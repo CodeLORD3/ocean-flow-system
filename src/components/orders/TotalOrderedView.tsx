@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   CalendarDays,
   ChevronDown,
@@ -28,6 +28,7 @@ import { ProductThumb } from "@/components/products/ProductThumb";
 
 import { useCustomerOrders } from "@/hooks/useCustomerOrders";
 import { CustomerOrder, ORDER_TYPE_LABELS, isoWeekOf } from "@/lib/customerOrders";
+import { PRODUCT_CATEGORIES, normalizeCategoryKey } from "@/lib/productCategories";
 import { PrintTotalChecklistDialog, type PrintableGroup } from "@/components/orders/PrintTotalChecklistDialog";
 
 /* ------------------------------------------------------------------ hjälpare */
@@ -86,6 +87,9 @@ type ProductRow = {
   name: string;
   unit: string;
   total: number;
+  /** Summerat radvärde (kr) när priser finns på raderna. */
+  value: number;
+  category: string;
   productId: string | null;
   imageUrl: string | null;
   orders: OrderLink[];
@@ -93,6 +97,22 @@ type ProductRow = {
 
 
 type Group = { key: string; label: string; orderCount: number; rows: ProductRow[] };
+
+const OTHER_CATEGORY = "Övrigt";
+
+/** Kanonisk kategoriordning: skaldjur för sig, fisk för sig osv. Okända sist. */
+const categoryRank = (name: string) => {
+  const i = (PRODUCT_CATEGORIES as readonly string[]).findIndex(
+    (c) => normalizeCategoryKey(c) === normalizeCategoryKey(name),
+  );
+  return i === -1 ? 999 : i;
+};
+
+const compareCategory = (a: string, b: string) =>
+  categoryRank(a) - categoryRank(b) || a.localeCompare(b, "sv");
+
+const moneyText = (v: number) =>
+  Number(v || 0).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 /** Summerar en produktrad per leveranssätt/hämtsätt. */
 function byType(row: ProductRow) {
@@ -121,11 +141,13 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
   const [picked, setPicked] = useState<string[]>([]);
   const [orderType, setOrderType] = useState("all");
   const [productSearch, setProductSearch] = useState("");
-  const [sort, setSort] = useState<"name" | "qty">("name");
+  const [category, setCategory] = useState("all");
+  const [sort, setSort] = useState<"name" | "qty" | "orders" | "value" | "date">("name");
   const [openRows, setOpenRows] = useState<string[]>([]);
   const [closedGroups, setClosedGroups] = useState<string[]>([]);
   const [showAll, setShowAll] = useState<string[]>([]);
   const [printOpen, setPrintOpen] = useState(false);
+
 
   const bounds = useMemo(() => {
     if (picked.length > 0) {
@@ -156,7 +178,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
     setTo(iso(addDays(start, 6)));
   };
 
-  const { groups, orderCount, productCount } = useMemo(() => {
+  const { groups, orderCount, productCount, categoryOptions } = useMemo(() => {
     const term = productSearch.trim().toLowerCase();
     const selected = picked.length > 0 ? new Set(picked) : null;
     const map = new Map<
@@ -165,6 +187,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
     >();
     const orderIds = new Set<string>();
     const products = new Set<string>();
+    const cats = new Set<string>();
 
     for (const o of orders) {
       if (selected && !selected.has(o.wanted_date)) continue;
@@ -178,6 +201,12 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
         const unit = l.unit || l.products?.unit || "st";
         const qty = Number(l.quantity_ordered || 0);
         if (!qty) continue;
+        const cat = (l.products?.category || "").trim() || OTHER_CATEGORY;
+        cats.add(cat);
+        if (category !== "all" && normalizeCategoryKey(cat) !== normalizeCategoryKey(category)) continue;
+
+        const perUnit = l.price_per_unit ?? l.estimated_price_per_unit ?? null;
+        const lineValue = Number(l.line_total ?? (perUnit != null ? qty * Number(perUnit) : 0)) || 0;
 
         const group =
           map.get(groupKey) ??
@@ -185,10 +214,21 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
         const rowKey = `${name}__${unit}`;
         const row: ProductRow =
           group.rows.get(rowKey) ??
-          { key: rowKey, name, unit, total: 0, productId: null, imageUrl: null, orders: [] };
+          {
+            key: rowKey,
+            name,
+            unit,
+            total: 0,
+            value: 0,
+            category: cat,
+            productId: null,
+            imageUrl: null,
+            orders: [],
+          };
         row.productId = row.productId ?? l.products?.id ?? null;
         row.imageUrl = row.imageUrl ?? l.products?.image_url ?? null;
         row.total += qty;
+        row.value += lineValue;
 
         const existing = row.orders.find((x) => x.orderNumber === o.order_number);
         if (existing) existing.quantity += qty;
@@ -209,31 +249,51 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
       }
     }
 
+    const earliest = (r: ProductRow) =>
+      r.orders.reduce((min, o) => (o.wantedDate < min ? o.wantedDate : min), "9999-12-31");
+
+    const withinCategory = (a: ProductRow, b: ProductRow) => {
+      if (sort === "qty") return b.total - a.total;
+      if (sort === "orders") return b.orders.length - a.orders.length;
+      if (sort === "value") return b.value - a.value;
+      if (sort === "date") return earliest(a).localeCompare(earliest(b));
+      return a.name.localeCompare(b.name, "sv");
+    };
+
     const list: Group[] = [...map.entries()]
       .sort((a, b) => a[1].sortKey.localeCompare(b[1].sortKey))
       .map(([key, g]) => ({
         key,
         label: g.label,
         orderCount: g.orderIds.size,
-        rows: [...g.rows.values()].sort((a, b) =>
-          sort === "qty" ? b.total - a.total : a.name.localeCompare(b.name, "sv"),
+        // Alltid kategori först: skaldjur för sig, fisk för sig — sedan valt sorteringssätt.
+        rows: [...g.rows.values()].sort(
+          (a, b) => compareCategory(a.category, b.category) || withinCategory(a, b),
         ),
       }));
 
-    return { groups: list, orderCount: orderIds.size, productCount: products.size };
-  }, [orders, picked, mode, productSearch, sort]);
+    return {
+      groups: list,
+      orderCount: orderIds.size,
+      productCount: products.size,
+      categoryOptions: [...cats].sort(compareCategory),
+    };
+  }, [orders, picked, mode, productSearch, sort, category]);
+
 
   const exportCsv = () => {
     const rows: string[][] = [
-      ["Period", "Produkt", "Enhet", "Mängd", "Antal ordrar", "Leveranssätt", "Ordrar"],
+      ["Period", "Kategori", "Produkt", "Enhet", "Mängd", "Värde", "Antal ordrar", "Leveranssätt", "Ordrar"],
     ];
     for (const g of groups)
       for (const r of g.rows)
         rows.push([
           g.label,
+          r.category,
           r.name,
           r.unit,
           qtyText(r.total, r.unit),
+          moneyText(r.value),
           String(r.orders.length),
           byType(r)
             .map(([t, v]) => `${t} ${qtyText(v.qty, r.unit)} ${r.unit} (${v.orders})`)
@@ -431,6 +491,31 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                 <SelectItem value="leverans">Leverans</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="h-10 text-xs">
+                <SelectValue placeholder="Kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alla kategorier</SelectItem>
+                {categoryOptions.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
+              <SelectTrigger className="h-10 text-xs">
+                <SelectValue placeholder="Sortering" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Kategori → namn (A–Ö)</SelectItem>
+                <SelectItem value="qty">Kategori → största mängd</SelectItem>
+                <SelectItem value="orders">Kategori → flest ordrar</SelectItem>
+                <SelectItem value="value">Kategori → högst värde</SelectItem>
+                <SelectItem value="date">Kategori → tidigast datum</SelectItem>
+              </SelectContent>
+            </Select>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -440,6 +525,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                 className="h-10 pl-8 text-xs"
               />
             </div>
+
           </CardContent>
         </Card>
       </div>
@@ -539,17 +625,36 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                     <span className="w-[210px]">Leveranssätt</span>
                   </div>
 
-                  {g.rows.map((r) => {
+                  {g.rows.map((r, i) => {
                     const key = `${g.key}-${r.key}`;
                     const isOpen = openRows.includes(key);
                     const types = byType(r);
                     const expanded = showAll.includes(key);
                     const visible = expanded ? r.orders : r.orders.slice(0, 5);
+                    const newCategory = i === 0 || g.rows[i - 1].category !== r.category;
+                    const catRows = g.rows.filter((x) => x.category === r.category);
                     return (
+                      <Fragment key={key}>
+                        {newCategory && (
+                          <div className="mt-1 flex items-center gap-2 border-b border-border/60 bg-muted/40 px-2 py-1.5 first:mt-0">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-foreground">
+                              {r.category}
+                            </span>
+                            <Badge
+                              variant="secondary"
+                              className="rounded-full px-1.5 py-0 text-[10px] font-normal leading-4"
+                            >
+                              {catRows.length} varor
+                            </Badge>
+                            <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">
+                              {catRows.reduce((n, x) => n + x.orders.length, 0)} orderrader
+                            </span>
+                          </div>
+                        )}
                       <div
-                        key={key}
-                        className={`border-b border-border/50 last:border-0 ${isOpen ? "bg-muted/20" : ""}`}
+                        className={`border-b border-border/50 ${isOpen ? "bg-muted/20" : ""}`}
                       >
+
                         <button
                           type="button"
                           onClick={() => toggle(openRows, setOpenRows, key)}
@@ -663,6 +768,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                           </div>
                         )}
                       </div>
+                      </Fragment>
                     );
                   })}
                 </CardContent>
