@@ -58,7 +58,7 @@ export function FortnoxInvoiceButton({ orderId }: { orderId: string }) {
   };
 
   const sent =
-    ["created", "bookkept", "sent"].includes(job.data?.status ?? "") && job.data?.fortnox_document_number;
+    ["created", "bookkept", "sent", "paid", "cancelled"].includes(job.data?.status ?? "") && job.data?.fortnox_document_number;
 
 
   if (sent) {
