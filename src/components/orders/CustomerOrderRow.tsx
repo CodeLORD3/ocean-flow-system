@@ -557,10 +557,6 @@ export function CustomerOrderRow({
             </div>
           )}
 
-          {/* Rubrik som binder varorna till just den här kunden. */}
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">
-            {name}s beställning
-          </div>
 
           {/* Varorna först: vad är beställt och hur mycket. */}
           {readOnly ? (
