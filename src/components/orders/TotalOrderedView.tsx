@@ -425,16 +425,18 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
         groups.map((g) => {
           const groupOpen = !closedGroups.includes(g.key);
           return (
-            <Card key={g.key}>
-              <CardHeader className="pb-2">
+            <Card key={g.key} className="overflow-hidden border-border/60 shadow-sm">
+              <CardHeader className="border-b border-border/60 bg-muted/30 py-3">
                 <button
                   type="button"
                   onClick={() => toggle(closedGroups, setClosedGroups, g.key)}
                   className="flex w-full items-center gap-2 text-left"
                 >
-                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                  <CardTitle className="text-base capitalize">{g.label}</CardTitle>
-                  <Badge variant="secondary" className="text-[11px]">
+                  <div className="rounded-lg bg-background p-1.5 ring-1 ring-inset ring-border/60">
+                    <CalendarDays className="h-4 w-4 text-primary" />
+                  </div>
+                  <CardTitle className="text-base capitalize tracking-tight">{g.label}</CardTitle>
+                  <Badge variant="secondary" className="rounded-full text-[11px] font-normal">
                     {g.orderCount} ordrar
                   </Badge>
                   {groupOpen ? (
@@ -446,15 +448,15 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
               </CardHeader>
 
               {groupOpen && (
-                <CardContent className="space-y-0 pt-0">
+                <CardContent className="space-y-0 px-3 pt-0 md:px-4">
                   {/* Kolumnrubriker */}
-                  <div className="hidden items-center gap-2 border-b border-border px-1 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground md:flex">
+                  <div className="hidden items-center gap-2 border-b border-border/60 px-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:flex">
                     <span className="w-5" />
                     <span className="min-w-0 flex-1">Produkt</span>
                     <button
                       type="button"
                       onClick={() => setSort(sort === "qty" ? "name" : "qty")}
-                      className="flex w-24 items-center justify-end gap-1 hover:text-foreground"
+                      className="flex w-24 items-center justify-end gap-1 transition-colors hover:text-foreground"
                     >
                       Mängd {sort === "qty" ? "↓" : "↕"}
                     </button>
@@ -470,19 +472,22 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                     const expanded = showAll.includes(key);
                     const visible = expanded ? r.orders : r.orders.slice(0, 5);
                     return (
-                      <div key={key} className="border-b border-border/60 last:border-0">
+                      <div
+                        key={key}
+                        className={`border-b border-border/50 last:border-0 ${isOpen ? "bg-muted/20" : ""}`}
+                      >
                         <button
                           type="button"
                           onClick={() => toggle(openRows, setOpenRows, key)}
-                          className="flex w-full flex-wrap items-center gap-2 rounded-md px-1 py-2.5 text-left hover:bg-muted/50"
+                          className="flex w-full flex-wrap items-center gap-2 rounded-lg px-1 py-3 text-left transition-colors hover:bg-muted/40"
                         >
                           {isOpen ? (
-                            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
                           ) : (
                             <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                           )}
-                          <span className="min-w-0 flex-1 truncate font-medium">{r.name}</span>
-                          <span className="w-24 text-right font-mono text-sm font-semibold tabular-nums">
+                          <span className="min-w-0 flex-1 truncate font-medium tracking-tight">{r.name}</span>
+                          <span className="w-24 text-right font-mono text-sm font-semibold tabular-nums text-primary">
                             {qtyText(r.total, r.unit)}
                           </span>
                           <span className="w-12 text-xs text-muted-foreground">{r.unit}</span>
@@ -491,12 +496,17 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                           </span>
                           <span className="flex w-[210px] flex-wrap gap-1">
                             {types.map(([t, v]) => (
-                              <Badge key={t} variant="outline" className="text-[10px] font-normal">
-                                {t} {v.orders}
+                              <Badge
+                                key={t}
+                                variant="secondary"
+                                className="rounded-full border-0 bg-muted text-[10px] font-normal text-muted-foreground"
+                              >
+                                {t} <span className="ml-1 font-medium text-foreground">{v.orders}</span>
                               </Badge>
                             ))}
                           </span>
                         </button>
+
 
                         {isOpen && (
                           <div className="grid gap-3 pb-3 pl-6 pr-1 lg:grid-cols-[1fr,280px]">
