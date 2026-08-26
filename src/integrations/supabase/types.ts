@@ -2207,42 +2207,90 @@ export type Database = {
       customers: {
         Row: {
           address: string | null
+          address2: string | null
           city: string | null
           contact_person: string | null
+          country_code: string | null
           created_at: string | null
+          currency: string | null
+          delivery_address1: string | null
+          delivery_city: string | null
+          delivery_country_code: string | null
+          delivery_name: string | null
+          delivery_zip_code: string | null
           email: string | null
           id: string
+          is_active: boolean
+          legal_entity_code: string | null
           name: string
           notes: string | null
+          org_number: string | null
           phone: string | null
           requires_identification_mark: boolean
+          source: string | null
           store_id: string | null
+          terms_of_payment: string | null
+          vat_number: string | null
+          vat_type: string | null
+          zip_code: string | null
         }
         Insert: {
           address?: string | null
+          address2?: string | null
           city?: string | null
           contact_person?: string | null
+          country_code?: string | null
           created_at?: string | null
+          currency?: string | null
+          delivery_address1?: string | null
+          delivery_city?: string | null
+          delivery_country_code?: string | null
+          delivery_name?: string | null
+          delivery_zip_code?: string | null
           email?: string | null
           id?: string
+          is_active?: boolean
+          legal_entity_code?: string | null
           name: string
           notes?: string | null
+          org_number?: string | null
           phone?: string | null
           requires_identification_mark?: boolean
+          source?: string | null
           store_id?: string | null
+          terms_of_payment?: string | null
+          vat_number?: string | null
+          vat_type?: string | null
+          zip_code?: string | null
         }
         Update: {
           address?: string | null
+          address2?: string | null
           city?: string | null
           contact_person?: string | null
+          country_code?: string | null
           created_at?: string | null
+          currency?: string | null
+          delivery_address1?: string | null
+          delivery_city?: string | null
+          delivery_country_code?: string | null
+          delivery_name?: string | null
+          delivery_zip_code?: string | null
           email?: string | null
           id?: string
+          is_active?: boolean
+          legal_entity_code?: string | null
           name?: string
           notes?: string | null
+          org_number?: string | null
           phone?: string | null
           requires_identification_mark?: boolean
+          source?: string | null
           store_id?: string | null
+          terms_of_payment?: string | null
+          vat_number?: string | null
+          vat_type?: string | null
+          zip_code?: string | null
         }
         Relationships: [
           {
@@ -12673,6 +12721,15 @@ export type Database = {
         Returns: Json
       }
       fortnox_claim_refresh: { Args: { p_entity: string }; Returns: boolean }
+      fortnox_import_customer: {
+        Args: {
+          p_customer_number: string
+          p_entity: string
+          p_makrilltrade_customer_id: string
+          p_payload: Json
+        }
+        Returns: string
+      }
       fortnox_on_invoice_cancelled: {
         Args: {
           p_document_number: string
