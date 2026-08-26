@@ -610,7 +610,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
               {groupOpen && (
                 <CardContent className="space-y-0 px-3 pt-0 md:px-4">
                   {/* Kolumnrubriker */}
-                  <div className="hidden items-center gap-2 border-b border-border/60 px-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:flex">
+                  <div className="hidden items-center gap-2 border-b border-border/60 px-1 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground md:flex">
                     <span className="w-5" />
                     <span className="min-w-0 flex-1">Produkt</span>
                     <button
@@ -636,18 +636,15 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                     return (
                       <Fragment key={key}>
                         {newCategory && (
-                          <div className="mt-1 flex items-center gap-2 border-b border-border/60 bg-muted/40 px-2 py-1.5 first:mt-0">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-foreground">
+                          <div className="mt-1 flex items-center gap-1.5 border-b border-border/40 bg-muted/25 px-1.5 py-0.5 first:mt-0">
+                            <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
                               {r.category}
                             </span>
-                            <Badge
-                              variant="secondary"
-                              className="rounded-full px-1.5 py-0 text-[10px] font-normal leading-4"
-                            >
+                            <span className="text-[9px] tabular-nums text-muted-foreground/70">
                               {catRows.length} varor
-                            </Badge>
-                            <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">
-                              {catRows.reduce((n, x) => n + x.orders.length, 0)} orderrader
+                            </span>
+                            <span className="ml-auto font-mono text-[9px] tabular-nums text-muted-foreground/70">
+                              {catRows.reduce((n, x) => n + x.orders.length, 0)} rader
                             </span>
                           </div>
                         )}
@@ -658,12 +655,12 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                         <button
                           type="button"
                           onClick={() => toggle(openRows, setOpenRows, key)}
-                          className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5 rounded-md px-1 py-1.5 text-left transition-colors hover:bg-muted/40"
+                          className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5 rounded-md px-1 py-1 text-left transition-colors hover:bg-muted/40"
                         >
                           {isOpen ? (
-                            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-primary" />
+                            <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
                           ) : (
-                            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
                           )}
                           {/* Produktbilden alltid först på varan */}
                           <ProductThumb
@@ -671,20 +668,21 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                             alt={r.name}
                             productId={r.productId}
                             static
-                            className="h-7 w-9 shrink-0 rounded md:h-8 md:w-11"
+                            className="h-6 w-8 shrink-0 rounded"
                           />
-                          <span className="min-w-0 flex-1 truncate text-xs font-medium tracking-tight md:text-sm">
+                          <span className="min-w-0 flex-1 truncate text-[11px] font-medium tracking-tight md:text-xs">
                             {r.name}
                           </span>
 
-                          <span className="text-right font-mono text-xs font-semibold tabular-nums text-primary md:w-24 md:text-sm">
+                          <span className="text-right font-mono text-[11px] font-semibold tabular-nums text-primary md:w-24 md:text-xs">
                             {qtyText(r.total, r.unit)}
                           </span>
-                          <span className="text-[11px] text-muted-foreground md:w-12">{r.unit}</span>
-                          <span className="w-full pl-6 text-[10px] text-muted-foreground md:w-24 md:pl-0 md:text-right md:font-mono md:text-[11px] md:tabular-nums">
+                          <span className="text-[10px] text-muted-foreground md:w-12">{r.unit}</span>
+                          <span className="w-full pl-5 text-[10px] text-muted-foreground md:w-24 md:pl-0 md:text-right md:font-mono md:tabular-nums">
                             <span className="md:hidden">{r.orders.length} ordrar</span>
                             <span className="hidden md:inline">{r.orders.length}</span>
                           </span>
+
                           <span className="flex w-full flex-wrap gap-1 pl-6 md:w-[210px] md:pl-0">
                             {types.map(([t, v]) => (
                               <Badge
