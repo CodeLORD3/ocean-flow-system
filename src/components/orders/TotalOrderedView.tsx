@@ -616,14 +616,13 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                     <button
                       type="button"
                       onClick={() => setSort(sort === "qty" ? "name" : "qty")}
-                      className="flex w-24 items-center justify-end gap-1 transition-colors hover:text-foreground"
+                      className="flex w-28 items-center justify-end gap-1 transition-colors hover:text-foreground"
                     >
                       Mängd {sort === "qty" ? "↓" : "↕"}
                     </button>
-                    <span className="w-12">Enhet</span>
-                    <span className="w-24 text-right">Antal ordrar</span>
-                    <span className="w-[210px]">Leveranssätt</span>
+                    <span className="w-20 text-right">Ordrar</span>
                   </div>
+
 
                   {g.rows.map((r, i) => {
                     const key = `${g.key}-${r.key}`;
