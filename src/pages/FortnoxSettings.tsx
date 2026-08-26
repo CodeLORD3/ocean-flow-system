@@ -87,12 +87,31 @@ export default function FortnoxSettings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("fortnox_invoice_jobs")
-        .select("id, order_id, legal_entity_code, status, fortnox_document_number, fortnox_url, last_error, stock_booked_at, created_at")
+        .select("id, order_id, legal_entity_code, status, fortnox_document_number, fortnox_url, last_error, stock_booked_at, created_at, fortnox_balance, fortnox_total, status_synced_at")
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) throw error;
       return data;
     },
+  });
+
+  const syncStatus = useMutation({
+    mutationFn: async (orderId: string) => {
+      const { data, error } = await supabase.functions.invoke("fortnox-sync-invoice-status", {
+        body: { order_id: orderId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (d) => {
+      const r = d?.results?.[0];
+      if (r?.error) toast.error(r.error);
+      else toast.success(`Status uppdaterad: ${JOB_STATUS_LABELS[r?.status] ?? r?.status ?? "okänd"}`);
+      qc.invalidateQueries({ queryKey: ["fortnox_invoice_jobs"] });
+      qc.invalidateQueries({ queryKey: ["fortnox_invoice_job"] });
+    },
+    onError: (e: any) => toast.error(e.message),
   });
 
   const connect = async (code: string) => {
@@ -302,10 +321,32 @@ export default function FortnoxSettings() {
                           {j.fortnox_document_number ? `Faktura ${j.fortnox_document_number}` : "Ingen faktura"}
                           {j.stock_booked_at ? " · lager bokat" : ""}
                         </div>
+                        <div className="truncate text-xs text-muted-foreground font-mono tabular-nums">
+                          {j.fortnox_total != null ? `Total ${Number(j.fortnox_total).toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr` : "Total –"}
+                          {" · "}
+                          {j.fortnox_balance != null ? `Kvar ${Number(j.fortnox_balance).toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr` : "Kvar –"}
+                          {" · "}
+                          {j.status_synced_at ? `synkad ${new Date(j.status_synced_at).toLocaleString("sv-SE")}` : "aldrig synkad"}
+                        </div>
                         {j.last_error && <div className="text-xs text-destructive break-all">{j.last_error}</div>}
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant={j.status === "bookkept" || j.status === "sent" ? "default" : j.status === "failed" ? "destructive" : "outline"}>{JOB_STATUS_LABELS[j.status] ?? j.status}</Badge>
+                        {j.fortnox_document_number && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={syncStatus.isPending && syncStatus.variables === j.order_id}
+                            onClick={() => syncStatus.mutate(j.order_id)}
+                          >
+                            {syncStatus.isPending && syncStatus.variables === j.order_id ? (
+                              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                            ) : (
+                              <RefreshCw className="mr-1 h-3 w-3" />
+                            )}
+                            Uppdatera status
+                          </Button>
+                        )}
                         {j.fortnox_url && (
                           <a href={j.fortnox_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">Öppna</a>
                         )}
