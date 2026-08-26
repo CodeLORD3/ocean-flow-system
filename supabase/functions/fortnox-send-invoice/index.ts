@@ -8,6 +8,7 @@ type Row = {
   unit: string | null;
   price: number;
   vat_rate: number | null;
+  ean?: string | null;
 };
 
 Deno.serve(async (req) => {

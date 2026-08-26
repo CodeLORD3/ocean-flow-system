@@ -136,6 +136,7 @@ const financeNav = [
   { title: "Webbordrar", url: "/shopify", icon: Globe },
   { title: "Storlekssortering", url: "/size-grades", icon: Ruler },
   { title: "Omvandlingsrecept", url: "/transformation-recipes", icon: CookingPot },
+  { title: "Fortnox", url: "/fortnox", icon: Plug },
   { title: "Ekonomi", url: "/finance", icon: CreditCard },
   { title: "Prognoser", url: "/forecasts", icon: TrendingUp },
 ];

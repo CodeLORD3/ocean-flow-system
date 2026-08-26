@@ -36,6 +36,7 @@ import Personalkollen from "@/pages/Integrations/Personalkollen";
 import ClockStations from "@/pages/ClockStations";
 import TimeEntriesPage from "@/pages/TimeEntriesPage";
 import ClockVsPk from "@/pages/ClockVsPk";
+import FortnoxSettings from "@/pages/FortnoxSettings";
 
 import StaffSchedule from "@/pages/StaffSchedule";
 
@@ -127,6 +128,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/on-site-now": { component: <LiveStaff /> },
   "/staff-schedule": { component: <StaffSchedule /> },
 
+  "/fortnox": { component: <FortnoxSettings /> },
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
   "/trade-offers": { component: <TradeOffers /> },
   "/trade-history": { component: <TradeHistory /> },
