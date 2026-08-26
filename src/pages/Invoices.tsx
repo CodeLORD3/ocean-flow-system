@@ -13,6 +13,8 @@ import { useShopOrders } from "@/hooks/useShopOrders";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import DeliveryNote from "@/components/DeliveryNote";
+import { ShopOrderFortnoxButton } from "@/components/orders/ShopOrderFortnoxButton";
+import { StoreFortnoxCustomerMap } from "@/components/fortnox/StoreFortnoxCustomerMap";
 
 
 const INVOICE_STATUSES = [
@@ -101,6 +103,8 @@ export default function Invoices() {
         </Card>
       </div>
 
+      <StoreFortnoxCustomerMap />
+
       <Card className="shadow-card">
         <CardHeader className="pb-2">
 
@@ -132,6 +136,7 @@ export default function Invoices() {
                     <th className="pb-2 text-right font-medium text-muted-foreground">Värde</th>
                     <th className="pb-2 text-left font-medium text-muted-foreground">Orderstatus</th>
                     <th className="pb-2 text-left font-medium text-muted-foreground">Fakturastatus</th>
+                    <th className="pb-2 text-left font-medium text-muted-foreground">Fortnox</th>
                     <th className="pb-2 w-8"></th>
                   </tr>
                 </thead>
@@ -189,6 +194,9 @@ export default function Invoices() {
                             </Select>
                           </td>
                           <td className="py-2" onClick={e => e.stopPropagation()}>
+                            <ShopOrderFortnoxButton orderId={order.id} />
+                          </td>
+                          <td className="py-2" onClick={e => e.stopPropagation()}>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -202,7 +210,7 @@ export default function Invoices() {
                         </tr>
                         {isExpanded && (
                           <tr key={`${order.id}-detail`}>
-                            <td colSpan={11} className="p-0">
+                            <td colSpan={12} className="p-0">
                               <div className="bg-muted/20 border-y border-border/30 px-6 py-3">
                                 <div className="flex items-center justify-between mb-2">
                                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
