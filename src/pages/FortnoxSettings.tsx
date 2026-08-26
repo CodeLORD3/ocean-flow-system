@@ -14,14 +14,8 @@ const ENTITIES = [
   { code: "fsab-se", name: "Fisk & Skaldjursspecialisten AB" },
 ];
 
-const JOB_STATUS_LABELS: Record<string, string> = {
-  pending: "Köad",
-  creating: "Skickar",
-  created: "Faktura skapad",
-  bookkept: "Klar – lager bokfört",
-  sent: "Skickad",
-  failed: "Misslyckades",
-};
+const JOB_STATUS_LABELS = FORTNOX_JOB_STATUS_LABEL;
+
 
 
 const statusBadge = (status: string) => {
