@@ -74,6 +74,7 @@ const typeLabel = (t?: string | null) =>
   (t && (ORDER_TYPE_LABELS as Record<string, string>)[t]) || "Övrigt";
 
 type OrderLink = {
+  orderId: string;
   orderNumber: string;
   customer: string;
   storeName: string;
@@ -132,7 +133,14 @@ function byType(row: ProductRow) {
  * dagar eller veckor, med utfällbar lista över vilka ordrar som ligger bakom.
  * Kilo och styck summeras alltid separat — aldrig konverterat.
  */
-export function TotalOrderedView({ storeId }: { storeId: string | null }) {
+export function TotalOrderedView({
+  storeId,
+  onOpenOrder,
+}: {
+  storeId: string | null;
+  /** Öppnar beställningen i orderlistan med den valda varan markerad. */
+  onOpenOrder?: (orderId: string, productName: string) => void;
+}) {
   const today = iso(new Date());
   const [mode, setMode] = useState<"day" | "week">("day");
   const [from, setFrom] = useState(today);
@@ -234,6 +242,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
         if (existing) existing.quantity += qty;
         else
           row.orders.push({
+            orderId: o.id,
             orderNumber: o.order_number,
             customer: customerName(o),
             storeName: o.stores?.name ?? "",
