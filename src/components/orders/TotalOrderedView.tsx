@@ -594,18 +594,18 @@ export function TotalOrderedView({
         groups.map((g) => {
           const groupOpen = !closedGroups.includes(g.key);
           return (
-            <Card key={g.key} className="overflow-hidden border-border/60 shadow-sm">
-              <CardHeader className="border-b border-border/60 bg-muted/30 py-3">
+            <Card key={g.key} className="overflow-hidden rounded-2xl border-border/60 shadow-sm">
+              <CardHeader className="border-b border-border/50 bg-muted/20 py-2.5">
                 <button
                   type="button"
                   onClick={() => toggle(closedGroups, setClosedGroups, g.key)}
-                  className="flex w-full items-center gap-2 text-left"
+                  className="flex w-full items-center gap-2.5 text-left"
                 >
-                  <div className="rounded-lg bg-background p-1.5 ring-1 ring-inset ring-border/60">
-                    <CalendarDays className="h-4 w-4 text-primary" />
+                  <div className="rounded-lg bg-background p-1.5 ring-1 ring-inset ring-border/50">
+                    <CalendarDays className="h-3.5 w-3.5 text-primary" />
                   </div>
-                  <CardTitle className="text-base capitalize tracking-tight">{g.label}</CardTitle>
-                  <Badge variant="secondary" className="rounded-full text-[11px] font-normal">
+                  <CardTitle className="text-[15px] font-semibold capitalize tracking-tight">{g.label}</CardTitle>
+                  <Badge variant="secondary" className="rounded-full text-[10px] font-normal">
                     {g.orderCount} ordrar
                   </Badge>
                   {groupOpen ? (
@@ -617,19 +617,20 @@ export function TotalOrderedView({
               </CardHeader>
 
               {groupOpen && (
-                <CardContent className="space-y-0 px-3 pt-0 md:px-4">
+                <CardContent className="space-y-0 px-2 pb-2 pt-0 md:px-3">
                   {/* Kolumnrubriker */}
-                  <div className="hidden items-center gap-2 border-b border-border/60 px-1 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground md:flex">
-                    <span className="w-5" />
+                  <div className="hidden items-center gap-3 px-2 py-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80 md:flex">
+                    <span className="w-3" />
+                    <span className="w-8" />
                     <span className="min-w-0 flex-1">Produkt</span>
                     <button
                       type="button"
                       onClick={() => setSort(sort === "qty" ? "name" : "qty")}
-                      className="flex w-28 items-center justify-end gap-1 transition-colors hover:text-foreground"
+                      className="flex w-24 items-center justify-end gap-1 transition-colors hover:text-foreground"
                     >
                       Mängd {sort === "qty" ? "↓" : "↕"}
                     </button>
-                    <span className="w-20 text-right">Ordrar</span>
+                    <span className="w-16 text-right">Ordrar</span>
                   </div>
 
 
@@ -644,11 +645,11 @@ export function TotalOrderedView({
                     return (
                       <Fragment key={key}>
                         {newCategory && (
-                          <div className="mt-1 flex items-center gap-1.5 border-b border-border/40 bg-muted/25 px-1.5 py-0.5 first:mt-0">
-                            <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          <div className="mt-3 flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-1 first:mt-0">
+                            <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                               {r.category}
                             </span>
-                            <span className="text-[9px] tabular-nums text-muted-foreground/70">
+                            <span className="font-mono text-[9px] tabular-nums text-muted-foreground/70">
                               {catRows.length} varor
                             </span>
                             <span className="ml-auto font-mono text-[9px] tabular-nums text-muted-foreground/70">
@@ -657,18 +658,25 @@ export function TotalOrderedView({
                           </div>
                         )}
                       <div
-                        className={`border-b border-border/50 ${isOpen ? "bg-muted/20" : ""}`}
+                        className={`relative transition-colors ${
+                          isOpen
+                            ? "my-1 rounded-xl bg-primary/[0.04] ring-1 ring-inset ring-primary/15"
+                            : "border-b border-border/40 last:border-b-0"
+                        }`}
                       >
+                        {isOpen && (
+                          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-primary/70" />
+                        )}
 
                         <button
                           type="button"
                           onClick={() => toggle(openRows, setOpenRows, key)}
-                          className="flex w-full items-center gap-2 overflow-hidden rounded-md px-1 py-1 text-left transition-colors hover:bg-muted/40"
+                          className="flex w-full items-center gap-3 overflow-hidden rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-muted/40"
                         >
                           {isOpen ? (
                             <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
                           ) : (
-                            <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                            <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/70" />
                           )}
                           {/* Produktbilden alltid först på varan */}
                           <ProductThumb
@@ -676,29 +684,30 @@ export function TotalOrderedView({
                             alt={r.name}
                             productId={r.productId}
                             static
-                            className="h-6 w-8 shrink-0 rounded"
+                            className="h-6 w-8 shrink-0 rounded-md"
                           />
-                          <span className="min-w-0 flex-1 truncate text-[11px] font-medium tracking-tight md:text-xs">
+                          <span
+                            className={`min-w-0 flex-1 truncate tracking-tight ${
+                              isOpen ? "text-xs font-semibold md:text-[13px]" : "text-[11px] font-medium md:text-xs"
+                            }`}
+                          >
                             {r.name}
                           </span>
 
-                          <span className="shrink-0 whitespace-nowrap text-right font-mono text-[11px] font-semibold tabular-nums text-primary md:w-28 md:text-xs">
+                          <span className="shrink-0 whitespace-nowrap text-right font-mono text-[11px] font-semibold tabular-nums text-primary md:w-24 md:text-xs">
                             {qtyText(r.total, r.unit)} {r.unit}
                           </span>
-                          <span className="shrink-0 whitespace-nowrap text-right font-mono text-[10px] tabular-nums text-muted-foreground md:w-20 md:text-[11px]">
+                          <span className="shrink-0 whitespace-nowrap text-right font-mono text-[10px] tabular-nums text-muted-foreground md:w-16 md:text-[11px]">
                             {r.orders.length} st
                           </span>
 
                         </button>
 
-
-
-
                         {isOpen && (
-                          <div className="grid gap-3 pb-3 pl-2 pr-1 md:pl-6 lg:grid-cols-[1fr,280px]">
-                            <div className="rounded-md border border-border/60">
-                              <div className="border-b border-border/60 px-2 py-1.5 text-[11px] font-medium text-muted-foreground">
-                                Detaljerade ordrar ({r.orders.length} st)
+                          <div className="grid gap-2 px-2 pb-2 md:pl-8 lg:grid-cols-[1fr,260px]">
+                            <div className="overflow-hidden rounded-xl bg-background/60 ring-1 ring-inset ring-border/50">
+                              <div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                                Ordrar ({r.orders.length})
                               </div>
                               <div className="divide-y divide-border/40">
                                 {visible.map((o) => (
@@ -708,18 +717,18 @@ export function TotalOrderedView({
                                     onClick={() => onOpenOrder?.(o.orderId, r.name)}
                                     disabled={!onOpenOrder}
                                     title={onOpenOrder ? `Öppna ${o.orderNumber}` : undefined}
-                                    className="grid w-full grid-cols-[auto,1fr] items-baseline gap-x-2 gap-y-0.5 px-2 py-2 text-left text-xs transition-colors hover:bg-muted/50 md:flex md:flex-wrap md:py-1.5"
+                                    className="grid w-full grid-cols-[auto,1fr] items-baseline gap-x-2 gap-y-0.5 px-2.5 py-2 text-left text-[11px] transition-colors hover:bg-muted/50 md:flex md:flex-wrap md:py-1.5 md:text-xs"
                                   >
                                     <span className="font-mono text-primary underline-offset-2 hover:underline">
                                       {o.orderNumber}
                                     </span>
                                     <span className="min-w-0 truncate md:flex-1">{o.customer}</span>
                                     <span className="col-span-2 flex flex-wrap items-baseline gap-2 md:contents">
-                                      <span className="font-mono tabular-nums">
+                                      <span className="w-20 text-right font-mono font-semibold tabular-nums">
                                         {qtyText(o.quantity, r.unit)} {r.unit}
                                       </span>
-                                      <span className="text-muted-foreground">{typeLabel(o.orderType)}</span>
-                                      <span className="font-mono text-muted-foreground">{o.wantedDate}</span>
+                                      <span className="w-24 text-right text-muted-foreground">{typeLabel(o.orderType)}</span>
+                                      <span className="w-20 text-right font-mono tabular-nums text-muted-foreground">{o.wantedDate}</span>
                                     </span>
                                   </button>
                                 ))}
@@ -729,7 +738,7 @@ export function TotalOrderedView({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 w-full text-xs"
+                                  className="h-8 w-full rounded-none text-[11px]"
                                   onClick={() => toggle(showAll, setShowAll, key)}
                                 >
                                   {expanded
@@ -739,28 +748,28 @@ export function TotalOrderedView({
                               )}
                             </div>
 
-                            <div className="rounded-md border border-border/60 p-2">
-                              <div className="mb-1 text-[11px] font-medium text-muted-foreground">
-                                Summering för {r.name}
+                            <div className="rounded-xl bg-background/60 p-2.5 ring-1 ring-inset ring-border/50">
+                              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                                Summering
                               </div>
                               {types.map(([t, v]) => (
-                                <div key={t} className="flex items-baseline justify-between gap-2 py-0.5 text-xs">
-                                  <span>{t}</span>
-                                  <span className="font-mono tabular-nums">
+                                <div key={t} className="flex items-baseline gap-2 py-0.5 text-[11px] md:text-xs">
+                                  <span className="min-w-0 flex-1 truncate text-muted-foreground">{t}</span>
+                                  <span className="w-20 text-right font-mono tabular-nums">
                                     {qtyText(v.qty, r.unit)} {r.unit}
                                   </span>
-                                  <span className="text-muted-foreground">
-                                    ({v.orders} {v.orders === 1 ? "order" : "ordrar"})
+                                  <span className="w-14 text-right font-mono tabular-nums text-muted-foreground/70">
+                                    {v.orders} st
                                   </span>
                                 </div>
                               ))}
-                              <div className="mt-1 flex items-baseline justify-between gap-2 border-t border-border/60 pt-1 text-xs font-semibold">
-                                <span>Totalt</span>
-                                <span className="font-mono tabular-nums">
+                              <div className="mt-1.5 flex items-baseline gap-2 border-t border-border/50 pt-1.5 text-[11px] font-semibold md:text-xs">
+                                <span className="min-w-0 flex-1">Totalt</span>
+                                <span className="w-20 text-right font-mono tabular-nums text-primary">
                                   {qtyText(r.total, r.unit)} {r.unit}
                                 </span>
-                                <span className="font-normal text-muted-foreground">
-                                  ({r.orders.length} ordrar)
+                                <span className="w-14 text-right font-mono font-normal tabular-nums text-muted-foreground/70">
+                                  {r.orders.length} st
                                 </span>
                               </div>
                             </div>
