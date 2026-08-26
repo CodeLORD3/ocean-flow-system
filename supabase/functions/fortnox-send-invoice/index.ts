@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
         idempotency_key: idempotencyKey,
         request_payload: payload,
         created_by: user.id,
-        status: "sending",
+        status: "creating",
       },
       { onConflict: "idempotency_key" },
     )
@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
 
   const fail = async (msg: string, status = 502) => {
     await sb.from("fortnox_invoice_jobs")
-      .update({ status: "error", last_error: msg, attempts: (job.attempts ?? 0) + 1 })
+      .update({ status: "failed", last_error: msg, attempts: (job.attempts ?? 0) + 1 })
       .eq("id", job.id);
     return json({ error: msg }, status);
   };
@@ -155,6 +155,11 @@ Deno.serve(async (req) => {
       if (!doc) return await fail("Fortnox returnerade ingen fakturanummer");
     }
 
+    // 4b) Faktura finns i Fortnox – markera "created" innan lagerbokning
+    await sb.from("fortnox_invoice_jobs")
+      .update({ status: "created", fortnox_document_number: doc, response: { document_number: doc } })
+      .eq("id", job.id);
+
     // 5) Bokför lager i Makrilltrade (idempotent i DB-funktionen)
     const { error: sErr } = await sb.rpc("fortnox_on_invoice_created", {
       p_order_id: orderId, p_entity: entity, p_document_number: doc,
@@ -162,7 +167,7 @@ Deno.serve(async (req) => {
 
     const url = `https://apps.fortnox.se/fi/?sid=${doc}`;
     await sb.from("fortnox_invoice_jobs").update({
-      status: "sent",
+      status: sErr ? "created" : "bookkept",
       fortnox_document_number: doc,
       fortnox_url: url,
       stock_booked_at: sErr ? null : new Date().toISOString(),
