@@ -4,20 +4,21 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { FileUp, Loader2, ExternalLink } from "lucide-react";
+import { FileUp, Loader2, ExternalLink, RefreshCw } from "lucide-react";
 import { fortnoxDraftCreatedText, fortnoxJobStatusLabel } from "@/lib/fortnoxStatus";
 
 /** Skickar en kundorder till Fortnox som faktura. Idempotent per ordernummer. */
 export function FortnoxInvoiceButton({ orderId }: { orderId: string }) {
   const qc = useQueryClient();
   const [sending, setSending] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   const job = useQuery({
     queryKey: ["fortnox_invoice_job", orderId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("fortnox_invoice_jobs")
-        .select("status, fortnox_document_number, fortnox_url, last_error, stock_booked_at")
+        .select("status, fortnox_document_number, fortnox_url, last_error, stock_booked_at, fortnox_balance, fortnox_total, status_synced_at")
         .eq("order_id", orderId)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -43,6 +44,19 @@ export function FortnoxInvoiceButton({ orderId }: { orderId: string }) {
     qc.invalidateQueries({ queryKey: ["fortnox_invoice_jobs"] });
   };
 
+  const syncStatus = async () => {
+    setSyncing(true);
+    const { data, error } = await supabase.functions.invoke("fortnox-sync-invoice-status", { body: { order_id: orderId } });
+    setSyncing(false);
+    if (error) return toast.error(error.message);
+    if (data?.error) return toast.error(data.error);
+    const r = data?.results?.[0];
+    if (r?.error) return toast.error(r.error);
+    toast.success(`Status i Fortnox: ${fortnoxJobStatusLabel(r?.status)}`);
+    qc.invalidateQueries({ queryKey: ["fortnox_invoice_job", orderId] });
+    qc.invalidateQueries({ queryKey: ["fortnox_invoice_jobs"] });
+  };
+
   const sent =
     ["created", "bookkept", "sent"].includes(job.data?.status ?? "") && job.data?.fortnox_document_number;
 
@@ -54,6 +68,20 @@ export function FortnoxInvoiceButton({ orderId }: { orderId: string }) {
           Fortnox {job.data!.fortnox_document_number}
         </Badge>
         <span className="text-[11px] text-muted-foreground">{fortnoxJobStatusLabel(job.data?.status)}</span>
+        {job.data?.fortnox_balance != null && (
+          <span className="text-[11px] text-muted-foreground font-mono tabular-nums">
+            Kvar {Number(job.data.fortnox_balance).toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
+          </span>
+        )}
+        <Button variant="ghost" size="sm" className="h-7 text-[11px]" disabled={syncing} onClick={syncStatus}>
+          {syncing ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <RefreshCw className="mr-1 h-3 w-3" />}
+          Uppdatera status
+        </Button>
+        {job.data?.status_synced_at && (
+          <span className="text-[11px] text-muted-foreground">
+            synkad {new Date(job.data.status_synced_at).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}
+          </span>
+        )}
         {job.data?.fortnox_url && (
           <a
             href={job.data.fortnox_url}
