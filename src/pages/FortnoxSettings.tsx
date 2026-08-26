@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Link2, RefreshCw, Check, AlertTriangle, Plug } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { FORTNOX_JOB_STATUS_LABEL } from "@/lib/fortnoxStatus";
 
 const ENTITIES = [
   { code: "de-no1", name: "DE No.1 AB" },
