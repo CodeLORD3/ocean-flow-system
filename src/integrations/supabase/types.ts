@@ -12603,6 +12603,7 @@ export type Database = {
         | "region_admin"
         | "group_admin"
         | "platform_admin"
+        | "multi_store_manager"
       location_type:
         | "inkopslager"
         | "grossistlager"
@@ -12754,6 +12755,7 @@ export const Constants = {
         "region_admin",
         "group_admin",
         "platform_admin",
+        "multi_store_manager",
       ],
       location_type: [
         "inkopslager",
