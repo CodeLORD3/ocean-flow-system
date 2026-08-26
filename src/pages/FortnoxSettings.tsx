@@ -14,6 +14,16 @@ const ENTITIES = [
   { code: "fsab-se", name: "Fisk & Skaldjursspecialisten AB" },
 ];
 
+const JOB_STATUS_LABELS: Record<string, string> = {
+  pending: "Köad",
+  creating: "Skickar",
+  created: "Faktura skapad",
+  bookkept: "Klar – lager bokfört",
+  sent: "Skickad",
+  failed: "Misslyckades",
+};
+
+
 const statusBadge = (status: string) => {
   if (status === "connected") return <Badge className="bg-emerald-600/15 text-emerald-400 border-emerald-600/30">Kopplad</Badge>;
   if (status === "needs_reauth") return <Badge variant="destructive">Måste kopplas om</Badge>;
@@ -273,7 +283,7 @@ export default function FortnoxSettings() {
                         {j.last_error && <div className="text-xs text-destructive break-all">{j.last_error}</div>}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant={j.status === "sent" ? "default" : j.status === "error" ? "destructive" : "outline"}>{j.status}</Badge>
+                        <Badge variant={j.status === "bookkept" || j.status === "sent" ? "default" : j.status === "failed" ? "destructive" : "outline"}>{JOB_STATUS_LABELS[j.status] ?? j.status}</Badge>
                         {j.fortnox_url && (
                           <a href={j.fortnox_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">Öppna</a>
                         )}

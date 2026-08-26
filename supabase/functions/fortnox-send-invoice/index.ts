@@ -65,7 +65,24 @@ Deno.serve(async (req) => {
 
   if (dryRun) return json({ ok: true, dry_run: true, legal_entity_code: entity, idempotency_key: idempotencyKey, payload });
 
-  // 2) Idempotent jobb
+  // 2) Idempotent jobb – läs befintligt jobb FÖRE upsert så att status inte skrivs över
+  const { data: prior } = await sb
+    .from("fortnox_invoice_jobs")
+    .select("*")
+    .eq("idempotency_key", idempotencyKey)
+    .maybeSingle();
+
+  if (prior?.fortnox_document_number && ["created", "bookkept", "sent"].includes(prior.status)) {
+    return json({
+      ok: true,
+      already: true,
+      already_sent: true,
+      status: prior.status,
+      document_number: prior.fortnox_document_number,
+      url: prior.fortnox_url,
+    });
+  }
+
   const { data: job, error: jErr } = await sb
     .from("fortnox_invoice_jobs")
     .upsert(
@@ -75,7 +92,7 @@ Deno.serve(async (req) => {
         idempotency_key: idempotencyKey,
         request_payload: payload,
         created_by: user.id,
-        status: "sending",
+        status: "creating",
       },
       { onConflict: "idempotency_key" },
     )
@@ -83,13 +100,10 @@ Deno.serve(async (req) => {
     .single();
   if (jErr) return json({ error: jErr.message }, 500);
 
-  if (job.status === "sent" && job.fortnox_document_number) {
-    return json({ ok: true, already_sent: true, document_number: job.fortnox_document_number, url: job.fortnox_url });
-  }
 
   const fail = async (msg: string, status = 502) => {
     await sb.from("fortnox_invoice_jobs")
-      .update({ status: "error", last_error: msg, attempts: (job.attempts ?? 0) + 1 })
+      .update({ status: "failed", last_error: msg, attempts: (job.attempts ?? 0) + 1 })
       .eq("id", job.id);
     return json({ error: msg }, status);
   };
@@ -155,6 +169,11 @@ Deno.serve(async (req) => {
       if (!doc) return await fail("Fortnox returnerade ingen fakturanummer");
     }
 
+    // 4b) Faktura finns i Fortnox – markera "created" innan lagerbokning
+    await sb.from("fortnox_invoice_jobs")
+      .update({ status: "created", fortnox_document_number: doc, response: { document_number: doc } })
+      .eq("id", job.id);
+
     // 5) Bokför lager i Makrilltrade (idempotent i DB-funktionen)
     const { error: sErr } = await sb.rpc("fortnox_on_invoice_created", {
       p_order_id: orderId, p_entity: entity, p_document_number: doc,
@@ -162,7 +181,7 @@ Deno.serve(async (req) => {
 
     const url = `https://apps.fortnox.se/fi/?sid=${doc}`;
     await sb.from("fortnox_invoice_jobs").update({
-      status: "sent",
+      status: sErr ? "created" : "bookkept",
       fortnox_document_number: doc,
       fortnox_url: url,
       stock_booked_at: sErr ? null : new Date().toISOString(),
