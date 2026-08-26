@@ -295,16 +295,16 @@ export function CustomerOrderRow({
   return (
     <div
       id={`order-${order.id}`}
-      className={`relative overflow-hidden border-x border-b border-grid-line ${tone.row} ${
+      className={`relative overflow-hidden border-x border-b border-grid-line transition-all duration-200 ${tone.row} ${
         isOpen
-          ? "z-10 my-2.5 rounded-2xl border border-primary/25 bg-primary/[0.05] pl-2 shadow-[0_6px_20px_-12px_hsl(var(--primary)/0.45)]"
+          ? "z-10 my-3 rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] pl-2.5 shadow-[0_10px_30px_-18px_hsl(var(--primary)/0.55)]"
           : ""
       } ${selected && !isOpen ? "ring-1 ring-inset ring-primary" : ""}`}
     >
       {/* Aktiv order: tjock, mjuk accentlinje längs hela kortets vänsterkant. */}
       {isOpen && (
         <span
-          className="pointer-events-none absolute bottom-1.5 left-1.5 top-1.5 w-1.5 rounded-full bg-primary"
+          className="pointer-events-none absolute bottom-2 left-1.5 top-2 w-1.5 rounded-full bg-primary/80"
           aria-hidden
         />
       )}
