@@ -87,12 +87,31 @@ export default function FortnoxSettings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("fortnox_invoice_jobs")
-        .select("id, order_id, legal_entity_code, status, fortnox_document_number, fortnox_url, last_error, stock_booked_at, created_at")
+        .select("id, order_id, legal_entity_code, status, fortnox_document_number, fortnox_url, last_error, stock_booked_at, created_at, fortnox_balance, fortnox_total, status_synced_at")
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) throw error;
       return data;
     },
+  });
+
+  const syncStatus = useMutation({
+    mutationFn: async (orderId: string) => {
+      const { data, error } = await supabase.functions.invoke("fortnox-sync-invoice-status", {
+        body: { order_id: orderId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (d) => {
+      const r = d?.results?.[0];
+      if (r?.error) toast.error(r.error);
+      else toast.success(`Status uppdaterad: ${JOB_STATUS_LABELS[r?.status] ?? r?.status ?? "okänd"}`);
+      qc.invalidateQueries({ queryKey: ["fortnox_invoice_jobs"] });
+      qc.invalidateQueries({ queryKey: ["fortnox_invoice_job"] });
+    },
+    onError: (e: any) => toast.error(e.message),
   });
 
   const connect = async (code: string) => {
