@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
