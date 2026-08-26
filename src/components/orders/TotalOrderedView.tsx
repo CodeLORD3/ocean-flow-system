@@ -178,8 +178,13 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
           map.get(groupKey) ??
           { label, sortKey: o.wanted_date, orderIds: new Set<string>(), rows: new Map<string, ProductRow>() };
         const rowKey = `${name}__${unit}`;
-        const row = group.rows.get(rowKey) ?? { key: rowKey, name, unit, total: 0, orders: [] };
+        const row: ProductRow =
+          group.rows.get(rowKey) ??
+          { key: rowKey, name, unit, total: 0, productId: null, imageUrl: null, orders: [] };
+        row.productId = row.productId ?? l.products?.id ?? null;
+        row.imageUrl = row.imageUrl ?? l.products?.image_url ?? null;
         row.total += qty;
+
         const existing = row.orders.find((x) => x.orderNumber === o.order_number);
         if (existing) existing.quantity += qty;
         else
