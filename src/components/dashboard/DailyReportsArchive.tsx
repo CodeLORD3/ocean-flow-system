@@ -216,7 +216,7 @@ export function DailyReportsArchive() {
                     </div>
 
                     <p className="text-[10px] text-muted-foreground">
-                      Sparad{" "}
+                      Sparad av {nameOf(r.created_by) ?? "okänd"} ·{" "}
                       {new Date(r.updated_at || r.created_at).toLocaleString("sv-SE", {
                         dateStyle: "short",
                         timeStyle: "short",
