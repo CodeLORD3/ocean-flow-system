@@ -188,6 +188,7 @@ export function CustomerOrderRow({
   onSelect,
   photoCount = 0,
   orderCount = 0,
+  highlightProduct,
 }: {
   order: CustomerOrder;
   canEdit?: boolean;
@@ -201,6 +202,8 @@ export function CustomerOrderRow({
   photoCount?: number;
   /** Kundens totala antal beställningar i kedjan, visas som stjärna. */
   orderCount?: number;
+  /** Varunamn som ska markeras i rullgardinen, t.ex. vid hopp från totallistan. */
+  highlightProduct?: string | null;
 }) {
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
