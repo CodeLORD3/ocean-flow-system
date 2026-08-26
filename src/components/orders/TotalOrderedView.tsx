@@ -520,9 +520,18 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                           ) : (
                             <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
                           )}
+                          {/* Produktbilden alltid först på varan */}
+                          <ProductThumb
+                            src={r.imageUrl}
+                            alt={r.name}
+                            productId={r.productId}
+                            static
+                            className="h-12 w-16 md:h-14 md:w-20"
+                          />
                           <span className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight md:text-base">
                             {r.name}
                           </span>
+
                           <span className="text-right font-mono text-base font-semibold tabular-nums text-primary md:w-24 md:text-sm">
                             {qtyText(r.total, r.unit)}
                           </span>
