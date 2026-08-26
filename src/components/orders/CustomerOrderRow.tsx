@@ -345,7 +345,11 @@ export function CustomerOrderRow({
             </span>
 
             {/* Kundnamnet börjar alltid på samma x-position — källan står i egen kolumn efter namnet. */}
-            <span className="flex min-w-[14rem] shrink-0 flex-1 items-center whitespace-nowrap border-r border-grid-line/70 pl-3 pr-5 font-semibold">
+            <span
+              className={`flex min-w-[14rem] shrink-0 flex-1 items-center whitespace-nowrap border-r border-grid-line/70 pl-3 pr-5 ${
+                isOpen ? "text-[13px] font-bold tracking-tight" : "font-semibold"
+              }`}
+            >
               {order.customer_id ? (
                 <span
                   role="link"
