@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, Truck, ChefHat, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check } from "lucide-react";
+import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,10 +44,7 @@ import { CurrencyAmount } from "@/components/orders/CurrencyAmount";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
-import { DeliveryRouteView } from "@/components/orders/DeliveryRouteView";
-import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
-import { TodayPickupsView } from "@/components/orders/TodayPickupsView";
 import { TotalOrderedView } from "@/components/orders/TotalOrderedView";
 
 /** Orderflikarna: tre operativa lägen först, historiken nedtonad sist. */
@@ -169,7 +166,7 @@ export default function CustomerOrders() {
   const [wizardOpen, setWizardOpen] = useState(false);
   /* Flera ordrar kan vara öppna samtidigt — att öppna en stänger inte de andra. */
   const [openRows, setOpenRows] = useState<string[]>([]);
-  const [panel, setPanel] = useState<"orders" | "customers" | "stats" | "route" | "kitchen" | "needs" | "pickups" | "totals">(
+  const [panel, setPanel] = useState<"orders" | "customers" | "stats" | "needs" | "totals">(
     "orders",
   );
 
