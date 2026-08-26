@@ -610,7 +610,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
               {groupOpen && (
                 <CardContent className="space-y-0 px-3 pt-0 md:px-4">
                   {/* Kolumnrubriker */}
-                  <div className="hidden items-center gap-2 border-b border-border/60 px-1 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:flex">
+                  <div className="hidden items-center gap-2 border-b border-border/60 px-1 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground md:flex">
                     <span className="w-5" />
                     <span className="min-w-0 flex-1">Produkt</span>
                     <button
