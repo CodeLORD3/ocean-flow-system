@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Loader2, Link2, RefreshCw, Check, AlertTriangle, Plug } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { FORTNOX_JOB_STATUS_LABEL } from "@/lib/fortnoxStatus";
+import { FortnoxCancelDraftButton } from "@/components/orders/FortnoxCancelDraftButton";
 
 const ENTITIES = [
   { code: "de-no1", name: "DE No.1 AB" },
@@ -347,6 +348,12 @@ export default function FortnoxSettings() {
                             Uppdatera status
                           </Button>
                         )}
+                        <FortnoxCancelDraftButton
+                          orderId={j.order_id}
+                          documentNumber={j.fortnox_document_number}
+                          status={j.status}
+                          className="h-8 text-xs border-destructive/40 text-destructive hover:bg-destructive/10"
+                        />
                         {j.fortnox_url && (
                           <a href={j.fortnox_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">Öppna</a>
                         )}

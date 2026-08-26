@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { FileUp, Loader2, ExternalLink, RefreshCw } from "lucide-react";
 import { fortnoxDraftCreatedText, fortnoxJobStatusLabel } from "@/lib/fortnoxStatus";
+import { FortnoxCancelDraftButton } from "./FortnoxCancelDraftButton";
 
 /** Skickar en kundorder till Fortnox som faktura. Idempotent per ordernummer. */
 export function FortnoxInvoiceButton({ orderId }: { orderId: string }) {
@@ -77,6 +78,11 @@ export function FortnoxInvoiceButton({ orderId }: { orderId: string }) {
           {syncing ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <RefreshCw className="mr-1 h-3 w-3" />}
           Uppdatera status
         </Button>
+        <FortnoxCancelDraftButton
+          orderId={orderId}
+          documentNumber={job.data?.fortnox_document_number}
+          status={job.data?.status}
+        />
         {job.data?.status_synced_at && (
           <span className="text-[11px] text-muted-foreground">
             synkad {new Date(job.data.status_synced_at).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}
