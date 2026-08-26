@@ -573,10 +573,27 @@ export default function CustomerOrders() {
           </div>
         )}
 
-
-
+        {panel === "orders" && focus && (
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 p-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9"
+              onClick={() => {
+                setFocus(null);
+                setPanel("totals");
+              }}
+            >
+              <ArrowLeft className="mr-1.5 h-4 w-4" /> Tillbaka till totallistan
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Markerad vara: <span className="font-medium text-foreground">{focus.product}</span>
+            </span>
+          </div>
+        )}
 
         <div className={panel === "orders" ? "space-y-3" : "hidden"}>
+
           {!isLoading && viewOrders.length === 0 ? (
 
             <EmptyState
