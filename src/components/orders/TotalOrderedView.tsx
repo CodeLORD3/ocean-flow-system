@@ -623,17 +623,36 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                     <span className="w-[210px]">Leveranssätt</span>
                   </div>
 
-                  {g.rows.map((r) => {
+                  {g.rows.map((r, i) => {
                     const key = `${g.key}-${r.key}`;
                     const isOpen = openRows.includes(key);
                     const types = byType(r);
                     const expanded = showAll.includes(key);
                     const visible = expanded ? r.orders : r.orders.slice(0, 5);
+                    const newCategory = i === 0 || g.rows[i - 1].category !== r.category;
+                    const catRows = g.rows.filter((x) => x.category === r.category);
                     return (
+                      <Fragment key={key}>
+                        {newCategory && (
+                          <div className="mt-1 flex items-center gap-2 border-b border-border/60 bg-muted/40 px-2 py-1.5 first:mt-0">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-foreground">
+                              {r.category}
+                            </span>
+                            <Badge
+                              variant="secondary"
+                              className="rounded-full px-1.5 py-0 text-[10px] font-normal leading-4"
+                            >
+                              {catRows.length} varor
+                            </Badge>
+                            <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">
+                              {catRows.reduce((n, x) => n + x.orders.length, 0)} orderrader
+                            </span>
+                          </div>
+                        )}
                       <div
-                        key={key}
-                        className={`border-b border-border/50 last:border-0 ${isOpen ? "bg-muted/20" : ""}`}
+                        className={`border-b border-border/50 ${isOpen ? "bg-muted/20" : ""}`}
                       >
+
                         <button
                           type="button"
                           onClick={() => toggle(openRows, setOpenRows, key)}
