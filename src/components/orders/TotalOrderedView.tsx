@@ -6,6 +6,7 @@ import {
   ChevronUp,
   Download,
   Package,
+  Printer,
   Search,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +28,7 @@ import { ProductThumb } from "@/components/products/ProductThumb";
 
 import { useCustomerOrders } from "@/hooks/useCustomerOrders";
 import { CustomerOrder, ORDER_TYPE_LABELS, isoWeekOf } from "@/lib/customerOrders";
+import { generateTotalOrderedChecklistPdf } from "@/lib/totalOrderedChecklistPdf";
 
 /* ------------------------------------------------------------------ hjälpare */
 
@@ -469,6 +471,14 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
             onClick={exportCsv}
           >
             <Download className="h-4 w-4" /> Exportera till Excel/CSV
+          </Button>
+          <Button
+            size="sm"
+            className="h-11 w-full gap-1.5 rounded-lg text-xs sm:h-10 sm:w-auto"
+            onClick={printChecklist}
+            disabled={groups.length === 0}
+          >
+            <Printer className="h-4 w-4" /> Skriv ut checklista
           </Button>
         </CardContent>
       </Card>
