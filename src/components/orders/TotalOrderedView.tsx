@@ -387,7 +387,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
 
       {/* Sammanfattning */}
       <Card className="overflow-hidden border-border/60 shadow-sm">
-        <CardContent className="flex flex-wrap items-center gap-8 py-5">
+        <CardContent className="flex flex-wrap items-center gap-4 py-4 sm:gap-8 sm:py-5">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-primary/10 p-2.5 ring-1 ring-inset ring-primary/20">
               <CalendarDays className="h-5 w-5 text-primary" />
@@ -409,11 +409,17 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
               <div className="text-[11px] text-muted-foreground">i valt urval</div>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="ml-auto h-10 gap-1.5 rounded-lg text-xs" onClick={exportCsv}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-11 w-full gap-1.5 rounded-lg text-xs sm:ml-auto sm:h-10 sm:w-auto"
+            onClick={exportCsv}
+          >
             <Download className="h-4 w-4" /> Exportera till Excel/CSV
           </Button>
         </CardContent>
       </Card>
+
 
 
       {!isLoading && groups.length === 0 ? (
