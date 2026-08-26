@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
   }
   if (rows.length === 0) return json({ error: "Butiksordern har inga levererade rader" }, 409);
 
-  const idempotencyKey = `MKR-SHOP-${orderId}`;
+  let idempotencyKey = `MKR-SHOP-${orderId}`;
 
   const invoiceRows = () =>
     rows.map((r) => ({
