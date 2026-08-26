@@ -479,22 +479,25 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                         <button
                           type="button"
                           onClick={() => toggle(openRows, setOpenRows, key)}
-                          className="flex w-full flex-wrap items-center gap-2 rounded-lg px-1 py-3 text-left transition-colors hover:bg-muted/40"
+                          className="flex w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-1 py-3 text-left transition-colors hover:bg-muted/40"
                         >
                           {isOpen ? (
-                            <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
+                            <ChevronDown className="h-5 w-5 shrink-0 text-primary" />
                           ) : (
-                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
                           )}
-                          <span className="min-w-0 flex-1 truncate font-medium tracking-tight">{r.name}</span>
-                          <span className="w-24 text-right font-mono text-sm font-semibold tabular-nums text-primary">
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight md:text-base">
+                            {r.name}
+                          </span>
+                          <span className="text-right font-mono text-base font-semibold tabular-nums text-primary md:w-24 md:text-sm">
                             {qtyText(r.total, r.unit)}
                           </span>
-                          <span className="w-12 text-xs text-muted-foreground">{r.unit}</span>
-                          <span className="w-24 text-right font-mono text-xs tabular-nums text-muted-foreground">
-                            {r.orders.length}
+                          <span className="text-xs text-muted-foreground md:w-12">{r.unit}</span>
+                          <span className="w-full pl-7 text-[11px] text-muted-foreground md:w-24 md:pl-0 md:text-right md:font-mono md:text-xs md:tabular-nums">
+                            <span className="md:hidden">{r.orders.length} ordrar</span>
+                            <span className="hidden md:inline">{r.orders.length}</span>
                           </span>
-                          <span className="flex w-[210px] flex-wrap gap-1">
+                          <span className="flex w-full flex-wrap gap-1 pl-7 md:w-[210px] md:pl-0">
                             {types.map(([t, v]) => (
                               <Badge
                                 key={t}
@@ -506,6 +509,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                             ))}
                           </span>
                         </button>
+
 
 
                         {isOpen && (
