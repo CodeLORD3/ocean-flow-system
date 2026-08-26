@@ -654,7 +654,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                         <button
                           type="button"
                           onClick={() => toggle(openRows, setOpenRows, key)}
-                          className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5 rounded-md px-1 py-1 text-left transition-colors hover:bg-muted/40"
+                          className="flex w-full items-center gap-2 overflow-hidden rounded-md px-1 py-1 text-left transition-colors hover:bg-muted/40"
                         >
                           {isOpen ? (
                             <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
@@ -673,26 +673,13 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                             {r.name}
                           </span>
 
-                          <span className="text-right font-mono text-[11px] font-semibold tabular-nums text-primary md:w-24 md:text-xs">
-                            {qtyText(r.total, r.unit)}
+                          <span className="shrink-0 whitespace-nowrap text-right font-mono text-[11px] font-semibold tabular-nums text-primary md:w-28 md:text-xs">
+                            {qtyText(r.total, r.unit)} {r.unit}
                           </span>
-                          <span className="text-[10px] text-muted-foreground md:w-12">{r.unit}</span>
-                          <span className="w-full pl-5 text-[10px] text-muted-foreground md:w-24 md:pl-0 md:text-right md:font-mono md:tabular-nums">
-                            <span className="md:hidden">{r.orders.length} ordrar</span>
-                            <span className="hidden md:inline">{r.orders.length}</span>
+                          <span className="shrink-0 whitespace-nowrap text-right font-mono text-[10px] tabular-nums text-muted-foreground md:w-20 md:text-[11px]">
+                            {r.orders.length} st
                           </span>
 
-                          <span className="flex w-full flex-wrap gap-1 pl-6 md:w-[210px] md:pl-0">
-                            {types.map(([t, v]) => (
-                              <Badge
-                                key={t}
-                                variant="secondary"
-                                className="rounded-full border-0 bg-muted px-1.5 py-0 text-[10px] font-normal leading-4 text-muted-foreground"
-                              >
-                                {t} <span className="ml-1 font-medium text-foreground">{v.orders}</span>
-                              </Badge>
-                            ))}
-                          </span>
                         </button>
 
 
