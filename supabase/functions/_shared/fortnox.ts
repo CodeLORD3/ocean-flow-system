@@ -206,7 +206,13 @@ export async function fortnoxRequest<T = any>(
       forceRefresh = true;
       continue;
     }
-    throw new FortnoxError(res.status, ei?.Error ?? null, ei?.Message ?? `Fortnox svarade ${res.status}`, path);
+    throw new FortnoxError(
+      res.status,
+      ei?.Code ?? ei?.code ?? ei?.Error ?? null,
+      ei?.Message ?? ei?.message ?? `Fortnox svarade ${res.status}`,
+      path,
+    );
+
   }
   throw new FortnoxError(429, null, "Fortnox rate limit – gav upp efter 6 försök", path);
 }

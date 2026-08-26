@@ -114,8 +114,17 @@ Deno.serve(async (req) => {
   };
 
   try {
-    // Säkerställ artiklar i Fortnox (SERVICE, inget lager i Fortnox)
+    // Säkerställ artiklar i Fortnox (SERVICE, inget lager i Fortnox).
+    // Samma artikel kan finnas på flera orderrader (olika partier/priser) – hantera varje artikelnummer en gång.
+    const seen = new Map<string, string>();
     for (const r of rows) {
+      const cached = seen.get(r.article_number);
+      if (cached) {
+        r.article_number = cached;
+        continue;
+      }
+      const original = r.article_number;
+
       const { data: mapped } = await sb
         .from("fortnox_article_map")
         .select("fortnox_article_number")
@@ -124,6 +133,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (mapped?.fortnox_article_number) {
         r.article_number = mapped.fortnox_article_number;
+        seen.set(original, r.article_number);
         continue;
       }
       let exists = true;
@@ -134,16 +144,25 @@ Deno.serve(async (req) => {
         else throw e;
       }
       if (!exists) {
-        await fortnoxRequest(sb, entity, "POST", "/articles", {
-          Article: {
-            ArticleNumber: r.article_number,
-            Description: r.description?.slice(0, 50) ?? "Vara",
-            Type: "SERVICE",
-            StockGoods: false,
-            Active: true,
-            EAN: r.ean ?? undefined,
-          },
-        });
+        try {
+          await fortnoxRequest(sb, entity, "POST", "/articles", {
+            Article: {
+              ArticleNumber: r.article_number,
+              Description: r.description?.slice(0, 50) ?? "Vara",
+              Type: "SERVICE",
+              StockGoods: false,
+              Active: true,
+              EAN: r.ean ?? undefined,
+            },
+          });
+        } catch (e) {
+          // Artikeln skapades av ett parallellt anrop – det är inget fel
+          const already =
+            e instanceof FortnoxError &&
+            e.status === 400 &&
+            (e.fortnoxCode === 2000013 || /anv[äa]nds redan|already/i.test(e.message));
+          if (!already) throw e;
+        }
       }
       if (r.product_id) {
         await sb.from("fortnox_article_map").upsert(
@@ -151,7 +170,9 @@ Deno.serve(async (req) => {
           { onConflict: "legal_entity_code,product_id" },
         );
       }
+      seen.set(original, r.article_number);
     }
+
     payload.Invoice.InvoiceRows = invoiceRows();
 
     // Skapa faktura – kolla först om nyckeln redan finns hos Fortnox
