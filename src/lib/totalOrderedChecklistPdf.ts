@@ -19,8 +19,11 @@ export interface TotalChecklistPayload {
   title?: string;
   periodLabel: string;
   storeName?: string;
+  /** Extra rad i sidhuvudet, t.ex. när bara vissa varor är valda. */
+  selectionNote?: string;
   groups: TotalChecklistGroup[];
 }
+
 
 const qty = (v: number, unit: string) =>
   Number(v || 0).toLocaleString("sv-SE", {
@@ -59,6 +62,16 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
 
   let y = 30;
 
+  if (payload.selectionNote) {
+    doc.setFontSize(9);
+    doc.setTextColor(110, 110, 110);
+    doc.text(payload.selectionNote, margin, y - 2);
+    doc.setTextColor(0, 0, 0);
+    y += 5;
+  }
+
+
+
   for (const g of payload.groups) {
     if (y > 250) {
       doc.addPage();
@@ -78,39 +91,39 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
     autoTable(doc, {
       startY: y,
       margin: { left: margin, right: margin },
-      head: [["Sorterat", "Packat", "Produkt", "Mängd", "Enhet", "Ordrar", "Leveranssätt"]],
+      head: [["Sorterat", "Packat", "Produkt", "Mängd", "Ordrar", "Leveranssätt"]],
       body: g.rows.map((r) => [
         "",
         "",
         r.name,
-        qty(r.total, r.unit),
-        r.unit,
+        `${qty(r.total, r.unit)} ${r.unit}`,
         String(r.orderCount),
         r.types,
       ]),
-      styles: { fontSize: 9, cellPadding: 2, lineColor: [210, 210, 210], lineWidth: 0.2 },
+      styles: { fontSize: 11, cellPadding: 2.8, lineColor: [190, 190, 190], lineWidth: 0.25 },
       headStyles: {
         fillColor: [241, 245, 249],
         textColor: [30, 41, 59],
-        fontSize: 8,
+        fontSize: 9,
         halign: "left",
       },
       columnStyles: {
-        0: { cellWidth: 16, halign: "center" },
-        1: { cellWidth: 16, halign: "center" },
+        0: { cellWidth: 18, halign: "center" },
+        1: { cellWidth: 18, halign: "center" },
         2: { cellWidth: "auto", fontStyle: "bold" },
-        3: { cellWidth: 20, halign: "right" },
-        4: { cellWidth: 12 },
-        5: { cellWidth: 14, halign: "right" },
-        6: { cellWidth: 42, fontSize: 7, textColor: [110, 110, 110] },
+        3: { cellWidth: 26, halign: "right", fontStyle: "bold" },
+        4: { cellWidth: 16, halign: "right" },
+        5: { cellWidth: 30, fontSize: 7, textColor: [110, 110, 110] },
       },
+
       // Rita kryssrutor i de två första kolumnerna
       didDrawCell: (data) => {
         if (data.section !== "body" || (data.column.index !== 0 && data.column.index !== 1)) return;
-        const size = 4.2;
+        const size = 5.6;
         const cx = data.cell.x + data.cell.width / 2 - size / 2;
         const cy = data.cell.y + data.cell.height / 2 - size / 2;
         doc.setDrawColor(90, 90, 90);
+
         doc.setLineWidth(0.3);
         doc.rect(cx, cy, size, size);
       },

@@ -478,12 +478,13 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
           </Button>
           <Button
             size="sm"
-            className="h-11 w-full gap-1.5 rounded-lg text-xs sm:h-10 sm:w-auto"
+            className="h-12 w-full gap-2 rounded-lg text-sm font-semibold sm:h-11 sm:w-auto"
             onClick={() => setPrintOpen(true)}
             disabled={groups.length === 0}
           >
-            <Printer className="h-4 w-4" /> Skriv ut checklista…
+            <Printer className="h-5 w-5" /> Skriv ut lista
           </Button>
+
         </CardContent>
       </Card>
 
