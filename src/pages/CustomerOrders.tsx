@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -175,8 +175,12 @@ export default function CustomerOrders() {
 
   /* Hopp från totallistan: vilken order som öppnats och vilken vara som ska lysa. */
   const [focus, setFocus] = useState<{ orderId: string; product: string } | null>(null);
+  /* Totallistan monteras kvar efter första besöket så filter och läge finns kvar. */
+  const [totalsMounted, setTotalsMounted] = useState(false);
+  const totalsScroll = useRef(0);
 
   const openFromTotals = (orderId: string, productName: string) => {
+    totalsScroll.current = window.scrollY;
     setPanel("orders");
     setTab("alla");
     setSearch("");
@@ -191,6 +195,14 @@ export default function CustomerOrders() {
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 250);
   };
+
+  /* Tillbaka till totallistan — samma vy, samma position. */
+  const backToTotals = () => {
+    setFocus(null);
+    setPanel("totals");
+    setTimeout(() => window.scrollTo({ top: totalsScroll.current, behavior: "auto" }), 60);
+  };
+
 
   const toggleRow = (id: string) =>
     setOpenRows((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
@@ -521,7 +533,10 @@ export default function CustomerOrders() {
                   ? "shadow-sm"
                   : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
               }`}
-              onClick={() => setPanel(panel === "totals" ? "orders" : "totals")}
+              onClick={() => {
+                setTotalsMounted(true);
+                setPanel(panel === "totals" ? "orders" : "totals");
+              }}
             >
               <Sigma className="h-4 w-4" /> Totallista
             </Button>
@@ -574,16 +589,8 @@ export default function CustomerOrders() {
         )}
 
         {panel === "orders" && focus && (
-          <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 p-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9"
-              onClick={() => {
-                setFocus(null);
-                setPanel("totals");
-              }}
-            >
+          <div className="sticky top-0 z-30 -mx-1 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/10 p-2 backdrop-blur supports-[backdrop-filter]:bg-primary/10">
+            <Button size="sm" className="h-9 font-semibold" onClick={backToTotals}>
               <ArrowLeft className="mr-1.5 h-4 w-4" /> Tillbaka till totallistan
             </Button>
             <span className="text-xs text-muted-foreground">
@@ -591,6 +598,7 @@ export default function CustomerOrders() {
             </span>
           </div>
         )}
+
 
         <div className={panel === "orders" ? "space-y-3" : "hidden"}>
 
@@ -697,8 +705,10 @@ export default function CustomerOrders() {
         )}
         {panel === "stats" && <CustomerOrderStats storeId={effectiveStore} currency={currency} />}
         {panel === "needs" && <PurchaseNeedsView />}
-        {panel === "totals" && (
-          <TotalOrderedView storeId={effectiveStore} onOpenOrder={openFromTotals} />
+        {(panel === "totals" || totalsMounted) && (
+          <div className={panel === "totals" ? "" : "hidden"}>
+            <TotalOrderedView storeId={effectiveStore} onOpenOrder={openFromTotals} />
+          </div>
         )}
 
       </div>
