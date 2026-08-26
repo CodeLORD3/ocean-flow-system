@@ -294,6 +294,7 @@ export function CustomerOrderRow({
 
   return (
     <div
+      id={`order-${order.id}`}
       className={`overflow-hidden border-x border-b border-grid-line ${tone.row} ${
         isOpen ? "border-primary ring-1 ring-primary" : ""
       } ${selected && !isOpen ? "ring-1 ring-inset ring-primary" : ""}`}
