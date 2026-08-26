@@ -1,11 +1,20 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Download, Search } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Download,
+  Package,
+  Search,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -15,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/EmptyState";
 import { useCustomerOrders } from "@/hooks/useCustomerOrders";
-import { CustomerOrder, isoWeekOf } from "@/lib/customerOrders";
+import { CustomerOrder, ORDER_TYPE_LABELS, isoWeekOf } from "@/lib/customerOrders";
 
 /* ------------------------------------------------------------------ hjälpare */
 
@@ -47,7 +56,7 @@ const qtyText = (v: number, unit: string) =>
 
 const dayLabel = (s: string) =>
   parseIso(s)
-    .toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })
+    .toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
     .replace(/^./, (c) => c.toUpperCase());
 
 const shortDay = (s: string) =>
@@ -56,15 +65,40 @@ const shortDay = (s: string) =>
 const customerName = (o: CustomerOrder) =>
   o.customers_retail?.name || o.customer_name_snapshot || "Kund utan namn";
 
+const typeLabel = (t?: string | null) =>
+  (t && (ORDER_TYPE_LABELS as Record<string, string>)[t]) || "Övrigt";
+
+type OrderLink = {
+  orderNumber: string;
+  customer: string;
+  storeName: string;
+  quantity: number;
+  orderType: string;
+  wantedDate: string;
+};
+
 type ProductRow = {
   key: string;
   name: string;
   unit: string;
   total: number;
-  orders: { orderNumber: string; customer: string; storeName: string; quantity: number }[];
+  orders: OrderLink[];
 };
 
-type Group = { key: string; label: string; rows: ProductRow[] };
+type Group = { key: string; label: string; orderCount: number; rows: ProductRow[] };
+
+/** Summerar en produktrad per leveranssätt/hämtsätt. */
+function byType(row: ProductRow) {
+  const map = new Map<string, { qty: number; orders: number }>();
+  for (const o of row.orders) {
+    const k = typeLabel(o.orderType);
+    const cur = map.get(k) ?? { qty: 0, orders: 0 };
+    cur.qty += o.quantity;
+    cur.orders += 1;
+    map.set(k, cur);
+  }
+  return [...map.entries()].sort((a, b) => b[1].qty - a[1].qty);
+}
 
 /**
  * "Totalt beställt": summerar kundorderrader per produkt och enhet över valda
@@ -81,7 +115,9 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
   const [orderType, setOrderType] = useState("all");
   const [productSearch, setProductSearch] = useState("");
   const [sort, setSort] = useState<"name" | "qty">("name");
-  const [open, setOpen] = useState<string[]>([]);
+  const [openRows, setOpenRows] = useState<string[]>([]);
+  const [closedGroups, setClosedGroups] = useState<string[]>([]);
+  const [showAll, setShowAll] = useState<string[]>([]);
 
   const bounds = useMemo(() => {
     if (picked.length > 0) {
@@ -112,23 +148,21 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
     setTo(iso(addDays(start, 6)));
   };
 
-  const togglePicked = (dates: Date[] | undefined) =>
-    setPicked((dates ?? []).map(iso).sort());
-
   const { groups, orderCount, productCount } = useMemo(() => {
     const term = productSearch.trim().toLowerCase();
     const selected = picked.length > 0 ? new Set(picked) : null;
-    const map = new Map<string, { label: string; sortKey: string; rows: Map<string, ProductRow> }>();
+    const map = new Map<
+      string,
+      { label: string; sortKey: string; orderIds: Set<string>; rows: Map<string, ProductRow> }
+    >();
     const orderIds = new Set<string>();
     const products = new Set<string>();
 
     for (const o of orders) {
       if (selected && !selected.has(o.wanted_date)) continue;
-      const groupKey = mode === "day" ? o.wanted_date : `${isoWeekOf(o.wanted_date).year}-${String(isoWeekOf(o.wanted_date).week).padStart(2, "0")}`;
-      const label =
-        mode === "day"
-          ? dayLabel(o.wanted_date)
-          : `Vecka ${isoWeekOf(o.wanted_date).week}`;
+      const { week, year } = isoWeekOf(o.wanted_date);
+      const groupKey = mode === "day" ? o.wanted_date : `${year}-${String(week).padStart(2, "0")}`;
+      const label = mode === "day" ? dayLabel(o.wanted_date) : `Vecka ${week}`;
 
       for (const l of o.customer_order_lines ?? []) {
         const name = l.products?.name || l.free_text_name || "Okänd vara";
@@ -138,10 +172,10 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
         if (!qty) continue;
 
         const group =
-          map.get(groupKey) ?? { label, sortKey: o.wanted_date, rows: new Map<string, ProductRow>() };
+          map.get(groupKey) ??
+          { label, sortKey: o.wanted_date, orderIds: new Set<string>(), rows: new Map<string, ProductRow>() };
         const rowKey = `${name}__${unit}`;
-        const row =
-          group.rows.get(rowKey) ?? { key: rowKey, name, unit, total: 0, orders: [] };
+        const row = group.rows.get(rowKey) ?? { key: rowKey, name, unit, total: 0, orders: [] };
         row.total += qty;
         const existing = row.orders.find((x) => x.orderNumber === o.order_number);
         if (existing) existing.quantity += qty;
@@ -151,8 +185,11 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
             customer: customerName(o),
             storeName: o.stores?.name ?? "",
             quantity: qty,
+            orderType: o.order_type ?? "",
+            wantedDate: o.wanted_date,
           });
         group.rows.set(rowKey, row);
+        group.orderIds.add(o.id);
         map.set(groupKey, group);
         orderIds.add(o.id);
         products.add(rowKey);
@@ -164,6 +201,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
       .map(([key, g]) => ({
         key,
         label: g.label,
+        orderCount: g.orderIds.size,
         rows: [...g.rows.values()].sort((a, b) =>
           sort === "qty" ? b.total - a.total : a.name.localeCompare(b.name, "sv"),
         ),
@@ -173,7 +211,9 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
   }, [orders, picked, mode, productSearch, sort]);
 
   const exportCsv = () => {
-    const rows: string[][] = [["Period", "Produkt", "Enhet", "Mängd", "Antal ordrar", "Ordrar"]];
+    const rows: string[][] = [
+      ["Period", "Produkt", "Enhet", "Mängd", "Antal ordrar", "Leveranssätt", "Ordrar"],
+    ];
     for (const g of groups)
       for (const r of g.rows)
         rows.push([
@@ -182,7 +222,12 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
           r.unit,
           qtyText(r.total, r.unit),
           String(r.orders.length),
-          r.orders.map((o) => `${o.orderNumber} ${o.customer} (${qtyText(o.quantity, r.unit)})`).join(" | "),
+          byType(r)
+            .map(([t, v]) => `${t} ${qtyText(v.qty, r.unit)} ${r.unit} (${v.orders})`)
+            .join(" | "),
+          r.orders
+            .map((o) => `${o.orderNumber} ${o.customer} (${qtyText(o.quantity, r.unit)} ${r.unit})`)
+            .join(" | "),
         ]);
     const csv = rows
       .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(";"))
@@ -195,98 +240,57 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
     URL.revokeObjectURL(url);
   };
 
-  const toggleOpen = (key: string) =>
-    setOpen((cur) => (cur.includes(key) ? cur.filter((x) => x !== key) : [...cur, key]));
+  const toggle = (list: string[], set: (v: string[]) => void, key: string) =>
+    set(list.includes(key) ? list.filter((x) => x !== key) : [...list, key]);
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Urval</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
+      {/* Kontrollpaneler: vygruppering, datumval, filter */}
+      <div className="grid gap-3 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              1. Vygruppering
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <ToggleGroup
               type="single"
               value={mode}
               onValueChange={(v) => v && setMode(v as "day" | "week")}
               className="gap-1"
             >
-              <ToggleGroupItem value="day" className="h-10 px-3 text-xs">
-                Dagligen
+              <ToggleGroupItem value="day" className="h-10 gap-1.5 px-3 text-xs">
+                <CalendarDays className="h-4 w-4" /> Dagligen
               </ToggleGroupItem>
-              <ToggleGroupItem value="week" className="h-10 px-3 text-xs">
-                Veckovis
+              <ToggleGroupItem value="week" className="h-10 gap-1.5 px-3 text-xs">
+                <CalendarDays className="h-4 w-4" /> Veckovis
               </ToggleGroupItem>
             </ToggleGroup>
+          </CardContent>
+        </Card>
 
-            <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => quickRange("today")}>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              2. Datumval
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex flex-wrap gap-1">
+              <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => quickRange("today")}>
                 Idag
               </Button>
-              <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => quickRange("thisWeek")}>
+              <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => quickRange("thisWeek")}>
                 Denna vecka
               </Button>
-              <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => quickRange("lastWeek")}>
+              <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => quickRange("lastWeek")}>
                 Förra veckan
               </Button>
             </div>
-
-            <Select value={orderType} onValueChange={setOrderType}>
-              <SelectTrigger className="h-10 w-[160px] text-xs">
-                <SelectValue placeholder="Ordertyp" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alla typer</SelectItem>
-                <SelectItem value="upphamtning">Upphämtning</SelectItem>
-                <SelectItem value="leverans">Leverans</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="relative min-w-[180px] flex-1">
-              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={productSearch}
-                onChange={(e) => setProductSearch(e.target.value)}
-                placeholder="Sök produktnamn"
-                className="h-10 pl-8 text-xs"
-              />
-            </div>
-
-            <Button variant="outline" size="sm" className="h-10 gap-1.5 text-xs" onClick={exportCsv}>
-              <Download className="h-4 w-4" /> Exportera CSV
-            </Button>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-[auto,1fr]">
-            <div className="space-y-2">
-              <div className="text-xs font-medium text-muted-foreground">
-                Bocka i enskilda dagar (styr urvalet)
-              </div>
-              <Calendar
-                mode="multiple"
-                weekStartsOn={1}
-                selected={picked.map(parseIso)}
-                onSelect={togglePicked}
-                className="rounded-md border p-2"
-              />
-              {picked.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1">
-                  {picked.map((d) => (
-                    <Badge key={d} variant="secondary" className="text-[11px]">
-                      {shortDay(d)}
-                    </Badge>
-                  ))}
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setPicked([])}>
-                    Rensa dagar
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-xs font-medium text-muted-foreground">Datumintervall</div>
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="space-y-1">
+                <div className="text-[11px] text-muted-foreground">Från och med</div>
                 <Input
                   type="date"
                   value={from}
@@ -294,9 +298,11 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                     setPicked([]);
                     setFrom(e.target.value);
                   }}
-                  className="h-10 w-[150px] text-xs"
+                  className="h-9 w-[140px] text-xs"
                 />
-                <span className="text-xs text-muted-foreground">till</span>
+              </div>
+              <div className="space-y-1">
+                <div className="text-[11px] text-muted-foreground">Till och med</div>
                 <Input
                   type="date"
                   value={to}
@@ -304,22 +310,107 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                     setPicked([]);
                     setTo(e.target.value);
                   }}
-                  className="h-10 w-[150px] text-xs"
+                  className="h-9 w-[140px] text-xs"
                 />
               </div>
-              <div className="flex flex-wrap gap-2 pt-1">
-                <Badge variant="outline" className="font-mono tabular-nums">
-                  {orderCount} ordrar
-                </Badge>
-                <Badge variant="outline" className="font-mono tabular-nums">
-                  {productCount} produkter
-                </Badge>
-                {picked.length > 0 && (
-                  <Badge variant="secondary">{picked.length} valda dagar</Badge>
-                )}
+              <div className="space-y-1">
+                <div className="text-[11px] text-muted-foreground">Eller välj specifika dagar</div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs">
+                      <CalendarDays className="h-4 w-4" />
+                      {picked.length > 0 ? `${picked.length} dagar valda` : "Välj dagar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2" align="start">
+                    <Calendar
+                      mode="multiple"
+                      weekStartsOn={1}
+                      selected={picked.map(parseIso)}
+                      onSelect={(dates) => setPicked((dates ?? []).map(iso).sort())}
+                    />
+                    {picked.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-1 h-8 w-full text-xs"
+                        onClick={() => setPicked([])}
+                      >
+                        Rensa valda dagar
+                      </Button>
+                    )}
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
+            {picked.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {picked.map((d) => (
+                  <Badge key={d} variant="secondary" className="text-[11px]">
+                    {shortDay(d)}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              3. Filter
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Select value={orderType} onValueChange={setOrderType}>
+              <SelectTrigger className="h-10 text-xs">
+                <SelectValue placeholder="Leveranssätt" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alla leveranssätt</SelectItem>
+                <SelectItem value="upphamtning">Upphämtning</SelectItem>
+                <SelectItem value="leverans">Leverans</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                placeholder="Sök produkt…"
+                className="h-10 pl-8 text-xs"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Sammanfattning */}
+      <Card>
+        <CardContent className="flex flex-wrap items-center gap-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="rounded-md bg-muted p-2">
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Unika ordrar</div>
+              <div className="font-mono text-xl font-semibold tabular-nums">{orderCount} st</div>
+              <div className="text-[11px] text-muted-foreground">i valt urval</div>
+            </div>
           </div>
+          <div className="flex items-center gap-3">
+            <div className="rounded-md bg-muted p-2">
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Olika produkter</div>
+              <div className="font-mono text-xl font-semibold tabular-nums">{productCount} st</div>
+              <div className="text-[11px] text-muted-foreground">i valt urval</div>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" className="ml-auto h-10 gap-1.5 text-xs" onClick={exportCsv}>
+            <Download className="h-4 w-4" /> Exportera till Excel/CSV
+          </Button>
         </CardContent>
       </Card>
 
@@ -329,70 +420,153 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
           description="Välj andra dagar eller ändra filtren för att se totalt beställda mängder."
         />
       ) : (
-        groups.map((g) => (
-          <Card key={g.key}>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center justify-between text-base capitalize">
-                <span>{g.label}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-[11px] font-normal text-muted-foreground"
-                  onClick={() => setSort(sort === "qty" ? "name" : "qty")}
+        groups.map((g) => {
+          const groupOpen = !closedGroups.includes(g.key);
+          return (
+            <Card key={g.key}>
+              <CardHeader className="pb-2">
+                <button
+                  type="button"
+                  onClick={() => toggle(closedGroups, setClosedGroups, g.key)}
+                  className="flex w-full items-center gap-2 text-left"
                 >
-                  Mängd {sort === "qty" ? "↓" : "–"}
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-1">
-              {g.rows.map((r) => {
-                const key = `${g.key}-${r.key}`;
-                const isOpen = open.includes(key);
-                return (
-                  <div key={key} className="border-b border-border/60 pb-1 last:border-0 last:pb-0">
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-base capitalize">{g.label}</CardTitle>
+                  <Badge variant="secondary" className="text-[11px]">
+                    {g.orderCount} ordrar
+                  </Badge>
+                  {groupOpen ? (
+                    <ChevronUp className="ml-auto h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="ml-auto h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+              </CardHeader>
+
+              {groupOpen && (
+                <CardContent className="space-y-0 pt-0">
+                  {/* Kolumnrubriker */}
+                  <div className="hidden items-center gap-2 border-b border-border px-1 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground md:flex">
+                    <span className="w-5" />
+                    <span className="min-w-0 flex-1">Produkt</span>
                     <button
                       type="button"
-                      onClick={() => toggleOpen(key)}
-                      className="flex w-full items-center gap-2 rounded-md px-1 py-2 text-left hover:bg-muted/50"
+                      onClick={() => setSort(sort === "qty" ? "name" : "qty")}
+                      className="flex w-24 items-center justify-end gap-1 hover:text-foreground"
                     >
-                      {isOpen ? (
-                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      )}
-                      <span className="min-w-0 flex-1 truncate font-medium">{r.name}</span>
-                      <Badge variant="outline" className="shrink-0 text-[11px]">
-                        {r.orders.length} ordrar
-                      </Badge>
-                      <span className="shrink-0 font-mono text-sm font-semibold tabular-nums">
-                        {qtyText(r.total, r.unit)} {r.unit}
-                      </span>
+                      Mängd {sort === "qty" ? "↓" : "↕"}
                     </button>
-                    {isOpen && (
-                      <div className="space-y-1 pb-2 pl-7 pr-1">
-                        {r.orders.map((o) => (
-                          <div
-                            key={`${key}-${o.orderNumber}`}
-                            className="flex flex-wrap items-baseline justify-between gap-2 text-xs"
-                          >
-                            <span className="font-mono text-muted-foreground">{o.orderNumber}</span>
-                            <span className="min-w-0 flex-1 truncate">{o.customer}</span>
-                            {o.storeName && (
-                              <span className="text-muted-foreground">{o.storeName}</span>
-                            )}
-                            <span className="font-mono tabular-nums">
-                              {qtyText(o.quantity, r.unit)} {r.unit}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <span className="w-12">Enhet</span>
+                    <span className="w-24 text-right">Antal ordrar</span>
+                    <span className="w-[210px]">Leveranssätt</span>
                   </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        ))
+
+                  {g.rows.map((r) => {
+                    const key = `${g.key}-${r.key}`;
+                    const isOpen = openRows.includes(key);
+                    const types = byType(r);
+                    const expanded = showAll.includes(key);
+                    const visible = expanded ? r.orders : r.orders.slice(0, 5);
+                    return (
+                      <div key={key} className="border-b border-border/60 last:border-0">
+                        <button
+                          type="button"
+                          onClick={() => toggle(openRows, setOpenRows, key)}
+                          className="flex w-full flex-wrap items-center gap-2 rounded-md px-1 py-2.5 text-left hover:bg-muted/50"
+                        >
+                          {isOpen ? (
+                            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          )}
+                          <span className="min-w-0 flex-1 truncate font-medium">{r.name}</span>
+                          <span className="w-24 text-right font-mono text-sm font-semibold tabular-nums">
+                            {qtyText(r.total, r.unit)}
+                          </span>
+                          <span className="w-12 text-xs text-muted-foreground">{r.unit}</span>
+                          <span className="w-24 text-right font-mono text-xs tabular-nums text-muted-foreground">
+                            {r.orders.length}
+                          </span>
+                          <span className="flex w-[210px] flex-wrap gap-1">
+                            {types.map(([t, v]) => (
+                              <Badge key={t} variant="outline" className="text-[10px] font-normal">
+                                {t} {v.orders}
+                              </Badge>
+                            ))}
+                          </span>
+                        </button>
+
+                        {isOpen && (
+                          <div className="grid gap-3 pb-3 pl-6 pr-1 lg:grid-cols-[1fr,280px]">
+                            <div className="rounded-md border border-border/60">
+                              <div className="border-b border-border/60 px-2 py-1.5 text-[11px] font-medium text-muted-foreground">
+                                Detaljerade ordrar ({r.orders.length} st)
+                              </div>
+                              <div className="divide-y divide-border/40">
+                                {visible.map((o) => (
+                                  <div
+                                    key={`${key}-${o.orderNumber}`}
+                                    className="flex flex-wrap items-baseline gap-2 px-2 py-1.5 text-xs"
+                                  >
+                                    <span className="font-mono text-muted-foreground">{o.orderNumber}</span>
+                                    <span className="min-w-0 flex-1 truncate">{o.customer}</span>
+                                    <span className="font-mono tabular-nums">
+                                      {qtyText(o.quantity, r.unit)} {r.unit}
+                                    </span>
+                                    <span className="text-muted-foreground">{typeLabel(o.orderType)}</span>
+                                    <span className="font-mono text-muted-foreground">{o.wantedDate}</span>
+                                  </div>
+                                ))}
+                              </div>
+                              {r.orders.length > 5 && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-full text-xs"
+                                  onClick={() => toggle(showAll, setShowAll, key)}
+                                >
+                                  {expanded
+                                    ? "Visa färre"
+                                    : `Visa alla ${r.orders.length} ordrar`}
+                                </Button>
+                              )}
+                            </div>
+
+                            <div className="rounded-md border border-border/60 p-2">
+                              <div className="mb-1 text-[11px] font-medium text-muted-foreground">
+                                Summering för {r.name}
+                              </div>
+                              {types.map(([t, v]) => (
+                                <div key={t} className="flex items-baseline justify-between gap-2 py-0.5 text-xs">
+                                  <span>{t}</span>
+                                  <span className="font-mono tabular-nums">
+                                    {qtyText(v.qty, r.unit)} {r.unit}
+                                  </span>
+                                  <span className="text-muted-foreground">
+                                    ({v.orders} {v.orders === 1 ? "order" : "ordrar"})
+                                  </span>
+                                </div>
+                              ))}
+                              <div className="mt-1 flex items-baseline justify-between gap-2 border-t border-border/60 pt-1 text-xs font-semibold">
+                                <span>Totalt</span>
+                                <span className="font-mono tabular-nums">
+                                  {qtyText(r.total, r.unit)} {r.unit}
+                                </span>
+                                <span className="font-normal text-muted-foreground">
+                                  ({r.orders.length} ordrar)
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              )}
+            </Card>
+          );
+        })
       )}
     </div>
   );
