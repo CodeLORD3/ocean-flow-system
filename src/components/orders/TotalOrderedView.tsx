@@ -380,17 +380,17 @@ export function TotalOrderedView({
               1. Vygruppering
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 pt-0">
             <ToggleGroup
               type="single"
               value={mode}
               onValueChange={(v) => v && setMode(v as "day" | "week")}
-              className="gap-1"
+              className="grid w-full grid-cols-2 gap-1.5"
             >
-              <ToggleGroupItem value="day" className="h-10 gap-1.5 px-3 text-xs">
+              <ToggleGroupItem value="day" className="h-10 gap-1.5 rounded-xl px-3 text-xs">
                 <CalendarDays className="h-4 w-4" /> Dagligen
               </ToggleGroupItem>
-              <ToggleGroupItem value="week" className="h-10 gap-1.5 px-3 text-xs">
+              <ToggleGroupItem value="week" className="h-10 gap-1.5 rounded-xl px-3 text-xs">
                 <CalendarDays className="h-4 w-4" /> Veckovis
               </ToggleGroupItem>
             </ToggleGroup>
