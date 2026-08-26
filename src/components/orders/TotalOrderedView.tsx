@@ -250,6 +250,29 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
     URL.revokeObjectURL(url);
   };
 
+  /** Utskrivbar checklista att bocka av vid sortering och packning. */
+  const printChecklist = () => {
+    generateTotalOrderedChecklistPdf({
+      periodLabel: picked.length
+        ? `Valda dagar: ${picked.slice().sort().map(shortDay).join(", ")}`
+        : `${mode === "week" ? "Veckovis" : "Dagsvis"}  ·  ${bounds.fromDate} – ${bounds.toDate}`,
+      groups: groups.map((g) => ({
+        label: g.label,
+        orderCount: g.orderCount,
+        rows: g.rows.map((r) => ({
+          name: r.name,
+          unit: r.unit,
+          total: r.total,
+          orderCount: r.orders.length,
+          types: byType(r)
+            .map(([t, v]) => `${t} ${qtyText(v.qty, r.unit)} (${v.orders})`)
+            .join("\n"),
+        })),
+      })),
+    });
+  };
+
+
   const toggle = (list: string[], set: (v: string[]) => void, key: string) =>
     set(list.includes(key) ? list.filter((x) => x !== key) : [...list, key]);
 
