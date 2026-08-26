@@ -28,6 +28,7 @@ import { ProductThumb } from "@/components/products/ProductThumb";
 
 import { useCustomerOrders } from "@/hooks/useCustomerOrders";
 import { CustomerOrder, ORDER_TYPE_LABELS, isoWeekOf } from "@/lib/customerOrders";
+import { PRODUCT_CATEGORIES, normalizeCategoryKey } from "@/lib/productCategories";
 import { PrintTotalChecklistDialog, type PrintableGroup } from "@/components/orders/PrintTotalChecklistDialog";
 
 /* ------------------------------------------------------------------ hjälpare */
