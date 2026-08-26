@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, Truck, ChefHat, ShoppingCart, Archive, ArchiveRestore, Clock, Check } from "lucide-react";
+import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, Truck, ChefHat, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -48,6 +48,7 @@ import { DeliveryRouteView } from "@/components/orders/DeliveryRouteView";
 import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
 import { TodayPickupsView } from "@/components/orders/TodayPickupsView";
+import { TotalOrderedView } from "@/components/orders/TotalOrderedView";
 
 /** Orderflikarna: tre operativa lägen först, historiken nedtonad sist. */
 const TABS: { id: OrderTab; hint: string; muted?: boolean }[] = [
@@ -168,7 +169,7 @@ export default function CustomerOrders() {
   const [wizardOpen, setWizardOpen] = useState(false);
   /* Flera ordrar kan vara öppna samtidigt — att öppna en stänger inte de andra. */
   const [openRows, setOpenRows] = useState<string[]>([]);
-  const [panel, setPanel] = useState<"orders" | "customers" | "stats" | "route" | "kitchen" | "needs" | "pickups">(
+  const [panel, setPanel] = useState<"orders" | "customers" | "stats" | "route" | "kitchen" | "needs" | "pickups" | "totals">(
     "orders",
   );
 
@@ -545,6 +546,14 @@ export default function CustomerOrders() {
             >
               <BarChart3 className="h-4 w-4" /> Statistik
             </Button>
+            <Button
+              variant={panel === "totals" ? "default" : "outline"}
+              size="sm"
+              className="h-11 gap-1.5 px-3 text-xs"
+              onClick={() => setPanel(panel === "totals" ? "orders" : "totals")}
+            >
+              <Sigma className="h-4 w-4" /> Totalt
+            </Button>
           </div>
 
         </div>
@@ -565,6 +574,8 @@ export default function CustomerOrders() {
                       ? "Kökslista — att förbereda"
                       : panel === "pickups"
                         ? "Dagens hämtningar"
+                      : panel === "totals"
+                        ? "Totalt beställt"
                         : "Inköpsbehov per butik"}
             </span>
           </div>
@@ -684,6 +695,7 @@ export default function CustomerOrders() {
         )}
         {panel === "kitchen" && <CateringKitchenList storeId={effectiveStore} />}
         {panel === "needs" && <PurchaseNeedsView />}
+        {panel === "totals" && <TotalOrderedView storeId={effectiveStore} />}
         {panel === "pickups" && (
           <TodayPickupsView
             storeId={effectiveStore}
