@@ -13,6 +13,8 @@ import { useShopOrders } from "@/hooks/useShopOrders";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import DeliveryNote from "@/components/DeliveryNote";
+import { FortnoxInvoiceQueue } from "@/components/orders/FortnoxInvoiceQueue";
+
 
 const INVOICE_STATUSES = [
   { value: "Väntande", label: "Väntande", icon: Clock, color: "bg-warning/15 text-warning border-warning/20" },
@@ -100,8 +102,11 @@ export default function Invoices() {
         </Card>
       </div>
 
+      <FortnoxInvoiceQueue />
+
       <Card className="shadow-card">
         <CardHeader className="pb-2">
+
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-primary" />
             <div>
