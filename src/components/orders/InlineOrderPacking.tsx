@@ -252,7 +252,8 @@ export function InlineOrderPacking({
 
       {!packingStarted && (
         <Button
-          className="h-11 w-full sm:w-auto"
+          size="sm"
+          className="h-9 rounded-full px-4 shadow-sm"
           disabled={updateOrder.isPending}
           onClick={startPacking}
         >
@@ -263,13 +264,15 @@ export function InlineOrderPacking({
       {canUndoPacking && (
         <Button
           variant="outline"
-          className="h-11 w-full sm:w-auto"
+          size="sm"
+          className="h-9 rounded-full px-4"
           disabled={updateOrder.isPending}
           onClick={undoPacking}
         >
           <RotateCcw className="mr-2 h-4 w-4" /> Ångra packning
         </Button>
       )}
+
 
       <ul className="divide-y divide-border/70">
         {lines.map((l, i) => {
