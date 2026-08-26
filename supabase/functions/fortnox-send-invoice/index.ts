@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const orderId: string | undefined = body?.order_id;
   const dryRun = body?.dry_run === true;
+  const send_email = body?.send_email === true;
   if (!orderId || !/^[0-9a-f-]{36}$/i.test(orderId)) return json({ error: "order_id (uuid) krävs" }, 400);
 
   const sb = adminClient();
@@ -180,16 +181,46 @@ Deno.serve(async (req) => {
     });
 
     const url = `https://apps.fortnox.se/fi/?sid=${doc}`;
-    await sb.from("fortnox_invoice_jobs").update({
-      status: sErr ? "created" : "bookkept",
+    let status = "created";
+    const setJob = async (patch: Record<string, unknown>) =>
+      await sb.from("fortnox_invoice_jobs").update(patch).eq("id", job.id);
+
+    await setJob({
+      status,
       fortnox_document_number: doc,
       fortnox_url: url,
       stock_booked_at: sErr ? null : new Date().toISOString(),
       last_error: sErr ? `Faktura skapad men lagerbokning misslyckades: ${sErr.message}` : null,
       attempts: (job.attempts ?? 0) + 1,
-    }).eq("id", job.id);
+    });
 
-    return json({ ok: true, document_number: doc, url, stock_booked: !sErr, stock_error: sErr?.message ?? null });
+    // 6) Bokföring/utskick sker manuellt i Fortnox – om inte bolaget valt automatik
+    const { data: conn } = await sb
+      .from("fortnox_connections")
+      .select("auto_bookkeep")
+      .eq("legal_entity_code", entity)
+      .single();
+
+    if (conn?.auto_bookkeep && status === "created") {
+      await fortnoxRequest(sb, entity, "PUT", `/invoices/${doc}/bookkeep`);
+      status = "bookkept";
+      await setJob({ status, fortnox_booked: true });
+      if (send_email) {
+        await fortnoxRequest(sb, entity, "GET", `/invoices/${doc}/email`);
+        status = "sent";
+        await setJob({ status, fortnox_sent: true });
+      }
+    }
+
+    return json({
+      ok: true,
+      document_number: doc,
+      status,
+      url,
+      stock_booked: !sErr,
+      stock_error: sErr?.message ?? null,
+    });
+
   } catch (e) {
     return await fail(e instanceof Error ? e.message : String(e));
   }

@@ -8,20 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Link2, RefreshCw, Check, AlertTriangle, Plug } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { FORTNOX_JOB_STATUS_LABEL } from "@/lib/fortnoxStatus";
 
 const ENTITIES = [
   { code: "de-no1", name: "DE No.1 AB" },
   { code: "fsab-se", name: "Fisk & Skaldjursspecialisten AB" },
 ];
 
-const JOB_STATUS_LABELS: Record<string, string> = {
-  pending: "Köad",
-  creating: "Skickar",
-  created: "Faktura skapad",
-  bookkept: "Klar – lager bokfört",
-  sent: "Skickad",
-  failed: "Misslyckades",
-};
+const JOB_STATUS_LABELS = FORTNOX_JOB_STATUS_LABEL;
+
 
 
 const statusBadge = (status: string) => {
@@ -121,6 +117,18 @@ export default function FortnoxSettings() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const autoBookkeep = useMutation({
+    mutationFn: async ({ code, value }: { code: string; value: boolean }) => {
+      const { error } = await supabase
+        .from("fortnox_connections")
+        .update({ auto_bookkeep: value })
+        .eq("legal_entity_code", code);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fortnox_connections"] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const confirmMatch = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("fortnox_customer_map").update({ confirmed: true }).eq("id", id);
@@ -192,6 +200,20 @@ export default function FortnoxSettings() {
                       <span className="break-all">{c.last_error}</span>
                     </div>
                   )}
+                  <div className="mt-2 flex items-start gap-2">
+                    <Switch
+                      checked={c?.auto_bookkeep === true}
+                      disabled={!c || autoBookkeep.isPending}
+                      onCheckedChange={(v) => autoBookkeep.mutate({ code: e.code, value: v })}
+                      aria-label="Bokför och skicka automatiskt"
+                    />
+                    <div className="text-xs">
+                      <div className="font-medium">Bokför och skicka automatiskt</div>
+                      <div className="text-muted-foreground">
+                        Av = fakturan skapas som utkast i Fortnox och bokförs/skickas där.
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" disabled={busy === e.code} onClick={() => connect(e.code)}>

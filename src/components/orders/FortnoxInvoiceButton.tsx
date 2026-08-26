@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { FileUp, Loader2, ExternalLink } from "lucide-react";
+import { fortnoxDraftCreatedText, fortnoxJobStatusLabel } from "@/lib/fortnoxStatus";
 
 /** Skickar en kundorder till Fortnox som faktura. Idempotent per ordernummer. */
 export function FortnoxInvoiceButton({ orderId }: { orderId: string }) {
@@ -34,8 +35,8 @@ export function FortnoxInvoiceButton({ orderId }: { orderId: string }) {
     if (data?.error) return toast.error(data.error);
     toast.success(
       data.already_sent
-        ? `Redan fakturerad i Fortnox (${data.document_number})`
-        : `Faktura ${data.document_number} skapad i Fortnox`,
+        ? `Redan skickad till Fortnox (faktura nr ${data.document_number})`
+        : fortnoxDraftCreatedText(data.document_number),
     );
     if (data?.stock_error) toast.warning(`Lagerbokning: ${data.stock_error}`);
     qc.invalidateQueries({ queryKey: ["fortnox_invoice_job", orderId] });
@@ -48,10 +49,11 @@ export function FortnoxInvoiceButton({ orderId }: { orderId: string }) {
 
   if (sent) {
     return (
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         <Badge className="border-emerald-600/30 bg-emerald-600/15 text-emerald-400 text-[11px]">
           Fortnox {job.data!.fortnox_document_number}
         </Badge>
+        <span className="text-[11px] text-muted-foreground">{fortnoxJobStatusLabel(job.data?.status)}</span>
         {job.data?.fortnox_url && (
           <a
             href={job.data.fortnox_url}

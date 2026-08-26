@@ -3744,6 +3744,7 @@ export type Database = {
           access_secret_id: string | null
           access_token_expires_at: string | null
           account_type: string
+          auto_bookkeep: boolean
           connected_by: string | null
           created_at: string
           fortnox_company_name: string | null
@@ -3764,6 +3765,7 @@ export type Database = {
           access_secret_id?: string | null
           access_token_expires_at?: string | null
           account_type?: string
+          auto_bookkeep?: boolean
           connected_by?: string | null
           created_at?: string
           fortnox_company_name?: string | null
@@ -3784,6 +3786,7 @@ export type Database = {
           access_secret_id?: string | null
           access_token_expires_at?: string | null
           account_type?: string
+          auto_bookkeep?: boolean
           connected_by?: string | null
           created_at?: string
           fortnox_company_name?: string | null
@@ -3883,9 +3886,16 @@ export type Database = {
       fortnox_invoice_jobs: {
         Row: {
           attempts: number
+          cancelled_at: string | null
           created_at: string
           created_by: string | null
+          final_pay_date: string | null
+          fortnox_balance: number | null
+          fortnox_booked: boolean | null
+          fortnox_cancelled: boolean | null
           fortnox_document_number: string | null
+          fortnox_sent: boolean | null
+          fortnox_total: number | null
           fortnox_url: string | null
           id: string
           idempotency_key: string
@@ -3895,14 +3905,22 @@ export type Database = {
           request_payload: Json | null
           response: Json | null
           status: string
+          status_synced_at: string | null
           stock_booked_at: string | null
           updated_at: string
         }
         Insert: {
           attempts?: number
+          cancelled_at?: string | null
           created_at?: string
           created_by?: string | null
+          final_pay_date?: string | null
+          fortnox_balance?: number | null
+          fortnox_booked?: boolean | null
+          fortnox_cancelled?: boolean | null
           fortnox_document_number?: string | null
+          fortnox_sent?: boolean | null
+          fortnox_total?: number | null
           fortnox_url?: string | null
           id?: string
           idempotency_key: string
@@ -3912,14 +3930,22 @@ export type Database = {
           request_payload?: Json | null
           response?: Json | null
           status?: string
+          status_synced_at?: string | null
           stock_booked_at?: string | null
           updated_at?: string
         }
         Update: {
           attempts?: number
+          cancelled_at?: string | null
           created_at?: string
           created_by?: string | null
+          final_pay_date?: string | null
+          fortnox_balance?: number | null
+          fortnox_booked?: boolean | null
+          fortnox_cancelled?: boolean | null
           fortnox_document_number?: string | null
+          fortnox_sent?: boolean | null
+          fortnox_total?: number | null
           fortnox_url?: string | null
           id?: string
           idempotency_key?: string
@@ -3929,6 +3955,7 @@ export type Database = {
           request_payload?: Json | null
           response?: Json | null
           status?: string
+          status_synced_at?: string | null
           stock_booked_at?: string | null
           updated_at?: string
         }
