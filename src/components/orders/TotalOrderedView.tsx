@@ -515,12 +515,12 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                         <button
                           type="button"
                           onClick={() => toggle(openRows, setOpenRows, key)}
-                          className="flex w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-1 py-3 text-left transition-colors hover:bg-muted/40"
+                          className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5 rounded-md px-1 py-1.5 text-left transition-colors hover:bg-muted/40"
                         >
                           {isOpen ? (
-                            <ChevronDown className="h-5 w-5 shrink-0 text-primary" />
+                            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-primary" />
                           ) : (
-                            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                           )}
                           {/* Produktbilden alltid först på varan */}
                           <ProductThumb
@@ -528,32 +528,33 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                             alt={r.name}
                             productId={r.productId}
                             static
-                            className="h-12 w-16 md:h-14 md:w-20"
+                            className="h-7 w-9 shrink-0 rounded md:h-8 md:w-11"
                           />
-                          <span className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight md:text-base">
+                          <span className="min-w-0 flex-1 truncate text-xs font-medium tracking-tight md:text-sm">
                             {r.name}
                           </span>
 
-                          <span className="text-right font-mono text-base font-semibold tabular-nums text-primary md:w-24 md:text-sm">
+                          <span className="text-right font-mono text-xs font-semibold tabular-nums text-primary md:w-24 md:text-sm">
                             {qtyText(r.total, r.unit)}
                           </span>
-                          <span className="text-xs text-muted-foreground md:w-12">{r.unit}</span>
-                          <span className="w-full pl-7 text-[11px] text-muted-foreground md:w-24 md:pl-0 md:text-right md:font-mono md:text-xs md:tabular-nums">
+                          <span className="text-[11px] text-muted-foreground md:w-12">{r.unit}</span>
+                          <span className="w-full pl-6 text-[10px] text-muted-foreground md:w-24 md:pl-0 md:text-right md:font-mono md:text-[11px] md:tabular-nums">
                             <span className="md:hidden">{r.orders.length} ordrar</span>
                             <span className="hidden md:inline">{r.orders.length}</span>
                           </span>
-                          <span className="flex w-full flex-wrap gap-1 pl-7 md:w-[210px] md:pl-0">
+                          <span className="flex w-full flex-wrap gap-1 pl-6 md:w-[210px] md:pl-0">
                             {types.map(([t, v]) => (
                               <Badge
                                 key={t}
                                 variant="secondary"
-                                className="rounded-full border-0 bg-muted text-[10px] font-normal text-muted-foreground"
+                                className="rounded-full border-0 bg-muted px-1.5 py-0 text-[10px] font-normal leading-4 text-muted-foreground"
                               >
                                 {t} <span className="ml-1 font-medium text-foreground">{v.orders}</span>
                               </Badge>
                             ))}
                           </span>
                         </button>
+
 
 
 
