@@ -324,7 +324,9 @@ export function CustomerOrderRow({
           type="button"
           onClick={() => onToggle?.(order.id)}
           aria-expanded={isOpen}
-          className={`min-w-0 flex-1 px-2.5 py-1.5 text-left transition-colors ${tone.hover}`}
+          className={`min-w-0 flex-1 px-2.5 text-left transition-colors ${
+            isOpen ? "py-2.5" : "py-1.5"
+          } ${tone.hover}`}
         >
           {/* Desktop: fast kolumnraster. Mobil: två rader, kundnamnet störst. */}
           <div className="hidden min-h-5 items-center gap-0 text-xs sm:flex">
