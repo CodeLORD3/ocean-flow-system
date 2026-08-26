@@ -617,7 +617,7 @@ export function CustomerOrderRow({
 
           {/* Kommentaren direkt under varorna — den styr ofta packningen. */}
           {(order.note || lineNotes.length > 0) && (
-            <div className="space-y-1 rounded-sm border border-grid-line bg-card p-2 text-xs">
+            <div className="space-y-1 rounded-xl border border-border/60 bg-background/70 p-2.5 text-xs">
               <div className="flex items-center gap-1.5 font-semibold text-foreground">
                 <MessageSquare className="h-3.5 w-3.5 text-primary" /> Kommentar
               </div>
