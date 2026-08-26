@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const sb = adminClient();
-  const cronSecret = Deno.env.get("CRON_SECRET");
+  const cronSecret = Deno.env.get("FORTNOX_CRON_SECRET") ?? Deno.env.get("CRON_SECRET");
   const isCron = !!cronSecret && req.headers.get("x-cron-secret") === cronSecret;
 
   let query = sb.from("fortnox_invoice_jobs").select("*").not("fortnox_document_number", "is", null);
