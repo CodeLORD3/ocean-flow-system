@@ -513,7 +513,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
 
 
                         {isOpen && (
-                          <div className="grid gap-3 pb-3 pl-6 pr-1 lg:grid-cols-[1fr,280px]">
+                          <div className="grid gap-3 pb-3 pl-2 pr-1 md:pl-6 lg:grid-cols-[1fr,280px]">
                             <div className="rounded-md border border-border/60">
                               <div className="border-b border-border/60 px-2 py-1.5 text-[11px] font-medium text-muted-foreground">
                                 Detaljerade ordrar ({r.orders.length} st)
@@ -522,18 +522,21 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                                 {visible.map((o) => (
                                   <div
                                     key={`${key}-${o.orderNumber}`}
-                                    className="flex flex-wrap items-baseline gap-2 px-2 py-1.5 text-xs"
+                                    className="grid grid-cols-[auto,1fr] items-baseline gap-x-2 gap-y-0.5 px-2 py-2 text-xs md:flex md:flex-wrap md:py-1.5"
                                   >
                                     <span className="font-mono text-muted-foreground">{o.orderNumber}</span>
-                                    <span className="min-w-0 flex-1 truncate">{o.customer}</span>
-                                    <span className="font-mono tabular-nums">
-                                      {qtyText(o.quantity, r.unit)} {r.unit}
+                                    <span className="min-w-0 truncate md:flex-1">{o.customer}</span>
+                                    <span className="col-span-2 flex flex-wrap items-baseline gap-2 md:contents">
+                                      <span className="font-mono tabular-nums">
+                                        {qtyText(o.quantity, r.unit)} {r.unit}
+                                      </span>
+                                      <span className="text-muted-foreground">{typeLabel(o.orderType)}</span>
+                                      <span className="font-mono text-muted-foreground">{o.wantedDate}</span>
                                     </span>
-                                    <span className="text-muted-foreground">{typeLabel(o.orderType)}</span>
-                                    <span className="font-mono text-muted-foreground">{o.wantedDate}</span>
                                   </div>
                                 ))}
                               </div>
+
                               {r.orders.length > 5 && (
                                 <Button
                                   variant="ghost"
