@@ -10,6 +10,7 @@ export type RoleKey =
   | "region_admin"
   | "company_admin"
   | "wholesale_staff"
+  | "multi_store_manager"
   | "store_manager"
   | "store_staff";
 
