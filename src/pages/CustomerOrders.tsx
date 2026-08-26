@@ -175,8 +175,12 @@ export default function CustomerOrders() {
 
   /* Hopp från totallistan: vilken order som öppnats och vilken vara som ska lysa. */
   const [focus, setFocus] = useState<{ orderId: string; product: string } | null>(null);
+  /* Totallistan monteras kvar efter första besöket så filter och läge finns kvar. */
+  const [totalsMounted, setTotalsMounted] = useState(false);
+  const totalsScroll = useRef(0);
 
   const openFromTotals = (orderId: string, productName: string) => {
+    totalsScroll.current = window.scrollY;
     setPanel("orders");
     setTab("alla");
     setSearch("");
@@ -191,6 +195,14 @@ export default function CustomerOrders() {
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 250);
   };
+
+  /* Tillbaka till totallistan — samma vy, samma position. */
+  const backToTotals = () => {
+    setFocus(null);
+    setPanel("totals");
+    setTimeout(() => window.scrollTo({ top: totalsScroll.current, behavior: "auto" }), 60);
+  };
+
 
   const toggleRow = (id: string) =>
     setOpenRows((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
