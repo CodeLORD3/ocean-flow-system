@@ -493,7 +493,7 @@ export function TotalOrderedView({
           </CardHeader>
           <CardContent className="space-y-2 p-3 pt-0">
             <Select value={orderType} onValueChange={setOrderType}>
-              <SelectTrigger className="h-10 text-xs">
+              <SelectTrigger className="h-10 rounded-xl text-xs">
                 <SelectValue placeholder="Leveranssätt" />
               </SelectTrigger>
               <SelectContent>
@@ -503,7 +503,7 @@ export function TotalOrderedView({
               </SelectContent>
             </Select>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="h-10 text-xs">
+              <SelectTrigger className="h-10 rounded-xl text-xs">
                 <SelectValue placeholder="Kategori" />
               </SelectTrigger>
               <SelectContent>
@@ -516,7 +516,7 @@ export function TotalOrderedView({
               </SelectContent>
             </Select>
             <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
-              <SelectTrigger className="h-10 text-xs">
+              <SelectTrigger className="h-10 rounded-xl text-xs">
                 <SelectValue placeholder="Sortering" />
               </SelectTrigger>
               <SelectContent>
@@ -533,7 +533,7 @@ export function TotalOrderedView({
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
                 placeholder="Sök produkt…"
-                className="h-10 pl-8 text-xs"
+                className="h-10 rounded-xl pl-8 text-xs"
               />
             </div>
 
@@ -606,7 +606,7 @@ export function TotalOrderedView({
           const groupOpen = !closedGroups.includes(g.key);
           return (
             <Card key={g.key} className="overflow-hidden rounded-2xl border-border/60 shadow-sm">
-              <CardHeader className="border-b border-border/50 bg-muted/20 py-2.5">
+              <CardHeader className="sticky top-0 z-20 border-b border-border/50 bg-card/95 px-3 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-card/80">
                 <button
                   type="button"
                   onClick={() => toggle(closedGroups, setClosedGroups, g.key)}
