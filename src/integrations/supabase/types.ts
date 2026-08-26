@@ -9768,6 +9768,7 @@ export type Database = {
           quantity_kg: number
           quantity_pieces: number | null
           reference_id: string | null
+          reference_line_id: string | null
           reference_type: string | null
           source_currency: string | null
           unit_cost: number | null
@@ -9787,6 +9788,7 @@ export type Database = {
           quantity_kg: number
           quantity_pieces?: number | null
           reference_id?: string | null
+          reference_line_id?: string | null
           reference_type?: string | null
           source_currency?: string | null
           unit_cost?: number | null
@@ -9806,6 +9808,7 @@ export type Database = {
           quantity_kg?: number
           quantity_pieces?: number | null
           reference_id?: string | null
+          reference_line_id?: string | null
           reference_type?: string | null
           source_currency?: string | null
           unit_cost?: number | null
