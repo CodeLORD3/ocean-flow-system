@@ -88,3 +88,6 @@ verify_jwt = false
 
 [functions.fortnox-send-invoice]
 verify_jwt = false
+
+[functions.fortnox-sync-invoice-status]
+verify_jwt = false
