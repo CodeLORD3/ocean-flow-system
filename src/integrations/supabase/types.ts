@@ -12387,6 +12387,7 @@ export type Database = {
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_staff_manager: { Args: never; Returns: boolean }
+      is_store_scoped: { Args: { _user_id: string }; Returns: boolean }
       last_name_key: { Args: { v: string }; Returns: string }
       latin_norm: { Args: { v: string }; Returns: string }
       ledger_zero_empty_costs: { Args: never; Returns: number }
