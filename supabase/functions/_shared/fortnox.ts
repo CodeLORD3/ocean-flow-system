@@ -89,7 +89,7 @@ export function redirectUri(): string {
   return `${Deno.env.get("SUPABASE_URL")}/functions/v1/fortnox-oauth-callback`;
 }
 
-export const APP_URL = "https://ocean-flow-system.lovable.app";
+export const APP_URL = "https://makrilltrade.com";
 
 export function exchangeCode(code: string): Promise<TokenResponse> {
   return tokenRequest({

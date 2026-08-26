@@ -36,7 +36,9 @@ Deno.serve(async (req) => {
   }
   if (rows.length === 0) return json({ error: "Ordern har inga fakturerbara rader" }, 409);
 
-  const idempotencyKey = `MKR-${inp.order_number ?? orderId.slice(0, 8)}`;
+  // Idempotensnyckel = order-id (garanterat unikt, återanvänds aldrig).
+  // Ordernummret följer med som referens 2 för läsbarhet i Fortnox.
+  const idempotencyKey = `MKR-${orderId}`;
 
   const payload = {
     Invoice: {
@@ -49,6 +51,8 @@ Deno.serve(async (req) => {
       YourReference: inp.your_reference ?? undefined,
       Remarks: inp.remarks ?? undefined,
       ExternalInvoiceReference1: idempotencyKey,
+      ExternalInvoiceReference2: inp.order_number ? String(inp.order_number) : undefined,
+
       InvoiceRows: rows.map((r) => ({
         ArticleNumber: r.article_number,
         Description: r.description?.slice(0, 50),

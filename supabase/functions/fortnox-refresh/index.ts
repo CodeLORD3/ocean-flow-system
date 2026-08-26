@@ -2,7 +2,7 @@
 import { adminClient, getAccessToken, json } from "../_shared/fortnox.ts";
 
 Deno.serve(async (req) => {
-  if (req.headers.get("x-cron-secret") !== Deno.env.get("IMAGE_JOB_TOKEN")) return json({ error: "forbidden" }, 403);
+  if (req.headers.get("x-cron-secret") !== Deno.env.get("FORTNOX_CRON_SECRET")) return json({ error: "forbidden" }, 403);
 
   const sb = adminClient();
   const { data: conns } = await sb.from("fortnox_connections").select("legal_entity_code").eq("status", "connected");
