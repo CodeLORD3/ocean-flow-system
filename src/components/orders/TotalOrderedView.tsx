@@ -177,7 +177,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
     setTo(iso(addDays(start, 6)));
   };
 
-  const { groups, orderCount, productCount } = useMemo(() => {
+  const { groups, orderCount, productCount, categoryOptions } = useMemo(() => {
     const term = productSearch.trim().toLowerCase();
     const selected = picked.length > 0 ? new Set(picked) : null;
     const map = new Map<
@@ -186,6 +186,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
     >();
     const orderIds = new Set<string>();
     const products = new Set<string>();
+    const cats = new Set<string>();
 
     for (const o of orders) {
       if (selected && !selected.has(o.wanted_date)) continue;
@@ -199,6 +200,12 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
         const unit = l.unit || l.products?.unit || "st";
         const qty = Number(l.quantity_ordered || 0);
         if (!qty) continue;
+        const cat = (l.products?.category || "").trim() || OTHER_CATEGORY;
+        cats.add(cat);
+        if (category !== "all" && normalizeCategoryKey(cat) !== normalizeCategoryKey(category)) continue;
+
+        const perUnit = l.price_per_unit ?? l.estimated_price_per_unit ?? null;
+        const lineValue = Number(l.line_total ?? (perUnit != null ? qty * Number(perUnit) : 0)) || 0;
 
         const group =
           map.get(groupKey) ??
@@ -206,10 +213,21 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
         const rowKey = `${name}__${unit}`;
         const row: ProductRow =
           group.rows.get(rowKey) ??
-          { key: rowKey, name, unit, total: 0, productId: null, imageUrl: null, orders: [] };
+          {
+            key: rowKey,
+            name,
+            unit,
+            total: 0,
+            value: 0,
+            category: cat,
+            productId: null,
+            imageUrl: null,
+            orders: [],
+          };
         row.productId = row.productId ?? l.products?.id ?? null;
         row.imageUrl = row.imageUrl ?? l.products?.image_url ?? null;
         row.total += qty;
+        row.value += lineValue;
 
         const existing = row.orders.find((x) => x.orderNumber === o.order_number);
         if (existing) existing.quantity += qty;
@@ -230,19 +248,37 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
       }
     }
 
+    const earliest = (r: ProductRow) =>
+      r.orders.reduce((min, o) => (o.wantedDate < min ? o.wantedDate : min), "9999-12-31");
+
+    const withinCategory = (a: ProductRow, b: ProductRow) => {
+      if (sort === "qty") return b.total - a.total;
+      if (sort === "orders") return b.orders.length - a.orders.length;
+      if (sort === "value") return b.value - a.value;
+      if (sort === "date") return earliest(a).localeCompare(earliest(b));
+      return a.name.localeCompare(b.name, "sv");
+    };
+
     const list: Group[] = [...map.entries()]
       .sort((a, b) => a[1].sortKey.localeCompare(b[1].sortKey))
       .map(([key, g]) => ({
         key,
         label: g.label,
         orderCount: g.orderIds.size,
-        rows: [...g.rows.values()].sort((a, b) =>
-          sort === "qty" ? b.total - a.total : a.name.localeCompare(b.name, "sv"),
+        // Alltid kategori först: skaldjur för sig, fisk för sig — sedan valt sorteringssätt.
+        rows: [...g.rows.values()].sort(
+          (a, b) => compareCategory(a.category, b.category) || withinCategory(a, b),
         ),
       }));
 
-    return { groups: list, orderCount: orderIds.size, productCount: products.size };
-  }, [orders, picked, mode, productSearch, sort]);
+    return {
+      groups: list,
+      orderCount: orderIds.size,
+      productCount: products.size,
+      categoryOptions: [...cats].sort(compareCategory),
+    };
+  }, [orders, picked, mode, productSearch, sort, category]);
+
 
   const exportCsv = () => {
     const rows: string[][] = [
