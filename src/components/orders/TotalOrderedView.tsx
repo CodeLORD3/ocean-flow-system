@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/EmptyState";
+import { ProductThumb } from "@/components/products/ProductThumb";
+
 import { useCustomerOrders } from "@/hooks/useCustomerOrders";
 import { CustomerOrder, ORDER_TYPE_LABELS, isoWeekOf } from "@/lib/customerOrders";
 
@@ -82,8 +84,11 @@ type ProductRow = {
   name: string;
   unit: string;
   total: number;
+  productId: string | null;
+  imageUrl: string | null;
   orders: OrderLink[];
 };
+
 
 type Group = { key: string; label: string; orderCount: number; rows: ProductRow[] };
 
@@ -175,8 +180,13 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
           map.get(groupKey) ??
           { label, sortKey: o.wanted_date, orderIds: new Set<string>(), rows: new Map<string, ProductRow>() };
         const rowKey = `${name}__${unit}`;
-        const row = group.rows.get(rowKey) ?? { key: rowKey, name, unit, total: 0, orders: [] };
+        const row: ProductRow =
+          group.rows.get(rowKey) ??
+          { key: rowKey, name, unit, total: 0, productId: null, imageUrl: null, orders: [] };
+        row.productId = row.productId ?? l.products?.id ?? null;
+        row.imageUrl = row.imageUrl ?? l.products?.image_url ?? null;
         row.total += qty;
+
         const existing = row.orders.find((x) => x.orderNumber === o.order_number);
         if (existing) existing.quantity += qty;
         else
@@ -512,9 +522,18 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                           ) : (
                             <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
                           )}
+                          {/* Produktbilden alltid först på varan */}
+                          <ProductThumb
+                            src={r.imageUrl}
+                            alt={r.name}
+                            productId={r.productId}
+                            static
+                            className="h-12 w-16 md:h-14 md:w-20"
+                          />
                           <span className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight md:text-base">
                             {r.name}
                           </span>
+
                           <span className="text-right font-mono text-base font-semibold tabular-nums text-primary md:w-24 md:text-sm">
                             {qtyText(r.total, r.unit)}
                           </span>
