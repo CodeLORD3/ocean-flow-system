@@ -102,8 +102,11 @@ export default function Invoices() {
         </Card>
       </div>
 
+      <FortnoxInvoiceQueue />
+
       <Card className="shadow-card">
         <CardHeader className="pb-2">
+
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-primary" />
             <div>
