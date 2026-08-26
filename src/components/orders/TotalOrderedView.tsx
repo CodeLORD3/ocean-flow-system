@@ -415,9 +415,9 @@ export function TotalOrderedView({
                 Förra veckan
               </Button>
             </div>
-            <div className="flex flex-wrap items-end gap-2">
-              <div className="min-w-[140px] flex-1 space-y-1 sm:flex-none">
-                <div className="text-[11px] text-muted-foreground">Från och med</div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <div className="text-[10px] uppercase tracking-[0.06em] text-muted-foreground">Från och med</div>
                 <Input
                   type="date"
                   value={from}
@@ -425,11 +425,11 @@ export function TotalOrderedView({
                     setPicked([]);
                     setFrom(e.target.value);
                   }}
-                  className="h-11 w-full text-xs sm:h-9 sm:w-[140px]"
+                  className="h-10 w-full rounded-xl text-xs"
                 />
               </div>
-              <div className="min-w-[140px] flex-1 space-y-1 sm:flex-none">
-                <div className="text-[11px] text-muted-foreground">Till och med</div>
+              <div className="space-y-1">
+                <div className="text-[10px] uppercase tracking-[0.06em] text-muted-foreground">Till och med</div>
                 <Input
                   type="date"
                   value={to}
@@ -437,15 +437,17 @@ export function TotalOrderedView({
                     setPicked([]);
                     setTo(e.target.value);
                   }}
-                  className="h-11 w-full text-xs sm:h-9 sm:w-[140px]"
+                  className="h-10 w-full rounded-xl text-xs"
                 />
               </div>
 
-              <div className="space-y-1">
-                <div className="text-[11px] text-muted-foreground">Eller välj specifika dagar</div>
+              <div className="col-span-2 space-y-1">
+                <div className="text-[10px] uppercase tracking-[0.06em] text-muted-foreground">
+                  Eller välj specifika dagar
+                </div>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs">
+                    <Button variant="outline" size="sm" className="h-10 w-full gap-1.5 rounded-xl text-xs">
                       <CalendarDays className="h-4 w-4" />
                       {picked.length > 0 ? `${picked.length} dagar valda` : "Välj dagar"}
                     </Button>
