@@ -245,8 +245,27 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
 
   return (
     <div className="space-y-4">
+      {/* Framhävd rubrik: totallistan är första steget i packflödet */}
+      <Card className="overflow-hidden border-primary/30 bg-primary/5 shadow-sm">
+        <CardContent className="flex items-start gap-3 py-4">
+          <div className="rounded-xl bg-primary/15 p-2.5 ring-1 ring-inset ring-primary/25">
+            <Package className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0 space-y-1">
+            <div className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+              Totallista — allt som är beställt
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
+              Steg 1: sortera och packa upp varorna i totala mängder per produkt. Steg 2: packa varje enskild
+              beställning från orderlistan.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Kontrollpaneler: vygruppering, datumval, filter */}
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -289,7 +308,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
               </Button>
             </div>
             <div className="flex flex-wrap items-end gap-2">
-              <div className="space-y-1">
+              <div className="min-w-[140px] flex-1 space-y-1 sm:flex-none">
                 <div className="text-[11px] text-muted-foreground">Från och med</div>
                 <Input
                   type="date"
@@ -298,10 +317,10 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                     setPicked([]);
                     setFrom(e.target.value);
                   }}
-                  className="h-9 w-[140px] text-xs"
+                  className="h-11 w-full text-xs sm:h-9 sm:w-[140px]"
                 />
               </div>
-              <div className="space-y-1">
+              <div className="min-w-[140px] flex-1 space-y-1 sm:flex-none">
                 <div className="text-[11px] text-muted-foreground">Till och med</div>
                 <Input
                   type="date"
@@ -310,9 +329,10 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                     setPicked([]);
                     setTo(e.target.value);
                   }}
-                  className="h-9 w-[140px] text-xs"
+                  className="h-11 w-full text-xs sm:h-9 sm:w-[140px]"
                 />
               </div>
+
               <div className="space-y-1">
                 <div className="text-[11px] text-muted-foreground">Eller välj specifika dagar</div>
                 <Popover>
@@ -387,7 +407,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
 
       {/* Sammanfattning */}
       <Card className="overflow-hidden border-border/60 shadow-sm">
-        <CardContent className="flex flex-wrap items-center gap-8 py-5">
+        <CardContent className="flex flex-wrap items-center gap-4 py-4 sm:gap-8 sm:py-5">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-primary/10 p-2.5 ring-1 ring-inset ring-primary/20">
               <CalendarDays className="h-5 w-5 text-primary" />
@@ -409,11 +429,17 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
               <div className="text-[11px] text-muted-foreground">i valt urval</div>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="ml-auto h-10 gap-1.5 rounded-lg text-xs" onClick={exportCsv}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-11 w-full gap-1.5 rounded-lg text-xs sm:ml-auto sm:h-10 sm:w-auto"
+            onClick={exportCsv}
+          >
             <Download className="h-4 w-4" /> Exportera till Excel/CSV
           </Button>
         </CardContent>
       </Card>
+
 
 
       {!isLoading && groups.length === 0 ? (
@@ -479,22 +505,25 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                         <button
                           type="button"
                           onClick={() => toggle(openRows, setOpenRows, key)}
-                          className="flex w-full flex-wrap items-center gap-2 rounded-lg px-1 py-3 text-left transition-colors hover:bg-muted/40"
+                          className="flex w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-1 py-3 text-left transition-colors hover:bg-muted/40"
                         >
                           {isOpen ? (
-                            <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
+                            <ChevronDown className="h-5 w-5 shrink-0 text-primary" />
                           ) : (
-                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
                           )}
-                          <span className="min-w-0 flex-1 truncate font-medium tracking-tight">{r.name}</span>
-                          <span className="w-24 text-right font-mono text-sm font-semibold tabular-nums text-primary">
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight md:text-base">
+                            {r.name}
+                          </span>
+                          <span className="text-right font-mono text-base font-semibold tabular-nums text-primary md:w-24 md:text-sm">
                             {qtyText(r.total, r.unit)}
                           </span>
-                          <span className="w-12 text-xs text-muted-foreground">{r.unit}</span>
-                          <span className="w-24 text-right font-mono text-xs tabular-nums text-muted-foreground">
-                            {r.orders.length}
+                          <span className="text-xs text-muted-foreground md:w-12">{r.unit}</span>
+                          <span className="w-full pl-7 text-[11px] text-muted-foreground md:w-24 md:pl-0 md:text-right md:font-mono md:text-xs md:tabular-nums">
+                            <span className="md:hidden">{r.orders.length} ordrar</span>
+                            <span className="hidden md:inline">{r.orders.length}</span>
                           </span>
-                          <span className="flex w-[210px] flex-wrap gap-1">
+                          <span className="flex w-full flex-wrap gap-1 pl-7 md:w-[210px] md:pl-0">
                             {types.map(([t, v]) => (
                               <Badge
                                 key={t}
@@ -508,8 +537,9 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                         </button>
 
 
+
                         {isOpen && (
-                          <div className="grid gap-3 pb-3 pl-6 pr-1 lg:grid-cols-[1fr,280px]">
+                          <div className="grid gap-3 pb-3 pl-2 pr-1 md:pl-6 lg:grid-cols-[1fr,280px]">
                             <div className="rounded-md border border-border/60">
                               <div className="border-b border-border/60 px-2 py-1.5 text-[11px] font-medium text-muted-foreground">
                                 Detaljerade ordrar ({r.orders.length} st)
@@ -518,18 +548,21 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                                 {visible.map((o) => (
                                   <div
                                     key={`${key}-${o.orderNumber}`}
-                                    className="flex flex-wrap items-baseline gap-2 px-2 py-1.5 text-xs"
+                                    className="grid grid-cols-[auto,1fr] items-baseline gap-x-2 gap-y-0.5 px-2 py-2 text-xs md:flex md:flex-wrap md:py-1.5"
                                   >
                                     <span className="font-mono text-muted-foreground">{o.orderNumber}</span>
-                                    <span className="min-w-0 flex-1 truncate">{o.customer}</span>
-                                    <span className="font-mono tabular-nums">
-                                      {qtyText(o.quantity, r.unit)} {r.unit}
+                                    <span className="min-w-0 truncate md:flex-1">{o.customer}</span>
+                                    <span className="col-span-2 flex flex-wrap items-baseline gap-2 md:contents">
+                                      <span className="font-mono tabular-nums">
+                                        {qtyText(o.quantity, r.unit)} {r.unit}
+                                      </span>
+                                      <span className="text-muted-foreground">{typeLabel(o.orderType)}</span>
+                                      <span className="font-mono text-muted-foreground">{o.wantedDate}</span>
                                     </span>
-                                    <span className="text-muted-foreground">{typeLabel(o.orderType)}</span>
-                                    <span className="font-mono text-muted-foreground">{o.wantedDate}</span>
                                   </div>
                                 ))}
                               </div>
+
                               {r.orders.length > 5 && (
                                 <Button
                                   variant="ghost"
