@@ -117,6 +117,18 @@ export default function FortnoxSettings() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const autoBookkeep = useMutation({
+    mutationFn: async ({ code, value }: { code: string; value: boolean }) => {
+      const { error } = await supabase
+        .from("fortnox_connections")
+        .update({ auto_bookkeep: value })
+        .eq("legal_entity_code", code);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fortnox_connections"] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const confirmMatch = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("fortnox_customer_map").update({ confirmed: true }).eq("id", id);
