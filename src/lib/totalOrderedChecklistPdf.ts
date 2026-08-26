@@ -91,13 +91,12 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
     autoTable(doc, {
       startY: y,
       margin: { left: margin, right: margin },
-      head: [["Sorterat", "Packat", "Produkt", "Mängd", "Enhet", "Ordrar", "Leveranssätt"]],
+      head: [["Sorterat", "Packat", "Produkt", "Mängd", "Ordrar", "Leveranssätt"]],
       body: g.rows.map((r) => [
         "",
         "",
         r.name,
-        qty(r.total, r.unit),
-        r.unit,
+        `${qty(r.total, r.unit)} ${r.unit}`,
         String(r.orderCount),
         r.types,
       ]),
@@ -112,11 +111,11 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
         0: { cellWidth: 18, halign: "center" },
         1: { cellWidth: 18, halign: "center" },
         2: { cellWidth: "auto", fontStyle: "bold" },
-        3: { cellWidth: 22, halign: "right", fontStyle: "bold" },
-        4: { cellWidth: 13 },
-        5: { cellWidth: 14, halign: "right" },
-        6: { cellWidth: 38, fontSize: 7, textColor: [110, 110, 110] },
+        3: { cellWidth: 26, halign: "right", fontStyle: "bold" },
+        4: { cellWidth: 16, halign: "right" },
+        5: { cellWidth: 30, fontSize: 7, textColor: [110, 110, 110] },
       },
+
       // Rita kryssrutor i de två första kolumnerna
       didDrawCell: (data) => {
         if (data.section !== "body" || (data.column.index !== 0 && data.column.index !== 1)) return;
