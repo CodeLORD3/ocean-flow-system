@@ -69,12 +69,21 @@ export const ROLE_DEFS: RoleDef[] = [
     rank: 5,
   },
   {
-    key: "store_manager",
-    label: "Butikschef",
-    description: "Butiksportalen med rapporter och personal för valda butiker.",
+    key: "multi_store_manager",
+    label: "Flerbutikschef",
+    description:
+      "Butikschef för flera enheter. Krävs för att medvetet se och attestera mer än en butik — utan rollen gäller endast den egna butiken.",
     scope: "store",
     portals: ["shop"],
     rank: 6,
+  },
+  {
+    key: "store_manager",
+    label: "Butikschef",
+    description: "Butiksportalen med rapporter och personal för den egna butiken.",
+    scope: "store",
+    portals: ["shop"],
+    rank: 7,
   },
   {
     key: "store_staff",
