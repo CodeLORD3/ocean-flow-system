@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, Truck, ChefHat, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check } from "lucide-react";
+import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,10 +44,7 @@ import { CurrencyAmount } from "@/components/orders/CurrencyAmount";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
-import { DeliveryRouteView } from "@/components/orders/DeliveryRouteView";
-import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
-import { TodayPickupsView } from "@/components/orders/TodayPickupsView";
 import { TotalOrderedView } from "@/components/orders/TotalOrderedView";
 
 /** Orderflikarna: tre operativa lägen först, historiken nedtonad sist. */
@@ -169,7 +166,7 @@ export default function CustomerOrders() {
   const [wizardOpen, setWizardOpen] = useState(false);
   /* Flera ordrar kan vara öppna samtidigt — att öppna en stänger inte de andra. */
   const [openRows, setOpenRows] = useState<string[]>([]);
-  const [panel, setPanel] = useState<"orders" | "customers" | "stats" | "route" | "kitchen" | "needs" | "pickups" | "totals">(
+  const [panel, setPanel] = useState<"orders" | "customers" | "stats" | "needs" | "totals">(
     "orders",
   );
 
@@ -509,31 +506,6 @@ export default function CustomerOrders() {
             >
               <Sigma className="h-4 w-4" /> Totallista
             </Button>
-            <Button
-              variant={panel === "pickups" ? "default" : "outline"}
-              size="sm"
-              className="h-11 gap-1.5 px-3 text-xs"
-              onClick={() => setPanel(panel === "pickups" ? "orders" : "pickups")}
-            >
-              <Clock className="h-4 w-4" /> Hämtningar
-            </Button>
-
-            <Button
-              variant={panel === "route" ? "default" : "outline"}
-              size="sm"
-              className="h-11 gap-1.5 px-3 text-xs"
-              onClick={() => setPanel(panel === "route" ? "orders" : "route")}
-            >
-              <Truck className="h-4 w-4" /> Leveransrutt
-            </Button>
-            <Button
-              variant={panel === "kitchen" ? "default" : "outline"}
-              size="sm"
-              className="h-11 gap-1.5 px-3 text-xs"
-              onClick={() => setPanel(panel === "kitchen" ? "orders" : "kitchen")}
-            >
-              <ChefHat className="h-4 w-4" /> Kökslista
-            </Button>
             {!isShop && (
               <Button
                 variant={panel === "needs" ? "default" : "outline"}
@@ -574,16 +546,11 @@ export default function CustomerOrders() {
                 ? "Kundregister"
                 : panel === "stats"
                   ? "Statistik"
-                  : panel === "route"
-                    ? "Leveransrutt"
-                    : panel === "kitchen"
-                      ? "Kökslista — att förbereda"
-                      : panel === "pickups"
-                        ? "Dagens hämtningar"
-                      : panel === "totals"
-                        ? "Totalt beställt"
-                        : "Inköpsbehov per butik"}
+                  : panel === "totals"
+                    ? "Totalt beställt"
+                    : "Inköpsbehov per butik"}
             </span>
+
           </div>
         )}
 
@@ -692,22 +659,9 @@ export default function CustomerOrders() {
           <RetailCustomerRegistry storeId={effectiveStore} readOnly={!canEdit} />
         )}
         {panel === "stats" && <CustomerOrderStats storeId={effectiveStore} currency={currency} />}
-        {panel === "route" && (
-          <DeliveryRouteView
-            storeId={effectiveStore}
-            storeName={isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name}
-            readOnly={!canEdit}
-          />
-        )}
-        {panel === "kitchen" && <CateringKitchenList storeId={effectiveStore} />}
         {panel === "needs" && <PurchaseNeedsView />}
         {panel === "totals" && <TotalOrderedView storeId={effectiveStore} />}
-        {panel === "pickups" && (
-          <TodayPickupsView
-            storeId={effectiveStore}
-            storeName={stores.find((s) => s.id === effectiveStore)?.name ?? null}
-          />
-        )}
+
       </div>
 
 
