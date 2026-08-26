@@ -19,8 +19,11 @@ export interface TotalChecklistPayload {
   title?: string;
   periodLabel: string;
   storeName?: string;
+  /** Extra rad i sidhuvudet, t.ex. när bara vissa varor är valda. */
+  selectionNote?: string;
   groups: TotalChecklistGroup[];
 }
+
 
 const qty = (v: number, unit: string) =>
   Number(v || 0).toLocaleString("sv-SE", {
