@@ -175,6 +175,10 @@ export function InlineOrderPacking({
   };
 
   const packingStarted = !!order.packing_started_at || order.pack_status !== "opackad";
+  const anyPacked = lines.some((l) => l.pack_status === "packad");
+  /** Går att ångra så länge ingen rad hunnit packas och ordern inte lämnats ut. */
+  const canUndoPacking =
+    packingStarted && !anyPacked && !order.handed_over_at && !["levererad", "avhamtad"].includes(order.status ?? "");
 
   /** Startar packningen: hela orderraden i listan blir gul och läget sparas. */
   const startPacking = async () => {
@@ -188,6 +192,24 @@ export function InlineOrderPacking({
       },
     });
     toast.success("Packningen är påbörjad.");
+  };
+
+  /** Ångrar en felaktig start: ordern går tillbaka till opackad. */
+  const undoPacking = async () => {
+    try {
+      await updateOrder.mutateAsync({
+        id: order.id,
+        patch: { packing_started_at: null, pack_status: "opackad" } as any,
+        event: {
+          type: "andrad",
+          description: "Packning ångrad – ordern är opackad igen",
+          by: activeUser?.first_name ?? null,
+        },
+      });
+      toast.success("Packningen är ångrad.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte ångra packningen.");
+    }
   };
 
   /** Kryssrutan packar raden direkt med beställd/vägd mängd, eller ångrar. */
