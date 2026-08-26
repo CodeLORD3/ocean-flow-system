@@ -589,15 +589,25 @@ export default function CustomerOrders() {
         )}
 
         {panel === "orders" && focus && (
-          <div className="sticky top-0 z-30 -mx-1 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/10 p-2 backdrop-blur supports-[backdrop-filter]:bg-primary/10">
-            <Button size="sm" className="h-9 font-semibold" onClick={backToTotals}>
+          <div className="fixed left-1/2 top-2 z-50 flex max-w-[95vw] -translate-x-1/2 items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-2 py-1.5 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-primary/15">
+            <Button size="sm" className="h-8 rounded-full font-semibold" onClick={backToTotals}>
               <ArrowLeft className="mr-1.5 h-4 w-4" /> Tillbaka till totallistan
             </Button>
-            <span className="text-xs text-muted-foreground">
-              Markerad vara: <span className="font-medium text-foreground">{focus.product}</span>
+            <span className="truncate text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{focus.product}</span>
             </span>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 shrink-0 rounded-full"
+              title="Stäng och stanna i kundbeställningar"
+              onClick={() => setFocus(null)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         )}
+
 
 
         <div className={panel === "orders" ? "space-y-3" : "hidden"}>
