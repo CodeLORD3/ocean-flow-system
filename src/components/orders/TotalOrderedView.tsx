@@ -245,8 +245,27 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
 
   return (
     <div className="space-y-4">
+      {/* Framhävd rubrik: totallistan är första steget i packflödet */}
+      <Card className="overflow-hidden border-primary/30 bg-primary/5 shadow-sm">
+        <CardContent className="flex items-start gap-3 py-4">
+          <div className="rounded-xl bg-primary/15 p-2.5 ring-1 ring-inset ring-primary/25">
+            <Package className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0 space-y-1">
+            <div className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+              Totallista — allt som är beställt
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
+              Steg 1: sortera och packa upp varorna i totala mängder per produkt. Steg 2: packa varje enskild
+              beställning från orderlistan.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Kontrollpaneler: vygruppering, datumval, filter */}
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
