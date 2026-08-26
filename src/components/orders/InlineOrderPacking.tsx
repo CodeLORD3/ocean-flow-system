@@ -68,11 +68,14 @@ export function InlineOrderPacking({
   order,
   currency,
   onOrderPacked,
+  highlightProduct,
 }: {
   order: CustomerOrder;
   currency: string;
   /** Anropas när sista raden packats (ordern blir grön) så rullgardinen kan stängas. */
   onOrderPacked?: () => void;
+  /** Varunamn som ska markeras, t.ex. vid hopp från totallistan. */
+  highlightProduct?: string | null;
 }) {
   const { activeUser } = useActiveUser();
   const packLine = usePackOrderLine();

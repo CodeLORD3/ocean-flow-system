@@ -588,7 +588,12 @@ export function CustomerOrderRow({
           ) : editing ? (
             <InlineOrderEdit order={order} currency={currency} onClose={() => setEditing(false)} />
           ) : (
-            <InlineOrderPacking order={order} currency={currency} onOrderPacked={() => onToggle?.(order.id)} />
+            <InlineOrderPacking
+              order={order}
+              currency={currency}
+              highlightProduct={highlightProduct}
+              onOrderPacked={() => onToggle?.(order.id)}
+            />
           )}
 
           {/* Kommentaren direkt under varorna — den styr ofta packningen. */}
