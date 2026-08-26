@@ -87,6 +87,12 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Samtidighetsspärr: pågår redan ett skickande (dubbelklick / dubbla anrop)?
+  if (prior?.status === "creating" && Date.now() - new Date(prior.updated_at ?? prior.created_at).getTime() < 120_000) {
+    return json({ error: "Fakturan skickas redan till Fortnox. Vänta någon minut och uppdatera status." }, 409);
+  }
+
+
   const { data: job, error: jErr } = await sb
     .from("fortnox_invoice_jobs")
     .upsert(
