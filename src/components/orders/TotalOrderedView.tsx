@@ -86,6 +86,9 @@ type ProductRow = {
   name: string;
   unit: string;
   total: number;
+  /** Summerat radvärde (kr) när priser finns på raderna. */
+  value: number;
+  category: string;
   productId: string | null;
   imageUrl: string | null;
   orders: OrderLink[];
@@ -93,6 +96,22 @@ type ProductRow = {
 
 
 type Group = { key: string; label: string; orderCount: number; rows: ProductRow[] };
+
+const OTHER_CATEGORY = "Övrigt";
+
+/** Kanonisk kategoriordning: skaldjur för sig, fisk för sig osv. Okända sist. */
+const categoryRank = (name: string) => {
+  const i = (PRODUCT_CATEGORIES as readonly string[]).findIndex(
+    (c) => normalizeCategoryKey(c) === normalizeCategoryKey(name),
+  );
+  return i === -1 ? 999 : i;
+};
+
+const compareCategory = (a: string, b: string) =>
+  categoryRank(a) - categoryRank(b) || a.localeCompare(b, "sv");
+
+const moneyText = (v: number) =>
+  Number(v || 0).toLocaleString("sv-SE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 /** Summerar en produktrad per leveranssätt/hämtsätt. */
 function byType(row: ProductRow) {
@@ -121,11 +140,13 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
   const [picked, setPicked] = useState<string[]>([]);
   const [orderType, setOrderType] = useState("all");
   const [productSearch, setProductSearch] = useState("");
-  const [sort, setSort] = useState<"name" | "qty">("name");
+  const [category, setCategory] = useState("all");
+  const [sort, setSort] = useState<"name" | "qty" | "orders" | "value" | "date">("name");
   const [openRows, setOpenRows] = useState<string[]>([]);
   const [closedGroups, setClosedGroups] = useState<string[]>([]);
   const [showAll, setShowAll] = useState<string[]>([]);
   const [printOpen, setPrintOpen] = useState(false);
+
 
   const bounds = useMemo(() => {
     if (picked.length > 0) {
