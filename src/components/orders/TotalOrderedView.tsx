@@ -404,14 +404,14 @@ export function TotalOrderedView({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 p-3 pt-0">
-            <div className="flex flex-wrap gap-1">
-              <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => quickRange("today")}>
+            <div className="grid grid-cols-3 gap-1.5">
+              <Button variant="outline" size="sm" className="h-9 rounded-xl px-1 text-[11px]" onClick={() => quickRange("today")}>
                 Idag
               </Button>
-              <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => quickRange("thisWeek")}>
+              <Button variant="outline" size="sm" className="h-9 rounded-xl px-1 text-[11px]" onClick={() => quickRange("thisWeek")}>
                 Denna vecka
               </Button>
-              <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => quickRange("lastWeek")}>
+              <Button variant="outline" size="sm" className="h-9 rounded-xl px-1 text-[11px]" onClick={() => quickRange("lastWeek")}>
                 Förra veckan
               </Button>
             </div>
