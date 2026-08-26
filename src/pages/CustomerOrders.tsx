@@ -509,31 +509,6 @@ export default function CustomerOrders() {
             >
               <Sigma className="h-4 w-4" /> Totallista
             </Button>
-            <Button
-              variant={panel === "pickups" ? "default" : "outline"}
-              size="sm"
-              className="h-11 gap-1.5 px-3 text-xs"
-              onClick={() => setPanel(panel === "pickups" ? "orders" : "pickups")}
-            >
-              <Clock className="h-4 w-4" /> Hämtningar
-            </Button>
-
-            <Button
-              variant={panel === "route" ? "default" : "outline"}
-              size="sm"
-              className="h-11 gap-1.5 px-3 text-xs"
-              onClick={() => setPanel(panel === "route" ? "orders" : "route")}
-            >
-              <Truck className="h-4 w-4" /> Leveransrutt
-            </Button>
-            <Button
-              variant={panel === "kitchen" ? "default" : "outline"}
-              size="sm"
-              className="h-11 gap-1.5 px-3 text-xs"
-              onClick={() => setPanel(panel === "kitchen" ? "orders" : "kitchen")}
-            >
-              <ChefHat className="h-4 w-4" /> Kökslista
-            </Button>
             {!isShop && (
               <Button
                 variant={panel === "needs" ? "default" : "outline"}
