@@ -606,7 +606,7 @@ export function TotalOrderedView({
           const groupOpen = !closedGroups.includes(g.key);
           return (
             <Card key={g.key} className="overflow-hidden rounded-2xl border-border/60 shadow-sm">
-              <CardHeader className="sticky top-0 z-20 border-b border-border/50 bg-card/95 px-3 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+              <CardHeader className="border-b border-border/50 bg-muted/20 px-3 py-2.5">
                 <button
                   type="button"
                   onClick={() => toggle(closedGroups, setClosedGroups, g.key)}
