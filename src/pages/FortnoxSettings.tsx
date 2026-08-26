@@ -11,6 +11,7 @@ import { Loader2, Link2, RefreshCw, Check, AlertTriangle, Plug } from "lucide-re
 import { Switch } from "@/components/ui/switch";
 import { FORTNOX_JOB_STATUS_LABEL } from "@/lib/fortnoxStatus";
 import { FortnoxCancelDraftButton } from "@/components/orders/FortnoxCancelDraftButton";
+import { FortnoxImportCustomersDialog } from "@/components/fortnox/FortnoxImportCustomersDialog";
 
 const ENTITIES = [
   { code: "de-no1", name: "DE No.1 AB" },
@@ -245,6 +246,11 @@ export default function FortnoxSettings() {
                     {sync.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <RefreshCw className="mr-1 h-3 w-3" />}
                     Synka kunder
                   </Button>
+                  <FortnoxImportCustomersDialog
+                    legalEntityCode={e.code}
+                    entityName={e.name}
+                    disabled={c?.status !== "connected"}
+                  />
                 </div>
               </div>
             );
