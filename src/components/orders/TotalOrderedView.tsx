@@ -82,8 +82,11 @@ type ProductRow = {
   name: string;
   unit: string;
   total: number;
+  productId: string | null;
+  imageUrl: string | null;
   orders: OrderLink[];
 };
+
 
 type Group = { key: string; label: string; orderCount: number; rows: ProductRow[] };
 
