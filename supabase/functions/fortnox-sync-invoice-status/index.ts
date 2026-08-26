@@ -25,8 +25,9 @@ async function syncOne(sb: any, job: any) {
   if (newStatus !== job.status) patch.status = newStatus;
 
   // Annullering gjord direkt i Fortnox: reversera lageruttaget en gång.
+  // Butiksordrar bokar inget lager vid fakturering och ska därför inte reverseras.
   let reversed = false;
-  if (newStatus === "cancelled" && !job.cancelled_at) {
+  if (newStatus === "cancelled" && !job.cancelled_at && job.order_kind !== "shop_order") {
     const { error: rErr } = await sb.rpc("fortnox_on_invoice_cancelled", {
       p_order_id: job.order_id,
       p_entity: job.legal_entity_code,
@@ -38,7 +39,10 @@ async function syncOne(sb: any, job: any) {
       patch.cancelled_at = new Date().toISOString();
       reversed = true;
     }
+  } else if (newStatus === "cancelled" && !job.cancelled_at) {
+    patch.cancelled_at = new Date().toISOString();
   }
+
 
   await sb.from("fortnox_invoice_jobs").update(patch).eq("id", job.id);
   return { order_id: job.order_id, document_number: job.fortnox_document_number, status: newStatus, reversed };
