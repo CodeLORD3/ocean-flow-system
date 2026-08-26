@@ -549,16 +549,11 @@ export default function CustomerOrders() {
                 ? "Kundregister"
                 : panel === "stats"
                   ? "Statistik"
-                  : panel === "route"
-                    ? "Leveransrutt"
-                    : panel === "kitchen"
-                      ? "Kökslista — att förbereda"
-                      : panel === "pickups"
-                        ? "Dagens hämtningar"
-                      : panel === "totals"
-                        ? "Totalt beställt"
-                        : "Inköpsbehov per butik"}
+                  : panel === "totals"
+                    ? "Totalt beställt"
+                    : "Inköpsbehov per butik"}
             </span>
+
           </div>
         )}
 
