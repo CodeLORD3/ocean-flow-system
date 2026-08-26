@@ -289,7 +289,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
               </Button>
             </div>
             <div className="flex flex-wrap items-end gap-2">
-              <div className="space-y-1">
+              <div className="min-w-[140px] flex-1 space-y-1 sm:flex-none">
                 <div className="text-[11px] text-muted-foreground">Från och med</div>
                 <Input
                   type="date"
@@ -298,10 +298,10 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                     setPicked([]);
                     setFrom(e.target.value);
                   }}
-                  className="h-9 w-[140px] text-xs"
+                  className="h-11 w-full text-xs sm:h-9 sm:w-[140px]"
                 />
               </div>
-              <div className="space-y-1">
+              <div className="min-w-[140px] flex-1 space-y-1 sm:flex-none">
                 <div className="text-[11px] text-muted-foreground">Till och med</div>
                 <Input
                   type="date"
@@ -310,9 +310,10 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                     setPicked([]);
                     setTo(e.target.value);
                   }}
-                  className="h-9 w-[140px] text-xs"
+                  className="h-11 w-full text-xs sm:h-9 sm:w-[140px]"
                 />
               </div>
+
               <div className="space-y-1">
                 <div className="text-[11px] text-muted-foreground">Eller välj specifika dagar</div>
                 <Popover>
