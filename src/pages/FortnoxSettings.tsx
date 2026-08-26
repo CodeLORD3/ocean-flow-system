@@ -321,10 +321,32 @@ export default function FortnoxSettings() {
                           {j.fortnox_document_number ? `Faktura ${j.fortnox_document_number}` : "Ingen faktura"}
                           {j.stock_booked_at ? " · lager bokat" : ""}
                         </div>
+                        <div className="truncate text-xs text-muted-foreground font-mono tabular-nums">
+                          {j.fortnox_total != null ? `Total ${Number(j.fortnox_total).toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr` : "Total –"}
+                          {" · "}
+                          {j.fortnox_balance != null ? `Kvar ${Number(j.fortnox_balance).toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr` : "Kvar –"}
+                          {" · "}
+                          {j.status_synced_at ? `synkad ${new Date(j.status_synced_at).toLocaleString("sv-SE")}` : "aldrig synkad"}
+                        </div>
                         {j.last_error && <div className="text-xs text-destructive break-all">{j.last_error}</div>}
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant={j.status === "bookkept" || j.status === "sent" ? "default" : j.status === "failed" ? "destructive" : "outline"}>{JOB_STATUS_LABELS[j.status] ?? j.status}</Badge>
+                        {j.fortnox_document_number && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={syncStatus.isPending && syncStatus.variables === j.order_id}
+                            onClick={() => syncStatus.mutate(j.order_id)}
+                          >
+                            {syncStatus.isPending && syncStatus.variables === j.order_id ? (
+                              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                            ) : (
+                              <RefreshCw className="mr-1 h-3 w-3" />
+                            )}
+                            Uppdatera status
+                          </Button>
+                        )}
                         {j.fortnox_url && (
                           <a href={j.fortnox_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">Öppna</a>
                         )}
