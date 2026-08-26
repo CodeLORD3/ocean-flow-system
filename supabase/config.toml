@@ -73,3 +73,18 @@ verify_jwt = false
 
 [functions.clock-status]
 verify_jwt = false
+
+[functions.fortnox-oauth-start]
+verify_jwt = false
+
+[functions.fortnox-oauth-callback]
+verify_jwt = false
+
+[functions.fortnox-refresh]
+verify_jwt = false
+
+[functions.fortnox-sync-customers]
+verify_jwt = false
+
+[functions.fortnox-send-invoice]
+verify_jwt = false
