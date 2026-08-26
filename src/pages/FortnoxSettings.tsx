@@ -202,9 +202,6 @@ export default function FortnoxSettings() {
                       </div>
                     </div>
                   </div>
-
-                    </div>
-                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" disabled={busy === e.code} onClick={() => connect(e.code)}>
