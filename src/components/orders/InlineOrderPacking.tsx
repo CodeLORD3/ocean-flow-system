@@ -257,6 +257,17 @@ export function InlineOrderPacking({
         </Button>
       )}
 
+      {canUndoPacking && (
+        <Button
+          variant="outline"
+          className="h-11 w-full sm:w-auto"
+          disabled={updateOrder.isPending}
+          onClick={undoPacking}
+        >
+          <RotateCcw className="mr-2 h-4 w-4" /> Ångra packning
+        </Button>
+      )}
+
       <ul className="divide-y divide-border overflow-hidden rounded-md border border-border">
         {lines.map((l, i) => {
           const name = (l.products?.name || l.free_text_name || "Vara") as string;
