@@ -560,14 +560,6 @@ export default function CustomerOrders() {
             >
               <BarChart3 className="h-4 w-4" /> Statistik
             </Button>
-            <Button
-              variant={panel === "totals" ? "default" : "outline"}
-              size="sm"
-              className="h-11 gap-1.5 px-3 text-xs"
-              onClick={() => setPanel(panel === "totals" ? "orders" : "totals")}
-            >
-              <Sigma className="h-4 w-4" /> Totalt
-            </Button>
           </div>
 
         </div>
