@@ -12673,6 +12673,14 @@ export type Database = {
         Returns: Json
       }
       fortnox_claim_refresh: { Args: { p_entity: string }; Returns: boolean }
+      fortnox_on_invoice_cancelled: {
+        Args: {
+          p_document_number: string
+          p_entity: string
+          p_order_id: string
+        }
+        Returns: undefined
+      }
       fortnox_on_invoice_created: {
         Args: {
           p_document_number: string
