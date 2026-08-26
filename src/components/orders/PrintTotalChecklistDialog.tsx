@@ -27,12 +27,6 @@ interface Props {
   storeName?: string;
 }
 
-const qty = (v: number, unit: string) =>
-  Number(v || 0).toLocaleString("sv-SE", {
-    minimumFractionDigits: unit === "kg" ? 1 : 0,
-    maximumFractionDigits: unit === "kg" ? 1 : 0,
-  });
-
 /** Slår ihop flera perioder till en gemensam lista per produkt och enhet. */
 function mergeGroups(groups: PrintableGroup[]): TotalChecklistGroup {
   const rows = new Map<string, TotalChecklistGroup["rows"][number]>();
@@ -184,5 +178,3 @@ export function PrintTotalChecklistDialog({ open, onOpenChange, groups, mode, st
     </Dialog>
   );
 }
-
-export { qty };

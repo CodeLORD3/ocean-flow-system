@@ -28,7 +28,7 @@ import { ProductThumb } from "@/components/products/ProductThumb";
 
 import { useCustomerOrders } from "@/hooks/useCustomerOrders";
 import { CustomerOrder, ORDER_TYPE_LABELS, isoWeekOf } from "@/lib/customerOrders";
-import { generateTotalOrderedChecklistPdf } from "@/lib/totalOrderedChecklistPdf";
+import { PrintTotalChecklistDialog, type PrintableGroup } from "@/components/orders/PrintTotalChecklistDialog";
 
 /* ------------------------------------------------------------------ hjälpare */
 
@@ -125,6 +125,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
   const [openRows, setOpenRows] = useState<string[]>([]);
   const [closedGroups, setClosedGroups] = useState<string[]>([]);
   const [showAll, setShowAll] = useState<string[]>([]);
+  const [printOpen, setPrintOpen] = useState(false);
 
   const bounds = useMemo(() => {
     if (picked.length > 0) {
@@ -252,13 +253,11 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
     URL.revokeObjectURL(url);
   };
 
-  /** Utskrivbar checklista att bocka av vid sortering och packning. */
-  const printChecklist = () => {
-    generateTotalOrderedChecklistPdf({
-      periodLabel: picked.length
-        ? `Valda dagar: ${picked.slice().sort().map(shortDay).join(", ")}`
-        : `${mode === "week" ? "Veckovis" : "Dagsvis"}  ·  ${bounds.fromDate} – ${bounds.toDate}`,
-      groups: groups.map((g) => ({
+  /** Underlag till utskriftsdialogen: en post per dag eller vecka. */
+  const printableGroups: PrintableGroup[] = useMemo(
+    () =>
+      groups.map((g) => ({
+        key: g.key,
         label: g.label,
         orderCount: g.orderCount,
         rows: g.rows.map((r) => ({
@@ -271,15 +270,20 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
             .join("\n"),
         })),
       })),
-    });
-  };
-
+    [groups],
+  );
 
   const toggle = (list: string[], set: (v: string[]) => void, key: string) =>
     set(list.includes(key) ? list.filter((x) => x !== key) : [...list, key]);
 
   return (
     <div className="space-y-4">
+      <PrintTotalChecklistDialog
+        open={printOpen}
+        onOpenChange={setPrintOpen}
+        groups={printableGroups}
+        mode={mode}
+      />
       {/* Framhävd rubrik: totallistan är första steget i packflödet */}
       <Card className="overflow-hidden border-primary/30 bg-primary/5 shadow-sm">
         <CardContent className="flex items-start gap-3 py-4">
@@ -475,10 +479,10 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
           <Button
             size="sm"
             className="h-11 w-full gap-1.5 rounded-lg text-xs sm:h-10 sm:w-auto"
-            onClick={printChecklist}
+            onClick={() => setPrintOpen(true)}
             disabled={groups.length === 0}
           >
-            <Printer className="h-4 w-4" /> Skriv ut checklista
+            <Printer className="h-4 w-4" /> Skriv ut checklista…
           </Button>
         </CardContent>
       </Card>
