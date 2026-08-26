@@ -630,7 +630,7 @@ export function CustomerOrderRow({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-muted/50 p-2 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/15 bg-background/70 px-3 py-2 text-xs">
             <span className="text-muted-foreground">
               {order.total_incl_vat ? "Verkligt pris" : "Uppskattat pris"}
             </span>
