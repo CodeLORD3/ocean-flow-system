@@ -557,9 +557,14 @@ export function CustomerOrderRow({
             </div>
           )}
 
+          {/* Rubrik som binder varorna till just den här kunden. */}
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">
+            {name}s beställning
+          </div>
+
           {/* Varorna först: vad är beställt och hur mycket. */}
           {readOnly ? (
-            <ul className="divide-y divide-grid-line rounded-sm border border-grid-line">
+            <ul className="divide-y divide-border/70">
               {lines.map((l) => {
                 const label = (l.products?.name || l.free_text_name || "Vara") as string;
                 const struck = l.pack_status === "struken";
