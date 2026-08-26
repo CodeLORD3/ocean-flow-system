@@ -461,9 +461,9 @@ export function CustomerOrderRow({
           <div className="space-y-1 sm:hidden">
             <div className="flex items-start gap-2">
               <span
-                className={`min-w-0 flex-1 break-words text-[15px] font-semibold leading-snug ${
-                  cancelled ? "line-through" : ""
-                }`}
+                className={`min-w-0 flex-1 break-words leading-snug ${
+                  isOpen ? "text-[17px] font-bold" : "text-[15px] font-semibold"
+                } ${cancelled ? "line-through" : ""}`}
               >
                 {name}
               </span>
