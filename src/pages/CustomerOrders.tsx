@@ -709,8 +709,10 @@ export default function CustomerOrders() {
         )}
         {panel === "stats" && <CustomerOrderStats storeId={effectiveStore} currency={currency} />}
         {panel === "needs" && <PurchaseNeedsView />}
-        {panel === "totals" && (
-          <TotalOrderedView storeId={effectiveStore} onOpenOrder={openFromTotals} />
+        {(panel === "totals" || totalsMounted) && (
+          <div className={panel === "totals" ? "" : "hidden"}>
+            <TotalOrderedView storeId={effectiveStore} onOpenOrder={openFromTotals} />
+          </div>
         )}
 
       </div>
