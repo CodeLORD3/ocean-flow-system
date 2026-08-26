@@ -173,6 +173,25 @@ export default function CustomerOrders() {
   const [tab, setTab] = useState<OrderTab>("alla");
   const [marked, setMarked] = useState<string[]>([]);
 
+  /* Hopp från totallistan: vilken order som öppnats och vilken vara som ska lysa. */
+  const [focus, setFocus] = useState<{ orderId: string; product: string } | null>(null);
+
+  const openFromTotals = (orderId: string, productName: string) => {
+    setPanel("orders");
+    setTab("alla");
+    setSearch("");
+    setStatus("all");
+    setPackStatus("all");
+    setOrderType("all");
+    setFocus({ orderId, product: productName });
+    setOpenRows((cur) => (cur.includes(orderId) ? cur : [...cur, orderId]));
+    setTimeout(() => {
+      document
+        .getElementById(`order-${orderId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 250);
+  };
+
   const toggleRow = (id: string) =>
     setOpenRows((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   const toggleMark = (id: string, next: boolean) =>
@@ -554,10 +573,27 @@ export default function CustomerOrders() {
           </div>
         )}
 
-
-
+        {panel === "orders" && focus && (
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 p-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9"
+              onClick={() => {
+                setFocus(null);
+                setPanel("totals");
+              }}
+            >
+              <ArrowLeft className="mr-1.5 h-4 w-4" /> Tillbaka till totallistan
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Markerad vara: <span className="font-medium text-foreground">{focus.product}</span>
+            </span>
+          </div>
+        )}
 
         <div className={panel === "orders" ? "space-y-3" : "hidden"}>
+
           {!isLoading && viewOrders.length === 0 ? (
 
             <EmptyState
@@ -632,6 +668,7 @@ export default function CustomerOrders() {
                             orderCount={
                               o.customer_id ? customerOrderCounts?.[o.customer_id] ?? 0 : 0
                             }
+                            highlightProduct={focus?.orderId === o.id ? focus.product : null}
                           />
                         ))}
                       </div>
@@ -660,7 +697,9 @@ export default function CustomerOrders() {
         )}
         {panel === "stats" && <CustomerOrderStats storeId={effectiveStore} currency={currency} />}
         {panel === "needs" && <PurchaseNeedsView />}
-        {panel === "totals" && <TotalOrderedView storeId={effectiveStore} />}
+        {panel === "totals" && (
+          <TotalOrderedView storeId={effectiveStore} onOpenOrder={openFromTotals} />
+        )}
 
       </div>
 

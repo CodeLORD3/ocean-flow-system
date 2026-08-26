@@ -188,6 +188,7 @@ export function CustomerOrderRow({
   onSelect,
   photoCount = 0,
   orderCount = 0,
+  highlightProduct,
 }: {
   order: CustomerOrder;
   canEdit?: boolean;
@@ -201,6 +202,8 @@ export function CustomerOrderRow({
   photoCount?: number;
   /** Kundens totala antal beställningar i kedjan, visas som stjärna. */
   orderCount?: number;
+  /** Varunamn som ska markeras i rullgardinen, t.ex. vid hopp från totallistan. */
+  highlightProduct?: string | null;
 }) {
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
@@ -291,6 +294,7 @@ export function CustomerOrderRow({
 
   return (
     <div
+      id={`order-${order.id}`}
       className={`overflow-hidden border-x border-b border-grid-line ${tone.row} ${
         isOpen ? "border-primary ring-1 ring-primary" : ""
       } ${selected && !isOpen ? "ring-1 ring-inset ring-primary" : ""}`}
@@ -545,10 +549,15 @@ export function CustomerOrderRow({
               {lines.map((l) => {
                 const label = (l.products?.name || l.free_text_name || "Vara") as string;
                 const struck = l.pack_status === "struken";
+                const marked =
+                  !!highlightProduct &&
+                  label.toLowerCase() === highlightProduct.trim().toLowerCase();
                 return (
                   <li
                     key={l.id}
-                    className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2.5 py-1.5 text-xs"
+                    className={`flex flex-wrap items-center gap-x-2 gap-y-1 px-2.5 py-1.5 text-xs ${
+                      marked ? "bg-primary/10 ring-1 ring-inset ring-primary" : ""
+                    }`}
                   >
                     <ProductThumb
                       src={l.products?.image_url}
@@ -579,7 +588,12 @@ export function CustomerOrderRow({
           ) : editing ? (
             <InlineOrderEdit order={order} currency={currency} onClose={() => setEditing(false)} />
           ) : (
-            <InlineOrderPacking order={order} currency={currency} onOrderPacked={() => onToggle?.(order.id)} />
+            <InlineOrderPacking
+              order={order}
+              currency={currency}
+              highlightProduct={highlightProduct}
+              onOrderPacked={() => onToggle?.(order.id)}
+            />
           )}
 
           {/* Kommentaren direkt under varorna — den styr ofta packningen. */}

@@ -68,11 +68,14 @@ export function InlineOrderPacking({
   order,
   currency,
   onOrderPacked,
+  highlightProduct,
 }: {
   order: CustomerOrder;
   currency: string;
   /** Anropas när sista raden packats (ordern blir grön) så rullgardinen kan stängas. */
   onOrderPacked?: () => void;
+  /** Varunamn som ska markeras, t.ex. vid hopp från totallistan. */
+  highlightProduct?: string | null;
 }) {
   const { activeUser } = useActiveUser();
   const packLine = usePackOrderLine();
@@ -282,8 +285,13 @@ export function InlineOrderPacking({
             : struck
               ? "bg-row-off"
               : "bg-card";
+          const marked =
+            !!highlightProduct && name.toLowerCase() === highlightProduct.trim().toLowerCase();
           return (
-            <li key={l.id} className={rowBg}>
+            <li
+              key={l.id}
+              className={`${rowBg} ${marked ? "ring-1 ring-inset ring-primary" : ""}`}
+            >
               <div className="flex items-center gap-1">
                 {/* Stor kryssruta för tumtryck: markerar just den varan som packad. */}
                 <label
