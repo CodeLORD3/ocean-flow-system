@@ -173,6 +173,25 @@ export default function CustomerOrders() {
   const [tab, setTab] = useState<OrderTab>("alla");
   const [marked, setMarked] = useState<string[]>([]);
 
+  /* Hopp från totallistan: vilken order som öppnats och vilken vara som ska lysa. */
+  const [focus, setFocus] = useState<{ orderId: string; product: string } | null>(null);
+
+  const openFromTotals = (orderId: string, productName: string) => {
+    setPanel("orders");
+    setTab("alla");
+    setSearch("");
+    setStatus("all");
+    setPackStatus("all");
+    setOrderType("all");
+    setFocus({ orderId, product: productName });
+    setOpenRows((cur) => (cur.includes(orderId) ? cur : [...cur, orderId]));
+    setTimeout(() => {
+      document
+        .getElementById(`order-${orderId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 250);
+  };
+
   const toggleRow = (id: string) =>
     setOpenRows((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   const toggleMark = (id: string, next: boolean) =>
