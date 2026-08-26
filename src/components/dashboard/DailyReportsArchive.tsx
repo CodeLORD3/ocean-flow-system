@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useStores } from "@/hooks/useStores";
 import { useStaff } from "@/hooks/useStaff";
+import { useActorNames } from "@/hooks/useActorNames";
 import { formatWeekdayDate, type DailyReport } from "@/hooks/useDailyReport";
 import { Loader2, ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +51,7 @@ export function DailyReportsArchive() {
   const { data: reports = [], isLoading } = useAllDailyReports();
   const { data: stores = [] } = useStores(true);
   const { data: staff = [] } = useStaff();
+  const { nameOf } = useActorNames();
   const [storeFilter, setStoreFilter] = useState<string>("all");
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -105,24 +107,30 @@ export function DailyReportsArchive() {
                 <button
                   type="button"
                   onClick={() => setOpenId(open ? null : r.id)}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-muted/40 transition-colors"
+                  className="w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-muted/40 transition-colors"
                 >
                   {open ? (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                   ) : (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                   )}
-                  <span className="text-sm font-medium truncate">{storeName(r.store_id)}</span>
-                  <span className="text-xs text-muted-foreground truncate">
-                    {formatWeekdayDate(r.report_date)}
+                  <span className="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center sm:gap-3">
+                    <span className="text-sm font-medium break-words">{storeName(r.store_id)}</span>
+                    <span className="text-xs text-muted-foreground break-words">
+                      {formatWeekdayDate(r.report_date)}
+                    </span>
+                    <span className="text-xs text-muted-foreground break-words">
+                      {nameOf(r.created_by) ?? "Okänd rapportör"}
+                    </span>
                   </span>
-                  <span className="ml-auto flex items-center gap-3">
+                  <span className="shrink-0 flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
                     <span className="font-mono tabular-nums text-sm">{nf(r.gross_sales)} kr</span>
                     <Badge variant="outline" className="text-[10px]">
                       {(r.staff_entries ?? []).length} pers
                     </Badge>
                   </span>
                 </button>
+
 
                 {open && (
                   <div className="px-3 pb-3 pt-1 space-y-3 bg-muted/20">
@@ -208,7 +216,7 @@ export function DailyReportsArchive() {
                     </div>
 
                     <p className="text-[10px] text-muted-foreground">
-                      Sparad{" "}
+                      Sparad av {nameOf(r.created_by) ?? "okänd"} ·{" "}
                       {new Date(r.updated_at || r.created_at).toLocaleString("sv-SE", {
                         dateStyle: "short",
                         timeStyle: "short",
