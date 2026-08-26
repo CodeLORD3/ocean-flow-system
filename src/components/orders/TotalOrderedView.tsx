@@ -489,6 +489,31 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                 <SelectItem value="leverans">Leverans</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="h-10 text-xs">
+                <SelectValue placeholder="Kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alla kategorier</SelectItem>
+                {categoryOptions.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
+              <SelectTrigger className="h-10 text-xs">
+                <SelectValue placeholder="Sortering" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Kategori → namn (A–Ö)</SelectItem>
+                <SelectItem value="qty">Kategori → största mängd</SelectItem>
+                <SelectItem value="orders">Kategori → flest ordrar</SelectItem>
+                <SelectItem value="value">Kategori → högst värde</SelectItem>
+                <SelectItem value="date">Kategori → tidigast datum</SelectItem>
+              </SelectContent>
+            </Select>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -498,6 +523,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                 className="h-10 pl-8 text-xs"
               />
             </div>
+
           </CardContent>
         </Card>
       </div>
