@@ -538,7 +538,7 @@ export function CustomerOrderRow({
       )}
 
       {isOpen && (
-        <div className="space-y-2.5 border-t-2 border-primary bg-muted/60 p-2.5">
+        <div className="space-y-3 border-t border-primary/20 px-3 pb-3 pt-2.5">
           {/* Allergi är säkerhetskritisk och visas alltid först. */}
           {(order.allergy_note || allergens.length > 0) && (
             <div className="space-y-1.5 rounded-sm border border-destructive/40 bg-destructive/10 p-2 text-xs">
