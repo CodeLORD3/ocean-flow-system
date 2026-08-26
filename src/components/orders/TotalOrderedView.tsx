@@ -386,33 +386,35 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
       </div>
 
       {/* Sammanfattning */}
-      <Card>
-        <CardContent className="flex flex-wrap items-center gap-6 py-4">
+      <Card className="overflow-hidden border-border/60 shadow-sm">
+        <CardContent className="flex flex-wrap items-center gap-8 py-5">
           <div className="flex items-center gap-3">
-            <div className="rounded-md bg-muted p-2">
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <div className="rounded-xl bg-primary/10 p-2.5 ring-1 ring-inset ring-primary/20">
+              <CalendarDays className="h-5 w-5 text-primary" />
             </div>
-            <div>
-              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Unika ordrar</div>
-              <div className="font-mono text-xl font-semibold tabular-nums">{orderCount} st</div>
+            <div className="space-y-0.5">
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Unika ordrar</div>
+              <div className="font-mono text-2xl font-semibold leading-none tabular-nums">{orderCount} st</div>
               <div className="text-[11px] text-muted-foreground">i valt urval</div>
             </div>
           </div>
+          <div className="hidden h-12 w-px bg-border/70 sm:block" />
           <div className="flex items-center gap-3">
-            <div className="rounded-md bg-muted p-2">
-              <Package className="h-4 w-4 text-muted-foreground" />
+            <div className="rounded-xl bg-accent/50 p-2.5 ring-1 ring-inset ring-border/60">
+              <Package className="h-5 w-5 text-accent-foreground" />
             </div>
-            <div>
-              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Olika produkter</div>
-              <div className="font-mono text-xl font-semibold tabular-nums">{productCount} st</div>
+            <div className="space-y-0.5">
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Olika produkter</div>
+              <div className="font-mono text-2xl font-semibold leading-none tabular-nums">{productCount} st</div>
               <div className="text-[11px] text-muted-foreground">i valt urval</div>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="ml-auto h-10 gap-1.5 text-xs" onClick={exportCsv}>
+          <Button variant="outline" size="sm" className="ml-auto h-10 gap-1.5 rounded-lg text-xs" onClick={exportCsv}>
             <Download className="h-4 w-4" /> Exportera till Excel/CSV
           </Button>
         </CardContent>
       </Card>
+
 
       {!isLoading && groups.length === 0 ? (
         <EmptyState
