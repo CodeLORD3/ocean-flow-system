@@ -107,30 +107,46 @@ export default function ClockVsPk() {
     return list.sort((a, b) => b.day.localeCompare(a.day) || a.employee_id.localeCompare(b.employee_id));
   }, [entries, pkRows]);
 
-  const deviations = rows.filter((r) => r.diffMinutes != null && Math.abs(r.diffMinutes) > 5);
+  const TOLERANCE = 5;
+  const compared = rows.filter((r) => r.diffMinutes != null);
+  const singleSource = rows.filter((r) => r.diffMinutes == null);
+  const deviations = compared.filter((r) => Math.abs(r.diffMinutes!) > TOLERANCE);
   const totalDiff = rows.reduce((sum, r) => sum + Math.abs(r.diffMinutes ?? 0), 0);
-  const missingPk = rows.filter((r) => r.clockSeconds != null && r.pkSeconds == null).length;
+  // Beslutsordning: störst differens överst.
+  const ordered = [...compared].sort(
+    (a, b) => Math.abs(b.diffMinutes!) - Math.abs(a.diffMinutes!) || b.day.localeCompare(a.day),
+  );
 
   return (
-    <div className="p-4 sm:p-6 space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold">Klocka vs Personalkollen</h1>
-        <p className="text-sm text-muted-foreground">
-          Parallellkörning per person och dag. Differens över 5 minuter markeras rött.
-        </p>
-      </div>
+    <IndustryFrame className="p-4 sm:p-6">
+      <DecisionBar>
+        <div className="mr-auto">
+          <SectionLabel>Parallellkörning</SectionLabel>
+          <h1 className="ind-h1">Klocka vs Personalkollen</h1>
+          <p className="ind-muted text-sm">
+            {deviations.length} dagar med avvikelse över {TOLERANCE} min · total differens {totalDiff} min
+          </p>
+        </div>
+        <DecisionMetric
+          label="Dagar med avvikelse"
+          value={deviations.length}
+          tone={deviations.length > 0 ? "progress" : "ok"}
+        />
+        <DecisionMetric label="Total differens (min)" value={totalDiff} />
+        <DecisionMetric label="Jämförda rader" value={compared.length} />
+      </DecisionBar>
 
-      <div className="flex flex-wrap items-end gap-3">
+      <div className="mt-4 flex flex-wrap items-end gap-3">
         <div className="space-y-1">
-          <Label className="text-xs">Från</Label>
+          <SectionLabel>Från</SectionLabel>
           <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-[150px]" />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Till</Label>
+          <SectionLabel>Till</SectionLabel>
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-[150px]" />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Enhet</Label>
+          <SectionLabel>Enhet</SectionLabel>
           <Select value={storeId || "all"} onValueChange={(v) => setStoreId(v === "all" ? "" : v)}>
             <SelectTrigger className="w-[220px]">
               <SelectValue />
@@ -147,85 +163,65 @@ export default function ClockVsPk() {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-4">
-        <Card className="p-3">
-          <p className="text-xs text-muted-foreground">Jämförda rader</p>
-          <p className="text-2xl font-mono tabular-nums">{rows.length}</p>
-        </Card>
-        <Card className="p-3">
-          <p className="text-xs text-muted-foreground">Dagar med avvikelse &gt; 5 min</p>
-          <p className="text-2xl font-mono tabular-nums text-destructive">{deviations.length}</p>
-        </Card>
-        <Card className="p-3">
-          <p className="text-xs text-muted-foreground">Total differens (min)</p>
-          <p className="text-2xl font-mono tabular-nums">{totalDiff}</p>
-        </Card>
-        <Card className="p-3">
-          <p className="text-xs text-muted-foreground">Saknas i Personalkollen</p>
-          <p className="text-2xl font-mono tabular-nums">{missingPk}</p>
-        </Card>
-      </div>
-
-      <Card className="overflow-x-auto">
+      <section className="mt-6">
+        <SectionLabel className="mb-2">Jämförelse — störst differens överst</SectionLabel>
         {loadingClock || loadingPk ? (
-          <div className="p-6">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : rows.length === 0 ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">
-            Ingen jämförbar tid i perioden.
-          </p>
+          <Loader2 className="h-5 w-5 animate-spin ind-muted" />
+        ) : ordered.length === 0 ? (
+          <p className="ind-muted text-sm">Ingen jämförbar tid i perioden.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="p-2">Datum</th>
-                <th className="p-2">Person</th>
-                <th className="p-2">Klocka in</th>
-                <th className="p-2">Klocka ut</th>
-                <th className="p-2">Klocka tid</th>
-                <th className="p-2">PK in</th>
-                <th className="p-2">PK ut</th>
-                <th className="p-2">PK tid</th>
-                <th className="p-2">Diff (min)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => {
-                const bad = r.diffMinutes != null && Math.abs(r.diffMinutes) > 5;
-                return (
-                  <tr key={r.key} className={`border-b ${bad ? "bg-destructive/10" : ""}`}>
-                    <td className="p-2 font-mono">{r.day}</td>
-                    <td className="p-2">{employeeName.get(r.employee_id) ?? r.employee_id}</td>
-                    <td className="p-2 font-mono tabular-nums">{hhmm(r.clockIn)}</td>
-                    <td className="p-2 font-mono tabular-nums">{hhmm(r.clockOut)}</td>
-                    <td className="p-2 font-mono tabular-nums">
-                      {r.clockSeconds != null ? durationLabel(r.clockSeconds) : "–"}
-                    </td>
-                    <td className="p-2 font-mono tabular-nums">{hhmm(r.pkIn)}</td>
-                    <td className="p-2 font-mono tabular-nums">{hhmm(r.pkOut)}</td>
-                    <td className="p-2 font-mono tabular-nums">
-                      {r.pkSeconds != null ? durationLabel(r.pkSeconds) : "–"}
-                    </td>
-                    <td className="p-2 font-mono tabular-nums">
-                      {r.diffMinutes == null ? (
-                        <Badge variant="outline" className="text-[10px]">
-                          endast en källa
-                        </Badge>
-                      ) : (
-                        <span className={bad ? "text-destructive font-semibold" : ""}>
-                          {r.diffMinutes > 0 ? "+" : ""}
-                          {r.diffMinutes}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          ordered.map((r) => {
+            const diff = r.diffMinutes!;
+            const outside = Math.abs(diff) > TOLERANCE;
+            return (
+              <IndustryRow key={r.key} edge={outside ? "strong" : "none"} muted={!outside} className="flex-wrap">
+                <span className="ind-mono min-w-[100px]">{r.day}</span>
+                <span className="min-w-[180px]">{employeeName.get(r.employee_id) ?? r.employee_id}</span>
+                <span className="ind-mono">
+                  Klocka {hhmm(r.clockIn)}–{hhmm(r.clockOut)}{" "}
+                  {r.clockSeconds != null ? durationLabel(r.clockSeconds) : "–"}
+                </span>
+                <span className="ind-mono">
+                  PK {hhmm(r.pkIn)}–{hhmm(r.pkOut)}{" "}
+                  {r.pkSeconds != null ? durationLabel(r.pkSeconds) : "–"}
+                </span>
+                <span className="ml-auto">
+                  {outside ? (
+                    <StatusLabel tone="progress">
+                      Differens {diff > 0 ? "+" : ""}
+                      {diff} min
+                    </StatusLabel>
+                  ) : (
+                    <StatusLabel tone="neutral">Inom tolerans</StatusLabel>
+                  )}
+                </span>
+              </IndustryRow>
+            );
+          })
         )}
-      </Card>
-    </div>
+      </section>
+
+      {singleSource.length > 0 && (
+        <section className="mt-8">
+          <details>
+            <summary className="ind-label cursor-pointer">
+              Endast en källa ({singleSource.length})
+            </summary>
+            <div className="mt-2">
+              {singleSource.map((r) => (
+                <IndustryRow key={r.key} edge="neutral" muted className="flex-wrap">
+                  <span className="ind-mono min-w-[100px]">{r.day}</span>
+                  <span className="min-w-[180px]">{employeeName.get(r.employee_id) ?? r.employee_id}</span>
+                  <StatusLabel tone="neutral">
+                    {r.clockSeconds != null ? "Endast klocka" : "Endast Personalkollen"}
+                  </StatusLabel>
+                </IndustryRow>
+              ))}
+            </div>
+          </details>
+        </section>
+      )}
+    </IndustryFrame>
   );
 }
+
