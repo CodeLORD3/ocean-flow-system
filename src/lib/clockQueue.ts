@@ -20,7 +20,7 @@ export interface QueuedPunch {
   cipher: ArrayBuffer;
   action: "in" | "ut" | "rast_start" | "rast_slut";
   occurred_at: string;
-  label: string; // maskerad etikett för UI, t.ex. ****1234
+  label: string; // helt sifferfri etikett för UI, t.ex. "Stämpling köad 13:12"
 }
 
 function openDb(): Promise<IDBDatabase> {
