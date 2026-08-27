@@ -188,5 +188,5 @@ export function useMailIntakeActions() {
     onSuccess: invalidate,
   });
 
-  return { runIntake, saveSender, removeSender, ignoreMessage, setDocumentSupplier, invalidate };
+  return { runIntake, runFortnoxIntake, saveSender, removeSender, ignoreMessage, setDocumentSupplier, invalidate };
 }
