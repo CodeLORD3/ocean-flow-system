@@ -598,6 +598,15 @@ function DraftQueueCard({
         </div>
       </div>
 
+      {error && (
+        <p className="flex items-start gap-1.5 rounded border border-destructive/40 bg-destructive/10 px-2 py-1.5 text-[11px] text-destructive">
+          <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+          <span>Attesten stoppades: {error}</span>
+        </p>
+      )}
+
+
+
       {lines.length > 0 && (
         <div className="rounded border bg-muted/30 overflow-x-auto">
           <table className="w-full text-[11px]">
