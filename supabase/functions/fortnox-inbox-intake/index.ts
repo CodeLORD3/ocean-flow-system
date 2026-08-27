@@ -326,7 +326,7 @@ Deno.serve(async (req) => {
     let invoices = 0;
     if (includeInvoices) {
       try {
-        const list = await fortnoxRequest<any>(sb, entity, "GET", "/supplierinvoices?limit=50&sortby=givendate&sortorder=descending");
+        const list = await fortnoxRequest<any>(sb, entity, "GET", "/supplierinvoices?limit=50&sortorder=descending");
         for (const head of (list?.SupplierInvoices ?? [])) {
           const nr = String(head.GivenNumber ?? head.DocumentNumber ?? "");
           if (!nr) continue;
