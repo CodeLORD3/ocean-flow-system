@@ -78,7 +78,7 @@ export async function enqueuePunch(
       cipher,
       action,
       occurred_at: occurredAt,
-      label: `****${identifier.slice(-4)}`,
+      label: `Stämpling köad ${new Date(occurredAt).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}`,
     } as QueuedPunch),
   );
 }
