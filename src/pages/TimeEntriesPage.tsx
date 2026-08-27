@@ -249,153 +249,118 @@ export default function TimeEntriesPage() {
   }
 
 
+  const sourceEdge = (source: string): "accent" | "neutral" | "accent-2" =>
+    source === "clock" ? "accent" : source === "correction" ? "accent-2" : "neutral";
+
+  const days = [...new Set(summaries.map((s) => s.day))].sort((a, b) => b.localeCompare(a));
+
   return (
-    <div className="p-4 sm:p-6 space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">Rapporterad tid</h1>
-          <p className="text-sm text-muted-foreground">
+    <IndustryFrame className="p-4 sm:p-6">
+      <DecisionBar>
+        <div className="mr-auto">
+          <SectionLabel>Personal · journal</SectionLabel>
+          <h1 className="ind-h1">Rapporterad tid</h1>
+          <p className="ind-muted text-sm">
             Stämplingar från klockan, manuella efterregistreringar och rättelser.
           </p>
         </div>
         <div className="flex gap-2">
-          <Button className="gap-2" onClick={() => setManualOpen(true)}>
+          <IndustryButton variant="secondary" size="touch" onClick={() => setManualOpen(true)}>
             <Plus className="h-4 w-4" /> Efterregistrera
-          </Button>
-          <Button variant="outline" className="gap-2" onClick={() => setInspector(true)}>
+          </IndustryButton>
+          <IndustryButton variant="secondary" size="touch" onClick={() => setInspector(true)}>
             <ShieldCheck className="h-4 w-4" /> Visa för Skatteverket
-          </Button>
+          </IndustryButton>
         </div>
-      </div>
+      </DecisionBar>
 
-      {filters}
+      <div className="mt-4">{filters}</div>
 
-      <Tabs defaultValue="day">
-        <TabsList>
-          <TabsTrigger value="day">Dagslista</TabsTrigger>
-          <TabsTrigger value="journal">Journal ({entries.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="day">
-          <Card className="overflow-x-auto">
-            {isLoading ? (
-              <div className="p-6">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : summaries.length === 0 ? (
-              <p className="p-8 text-center text-sm text-muted-foreground">
-                Inga stämplingar för perioden.
-              </p>
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs text-muted-foreground">
-                    <th className="p-2 w-8"></th>
-                    <th className="p-2">Datum</th>
-                    <th className="p-2">Person</th>
-                    <th className="p-2">In</th>
-                    <th className="p-2">Ut</th>
-                    <th className="p-2">Rast</th>
-                    <th className="p-2">Total tid</th>
-                    <th className="p-2">Källa</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summaries.map((r) => {
-                    const key = `${r.employee_id}-${r.day}`;
-                    return (
-                      <tr key={key} className="border-b hover:bg-muted/40">
-                        <td className="p-2">
-                          <Checkbox
-                            checked={selected.has(key)}
-                            onCheckedChange={(v) =>
-                              setSelected((prev) => {
-                                const next = new Set(prev);
-                                if (v) next.add(key);
-                                else next.delete(key);
-                                return next;
-                              })
-                            }
-                          />
-                        </td>
-                        <td className="p-2 font-mono">{r.day}</td>
-                        <td className="p-2">{employeeName.get(r.employee_id) ?? r.employee_id}</td>
-                        <td className="p-2 font-mono tabular-nums">{hhmm(r.first_in)}</td>
-                        <td className="p-2 font-mono tabular-nums">{hhmm(r.last_out)}</td>
-                        <td className="p-2 font-mono tabular-nums">{durationLabel(r.break_seconds)}</td>
-                        <td className="p-2 font-mono tabular-nums">{durationLabel(r.work_seconds)}</td>
-                        <td className="p-2">
-                          {r.sources.map((s) => (
-                            <Badge key={s} variant="outline" className="mr-1 text-[10px]">
-                              {SOURCE_LABEL[s as TimeEntry["source"]]}
-                            </Badge>
-                          ))}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </Card>
-          {selected.size > 0 && (
-            <p className="text-xs text-muted-foreground mt-2">
-              {selected.size} rader markerade. Attest kommer i etapp 3.
-            </p>
-          )}
-        </TabsContent>
-
-        <TabsContent value="journal">
-          <Card className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-xs text-muted-foreground">
-                  <th className="p-2">Tidpunkt</th>
-                  <th className="p-2">Person</th>
-                  <th className="p-2">Typ</th>
-                  <th className="p-2">Källa</th>
-                  <th className="p-2">Registrerad</th>
-                  <th className="p-2">Rättar</th>
-                  <th className="p-2">Anteckning</th>
-                  <th className="p-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {journal.map((e) => {
-                  const isEffective = effective.some((x) => x.id === e.id);
+      <section className="mt-6">
+        <SectionLabel className="mb-2">Dagslista</SectionLabel>
+        {isLoading ? (
+          <Loader2 className="h-5 w-5 animate-spin ind-muted" />
+        ) : summaries.length === 0 ? (
+          <p className="ind-muted text-sm">Inga stämplingar för perioden.</p>
+        ) : (
+          days.map((day) => (
+            <div key={day} className="mb-6">
+              <SectionLabel className="mb-1">{day}</SectionLabel>
+              {summaries
+                .filter((r) => r.day === day)
+                .map((r) => {
+                  const key = `${r.employee_id}-${r.day}`;
+                  const primarySource = r.sources[0] ?? "clock";
                   return (
-                    <tr
-                      key={e.id}
-                      className={`border-b ${isEffective ? "" : "opacity-50 line-through"}`}
-                    >
-                      <td className="p-2 font-mono">{e.occurred_at.slice(0, 16).replace("T", " ")}</td>
-                      <td className="p-2">{employeeName.get(e.employee_id) ?? e.employee_id}</td>
-                      <td className="p-2">{TYPE_LABEL[e.type]}</td>
-                      <td className="p-2">
-                        <Badge variant="outline" className="text-[10px]">
-                          {SOURCE_LABEL[e.source]}
-                        </Badge>
-                      </td>
-                      <td className="p-2 font-mono text-xs">
-                        {e.registered_at.slice(0, 16).replace("T", " ")}
-                      </td>
-                      <td className="p-2 font-mono text-xs">
-                        {e.corrects_entry_id ? `${e.correction_kind} · ${e.corrects_entry_id.slice(0, 8)}` : "–"}
-                      </td>
-                      <td className="p-2 text-xs">{e.note ?? ""}</td>
-                      <td className="p-2">
-                        <Button size="sm" variant="ghost" className="gap-1" onClick={() => openCorrection(e)}>
-                          <Pencil className="h-3.5 w-3.5" /> Rätta
-                        </Button>
-                      </td>
-                    </tr>
+                    <IndustryRow key={key} edge={sourceEdge(primarySource)} className="flex-wrap">
+                      <Checkbox
+                        checked={selected.has(key)}
+                        aria-label={`Markera ${employeeName.get(r.employee_id) ?? r.employee_id}`}
+                        onCheckedChange={(v) =>
+                          setSelected((prev) => {
+                            const next = new Set(prev);
+                            if (v) next.add(key);
+                            else next.delete(key);
+                            return next;
+                          })
+                        }
+                      />
+                      <span className="min-w-[180px]">{employeeName.get(r.employee_id) ?? r.employee_id}</span>
+                      <span className="ind-mono">{hhmm(r.first_in)} – {hhmm(r.last_out)}</span>
+                      <span className="ind-muted ind-mono text-sm">rast {durationLabel(r.break_seconds)}</span>
+                      <span className="ind-mono">{durationLabel(r.work_seconds)}</span>
+                      <span className="ml-auto flex gap-3">
+                        {r.sources.map((s) => (
+                          <StatusLabel
+                            key={s}
+                            tone={s === "clock" ? "ok" : s === "correction" ? "progress" : "neutral"}
+                          >
+                            {SOURCE_LABEL[s as TimeEntry["source"]]}
+                          </StatusLabel>
+                        ))}
+                      </span>
+                    </IndustryRow>
                   );
                 })}
-              </tbody>
-            </table>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          ))
+        )}
+        {selected.size > 0 && (
+          <p className="ind-muted text-sm">{selected.size} rader markerade. Attest kommer i etapp 3.</p>
+        )}
+      </section>
+
+      <section className="mt-8">
+        <SectionLabel className="mb-2">Journal ({entries.length})</SectionLabel>
+        {journal.map((e) => {
+          const isEffective = effective.some((x) => x.id === e.id);
+          return (
+            <IndustryRow
+              key={e.id}
+              edge={sourceEdge(e.source)}
+              muted={!isEffective}
+              className={`flex-wrap ${isEffective ? "" : "line-through"}`}
+            >
+              <span className="ind-mono min-w-[130px]">{e.occurred_at.slice(0, 16).replace("T", " ")}</span>
+              <span className="min-w-[170px]">{employeeName.get(e.employee_id) ?? e.employee_id}</span>
+              <span>{TYPE_LABEL[e.type]}</span>
+              <StatusLabel tone={e.source === "clock" ? "ok" : e.source === "correction" ? "progress" : "neutral"}>
+                {SOURCE_LABEL[e.source]}
+              </StatusLabel>
+              {e.corrects_entry_id && (
+                <span className="ind-muted text-sm">
+                  ersätter {e.correction_kind} · {e.corrects_entry_id.slice(0, 8)}
+                </span>
+              )}
+              {e.note && <span className="ind-muted text-sm">{e.note}</span>}
+              <IndustryButton variant="ghost" className="ml-auto" onClick={() => openCorrection(e)}>
+                <Pencil className="h-3.5 w-3.5" /> Rätta
+              </IndustryButton>
+            </IndustryRow>
+          );
+        })}
+      </section>
+
 
       {/* Manuell efterregistrering */}
       <Dialog open={manualOpen} onOpenChange={setManualOpen}>
