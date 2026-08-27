@@ -119,6 +119,19 @@ export function useMailIntakeActions() {
     onSuccess: invalidate,
   });
 
+  /** Hämtar digital post från Fortnox (Inbox, arkiv och leverantörsfakturor). */
+  const runFortnoxIntake = useMutation({
+    mutationFn: async (opts: { entity?: string; archive?: boolean; invoices?: boolean } = {}) => {
+      const { data, error } = await supabase.functions.invoke("fortnox-inbox-intake", {
+        body: { entity: "fsab-se", ...opts },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as { fetched: number; stored: number; skipped: number; invoices: number };
+    },
+    onSuccess: invalidate,
+  });
+
   const saveSender = useMutation({
     mutationFn: async (sender: Partial<MailSender> & { pattern: string }) => {
       const pattern = sender.pattern.trim().toLowerCase().replace(/^@/, "");
