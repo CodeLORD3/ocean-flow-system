@@ -164,34 +164,32 @@ export default function TimeEntriesPage() {
   );
 
   if (inspector) {
+    const printedAt = new Date().toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" });
+    const unitLabel = storeId ? storeName.get(storeId) ?? "–" : "Alla enheter";
     return (
-      <div className="fixed inset-0 z-50 bg-background overflow-auto p-6 print:p-0">
-        <div className="flex items-center justify-between mb-4 print:hidden">
+      <div className="fixed inset-0 z-50 ind-inspect overflow-auto p-6 print:p-0">
+        <div className="flex items-center justify-between mb-6 ind-print-hidden">
           <div>
-            <h1 className="text-xl font-semibold">Personalliggare — inspektörsläge (låst)</h1>
-            <p className="text-sm text-muted-foreground">
-              {storeId ? storeName.get(storeId) : "Alla enheter"} · {from} – {to}
-            </p>
+            <SectionLabel>Elektronisk personalliggare — låst läge</SectionLabel>
+            <h1 className="ind-h2">
+              {unitLabel} · {from} – {to}
+            </h1>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2" onClick={() => window.print()}>
+            <IndustryButton variant="secondary" onClick={() => window.print()}>
               <Printer className="h-4 w-4" /> Skriv ut / PDF
-            </Button>
-            <Button variant="ghost" className="gap-2" onClick={() => setInspector(false)}>
+            </IndustryButton>
+            <IndustryButton variant="ghost" onClick={() => setInspector(false)}>
               <X className="h-4 w-4" /> Stäng
-            </Button>
+            </IndustryButton>
           </div>
         </div>
-        <div className="hidden print:block mb-4">
-          <h1 className="text-lg font-semibold">Personalliggare</h1>
-          <p className="text-sm">
-            {storeId ? storeName.get(storeId) : "Alla enheter"} · {from} – {to}
-          </p>
-        </div>
-        <table className="w-full text-sm">
+
+        <SectionLabel className="mb-2">Närvaro</SectionLabel>
+        <table>
           <thead>
-            <tr className="border-b text-left">
-              <th className="py-2">Datum</th>
+            <tr>
+              <th>Datum</th>
               <th>Person</th>
               <th>Start</th>
               <th>Slut</th>
@@ -202,24 +200,24 @@ export default function TimeEntriesPage() {
           </thead>
           <tbody>
             {ledgerRows.map((r) => (
-              <tr key={`${r.employee_id}-${r.day}`} className="border-b">
-                <td className="py-1.5 font-mono">{r.day}</td>
+              <tr key={`${r.employee_id}-${r.day}`}>
+                <td className="ind-mono">{r.day}</td>
                 <td>{employeeName.get(r.employee_id) ?? r.employee_id}</td>
-                <td className="font-mono tabular-nums">{hhmm(r.first_in)}</td>
-                <td className="font-mono tabular-nums">{hhmm(r.last_out)}</td>
-                <td className="font-mono tabular-nums">{durationLabel(r.break_seconds)}</td>
-                <td className="font-mono tabular-nums">{durationLabel(r.work_seconds)}</td>
+                <td className="ind-mono">{hhmm(r.first_in)}</td>
+                <td className="ind-mono">{hhmm(r.last_out)}</td>
+                <td className="ind-mono">{durationLabel(r.break_seconds)}</td>
+                <td className="ind-mono">{durationLabel(r.work_seconds)}</td>
                 <td>{r.sources.map((s) => SOURCE_LABEL[s as TimeEntry["source"]]).join(", ")}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        <h2 className="mt-8 mb-2 font-semibold text-sm">Korrigeringshistorik</h2>
-        <table className="w-full text-xs">
+        <SectionLabel className="mt-8 mb-2">Korrigeringshistorik</SectionLabel>
+        <table>
           <thead>
-            <tr className="border-b text-left">
-              <th className="py-1">Tidpunkt</th>
+            <tr>
+              <th>Tidpunkt</th>
               <th>Person</th>
               <th>Typ</th>
               <th>Källa</th>
@@ -230,21 +228,26 @@ export default function TimeEntriesPage() {
           </thead>
           <tbody>
             {journal.map((e) => (
-              <tr key={e.id} className="border-b">
-                <td className="py-1 font-mono">{e.occurred_at.slice(0, 16).replace("T", " ")}</td>
+              <tr key={e.id}>
+                <td className="ind-mono">{e.occurred_at.slice(0, 16).replace("T", " ")}</td>
                 <td>{employeeName.get(e.employee_id) ?? e.employee_id}</td>
                 <td>{TYPE_LABEL[e.type]}</td>
                 <td>{SOURCE_LABEL[e.source]}</td>
-                <td className="font-mono">{e.corrects_entry_id ? `${e.correction_kind} ${e.corrects_entry_id.slice(0, 8)}` : "–"}</td>
-                <td className="font-mono">{e.registered_at.slice(0, 16).replace("T", " ")}</td>
+                <td className="ind-mono">{e.corrects_entry_id ? `${e.correction_kind} ${e.corrects_entry_id.slice(0, 8)}` : "–"}</td>
+                <td className="ind-mono">{e.registered_at.slice(0, 16).replace("T", " ")}</td>
                 <td>{e.note ?? ""}</td>
               </tr>
             ))}
           </tbody>
         </table>
+
+        <footer className="mt-8 pt-3 text-sm" style={{ borderTop: "1px solid currentColor" }}>
+          Elektronisk personalliggare — {unitLabel} — utskriven {printedAt}
+        </footer>
       </div>
     );
   }
+
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
