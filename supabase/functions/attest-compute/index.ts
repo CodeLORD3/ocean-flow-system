@@ -242,6 +242,16 @@ Deno.serve(async (req) => {
   let written = 0;
   const skipped: string[] = [];
   for (const row of rows) {
+    // Unika villkoret matchar inte NULL i shift_id — rensa gammal oplanerad rad först.
+    if (row.shift_id === null) {
+      await db
+        .from("attestations")
+        .delete()
+        .eq("store_id", row.store_id as string)
+        .eq("date", row.date as string)
+        .eq("employee_id", row.employee_id as string)
+        .is("shift_id", null);
+    }
     const { error } = await db
       .from("attestations")
       .upsert(row, { onConflict: "store_id,date,employee_id,shift_id", ignoreDuplicates: false });
