@@ -123,6 +123,9 @@ const staffNav = [
   { title: "Klocka vs PK", url: "/clock-vs-pk", icon: Scale },
   { title: "Personalkollen", url: "/personalkollen", icon: Plug },
   { title: "Schema", url: "/staff-schedule", icon: CalendarRange },
+  { title: "Schemaplanering", url: "/schedule-planner", icon: CalendarRange },
+  { title: "Mina pass", url: "/my-shifts", icon: CalendarRange },
+  { title: "Attest", url: "/attestations", icon: ClipboardCheck },
 ];
 
 const financeNav = [
