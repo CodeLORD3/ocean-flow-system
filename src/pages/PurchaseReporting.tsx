@@ -1626,10 +1626,12 @@ export default function PurchaseReporting() {
                 </DialogHeader>
                 <MailIntakePanel
                   onOpenReport={(id) => {
+                    // Mejlinloppet ska stanna öppet efter attest så man kan
+                    // fortsätta med nästa dokument i kön.
                     setSelectedReportId(id);
-                    setMailOpen(false);
                   }}
                 />
+
               </DialogContent>
             </Dialog>
 
