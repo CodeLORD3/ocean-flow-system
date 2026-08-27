@@ -49,8 +49,14 @@ export function buildPackListDoc(params: {
 
   header();
 
-  for (const o of params.orders) {
-    pageBreak(34);
+  // En beställning = egen sida. Två olika ordrar hamnar aldrig på samma papper;
+  // en lång order fortsätter på sida 2, 3 ... med samma sidhuvud.
+  params.orders.forEach((o, index) => {
+    if (index > 0) {
+      doc.addPage();
+      y = 18;
+      header();
+    }
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.text(`${o.order_number} — ${o.customers_retail?.name || o.customer_name_snapshot || "Kund"}`, left, y);
