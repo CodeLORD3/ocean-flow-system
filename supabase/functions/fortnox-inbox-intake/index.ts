@@ -351,7 +351,10 @@ Deno.serve(async (req) => {
         for (const head of (list?.SupplierInvoices ?? [])) {
           const nr = String(head.GivenNumber ?? head.DocumentNumber ?? "");
           if (!nr) continue;
+          // Historiska fakturor hoppas över — bara från startgränsen och framåt.
+          if (tooOld(head.InvoiceDate ?? head.DueDate ?? null)) { skipped++; continue; }
           const supplierName = String(head.SupplierName ?? "");
+
           const supplierId = resolveSupplier(supplierName);
           const storagePath = `fortnox/${entity}/supplierinvoice-${nr}.json`;
 
