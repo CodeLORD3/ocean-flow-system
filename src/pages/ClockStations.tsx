@@ -3,12 +3,20 @@
  */
 import { useMemo, useState } from "react";
 import QRCode from "qrcode";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  IndustryFrame,
+  IndustryButton,
+  IndustryRow,
+  SectionLabel,
+  StatusLabel,
+  DecisionBar,
+  DecisionMetric,
+  SideQueue,
+  QueueItem,
+} from "@/components/industry";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +34,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Loader2, Plus, RefreshCw, Ban, MonitorSmartphone, UserPlus } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Ban } from "lucide-react";
 import {
   useClockStations,
   useCreateClockStation,
@@ -311,8 +319,9 @@ export default function ClockStations() {
               Koden visas bara en gång. Ange den på klockan (/clock) eller skanna QR-koden.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 text-center">
-            <p className="text-3xl font-mono tracking-[0.2em]">{codeReveal?.code}</p>
+          <div className="ind ind-accent-surface ind-corners space-y-4 p-4 text-center">
+            <span className="ind-corner-b" aria-hidden="true" />
+            <p className="ind-h1 ind-mono tracking-[0.2em]">{codeReveal?.code}</p>
             {codeReveal?.qr && <img src={codeReveal.qr} alt="QR med aktiveringskod" className="mx-auto rounded" />}
           </div>
           <DialogFooter>
@@ -465,6 +474,6 @@ export default function ClockStations() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </IndustryFrame>
   );
 }
