@@ -64,6 +64,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
   const { runIntake, saveSender, removeSender, ignoreMessage, setDocumentSupplier, invalidate } = useMailIntakeActions();
 
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [approveError, setApproveError] = useState<string | null>(null);
   const [newPattern, setNewPattern] = useState("");
   const [newSupplier, setNewSupplier] = useState<string>("");
   const [newPortal, setNewPortal] = useState(false);
@@ -109,6 +110,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
 
   const handleApprove = async (doc: SupplierDocument) => {
     setBusyId(doc.id);
+    setApproveError(null);
     try {
       if (doc.doc_type === "faktura" || doc.doc_type === "kreditnota") {
         const rows = await matchInvoiceToLots(doc);
@@ -116,6 +118,9 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
         const n = await approveInvoice(doc, rows);
         toast({ title: "Faktura attesterad", description: `${n} partier fick fastställt pris.` });
       } else {
+        if (products.length === 0) {
+          throw new Error("Produktregistret är inte inläst ännu — vänta några sekunder och försök igen.");
+        }
         const reportId = await approveDeliveryNote(doc, {
           products: products as any,
           suppliers: suppliers as any,
@@ -126,11 +131,17 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
       }
       invalidate();
     } catch (e: any) {
-      toast({ title: "Kunde inte attestera", description: e.message, variant: "destructive" });
+      // Felet visas kvar på kortet — en toast som försvinner gör att attesten
+      // ser ut att "inte göra något" när den i själva verket stoppats.
+      console.error("Attest misslyckades", e);
+      const msg = e?.message || e?.error_description || e?.details || "Okänt fel vid attest.";
+      setApproveError(msg);
+      toast({ title: "Kunde inte attestera", description: msg, variant: "destructive" });
     } finally {
       setBusyId(null);
     }
   };
+
 
   const handleReject = async (doc: SupplierDocument) => {
     const reason = window.prompt("Orsak till avvisning?") ?? "";
