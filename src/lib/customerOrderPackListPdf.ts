@@ -128,11 +128,7 @@ export function buildPackListDoc(params: {
       y += 5;
     }
 
-    doc.setDrawColor(180);
-    pageBreak(8);
-    doc.line(left, y, right, y);
-    y += 7;
-  }
+  });
 
   doc.setFontSize(8);
   doc.setTextColor(120);
