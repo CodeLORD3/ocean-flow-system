@@ -153,10 +153,12 @@ Deno.serve(async (req) => {
       try {
         const { files } = await readFolder(sb, entity, `?path=${path}`, path);
         candidates.push(...files);
-      } catch (e) {
-        results.push({ source: path, action: "kunde_inte_lasas", error: String(e instanceof Error ? e.message : e) });
+      } catch {
+        // Vissa Fortnox-konton stödjer inte ?path=inbox — inkorgen hittas då som
+        // vanlig arkivmapp i traverseringen nedan.
       }
     }
+
 
     if (includeArchive) {
       try {
