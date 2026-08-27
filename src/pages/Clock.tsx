@@ -127,7 +127,7 @@ export default function Clock() {
     try {
       if (!navigator.onLine) {
         // Offline: köa direkt, in/ut väljs i nästa steg
-        setFound({ id: "offline", first_name: "Offline-stämpling", pnr_masked: `****${value.slice(-4)}`, suggested: "in" });
+        setFound({ id: "offline", first_name: "Offline-stämpling", pnr_masked: null, suggested: "in" });
         return;
       }
       const res = await lookup(value);
