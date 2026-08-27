@@ -251,12 +251,16 @@ const round3 = (n: number) => Math.round(n * 1000) / 1000;
 /**
  * Webbutiken säljer viktvaror i förpackningar ("Räkor Färska, 0,5kg"), medan
  * Makrilltrade räknar viktvaror i KILO. Shopify skickar antal förpackningar —
- * 4 st à 0,5 kg är 2 kg, inte 4 kg. Här läses förpackningsstorleken ut ur
- * titel/SKU (0,5kg, 500g, 1/2 kg) med line_items.grams som reserv.
+ * 4 st à 0,5 kg är 2 kg, inte 4 kg. Förpackningsstorleken kan ligga i titeln,
+ * i variantnamnet (variant_title = "500g"), i det sammansatta radnamnet
+ * (name = "Fresh Cooked Shrimps - 500g") eller i SKU. Alla läses, med
+ * line_items.grams som sista reserv.
  * Returnerar 1 när ingen storlek kan läsas — då tolkas raden som hela kilon.
  */
-function packSizeKg(title: string, sku: string, grams: unknown): number {
-  const text = `${title} ${sku}`.toLowerCase().replace(/\u00a0/g, " ");
+function packSizeKg(title: string, sku: string, grams: unknown, variant?: unknown, name?: unknown): number {
+  const text = `${title} ${variant ?? ""} ${name ?? ""} ${sku}`
+    .toLowerCase()
+    .replace(/\u00a0/g, " ");
   const half = /(^|[^0-9])1\s*\/\s*2\s*kg/.test(text);
   if (half) return 0.5;
   const kg = text.match(/(\d+(?:[.,]\d+)?)\s*\.?\s*kg\b/);
@@ -273,6 +277,7 @@ function packSizeKg(title: string, sku: string, grams: unknown): number {
   if (Number.isFinite(fromGrams) && fromGrams > 0) return fromGrams / 1000;
   return 1;
 }
+
 
 
 /**
@@ -680,7 +685,7 @@ async function createOrder(
     const packPrice = round2(Number(li?.price ?? 0));
     const lineTotal = round2(packs * packPrice);
     const isWeight = !!product && stockUnitOf(product.unit) === "kg";
-    const pack = isWeight ? packSizeKg(title, sku, li?.grams) : 1;
+    const pack = isWeight ? packSizeKg(title, sku, li?.grams, li?.variant_title, li?.name) : 1;
     const qty = pack !== 1 ? round3(packs * pack) : packs;
     const price = pack !== 1 && pack > 0 ? round2(packPrice / pack) : packPrice;
     estimated += lineTotal;
