@@ -153,10 +153,12 @@ Deno.serve(async (req) => {
       try {
         const { files } = await readFolder(sb, entity, `?path=${path}`, path);
         candidates.push(...files);
-      } catch (e) {
-        results.push({ source: path, action: "kunde_inte_lasas", error: String(e instanceof Error ? e.message : e) });
+      } catch {
+        // Vissa Fortnox-konton stödjer inte ?path=inbox — inkorgen hittas då som
+        // vanlig arkivmapp i traverseringen nedan.
       }
     }
+
 
     if (includeArchive) {
       try {
@@ -324,7 +326,7 @@ Deno.serve(async (req) => {
     let invoices = 0;
     if (includeInvoices) {
       try {
-        const list = await fortnoxRequest<any>(sb, entity, "GET", "/supplierinvoices?limit=50&sortby=givendate&sortorder=descending");
+        const list = await fortnoxRequest<any>(sb, entity, "GET", "/supplierinvoices?limit=50&sortorder=descending");
         for (const head of (list?.SupplierInvoices ?? [])) {
           const nr = String(head.GivenNumber ?? head.DocumentNumber ?? "");
           if (!nr) continue;
