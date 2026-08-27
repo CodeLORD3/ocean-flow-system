@@ -39,6 +39,9 @@ import ClockVsPk from "@/pages/ClockVsPk";
 import FortnoxSettings from "@/pages/FortnoxSettings";
 
 import StaffSchedule from "@/pages/StaffSchedule";
+import SchedulePlanner from "@/pages/SchedulePlanner";
+import MyShifts from "@/pages/MyShifts";
+import Attestations from "@/pages/Attestations";
 
 import TradeOffers from "@/pages/TradeOffers";
 import TradeHistory from "@/pages/TradeHistory";
@@ -127,6 +130,9 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/clock-vs-pk": { component: <ClockVsPk /> },
   "/on-site-now": { component: <LiveStaff /> },
   "/staff-schedule": { component: <StaffSchedule /> },
+  "/schedule-planner": { component: <SchedulePlanner /> },
+  "/my-shifts": { component: <MyShifts /> },
+  "/attestations": { component: <Attestations /> },
 
   "/fortnox": { component: <FortnoxSettings /> },
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
