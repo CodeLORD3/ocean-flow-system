@@ -685,7 +685,7 @@ async function createOrder(
     const packPrice = round2(Number(li?.price ?? 0));
     const lineTotal = round2(packs * packPrice);
     const isWeight = !!product && stockUnitOf(product.unit) === "kg";
-    const pack = isWeight ? packSizeKg(title, sku, li?.grams) : 1;
+    const pack = isWeight ? packSizeKg(title, sku, li?.grams, li?.variant_title, li?.name) : 1;
     const qty = pack !== 1 ? round3(packs * pack) : packs;
     const price = pack !== 1 && pack > 0 ? round2(packPrice / pack) : packPrice;
     estimated += lineTotal;
