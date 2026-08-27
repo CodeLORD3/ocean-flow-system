@@ -146,10 +146,10 @@ export function QueueItem({ className, children, ...rest }: HTMLAttributes<HTMLD
   );
 }
 
-export function IndustryInput({
-  kiosk,
-  className,
-  ...rest
-}: React.InputHTMLAttributes<HTMLInputElement> & { kiosk?: boolean }) {
-  return <input className={cx("ind-input", kiosk && "ind-input--kiosk", className)} {...rest} />;
-}
+export const IndustryInput = forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement> & { kiosk?: boolean }
+>(({ kiosk, className, ...rest }, ref) => (
+  <input ref={ref} className={cx("ind-input", kiosk && "ind-input--kiosk", className)} {...rest} />
+));
+IndustryInput.displayName = "IndustryInput";

@@ -300,7 +300,7 @@ export default function Clock() {
             </div>
             <IndustryInput
               kiosk
-              ref={inputRef as never}
+              ref={inputRef}
               value={identifier}
               inputMode="numeric"
               autoComplete="off"
