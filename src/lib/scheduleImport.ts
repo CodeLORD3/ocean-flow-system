@@ -42,6 +42,8 @@ export interface ParsedRow {
   shift_type_hint: string | null;
   note: string | null;
   errors: string[];
+  /** Varningar som inte blockerar import men MÅSTE synas i granskningen. */
+  warnings: string[];
 }
 
 const MONTHS: Record<string, number> = {
@@ -54,7 +56,9 @@ const normKey = (k: string) =>
     .trim()
     .replace(/[åä]/g, "a")
     .replace(/ö/g, "o")
-    .replace(/[\s.-]+/g, "_");
+    .replace(/[()[\]{}:;,/]+/g, " ")
+    .replace(/[\s._-]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 
 const COLUMN_ALIASES: Record<string, ImportColumn> = {
   datum: "datum",
@@ -69,9 +73,22 @@ const COLUMN_ALIASES: Record<string, ImportColumn> = {
   rast_min: "rast_min",
   rast: "rast_min",
   rastminuter: "rast_min",
+  rast_minuter: "rast_min",
+  rast_minutes: "rast_min",
+  rast_i_minuter: "rast_min",
+  paus: "rast_min",
+  paus_min: "rast_min",
+  lunch: "rast_min",
+  lunch_min: "rast_min",
+  break: "rast_min",
+  break_min: "rast_min",
   anstallningsnummer: "anstallningsnummer",
   anstnr: "anstallningsnummer",
+  anst_nr: "anstallningsnummer",
   anstallningsnr: "anstallningsnummer",
+  anstallnings_nr: "anstallningsnummer",
+  personalnummer: "anstallningsnummer",
+  personal_nr: "anstallningsnummer",
   personnummer: "personnummer",
   pnr: "personnummer",
   namn: "namn",
@@ -180,7 +197,20 @@ export function looksLikeTemplate(rows: RawRow[]): boolean {
   return mapped.includes("datum") && mapped.includes("starttid") && mapped.includes("sluttid");
 }
 
+/** Kolumnrubriker i filen som parsern inte känner igen (visas som varning). */
+export function unmappedColumns(rows: RawRow[]): string[] {
+  if (!rows.length) return [];
+  const out = new Set<string>();
+  for (const row of rows) {
+    for (const [key, value] of Object.entries(row.values)) {
+      if (!COLUMN_ALIASES[key] && String(value ?? "").trim()) out.add(key);
+    }
+  }
+  return [...out];
+}
+
 export function parseRows(rows: RawRow[]): ParsedRow[] {
+  const unmapped = unmappedColumns(rows);
   return rows.map((row) => {
     const get = (col: ImportColumn): string => {
       for (const [key, value] of Object.entries(row.values)) {
@@ -195,8 +225,23 @@ export function parseRows(rows: RawRow[]): ParsedRow[] {
     if (!start) errors.push(`Starttid kunde inte tolkas: "${get("starttid") || "tomt"}"`);
     const end = parseTime(get("sluttid"));
     if (!end) errors.push(`Sluttid kunde inte tolkas: "${get("sluttid") || "tomt"}"`);
+    const warnings: string[] = [];
     const breakRaw = get("rast_min").replace(",", ".");
-    const breakMinutes = breakRaw ? Math.max(0, Math.round(Number(breakRaw) || 0)) : 0;
+    let breakMinutes = 0;
+    if (!breakRaw) {
+      warnings.push("Rast saknas i filen — satt till 0 minuter. Kontrollera innan import.");
+    } else if (Number.isNaN(Number(breakRaw))) {
+      breakMinutes = 0;
+      warnings.push(`Rast kunde inte tolkas: "${breakRaw}" — satt till 0 minuter.`);
+    } else {
+      breakMinutes = Math.max(0, Math.round(Number(breakRaw)));
+    }
+    if (!get("skifttyp")) warnings.push("Skifttyp saknas — passet får standardtypen Ordinarie.");
+    for (const key of unmapped) {
+      if (String(row.values[key] ?? "").trim()) {
+        warnings.push(`Kolumnen "${key}" kunde inte tolkas och importeras inte (värde: "${row.values[key]}").`);
+      }
+    }
 
     return {
       index: row.index,
@@ -212,6 +257,7 @@ export function parseRows(rows: RawRow[]): ParsedRow[] {
       shift_type_hint: get("skifttyp") || null,
       note: get("notering") || null,
       errors,
+      warnings,
     };
   });
 }
