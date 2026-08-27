@@ -511,6 +511,7 @@ function DraftQueueCard({
   suppliers,
   busy,
   queueLength,
+  error,
   onSetSupplier,
   onApprove,
   onReject,
@@ -519,6 +520,7 @@ function DraftQueueCard({
   suppliers: any[];
   busy: boolean;
   queueLength: number;
+  error?: string | null;
   onSetSupplier: (supplierId: string) => void;
   onApprove: () => void;
   onReject: () => void;
