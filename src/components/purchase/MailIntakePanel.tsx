@@ -61,7 +61,8 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
   const { data: products = [] } = useProducts();
   const { data: suppliers = [] } = useSuppliers();
   const { data: sizeGrades = [] } = useSizeGrades();
-  const { runIntake, saveSender, removeSender, ignoreMessage, setDocumentSupplier, invalidate } = useMailIntakeActions();
+  const { runIntake, runFortnoxIntake, saveSender, removeSender, ignoreMessage, setDocumentSupplier, invalidate } =
+    useMailIntakeActions();
 
   const [busyId, setBusyId] = useState<string | null>(null);
   const [approveError, setApproveError] = useState<string | null>(null);
