@@ -64,6 +64,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
   const { runIntake, saveSender, removeSender, ignoreMessage, setDocumentSupplier, invalidate } = useMailIntakeActions();
 
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [approveError, setApproveError] = useState<string | null>(null);
   const [newPattern, setNewPattern] = useState("");
   const [newSupplier, setNewSupplier] = useState<string>("");
   const [newPortal, setNewPortal] = useState(false);
@@ -109,6 +110,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
 
   const handleApprove = async (doc: SupplierDocument) => {
     setBusyId(doc.id);
+    setApproveError(null);
     try {
       if (doc.doc_type === "faktura" || doc.doc_type === "kreditnota") {
         const rows = await matchInvoiceToLots(doc);
@@ -116,6 +118,9 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
         const n = await approveInvoice(doc, rows);
         toast({ title: "Faktura attesterad", description: `${n} partier fick fastställt pris.` });
       } else {
+        if (products.length === 0) {
+          throw new Error("Produktregistret är inte inläst ännu — vänta några sekunder och försök igen.");
+        }
         const reportId = await approveDeliveryNote(doc, {
           products: products as any,
           suppliers: suppliers as any,
@@ -126,11 +131,17 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
       }
       invalidate();
     } catch (e: any) {
-      toast({ title: "Kunde inte attestera", description: e.message, variant: "destructive" });
+      // Felet visas kvar på kortet — en toast som försvinner gör att attesten
+      // ser ut att "inte göra något" när den i själva verket stoppats.
+      console.error("Attest misslyckades", e);
+      const msg = e?.message || e?.error_description || e?.details || "Okänt fel vid attest.";
+      setApproveError(msg);
+      toast({ title: "Kunde inte attestera", description: msg, variant: "destructive" });
     } finally {
       setBusyId(null);
     }
   };
+
 
   const handleReject = async (doc: SupplierDocument) => {
     const reason = window.prompt("Orsak till avvisning?") ?? "";
@@ -299,6 +310,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                   suppliers={suppliers as any[]}
                   busy={busyId === doc.id}
                   queueLength={drafts.length}
+                  error={approveError}
                   onSetSupplier={(supplier_id) =>
                     setDocumentSupplier.mutate(
                       { id: doc.id, supplier_id },
@@ -309,6 +321,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                   onReject={() => handleReject(doc)}
                 />
               ))}
+
               {drafts.length > 1 && (
                 <div className="p-3 text-[11px] text-muted-foreground flex items-center gap-1.5">
                   <Lock className="h-3 w-3" />
@@ -498,6 +511,7 @@ function DraftQueueCard({
   suppliers,
   busy,
   queueLength,
+  error,
   onSetSupplier,
   onApprove,
   onReject,
@@ -506,6 +520,7 @@ function DraftQueueCard({
   suppliers: any[];
   busy: boolean;
   queueLength: number;
+  error?: string | null;
   onSetSupplier: (supplierId: string) => void;
   onApprove: () => void;
   onReject: () => void;
@@ -582,6 +597,15 @@ function DraftQueueCard({
           </Button>
         </div>
       </div>
+
+      {error && (
+        <p className="flex items-start gap-1.5 rounded border border-destructive/40 bg-destructive/10 px-2 py-1.5 text-[11px] text-destructive">
+          <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+          <span>Attesten stoppades: {error}</span>
+        </p>
+      )}
+
+
 
       {lines.length > 0 && (
         <div className="rounded border bg-muted/30 overflow-x-auto">
