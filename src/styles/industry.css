@@ -1,0 +1,238 @@
+/**
+ * "Industry" — Makrilltrades nya designsystem (designpilot: stämpelklockemodulen).
+ *
+ * ENDA globala tokenfilen. Alla vyer refererar variabler/klasser härifrån —
+ * ingen vy får hårdkoda hex-färger.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@500;600;700&display=swap');
+
+:root {
+  --color-bg: #f2f2f3;
+  --color-surface: #e9e9ea;
+  --color-text: #1d1f20;
+  --color-accent: #5980a6;
+  --color-accent-2: #728fab;
+  --color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+
+  --color-neutral-100:#f5f5f8; --color-neutral-200:#e7e7ea; --color-neutral-300:#d4d4d7;
+  --color-neutral-400:#b7b7ba; --color-neutral-500:#98989b; --color-neutral-600:#7a7a7d;
+  --color-neutral-700:#5d5d60; --color-neutral-800:#424244; --color-neutral-900:#2b2b2d;
+
+  --color-accent-100:#eef6ff; --color-accent-200:#d6ebff; --color-accent-300:#b5d9fd;
+  --color-accent-400:#94bce3; --color-accent-500:#749dc4; --color-accent-600:#597ea3;
+  --color-accent-700:#416180; --color-accent-800:#2c455d; --color-accent-900:#1d2d3d;
+
+  --font-heading: "Barlow Condensed", system-ui, sans-serif;
+  --font-heading-weight: 600;
+  --font-body: "Barlow", system-ui, sans-serif;
+
+  --space-1:3.4px; --space-2:6.8px; --space-3:10.2px; --space-4:13.6px; --space-6:20.4px; --space-8:27.2px;
+  --radius-sm:2px; --radius-md:4px; --radius-lg:7px;
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #2b2b2d 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #2b2b2d 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #2b2b2d 22%, transparent);
+
+  /* Härledda värden — muted-text hålls mörk nog för WCAG AA på surface. */
+  --ind-muted: color-mix(in srgb, var(--color-text) 68%, var(--color-surface));
+  --ind-status-ok: var(--color-accent-700);
+  --ind-status-progress: #8a6a12;
+  --ind-status-alert: #8f2f2a;
+  --ind-status-neutral: var(--color-neutral-600);
+}
+
+/* ---------------------------------------------------------------- grund */
+
+.ind {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.ind h1, .ind h2, .ind h3, .ind h4, .ind h5, .ind .ind-h1, .ind .ind-h2, .ind .ind-h3 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.ind .ind-h1 { font-size: 30px; }
+.ind .ind-h2 { font-size: 24px; }
+.ind .ind-h3 { font-size: 19px; }
+
+/* Sektionsetikett: h6 = 13px versaler, 0.08em spärrning */
+.ind-label {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 13px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ind-muted);
+  margin: 0;
+}
+
+.ind-muted { color: var(--ind-muted); }
+.ind-mono { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+
+.ind-divider { border: 0; border-top: 1px solid var(--color-divider); margin: 0; }
+
+.ind-surface {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+}
+
+.ind-panel {
+  background: var(--color-neutral-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.ind-accent-surface {
+  background: var(--color-accent-100);
+  border-radius: var(--radius-md);
+}
+
+/* ------------------------------------------------ blueprint-hörnmarkering */
+
+.ind-corners { position: relative; }
+.ind-corners::before,
+.ind-corners::after,
+.ind-corners > .ind-corner-b::before,
+.ind-corners > .ind-corner-b::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  border-color: color-mix(in srgb, var(--color-text) 45%, transparent);
+  border-style: solid;
+  border-width: 0;
+}
+.ind-corners::before { top: 4px; left: 4px; border-top-width: 1px; border-left-width: 1px; }
+.ind-corners::after { top: 4px; right: 4px; border-top-width: 1px; border-right-width: 1px; }
+.ind-corners > .ind-corner-b { position: absolute; inset: 0; pointer-events: none; }
+.ind-corners > .ind-corner-b::before { bottom: 4px; left: 4px; border-bottom-width: 1px; border-left-width: 1px; }
+.ind-corners > .ind-corner-b::after { bottom: 4px; right: 4px; border-bottom-width: 1px; border-right-width: 1px; }
+
+/* ------------------------------------------------------------- knappar */
+
+.ind-btn {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background-color .12s ease, color .12s ease, border-color .12s ease;
+}
+.ind-btn:disabled { opacity: .45; cursor: not-allowed; }
+.ind-btn:focus-visible {
+  outline: 2px solid var(--color-accent-700);
+  outline-offset: 2px;
+}
+
+.ind-btn--primary { background: var(--color-accent-600); color: var(--color-neutral-100); }
+.ind-btn--primary:not(:disabled):active { background: var(--color-accent-700); }
+
+.ind-btn--secondary { border-color: var(--color-divider); color: var(--color-text); }
+.ind-btn--secondary:not(:disabled):active { background: var(--color-neutral-200); }
+
+.ind-btn--ghost { color: var(--color-accent-700); }
+.ind-btn--ghost:not(:disabled):active { background: var(--color-accent-100); }
+
+.ind-btn--touch { min-height: 48px; padding: var(--space-3) var(--space-6); }
+.ind-btn--kiosk { min-height: 72px; font-size: 22px; }
+
+/* --------------------------------------------------------------- fält */
+
+.ind-input {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-text);
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  min-height: 40px;
+}
+.ind-input:focus-visible { outline: 2px solid var(--color-accent-700); outline-offset: 1px; }
+.ind-input::placeholder { color: var(--color-neutral-600); }
+
+.ind-input--kiosk {
+  min-height: 64px;
+  font-size: 30px;
+  text-align: center;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------- rader och status (vänsterkant + text) */
+
+.ind-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid transparent;
+}
+.ind-row + .ind-row { margin-top: var(--space-1); }
+.ind-row--edge-accent { border-left-color: var(--color-accent-600); }
+.ind-row--edge-accent-2 { border-left-color: var(--color-accent-2); }
+.ind-row--edge-neutral { border-left-color: var(--color-neutral-500); }
+.ind-row--edge-strong { border-left-color: var(--color-accent-700); }
+.ind-row--edge-alert { border-left-color: var(--ind-status-alert); }
+.ind-row--muted { color: var(--ind-muted); }
+
+.ind-status {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.ind-status--ok { color: var(--ind-status-ok); }
+.ind-status--progress { color: var(--ind-status-progress); }
+.ind-status--alert { color: var(--ind-status-alert); }
+.ind-status--neutral { color: var(--ind-status-neutral); }
+
+/* -------------------------------------------------------- sidokö/beslutsrad */
+
+.ind-queue { border-left: 1px solid var(--color-divider); padding-left: var(--space-6); }
+.ind-queue-item { padding: var(--space-3) 0; border-left: 3px solid var(--color-accent-600); padding-left: var(--space-3); }
+.ind-queue-item + .ind-queue-item { border-top: 1px solid var(--color-divider); }
+
+.ind-decision {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-6);
+  padding: var(--space-4) 0 var(--space-6);
+  border-bottom: 1px solid var(--color-divider);
+}
+.ind-decision__value { font-family: var(--font-heading); font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------ inspektörsläge/print */
+
+.ind-inspect { background: #ffffff; color: #000000; font-family: var(--font-body); }
+.ind-inspect table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ind-inspect th { text-align: left; font-family: var(--font-heading); font-weight: var(--font-heading-weight); text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; border-bottom: 1px solid #000; padding: 4px 6px; }
+.ind-inspect td { padding: 3px 6px; border-bottom: 1px solid color-mix(in srgb, #000 20%, transparent); }
+
+@media print {
+  .ind-print-hidden { display: none !important; }
+  .ind-inspect { padding: 0; }
+}
