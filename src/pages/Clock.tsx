@@ -4,13 +4,19 @@
  * Steg 1: aktiveringskod (sparas i enheten tills koden roteras/återkallas).
  * Steg 2: stämpelvy med stort numeriskt inmatningsfält (RFID keyboard wedge
  * fungerar automatiskt eftersom samma fält används).
+ *
+ * Design: "Industry" — ett fokus per vy, blueprint-hörn bara på ytterram och
+ * primärknapp, status via vänsterkant + textetikett.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, WifiOff, CheckCircle2, Clock as ClockIcon, LogIn, LogOut, Coffee } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import {
+  IndustryFrame,
+  IndustryButton,
+  IndustryInput,
+  SectionLabel,
+  StatusLabel,
+} from "@/components/industry";
 import {
   activate,
   clearSession,
@@ -186,150 +192,168 @@ export default function Clock() {
   // ---------- Steg 1: aktivering ----------
   if (!activated) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <Card className="w-full max-w-md p-8 space-y-6">
-          <div className="space-y-1 text-center">
-            <ClockIcon className="h-10 w-10 mx-auto text-primary" />
-            <h1 className="text-2xl font-semibold">Aktivera stämpelklockan</h1>
-            <p className="text-sm text-muted-foreground">
-              Ange aktiveringskoden för försäljningsstället.
-            </p>
+      <IndustryFrame className="min-h-screen flex items-center justify-center p-6">
+        <div className="w-full max-w-md space-y-6">
+          <div className="space-y-1">
+            <SectionLabel>Stämpelklocka · aktivering</SectionLabel>
+            <h1 className="ind-h1">Aktivera klockan</h1>
+            <p className="ind-muted text-sm">Ange aktiveringskoden för försäljningsstället.</p>
           </div>
-          <Input
+          <IndustryInput
+            kiosk
             autoFocus
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             onKeyDown={(e) => e.key === "Enter" && handleActivate()}
             placeholder="AKTIVERINGSKOD"
-            className="h-16 text-center text-2xl tracking-[0.3em] font-mono"
+            aria-label="Aktiveringskod"
           />
-          {error && <p className="text-sm text-destructive text-center">{error}</p>}
-          <Button className="w-full h-14 text-lg" onClick={handleActivate} disabled={busy || code.length < 8}>
+          {error && (
+            <p className="ind-row ind-row--edge-alert">
+              <StatusLabel tone="alert">Fel</StatusLabel>
+              <span className="text-sm">{error}</span>
+            </p>
+          )}
+          <IndustryButton
+            variant="primary"
+            size="kiosk"
+            corners
+            className="w-full"
+            onClick={handleActivate}
+            disabled={busy || code.length < 8}
+          >
             {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : "Aktivera"}
-          </Button>
-        </Card>
-      </div>
+          </IndustryButton>
+        </div>
+      </IndustryFrame>
     );
   }
 
   // ---------- Steg 2: kiosk ----------
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 sm:p-8">
-      <div className="mx-auto max-w-3xl space-y-6">
-        <header className="flex items-center justify-between gap-3">
+    <IndustryFrame className="min-h-screen p-4 sm:p-8">
+      <div className="mx-auto max-w-3xl">
+        <header className="flex items-start justify-between gap-4 pb-6">
           <div>
-            <h1 className="text-xl font-semibold">{station?.store_name ?? station?.name ?? "Stämpelklocka"}</h1>
-            <p className="text-xs text-muted-foreground">{station?.name}</p>
+            <SectionLabel>{station?.name ?? "Stämpelklocka"}</SectionLabel>
+            <p className="ind-h3">{station?.store_name ?? "Försäljningsställe"}</p>
           </div>
-          <div className="flex items-center gap-2">
-            {!online && (
-              <Badge variant="destructive" className="gap-1">
-                <WifiOff className="h-3 w-3" /> Offline-läge
-              </Badge>
-            )}
-            {queued > 0 && <Badge variant="outline">{queued} i kö</Badge>}
-            <Badge variant="outline" className="font-mono tabular-nums">
-              {new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}
-            </Badge>
-          </div>
+          <p className="ind-h2 ind-mono">
+            {new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}
+          </p>
         </header>
 
+        {!online && (
+          <div className="ind-row ind-row--edge-neutral mb-4">
+            <SectionLabel>Offline — stämplingar köas</SectionLabel>
+            {queued > 0 && <span className="ind-muted text-sm ind-mono">{queued} i kö</span>}
+          </div>
+        )}
+
         {receipt ? (
-          <Card className="p-10 text-center space-y-3 border-primary">
-            <CheckCircle2 className="h-14 w-14 mx-auto text-primary" />
-            <p className="text-2xl font-semibold">
-              {ACTION_LABEL[receipt.action]} registrerad
-            </p>
-            <p className="text-lg">
-              {receipt.name} · <span className="font-mono tabular-nums">{timeOf(receipt.at)}</span>
-            </p>
+          <div className="ind-accent-surface p-8 space-y-2">
+            <SectionLabel>{ACTION_LABEL[receipt.action]} registrerad</SectionLabel>
+            <p className="ind-h1">{receipt.name}</p>
+            <p className="ind-h3 ind-mono">{timeOf(receipt.at)}</p>
             {receipt.offline && (
-              <p className="text-sm text-muted-foreground">
-                Sparad i offline-kön och syncas när nätet är tillbaka.
-              </p>
+              <p className="ind-muted text-sm">Sparad i offline-kön och syncas när nätet är tillbaka.</p>
             )}
-          </Card>
+          </div>
         ) : found ? (
-          <Card className="p-8 space-y-6 text-center">
+          <div className="space-y-6">
             <div>
-              <p className="text-3xl font-semibold">Hej {found.first_name}</p>
-              <p className="text-lg font-mono text-muted-foreground">{found.pnr_masked ?? ""}</p>
+              <h2 className="ind-h2">
+                Hej {found.first_name} {found.pnr_masked ? `(${found.pnr_masked})` : ""}
+              </h2>
+              <p className="ind-muted text-sm">Föreslaget nästa steg: {ACTION_LABEL[found.suggested]}</p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Button className="h-20 text-lg gap-2" onClick={() => handlePunch("in")} disabled={busy}>
-                <LogIn className="h-6 w-6" /> IN
-              </Button>
-              <Button
-                className="h-20 text-lg gap-2"
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <IndustryButton variant="primary" size="kiosk" corners onClick={() => handlePunch("in")} disabled={busy}>
+                IN
+              </IndustryButton>
+              <IndustryButton variant="secondary" size="kiosk" onClick={() => handlePunch("ut")} disabled={busy}>
+                UT
+              </IndustryButton>
+              <IndustryButton
                 variant="secondary"
-                onClick={() => handlePunch("ut")}
+                size="kiosk"
+                onClick={() => handlePunch(found.suggested === "rast_slut" ? "rast_slut" : "rast_start")}
                 disabled={busy}
               >
-                <LogOut className="h-6 w-6" /> UT
-              </Button>
-              <Button
-                className="h-16 text-base gap-2"
-                variant="outline"
-                onClick={() => handlePunch("rast_start")}
-                disabled={busy}
-              >
-                <Coffee className="h-5 w-5" /> RAST börjar
-              </Button>
-              <Button
-                className="h-16 text-base gap-2"
-                variant="outline"
-                onClick={() => handlePunch("rast_slut")}
-                disabled={busy}
-              >
-                <Coffee className="h-5 w-5" /> RAST slutar
-              </Button>
+                RAST
+              </IndustryButton>
             </div>
-            <p className="text-sm text-muted-foreground">Föreslaget nästa steg: {ACTION_LABEL[found.suggested]}</p>
-            <Button variant="ghost" onClick={reset}>
-              Avbryt
-            </Button>
-          </Card>
+            <div className="flex gap-3">
+              <IndustryButton variant="ghost" size="touch" onClick={() => handlePunch("rast_slut")} disabled={busy}>
+                Rast slutar
+              </IndustryButton>
+              <IndustryButton variant="ghost" size="touch" onClick={reset}>
+                Avbryt
+              </IndustryButton>
+            </div>
+          </div>
         ) : (
-          <Card className="p-8 space-y-5">
-            <label className="block text-center text-lg font-medium">
-              Personnummer eller kortnummer
-            </label>
-            <Input
-              ref={inputRef}
+          <div className="space-y-6">
+            <div className="text-center">
+              <SectionLabel>Stämpla</SectionLabel>
+              <h2 className="ind-h2">Personnummer eller kortnummer</h2>
+            </div>
+            <IndustryInput
+              kiosk
+              ref={inputRef as never}
               value={identifier}
               inputMode="numeric"
               autoComplete="off"
               onChange={(e) => setIdentifier(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleLookup()}
               placeholder="ÅÅMMDDXXXX"
-              className="h-20 text-center text-3xl font-mono tracking-widest"
+              aria-label="Personnummer eller kortnummer"
             />
             {pending && (
-              <p className="text-center text-base text-amber-500 font-medium">{pending}</p>
+              <div className="ind-row ind-row--edge-accent-2">
+                <StatusLabel tone="progress">Väntar</StatusLabel>
+                <span className="text-sm">{pending}</span>
+              </div>
             )}
-            {error && <p className="text-center text-sm text-destructive">{error}</p>}
-            <Button className="w-full h-16 text-xl" onClick={handleLookup} disabled={busy || !identifier}>
-              {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : "Fortsätt"}
-            </Button>
-          </Card>
+            {error && (
+              <div className="ind-row ind-row--edge-alert">
+                <StatusLabel tone="alert">Fel</StatusLabel>
+                <span className="text-sm">{error}</span>
+              </div>
+            )}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <IndustryButton
+                variant="primary"
+                size="kiosk"
+                corners
+                onClick={handleLookup}
+                disabled={busy || !identifier}
+              >
+                {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : "IN"}
+              </IndustryButton>
+              <IndustryButton variant="secondary" size="kiosk" onClick={handleLookup} disabled={busy || !identifier}>
+                UT
+              </IndustryButton>
+              <IndustryButton variant="secondary" size="kiosk" onClick={handleLookup} disabled={busy || !identifier}>
+                RAST
+              </IndustryButton>
+            </div>
+          </div>
         )}
 
-        <Card className="p-4">
-          <p className="text-sm font-medium mb-2">På plats nu</p>
+        <footer className="mt-8 pt-4" style={{ borderTop: "1px solid var(--color-divider)" }}>
+          <SectionLabel>På plats nu</SectionLabel>
           {onSite.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Ingen är instämplad.</p>
+            <p className="ind-muted text-sm">Ingen är instämplad.</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
-              {onSite.map((p, i) => (
-                <Badge key={i} variant={p.on_break ? "outline" : "secondary"} className="gap-1">
-                  {p.first_name} {p.initial}. · {timeOf(p.since)}
-                  {p.on_break ? " (rast)" : ""}
-                </Badge>
-              ))}
-            </div>
+            <p className="ind-muted text-sm">
+              {onSite
+                .map((p) => `${p.first_name} ${p.initial}. ${timeOf(p.since)}${p.on_break ? " (rast)" : ""}`)
+                .join("   ·   ")}
+            </p>
           )}
-        </Card>
+        </footer>
       </div>
-    </div>
+    </IndustryFrame>
   );
 }
