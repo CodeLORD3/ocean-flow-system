@@ -110,6 +110,16 @@ Deno.serve(async (req) => {
   const limit = typeof body.limit === "number" ? Math.min(Math.max(body.limit, 1), 40) : 15;
   const includeArchive = body.archive !== false;
   const includeInvoices = body.invoices !== false;
+  /**
+   * Startgräns: bara post från och med detta datum hämtas — aldrig historik.
+   * Standard = dagens datum (svensk tid). Kan överstyras med { since: "YYYY-MM-DD" }.
+   */
+  const since =
+    typeof body.since === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.since)
+      ? body.since
+      : new Date(Date.now() + 2 * 3600_000).toISOString().slice(0, 10);
+  const tooOld = (date?: string | null) => !!date && date.slice(0, 10) < since;
+
 
   const { data: run } = await sb
     .from("mail_intake_runs")
