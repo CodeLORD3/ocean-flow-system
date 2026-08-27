@@ -5,10 +5,15 @@
  * tid in/ut och timmar mot pk_logged_times, med differens i minuter.
  */
 import { useMemo, useState } from "react";
-import { Card } from "@/components/ui/card";
+import {
+  IndustryFrame,
+  IndustryRow,
+  SectionLabel,
+  StatusLabel,
+  DecisionBar,
+  DecisionMetric,
+} from "@/components/industry";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
