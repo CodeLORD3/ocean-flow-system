@@ -381,6 +381,11 @@ export function ScheduleImportDialog({
                   value={rows.filter((r) => r.errors.length).length}
                   tone={rows.some((r) => r.errors.length) ? "alert" : "ok"}
                 />
+                <DecisionMetric
+                  label="Varningar"
+                  value={rows.filter((r) => r.warnings.length).length}
+                  tone={rows.some((r) => r.warnings.length) ? "progress" : "ok"}
+                />
                 <DecisionMetric label="Nya" value={rows.filter((r) => r.diff === "ny").length} />
                 <DecisionMetric
                   label="Ändrade"
@@ -411,7 +416,9 @@ export function ScheduleImportDialog({
                           ? "accent-2"
                           : r.diff === "andrad"
                             ? "accent"
-                            : "neutral";
+                            : r.warnings.length
+                              ? "accent-2"
+                              : "neutral";
                     return (
                       <IndustryRow key={r.index} edge={edge}>
                         <div className="flex flex-wrap items-start gap-3">
@@ -452,6 +459,12 @@ export function ScheduleImportDialog({
                             {r.errors.map((err) => (
                               <p key={err} className="ind-status--alert text-xs">
                                 {err}
+                              </p>
+                            ))}
+                            {r.warnings.map((warn) => (
+                              <p key={warn} className="text-xs">
+                                <StatusLabel tone="progress">Varning</StatusLabel>{" "}
+                                <span className="ind-muted">{warn}</span>
                               </p>
                             ))}
                             {r.checks.map((c) => (

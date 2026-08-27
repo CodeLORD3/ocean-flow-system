@@ -13232,6 +13232,7 @@ export type Database = {
         Args: { _on?: string; _store_id: string }
         Returns: string
       }
+      cost_read_allowed: { Args: { _store_id: string }; Returns: boolean }
       current_staff: {
         Args: never
         Returns: {
@@ -13490,6 +13491,10 @@ export type Database = {
         Args: { p_location_id: string; p_lots: Json; p_report_id: string }
         Returns: string[]
       }
+      post_purchase_report_internal: {
+        Args: { p_location_id: string; p_lots: Json; p_report_id: string }
+        Returns: string[]
+      }
       preview_stock_zeroing: {
         Args: never
         Returns: {
@@ -13532,6 +13537,10 @@ export type Database = {
         Args: { _lot_id: string; _new_product_id: string }
         Returns: Json
       }
+      reclassify_lot_product_internal: {
+        Args: { _lot_id: string; _new_product_id: string }
+        Returns: Json
+      }
       service_set_employee_pnr: {
         Args: { _employee_id: string; _pnr: string }
         Returns: undefined
@@ -13567,11 +13576,16 @@ export type Database = {
         Args: { _day: string; _employee_id: string }
         Returns: number
       }
+      staff_shifts_rebuild_from_clock_internal: {
+        Args: { _day: string; _employee_id: string }
+        Returns: number
+      }
       staff_shifts_rebuild_range: {
         Args: { _from: string; _to: string }
         Returns: number
       }
       stock_reconciliation_check: { Args: { _source?: string }; Returns: Json }
+      stock_write_allowed: { Args: never; Returns: boolean }
       sumup_name_key: { Args: { _name: string }; Returns: string }
       unpost_purchase_report: { Args: { _report_id: string }; Returns: Json }
       user_company_ids: { Args: { _user_id: string }; Returns: string[] }
