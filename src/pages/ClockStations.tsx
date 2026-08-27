@@ -118,151 +118,153 @@ export default function ClockStations() {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">Stämpelklocka</h1>
-          <p className="text-sm text-muted-foreground">
-            Stationer per försäljningsställe, aktiveringskoder och väntande registreringar.
+    <IndustryFrame className="p-4 sm:p-6">
+      {/* Beslutsrad: ett fokus — stationerna. Sidokön tar avvikelserna. */}
+      <DecisionBar>
+        <div className="mr-auto">
+          <SectionLabel>Stämpelklocka</SectionLabel>
+          <h1 className="ind-h1">Stationer</h1>
+          <p className="ind-muted text-sm">
+            En station = ett försäljningsställe. Aktiveringskoden visas bara en gång.
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2">
+        <DecisionMetric label="Aktiva stationer" value={stations.filter((s) => s.status === "active").length} />
+        <DecisionMetric
+          label="Väntar granskning"
+          value={pending.length}
+          tone={pending.length > 0 ? "progress" : "neutral"}
+        />
+        <IndustryButton variant="primary" corners size="touch" onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4" /> Ny station
-        </Button>
-      </div>
+        </IndustryButton>
+      </DecisionBar>
 
-      <Tabs defaultValue="stations">
-        <TabsList>
-          <TabsTrigger value="stations">Stationer ({stations.length})</TabsTrigger>
-          <TabsTrigger value="pending">
-            Väntande registreringar {pending.length > 0 && <Badge className="ml-2">{pending.length}</Badge>}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="stations" className="space-y-3">
+      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <section>
+          <SectionLabel className="mb-3">Stationslista</SectionLabel>
           {isLoading ? (
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <Loader2 className="h-5 w-5 animate-spin ind-muted" />
           ) : stations.length === 0 ? (
-            <Card className="p-8 text-center text-sm text-muted-foreground">
-              Ingen station finns ännu. Skapa en station för pilotbutiken.
-            </Card>
+            <p className="ind-muted text-sm">Ingen station finns ännu. Skapa en station för pilotbutiken.</p>
           ) : (
             stations.map((s) => (
-              <Card key={s.id} className="p-4 flex flex-wrap items-center gap-4">
-                <MonitorSmartphone className="h-5 w-5 text-muted-foreground" />
-                <div className="min-w-[200px]">
-                  <p className="font-medium">{s.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {s.store_id ? storeName.get(s.store_id) ?? "–" : "Ingen enhet"} · {s.legal_entity_id ?? "–"}
+              <IndustryRow key={s.id} edge={s.status === "active" ? "accent" : "neutral"} className="flex-wrap">
+                <div className="min-w-[190px]">
+                  <p className="ind-h3">{s.name}</p>
+                  <p className="ind-muted text-sm">
+                    {s.store_id ? storeName.get(s.store_id) ?? "–" : "Ingen enhet"}
                   </p>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  <p>Kod slutar på ••{s.activation_code_hint ?? "––"}</p>
-                  <p>Roterad {dateTime(s.code_rotated_at)}</p>
+                <div className="ind-muted text-sm">
+                  <SectionLabel>Senast sedd</SectionLabel>
+                  <span className="ind-mono">{dateTime(s.last_seen_at)}</span>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  <p>Senast sedd</p>
-                  <p className="font-mono">{dateTime(s.last_seen_at)}</p>
+                <div className="ind-muted text-sm">
+                  <SectionLabel>Kod</SectionLabel>
+                  <span className="ind-mono">••{s.activation_code_hint ?? "––"}</span>
                 </div>
-                <Badge variant={s.status === "active" ? "secondary" : "destructive"}>
-                  {s.status === "active" ? "Aktiv" : "Återkallad"}
-                </Badge>
-                <div className="ml-auto flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => openProfile(s)}>
+                <StatusLabel tone={s.status === "active" ? "ok" : "alert"}>
+                  {s.status === "active" ? "Aktiv" : "Revokerad"}
+                </StatusLabel>
+                <div className="ml-auto flex gap-1">
+                  <IndustryButton variant="ghost" onClick={() => openProfile(s)}>
                     Profil
-                  </Button>
-                  <Button size="sm" variant="outline" className="gap-1" onClick={() => doRotate(s)}>
+                  </IndustryButton>
+                  <IndustryButton variant="ghost" onClick={() => doRotate(s)}>
                     <RefreshCw className="h-3.5 w-3.5" /> Rotera kod
-                  </Button>
-                  <Button
-                    size="sm"
+                  </IndustryButton>
+                  <IndustryButton
                     variant="ghost"
-                    className="gap-1 text-destructive"
                     disabled={s.status !== "active"}
                     onClick={() => revoke.mutate(s.id)}
                   >
                     <Ban className="h-3.5 w-3.5" /> Återkalla
-                  </Button>
+                  </IndustryButton>
                 </div>
-              </Card>
+              </IndustryRow>
             ))
           )}
-        </TabsContent>
+        </section>
 
-        <TabsContent value="pending" className="space-y-3">
+        {/* Sidokö: avvikelser med EN åtgärd per post */}
+        <SideQueue label="Väntande registreringar" empty="Inga väntande registreringar.">
           {pending.length === 0 ? (
-            <Card className="p-8 text-center text-sm text-muted-foreground">
-              Inga väntande registreringar.
-            </Card>
+            <p className="ind-muted text-sm">Inga väntande registreringar.</p>
           ) : (
             pending.map((p) => (
-              <Card key={p.id} className="p-4 flex flex-wrap items-center gap-4">
-                <UserPlus className="h-5 w-5 text-amber-500" />
-                <div>
-                  <p className="font-medium font-mono">{p.pnr_masked ?? p.identifier_masked ?? "okänd"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {p.stated_name ?? "Namn saknas"} · {p.store_id ? storeName.get(p.store_id) ?? "–" : "–"} ·{" "}
-                    {dateTime(p.occurred_at)} · {p.attempts} försök
-                  </p>
-                </div>
-                <div className="ml-auto flex items-center gap-2">
-                  {approveFor === p.id ? (
-                    <>
-                      <Select value={approveEmployee} onValueChange={setApproveEmployee}>
-                        <SelectTrigger className="w-[240px]">
-                          <SelectValue placeholder="Koppla till person" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {employees.map((e) => (
-                            <SelectItem key={e.id} value={e.id}>
-                              {e.first_name} {e.last_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        size="sm"
-                        disabled={!approveEmployee}
-                        onClick={async () => {
-                          await handlePending.mutateAsync({
-                            id: p.id,
-                            action: "approved",
-                            employee_id: approveEmployee,
-                          });
-                          setApproveFor(null);
-                          setApproveEmployee("");
-                          toast.success(
-                            "Godkänd. Personen kan stämpla när personnummret är kopplat på personalkortet.",
-                          );
-                        }}
-                      >
-                        Spara
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setApproveFor(null)}>
-                        Avbryt
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button size="sm" onClick={() => setApproveFor(p.id)}>
-                        Godkänn
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive"
-                        onClick={() => handlePending.mutate({ id: p.id, action: "rejected" })}
-                      >
-                        Avvisa
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </Card>
+              <QueueItem key={p.id}>
+                <p className="ind-mono text-sm">{p.pnr_masked ?? p.identifier_masked ?? "okänd"}</p>
+                <p className="text-sm">{p.stated_name ?? "Namn saknas"}</p>
+                <p className="ind-muted text-sm">
+                  {p.store_id ? storeName.get(p.store_id) ?? "–" : "–"} · {dateTime(p.occurred_at)}
+                </p>
+                <IndustryButton variant="primary" className="mt-2 w-full" onClick={() => setApproveFor(p.id)}>
+                  Granska
+                </IndustryButton>
+              </QueueItem>
             ))
           )}
-        </TabsContent>
-      </Tabs>
+        </SideQueue>
+      </div>
+
+      {/* Granska väntande registrering: godkänn / koppla / avvisa */}
+      <Dialog open={Boolean(approveFor)} onOpenChange={(o) => !o && setApproveFor(null)}>
+        <DialogContent className="ind">
+          <DialogHeader>
+            <DialogTitle className="ind-h2">Granska registrering</DialogTitle>
+            <DialogDescription className="ind-muted">
+              Koppla stämplingen till en person, eller avvisa registreringen.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <SectionLabel>Person</SectionLabel>
+            <Select value={approveEmployee} onValueChange={setApproveEmployee}>
+              <SelectTrigger>
+                <SelectValue placeholder="Koppla till person" />
+              </SelectTrigger>
+              <SelectContent>
+                {employees.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.first_name} {e.last_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <IndustryButton
+              variant="ghost"
+              onClick={async () => {
+                if (!approveFor) return;
+                await handlePending.mutateAsync({ id: approveFor, action: "rejected" });
+                setApproveFor(null);
+              }}
+            >
+              Avvisa
+            </IndustryButton>
+            <IndustryButton
+              variant="primary"
+              disabled={!approveEmployee}
+              onClick={async () => {
+                if (!approveFor) return;
+                await handlePending.mutateAsync({
+                  id: approveFor,
+                  action: "approved",
+                  employee_id: approveEmployee,
+                });
+                setApproveFor(null);
+                setApproveEmployee("");
+                toast.success(
+                  "Godkänd. Personen kan stämpla när personnummret är kopplat på personalkortet.",
+                );
+              }}
+            >
+              Godkänn
+            </IndustryButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Skapa station */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
