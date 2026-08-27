@@ -343,13 +343,25 @@ Deno.serve(async (req) => {
 
           const detail = await fortnoxRequest<any>(sb, entity, "GET", `/supplierinvoices/${encodeURIComponent(nr)}`);
           const inv = detail?.SupplierInvoice ?? head;
-          const rows = (inv?.SupplierInvoiceRows ?? []).map((r: any) => ({
-            name: r.ItemDescription ?? r.Information ?? r.ArticleNumber ?? "",
-            article_number: r.ArticleNumber ?? null,
-            quantity: Number(r.Quantity ?? 0) || null,
-            unit_price: Number(r.Price ?? 0) || null,
-            total: Number(r.Total ?? 0) || null,
-          }));
+
+          // Fortnox SupplierInvoiceRows är BOKFÖRINGSrader (konto, debet/kredit) —
+          // de innehåller inga artiklar, mängder eller à-priser. Vi visar dem därför
+          // som konteringsinformation och aldrig som inköpsrader.
+          const accountRows = (inv?.SupplierInvoiceRows ?? [])
+            .map((r: any) => {
+              const debit = Number(r.Debit ?? 0) || 0;
+              const credit = Number(r.Credit ?? 0) || 0;
+              return {
+                account: r.Account != null ? String(r.Account) : null,
+                description: String(r.Description ?? r.Information ?? r.TransactionInformation ?? "").trim() || null,
+                amount: debit - credit || null,
+              };
+            })
+            .filter((r: { account: string | null; amount: number | null }) => r.account || r.amount);
+
+          // Riktiga artikelrader finns bara i den bifogade fakturafilen. Den läses in
+          // separat via mejlinloppet/arkivet, så här skapas inga produktrader.
+          const rows: Json[] = [];
 
           const payload = JSON.stringify({ source: "fortnox_supplierinvoice", invoice: inv }, null, 2);
           const bytes = new TextEncoder().encode(payload);
@@ -380,12 +392,16 @@ Deno.serve(async (req) => {
                 document_date: inv?.InvoiceDate ?? null,
                 total_ex_vat: Number(inv?.Total ?? 0) - Number(inv?.VAT ?? 0) || null,
                 currency: inv?.Currency ?? null,
+                source: "fortnox_supplierinvoice",
               },
               lines: rows,
+              account_rows: accountRows,
             },
             parse_status: rows.length ? "tolkad" : "ej_tolkad",
-            status: reminder ? "endast_info" : "utkast",
-            reject_reason: reminder ? "Betalningspåminnelse/inkasso — påverkar inte inköp eller priser" : null,
+            status: "endast_info",
+            reject_reason: reminder
+              ? "Betalningspåminnelse/inkasso — påverkar inte inköp eller priser"
+              : "Redan registrerad leverantörsfaktura i Fortnox — referens, saknar artikelrader",
           });
           if (invErr) {
             results.push({ invoice: nr, action: "kunde_inte_sparas", error: invErr.message });
