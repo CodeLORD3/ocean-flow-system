@@ -69,7 +69,7 @@ async function downloadFile(sb: SupabaseClient, entity: string, fileId: string):
   return new Uint8Array(await res.arrayBuffer());
 }
 
-type ArchiveFile = { id: string; name: string; path: string };
+type ArchiveFile = { id: string; name: string; path: string; date: string | null };
 
 /** Läser en arkivmapp (via ?path= eller ?folderid=) och returnerar filer + undermappar. */
 async function readFolder(
@@ -81,8 +81,17 @@ async function readFolder(
   const res = await fortnoxRequest<any>(sb, entity, "GET", `/archive/${query}`);
   const folder = res?.Folder ?? res;
   const files: ArchiveFile[] = (folder?.Files ?? [])
-    .map((f: any) => ({ id: String(f.Id ?? f.ArchiveFileId ?? ""), name: String(f.Name ?? "fil"), path: label }))
+    .map((f: any) => ({
+      id: String(f.Id ?? f.ArchiveFileId ?? ""),
+      name: String(f.Name ?? "fil"),
+      path: label,
+      date: (() => {
+        const raw = f.CreatedAt ?? f.Created ?? f.Date ?? f.UploadDate ?? null;
+        return raw ? String(raw).slice(0, 10) : null;
+      })(),
+    }))
     .filter((f: ArchiveFile) => f.id);
+
   const folders = (folder?.Folders ?? [])
     .map((f: any) => ({ id: String(f.Id ?? ""), name: String(f.Name ?? "") }))
     .filter((f: { id: string }) => f.id);
