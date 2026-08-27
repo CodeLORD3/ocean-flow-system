@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check } from "lucide-react";
+import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check, Printer, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,6 +41,7 @@ import { useEntityImageCounts } from "@/hooks/useEntityImages";
 import { StatusBar } from "@/components/shell/StatusBar";
 import { getStoreCurrency } from "@/lib/currency";
 import { CurrencyAmount } from "@/components/orders/CurrencyAmount";
+import { printPackList } from "@/lib/customerOrderPackListPdf";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
