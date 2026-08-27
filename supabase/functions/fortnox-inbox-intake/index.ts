@@ -204,6 +204,8 @@ Deno.serve(async (req) => {
     for (const file of candidates) {
       if (stored >= limit) break;
       if (!isDoc(file.name)) { skipped++; continue; }
+      if (tooOld(file.date)) { skipped++; continue; }
+
       fetched++;
 
       // Redan hämtad? Fortnox-ID:t ligger i storage_path, så vi slipper ladda om filen.
