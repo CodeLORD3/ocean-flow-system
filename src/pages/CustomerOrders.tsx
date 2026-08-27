@@ -344,6 +344,43 @@ export default function CustomerOrders() {
             )}
           </Button>
         )}
+        {/* Bulkutskrift: markera alla (eller några) och skriv ut packlistan i ett svep. */}
+        {panel === "orders" && viewOrders.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-12 px-4 text-base"
+              onClick={() => markAll(!allMarked)}
+            >
+              <CheckSquare className="mr-2 h-5 w-5" />
+              {allMarked ? "Avmarkera alla" : `Markera alla (${viewOrders.length})`}
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-12 px-4 text-base"
+              onClick={() =>
+                printPackList({
+                  orders: markedOrders.length > 0 ? markedOrders : viewOrders,
+                  storeName: selectedStore?.name ?? activeStoreName ?? null,
+                  dateLabel: rangeLabel(
+                    [
+                      ...new Set(
+                        (markedOrders.length > 0 ? markedOrders : viewOrders).map(
+                          (o) => o.wanted_date,
+                        ),
+                      ),
+                    ].sort(),
+                  ),
+                })
+              }
+            >
+              <Printer className="mr-2 h-5 w-5" />
+              Skriv ut {markedOrders.length > 0 ? markedOrders.length : viewOrders.length}
+            </Button>
+          </div>
+        )}
         {canCreate && (
           <Button size="lg" className="h-12 px-5 text-base" onClick={() => setWizardOpen(true)}>
             <Plus className="mr-2 h-5 w-5" /> Ny beställning
