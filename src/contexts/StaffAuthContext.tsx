@@ -25,7 +25,9 @@ interface AuthContextValue {
   user: User | null;
   staff: StaffProfile | null;
   loading: boolean;
+  lastError: string | null;
   signOut: () => Promise<void>;
+  hardSignOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -36,6 +38,7 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [staff, setStaff] = useState<StaffProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const loadStaff = async (uid: string | undefined) => {
     if (!uid) {
@@ -45,6 +48,7 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     // Behörigheten bor i user_scopes. Vyn staff_access sätter ihop personalen
     // med sina scopes, så klienten har ett enda begrepp att läsa.
     // Hämtningen får inte tysta misslyckas — då blir portalvalet tomt.
+    let lastMessage: string | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       const { data, error } = await supabase
         .from("staff_access")
@@ -54,13 +58,24 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
 
       if (!error) {
         setStaff((data as unknown as StaffProfile) ?? null);
+        setLastError(null);
         return;
       }
+      lastMessage = `${(error as any).code ?? "fel"}: ${error.message}`;
+      console.error("[auth] kunde inte hämta staff_access", error);
       // Nätverksglapp eller kall token: vänta kort och försök igen
       await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
     }
     setStaff(null);
+    setLastError(lastMessage);
+
+    // Är sessionen död? Då är detta ingen bugg utan en utloggning.
+    const { data: verified, error: userError } = await supabase.auth.getUser();
+    if (userError || !verified?.user) {
+      await hardSignOut();
+    }
   };
+
 
 
   const refresh = async () => {
@@ -73,6 +88,8 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
       setUser(sess?.user ?? null);
       // Defer Supabase call out of the auth callback
       setTimeout(() => loadStaff(sess?.user?.id), 0);
+      // Aldrig fastna i evig snurra — även misslyckad förnyelse släpper laddning
+      setLoading(false);
     });
 
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
@@ -84,9 +101,7 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    // Nollställ portalvalet så nästa inloggning alltid börjar i portalvalet
+  const clearLocal = () => {
     try {
       sessionStorage.removeItem("erp_site_context");
     } catch {
@@ -97,11 +112,31 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     setStaff(null);
   };
 
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    // Nollställ portalvalet så nästa inloggning alltid börjar i portalvalet
+    clearLocal();
+  };
+
+  // Död session: rensa allt lokalt även om servern inte kan nås
+  const hardSignOut = async () => {
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } catch {
+      /* ignore */
+    }
+    clearLocal();
+    setLastError(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user, staff, loading, signOut, refresh }}>
+    <AuthContext.Provider
+      value={{ session, user, staff, loading, lastError, signOut, hardSignOut, refresh }}
+    >
       {children}
     </AuthContext.Provider>
   );
+
 }
 
 export function useStaffAuth() {
