@@ -9744,6 +9744,8 @@ export type Database = {
           source: string
           staff_id: string
           store_id: string | null
+          time_entry_in_id: string | null
+          time_entry_out_id: string | null
           updated_at: string
         }
         Insert: {
@@ -9755,6 +9757,8 @@ export type Database = {
           source?: string
           staff_id: string
           store_id?: string | null
+          time_entry_in_id?: string | null
+          time_entry_out_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -9766,6 +9770,8 @@ export type Database = {
           source?: string
           staff_id?: string
           store_id?: string | null
+          time_entry_in_id?: string | null
+          time_entry_out_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -9788,6 +9794,20 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_shifts_time_entry_in_id_fkey"
+            columns: ["time_entry_in_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_shifts_time_entry_out_id_fkey"
+            columns: ["time_entry_out_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -13001,6 +13021,14 @@ export type Database = {
       shopify_match_key: { Args: { v: string }; Returns: string }
       species_key: { Args: { v: string }; Returns: string }
       staff_has_store: { Args: { _store: string }; Returns: boolean }
+      staff_shifts_rebuild_from_clock: {
+        Args: { _day: string; _employee_id: string }
+        Returns: number
+      }
+      staff_shifts_rebuild_range: {
+        Args: { _from: string; _to: string }
+        Returns: number
+      }
       stock_reconciliation_check: { Args: { _source?: string }; Returns: Json }
       sumup_name_key: { Args: { _name: string }; Returns: string }
       unpost_purchase_report: { Args: { _report_id: string }; Returns: Json }
