@@ -76,16 +76,29 @@ export default function PortalChooser() {
         <h2 className="text-lg font-semibold mb-2">Kunde inte hämta din behörighet</h2>
         <p className="text-sm text-muted-foreground mb-4 max-w-sm">
           Anslutningen till servern svarade inte. Försök igen — dina portaler laddas då om.
+          Hjälper det inte är sessionen slut: logga in igen.
         </p>
+        {lastError && (
+          <p className="text-xs font-mono text-destructive mb-4 max-w-sm break-words">
+            {lastError}
+          </p>
+        )}
         <div className="flex items-center gap-2">
           <Button onClick={() => refresh()}>Försök igen</Button>
-          <Button variant="outline" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" /> Logga ut
+          <Button
+            variant="outline"
+            onClick={async () => {
+              await hardSignOut();
+              navigate("/", { replace: true });
+            }}
+          >
+            <LogOut className="h-4 w-4 mr-2" /> Logga in igen
           </Button>
         </div>
       </div>
     );
   }
+
 
   if (staff && access.length === 0) {
 
