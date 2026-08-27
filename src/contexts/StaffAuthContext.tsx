@@ -88,6 +88,8 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
       setUser(sess?.user ?? null);
       // Defer Supabase call out of the auth callback
       setTimeout(() => loadStaff(sess?.user?.id), 0);
+      // Aldrig fastna i evig snurra — även misslyckad förnyelse släpper laddning
+      setLoading(false);
     });
 
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
@@ -99,9 +101,7 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    // Nollställ portalvalet så nästa inloggning alltid börjar i portalvalet
+  const clearLocal = () => {
     try {
       sessionStorage.removeItem("erp_site_context");
     } catch {
@@ -112,11 +112,31 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     setStaff(null);
   };
 
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    // Nollställ portalvalet så nästa inloggning alltid börjar i portalvalet
+    clearLocal();
+  };
+
+  // Död session: rensa allt lokalt även om servern inte kan nås
+  const hardSignOut = async () => {
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } catch {
+      /* ignore */
+    }
+    clearLocal();
+    setLastError(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user, staff, loading, signOut, refresh }}>
+    <AuthContext.Provider
+      value={{ session, user, staff, loading, lastError, signOut, hardSignOut, refresh }}
+    >
       {children}
     </AuthContext.Provider>
   );
+
 }
 
 export function useStaffAuth() {
