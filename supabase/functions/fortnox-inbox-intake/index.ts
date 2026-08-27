@@ -392,12 +392,16 @@ Deno.serve(async (req) => {
                 document_date: inv?.InvoiceDate ?? null,
                 total_ex_vat: Number(inv?.Total ?? 0) - Number(inv?.VAT ?? 0) || null,
                 currency: inv?.Currency ?? null,
+                source: "fortnox_supplierinvoice",
               },
               lines: rows,
+              account_rows: accountRows,
             },
             parse_status: rows.length ? "tolkad" : "ej_tolkad",
-            status: reminder ? "endast_info" : "utkast",
-            reject_reason: reminder ? "Betalningspåminnelse/inkasso — påverkar inte inköp eller priser" : null,
+            status: "endast_info",
+            reject_reason: reminder
+              ? "Betalningspåminnelse/inkasso — påverkar inte inköp eller priser"
+              : "Redan registrerad leverantörsfaktura i Fortnox — referens, saknar artikelrader",
           });
           if (invErr) {
             results.push({ invoice: nr, action: "kunde_inte_sparas", error: invErr.message });
