@@ -20,7 +20,7 @@ const PORTAL_META: Record<PortalKey, { title: string; description: string; icon:
 };
 
 export default function PortalChooser() {
-  const { session, staff, loading, signOut, refresh } = useStaffAuth();
+  const { session, staff, loading, lastError, signOut, hardSignOut, refresh } = useStaffAuth();
   const { setSite, setActiveStore } = useSite();
   const { data: stores = [] } = useStores();
   const storeCovers = useStoreCoverImages();
