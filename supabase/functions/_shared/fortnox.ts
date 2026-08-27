@@ -4,7 +4,11 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 export const FORTNOX_API = "https://api.fortnox.se/3";
 export const FORTNOX_AUTH_URL = "https://apps.fortnox.se/oauth-v1/auth";
 export const FORTNOX_TOKEN_URL = "https://apps.fortnox.se/oauth-v1/token";
-export const FORTNOX_SCOPES = ["customer", "article", "invoice", "price", "payment", "companyinformation", "settings"];
+export const FORTNOX_SCOPES = [
+  "customer", "article", "invoice", "price", "payment", "companyinformation", "settings",
+  // Digital post: arkivplats/inbox och registrerade leverantörsfakturor.
+  "archive", "supplierinvoice",
+];
 
 export const LEGAL_ENTITIES: Record<string, string> = {
   "de-no1": "DE No.1 AB",

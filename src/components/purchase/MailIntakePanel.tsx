@@ -61,7 +61,8 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
   const { data: products = [] } = useProducts();
   const { data: suppliers = [] } = useSuppliers();
   const { data: sizeGrades = [] } = useSizeGrades();
-  const { runIntake, saveSender, removeSender, ignoreMessage, setDocumentSupplier, invalidate } = useMailIntakeActions();
+  const { runIntake, runFortnoxIntake, saveSender, removeSender, ignoreMessage, setDocumentSupplier, invalidate } =
+    useMailIntakeActions();
 
   const [busyId, setBusyId] = useState<string | null>(null);
   const [approveError, setApproveError] = useState<string | null>(null);
@@ -197,6 +198,30 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
           >
             {runIntake.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
             Hämta nu
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs gap-1.5"
+            disabled={runFortnoxIntake.isPending}
+            title="Hämtar Inbox, arkiv och leverantörsfakturor från Fortnox (FSAB SE)"
+            onClick={() =>
+              runFortnoxIntake.mutate(
+                {},
+                {
+                  onSuccess: (r) =>
+                    toast({
+                      title: "Fortnox-post hämtad",
+                      description: `${r.stored} dokument · ${r.invoices} leverantörsfakturor · ${r.skipped} hoppade`,
+                    }),
+                  onError: (e: any) =>
+                    toast({ title: "Fortnox-fel", description: e.message, variant: "destructive" }),
+                },
+              )
+            }
+          >
+            {runFortnoxIntake.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Inbox className="h-3.5 w-3.5" />}
+            Hämta från Fortnox
           </Button>
         </div>
       </div>

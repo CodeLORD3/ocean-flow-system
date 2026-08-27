@@ -94,3 +94,6 @@ verify_jwt = false
 
 [functions.fortnox-send-shop-invoice]
 verify_jwt = false
+
+[functions.fortnox-inbox-intake]
+verify_jwt = false
