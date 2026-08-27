@@ -127,6 +127,8 @@ export function ScheduleImportDialog({
       published_at: null,
       note: row.note,
       import_id: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     const siblings: Shift[] = [
       ...existing.filter((s) => s.employee_id === row.match.employee_id && s.status !== "cancelled"),
