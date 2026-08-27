@@ -69,7 +69,7 @@ async function downloadFile(sb: SupabaseClient, entity: string, fileId: string):
   return new Uint8Array(await res.arrayBuffer());
 }
 
-type ArchiveFile = { id: string; name: string; path: string };
+type ArchiveFile = { id: string; name: string; path: string; date: string | null };
 
 /** Läser en arkivmapp (via ?path= eller ?folderid=) och returnerar filer + undermappar. */
 async function readFolder(
@@ -81,8 +81,17 @@ async function readFolder(
   const res = await fortnoxRequest<any>(sb, entity, "GET", `/archive/${query}`);
   const folder = res?.Folder ?? res;
   const files: ArchiveFile[] = (folder?.Files ?? [])
-    .map((f: any) => ({ id: String(f.Id ?? f.ArchiveFileId ?? ""), name: String(f.Name ?? "fil"), path: label }))
+    .map((f: any) => ({
+      id: String(f.Id ?? f.ArchiveFileId ?? ""),
+      name: String(f.Name ?? "fil"),
+      path: label,
+      date: (() => {
+        const raw = f.CreatedAt ?? f.Created ?? f.Date ?? f.UploadDate ?? null;
+        return raw ? String(raw).slice(0, 10) : null;
+      })(),
+    }))
     .filter((f: ArchiveFile) => f.id);
+
   const folders = (folder?.Folders ?? [])
     .map((f: any) => ({ id: String(f.Id ?? ""), name: String(f.Name ?? "") }))
     .filter((f: { id: string }) => f.id);
@@ -101,6 +110,16 @@ Deno.serve(async (req) => {
   const limit = typeof body.limit === "number" ? Math.min(Math.max(body.limit, 1), 40) : 15;
   const includeArchive = body.archive !== false;
   const includeInvoices = body.invoices !== false;
+  /**
+   * Startgräns: bara post från och med detta datum hämtas — aldrig historik.
+   * Standard = dagens datum (svensk tid). Kan överstyras med { since: "YYYY-MM-DD" }.
+   */
+  const since =
+    typeof body.since === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.since)
+      ? body.since
+      : new Date(Date.now() + 2 * 3600_000).toISOString().slice(0, 10);
+  const tooOld = (date?: string | null) => !!date && date.slice(0, 10) < since;
+
 
   const { data: run } = await sb
     .from("mail_intake_runs")
@@ -185,6 +204,8 @@ Deno.serve(async (req) => {
     for (const file of candidates) {
       if (stored >= limit) break;
       if (!isDoc(file.name)) { skipped++; continue; }
+      if (tooOld(file.date)) { skipped++; continue; }
+
       fetched++;
 
       // Redan hämtad? Fortnox-ID:t ligger i storage_path, så vi slipper ladda om filen.
@@ -330,7 +351,10 @@ Deno.serve(async (req) => {
         for (const head of (list?.SupplierInvoices ?? [])) {
           const nr = String(head.GivenNumber ?? head.DocumentNumber ?? "");
           if (!nr) continue;
+          // Historiska fakturor hoppas över — bara från startgränsen och framåt.
+          if (tooOld(head.InvoiceDate ?? head.DueDate ?? null)) { skipped++; continue; }
           const supplierName = String(head.SupplierName ?? "");
+
           const supplierId = resolveSupplier(supplierName);
           const storagePath = `fortnox/${entity}/supplierinvoice-${nr}.json`;
 
