@@ -220,6 +220,82 @@ export type Database = {
         }
         Relationships: []
       }
+      attestations: {
+        Row: {
+          approved_minutes: number | null
+          basis: string | null
+          computed: Json
+          created_at: string
+          date: string
+          decided_at: string | null
+          decided_by: string | null
+          deviation_type: string
+          employee_id: string
+          id: string
+          legal_entity_id: string | null
+          shift_id: string | null
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          approved_minutes?: number | null
+          basis?: string | null
+          computed?: Json
+          created_at?: string
+          date: string
+          decided_at?: string | null
+          decided_by?: string | null
+          deviation_type?: string
+          employee_id: string
+          id?: string
+          legal_entity_id?: string | null
+          shift_id?: string | null
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          approved_minutes?: number | null
+          basis?: string | null
+          computed?: Json
+          created_at?: string
+          date?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          deviation_type?: string
+          employee_id?: string
+          id?: string
+          legal_entity_id?: string | null
+          shift_id?: string | null
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attestations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attestations_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attestations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auction_calcs: {
         Row: {
           actual_price: number | null
@@ -276,6 +352,53 @@ export type Database = {
           yield_pct?: number | null
         }
         Relationships: []
+      }
+      availability: {
+        Row: {
+          created_at: string
+          date: string | null
+          employee_id: string
+          from_time: string
+          id: string
+          note: string | null
+          to_time: string
+          type: string
+          updated_at: string
+          weekday: number | null
+        }
+        Insert: {
+          created_at?: string
+          date?: string | null
+          employee_id: string
+          from_time: string
+          id?: string
+          note?: string | null
+          to_time: string
+          type: string
+          updated_at?: string
+          weekday?: number | null
+        }
+        Update: {
+          created_at?: string
+          date?: string | null
+          employee_id?: string
+          from_time?: string
+          id?: string
+          note?: string | null
+          to_time?: string
+          type?: string
+          updated_at?: string
+          weekday?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       batch_allocations: {
         Row: {
@@ -3234,6 +3357,38 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_competencies: {
+        Row: {
+          competency: string
+          created_at: string
+          employee_id: string
+          id: string
+          note: string | null
+        }
+        Insert: {
+          competency: string
+          created_at?: string
+          employee_id: string
+          id?: string
+          note?: string | null
+        }
+        Update: {
+          competency?: string
+          created_at?: string
+          employee_id?: string
+          id?: string
+          note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_competencies_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
@@ -6286,6 +6441,50 @@ export type Database = {
           },
         ]
       }
+      period_locks: {
+        Row: {
+          id: string
+          legal_entity_id: string | null
+          locked_at: string
+          locked_by: string | null
+          period: string
+          store_id: string
+          unlock_reason: string | null
+          unlocked_at: string | null
+          unlocked_by: string | null
+        }
+        Insert: {
+          id?: string
+          legal_entity_id?: string | null
+          locked_at?: string
+          locked_by?: string | null
+          period: string
+          store_id: string
+          unlock_reason?: string | null
+          unlocked_at?: string | null
+          unlocked_by?: string | null
+        }
+        Update: {
+          id?: string
+          legal_entity_id?: string | null
+          locked_at?: string
+          locked_by?: string | null
+          period?: string
+          store_id?: string
+          unlock_reason?: string | null
+          unlocked_at?: string | null
+          unlocked_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "period_locks_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pk_connections: {
         Row: {
           created_at: string
@@ -8657,6 +8856,53 @@ export type Database = {
           },
         ]
       }
+      schedule_imports: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          filename: string
+          id: string
+          legal_entity_id: string | null
+          row_results: Json
+          source: string
+          status: string
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          filename: string
+          id?: string
+          legal_entity_id?: string | null
+          row_results?: Json
+          source?: string
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          filename?: string
+          id?: string
+          legal_entity_id?: string | null
+          row_results?: Json
+          source?: string
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_imports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scomber_pricing_rules: {
         Row: {
           article_id: string
@@ -8707,6 +8953,285 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "makrilltrade_articles_cache"
             referencedColumns: ["article_id"]
+          },
+        ]
+      }
+      shift_history: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          changes: Json
+          id: string
+          shift_id: string
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          changes?: Json
+          id?: string
+          shift_id: string
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          changes?: Json
+          id?: string
+          shift_id?: string
+        }
+        Relationships: []
+      }
+      shift_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          from_employee_id: string | null
+          id: string
+          note: string | null
+          shift_id: string
+          status: string
+          to_employee_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          from_employee_id?: string | null
+          id?: string
+          note?: string | null
+          shift_id: string
+          status?: string
+          to_employee_id?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          from_employee_id?: string | null
+          id?: string
+          note?: string | null
+          shift_id?: string
+          status?: string
+          to_employee_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_requests_from_employee_id_fkey"
+            columns: ["from_employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_requests_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_requests_to_employee_id_fkey"
+            columns: ["to_employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_templates: {
+        Row: {
+          break_minutes: number
+          count: number
+          created_at: string
+          end_time: string
+          id: string
+          legal_entity_id: string | null
+          name: string
+          shift_type_id: string | null
+          start_time: string
+          store_id: string
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          break_minutes?: number
+          count?: number
+          created_at?: string
+          end_time: string
+          id?: string
+          legal_entity_id?: string | null
+          name: string
+          shift_type_id?: string | null
+          start_time: string
+          store_id: string
+          updated_at?: string
+          weekday: number
+        }
+        Update: {
+          break_minutes?: number
+          count?: number
+          created_at?: string
+          end_time?: string
+          id?: string
+          legal_entity_id?: string | null
+          name?: string
+          shift_type_id?: string | null
+          start_time?: string
+          store_id?: string
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_templates_shift_type_id_fkey"
+            columns: ["shift_type_id"]
+            isOneToOne: false
+            referencedRelation: "shift_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_templates_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_types: {
+        Row: {
+          color_token: string
+          created_at: string
+          id: string
+          is_payroll_relevant: boolean
+          is_swappable: boolean
+          legal_entity_id: string | null
+          name: string
+          required_competency: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          color_token?: string
+          created_at?: string
+          id?: string
+          is_payroll_relevant?: boolean
+          is_swappable?: boolean
+          legal_entity_id?: string | null
+          name: string
+          required_competency?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          color_token?: string
+          created_at?: string
+          id?: string
+          is_payroll_relevant?: boolean
+          is_swappable?: boolean
+          legal_entity_id?: string | null
+          name?: string
+          required_competency?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shifts: {
+        Row: {
+          break_minutes: number
+          created_at: string
+          created_by: string | null
+          date: string
+          employee_id: string | null
+          end_time: string
+          id: string
+          import_id: string | null
+          legal_entity_id: string | null
+          note: string | null
+          published_at: string | null
+          shift_type_id: string | null
+          start_time: string
+          status: string
+          store_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          break_minutes?: number
+          created_at?: string
+          created_by?: string | null
+          date: string
+          employee_id?: string | null
+          end_time: string
+          id?: string
+          import_id?: string | null
+          legal_entity_id?: string | null
+          note?: string | null
+          published_at?: string | null
+          shift_type_id?: string | null
+          start_time: string
+          status?: string
+          store_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          break_minutes?: number
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          employee_id?: string | null
+          end_time?: string
+          id?: string
+          import_id?: string | null
+          legal_entity_id?: string | null
+          note?: string | null
+          published_at?: string | null
+          shift_type_id?: string | null
+          start_time?: string
+          status?: string
+          store_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_shift_type_id_fkey"
+            columns: ["shift_type_id"]
+            isOneToOne: false
+            referencedRelation: "shift_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -10281,6 +10806,7 @@ export type Database = {
       }
       store_order_settings: {
         Row: {
+          approval_cutoff_hours: number
           created_at: string
           id: string
           max_catering_per_day: number
@@ -10291,6 +10817,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approval_cutoff_hours?: number
           created_at?: string
           id?: string
           max_catering_per_day?: number
@@ -10301,6 +10828,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approval_cutoff_hours?: number
           created_at?: string
           id?: string
           max_catering_per_day?: number
@@ -12662,6 +13190,10 @@ export type Database = {
         }[]
       }
       can_manage_employee_folder: { Args: { _name: string }; Returns: boolean }
+      can_manage_schedule: {
+        Args: { _legal_entity_id: string; _store_id: string }
+        Returns: boolean
+      }
       can_see_clock_store: {
         Args: { _legal_entity_id?: string; _store_id: string }
         Returns: boolean
@@ -12858,6 +13390,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      my_employee_ids: { Args: never; Returns: string[] }
+      my_employee_store_ids: { Args: never; Returns: string[] }
       next_customer_order_number: {
         Args: { _date: string; _store_id: string }
         Returns: string
@@ -12893,6 +13427,10 @@ export type Database = {
           _store: string
         }
         Returns: undefined
+      }
+      period_is_locked: {
+        Args: { _date: string; _store_id: string }
+        Returns: boolean
       }
       pk_can_read: { Args: never; Returns: boolean }
       pk_can_read_salary: { Args: never; Returns: boolean }
