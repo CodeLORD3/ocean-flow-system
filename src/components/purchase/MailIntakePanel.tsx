@@ -310,6 +310,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                   suppliers={suppliers as any[]}
                   busy={busyId === doc.id}
                   queueLength={drafts.length}
+                  error={approveError}
                   onSetSupplier={(supplier_id) =>
                     setDocumentSupplier.mutate(
                       { id: doc.id, supplier_id },
@@ -320,6 +321,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                   onReject={() => handleReject(doc)}
                 />
               ))}
+
               {drafts.length > 1 && (
                 <div className="p-3 text-[11px] text-muted-foreground flex items-center gap-1.5">
                   <Lock className="h-3 w-3" />
