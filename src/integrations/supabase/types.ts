@@ -12662,6 +12662,10 @@ export type Database = {
         }[]
       }
       can_manage_employee_folder: { Args: { _name: string }; Returns: boolean }
+      can_see_clock_store: {
+        Args: { _legal_entity_id?: string; _store_id: string }
+        Returns: boolean
+      }
       can_see_company: { Args: { _legal_entity_id: string }; Returns: boolean }
       can_see_employee: { Args: { _employee_id: string }; Returns: boolean }
       can_see_employee_folder: { Args: { _name: string }; Returns: boolean }
