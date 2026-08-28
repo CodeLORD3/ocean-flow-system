@@ -143,6 +143,240 @@ export type Database = {
           },
         ]
       }
+      absence_policies: {
+        Row: {
+          created_at: string
+          default_vacation_days: number
+          fk_report_day: number
+          id: string
+          karens_enabled: boolean
+          karens_warning_count: number
+          las_warning_days_before: number
+          legal_entity_id: string | null
+          max_saved_days_per_year: number
+          max_saved_years: number
+          notes: string | null
+          reinjury_window_days: number
+          sick_vacation_earning_days: number
+          updated_at: string
+          vab_vacation_earning: boolean
+        }
+        Insert: {
+          created_at?: string
+          default_vacation_days?: number
+          fk_report_day?: number
+          id?: string
+          karens_enabled?: boolean
+          karens_warning_count?: number
+          las_warning_days_before?: number
+          legal_entity_id?: string | null
+          max_saved_days_per_year?: number
+          max_saved_years?: number
+          notes?: string | null
+          reinjury_window_days?: number
+          sick_vacation_earning_days?: number
+          updated_at?: string
+          vab_vacation_earning?: boolean
+        }
+        Update: {
+          created_at?: string
+          default_vacation_days?: number
+          fk_report_day?: number
+          id?: string
+          karens_enabled?: boolean
+          karens_warning_count?: number
+          las_warning_days_before?: number
+          legal_entity_id?: string | null
+          max_saved_days_per_year?: number
+          max_saved_years?: number
+          notes?: string | null
+          reinjury_window_days?: number
+          sick_vacation_earning_days?: number
+          updated_at?: string
+          vab_vacation_earning?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "absence_policies_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: true
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      absence_request_history: {
+        Row: {
+          absence_request_id: string
+          action: string
+          changed_at: string
+          changed_by: string | null
+          changes: Json | null
+          id: string
+        }
+        Insert: {
+          absence_request_id: string
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          changes?: Json | null
+          id?: string
+        }
+        Update: {
+          absence_request_id?: string
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          changes?: Json | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "absence_request_history_absence_request_id_fkey"
+            columns: ["absence_request_id"]
+            isOneToOne: false
+            referencedRelation: "absence_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      absence_requests: {
+        Row: {
+          absence_type_id: string
+          created_at: string
+          created_by: string | null
+          days_count: number | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          employee_id: string
+          end_date: string | null
+          extent_pct: number
+          id: string
+          legal_entity_id: string | null
+          note: string | null
+          start_date: string
+          status: string
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          absence_type_id: string
+          created_at?: string
+          created_by?: string | null
+          days_count?: number | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          employee_id: string
+          end_date?: string | null
+          extent_pct?: number
+          id?: string
+          legal_entity_id?: string | null
+          note?: string | null
+          start_date: string
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          absence_type_id?: string
+          created_at?: string
+          created_by?: string | null
+          days_count?: number | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          employee_id?: string
+          end_date?: string | null
+          extent_pct?: number
+          id?: string
+          legal_entity_id?: string | null
+          note?: string | null
+          start_date?: string
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "absence_requests_absence_type_id_fkey"
+            columns: ["absence_type_id"]
+            isOneToOne: false
+            referencedRelation: "absence_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "absence_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "absence_requests_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "absence_requests_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      absence_types: {
+        Row: {
+          affects_vacation_balance: boolean
+          code: string
+          color_token: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_sick: boolean
+          is_vacation_earning: boolean
+          name: string
+          requires_approval: boolean
+          sort_order: number
+          updated_at: string
+          vacation_earning_max_days: number | null
+        }
+        Insert: {
+          affects_vacation_balance?: boolean
+          code: string
+          color_token?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_sick?: boolean
+          is_vacation_earning?: boolean
+          name: string
+          requires_approval?: boolean
+          sort_order?: number
+          updated_at?: string
+          vacation_earning_max_days?: number | null
+        }
+        Update: {
+          affects_vacation_balance?: boolean
+          code?: string
+          color_token?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_sick?: boolean
+          is_vacation_earning?: boolean
+          name?: string
+          requires_approval?: boolean
+          sort_order?: number
+          updated_at?: string
+          vacation_earning_max_days?: number | null
+        }
+        Relationships: []
+      }
       activity_logs: {
         Row: {
           action_type: string
@@ -1353,6 +1587,79 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comp_balance_txns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          delta_minutes: number
+          employee_id: string
+          id: string
+          reason: string
+          reference_id: string | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          delta_minutes: number
+          employee_id: string
+          id?: string
+          reason: string
+          reference_id?: string | null
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          delta_minutes?: number
+          employee_id?: string
+          id?: string
+          reason?: string
+          reference_id?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comp_balance_txns_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comp_balances: {
+        Row: {
+          balance_minutes: number
+          created_at: string
+          employee_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          balance_minutes?: number
+          created_at?: string
+          employee_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          balance_minutes?: number
+          created_at?: string
+          employee_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comp_balances_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
@@ -4190,6 +4497,125 @@ export type Database = {
           state?: string
         }
         Relationships: []
+      }
+      hr_notification_preferences: {
+        Row: {
+          category: string
+          created_at: string
+          email: boolean
+          employee_id: string | null
+          id: string
+          in_app: boolean
+          legal_entity_id: string | null
+          sms: boolean
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          email?: boolean
+          employee_id?: string | null
+          id?: string
+          in_app?: boolean
+          legal_entity_id?: string | null
+          sms?: boolean
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          email?: boolean
+          employee_id?: string | null
+          id?: string
+          in_app?: boolean
+          legal_entity_id?: string | null
+          sms?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_notification_preferences_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_notification_preferences_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      hr_notifications: {
+        Row: {
+          attempts: number
+          body: string | null
+          category: string
+          channel: string
+          created_at: string
+          dedupe_key: string | null
+          employee_id: string | null
+          error: string | null
+          id: string
+          next_attempt_at: string | null
+          payload: Json
+          recipient: string | null
+          sent_at: string | null
+          status: string
+          template_key: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          body?: string | null
+          category?: string
+          channel: string
+          created_at?: string
+          dedupe_key?: string | null
+          employee_id?: string | null
+          error?: string | null
+          id?: string
+          next_attempt_at?: string | null
+          payload?: Json
+          recipient?: string | null
+          sent_at?: string | null
+          status?: string
+          template_key: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          body?: string | null
+          category?: string
+          channel?: string
+          created_at?: string
+          dedupe_key?: string | null
+          employee_id?: string | null
+          error?: string | null
+          id?: string
+          next_attempt_at?: string | null
+          payload?: Json
+          recipient?: string | null
+          sent_at?: string | null
+          status?: string
+          template_key?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_notifications_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       image_feature_runs: {
         Row: {
@@ -9885,6 +10311,53 @@ export type Database = {
           },
         ]
       }
+      sick_periods: {
+        Row: {
+          created_at: string
+          employee_id: string
+          first_day: string
+          fk_reminder_sent_at: string | null
+          id: string
+          karens_applied: boolean
+          last_day: string | null
+          note: string | null
+          reopened_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          first_day: string
+          fk_reminder_sent_at?: string | null
+          id?: string
+          karens_applied?: boolean
+          last_day?: string | null
+          note?: string | null
+          reopened_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          first_day?: string
+          fk_reminder_sent_at?: string | null
+          id?: string
+          karens_applied?: boolean
+          last_day?: string | null
+          note?: string | null
+          reopened_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sick_periods_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       size_grades: {
         Row: {
           active: boolean
@@ -12397,6 +12870,106 @@ export type Database = {
           },
         ]
       }
+      vacation_balance_adjustments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          delta_days: number
+          id: string
+          reason: string
+          vacation_balance_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          delta_days: number
+          id?: string
+          reason: string
+          vacation_balance_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          delta_days?: number
+          id?: string
+          reason?: string
+          vacation_balance_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vacation_balance_adjustments_vacation_balance_id_fkey"
+            columns: ["vacation_balance_id"]
+            isOneToOne: false
+            referencedRelation: "vacation_balances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vacation_balances: {
+        Row: {
+          adjusted_at: string | null
+          adjusted_by: string | null
+          closed_at: string | null
+          created_at: string
+          earned_days: number
+          employee_id: string
+          entitled_days: number
+          expires_at: string | null
+          expiry_flagged: boolean
+          id: string
+          manual_adjustment_days: number
+          manual_adjustment_reason: string | null
+          saved_days: number
+          updated_at: string
+          used_days: number
+          vacation_year: number
+        }
+        Insert: {
+          adjusted_at?: string | null
+          adjusted_by?: string | null
+          closed_at?: string | null
+          created_at?: string
+          earned_days?: number
+          employee_id: string
+          entitled_days?: number
+          expires_at?: string | null
+          expiry_flagged?: boolean
+          id?: string
+          manual_adjustment_days?: number
+          manual_adjustment_reason?: string | null
+          saved_days?: number
+          updated_at?: string
+          used_days?: number
+          vacation_year: number
+        }
+        Update: {
+          adjusted_at?: string | null
+          adjusted_by?: string | null
+          closed_at?: string | null
+          created_at?: string
+          earned_days?: number
+          employee_id?: string
+          entitled_days?: number
+          expires_at?: string | null
+          expiry_flagged?: boolean
+          id?: string
+          manual_adjustment_days?: number
+          manual_adjustment_reason?: string | null
+          saved_days?: number
+          updated_at?: string
+          used_days?: number
+          vacation_year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vacation_balances_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vat_rates: {
         Row: {
           category: string
@@ -13168,6 +13741,43 @@ export type Database = {
       }
     }
     Functions: {
+      absence_conflicts: {
+        Args: { _request_id: string }
+        Returns: {
+          end_time: string
+          shift_date: string
+          shift_id: string
+          start_time: string
+          status: string
+          store_id: string
+        }[]
+      }
+      absence_policy_for: {
+        Args: { _legal_entity_id: string }
+        Returns: {
+          created_at: string
+          default_vacation_days: number
+          fk_report_day: number
+          id: string
+          karens_enabled: boolean
+          karens_warning_count: number
+          las_warning_days_before: number
+          legal_entity_id: string | null
+          max_saved_days_per_year: number
+          max_saved_years: number
+          notes: string | null
+          reinjury_window_days: number
+          sick_vacation_earning_days: number
+          updated_at: string
+          vab_vacation_earning: boolean
+        }
+        SetofOptions: {
+          from: "*"
+          to: "absence_policies"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       anonymize_retail_customer: {
         Args: { _customer_id: string; _reason?: string }
         Returns: Json
@@ -13224,6 +13834,10 @@ export type Database = {
         Args: { _station_id: string }
         Returns: Json
       }
+      comp_adjust: {
+        Args: { _delta_minutes: number; _employee_id: string; _reason: string }
+        Returns: Json
+      }
       company_of_location: {
         Args: { _location_id: string; _on?: string }
         Returns: string
@@ -13231,6 +13845,33 @@ export type Database = {
       company_of_store: {
         Args: { _on?: string; _store_id: string }
         Returns: string
+      }
+      compute_vacation_balance: {
+        Args: { _employee_id: string; _vacation_year: number }
+        Returns: {
+          adjusted_at: string | null
+          adjusted_by: string | null
+          closed_at: string | null
+          created_at: string
+          earned_days: number
+          employee_id: string
+          entitled_days: number
+          expires_at: string | null
+          expiry_flagged: boolean
+          id: string
+          manual_adjustment_days: number
+          manual_adjustment_reason: string | null
+          saved_days: number
+          updated_at: string
+          used_days: number
+          vacation_year: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "vacation_balances"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       cost_read_allowed: { Args: { _store_id: string }; Returns: boolean }
       current_staff: {
@@ -13259,6 +13900,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      decide_absence_request: {
+        Args: {
+          _conflict_action?: string
+          _decision: string
+          _decision_note?: string
+          _request_id: string
+        }
+        Returns: Json
       }
       employee_is_self: { Args: { _employee_id: string }; Returns: boolean }
       employee_pnr_key: { Args: never; Returns: string }
@@ -13355,6 +14005,17 @@ export type Database = {
       has_scope: {
         Args: { _type: string; _user_id: string; _value: string }
         Returns: boolean
+      }
+      hr_daily_checks: { Args: never; Returns: Json }
+      hr_notify: {
+        Args: {
+          _category: string
+          _dedupe_key?: string
+          _employee_id: string
+          _payload?: Json
+          _template_key: string
+        }
+        Returns: number
       }
       image_feed_store_labels: {
         Args: never
@@ -13541,6 +14202,14 @@ export type Database = {
         Args: { _lot_id: string; _new_product_id: string }
         Returns: Json
       }
+      recompute_all_vacation_balances: {
+        Args: { _vacation_year?: number }
+        Returns: number
+      }
+      register_sick_period: {
+        Args: { _employee_id: string; _first_day: string; _last_day?: string }
+        Returns: Json
+      }
       service_set_employee_pnr: {
         Args: { _employee_id: string; _pnr: string }
         Returns: undefined
@@ -13570,6 +14239,7 @@ export type Database = {
         Returns: undefined
       }
       shopify_match_key: { Args: { v: string }; Returns: string }
+      sick_karens_count_12m: { Args: { _employee_id: string }; Returns: number }
       species_key: { Args: { v: string }; Returns: string }
       staff_has_store: { Args: { _store: string }; Returns: boolean }
       staff_shifts_rebuild_from_clock: {
@@ -13594,6 +14264,40 @@ export type Database = {
       user_region_tags: { Args: { _user_id: string }; Returns: string[] }
       user_store_ids: { Args: { _user_id: string }; Returns: string[] }
       user_tenant_ids: { Args: { _user_id: string }; Returns: string[] }
+      vacation_adjust: {
+        Args: {
+          _delta_days: number
+          _employee_id: string
+          _reason: string
+          _vacation_year: number
+        }
+        Returns: {
+          adjusted_at: string | null
+          adjusted_by: string | null
+          closed_at: string | null
+          created_at: string
+          earned_days: number
+          employee_id: string
+          entitled_days: number
+          expires_at: string | null
+          expiry_flagged: boolean
+          id: string
+          manual_adjustment_days: number
+          manual_adjustment_reason: string | null
+          saved_days: number
+          updated_at: string
+          used_days: number
+          vacation_year: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "vacation_balances"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      vacation_year_of: { Args: { _d: string }; Returns: number }
+      vacation_year_rollover: { Args: { _from_year?: number }; Returns: Json }
       zero_stale_day_prices: { Args: never; Returns: number }
       zero_stale_day_prices_midnight: { Args: never; Returns: number }
       zero_stock_balances: {
