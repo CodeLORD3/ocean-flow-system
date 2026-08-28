@@ -13741,6 +13741,43 @@ export type Database = {
       }
     }
     Functions: {
+      absence_conflicts: {
+        Args: { _request_id: string }
+        Returns: {
+          end_time: string
+          shift_date: string
+          shift_id: string
+          start_time: string
+          status: string
+          store_id: string
+        }[]
+      }
+      absence_policy_for: {
+        Args: { _legal_entity_id: string }
+        Returns: {
+          created_at: string
+          default_vacation_days: number
+          fk_report_day: number
+          id: string
+          karens_enabled: boolean
+          karens_warning_count: number
+          las_warning_days_before: number
+          legal_entity_id: string | null
+          max_saved_days_per_year: number
+          max_saved_years: number
+          notes: string | null
+          reinjury_window_days: number
+          sick_vacation_earning_days: number
+          updated_at: string
+          vab_vacation_earning: boolean
+        }
+        SetofOptions: {
+          from: "*"
+          to: "absence_policies"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       anonymize_retail_customer: {
         Args: { _customer_id: string; _reason?: string }
         Returns: Json
@@ -13809,6 +13846,33 @@ export type Database = {
         Args: { _on?: string; _store_id: string }
         Returns: string
       }
+      compute_vacation_balance: {
+        Args: { _employee_id: string; _vacation_year: number }
+        Returns: {
+          adjusted_at: string | null
+          adjusted_by: string | null
+          closed_at: string | null
+          created_at: string
+          earned_days: number
+          employee_id: string
+          entitled_days: number
+          expires_at: string | null
+          expiry_flagged: boolean
+          id: string
+          manual_adjustment_days: number
+          manual_adjustment_reason: string | null
+          saved_days: number
+          updated_at: string
+          used_days: number
+          vacation_year: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "vacation_balances"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       cost_read_allowed: { Args: { _store_id: string }; Returns: boolean }
       current_staff: {
         Args: never
@@ -13836,6 +13900,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      decide_absence_request: {
+        Args: {
+          _conflict_action?: string
+          _decision: string
+          _decision_note?: string
+          _request_id: string
+        }
+        Returns: Json
       }
       employee_is_self: { Args: { _employee_id: string }; Returns: boolean }
       employee_pnr_key: { Args: never; Returns: string }
@@ -13932,6 +14005,17 @@ export type Database = {
       has_scope: {
         Args: { _type: string; _user_id: string; _value: string }
         Returns: boolean
+      }
+      hr_daily_checks: { Args: never; Returns: Json }
+      hr_notify: {
+        Args: {
+          _category: string
+          _dedupe_key?: string
+          _employee_id: string
+          _payload?: Json
+          _template_key: string
+        }
+        Returns: number
       }
       image_feed_store_labels: {
         Args: never
@@ -14118,6 +14202,10 @@ export type Database = {
         Args: { _lot_id: string; _new_product_id: string }
         Returns: Json
       }
+      recompute_all_vacation_balances: {
+        Args: { _vacation_year?: number }
+        Returns: number
+      }
       register_sick_period: {
         Args: { _employee_id: string; _first_day: string; _last_day?: string }
         Returns: Json
@@ -14176,6 +14264,40 @@ export type Database = {
       user_region_tags: { Args: { _user_id: string }; Returns: string[] }
       user_store_ids: { Args: { _user_id: string }; Returns: string[] }
       user_tenant_ids: { Args: { _user_id: string }; Returns: string[] }
+      vacation_adjust: {
+        Args: {
+          _delta_days: number
+          _employee_id: string
+          _reason: string
+          _vacation_year: number
+        }
+        Returns: {
+          adjusted_at: string | null
+          adjusted_by: string | null
+          closed_at: string | null
+          created_at: string
+          earned_days: number
+          employee_id: string
+          entitled_days: number
+          expires_at: string | null
+          expiry_flagged: boolean
+          id: string
+          manual_adjustment_days: number
+          manual_adjustment_reason: string | null
+          saved_days: number
+          updated_at: string
+          used_days: number
+          vacation_year: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "vacation_balances"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      vacation_year_of: { Args: { _d: string }; Returns: number }
+      vacation_year_rollover: { Args: { _from_year?: number }; Returns: Json }
       zero_stale_day_prices: { Args: never; Returns: number }
       zero_stale_day_prices_midnight: { Args: never; Returns: number }
       zero_stock_balances: {
