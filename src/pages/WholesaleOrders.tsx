@@ -1425,7 +1425,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                    <td className="min-w-0 px-2 py-0.5 font-medium text-foreground">
                      <div className="flex min-w-0 items-center gap-2">
                        <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="h-5 w-7 shrink-0" />
-                       <span className="truncate">{line.products?.name || "–"}</span>
+                       <span className="truncate" title={line.products?.name || undefined}>{line.products?.name || "–"}</span>
                      </div>
                    </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
