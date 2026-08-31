@@ -1072,7 +1072,7 @@ export function CustomerOrderRowHeader({
         <span className="w-12 shrink-0 border-r border-grid-line px-2 text-center">Ordrar</span>
         <span className="w-14 shrink-0 border-r border-grid-line px-2">Källa</span>
         <span className="w-12 shrink-0 border-r border-grid-line px-2">Kom.</span>
-        <span className="w-24 shrink-0 border-r border-grid-line px-2">Status</span>
+        <span className="w-36 shrink-0 border-r border-grid-line px-2">Status</span>
         <span className="w-24 shrink-0 border-r border-grid-line px-2 text-right">Summa ({currency})</span>
         <span className="w-28 shrink-0 px-2">Butik</span>
         <span className="w-3.5 shrink-0" />

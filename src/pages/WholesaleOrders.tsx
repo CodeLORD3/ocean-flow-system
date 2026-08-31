@@ -1397,13 +1397,13 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
 
               return (
                 <React.Fragment key={line.id}>
-                {catHeader && (
-                  <tr className="bg-muted/40">
-                    <td colSpan={9} className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      ▸ {catHeader}
-                    </td>
-                  </tr>
-                )}
+                 {catHeader && (
+                   <tr className="bg-muted/40">
+                     <td colSpan={10} className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                       ▸ {catHeader}
+                     </td>
+                   </tr>
+                 )}
                 <tr className={`border-b border-border/30 h-7 transition-colors ${
                   isUnavailable ? "opacity-50 bg-destructive/5" :
                   currentStatus === "Skickad" ? "bg-primary/10" :
