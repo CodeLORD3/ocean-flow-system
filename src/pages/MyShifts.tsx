@@ -6,10 +6,10 @@
  * beslut tidigare än cutoff före passtart auto-godkänns, inom cutoff går
  * ärendet till chefen.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeftRight, CalendarDays, ChevronLeft, ChevronRight, HandHelping, Plus, Stethoscope } from "lucide-react";
+import { ArrowLeftRight, CalendarDays, ChevronLeft, ChevronRight, HandHelping, Plus, Stethoscope, Undo2 } from "lucide-react";
 import {
   DecisionBar,
   DecisionMetric,
@@ -41,6 +41,9 @@ import {
   useAbsenceTypes,
   useCreateAbsenceRequest,
   useRegisterSickDay,
+  useActiveSickPeriod,
+  useUndoSickPeriod,
+  useEndSickPeriod,
   useVacationBalances,
 } from "@/hooks/useAbsence";
 import {
@@ -84,8 +87,12 @@ function useScheduleCutoff(storeId: string | null) {
 }
 
 export default function MyShifts() {
-  const [anchor, setAnchor] = useState(dateKey(new Date()));
+  const today = dateKey(new Date());
+  const [anchor, setAnchor] = useState(today);
   const [swapFor, setSwapFor] = useState<Shift | null>(null);
+  const [sickUndoUntil, setSickUndoUntil] = useState<number | null>(null);
+  const [sickUndoDate, setSickUndoDate] = useState<string | null>(null);
+  const [clockNow, setClockNow] = useState(() => Date.now());
   const [swapTo, setSwapTo] = useState<string>("");
   const [availOpen, setAvailOpen] = useState(false);
   const [absenceOpen, setAbsenceOpen] = useState(false);
@@ -110,18 +117,22 @@ export default function MyShifts() {
 
   const { data: myShifts = [] } = useEmployeeShifts(myIds, week[0], week[6]);
   const { data: storeShifts = [] } = useShifts(storeId, week[0], week[6]);
+  const { data: absenceShifts = [] } = useEmployeeShifts(myIds, absenceDraft.startDate, absenceDraft.endDate || absenceDraft.startDate);
   const { data: myRequests = [] } = useMyShiftRequests(myId);
   const { data: cutoff = DEFAULT_CUTOFF } = useScheduleCutoff(storeId);
   const { data: myAvailability = [] } = useAvailability(myId);
   const { data: absenceTypes = [] } = useAbsenceTypes();
   const { data: absenceRequests = [] } = useAbsenceRequests(myId, storeId);
   const { data: vacationBalances = [] } = useVacationBalances(myId);
+  const { data: activeSickPeriod } = useActiveSickPeriod(myId);
 
   const createRequest = useCreateShiftRequest();
   const saveAvailability = useSaveAvailability();
   const deleteAvailability = useDeleteAvailability();
   const createAbsenceRequest = useCreateAbsenceRequest();
   const registerSickDay = useRegisterSickDay();
+  const undoSickPeriod = useUndoSickPeriod();
+  const endSickPeriod = useEndSickPeriod();
 
   const absenceTypeById = useMemo(() => new Map(absenceTypes.map((type) => [type.id, type])), [absenceTypes]);
   const currentBalance = vacationBalances[0] ?? null;
@@ -351,34 +362,35 @@ export default function MyShifts() {
         )}
        </section>
 
-       <section className="space-y-2">
-         <div className="flex flex-wrap items-center justify-between gap-2">
-           <div>
-             <SectionLabel>Frånvaro & semester</SectionLabel>
-             <p className="ind-muted text-xs">Ansök om ledighet eller registrera sjukdag. Godkännande visas här när chefen har beslutat.</p>
-           </div>
-           <div className="flex flex-wrap gap-2">
-             <IndustryButton
-               size="touch"
-               variant="ghost"
-               disabled={!myId || registerSickDay.isPending}
-               onClick={async () => {
-                 if (!myId) return;
-                 try {
-                   await registerSickDay.mutateAsync({ employeeId: myId, date: dateKey(new Date()) });
-                   toast.success("Sjukdag registrerad");
-                 } catch (e) {
-                   toast.error(e instanceof Error ? e.message : "Kunde inte registrera sjukdag");
-                 }
-               }}
-             >
-               <Stethoscope className="h-4 w-4" /> Sjukanmäl idag
-             </IndustryButton>
-             <IndustryButton size="touch" variant="secondary" onClick={() => setAbsenceOpen(true)}>
-               <Plus className="h-4 w-4" /> Ny frånvaro
-             </IndustryButton>
-           </div>
-         </div>
+        <section className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <SectionLabel>Frånvaro & semester</SectionLabel>
+              <p className="ind-muted text-xs">Ansök om ledighet eller registrera sjukdag. Godkännande visas här när chefen har beslutat.</p>
+            </div>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              {activeSickPeriod ? (
+                <IndustryButton size="touch" variant="secondary" className="min-h-14 w-full sm:w-auto" disabled={!myId || endSickPeriod.isPending} onClick={async () => {
+                  if (!myId) return;
+                  try { await endSickPeriod.mutateAsync({ employeeId: myId, lastDay: today }); toast.success("Friskanmälan registrerad"); }
+                  catch (e) { toast.error(e instanceof Error ? e.message : "Kunde inte registrera friskanmälan"); }
+                }}><Stethoscope className="h-4 w-4" /> Friskanmäl idag</IndustryButton>
+              ) : (
+                <IndustryButton size="touch" variant="secondary" className="min-h-14 w-full sm:w-auto" disabled={!myId || todayShifts.length === 0 || registerSickDay.isPending} onClick={async () => {
+                  if (!myId) return;
+                  try { await registerSickDay.mutateAsync({ employeeId: myId, date: today }); setSickUndoDate(today); setSickUndoUntil(Date.now() + 10 * 60_000); toast.success("Sjukdag registrerad"); }
+                  catch (e) { toast.error(e instanceof Error ? e.message : "Kunde inte registrera sjukdag"); }
+                }}><Stethoscope className="h-4 w-4" /> Sjuk idag</IndustryButton>
+              )}
+              {sickUndoSeconds > 0 && sickUndoDate && <IndustryButton size="touch" variant="ghost" className="min-h-14 w-full sm:w-auto" disabled={undoSickPeriod.isPending} onClick={async () => {
+                if (!myId) return;
+                try { await undoSickPeriod.mutateAsync({ employeeId: myId, firstDay: sickUndoDate }); setSickUndoUntil(null); setSickUndoDate(null); toast.success("Sjukanmälan ångrad"); }
+                catch (e) { toast.error(e instanceof Error ? e.message : "Ångertiden har gått ut"); }
+              }}><Undo2 className="h-4 w-4" /> Ångra · {Math.floor(sickUndoSeconds / 60)}:{String(sickUndoSeconds % 60).padStart(2, "0")}</IndustryButton>}
+              <IndustryButton size="touch" variant="secondary" onClick={() => setAbsenceOpen(true)}><Plus className="h-4 w-4" /> Ny frånvaro</IndustryButton>
+            </div>
+          </div>
+          {activeSickPeriod && <IndustryRow edge="alert"><p className="text-sm"><StatusLabel tone="alert">Pågående sjukperiod</StatusLabel> Startad {activeSickPeriod.first_day} · karens {activeSickPeriod.karens_applied ? "uttagen" : "inte uttagen"}</p></IndustryRow>}
          {currentBalance && (
            <IndustryRow edge={currentBalance.expiry_flagged ? "alert" : "accent-2"}>
              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
@@ -517,10 +529,11 @@ export default function MyShifts() {
                  </SelectContent>
                </Select>
              </div>
-             <div className="grid grid-cols-2 gap-3">
-               <div><Label className="ind-label">Från</Label><IndustryInput type="date" value={absenceDraft.startDate} onChange={(e) => setAbsenceDraft({ ...absenceDraft, startDate: e.target.value })} /></div>
-               <div><Label className="ind-label">Till</Label><IndustryInput type="date" value={absenceDraft.endDate} onChange={(e) => setAbsenceDraft({ ...absenceDraft, endDate: e.target.value })} /></div>
-             </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label className="ind-label">Från</Label><IndustryInput type="date" value={absenceDraft.startDate} onChange={(e) => setAbsenceDraft({ ...absenceDraft, startDate: e.target.value })} /></div>
+                <div><Label className="ind-label">Till</Label><IndustryInput type="date" min={absenceDraft.startDate} value={absenceDraft.endDate} onChange={(e) => setAbsenceDraft({ ...absenceDraft, endDate: e.target.value })} /></div>
+              </div>
+              <IndustryRow edge="accent-2" className="text-sm"><span className="ind-mono">{calendarDays} kalenderdagar</span><span className="ind-muted">·</span><span className="ind-mono">{scheduledWorkDays} arbetsdagar enligt publicerat schema</span></IndustryRow>
              <div>
                <Label className="ind-label">Omfattning (%)</Label>
                <IndustryInput type="number" min="1" max="100" step="1" value={absenceDraft.extentPct} onChange={(e) => setAbsenceDraft({ ...absenceDraft, extentPct: e.target.value })} />
@@ -532,7 +545,7 @@ export default function MyShifts() {
              <IndustryButton
                variant="primary"
                corners
-               disabled={!myId || !absenceDraft.absenceTypeId || !absenceDraft.startDate || createAbsenceRequest.isPending}
+               disabled={!myId || !absenceDraft.absenceTypeId || !absenceDraft.startDate || (absenceDraft.endDate !== "" && absenceDraft.endDate < absenceDraft.startDate) || createAbsenceRequest.isPending}
                onClick={async () => {
                  if (!myId || !absenceDraft.absenceTypeId) return;
                  try {
@@ -546,8 +559,8 @@ export default function MyShifts() {
                      store_id: storeId,
                      legal_entity_id: myEmployment?.legal_entity_id ?? null,
                    });
-                   setAbsenceOpen(false);
-                   setAbsenceDraft({ absenceTypeId: "", startDate: dateKey(new Date()), endDate: "", extentPct: "100", note: "" });
+                    setAbsenceOpen(false);
+                   setAbsenceDraft({ absenceTypeId: "", startDate: today, endDate: "", extentPct: "100", note: "" });
                    toast.success("Frånvaroanmälan skickad");
                  } catch (e) {
                    toast.error(e instanceof Error ? e.message : "Kunde inte skicka frånvaroanmälan");

@@ -207,7 +207,8 @@ export function useUndoSickPeriod() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (input: { employeeId: string; firstDay: string }) => {
-      const { data, error } = await supabase.rpc("undo_sick_period", { _employee_id: input.employeeId, _first_day: input.firstDay });
+      const rpc = supabase.rpc as unknown as (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>;
+      const { data, error } = await rpc("undo_sick_period", { _employee_id: input.employeeId, _first_day: input.firstDay });
       if (error) throw error;
       return data;
     },
@@ -219,7 +220,8 @@ export function useEndSickPeriod() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (input: { employeeId: string; lastDay?: string | null }) => {
-      const { data, error } = await supabase.rpc("end_sick_period", { _employee_id: input.employeeId, _last_day: input.lastDay ?? null });
+      const rpc = supabase.rpc as unknown as (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>;
+      const { data, error } = await rpc("end_sick_period", { _employee_id: input.employeeId, _last_day: input.lastDay ?? null });
       if (error) throw error;
       return data;
     },

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CalendarDays, Loader2, Plus, Save, Settings2 } from "lucide-react";
 import { IndustryButton, IndustryFrame, IndustryInput, IndustryRow, SectionLabel, StatusLabel } from "@/components/industry";
+import { ShiftTemplatesPanel } from "@/components/staff/ShiftTemplatesPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -71,11 +72,12 @@ export default function StaffRules() {
       </div>
       {isLoading ? <Loader2 className="h-5 w-5 animate-spin ind-muted" /> : (
         <Tabs defaultValue="rules" className="space-y-5">
-          <TabsList>
+          <TabsList className="flex h-auto flex-wrap justify-start gap-1">
             <TabsTrigger value="rules"><Settings2 className="mr-2 h-4 w-4" />Arbetstidsregler</TabsTrigger>
             <TabsTrigger value="ob">OB & lönearter</TabsTrigger>
             <TabsTrigger value="sites">Driftställen</TabsTrigger>
             <TabsTrigger value="holidays"><CalendarDays className="mr-2 h-4 w-4" />Helgdagar</TabsTrigger>
+            <TabsTrigger value="templates">Passmallar</TabsTrigger>
           </TabsList>
           <TabsContent value="rules" className="space-y-1">
             <SectionLabel>Versionerade regler</SectionLabel>
@@ -93,6 +95,7 @@ export default function StaffRules() {
           </TabsContent>
           <TabsContent value="sites" className="space-y-1"><SectionLabel>Kontering per driftställe</SectionLabel>{sites.map((site) => <IndustryRow key={site.id} edge="neutral" className="flex-wrap"><div className="flex-1"><p className="font-medium">{site.name}</p><p className="ind-muted text-xs">Platslås {site.geofence_radius_m} m · {site.allow_mobile_punch ? "Mobil tillåten" : "Endast terminal"}</p></div><span className="ind-mono font-semibold">KST {site.posting_cost_center}</span><StatusLabel tone={site.ledger_required === "ja" ? "ok" : site.ledger_required === "utred" ? "progress" : "neutral"}>{site.ledger_required === "utred" ? "Liggarplikt: Utred" : `Liggarplikt: ${site.ledger_required}`}</StatusLabel></IndustryRow>)}</TabsContent>
           <TabsContent value="holidays" className="space-y-4"><div className="flex flex-wrap items-end gap-2"><div><SectionLabel>Datum</SectionLabel><IndustryInput type="date" value={holiday.date} onChange={(e) => setHoliday((v) => ({ ...v, date: e.target.value }))} /></div><div><SectionLabel>Namn</SectionLabel><IndustryInput placeholder="T.ex. Julafton" value={holiday.name} onChange={(e) => setHoliday((v) => ({ ...v, name: e.target.value }))} /></div><IndustryButton variant="primary" corners disabled={saving} onClick={addHoliday}><Plus className="h-4 w-4" />Lägg till</IndustryButton></div><div className="space-y-1">{holidays.map((item) => <IndustryRow key={item.id} className="flex-wrap"><span className="ind-mono w-28">{item.holiday_date}</span><span className="flex-1">{item.name}</span>{item.is_major_holiday && <StatusLabel tone="progress">Storhelg</StatusLabel>}</IndustryRow>)}</div></TabsContent>
+          <TabsContent value="templates" className="mt-5"><ShiftTemplatesPanel /></TabsContent>
         </Tabs>
       )}
       <p className="ind-muted text-xs"><Save className="mr-1 inline h-3.5 w-3.5" />Ändringar i regelvärden sparas när du lämnar fältet. Nivån för övertid är fortsatt markerad som overifierad tills avtalet är bekräftat.</p>
