@@ -6727,6 +6727,71 @@ export type Database = {
         }
         Relationships: []
       }
+      ob_windows: {
+        Row: {
+          agreement_source: string | null
+          created_at: string
+          day_kind: string
+          end_time: string
+          id: string
+          is_active: boolean
+          legal_entity_id: string | null
+          name: string
+          pct: number
+          sort_order: number
+          start_time: string
+          updated_at: string
+          valid_from: string
+          valid_to: string | null
+          version: number
+          wage_code_id: string | null
+        }
+        Insert: {
+          agreement_source?: string | null
+          created_at?: string
+          day_kind: string
+          end_time: string
+          id?: string
+          is_active?: boolean
+          legal_entity_id?: string | null
+          name: string
+          pct: number
+          sort_order?: number
+          start_time: string
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+          version?: number
+          wage_code_id?: string | null
+        }
+        Update: {
+          agreement_source?: string | null
+          created_at?: string
+          day_kind?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          legal_entity_id?: string | null
+          name?: string
+          pct?: number
+          sort_order?: number
+          start_time?: string
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+          version?: number
+          wage_code_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ob_windows_wage_code_id_fkey"
+            columns: ["wage_code_id"]
+            isOneToOne: false
+            referencedRelation: "wage_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offer_documents: {
         Row: {
           file_name: string
@@ -6910,6 +6975,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payroll_holidays: {
+        Row: {
+          country_code: string
+          created_at: string
+          holiday_date: string
+          id: string
+          is_major_holiday: boolean
+          name: string
+          note: string | null
+          treated_as: string
+          updated_at: string
+        }
+        Insert: {
+          country_code?: string
+          created_at?: string
+          holiday_date: string
+          id?: string
+          is_major_holiday?: boolean
+          name: string
+          note?: string | null
+          treated_as?: string
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          holiday_date?: string
+          id?: string
+          is_major_holiday?: boolean
+          name?: string
+          note?: string | null
+          treated_as?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       period_locks: {
         Row: {
@@ -12260,54 +12361,175 @@ export type Database = {
         }
         Relationships: []
       }
+      time_allocations: {
+        Row: {
+          correction_reason: string | null
+          corrects_allocation_id: string | null
+          cost_center: string
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          end_entry_id: string | null
+          ended_at: string | null
+          id: string
+          legal_entity_id: string | null
+          start_entry_id: string | null
+          started_at: string
+          store_id: string | null
+          work_site_id: string
+        }
+        Insert: {
+          correction_reason?: string | null
+          corrects_allocation_id?: string | null
+          cost_center: string
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          end_entry_id?: string | null
+          ended_at?: string | null
+          id?: string
+          legal_entity_id?: string | null
+          start_entry_id?: string | null
+          started_at: string
+          store_id?: string | null
+          work_site_id: string
+        }
+        Update: {
+          correction_reason?: string | null
+          corrects_allocation_id?: string | null
+          cost_center?: string
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          end_entry_id?: string | null
+          ended_at?: string | null
+          id?: string
+          legal_entity_id?: string | null
+          start_entry_id?: string | null
+          started_at?: string
+          store_id?: string | null
+          work_site_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_allocations_corrects_allocation_id_fkey"
+            columns: ["corrects_allocation_id"]
+            isOneToOne: false
+            referencedRelation: "time_allocations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_allocations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_allocations_end_entry_id_fkey"
+            columns: ["end_entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_allocations_start_entry_id_fkey"
+            columns: ["start_entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_allocations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_allocations_work_site_id_fkey"
+            columns: ["work_site_id"]
+            isOneToOne: false
+            referencedRelation: "work_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       time_entries: {
         Row: {
           correction_kind: string | null
           corrects_entry_id: string | null
+          cost_center: string | null
           created_at: string
           created_by: string | null
+          distance_m: number | null
           employee_id: string
+          geofence_ok: boolean | null
           id: string
           legal_entity_id: string | null
           note: string | null
           occurred_at: string
+          offline_queued: boolean
+          punch_accuracy_m: number | null
+          punch_lat: number | null
+          punch_lng: number | null
           registered_at: string
           source: string
           station_id: string | null
           store_id: string | null
+          synced_at: string | null
           type: string
+          work_site_id: string | null
         }
         Insert: {
           correction_kind?: string | null
           corrects_entry_id?: string | null
+          cost_center?: string | null
           created_at?: string
           created_by?: string | null
+          distance_m?: number | null
           employee_id: string
+          geofence_ok?: boolean | null
           id?: string
           legal_entity_id?: string | null
           note?: string | null
           occurred_at: string
+          offline_queued?: boolean
+          punch_accuracy_m?: number | null
+          punch_lat?: number | null
+          punch_lng?: number | null
           registered_at?: string
           source?: string
           station_id?: string | null
           store_id?: string | null
+          synced_at?: string | null
           type: string
+          work_site_id?: string | null
         }
         Update: {
           correction_kind?: string | null
           corrects_entry_id?: string | null
+          cost_center?: string | null
           created_at?: string
           created_by?: string | null
+          distance_m?: number | null
           employee_id?: string
+          geofence_ok?: boolean | null
           id?: string
           legal_entity_id?: string | null
           note?: string | null
           occurred_at?: string
+          offline_queued?: boolean
+          punch_accuracy_m?: number | null
+          punch_lat?: number | null
+          punch_lng?: number | null
           registered_at?: string
           source?: string
           station_id?: string | null
           store_id?: string | null
+          synced_at?: string | null
           type?: string
+          work_site_id?: string | null
         }
         Relationships: [
           {
@@ -12336,6 +12558,13 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_work_site_id_fkey"
+            columns: ["work_site_id"]
+            isOneToOne: false
+            referencedRelation: "work_sites"
             referencedColumns: ["id"]
           },
         ]
@@ -13169,6 +13398,39 @@ export type Database = {
         }
         Relationships: []
       }
+      wage_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          kind: string
+          legal_entity_id: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kind?: string
+          legal_entity_id?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kind?: string
+          legal_entity_id?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       waste_report_lines: {
         Row: {
           comment: string | null
@@ -13511,6 +13773,137 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "weekly_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_rules: {
+        Row: {
+          agreement_source: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_unverified: boolean
+          legal_entity_id: string | null
+          legal_source: string | null
+          name: string
+          note: string | null
+          rule_key: string
+          unit: string | null
+          updated_at: string
+          valid_from: string
+          valid_to: string | null
+          value_numeric: number | null
+          value_text: string | null
+          version: number
+        }
+        Insert: {
+          agreement_source?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_unverified?: boolean
+          legal_entity_id?: string | null
+          legal_source?: string | null
+          name: string
+          note?: string | null
+          rule_key: string
+          unit?: string | null
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+          value_numeric?: number | null
+          value_text?: string | null
+          version?: number
+        }
+        Update: {
+          agreement_source?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_unverified?: boolean
+          legal_entity_id?: string | null
+          legal_source?: string | null
+          name?: string
+          note?: string | null
+          rule_key?: string
+          unit?: string | null
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+          value_numeric?: number | null
+          value_text?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
+      work_sites: {
+        Row: {
+          allow_mobile_punch: boolean
+          cost_center: string | null
+          created_at: string
+          geofence_lat: number | null
+          geofence_lng: number | null
+          geofence_radius_m: number
+          id: string
+          is_active: boolean
+          is_own_premises: boolean
+          kind: Database["public"]["Enums"]["work_site_kind"]
+          ledger_note: string | null
+          ledger_required: Database["public"]["Enums"]["ledger_obligation"]
+          legal_entity_id: string | null
+          name: string
+          posting_cost_center: string
+          sort_order: number
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          allow_mobile_punch?: boolean
+          cost_center?: string | null
+          created_at?: string
+          geofence_lat?: number | null
+          geofence_lng?: number | null
+          geofence_radius_m?: number
+          id?: string
+          is_active?: boolean
+          is_own_premises?: boolean
+          kind?: Database["public"]["Enums"]["work_site_kind"]
+          ledger_note?: string | null
+          ledger_required?: Database["public"]["Enums"]["ledger_obligation"]
+          legal_entity_id?: string | null
+          name: string
+          posting_cost_center: string
+          sort_order?: number
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          allow_mobile_punch?: boolean
+          cost_center?: string | null
+          created_at?: string
+          geofence_lat?: number | null
+          geofence_lng?: number | null
+          geofence_radius_m?: number
+          id?: string
+          is_active?: boolean
+          is_own_premises?: boolean
+          kind?: Database["public"]["Enums"]["work_site_kind"]
+          ledger_note?: string | null
+          ledger_required?: Database["public"]["Enums"]["ledger_obligation"]
+          legal_entity_id?: string | null
+          name?: string
+          posting_cost_center?: string
+          sort_order?: number
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_sites_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -14385,6 +14778,7 @@ export type Database = {
         | "group_admin"
         | "platform_admin"
         | "multi_store_manager"
+      ledger_obligation: "ja" | "nej" | "utred"
       location_type:
         | "inkopslager"
         | "grossistlager"
@@ -14399,6 +14793,13 @@ export type Database = {
         | "delvis_levererad"
         | "godkand_inleverans"
         | "avvisad"
+      work_site_kind:
+        | "storkok"
+        | "produktion"
+        | "butik"
+        | "inkop"
+        | "transport"
+        | "extern"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -14538,6 +14939,7 @@ export const Constants = {
         "platform_admin",
         "multi_store_manager",
       ],
+      ledger_obligation: ["ja", "nej", "utred"],
       location_type: [
         "inkopslager",
         "grossistlager",
@@ -14553,6 +14955,14 @@ export const Constants = {
         "delvis_levererad",
         "godkand_inleverans",
         "avvisad",
+      ],
+      work_site_kind: [
+        "storkok",
+        "produktion",
+        "butik",
+        "inkop",
+        "transport",
+        "extern",
       ],
     },
   },
