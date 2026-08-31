@@ -120,7 +120,7 @@ export function useCreateAbsenceRequest() {
       const { data, error } = await supabase
         .from("absence_requests")
         .insert({ ...input, created_by: userData.user?.id ?? null })
-        .select("id, employee_id, absence_type_id, start_date, end_date, extent_pct, note, status, store_id, legal_entity_id, days_count, created_at, decided_at, decision_note")
+        .select("id, employee_id, absence_type_id, start_date, end_date, date_from, date_to, extent_pct, basis, note, reason, status, store_id, legal_entity_id, days_count, created_at, decided_at, decision_note")
         .single();
       if (error) throw error;
       return data as AbsenceRequest;
