@@ -510,8 +510,13 @@ export default function WholesaleOrders() {
     return matchSearch && matchStatus && matchStore;
   });
 
-   const groupedFilteredOrders = useMemo(() => groupByWeek(filteredOrders), [filteredOrders]);
+   const todayIso = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Stockholm" });
+   const currentOrders = useMemo(() => filteredOrders.filter((o: any) => !orderDate(o) || orderDate(o) >= todayIso), [filteredOrders, todayIso]);
+   const historicOrders = useMemo(() => filteredOrders.filter((o: any) => orderDate(o) && orderDate(o) < todayIso), [filteredOrders, todayIso]);
+   const groupedCurrentOrders = useMemo(() => groupByWeek(currentOrders, "asc"), [currentOrders]);
+   const groupedHistoricOrders = useMemo(() => groupByWeek(historicOrders, "desc"), [historicOrders]);
    const { data: photoCounts } = useEntityImageCounts(
+
      "shop_order",
      useMemo(() => filteredOrders.map((order: any) => order.id), [filteredOrders]),
    );
