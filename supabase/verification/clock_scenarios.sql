@@ -12,6 +12,8 @@ DECLARE
   v_midnight jsonb;
   v_dst jsonb;
   v_duplicate_count integer;
+  v_dst_total integer;
+
 BEGIN
   INSERT INTO public.employees (first_name, last_name, is_active)
   VALUES ('Körbevis', 'Etapp 2b', true)
