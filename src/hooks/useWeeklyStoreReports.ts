@@ -98,7 +98,6 @@ export function useToggleWeeklyClosure() {
       store_id: string;
       iso_year: number;
       iso_week: number;
-      week_start: string;
       closed: boolean;
       reason?: string;
     }) => {
@@ -112,20 +111,15 @@ export function useToggleWeeklyClosure() {
           closed_by: session.user?.id ?? null,
         });
         if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("weekly_store_report_closures")
-          .delete()
-          .eq("store_id", input.store_id)
-          .eq("iso_year", input.iso_year)
-          .eq("iso_week", input.iso_week);
-        if (error) throw error;
+        return;
       }
-      const { error: recomputeError } = await supabase.rpc("recompute_weekly_store_report_admin", {
-        _store_id: input.store_id,
-        _date: input.week_start,
-      });
-      if (recomputeError) throw recomputeError;
+      const { error } = await supabase
+        .from("weekly_store_report_closures")
+        .delete()
+        .eq("store_id", input.store_id)
+        .eq("iso_year", input.iso_year)
+        .eq("iso_week", input.iso_week);
+      if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["weekly-store-reports"] });
