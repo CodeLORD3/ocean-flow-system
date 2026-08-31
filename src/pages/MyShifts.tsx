@@ -199,6 +199,14 @@ export default function MyShifts() {
   const calendarDays = absenceDraft.endDate && absenceDraft.endDate >= absenceDraft.startDate
     ? Math.floor((new Date(`${absenceDraft.endDate}T12:00:00`).getTime() - new Date(`${absenceDraft.startDate}T12:00:00`).getTime()) / 86_400_000) + 1
     : absenceDraft.startDate ? 1 : 0;
+  const scheduledAbsenceShifts = useMemo(
+    () => absenceShifts.filter((shift) => shift.status === "published"),
+    [absenceShifts],
+  );
+  const requestedVacationDays = selectedAbsenceType?.affects_vacation_balance
+    ? scheduledWorkDays * (Number(absenceDraft.extentPct) / 100)
+    : 0;
+  const balanceAfterRequest = remainingVacation === null ? null : remainingVacation - requestedVacationDays;
 
   useEffect(() => {
     if (sickUndoUntil === null) return;
