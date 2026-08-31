@@ -9,7 +9,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeftRight, CalendarDays, ChevronLeft, ChevronRight, HandHelping, Plus } from "lucide-react";
+import { ArrowLeftRight, CalendarDays, ChevronLeft, ChevronRight, HandHelping, Plus, Stethoscope } from "lucide-react";
 import {
   DecisionBar,
   DecisionMetric,
@@ -23,6 +23,7 @@ import {
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmployees, useAllEmployments } from "@/hooks/useEmployees";
 import {
@@ -35,6 +36,13 @@ import {
   useSaveAvailability,
   useDeleteAvailability,
 } from "@/hooks/useSchedule";
+import {
+  useAbsenceRequests,
+  useAbsenceTypes,
+  useCreateAbsenceRequest,
+  useRegisterSickDay,
+  useVacationBalances,
+} from "@/hooks/useAbsence";
 import {
   DAY_NAMES,
   dateKey,
@@ -80,6 +88,14 @@ export default function MyShifts() {
   const [swapFor, setSwapFor] = useState<Shift | null>(null);
   const [swapTo, setSwapTo] = useState<string>("");
   const [availOpen, setAvailOpen] = useState(false);
+  const [absenceOpen, setAbsenceOpen] = useState(false);
+  const [absenceDraft, setAbsenceDraft] = useState({
+    absenceTypeId: "",
+    startDate: dateKey(new Date()),
+    endDate: "",
+    extentPct: "100",
+    note: "",
+  });
   const [availDraft, setAvailDraft] = useState({ date: dateKey(new Date()), from_time: "08:00", to_time: "17:00", type: "onskar" });
 
   const week = useMemo(() => weekDates(anchor), [anchor]);
@@ -97,10 +113,21 @@ export default function MyShifts() {
   const { data: myRequests = [] } = useMyShiftRequests(myId);
   const { data: cutoff = DEFAULT_CUTOFF } = useScheduleCutoff(storeId);
   const { data: myAvailability = [] } = useAvailability(myId);
+  const { data: absenceTypes = [] } = useAbsenceTypes();
+  const { data: absenceRequests = [] } = useAbsenceRequests(myId, storeId);
+  const { data: vacationBalances = [] } = useVacationBalances(myId);
 
   const createRequest = useCreateShiftRequest();
   const saveAvailability = useSaveAvailability();
   const deleteAvailability = useDeleteAvailability();
+  const createAbsenceRequest = useCreateAbsenceRequest();
+  const registerSickDay = useRegisterSickDay();
+
+  const absenceTypeById = useMemo(() => new Map(absenceTypes.map((type) => [type.id, type])), [absenceTypes]);
+  const currentBalance = vacationBalances[0] ?? null;
+  const remainingVacation = currentBalance
+    ? currentBalance.entitled_days + currentBalance.saved_days + currentBalance.manual_adjustment_days - currentBalance.used_days
+    : null;
 
   const published = myShifts.filter((s) => s.status === "published");
   const openShifts = storeShifts.filter((s) => !s.employee_id && s.status === "published");
@@ -242,12 +269,12 @@ export default function MyShifts() {
         </div>
       </div>
 
-      <DecisionBar>
-        <DecisionMetric label="Mina pass" value={published.length} />
-        <DecisionMetric label="Planerad tid" value={formatMinutes(totalMinutes)} />
-        <DecisionMetric label="Öppna pass" value={openShifts.length} tone={openShifts.length ? "progress" : "neutral"} />
-        <DecisionMetric label="Beslutsgräns" value={`${cutoff} h`} />
-      </DecisionBar>
+       <DecisionBar>
+         <DecisionMetric label="Mina pass" value={published.length} />
+         <DecisionMetric label="Planerad tid" value={formatMinutes(totalMinutes)} />
+         <DecisionMetric label="Öppna pass" value={openShifts.length} tone={openShifts.length ? "progress" : "neutral"} />
+         <DecisionMetric label="Semester kvar" value={remainingVacation === null ? "—" : `${remainingVacation.toFixed(1)} dagar`} tone={remainingVacation !== null && remainingVacation < 5 ? "progress" : "neutral"} />
+       </DecisionBar>
 
       {!myId && (
         <IndustryRow edge="alert">
@@ -322,11 +349,65 @@ export default function MyShifts() {
             <p className="ind-muted text-sm">Inga förfrågningar.</p>
           </IndustryRow>
         )}
-      </section>
+       </section>
 
-      <section className="space-y-2">
-        <div className="flex items-center justify-between">
-          <SectionLabel>Min tillgänglighet</SectionLabel>
+       <section className="space-y-2">
+         <div className="flex flex-wrap items-center justify-between gap-2">
+           <div>
+             <SectionLabel>Frånvaro & semester</SectionLabel>
+             <p className="ind-muted text-xs">Ansök om ledighet eller registrera sjukdag. Godkännande visas här när chefen har beslutat.</p>
+           </div>
+           <div className="flex flex-wrap gap-2">
+             <IndustryButton
+               size="touch"
+               variant="ghost"
+               disabled={!myId || registerSickDay.isPending}
+               onClick={async () => {
+                 if (!myId) return;
+                 try {
+                   await registerSickDay.mutateAsync({ employeeId: myId, date: dateKey(new Date()) });
+                   toast.success("Sjukdag registrerad");
+                 } catch (e) {
+                   toast.error(e instanceof Error ? e.message : "Kunde inte registrera sjukdag");
+                 }
+               }}
+             >
+               <Stethoscope className="h-4 w-4" /> Sjukanmäl idag
+             </IndustryButton>
+             <IndustryButton size="touch" variant="secondary" onClick={() => setAbsenceOpen(true)}>
+               <Plus className="h-4 w-4" /> Ny frånvaro
+             </IndustryButton>
+           </div>
+         </div>
+         {currentBalance && (
+           <IndustryRow edge={currentBalance.expiry_flagged ? "alert" : "accent-2"}>
+             <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+               <span><strong>{currentBalance.vacation_year}</strong> · intjänat {currentBalance.earned_days.toFixed(1)} dagar · sparat {currentBalance.saved_days.toFixed(1)} dagar</span>
+               <StatusLabel tone={currentBalance.expiry_flagged ? "alert" : "ok"}>{remainingVacation?.toFixed(1)} dagar kvar</StatusLabel>
+             </div>
+           </IndustryRow>
+         )}
+         {absenceRequests.slice(0, 8).map((request) => (
+           <IndustryRow key={request.id} edge={request.status === "rejected" ? "alert" : request.status === "pending" ? "accent-2" : "accent"}>
+             <div className="flex flex-wrap items-start justify-between gap-2">
+               <div>
+                 <p className="text-sm font-medium">{absenceTypeById.get(request.absence_type_id)?.name ?? "Frånvaro"}</p>
+                 <p className="ind-muted text-xs">{request.start_date}{request.end_date ? ` – ${request.end_date}` : ""} · {request.extent_pct}%</p>
+                 {request.note && <p className="ind-muted mt-1 text-xs">{request.note}</p>}
+               </div>
+               <StatusLabel tone={request.status === "rejected" ? "alert" : request.status === "pending" ? "progress" : "ok"}>
+                 {request.status === "pending" ? "Väntar på beslut" : request.status === "approved" ? "Godkänd" : request.status === "cancelled" ? "Avbruten" : "Avslagen"}
+               </StatusLabel>
+             </div>
+             {request.decision_note && <p className="ind-muted mt-2 text-xs">Chefens kommentar: {request.decision_note}</p>}
+           </IndustryRow>
+         ))}
+         {!absenceRequests.length && <IndustryRow edge="neutral"><p className="ind-muted text-sm">Ingen frånvaro registrerad.</p></IndustryRow>}
+       </section>
+
+       <section className="space-y-2">
+         <div className="flex items-center justify-between">
+           <SectionLabel>Min tillgänglighet</SectionLabel>
           <IndustryButton size="touch" variant="secondary" onClick={() => setAvailOpen(true)}>
             <Plus className="h-4 w-4" /> Lägg till
           </IndustryButton>
@@ -420,8 +501,67 @@ export default function MyShifts() {
         </DialogContent>
       </Dialog>
 
-      {/* Tillgänglighet */}
-      <Dialog open={availOpen} onOpenChange={setAvailOpen}>
+       {/* Frånvaro */}
+       <Dialog open={absenceOpen} onOpenChange={setAbsenceOpen}>
+         <DialogContent className="ind max-w-md">
+           <DialogHeader>
+             <DialogTitle className="ind-h2">Ny frånvaroanmälan</DialogTitle>
+           </DialogHeader>
+           <div className="space-y-3">
+             <div>
+               <Label className="ind-label">Typ</Label>
+               <Select value={absenceDraft.absenceTypeId} onValueChange={(value) => setAbsenceDraft({ ...absenceDraft, absenceTypeId: value })}>
+                 <SelectTrigger className="ind-input"><SelectValue placeholder="Välj frånvarotyp" /></SelectTrigger>
+                 <SelectContent>
+                   {absenceTypes.map((type) => <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>)}
+                 </SelectContent>
+               </Select>
+             </div>
+             <div className="grid grid-cols-2 gap-3">
+               <div><Label className="ind-label">Från</Label><IndustryInput type="date" value={absenceDraft.startDate} onChange={(e) => setAbsenceDraft({ ...absenceDraft, startDate: e.target.value })} /></div>
+               <div><Label className="ind-label">Till</Label><IndustryInput type="date" value={absenceDraft.endDate} onChange={(e) => setAbsenceDraft({ ...absenceDraft, endDate: e.target.value })} /></div>
+             </div>
+             <div>
+               <Label className="ind-label">Omfattning (%)</Label>
+               <IndustryInput type="number" min="1" max="100" step="1" value={absenceDraft.extentPct} onChange={(e) => setAbsenceDraft({ ...absenceDraft, extentPct: e.target.value })} />
+             </div>
+             <div><Label className="ind-label">Kommentar</Label><Textarea value={absenceDraft.note} onChange={(e) => setAbsenceDraft({ ...absenceDraft, note: e.target.value })} placeholder="Valfri kommentar" /></div>
+           </div>
+           <DialogFooter>
+             <IndustryButton variant="ghost" onClick={() => setAbsenceOpen(false)}>Avbryt</IndustryButton>
+             <IndustryButton
+               variant="primary"
+               corners
+               disabled={!myId || !absenceDraft.absenceTypeId || !absenceDraft.startDate || createAbsenceRequest.isPending}
+               onClick={async () => {
+                 if (!myId || !absenceDraft.absenceTypeId) return;
+                 try {
+                   await createAbsenceRequest.mutateAsync({
+                     employee_id: myId,
+                     absence_type_id: absenceDraft.absenceTypeId,
+                     start_date: absenceDraft.startDate,
+                     end_date: absenceDraft.endDate || null,
+                     extent_pct: Number(absenceDraft.extentPct),
+                     note: absenceDraft.note.trim() || undefined,
+                     store_id: storeId,
+                     legal_entity_id: myEmployment?.legal_entity_id ?? null,
+                   });
+                   setAbsenceOpen(false);
+                   setAbsenceDraft({ absenceTypeId: "", startDate: dateKey(new Date()), endDate: "", extentPct: "100", note: "" });
+                   toast.success("Frånvaroanmälan skickad");
+                 } catch (e) {
+                   toast.error(e instanceof Error ? e.message : "Kunde inte skicka frånvaroanmälan");
+                 }
+               }}
+             >
+               Skicka anmälan
+             </IndustryButton>
+           </DialogFooter>
+         </DialogContent>
+       </Dialog>
+
+       {/* Tillgänglighet */}
+       <Dialog open={availOpen} onOpenChange={setAvailOpen}>
         <DialogContent className="ind max-w-md">
           <DialogHeader>
             <DialogTitle className="ind-h2">Ny tillgänglighet</DialogTitle>

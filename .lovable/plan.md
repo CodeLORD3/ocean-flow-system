@@ -1,39 +1,71 @@
-# Etapp 4 — frånvaro, semester, saldon och HR-notiser
+# Behovsavstämning och beslutsstöd för inköp
 
 ## Mål
-Slutföra etapp 4 ovanpå den redan skapade HR-datamodellen: personal kan ansöka om frånvaro, chef kan hantera kön och saldon, och HR-händelser kan levereras som in-app-notiser samt via e-post/SMS enligt preferenser.
+Bygga vidare på Makrill Trades befintliga inköps- och orderflöden utan att ändra nuvarande design, orderkolumner eller Totallistans befintliga logik.
 
-## Genomförande
-1. **Notifieringsfunktionen**
-   - Skapa `notify` som autentiserar anrop, validerar mall/mottagare/payload och använder befintlig `hr_notify`-logik.
-   - Läsa Loopia-/46elks-credentials från Vault via secrets, aldrig från klientkod.
-   - Implementera kanalpreferenser, deduplicering, max ett SMS per händelse/mottagare, säkra svenska mallar och bounded retry för enbart tillfälliga leveransfel.
-   - Returnera tydliga fel och spara varje kanalhändelse i `hr_notifications`.
+## Plan
 
-2. **Återanvändbart frontend-lager**
-   - Bygga Industry-baserade hooks för `absence_requests`, `vacation_balances`, `comp_balances`, `sick_periods`, `hr_notifications` och preferenser.
-   - Lägga till en personalvy under Mina pass för frånvaroansökan, snabb sjukanmälan, egna statusar och saldo.
-   - Lägga till en chefsvy med SideQueue för väntande ansökningar, saldoförhandsvisning, konfliktinformation mot publicerade pass, beslut och beslutskommentar.
-   - Lägga till saldo-/sjukperiodsvy för behöriga chefer/admin med historik och manuella justeringar där backendreglerna tillåter det.
-   - Koppla HR-notiser till ett återanvändbart notiscenter i toppbaren, inklusive olästa räknare, markera läst och länk till rätt vy.
-   - Registrera routes och sidebarposter utan att ändra befintliga affärsflöden.
+1. **Förbered datamodell och avgränsningar**
+   - Använd `customer_orders.wanted_date` som enda datumgrund för kundbehov per vald vecka.
+   - Återanvänd den befintliga Totalliste-logiken/datagrunden för kundbehov i stället för en ny parallell aggregering.
+   - Summera grossistbeställningar från `shop_orders` och `shop_order_lines` per produkt och leveransdatum.
+   - Beräkna utestående mängd i andra öppna grossistordrar som `beställt − mottaget`, där mottaget hämtas från `quantity_delivered`, och exkludera ordern som redigeras.
+   - Återanvänd `products.id` som matchningskoppling eftersom båda katalogerna redan pekar på samma produktregister. `needs_product_match` och saknat `product_id` ska ge läget Kontrollera, aldrig en automatisk osäker matchning.
+   - Lägga till endast den datamodell/konfiguration som behövs för en justerbar överskottsgräns och eventuell revisionsinformation kring manuell matchningsbekräftelse. Ingen lager-, prognos- eller rekommendationslogik byggs.
 
-3. **Integrationer och regler**
-   - Visa och länka schemakrockar till berört pass.
-   - Visa sjukperiodens återinsjuknande, karensräknare och dag-15-varning utan att exponera hälsodetaljer i SMS/e-post.
-   - Koppla frånvarobeslut till attestvyn och visa frånvaroreferens när en missad schemarad löses.
-   - Visa semesterår, intjänade/uttagna/sparade dagar och varningar för förfall enligt befintliga databasfunktioner.
+2. **Ny avstämningsvy**
+   - Skapa en ny vy i samma flik-/menysystem som befintliga ordervyer, åtkomlig för grossist/admin enligt befintlig sidbehörighet.
+   - Veckoväljare baserad på leverans-/upphämtningsdatum, med kategorifilter enligt Totallistans befintliga filtermönster.
+   - Visa kategorirubriker i befintligt format med kategori, antal produkter och antal rader.
+   - Visa produktrader med befintlig miniatyr, produktnamn, enhet och högerställda mängder för:
+     - Kundbehov
+     - Beställt
+     - Behovsdifferens (`Beställt − Kundbehov`)
+   - Statuspill syskon till befintlig orderstatus:
+     - **Täckt** när säker matchning och beställt täcker behovet.
+     - **Saknas** när beställt understiger behovet eller ingen grossistorder finns.
+     - **Kontrollera** när matchningen är osäker; ingen differens räknas eller visas som ett beslut.
+     - **Info** när produkten inte är markerad som grossistvara.
+   - Visa alltid statusens text tillsammans med färg. Täckt-rader med konfigurerat stort överskott behåller grönt men får texten “Stort överskott – kontrollera svinnrisk”.
+   - Sammanfattning överst med klickbara antal per status, plus “Visa endast avvikelser” och kategori-filter.
+   - Klick på Saknas/Kontrollera öppnar relevant grossistorder/rad när koppling finns; annars visas tydligt att åtgärd eller manuell matchning krävs.
+   - Tomma lägen ska använda appens befintliga `EmptyState`-mönster.
 
-4. **Körbevis a–j**
-   - Testa mobil ansökan → chefsbeslut → saldo före/efter.
-   - Testa schemakrock, sjukperiodens återöppning/ny period, dag 15, attestkoppling och semesterårsskifte.
-   - Skicka ett verkligt testmeddelande till Baldvin efter explicit kontroll av mottagare och verifiera `sent` i `hr_notifications`.
-   - Genomföra RLS-verifiering med två autentiserade användare för anställd-/enhetsisolering.
-   - Verifiera avstängd SMS-preferens, att inget SMS-försök loggas, samt att testposter och testnotiser städas/voidas.
+3. **Beslutsstöd i “Ny beställning”**
+   - Utöka befintliga produktrader i grossistorderns orderformulär, utan att ändra befintliga orderkolumner i orderlistan.
+   - Visa alltid i samma rad:
+     - Kundbehov denna vecka
+     - Redan beställt i andra öppna grossistordrar med status Ny/Skickad/Delvis levererad
+     - Beställt-fältet
+     - Live-indikator som uppdateras vid varje ändring och visar om behovet täcks
+   - Visa “–” i stället för noll för redan beställt.
+   - Blockera dubbletter i den nya ordern och visa “Produkten finns redan i denna order” med länk/fokus till befintlig rad.
+   - Lägg senaste veckornas snitt och förra veckans beställda mängd bakom en expanderbar sekundärrad.
+   - Rekommendera eller skicka aldrig en kvantitet automatiskt; användaren måste själv skriva och bekräfta beställt mängd.
+
+4. **Manuell produktmatchning**
+   - Bygg ett explicit bekräftelseflöde för kundrader med osäker matchning eller saknad produktkoppling.
+   - Textlikhet får endast visa kandidater med tydlig osäkerhetsmarkering; ingen kandidat väljs automatiskt.
+   - Vid manuell bekräftelse sparas den delade produktkopplingen så att kommande veckor kan återanvända den bekräftade `product_id`-kopplingen.
+   - Visa en audit-/bekräftelsemarkering och möjlighet att avbryta utan att skapa differens eller orderkvantitet.
+
+5. **Navigation, behörighet och befintliga mönster**
+   - Lägg till ny vy som meny-/flikval med befintlig mörk sidebar, aktiv-state, ikonstil, flikrader, knappar, kort, filter och statuspill.
+   - Låt Kundbeställningar → Totallista vara oförändrad i utseende och beteende.
+   - Låt grossistorderns befintliga Beställt/Packat/Avvikelse/Status vara oförändrade; den nya kolumnen benämns alltid Behovsdifferens.
+   - Behåll separata domänobjekt för kundbeställningar och grossistordrar.
+   - Anpassa endast med befintliga responsiva klasser för mobil och surfplatta.
+
+6. **Verifiering**
+   - Kontrollera att vecka filtreras på wanted-/leveransdatum och inte skapelsedatum.
+   - Verifiera statusfallen Täckt, Saknas, Kontrollera och Info inklusive stora överskott.
+   - Verifiera att leveransavvikelse och behovsdifferens visas separat.
+   - Verifiera att öppna orderstatusar, mottaget mängd och aktuell order exkluderas korrekt från “Redan beställt”.
+   - Verifiera dubblettskydd, manuell matchningsbekräftelse, live-indikator och mobil layout.
+   - Kontrollera befintliga Totallistan och orderlistan för att säkerställa att de inte förändrats.
 
 ## Tekniskt
-- Endast Lovable Cloud-funktioner, befintliga tabeller/RPC:er och Industry-primitiver används.
-- Ingen löneberäkning eller nya Zollikon-regler.
-- Ingen personnummerdata i UI-notiser, e-post eller SMS.
-- Alla edge function-svar inkluderar CORS, input valideras och alla anrop testas mot den riktiga funktionen innan etappen rapporteras som klar.
-- Backendändringar begränsas till det som krävs för notifieringsfunktionen och verifierad säkerhet; inga klienthemligheter eller hårdkodade credentials.
+- Befintliga hooks och komponenter återanvänds först, särskilt Totallistans datum-/kategori-/produktgruppering, `ProductThumb`, `Badge`, `Button`, `Select`, `Input`, `Card`, `EmptyState` och befintliga orderradsmönster.
+- Nya komponenter hålls separata från `TotalOrderedView.tsx` och `WholesaleOrders.tsx` där det minskar risken för regression, men monteras via befintliga route-/tabbmönster.
+- Databasändringar görs endast om konfigurerbar överskottsgräns eller matchningsrevision saknar befintligt stöd. Alla nya publika tabeller får explicita grants, RLS och policies i samma migration.
+- Ingen automatisk produktmatchning, lagerberäkning, nettobehovsberäkning, prognos eller rekommenderad orderkvantitet implementeras.

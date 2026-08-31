@@ -60,6 +60,7 @@ import {
   useDecideShiftRequest,
   useShiftHistory,
 } from "@/hooks/useSchedule";
+import { useAbsenceRequests, useAbsenceTypes, useDecideAbsenceRequest } from "@/hooks/useAbsence";
 import { useAttestations, DEVIATION_LABEL } from "@/hooks/useAttest";
 import {
   DAY_NAMES,
@@ -109,6 +110,8 @@ export default function SchedulePlanner() {
   const { data: competencies = [] } = useEmployeeCompetencies();
   const { data: attestations = [] } = useAttestations(storeId || null, week[0], week[6]);
   const { data: requests = [] } = useShiftRequests(shifts.map((s) => s.id));
+  const { data: absenceRequests = [] } = useAbsenceRequests(undefined, storeId || null);
+  const { data: absenceTypes = [] } = useAbsenceTypes();
 
   const saveShift = useSaveShift();
   const deleteShift = useDeleteShift();
@@ -116,7 +119,14 @@ export default function SchedulePlanner() {
   const fromTemplates = useCreateWeekFromTemplates();
   const copyWeek = useCopyWeek();
   const decideRequest = useDecideShiftRequest();
+  const decideAbsenceRequest = useDecideAbsenceRequest();
   const { data: history = [] } = useShiftHistory(historyFor);
+  const absenceTypeById = useMemo(() => new Map(absenceTypes.map((type) => [type.id, type])), [absenceTypes]);
+  const nameByEmployeeId = useMemo(
+    () => new Map(employees.map((employee) => [employee.id, `${employee.first_name} ${employee.last_name}`])),
+    [employees],
+  );
+  const pendingAbsenceRequests = absenceRequests.filter((request) => request.status === "pending");
 
   const storeEmployments = useMemo(
     () => employments.filter((e) => e.store_id === storeId && e.is_active),
@@ -485,6 +495,48 @@ export default function SchedulePlanner() {
 
             <SideQueue label="Att besluta" empty="Inget väntar just nu.">
               <div className="space-y-2">
+                {pendingAbsenceRequests.map((request) => (
+                  <QueueItem key={request.id}>
+                    <SectionLabel>Frånvaro</SectionLabel>
+                    <p className="text-sm">
+                      {absenceTypeById.get(request.absence_type_id)?.name ?? "Frånvaro"} · {request.start_date}{request.end_date ? ` – ${request.end_date}` : ""}
+                    </p>
+                    <p className="ind-muted text-xs">
+                      {nameByEmployeeId.get(request.employee_id) ?? "Okänd medarbetare"} · {request.extent_pct}%
+                    </p>
+                    {request.note && <p className="ind-muted text-xs">{request.note}</p>}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <IndustryButton
+                        variant="primary"
+                        disabled={decideAbsenceRequest.isPending}
+                        onClick={async () => {
+                          try {
+                            await decideAbsenceRequest.mutateAsync({ requestId: request.id, decision: "approved" });
+                            toast.success("Frånvaro godkänd");
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Kunde inte godkänna frånvaron");
+                          }
+                        }}
+                      >
+                        Godkänn
+                      </IndustryButton>
+                      <IndustryButton
+                        variant="ghost"
+                        disabled={decideAbsenceRequest.isPending}
+                        onClick={async () => {
+                          try {
+                            await decideAbsenceRequest.mutateAsync({ requestId: request.id, decision: "rejected" });
+                            toast.success("Frånvaro avslagen");
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Kunde inte avslå frånvaron");
+                          }
+                        }}
+                      >
+                        Avslå
+                      </IndustryButton>
+                    </div>
+                  </QueueItem>
+                ))}
                 {pending.map((r) => {
                   const shift = shifts.find((s) => s.id === r.shift_id);
                   return (
