@@ -9,6 +9,14 @@ const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 export const CLOCK_SESSION_KEY = "mt.clock.session";
 export const CLOCK_STATION_KEY = "mt.clock.station";
 
+export interface ClockWorkSiteInfo {
+  id: string;
+  name: string;
+  posting_cost_center: string;
+  geofence_radius_m: number;
+  allow_mobile_punch: boolean;
+}
+
 export interface ClockStationInfo {
   id: string;
   name: string;
@@ -16,6 +24,7 @@ export interface ClockStationInfo {
   store_id?: string | null;
   legal_entity_id?: string | null;
   profile: Record<string, unknown>;
+  work_sites?: ClockWorkSiteInfo[];
 }
 
 async function call<T>(fn: string, body: Record<string, unknown>, sessionToken?: string): Promise<T> {
@@ -75,6 +84,7 @@ export interface PunchContext {
   latitude?: number;
   longitude?: number;
   accuracyM?: number;
+  offlineQueued?: boolean;
 }
 
 export async function punch(identifier: string, action: "in" | "ut" | "rast_start" | "rast_slut", occurredAt?: string, context: PunchContext = {}): Promise<PunchResult> {
