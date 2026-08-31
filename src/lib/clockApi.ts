@@ -94,6 +94,7 @@ export async function punch(identifier: string, action: "in" | "ut" | "rast_star
     mode: "punch", identifier, action, occurred_at: occurredAt,
     work_site_id: context.workSiteId, cost_center: context.costCenter,
     punch_lat: context.latitude, punch_lng: context.longitude, punch_accuracy_m: context.accuracyM,
+    offline_queued: context.offlineQueued,
   }, token);
 }
 
