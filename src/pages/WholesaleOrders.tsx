@@ -33,7 +33,7 @@ import { useStores } from "@/hooks/useStores";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
 import { useCustomerNeedByProduct, useOrderHistoryStats, useOutstandingOrdered } from "@/hooks/usePurchaseReconciliation";
-import { addDays, mondayOf, weekRange } from "@/lib/purchaseReconciliation";
+import { addDays, mondayOf, weekRange, qtyText, dashIfZero } from "@/lib/purchaseReconciliation";
 import { useProducts } from "@/hooks/useProducts";
 import { useTransportSchedules } from "@/hooks/useTransportSchedules";
 import { useStaff } from "@/hooks/useStaff";
@@ -187,6 +187,58 @@ export default function WholesaleOrders() {
      p.sku.toLowerCase().includes(newProductSearch.toLowerCase())) &&
     !newOrderLines.find(l => l.product_id === p.id)
   ).slice(0, 8);
+
+  /**
+   * Beslutsstöd per orderrad. Kundbehov gäller leveransveckan för det valda
+   * avgångsdatumet, "redan beställt" är utestående mängd i andra öppna ordrar.
+   * Täckning räknas live medan mängden skrivs in.
+   */
+  const decisionByProduct = useMemo(() => {
+    const out = new Map<string, {
+      need: number; outstanding: number; typed: number; coverage: number;
+      status: "saknas" | "tackt" | "ingen_behov"; duplicate: boolean;
+      average: number; lastWeek: number;
+    }>();
+    for (const line of newOrderLines) {
+      const need = decisionNeeds.data.get(line.product_id) ?? 0;
+      const outstanding = outstandingOrdered.data.get(line.product_id) ?? 0;
+      const typed = Number(line.quantity || 0);
+      const coverage = outstanding + typed;
+      out.set(line.product_id, {
+        need,
+        outstanding,
+        typed,
+        coverage,
+        status: need <= 0.005 ? "ingen_behov" : coverage + 0.005 < need ? "saknas" : "tackt",
+        duplicate: outstanding > 0.005,
+        average: historyStats.data.get(line.product_id)?.average ?? 0,
+        lastWeek: historyStats.data.get(line.product_id)?.lastWeek ?? 0,
+      });
+    }
+    return out;
+  }, [newOrderLines, decisionNeeds.data, outstandingOrdered.data, historyStats.data]);
+
+  /** Kundbehov för leveransveckan som ännu inte finns på ordern. */
+  const uncoveredNeeds = useMemo(() => {
+    if (!selectedDeliveryRange) return [];
+    const onOrder = new Set(newOrderLines.map(l => l.product_id));
+    const rows: { product: any; need: number; outstanding: number }[] = [];
+    for (const [productId, need] of decisionNeeds.data.entries()) {
+      if (onOrder.has(productId) || need <= 0.005) continue;
+      const outstanding = outstandingOrdered.data.get(productId) ?? 0;
+      if (outstanding + 0.005 >= need) continue;
+      const product = products.find(p => p.id === productId);
+      if (!product) continue;
+      rows.push({ product, need, outstanding });
+    }
+    return rows.sort((a, b) => (b.need - b.outstanding) - (a.need - a.outstanding)).slice(0, 12);
+  }, [selectedDeliveryRange, newOrderLines, decisionNeeds.data, outstandingOrdered.data, products]);
+
+  const toggleDecisionLine = (productId: string) =>
+    setExpandedDecisionLines(prev =>
+      prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId],
+    );
+
 
   const addNewProduct = (p: any) => {
     setNewOrderLines(prev => [{
