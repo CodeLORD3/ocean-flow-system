@@ -147,9 +147,23 @@ export function WeeklyStoreReportsSection() {
 
   const groupFilter = filter !== "all" && filter in REGION_LABELS ? filter : null;
   const storeFilter = filter !== "all" && !groupFilter ? filter : null;
+  const latestWeek = weeks[0];
+  const latestRegions = latestWeek
+    ? regions.filter((row) => row.iso_year === latestWeek.iso_year && row.iso_week === latestWeek.iso_week)
+    : [];
+  const selectedSummary = groupFilter
+    ? latestRegions.find((row) => row.group_key === groupFilter)
+    : filter === "all"
+      ? latestRegions.find((row) => row.group_key === "SE_TOTAL") ?? latestRegions[0]
+      : details.find((row) => row.store_id === storeFilter && row.iso_year === latestWeek?.iso_year && row.iso_week === latestWeek?.iso_week);
+  const summaryLabel = storeFilter
+    ? storeName(storeFilter)
+    : groupFilter
+      ? REGION_LABELS[groupFilter]
+      : "Sverige totalt";
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">Sammanställs automatiskt från sparade dagsrapporter</p>
         <Select value={filter} onValueChange={setFilter}>
@@ -168,6 +182,37 @@ export function WeeklyStoreReportsSection() {
           </SelectContent>
         </Select>
       </div>
+
+      {selectedSummary && latestWeek && (
+        <div className="border-b pb-4">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">Senaste veckan</p>
+              <p className="mt-1 text-sm font-semibold">{summaryLabel}</p>
+              <p className="text-xs text-muted-foreground">Vecka {latestWeek.iso_week} · {dateLabel(latestWeek.week_start)}–{dateLabel(latestWeek.week_end)}</p>
+            </div>
+            <StatusBadge status={selectedSummary.status} drift={"drift_after_lock" in selectedSummary ? selectedSummary.drift_after_lock : false} />
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="rounded-md border bg-muted/20 px-3 py-2.5">
+              <p className="text-[10px] text-muted-foreground">Summa</p>
+              <p className="mt-1 font-mono text-sm font-semibold tabular-nums">{money(selectedSummary.total_sales_sek)}</p>
+            </div>
+            <div className="rounded-md border bg-muted/20 px-3 py-2.5">
+              <p className="text-[10px] text-muted-foreground">Snitt/dag</p>
+              <p className="mt-1 font-mono text-sm tabular-nums">{money(selectedSummary.avg_sales_per_day_sek)}</p>
+            </div>
+            <div className="rounded-md border bg-muted/20 px-3 py-2.5">
+              <p className="text-[10px] text-muted-foreground">Bemanning</p>
+              <p className="mt-1 font-mono text-sm tabular-nums">{dec.format(selectedSummary.staff_hours)} h · {int.format(selectedSummary.staff_shifts)} pass</p>
+            </div>
+            <div className="rounded-md border bg-muted/20 px-3 py-2.5">
+              <p className="text-[10px] text-muted-foreground">Dagsrapporter</p>
+              <p className="mt-1 font-mono text-sm tabular-nums">{int.format(selectedSummary.daily_reports_count)} / {int.format(selectedSummary.expected_open_days)}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="divide-y rounded-md border">
         {weeks.map((week) => {
