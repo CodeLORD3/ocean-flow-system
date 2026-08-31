@@ -243,8 +243,10 @@
 /* -------------------------------------------------------- sidokö/beslutsrad */
 
 .ind-queue { border-left: 1px solid var(--color-divider); padding-left: var(--space-6); }
-.ind-queue-item { padding: var(--space-3) 0; border-left: 3px solid var(--color-accent-600); padding-left: var(--space-3); }
+.ind-queue-item { padding: var(--space-3) 0; box-shadow: inset 3px 0 0 var(--color-accent-600); padding-left: var(--space-3); }
 .ind-queue-item + .ind-queue-item { border-top: 1px solid var(--color-divider); }
+.ind-absence-badge { box-shadow: inset 3px 0 0 var(--color-warn-600); background: var(--color-warn-100); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); }
+.ind-coverage-short { box-shadow: inset 3px 0 0 var(--color-alert-600); }
 
 .ind-decision {
   display: flex;

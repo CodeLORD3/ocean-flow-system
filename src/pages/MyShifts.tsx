@@ -119,6 +119,7 @@ export default function MyShifts() {
   const [swapTo, setSwapTo] = useState<string>("");
   const [availOpen, setAvailOpen] = useState(false);
   const [absenceOpen, setAbsenceOpen] = useState(false);
+  const [otherAbsenceOpen, setOtherAbsenceOpen] = useState(false);
   const [absenceDraft, setAbsenceDraft] = useState({
     absenceTypeId: "",
     startDate: dateKey(new Date()),
@@ -159,9 +160,22 @@ export default function MyShifts() {
   const endSickPeriod = useEndSickPeriod();
 
   const absenceTypeById = useMemo(() => new Map(absenceTypes.map((type) => [type.id, type])), [absenceTypes]);
+  const quickAbsenceTypes = useMemo(() => {
+    const preferredCodes = ["semester", "sjuk", "vab", "komp"];
+    const preferred = preferredCodes
+      .map((code) => absenceTypes.find((type) => type.code === code))
+      .filter((type): type is (typeof absenceTypes)[number] => Boolean(type));
+    const fallback = absenceTypes.filter((type) => !preferred.some((quick) => quick.id === type.id));
+    return [...preferred, ...fallback].slice(0, 4);
+  }, [absenceTypes]);
+  const otherAbsenceTypes = useMemo(
+    () => absenceTypes.filter((type) => !quickAbsenceTypes.some((quick) => quick.id === type.id)),
+    [absenceTypes, quickAbsenceTypes],
+  );
+  const selectedAbsenceType = absenceTypeById.get(absenceDraft.absenceTypeId);
   const currentBalance = vacationBalances[0] ?? null;
   const remainingVacation = currentBalance
-    ? currentBalance.entitled_days + currentBalance.saved_days + currentBalance.manual_adjustment_days - currentBalance.used_days
+    ? currentBalance.earned_days + currentBalance.saved_days + currentBalance.manual_adjustment_days - currentBalance.used_days
     : null;
 
   const published = myShifts.filter((s) => s.status === "published");
