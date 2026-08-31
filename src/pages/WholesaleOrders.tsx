@@ -686,14 +686,51 @@ export default function WholesaleOrders() {
       </div>
 
       <Tabs defaultValue="per-order" className="space-y-3">
-        <TabsList className="h-8">
-          <TabsTrigger value="per-order" className="text-xs h-7 gap-1"><Eye className="h-3 w-3" /> Per order</TabsTrigger>
-          <TabsTrigger value="total" className="text-xs h-7 gap-1"><ListChecks className="h-3 w-3" /> Totalvy</TabsTrigger>
-          <TabsTrigger value="delivered" className="text-xs h-7 gap-1"><Truck className="h-3 w-3" /> Levererade ({deliveredOrders.length})</TabsTrigger>
-          <TabsTrigger value="archived" className="text-xs h-7 gap-1"><Archive className="h-3 w-3" /> Arkiverade ({archivedOrders.length})</TabsTrigger>
-          <TabsTrigger value="changes" className="text-xs h-7 gap-1 relative">
-            <Bell className="h-3 w-3" /> Ändringar ({pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length})
-            {pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 bg-warning rounded-full animate-pulse" />}
+        <TabsList className="flex h-auto w-full flex-wrap items-stretch justify-start gap-1 rounded-sm border border-grid-line bg-card p-1">
+          <TabsTrigger
+            value="per-order"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-2 text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+          >
+            <Eye className="h-4 w-4" /> Per order
+            <span className="rounded-sm bg-muted px-1 font-mono text-[10px] tabular-nums text-muted-foreground data-[state=active]:bg-background/20">
+              {activeOrders.length}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="total"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-2 text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+          >
+            <ListChecks className="h-4 w-4" /> Totalvy
+          </TabsTrigger>
+          <TabsTrigger
+            value="delivered"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-2 text-xs text-muted-foreground data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground"
+          >
+            <Truck className="h-4 w-4" /> Levererade
+            <span className="rounded-sm bg-muted px-1 font-mono text-[10px] tabular-nums">{deliveredOrders.length}</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="archived"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-2 text-xs text-muted-foreground data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground"
+          >
+            <Archive className="h-4 w-4" /> Arkiverade
+            <span className="rounded-sm bg-muted px-1 font-mono text-[10px] tabular-nums">{archivedOrders.length}</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="changes"
+            className="relative flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-2 text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <Bell className="h-4 w-4" /> Ändringar
+            {(() => {
+              const n = pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length;
+              return (
+                <span
+                  className={`rounded-sm px-1 font-mono text-[10px] tabular-nums ${n > 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"}`}
+                >
+                  {n}
+                </span>
+              );
+            })()}
           </TabsTrigger>
         </TabsList>
 
