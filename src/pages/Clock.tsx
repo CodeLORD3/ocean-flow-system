@@ -277,14 +277,15 @@ export default function Clock() {
   return (
     <IndustryFrame className="min-h-screen p-4 sm:p-8">
       <div className="mx-auto max-w-3xl">
-        <header className="flex items-start justify-between gap-4 pb-6">
+        <header className="grid items-center gap-3 pb-6 sm:grid-cols-[1fr_auto_1fr]">
           <div>
             <SectionLabel>{station?.name ?? "Stämpelklocka"}</SectionLabel>
             <p className="ind-h3">{station?.store_name ?? "Försäljningsställe"}</p>
           </div>
-          <p className="ind-h2 ind-mono">
+          <p className="ind-clock" aria-label="Aktuell tid">
             {new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}
           </p>
+          <span />
         </header>
 
         {!online && (
