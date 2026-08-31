@@ -7,7 +7,7 @@
 -- en transaktion som rullas tillbaka). Varje rad ger kolumnerna
 -- bevis / resultat / status så att utfallet kan klistras in som protokoll.
 
-\echo == Etapp 2b körbevis ==
+
 
 -- a) Svensk arbetsdag är IANA-baserad, inte fast offset.
 SELECT 'a. svensk_dag vid vinter/sommartid' AS bevis,
