@@ -307,7 +307,7 @@ export function WeeklyStoreReportsSection() {
           );
           const weekStores = details.filter(
             (r) => r.iso_year === week.iso_year && r.iso_week === week.iso_week &&
-              (storeFilter ? r.store_id === storeFilter : groupFilter ? regionStoreIds.has(r.store_id) : true),
+              (storeFilter ? r.store_id === storeFilter : groupFilter ? scopeStoreIds.has(r.store_id) : true),
           );
           if (weekRegions.length === 0 && weekStores.length === 0) return null;
 
