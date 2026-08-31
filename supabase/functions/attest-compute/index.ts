@@ -157,18 +157,21 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    // Rast av rast_start/rast_slut-par
-    let breakMinutes = 0;
-    let openBreak: string | null = null;
-    for (const e of dayEntries) {
-      if (e.type === "rast_start") openBreak = e.occurred_at;
-      if (e.type === "rast_slut" && openBreak) {
-        breakMinutes += minutesBetween(openBreak, e.occurred_at);
-        openBreak = null;
-      }
-    }
-
-    const clocked = lastOut ? Math.max(0, minutesBetween(firstIn, lastOut) - breakMinutes) : 0;
+    // Samma SQL-motor används av attest, Min tid och löneunderlag. Attestvyn
+    // får bara använda råstämplingarna för avvikelsens start/slut — minuter och
+    // rast kommer från berakna_arbetstid.
+    const { data: calculated, error: calculationError } = await db.rpc("berakna_arbetstid", {
+      _employee_id: shift.employee_id,
+      _from: shift.date,
+      _to: shift.date,
+    });
+    if (calculationError) return json({ error: calculationError.message }, 500);
+    const engineDay = (calculated ?? []).find((day) => day.arbetsdag === shift.date) as {
+      total_minutes?: number;
+      break_minutes?: number;
+    } | undefined;
+    const breakMinutes = Number(engineDay?.break_minutes ?? 0);
+    const clocked = Number(engineDay?.total_minutes ?? 0);
     const lateIn = Math.round((new Date(firstIn).getTime() - schedFrom.getTime()) / 60000);
     const earlyOut = lastOut ? Math.round((schedTo.getTime() - new Date(lastOut).getTime()) / 60000) : 0;
     const diff = clocked - scheduled;
@@ -215,7 +218,14 @@ Deno.serve(async (req) => {
     if (!ins.length) continue;
     const firstIn = ins[0].occurred_at;
     const lastOut = outs[outs.length - 1]?.occurred_at ?? null;
-    const clocked = lastOut ? Math.max(0, minutesBetween(firstIn, lastOut)) : 0;
+    const { data: calculated, error: calculationError } = await db.rpc("berakna_arbetstid", {
+      _employee_id: employeeId,
+      _from: date,
+      _to: date,
+    });
+    if (calculationError) return json({ error: calculationError.message }, 500);
+    const engineDay = (calculated ?? []).find((day) => day.arbetsdag === date) as { total_minutes?: number } | undefined;
+    const clocked = Number(engineDay?.total_minutes ?? 0);
     const store = dayEntries.find((e) => e.store_id)?.store_id ?? null;
     if (!store) continue;
     if (storeId && store !== storeId) continue;

@@ -45,7 +45,7 @@ import {
   TYPE_LABEL,
   SOURCE_LABEL,
 } from "@/lib/timeEntries";
-import { svenskDatum, svenskTid } from "@/lib/swedishTime";
+import { svenskDatum, svenskTid, svenskTidpunkt } from "@/lib/swedishTime";
 
 const today = () => svenskDatum();
 
@@ -88,7 +88,7 @@ export default function TimeEntriesPage() {
 
   const submitManual = async () => {
     if (!form.employee_id) return;
-    const occurredAt = new Date(`${form.date}T${form.time}:00`).toISOString();
+    const occurredAt = svenskTidpunkt(form.date, form.time).toISOString();
     try {
       await createEntry.mutateAsync({
         employee_id: form.employee_id,
@@ -108,7 +108,7 @@ export default function TimeEntriesPage() {
     if (!correcting) return;
     const occurredAt =
       kind === "replace"
-        ? new Date(`${form.date}T${form.time}:00`).toISOString()
+        ? svenskTidpunkt(form.date, form.time).toISOString()
         : correcting.occurred_at;
     try {
       await createEntry.mutateAsync({
