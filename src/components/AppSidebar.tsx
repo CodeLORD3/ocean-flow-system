@@ -123,6 +123,7 @@ const staffNav = [
   { title: "Rapporterad tid", url: "/time-entries", icon: ClipboardCheck },
   { title: "Regler & OB", url: "/staff-rules", icon: Settings },
   { title: "Löneunderlag", url: "/payroll-exports", icon: FileText },
+  { title: "Granska lön", url: "/payroll-review", icon: ClipboardCheck },
   { title: "Klocka vs PK", url: "/clock-vs-pk", icon: Scale },
   { title: "Personalkollen", url: "/personalkollen", icon: Plug },
   { title: "Schema", url: "/staff-schedule", icon: CalendarRange },
