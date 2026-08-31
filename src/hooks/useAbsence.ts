@@ -18,8 +18,12 @@ export interface AbsenceRequest {
   absence_type_id: string;
   start_date: string;
   end_date: string | null;
+  date_from?: string | null;
+  date_to?: string | null;
   extent_pct: number;
+  basis?: string | null;
   note: string | null;
+  reason?: string | null;
   status: string;
   store_id: string | null;
   legal_entity_id: string | null;
