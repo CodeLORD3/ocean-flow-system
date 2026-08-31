@@ -80,9 +80,10 @@ function isoWeek(iso: string) {
   const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
   return { week: Math.ceil(((t.getTime() - yearStart.getTime()) / 86400000 + 1) / 7), year: t.getUTCFullYear() };
 }
-function groupByWeek(list: any[]) {
+function groupByWeek(list: any[], direction: "desc" | "asc" = "desc") {
+  const dir = direction === "asc" ? 1 : -1;
   const weeks = new Map<string, { week: number; year: number; days: Map<string, any[]> }>();
-  [...list].sort((a, b) => orderDate(b).localeCompare(orderDate(a))).forEach((order) => {
+  [...list].sort((a, b) => dir * orderDate(a).localeCompare(orderDate(b))).forEach((order) => {
     const date = orderDate(order);
     const { week, year } = isoWeek(date || new Date().toISOString().slice(0, 10));
     const key = `${year}-${String(week).padStart(2, "0")}`;
@@ -93,9 +94,10 @@ function groupByWeek(list: any[]) {
     weeks.set(key, entry);
   });
   return [...weeks.entries()]
-    .sort((a, b) => b[0].localeCompare(a[0]))
+    .sort((a, b) => dir * a[0].localeCompare(b[0]))
     .map(([key, entry]) => ({ key, ...entry, count: [...entry.days.values()].flat().length }));
 }
+
 
 const formatOrderValue = (order: any) => (order.shop_order_lines || []).reduce(
   (sum: number, line: any) => sum + Number(line.quantity_ordered || 0) * Number(line.products?.wholesale_price || 0),
@@ -311,6 +313,8 @@ export default function WholesaleOrders() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
   const [storeFilter, setStoreFilter] = useState("alla");
+  const [showHistory, setShowHistory] = useState(false);
+
   const [marked, setMarked] = useState<string[]>([]);
   const [expandedOrderIds, setExpandedOrderIds] = useState<Set<string>>(new Set());
   const toggleExpandOrder = (id: string) => setExpandedOrderIds(prev => {
@@ -508,8 +512,13 @@ export default function WholesaleOrders() {
     return matchSearch && matchStatus && matchStore;
   });
 
-   const groupedFilteredOrders = useMemo(() => groupByWeek(filteredOrders), [filteredOrders]);
+   const todayIso = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Stockholm" });
+   const currentOrders = useMemo(() => filteredOrders.filter((o: any) => !orderDate(o) || orderDate(o) >= todayIso), [filteredOrders, todayIso]);
+   const historicOrders = useMemo(() => filteredOrders.filter((o: any) => orderDate(o) && orderDate(o) < todayIso), [filteredOrders, todayIso]);
+   const groupedCurrentOrders = useMemo(() => groupByWeek(currentOrders, "asc"), [currentOrders]);
+   const groupedHistoricOrders = useMemo(() => groupByWeek(historicOrders, "desc"), [historicOrders]);
    const { data: photoCounts } = useEntityImageCounts(
+
      "shop_order",
      useMemo(() => filteredOrders.map((order: any) => order.id), [filteredOrders]),
    );
@@ -886,13 +895,29 @@ export default function WholesaleOrders() {
             <div className="overflow-hidden rounded-md border border-grid-line bg-card shadow-sm">
               <WholesaleOrderRowHeader allSelected={allFilteredMarked} onSelectAll={markAllFiltered} />
               {filteredOrders.length === 0 && <div className="px-3 py-12 text-center text-sm text-muted-foreground">Inga ordrar att visa.</div>}
-              {groupedFilteredOrders.map((week) => <div key={week.key}>
+              {filteredOrders.length > 0 && currentOrders.length === 0 && <div className="px-3 py-8 text-center text-sm text-muted-foreground">Inga aktuella ordrar idag eller framåt.</div>}
+              {groupedCurrentOrders.map((week) => <div key={week.key}>
                 <div className="flex items-center gap-3 border-b-2 border-primary bg-primary/10 px-3 py-2"><span className="text-[12px] font-bold uppercase tracking-wide text-foreground">Vecka {week.week}</span><span className="truncate text-[11px] text-muted-foreground">{rangeLabel([...week.days.keys()])}</span><span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">{week.count} order</span></div>
-                {[...week.days.entries()].map(([day, dayOrders]) => <div key={day}>
-                  <div className="flex items-center gap-2 border-b border-grid-line bg-muted px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><span className="truncate">{dayLabel(day)}</span><span className="font-mono normal-case tabular-nums">{dayOrders.length} order</span></div>
+                {[...week.days.entries()].map(([day, dayOrders]) => <div key={day} className={day === todayIso ? "bg-primary/[0.04]" : undefined}>
+                  <div className={`flex items-center gap-2 border-b px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide ${day === todayIso ? "border-primary/40 bg-primary/15 text-foreground" : "border-grid-line bg-muted text-muted-foreground"}`}><span className="truncate">{dayLabel(day)}</span>{day === todayIso && <Badge className="rounded-sm px-1.5 py-0 text-[10px]">Idag</Badge>}<span className="font-mono normal-case tabular-nums">{dayOrders.length} order</span></div>
                   {dayOrders.map((order: any) => <WholesaleOrderAccordionRow key={order.id} order={order} day={day} open={expandedOrderIds.has(order.id)} selected={marked.includes(order.id)} stores={stores} photoCount={photoCounts?.[order.id] ?? 0} onToggle={toggleExpandOrder} onSelect={toggleMarked} onStatusChange={handleOrderStatusChange} onPrint={setPackingSlipOrder} onArchive={setArchiveConfirmOrder} onClose={collapseOrder} />)}
                 </div>)}
               </div>)}
+              {historicOrders.length > 0 && <div className="border-t border-grid-line">
+                <Button type="button" variant="ghost" onClick={() => setShowHistory((v) => !v)} className="flex h-auto w-full items-center justify-start gap-2 rounded-none bg-muted/60 px-3 py-2.5 text-left text-[12px] font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-muted">
+                  <ChevronRight className={`h-4 w-4 transition-transform ${showHistory ? "rotate-90" : ""}`} />
+                  <span>Historiska ordrar</span>
+                  <span className="ml-auto font-mono text-[11px] normal-case tabular-nums">{historicOrders.length} order</span>
+                </Button>
+                {showHistory && groupedHistoricOrders.map((week) => <div key={week.key}>
+                  <div className="flex items-center gap-3 border-b border-grid-line bg-muted/40 px-3 py-2"><span className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground">Vecka {week.week}</span><span className="truncate text-[11px] text-muted-foreground">{rangeLabel([...week.days.keys()])}</span><span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">{week.count} order</span></div>
+                  {[...week.days.entries()].map(([day, dayOrders]) => <div key={day}>
+                    <div className="flex items-center gap-2 border-b border-grid-line bg-muted px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><span className="truncate">{dayLabel(day)}</span><span className="font-mono normal-case tabular-nums">{dayOrders.length} order</span></div>
+                    {dayOrders.map((order: any) => <WholesaleOrderAccordionRow key={order.id} order={order} day={day} open={expandedOrderIds.has(order.id)} selected={marked.includes(order.id)} stores={stores} photoCount={photoCounts?.[order.id] ?? 0} onToggle={toggleExpandOrder} onSelect={toggleMarked} onStatusChange={handleOrderStatusChange} onPrint={setPackingSlipOrder} onArchive={setArchiveConfirmOrder} onClose={collapseOrder} />)}
+                  </div>)}
+                </div>)}
+              </div>}
+
             </div>
           </div>
         </TabsContent>
