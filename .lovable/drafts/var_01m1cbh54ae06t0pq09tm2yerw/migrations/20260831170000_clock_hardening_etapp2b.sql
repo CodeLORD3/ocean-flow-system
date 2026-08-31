@@ -279,7 +279,7 @@ BEGIN
     LIMIT 1
   ),
   classified AS (
-    SELECT m.day, m.minute_at, m.break_minutes,
+    SELECT m.day, m.minute_at,
       w.pct, w.wage_code_id,
       CASE WHEN w.pct IS NULL THEN 'regular'
            WHEN w.pct >= 100 THEN 'ob100'
@@ -310,7 +310,7 @@ BEGIN
       count(*) FILTER (WHERE c.bucket = 'ob50')::integer AS ob50_mins,
       count(*) FILTER (WHERE c.bucket = 'ob70')::integer AS ob70_mins,
       count(*) FILTER (WHERE c.bucket = 'ob100')::integer AS ob100_mins,
-      COALESCE(max(c.break_minutes), 0)::integer AS break_mins,
+      COALESCE((SELECT bt.break_minutes FROM break_totals bt WHERE bt.day = c.day), 0)::integer AS break_mins,
       bool_or(c.pct IS NOT NULL AND c.wage_code_id IS NULL) AS missing_wage,
       count(*)::integer AS worked_mins
     FROM classified c
