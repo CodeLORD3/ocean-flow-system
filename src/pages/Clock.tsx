@@ -55,7 +55,23 @@ export default function Clock() {
   const [online, setOnline] = useState(navigator.onLine);
   const [queued, setQueued] = useState(0);
   const [onSite, setOnSite] = useState<OnSitePerson[]>([]);
+  const [siteId, setSiteId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const workSites = station?.work_sites ?? [];
+  const activeSite = workSites.find((s) => s.id === siteId) ?? (workSites.length === 1 ? workSites[0] : null);
+
+  /** Hämtar position när driftstället har geofence. Tyst fallback utan position. */
+  const readPosition = useCallback(async () => {
+    if (!navigator.geolocation) return {};
+    return new Promise<{ latitude?: number; longitude?: number; accuracyM?: number }>((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracyM: pos.coords.accuracy }),
+        () => resolve({}),
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 30_000 },
+      );
+    });
+  }, []);
 
   const refreshQueue = useCallback(async () => {
     setQueued(await queuedCount().catch(() => 0));
