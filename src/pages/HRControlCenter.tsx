@@ -127,12 +127,18 @@ export default function HRControlCenter() {
     }
   };
 
-  const decide = async (requestId: string, decision: "approved" | "rejected") => {
+  const decide = async (requestId: string, decision: "approved" | "rejected", hasConflicts = false) => {
     if (decision === "rejected" && !rejectReason.trim()) return;
     try {
-      await decideAbsence.mutateAsync({ requestId, decision, note: decision === "rejected" ? rejectReason.trim() : undefined, conflictAction: "none" });
+      await decideAbsence.mutateAsync({
+        requestId,
+        decision,
+        note: decision === "rejected" ? rejectReason.trim() : undefined,
+        conflictAction: decision === "approved" && hasConflicts ? conflictAction : "none",
+      });
       setAbsenceReviewId(null);
       setRejectReason("");
+      setConflictAction("open_shift");
       toast.success(decision === "approved" ? "Frånvaro godkänd" : "Frånvaro avslagen");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Kunde inte besluta om frånvaron");
