@@ -877,6 +877,7 @@ export default function WholesaleOrders() {
               <div className="flex items-center gap-2">{marked.length > 0 && <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => printWholesalePackLists(orders.filter((order: any) => marked.includes(order.id)))}><Printer className="h-3.5 w-3.5" /> Skriv ut markerade</Button>}<span className="font-mono text-xs tabular-nums text-muted-foreground">Aktivt värde {activeOrders.reduce((sum: number, order: any) => sum + formatOrderValue(order), 0).toFixed(2)} kr</span></div>
             </div>
             <div className="overflow-hidden rounded-md border border-grid-line bg-card shadow-sm">
+              <WholesaleOrderRowHeader allSelected={allFilteredMarked} onSelectAll={markAllFiltered} />
               {filteredOrders.length === 0 && <div className="px-3 py-12 text-center text-sm text-muted-foreground">Inga ordrar att visa.</div>}
               {groupedFilteredOrders.map((week) => <div key={week.key}>
                 <div className="flex items-center gap-3 border-b-2 border-primary bg-primary/10 px-3 py-2"><span className="text-[12px] font-bold uppercase tracking-wide text-foreground">Vecka {week.week}</span><span className="truncate text-[11px] text-muted-foreground">{rangeLabel([...week.days.keys()])}</span><span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">{week.count} order</span></div>
