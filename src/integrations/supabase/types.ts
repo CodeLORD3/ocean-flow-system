@@ -16066,6 +16066,14 @@ export type Database = {
         Returns: Json
       }
       clock_code_hash: { Args: { _code: string }; Returns: string }
+      clock_inspector_reveal_pnr: {
+        Args: {
+          _employee_id: string
+          _inspector_session_id: string
+          _reason?: string
+        }
+        Returns: string
+      }
       clock_pending_approve: {
         Args: { _employee_id: string; _id: string }
         Returns: Json
