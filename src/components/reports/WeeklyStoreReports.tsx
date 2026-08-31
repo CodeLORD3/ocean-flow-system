@@ -181,26 +181,66 @@ export function WeeklyStoreReportsSection() {
       ? REGION_LABELS[groupFilter]
       : "Sverige totalt";
 
+  const exportRows: ReportRow[] = (selectedStoreForExport ? details.filter((row) => row.store_id === selectedStoreForExport) : latestRegions).map((row) => ({
+    label: "store_id" in row ? storeName(row.store_id) : row.group_label,
+    total_sales_sek: row.total_sales_sek,
+    avg_sales_per_day_sek: row.avg_sales_per_day_sek,
+    staff_hours: row.staff_hours,
+    staff_shifts: row.staff_shifts,
+    reports: `${row.daily_reports_count} / ${row.expected_open_days}`,
+    status: row.status,
+  }));
+
+  const exportReport = (format: "pdf" | "xlsx") => {
+    if (!latestWeekForExport || !selectedStoreForExport) {
+      toast({ title: "Välj en butik först", description: "Dag-för-dag-export kan göras efter att en butik valts." });
+      return;
+    }
+    const days = dayRowsFrom(
+      weekDayList(latestWeekForExport.week_start, latestWeekForExport.week_end),
+      dailyExport.data ?? [],
+    );
+    const payload = {
+      title: `${storeName(selectedStoreForExport)} · vecka ${latestWeekForExport.iso_week}`,
+      subtitle: `${latestWeekForExport.week_start} – ${latestWeekForExport.week_end}`,
+      rows: exportRows,
+      days: [{ storeLabel: storeName(selectedStoreForExport), rows: days }],
+    };
+    if (format === "pdf") weeklyReportPdf(payload);
+    else weeklyReportXlsx(payload);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">Sammanställs automatiskt från sparade dagsrapporter</p>
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="h-8 w-full text-xs sm:w-[240px]">
-            <SelectValue placeholder="Alla butiker och regioner" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alla butiker och regioner</SelectItem>
-            <SelectItem value="SE_TOTAL">Sverige totalt</SelectItem>
-            <SelectItem value="vast">Göteborg</SelectItem>
-            <SelectItem value="stockholm">Stockholm</SelectItem>
-            <SelectItem value="schweiz">Schweiz</SelectItem>
-            {stores.map((s) => (
-              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => exportReport("pdf")} disabled={dailyExport.isFetching}>
+            <Printer className="h-3.5 w-3.5" /> Skriv ut
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => exportReport("xlsx")} disabled={dailyExport.isFetching}>
+            <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
+          </Button>
+          <Select value={filter} onValueChange={(value) => { setFilter(value); setOpenStore(null); }}>
+            <SelectTrigger className="h-8 w-full text-xs sm:w-[240px]">
+              <SelectValue placeholder="Alla butiker och regioner" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alla butiker och regioner</SelectItem>
+              <SelectItem value="SE_TOTAL">Sverige totalt</SelectItem>
+              <SelectItem value="vast">Göteborg</SelectItem>
+              <SelectItem value="stockholm">Stockholm</SelectItem>
+              <SelectItem value="schweiz">Schweiz</SelectItem>
+              {stores.map((s) => (
+                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+      {selectedStoreForExport && (
+        <p className="text-[10px] text-muted-foreground">Utskrift och Excel gäller vald butik och senaste tillgängliga vecka.</p>
+      )}
 
       {selectedSummary && latestWeek && (
         <div className="border-b pb-4">
