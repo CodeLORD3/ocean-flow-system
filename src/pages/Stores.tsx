@@ -108,6 +108,9 @@ export default function Stores() {
         hours: form.hours || null,
         sqm: form.sqm || null,
         inventory_location_id: form.inventory_location_id || null,
+        region: form.region || null,
+        week_last_open_dow: form.week_last_open_dow,
+        weekly_report_enabled: form.weekly_report_enabled,
       } as any,
 
       {
