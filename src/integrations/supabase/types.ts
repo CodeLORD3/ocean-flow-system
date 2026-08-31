@@ -11797,6 +11797,8 @@ export type Database = {
           slug: string
           sqm: number | null
           unit_type: string
+          week_last_open_dow: number
+          weekly_report_enabled: boolean
         }
         Insert: {
           active?: boolean
@@ -11825,6 +11827,8 @@ export type Database = {
           slug: string
           sqm?: number | null
           unit_type?: string
+          week_last_open_dow?: number
+          weekly_report_enabled?: boolean
         }
         Update: {
           active?: boolean
@@ -11853,6 +11857,8 @@ export type Database = {
           slug?: string
           sqm?: number | null
           unit_type?: string
+          week_last_open_dow?: number
+          weekly_report_enabled?: boolean
         }
         Relationships: [
           {
@@ -13939,6 +13945,118 @@ export type Database = {
           },
         ]
       }
+      weekly_store_report_closures: {
+        Row: {
+          closed_by: string | null
+          created_at: string
+          id: string
+          iso_week: number
+          iso_year: number
+          reason: string | null
+          store_id: string
+        }
+        Insert: {
+          closed_by?: string | null
+          created_at?: string
+          id?: string
+          iso_week: number
+          iso_year: number
+          reason?: string | null
+          store_id: string
+        }
+        Update: {
+          closed_by?: string | null
+          created_at?: string
+          id?: string
+          iso_week?: number
+          iso_year?: number
+          reason?: string | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_store_report_closures_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_store_reports: {
+        Row: {
+          avg_sales_per_day_sek: number
+          created_at: string
+          daily_reports_count: number
+          drift_after_lock: boolean
+          drift_note: string | null
+          expected_open_days: number
+          id: string
+          iso_week: number
+          iso_year: number
+          locked_at: string | null
+          region: string | null
+          staff_hours: number
+          staff_shifts: number
+          status: string
+          store_id: string
+          total_sales_sek: number
+          updated_at: string
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          avg_sales_per_day_sek?: number
+          created_at?: string
+          daily_reports_count?: number
+          drift_after_lock?: boolean
+          drift_note?: string | null
+          expected_open_days?: number
+          id?: string
+          iso_week: number
+          iso_year: number
+          locked_at?: string | null
+          region?: string | null
+          staff_hours?: number
+          staff_shifts?: number
+          status?: string
+          store_id: string
+          total_sales_sek?: number
+          updated_at?: string
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          avg_sales_per_day_sek?: number
+          created_at?: string
+          daily_reports_count?: number
+          drift_after_lock?: boolean
+          drift_note?: string | null
+          expected_open_days?: number
+          id?: string
+          iso_week?: number
+          iso_year?: number
+          locked_at?: string | null
+          region?: string | null
+          staff_hours?: number
+          staff_shifts?: number
+          status?: string
+          store_id?: string
+          total_sales_sek?: number
+          updated_at?: string
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_store_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_rules: {
         Row: {
           agreement_source: string | null
@@ -14356,6 +14474,28 @@ export type Database = {
           store_name: string | null
           workplace_name: string | null
           workplace_url: string | null
+        }
+        Relationships: []
+      }
+      weekly_region_reports: {
+        Row: {
+          avg_sales_per_day_sek: number | null
+          daily_reports_count: number | null
+          diff_kr: number | null
+          diff_procent: number | null
+          expected_open_days: number | null
+          group_key: string | null
+          group_label: string | null
+          iso_week: number | null
+          iso_year: number | null
+          missing_stores: string[] | null
+          prev_total_sales_sek: number | null
+          staff_hours: number | null
+          staff_shifts: number | null
+          status: string | null
+          total_sales_sek: number | null
+          week_end: string | null
+          week_start: string | null
         }
         Relationships: []
       }
@@ -14825,6 +14965,10 @@ export type Database = {
       recompute_all_vacation_balances: {
         Args: { _vacation_year?: number }
         Returns: number
+      }
+      recompute_weekly_store_report: {
+        Args: { _date: string; _store_id: string }
+        Returns: undefined
       }
       register_sick_period: {
         Args: { _employee_id: string; _first_day: string; _last_day?: string }
