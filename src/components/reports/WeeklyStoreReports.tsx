@@ -145,8 +145,8 @@ export function WeeklyStoreReportsSection() {
     return <p className="py-6 text-center text-sm text-muted-foreground">Inga veckorapporter ännu.</p>;
   }
 
-  const groupFilter = filter in REGION_LABELS ? filter : null;
-  const storeFilter = groupFilter || filter === "all" ? null : filter;
+  const groupFilter = filter !== "all" && filter in REGION_LABELS ? filter : null;
+  const storeFilter = filter !== "all" && !groupFilter ? filter : null;
 
   return (
     <div className="space-y-3">
