@@ -181,53 +181,60 @@ function WholesaleOrderAccordionRow({
   onClose,
 }: WholesaleOrderAccordionRowProps) {
   const rowTone = order.status === "Avbruten"
-    ? { row: "bg-row-off", edge: "bg-row-off-edge" }
+    ? { row: "bg-row-off", hover: "hover:bg-row-off-hover", edge: "bg-row-off-edge", chip: "bg-card text-row-off-text border-row-off-edge" }
     : order.status === "Levererad" || order.status === "Klar / Levererad"
-      ? { row: "bg-row-done", edge: "bg-row-done-edge" }
+      ? { row: "bg-row-done", hover: "hover:bg-row-done-hover", edge: "bg-row-done-edge", chip: "bg-card text-row-done-text border-row-done-edge" }
       : order.status === "Packad"
-        ? { row: "bg-row-ok", edge: "bg-row-ok-edge" }
+        ? { row: "bg-row-ok", hover: "hover:bg-row-ok-hover", edge: "bg-row-ok-edge", chip: "bg-card text-row-ok-text border-row-ok-edge" }
         : order.status === "Pågående"
-          ? { row: "bg-row-warn", edge: "bg-row-warn-edge" }
-          : { row: "bg-row-neutral", edge: "bg-border" };
+          ? { row: "bg-row-warn", hover: "hover:bg-row-warn-hover", edge: "bg-row-warn-edge", chip: "bg-card text-row-warn-text border-row-warn-edge" }
+          : { row: "bg-row-neutral", hover: "hover:bg-row-neutral-hover", edge: "bg-border", chip: "bg-card text-muted-foreground border-grid-line" };
   const productsText = (order.shop_order_lines || [])
     .map((line: any) => `${line.products?.name || "Okänd"} (${line.quantity_ordered || 0} ${line.unit || line.products?.unit || ""})`)
     .join(", ") || "Inga produkter";
   const orderLines = order.shop_order_lines?.length || 0;
+  const statusChip = (
+    <span className={`inline-flex flex-nowrap items-center gap-1 whitespace-nowrap rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight ${rowTone.chip}`}>
+      {statusIcon[order.status]}
+      {order.status}
+    </span>
+  );
 
   return (
-    <div id={`wholesale-order-${order.id}`} className={`relative overflow-hidden border-x border-b border-grid-line transition-all duration-200 ${rowTone.row} ${open ? "z-10 my-2 rounded-md border border-primary/25 bg-primary/[0.04] pl-1.5 shadow-sm" : ""} ${selected && !open ? "ring-1 ring-inset ring-primary" : ""}`}>
-      {open && <span className="pointer-events-none absolute bottom-2 left-1.5 top-2 w-1 rounded-full bg-primary/80" aria-hidden />}
+    <div id={`wholesale-order-${order.id}`} className={`relative overflow-hidden border-x border-b border-grid-line transition-all duration-200 ${rowTone.row} ${open ? "z-10 my-3 rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] pl-2.5 shadow-[0_10px_30px_-18px_hsl(var(--primary)/0.55)]" : ""} ${selected && !open ? "ring-1 ring-inset ring-primary" : ""}`}>
+      {open && <span className="pointer-events-none absolute bottom-2 left-1.5 top-2 w-1.5 rounded-full bg-primary/80" aria-hidden />}
+
       <div className="flex min-w-0 items-stretch">
         {!open && <div className={`w-1 shrink-0 ${rowTone.edge}`} aria-hidden />}
-        <div className="flex w-9 shrink-0 items-center justify-center border-r border-grid-line/70">
+        <div className="hidden w-9 shrink-0 items-center justify-center border-r border-grid-line/70 sm:flex">
           <Checkbox checked={selected} onCheckedChange={() => onSelect(order.id)} aria-label={`Markera order från ${order.stores?.name || "butik"}`} />
         </div>
-        <Button
+        <button
           type="button"
-          variant="ghost"
           onClick={() => onToggle(order.id)}
           aria-expanded={open}
-          className={`h-auto min-w-0 flex-1 justify-start rounded-none px-2.5 text-left hover:bg-transparent ${open ? "py-3" : "py-2"}`}
+          className={`min-w-0 flex-1 px-2.5 text-left transition-colors ${open ? "py-2.5" : "py-1.5"} ${rowTone.hover}`}
         >
-          <div className="hidden w-full min-w-0 items-center text-xs sm:flex">
+          <div className="hidden min-h-5 w-full min-w-0 items-center text-xs sm:flex">
             <span className="w-36 shrink-0 border-r border-grid-line/70 pr-3 font-mono text-[11px] font-semibold tabular-nums">{day}<span className="block text-[10px] font-normal text-muted-foreground">{displayOrderWeek(order)}</span></span>
-            <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "font-bold" : "font-semibold"}`}>{order.stores?.name || "Okänd butik"}<span className="block text-[10px] font-normal text-muted-foreground">{order.created_by || "–"}</span></span>
-            <span className="min-w-0 flex-[1.5] truncate border-r border-grid-line/70 px-3">{productsText}</span>
-            <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 text-center font-mono text-[11px] tabular-nums">{orderLines} rader</span>
-            <span className="w-28 shrink-0 border-r border-grid-line/70 px-2"><Badge variant="outline" className={`rounded-sm text-[10px] ${statusColor[order.status] || ""}`}>{statusIcon[order.status]}<span className="ml-1">{order.status}</span></Badge></span>
+            <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "text-[13px] font-bold tracking-tight" : "font-semibold"}`}>{order.stores?.name || "Okänd butik"}<span className="block text-[10px] font-normal text-muted-foreground">{order.created_by || "–"}</span></span>
+            <span className="min-w-0 flex-[1.5] truncate border-r border-grid-line/70 px-3 text-muted-foreground">{productsText}</span>
+            <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 text-center font-mono text-[10px] tabular-nums text-muted-foreground">{orderLines} rader</span>
+            <span className="flex w-32 shrink-0 items-center overflow-hidden border-r border-grid-line/70 px-2">{statusChip}</span>
             <span className="w-24 shrink-0 px-2 text-right font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</span>
-            <ChevronDown className={`ml-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+            <ChevronDown className={`ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
           </div>
           <div className="w-full space-y-1 sm:hidden">
             <div className="flex items-start justify-between gap-2">
-              <span className={`min-w-0 flex-1 break-words leading-snug ${open ? "text-[16px] font-bold" : "text-[15px] font-semibold"}`}>{order.stores?.name || "Okänd butik"}</span>
+              <span className={`min-w-0 flex-1 break-words leading-snug ${open ? "text-[17px] font-bold" : "text-[15px] font-semibold"}`}>{order.stores?.name || "Okänd butik"}</span>
               <ChevronDown className={`mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
             </div>
-            <div className="flex flex-wrap items-center gap-1.5"><Badge variant="outline" className={`rounded-sm text-[10px] ${statusColor[order.status] || ""}`}>{statusIcon[order.status]}<span className="ml-1">{order.status}</span></Badge><span className="font-mono text-[11px] text-muted-foreground">{day} · {orderLines} rader</span></div>
+            <div className="flex flex-wrap items-center gap-1.5">{statusChip}<span className="font-mono text-[11px] text-muted-foreground">{day} · {orderLines} rader</span></div>
             <div className="line-clamp-2 text-xs text-muted-foreground">{productsText}</div>
             <div className="font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</div>
           </div>
-        </Button>
+        </button>
+
         <div className="flex shrink-0 items-center gap-1 px-2 sm:border-l sm:border-grid-line/70">
           <Select value={order.status} onValueChange={(value) => onStatusChange(order.id, value)}>
             <SelectTrigger className="hidden h-8 w-[108px] text-xs sm:flex"><SelectValue /></SelectTrigger>
@@ -252,6 +259,33 @@ function WholesaleOrderAccordionRow({
           <WholesaleOrderDetail order={order} onClose={() => onClose(order.id)} stores={stores} />
         </div>
       )}
+    </div>
+  );
+}
+
+function WholesaleOrderRowHeader({
+  allSelected,
+  onSelectAll,
+}: {
+  allSelected: boolean;
+  onSelectAll: (next: boolean) => void;
+}) {
+  return (
+    <div className="hidden items-center border border-grid-line bg-grid-head text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:flex">
+      <span className="w-1 shrink-0" aria-hidden />
+      <span className="flex w-9 shrink-0 items-center justify-center border-r border-grid-line py-1">
+        <Checkbox checked={allSelected} onCheckedChange={(value) => onSelectAll(!!value)} aria-label="Markera alla" />
+      </span>
+      <span className="flex min-w-0 flex-1 items-center px-2.5 py-1">
+        <span className="w-36 shrink-0 border-r border-grid-line pr-2">Datum</span>
+        <span className="min-w-[11rem] flex-1 border-r border-grid-line px-3">Butik</span>
+        <span className="min-w-0 flex-[1.5] border-r border-grid-line px-3">Produkter</span>
+        <span className="w-16 shrink-0 border-r border-grid-line px-2 text-center">Rader</span>
+        <span className="w-32 shrink-0 border-r border-grid-line px-2">Status</span>
+        <span className="w-24 shrink-0 px-2 text-right">Summa</span>
+        <span className="ml-2 w-3.5 shrink-0" />
+      </span>
+      <span className="w-[156px] shrink-0" aria-hidden />
     </div>
   );
 }
@@ -843,6 +877,7 @@ export default function WholesaleOrders() {
               <div className="flex items-center gap-2">{marked.length > 0 && <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => printWholesalePackLists(orders.filter((order: any) => marked.includes(order.id)))}><Printer className="h-3.5 w-3.5" /> Skriv ut markerade</Button>}<span className="font-mono text-xs tabular-nums text-muted-foreground">Aktivt värde {activeOrders.reduce((sum: number, order: any) => sum + formatOrderValue(order), 0).toFixed(2)} kr</span></div>
             </div>
             <div className="overflow-hidden rounded-md border border-grid-line bg-card shadow-sm">
+              <WholesaleOrderRowHeader allSelected={allFilteredMarked} onSelectAll={markAllFiltered} />
               {filteredOrders.length === 0 && <div className="px-3 py-12 text-center text-sm text-muted-foreground">Inga ordrar att visa.</div>}
               {groupedFilteredOrders.map((week) => <div key={week.key}>
                 <div className="flex items-center gap-3 border-b-2 border-primary bg-primary/10 px-3 py-2"><span className="text-[12px] font-bold uppercase tracking-wide text-foreground">Vecka {week.week}</span><span className="truncate text-[11px] text-muted-foreground">{rangeLabel([...week.days.keys()])}</span><span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">{week.count} order</span></div>
