@@ -8,13 +8,17 @@ import {
   type WeeklyStoreReport,
   type WeeklyRegionReport,
 } from "@/hooks/useWeeklyStoreReports";
+import { useDailyReportsRange } from "@/hooks/useDailyReportsRange";
+import { dayRowsFrom, weekDayList } from "@/lib/weeklyReportDays";
+import { weeklyReportPdf, weeklyReportXlsx, type ReportRow } from "@/lib/weeklyReportExport";
+import { StoreWeekDays } from "@/components/reports/StoreWeekDays";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ChevronDown, ChevronRight, AlertTriangle, LockKeyhole } from "lucide-react";
+import { Loader2, ChevronDown, ChevronRight, AlertTriangle, LockKeyhole, Printer, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
@@ -104,6 +108,7 @@ export function WeeklyStoreReportsSection() {
   const { toast } = useToast();
   const [filter, setFilter] = useState("all");
   const [openWeek, setOpenWeek] = useState<string | null>(null);
+  const [openStore, setOpenStore] = useState<string | null>(null);
 
   const regions = regionReports.data ?? [];
   const details = storeReports.data ?? [];
@@ -119,6 +124,14 @@ export function WeeklyStoreReportsSection() {
       .map(([key, value]) => ({ key, ...value }))
       .sort((a, b) => b.week_start.localeCompare(a.week_start));
   }, [regions, details]);
+
+  const latestWeekForExport = weeks[0];
+  const selectedStoreForExport = filter !== "all" && !(filter in REGION_LABELS) ? filter : null;
+  const dailyExport = useDailyReportsRange(
+    selectedStoreForExport,
+    latestWeekForExport?.week_start,
+    latestWeekForExport?.week_end,
+  );
 
   const storeName = (id: string) => stores.find((s) => s.id === id)?.name ?? "Butik";
   const isClosed = (storeId: string, year: number, week: number) =>
@@ -169,26 +182,71 @@ export function WeeklyStoreReportsSection() {
       ? REGION_LABELS[groupFilter]
       : "Sverige totalt";
 
+  const exportSource = selectedStoreForExport
+    ? details.filter((row) => row.store_id === selectedStoreForExport && row.iso_year === latestWeekForExport?.iso_year && row.iso_week === latestWeekForExport?.iso_week)
+    : groupFilter
+      ? latestRegions.filter((row) => row.group_key === groupFilter)
+      : latestRegions;
+  const exportRows: ReportRow[] = exportSource.map((row) => ({
+    label: "store_id" in row ? storeName(row.store_id) : row.group_label,
+    total_sales_sek: row.total_sales_sek,
+    avg_sales_per_day_sek: row.avg_sales_per_day_sek,
+    staff_hours: row.staff_hours,
+    staff_shifts: row.staff_shifts,
+    reports: `${row.daily_reports_count} / ${row.expected_open_days}`,
+    status: row.status,
+  }));
+
+  const exportReport = (format: "pdf" | "xlsx") => {
+    if (!latestWeekForExport) return;
+    const days = selectedStoreForExport
+      ? dayRowsFrom(
+          weekDayList(latestWeekForExport.week_start, latestWeekForExport.week_end),
+          dailyExport.data ?? [],
+        )
+      : undefined;
+    const titleLabel = selectedStoreForExport ? storeName(selectedStoreForExport) : summaryLabel;
+    const payload = {
+      title: `${titleLabel} · vecka ${latestWeekForExport.iso_week}`,
+      subtitle: `${latestWeekForExport.week_start} – ${latestWeekForExport.week_end}`,
+      rows: exportRows,
+      ...(days ? { days: [{ storeLabel: titleLabel, rows: days }] } : {}),
+    };
+    if (format === "pdf") weeklyReportPdf(payload);
+    else weeklyReportXlsx(payload);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">Sammanställs automatiskt från sparade dagsrapporter</p>
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="h-8 w-full text-xs sm:w-[240px]">
-            <SelectValue placeholder="Alla butiker och regioner" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alla butiker och regioner</SelectItem>
-            <SelectItem value="SE_TOTAL">Sverige totalt</SelectItem>
-            <SelectItem value="vast">Göteborg</SelectItem>
-            <SelectItem value="stockholm">Stockholm</SelectItem>
-            <SelectItem value="schweiz">Schweiz</SelectItem>
-            {stores.map((s) => (
-              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => exportReport("pdf")} disabled={dailyExport.isFetching}>
+            <Printer className="h-3.5 w-3.5" /> Skriv ut
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => exportReport("xlsx")} disabled={dailyExport.isFetching}>
+            <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
+          </Button>
+          <Select value={filter} onValueChange={(value) => { setFilter(value); setOpenStore(null); }}>
+            <SelectTrigger className="h-8 w-full text-xs sm:w-[240px]">
+              <SelectValue placeholder="Alla butiker och regioner" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alla butiker och regioner</SelectItem>
+              <SelectItem value="SE_TOTAL">Sverige totalt</SelectItem>
+              <SelectItem value="vast">Göteborg</SelectItem>
+              <SelectItem value="stockholm">Stockholm</SelectItem>
+              <SelectItem value="schweiz">Schweiz</SelectItem>
+              {stores.map((s) => (
+                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+      {selectedStoreForExport && (
+        <p className="text-[10px] text-muted-foreground">Utskrift och Excel gäller vald butik och senaste tillgängliga vecka.</p>
+      )}
 
       {selectedSummary && latestWeek && (
         <div className="border-b pb-4">
@@ -295,10 +353,16 @@ export function WeeklyStoreReportsSection() {
                           return (
                             <div key={row.id} className="p-3">
                               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                                <span className="flex items-center gap-1.5 text-sm font-medium">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-auto gap-1.5 p-0 text-left text-sm font-medium hover:bg-transparent hover:text-primary"
+                                  onClick={() => setOpenStore(openStore === `${row.store_id}-${row.iso_year}-${row.iso_week}` ? null : `${row.store_id}-${row.iso_year}-${row.iso_week}`)}
+                                >
+                                  {openStore === `${row.store_id}-${row.iso_year}-${row.iso_week}` ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                                   {storeName(row.store_id)}
                                   {row.locked_at && <LockKeyhole className="h-3 w-3 text-muted-foreground" />}
-                                </span>
+                                </Button>
                                 <div className="flex items-center gap-2">
                                   <StatusBadge status={row.status} drift={row.drift_after_lock} corrected={row.corrected} />
                                   <Button
@@ -315,6 +379,9 @@ export function WeeklyStoreReportsSection() {
                               <Metrics row={row} />
                               {row.drift_after_lock && row.drift_note && (
                                 <p className="mt-2 text-[10px] text-destructive">{row.drift_note}</p>
+                              )}
+                              {openStore === `${row.store_id}-${row.iso_year}-${row.iso_week}` && (
+                                <StoreWeekDays storeId={row.store_id} weekStart={row.week_start} weekEnd={row.week_end} />
                               )}
                             </div>
                           );
