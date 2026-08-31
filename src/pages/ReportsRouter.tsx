@@ -70,6 +70,24 @@ function WholesaleReportsPage() {
           </CardContent>
         )}
       </Card>
+
+      <Card>
+        <CardHeader
+          className="cursor-pointer hover:bg-muted/30 transition-colors py-3 px-4"
+          onClick={() => setWeeklyOpen(!weeklyOpen)}
+        >
+          <div className="flex items-center gap-2">
+            {weeklyOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+            <CalendarRange className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium">Veckorapporter</CardTitle>
+          </div>
+        </CardHeader>
+        {weeklyOpen && (
+          <CardContent className="pt-0 px-4 pb-4">
+            <WeeklyStoreReportsSection />
+          </CardContent>
+        )}
+      </Card>
     </div>
   );
 }
