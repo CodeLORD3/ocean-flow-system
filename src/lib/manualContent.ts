@@ -430,8 +430,38 @@ export const MANUAL_CHAPTERS: ManualChapter[] = [
     ],
   },
   {
+    id: "personal-schema",
+    title: "19. Personal & Schema",
+    route: "/personal",
+    purpose:
+      "Här finns hela personalmodulen samlad: personalregister, stämpling, rapporterad tid, schema, frånvaro, attest och löneunderlag.",
+    steps: [
+      "Öppna Personal & Schema i sidomenyn. Välj en rubrik på översikten och klicka på den funktion du vill använda.",
+      "Under Personal hanterar du personalkort, kontaktuppgifter, portalbehörigheter och anställningar.",
+      "Under Tid & Stämpling ser du stämplingar, faktisk och avrundad tid, vem som är på plats och din egen tid.",
+      "Under Schema planerar du pass, ser publicerat schema och hittar dina egna pass.",
+      "Under Frånvaro registrerar och hanterar du sjukperioder, semester, saldon och bemanning.",
+      "Under Attest & Regler granskar du tid och regler för OB, övertid och raster. Under Lön granskar och exporterar du löneunderlag.",
+      "Använd flikraden högst upp på personalsidorna för att byta direkt mellan funktionerna. Vilka poster som visas styrs av din behörighet.",
+    ],
+    tips: [
+      "Admin ser hela personalmodulen. Butiks- och grossistpersonal ser bara funktioner som hör till deras behörighet.",
+      "Om en sida saknas: öppna Personal & Schema i stället för att leta efter många separata menyposter.",
+    ],
+    problems: [
+      {
+        q: "Jag hittar inte Personal & Schema",
+        a: "Öppna eller expandera gruppen Personal i sidomenyn. Om posten fortfarande saknas saknar kontot behörighet till personalsidan – kontakta admin.",
+      },
+      {
+        q: "Jag ser inte en viss funktion",
+        a: "Översikten döljer automatiskt funktioner som ditt konto inte får använda. Admin behöver ändra behörigheten om du ska ha åtkomst.",
+      },
+    ],
+  },
+  {
     id: "logg",
-    title: "19. Aktivitetslogg",
+    title: "20. Aktivitetslogg",
     route: "/audit",
     image: "/manual/audit.png",
     purpose:
@@ -449,7 +479,7 @@ export const MANUAL_CHAPTERS: ManualChapter[] = [
   },
   {
     id: "felsokning",
-    title: "20. Om något strular – felsökning",
+    title: "21. Om något strular – felsökning",
     purpose:
       "De flesta problem löses på under en minut. Gå igenom listan i ordning innan du kontaktar support.",
     steps: [

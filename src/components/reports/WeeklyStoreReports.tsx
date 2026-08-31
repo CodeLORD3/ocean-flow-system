@@ -167,6 +167,10 @@ export function WeeklyStoreReportsSection() {
 
   const groupFilter = filter !== "all" && filter in REGION_LABELS ? filter : null;
   const storeFilter = filter !== "all" && !groupFilter ? filter : null;
+  const regionStoreIds = useMemo(
+    () => new Set(stores.filter((store) => store.region === groupFilter).map((store) => store.id)),
+    [stores, groupFilter],
+  );
   const latestWeek = weeks[0];
   const latestRegions = latestWeek
     ? regions.filter((row) => row.iso_year === latestWeek.iso_year && row.iso_week === latestWeek.iso_week)
@@ -286,10 +290,12 @@ export function WeeklyStoreReportsSection() {
       <div className="divide-y rounded-md border">
         {weeks.map((week) => {
           const weekRegions = regions.filter(
-            (r) => r.iso_year === week.iso_year && r.iso_week === week.iso_week && (!groupFilter || r.group_key === groupFilter),
+            (r) => r.iso_year === week.iso_year && r.iso_week === week.iso_week &&
+              (filter === "all" ? r.group_key === "SE_TOTAL" : Boolean(groupFilter) && r.group_key === groupFilter),
           );
           const weekStores = details.filter(
-            (r) => r.iso_year === week.iso_year && r.iso_week === week.iso_week && (!storeFilter || r.store_id === storeFilter),
+            (r) => r.iso_year === week.iso_year && r.iso_week === week.iso_week &&
+              (storeFilter ? r.store_id === storeFilter : groupFilter ? regionStoreIds.has(r.store_id) : true),
           );
           if (weekRegions.length === 0 && weekStores.length === 0) return null;
 

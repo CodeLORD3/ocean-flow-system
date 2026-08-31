@@ -50,6 +50,10 @@ export function MonthlyReportsSection() {
   const storeName = (id: string) => stores.find((store) => store.id === id)?.name ?? "Butik";
   const groupFilter = filter !== "all" && filter in REGION_LABELS ? filter : null;
   const storeFilter = filter !== "all" && !groupFilter ? filter : null;
+  const regionStoreIds = useMemo(
+    () => new Set(stores.filter((store) => store.region === groupFilter).map((store) => store.id)),
+    [stores, groupFilter],
+  );
   const latest = months[0];
   const latestRegion = latest ? regions.find((row) => row.group_key === (groupFilter ?? (filter === "all" ? "SE_TOTAL" : "")) && row.year === latest.year && row.month === latest.month) : undefined;
   const latestStore = latest && storeFilter ? details.find((row) => row.store_id === storeFilter && row.year === latest.year && row.month === latest.month) : undefined;
@@ -73,8 +77,10 @@ export function MonthlyReportsSection() {
       {summary && latest && <div className="border-b pb-4"><div className="mb-3 flex flex-wrap items-end justify-between gap-2"><div><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">Senaste månaden</p><p className="mt-1 text-sm font-semibold">{summaryLabel}</p><p className="text-xs capitalize text-muted-foreground">{monthLabel(latest.month_start)}</p></div><StatusBadge status={summary.status} corrected={summary.corrected} /></div><Metrics row={summary} /></div>}
 
       <div className="divide-y rounded-md border">{months.map((month) => {
-        const monthRegions = regions.filter((row) => row.year === month.year && row.month === month.month && (!groupFilter || row.group_key === groupFilter) && (filter !== "all" || row.group_key === "SE_TOTAL"));
-        const monthStores = details.filter((row) => row.year === month.year && row.month === month.month && (!storeFilter || row.store_id === storeFilter));
+        const monthRegions = regions.filter((row) => row.year === month.year && row.month === month.month &&
+          (filter === "all" ? row.group_key === "SE_TOTAL" : Boolean(groupFilter) && row.group_key === groupFilter));
+        const monthStores = details.filter((row) => row.year === month.year && row.month === month.month &&
+          (storeFilter ? row.store_id === storeFilter : groupFilter ? regionStoreIds.has(row.store_id) : true));
         if (!monthRegions.length && !monthStores.length) return null;
         const headline = monthRegions.find((row) => row.group_key === (groupFilter ?? "SE_TOTAL")) ?? monthRegions[0];
         const total = headline?.total_sales_sek ?? monthStores.reduce((sum, row) => sum + Number(row.total_sales_sek), 0);

@@ -59,8 +59,7 @@ const inventoryNav = [
 ];
 
 const orgNav = [
-  { title: "Personal", url: "/staff", icon: UserCheck },
-  { title: "Schema", url: "/staff-schedule", icon: CalendarRange },
+  { title: "Personal & Schema", url: "/personal", icon: UserCheck },
   { title: "Aktivitetslogg", url: "/audit", icon: ClipboardList },
 ];
 
