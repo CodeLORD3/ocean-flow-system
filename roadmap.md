@@ -35,7 +35,8 @@
 - [x] F22–F27: stationsvakt, nyhetsbaserade avvikelser, retention-logg, attestlås, självattestspärr och realtid
 - [x] Offlinefel sparas i felkö utan tyst radering, Min tid och IANA-tidszon i personalvyer
 - [x] Inspektörsläge loggar faktisk PNR-dekryptering och kostnadsställeväxling stöds
-- [ ] Acceptanskörning a–w efter att utkastet accepterats
+- [x] Körbevisen a–w skrivna som körbart skript (supabase/verification/etapp2b_korbevis.sql)
+- [ ] Acceptanskörning a–w körd med faktiska resultat (kräver att utkastet accepterats)
 
 ## Personalmodul: Etapp 5 — löneunderlag, förmåner & Fortnox-automation
 - [ ] Datamodell för versionerade lönepolicyer, löneperioder, lönerader, löneartsmappning, förmåner, avdrag, skattetabeller och arbetsgivaravgifter
