@@ -64,6 +64,35 @@ function getStoreZoneKey(store: { city: string; name: string }): string {
   return "international";
 }
 
+const orderDate = (order: any) => order.desired_delivery_date || order.shop_order_lines?.find((line: any) => line.delivery_date)?.delivery_date || order.created_at?.slice(0, 10) || "";
+const dayLabel = (iso: string) => {
+  if (!iso) return "Utan leveransdatum";
+  const pretty = new Date(`${iso}T00:00:00`).toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" });
+  return pretty.charAt(0).toUpperCase() + pretty.slice(1);
+};
+function isoWeek(iso: string) {
+  const d = new Date(`${iso}T00:00:00`);
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return { week: Math.ceil(((t.getTime() - yearStart.getTime()) / 86400000 + 1) / 7), year: t.getUTCFullYear() };
+}
+function groupByWeek(list: any[]) {
+  const weeks = new Map<string, { week: number; year: number; days: Map<string, any[]> }>();
+  [...list].sort((a, b) => orderDate(a).localeCompare(orderDate(b))).forEach((order) => {
+    const date = orderDate(order);
+    const { week, year } = isoWeek(date || new Date().toISOString().slice(0, 10));
+    const key = `${year}-${String(week).padStart(2, "0")}`;
+    const entry = weeks.get(key) ?? { week, year, days: new Map<string, any[]>() };
+    const dayOrders = entry.days.get(date) ?? [];
+    dayOrders.push(order);
+    entry.days.set(date, dayOrders);
+    weeks.set(key, entry);
+  });
+  return [...weeks.entries()].map(([key, entry]) => ({ key, ...entry, count: [...entry.days.values()].flat().length }));
+}
+
 const statusColor: Record<string, string> = {
   Ny: "",
   Pågående: "bg-warning/15 text-warning border-warning/20",
