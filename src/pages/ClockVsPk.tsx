@@ -25,10 +25,11 @@ import { Loader2 } from "lucide-react";
 import { useTimeEntries, usePkLoggedTimes } from "@/hooks/useClock";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useStores } from "@/hooks/useStores";
+import { svenskDatum } from "@/lib/swedishTime";
 import { summarizeDays, hhmm, durationLabel } from "@/lib/timeEntries";
 
-const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => new Date(Date.now() - n * 86400_000).toISOString().slice(0, 10);
+const today = () => svenskDatum();
+const daysAgo = (n: number) => svenskDatum(Date.now() - n * 86400_000);
 
 interface Row {
   key: string;

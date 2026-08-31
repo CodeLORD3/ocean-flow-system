@@ -45,8 +45,9 @@ import {
   TYPE_LABEL,
   SOURCE_LABEL,
 } from "@/lib/timeEntries";
+import { svenskDatum, svenskTid } from "@/lib/swedishTime";
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => svenskDatum();
 
 export default function TimeEntriesPage() {
   const [from, setFrom] = useState(today());
@@ -268,12 +269,12 @@ export default function TimeEntriesPage() {
           <tbody>
             {journal.map((e) => (
               <tr key={e.id}>
-                <td className="ind-mono">{e.occurred_at.slice(0, 16).replace("T", " ")}</td>
+                <td className="ind-mono">{`${svenskDatum(e.occurred_at)} ${svenskTid(e.occurred_at)}`}</td>
                 <td>{employeeName.get(e.employee_id) ?? e.employee_id}</td>
                 <td>{TYPE_LABEL[e.type]}</td>
                 <td>{SOURCE_LABEL[e.source]}</td>
                 <td className="ind-mono">{e.corrects_entry_id ? `${e.correction_kind} ${e.corrects_entry_id.slice(0, 8)}` : "–"}</td>
-                <td className="ind-mono">{e.registered_at.slice(0, 16).replace("T", " ")}</td>
+                <td className="ind-mono">{`${svenskDatum(e.registered_at)} ${svenskTid(e.registered_at)}`}</td>
                 <td>{e.note ?? ""}</td>
               </tr>
             ))}
@@ -380,7 +381,7 @@ export default function TimeEntriesPage() {
               muted={!isEffective}
               className={`flex-wrap ${isEffective ? "" : "line-through"}`}
             >
-              <span className="ind-mono min-w-[130px]">{e.occurred_at.slice(0, 16).replace("T", " ")}</span>
+              <span className="ind-mono min-w-[130px]">{`${svenskDatum(e.occurred_at)} ${svenskTid(e.occurred_at)}`}</span>
               <span className="min-w-[170px]">{employeeName.get(e.employee_id) ?? e.employee_id}</span>
               <span>{TYPE_LABEL[e.type]}</span>
               <StatusLabel tone={e.source === "clock" ? "ok" : e.source === "correction" ? "progress" : "neutral"}>
