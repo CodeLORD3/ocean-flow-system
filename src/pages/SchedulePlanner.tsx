@@ -455,11 +455,11 @@ export default function SchedulePlanner() {
                                     onDragStart={() => setDragging(s)}
                                     onClick={() => setEditing(s)}
                                     title={checks.map((c) => `${c.label}: ${c.detail}`).join("\n") || undefined}
-                                    className="ind-card cursor-pointer p-2"
-                                    style={{
-                                      borderLeft: `3px solid var(--color-${type?.color_token ?? "neutral-400"})`,
-                                      opacity: s.status === "draft" ? 0.72 : 1,
-                                    }}
+                                     className="ind-card cursor-pointer p-2"
+                                     style={{
+                                       boxShadow: `inset 3px 0 0 var(--color-${type?.color_token ?? "neutral-400"})`,
+                                       opacity: s.status === "draft" ? 0.72 : 1,
+                                     }}
                                   >
                                     <p className="ind-mono text-sm">
                                       {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
