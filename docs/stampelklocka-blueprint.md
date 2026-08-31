@@ -1153,6 +1153,6 @@ supabase/functions/personalkollen-sync/
 
 ## Slutsats
 
-Riktningen är en servervaliderad, revisionsbar och offline-tålig stämpelklocka där `time_entries` är den historiska sanningen. Kioskflödet, stationssäkerheten, maskerad identifiering, offlinekö, geofence, journal/rättelser, inspektörsläge, OB-underlag och Personalkollen-jämförelse finns i den nuvarande implementationen.
+Riktningen är en servervaliderad, revisionsbar och offline-tålig stämpelklocka där `time_entries` är den historiska sanningen. Kioskflödet, stationssäkerheten, maskerad identifiering, offlinekö, geofence, journal/rättelser, inspektörsläge, attest med avvikelser och periodlås, OB-underlag och Personalkollen-jämförelse finns i den nuvarande implementationen.
 
-De största punkterna att inte överskatta är den direkta Fortnox-löneexporten, automatisk regel-enforcement, komplett `time_allocations`, full attest från tidsvyn och relationen mellan nya `time_entries` och den separata legacy-funktionen för automatisk stängning av `staff_shifts`.
+De största punkterna att inte överskatta är den direkta Fortnox-löneexporten, automatisk regel-enforcement av dygns-/veckovila, komplett `time_allocations`, tidszonsantagandet i attestberäkningen och relationen mellan nya `time_entries` och den separata legacy-funktionen för automatisk stängning av `staff_shifts`.
