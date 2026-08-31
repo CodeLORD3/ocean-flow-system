@@ -154,11 +154,11 @@ Deno.serve(async (req) => {
     });
 
     if (missing.length > 0) {
-      // Arkiv har eftersläpning på några dagar → prognos-API:t täcker de senaste dagarna.
-      const archiveCutoff = addDays(today, -6);
+      // Historiska datum går alltid till historik-API:t. Idag och framtida
+      // datum går till prognos-API:t enligt rapportens datumlogik.
       const groups: { url: string; source: "archive" | "forecast"; days: string[] }[] = [
-        { url: ARCHIVE_URL, source: "archive", days: missing.filter((d) => d < archiveCutoff) },
-        { url: FORECAST_URL, source: "forecast", days: missing.filter((d) => d >= archiveCutoff) },
+        { url: ARCHIVE_URL, source: "archive", days: missing.filter((d) => d < today) },
+        { url: FORECAST_URL, source: "forecast", days: missing.filter((d) => d >= today) },
       ];
 
       for (const group of groups) {
