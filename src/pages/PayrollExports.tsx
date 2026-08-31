@@ -98,7 +98,8 @@ export default function PayrollExports() {
       const { data: user } = await supabase.auth.getUser();
       const { data: exportRow, error } = await supabase.from("payroll_exports").insert({ period_start: from, period_end: to, status: rows.some((row) => row.missingWage) ? "blocked" : "draft", blocked_reason: rows.some((row) => row.missingWage) ? "En eller flera OB-rader saknar löneart." : null, exported_by: user.user?.id ?? null }).select("id").single();
       if (error) throw error;
-      const { error: lineError } = await supabase.from("payroll_export_lines").insert(rows.map((row) => ({ export_id: exportRow.id, employee_id: row.employeeId, regular_minutes: row.regular, overtime_minutes: row.overtime, ob_50_minutes: row.ob50, ob_70_minutes: row.ob70, ob_100_minutes: row.ob100, wage_code_missing: row.missingWage, source_snapshot: row.source })));
+      const lines = rows.map((row) => ({ export_id: exportRow.id, employee_id: row.employeeId, regular_minutes: row.regular, overtime_minutes: row.overtime, ob_50_minutes: row.ob50, ob_70_minutes: row.ob70, ob_100_minutes: row.ob100, wage_code_missing: row.missingWage, source_snapshot: row.source as Json }));
+      const { error: lineError } = await supabase.from("payroll_export_lines").insert(lines);
       if (lineError) throw lineError;
       setGeneratedAt(new Date().toISOString());
       toast.success("Löneunderlaget sparat");
