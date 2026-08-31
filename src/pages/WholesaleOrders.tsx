@@ -8,7 +8,7 @@ import { isInfiniteStock } from "@/lib/infiniteStock";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
-  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, Plus, CalendarIcon, ChevronDown, ChevronRight, CheckSquare,
+  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, Plus, CalendarIcon, ChevronDown, ChevronRight, CheckSquare, Camera,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,7 @@ import DeliveryNote from "@/components/DeliveryNote";
 import { moveStockToTransport } from "@/lib/stockTransfer";
 import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLineStatus";
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
+import { useEntityImageCounts } from "@/hooks/useEntityImages";
 import { logActivity } from "@/hooks/useActivityLog";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { WholesaleTotalOrderedView } from "@/components/orders/WholesaleTotalOrderedView";
@@ -160,8 +161,9 @@ type WholesaleOrderAccordionRowProps = {
   day: string;
   open: boolean;
   selected: boolean;
-  stores: any[];
-  onToggle: (id: string) => void;
+   stores: any[];
+   photoCount?: number;
+   onToggle: (id: string) => void;
   onSelect: (id: string) => void;
   onStatusChange: (id: string, status: string) => void;
   onPrint: (order: any) => void;
@@ -175,6 +177,7 @@ function WholesaleOrderAccordionRow({
   open,
   selected,
   stores,
+  photoCount = 0,
   onToggle,
   onSelect,
   onStatusChange,
@@ -218,8 +221,11 @@ function WholesaleOrderAccordionRow({
             <span className="w-36 shrink-0 border-r border-grid-line/70 pr-3 font-mono text-[11px] font-semibold tabular-nums">{day}<span className="block text-[10px] font-normal text-muted-foreground">{displayOrderWeek(order)}</span></span>
             <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "text-[13px] font-bold tracking-tight" : "font-semibold"}`}>{order.stores?.name || "Okänd butik"}<span className="block text-[10px] font-normal text-muted-foreground">{order.created_by || "–"}</span></span>
             <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 text-center font-mono text-[10px] tabular-nums text-muted-foreground">{orderLines} rader</span>
-            <span className="flex w-32 shrink-0 items-center overflow-hidden border-r border-grid-line/70 px-2">{statusChip}</span>
-            <span className="w-24 shrink-0 px-2 text-right font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</span>
+             <span className="flex w-32 shrink-0 items-center overflow-hidden border-r border-grid-line/70 px-2">{statusChip}</span>
+             <span className="flex w-12 shrink-0 items-center justify-center border-r border-grid-line/70 px-2">
+               {photoCount > 0 && <span className="flex items-center gap-0.5 font-mono text-[10px] tabular-nums text-muted-foreground" title={`${photoCount} interna bilder på beställningen`}><Camera className="h-3.5 w-3.5" aria-label="Bilder finns" />{photoCount}</span>}
+             </span>
+             <span className="w-24 shrink-0 px-2 text-right font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</span>
             <ChevronDown className={`ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
           </div>
           <div className="w-full space-y-1 sm:hidden">
@@ -232,7 +238,7 @@ function WholesaleOrderAccordionRow({
           </div>
         </button>
 
-        <div className="flex shrink-0 items-center gap-1 px-2 sm:border-l sm:border-grid-line/70">
+        <div className="flex shrink-0 items-center justify-end gap-1 px-2 sm:w-[196px] sm:border-l sm:border-grid-line/70">
           <Select value={order.status} onValueChange={(value) => onStatusChange(order.id, value)}>
             <SelectTrigger className="hidden h-8 w-[108px] text-xs sm:flex"><SelectValue /></SelectTrigger>
             <SelectContent>{["Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}</SelectContent>
@@ -282,7 +288,7 @@ function WholesaleOrderRowHeader({
         <span className="w-24 shrink-0 px-2 text-right">Summa</span>
         <span className="ml-2 w-3.5 shrink-0" />
       </span>
-      <span className="w-[156px] shrink-0" aria-hidden />
+      <span className="w-[196px] shrink-0" aria-hidden />
     </div>
   );
 }
@@ -502,10 +508,14 @@ export default function WholesaleOrders() {
     return matchSearch && matchStatus && matchStore;
   });
 
-  const groupedFilteredOrders = useMemo(() => groupByWeek(filteredOrders), [filteredOrders]);
-  const allFilteredMarked = filteredOrders.length > 0 && filteredOrders.every((order: any) => marked.includes(order.id));
-  const toggleMarked = (id: string) => setMarked((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
-  const markAllFiltered = () => setMarked(allFilteredMarked ? marked.filter((id) => !filteredOrders.some((order: any) => order.id === id)) : [...new Set([...marked, ...filteredOrders.map((order: any) => order.id)])]);
+   const groupedFilteredOrders = useMemo(() => groupByWeek(filteredOrders), [filteredOrders]);
+   const { data: photoCounts } = useEntityImageCounts(
+     "shop_order",
+     useMemo(() => filteredOrders.map((order: any) => order.id), [filteredOrders]),
+   );
+   const allFilteredMarked = filteredOrders.length > 0 && filteredOrders.every((order: any) => marked.includes(order.id));
+   const toggleMarked = (id: string) => setMarked((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+   const markAllFiltered = () => setMarked(allFilteredMarked ? marked.filter((id) => !filteredOrders.some((order: any) => order.id === id)) : [...new Set([...marked, ...filteredOrders.map((order: any) => order.id)])]);
 
   const totalOrders = activeOrders.length;
   const newOrders = activeOrders.filter((o: any) => o.status === "Ny").length;
@@ -880,7 +890,7 @@ export default function WholesaleOrders() {
                 <div className="flex items-center gap-3 border-b-2 border-primary bg-primary/10 px-3 py-2"><span className="text-[12px] font-bold uppercase tracking-wide text-foreground">Vecka {week.week}</span><span className="truncate text-[11px] text-muted-foreground">{rangeLabel([...week.days.keys()])}</span><span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">{week.count} order</span></div>
                 {[...week.days.entries()].map(([day, dayOrders]) => <div key={day}>
                   <div className="flex items-center gap-2 border-b border-grid-line bg-muted px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><span className="truncate">{dayLabel(day)}</span><span className="font-mono normal-case tabular-nums">{dayOrders.length} order</span></div>
-                  {dayOrders.map((order: any) => <WholesaleOrderAccordionRow key={order.id} order={order} day={day} open={expandedOrderIds.has(order.id)} selected={marked.includes(order.id)} stores={stores} onToggle={toggleExpandOrder} onSelect={toggleMarked} onStatusChange={handleOrderStatusChange} onPrint={setPackingSlipOrder} onArchive={setArchiveConfirmOrder} onClose={collapseOrder} />)}
+                  {dayOrders.map((order: any) => <WholesaleOrderAccordionRow key={order.id} order={order} day={day} open={expandedOrderIds.has(order.id)} selected={marked.includes(order.id)} stores={stores} photoCount={photoCounts?.[order.id] ?? 0} onToggle={toggleExpandOrder} onSelect={toggleMarked} onStatusChange={handleOrderStatusChange} onPrint={setPackingSlipOrder} onArchive={setArchiveConfirmOrder} onClose={collapseOrder} />)}
                 </div>)}
               </div>)}
             </div>
@@ -1335,22 +1345,34 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
           title={`Order ${order.order_number || ""}`}
         />
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead>
-
-            <tr className="border-b border-border bg-muted/30">
-              <th className="px-2 py-1 text-left font-medium text-muted-foreground">Produkt</th>
-              <th className="px-2 py-1 text-left font-medium text-muted-foreground">Enhet</th>
-              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Beställt</th>
-              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Lager</th>
-              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Packat</th>
-              <th className="px-2 py-1 text-left font-medium text-muted-foreground">Avvikelse</th>
-              <th className="px-2 py-1 text-left font-medium text-muted-foreground min-w-[160px]">Status</th>
-              <th className="px-2 py-1 text-center font-medium text-muted-foreground">Åtgärd</th>
-              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Värde (kr)</th>
-            </tr>
-          </thead>
+       <div className="overflow-x-auto">
+         <table className="w-full table-fixed text-xs">
+           <colgroup>
+             <col />
+             <col className="w-14" />
+             <col className="w-16" />
+             <col className="w-16" />
+             <col className="w-16" />
+             <col className="w-24" />
+             <col className="w-40" />
+             <col className="w-14" />
+             <col className="w-40" />
+             <col className="w-24" />
+           </colgroup>
+           <thead>
+             <tr className="border-b border-border bg-muted/30">
+               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Produkt</th>
+               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Enhet</th>
+               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Beställt</th>
+               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Lager</th>
+               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Packat</th>
+               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Avvikelse</th>
+               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Status</th>
+               <th className="px-2 py-1 text-center font-medium text-muted-foreground">Bild</th>
+               <th className="px-2 py-1 text-center font-medium text-muted-foreground">Åtgärd</th>
+               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Värde (kr)</th>
+             </tr>
+           </thead>
           <tbody>
             {(() => {
               const allLines = order.shop_order_lines || [];
@@ -1385,13 +1407,13 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
 
               return (
                 <React.Fragment key={line.id}>
-                {catHeader && (
-                  <tr className="bg-muted/40">
-                    <td colSpan={9} className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      ▸ {catHeader}
-                    </td>
-                  </tr>
-                )}
+                 {catHeader && (
+                   <tr className="bg-muted/40">
+                     <td colSpan={10} className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                       ▸ {catHeader}
+                     </td>
+                   </tr>
+                 )}
                 <tr className={`border-b border-border/30 h-7 transition-colors ${
                   isUnavailable ? "opacity-50 bg-destructive/5" :
                   currentStatus === "Skickad" ? "bg-primary/10" :
@@ -1400,20 +1422,12 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   currentStatus === "Pågående" ? "bg-warning/10" :
                   ""
                 }`}>
-                  <td className="px-2 py-0.5 font-medium text-foreground">
-                    <div className="flex items-center gap-2">
-                      <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="w-7 h-5" />
-                      <span>{line.products?.name || "–"}</span>
-                      <OrderPhotosButton
-                        compact
-                        entityType={ORDER_LINE_PHOTO_ENTITY}
-                        entityId={line.id}
-                        productId={line.product_id}
-                        title={line.products?.name || "Orderrad"}
-                      />
-
-                    </div>
-                  </td>
+                   <td className="min-w-0 px-2 py-0.5 font-medium text-foreground">
+                     <div className="flex min-w-0 items-center gap-2">
+                       <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="h-5 w-7 shrink-0" />
+                       <span className="truncate">{line.products?.name || "–"}</span>
+                     </div>
+                   </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
                   <td className={`px-2 py-0.5 text-right font-mono ${infiniteStock ? "text-success" : availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
@@ -1487,8 +1501,18 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                         ))}
                       </SelectContent>
                     </Select>
-                  </td>
-                  <td className="px-2 py-0.5 text-center">
+                   </td>
+                   <td className="px-2 py-0.5 text-center">
+                     <OrderPhotosButton
+                       compact
+                       entityType={ORDER_LINE_PHOTO_ENTITY}
+                       entityId={line.id}
+                       productId={line.product_id}
+                       title={line.products?.name || "Orderrad"}
+                     />
+                   </td>
+                   <td className="px-2 py-0.5 text-center">
+
                     {!isUnavailable && (
                       <div className="flex items-center justify-center gap-1">
                         <Button
