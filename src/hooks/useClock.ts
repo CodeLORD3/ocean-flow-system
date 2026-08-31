@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { svenskDagStart, svenskDagSista, svenskDatum, svenskTidpunkt } from "@/lib/swedishTime";
+import { svenskDagStart, svenskDagSista, svenskDatum } from "@/lib/swedishTime";
 
 /**
  * Adminsidan av stämpelklockan (etapp 2).
