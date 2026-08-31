@@ -351,10 +351,15 @@ export function WeeklyStoreReportsSection() {
                           return (
                             <div key={row.id} className="p-3">
                               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                                <span className="flex items-center gap-1.5 text-sm font-medium">
+                                <button
+                                  type="button"
+                                  className="flex items-center gap-1.5 text-left text-sm font-medium hover:text-primary"
+                                  onClick={() => setOpenStore(openStore === `${row.store_id}-${row.iso_year}-${row.iso_week}` ? null : `${row.store_id}-${row.iso_year}-${row.iso_week}`)}
+                                >
+                                  {openStore === `${row.store_id}-${row.iso_year}-${row.iso_week}` ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                                   {storeName(row.store_id)}
                                   {row.locked_at && <LockKeyhole className="h-3 w-3 text-muted-foreground" />}
-                                </span>
+                                </button>
                                 <div className="flex items-center gap-2">
                                   <StatusBadge status={row.status} drift={row.drift_after_lock} corrected={row.corrected} />
                                   <Button
@@ -371,6 +376,9 @@ export function WeeklyStoreReportsSection() {
                               <Metrics row={row} />
                               {row.drift_after_lock && row.drift_note && (
                                 <p className="mt-2 text-[10px] text-destructive">{row.drift_note}</p>
+                              )}
+                              {openStore === `${row.store_id}-${row.iso_year}-${row.iso_week}` && (
+                                <StoreWeekDays storeId={row.store_id} weekStart={row.week_start} weekEnd={row.week_end} />
                               )}
                             </div>
                           );
