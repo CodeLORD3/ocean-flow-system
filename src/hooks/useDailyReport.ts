@@ -76,6 +76,9 @@ export function useSaveDailyReport() {
       qc.invalidateQueries({ queryKey: ["daily-reports", "all"] });
       qc.invalidateQueries({ queryKey: ["weekly-store-reports"] });
       qc.invalidateQueries({ queryKey: ["weekly-region-reports"] });
+      qc.invalidateQueries({ queryKey: ["monthly-store-reports"] });
+      qc.invalidateQueries({ queryKey: ["monthly-region-reports"] });
+      qc.invalidateQueries({ queryKey: ["daily-report-edits", "all"] });
     },
   });
 }
@@ -98,6 +101,9 @@ export function useUpdateDailyReport() {
       qc.invalidateQueries({ queryKey: ["daily-reports", "all"] });
       qc.invalidateQueries({ queryKey: ["weekly-store-reports"] });
       qc.invalidateQueries({ queryKey: ["weekly-region-reports"] });
+      qc.invalidateQueries({ queryKey: ["monthly-store-reports"] });
+      qc.invalidateQueries({ queryKey: ["monthly-region-reports"] });
+      qc.invalidateQueries({ queryKey: ["daily-report-edits", "all"] });
     },
   });
 }

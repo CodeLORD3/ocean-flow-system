@@ -1,0 +1,93 @@
+import { useMemo, useState } from "react";
+import { useStores } from "@/hooks/useStores";
+import { useMonthlyRegionReports, useMonthlyStoreReports, type MonthlyRegionReport, type MonthlyStoreReport } from "@/hooks/useMonthlyReports";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, ChevronDown, ChevronRight, AlertTriangle, PencilLine } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
+const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const money = (value: number | null | undefined) => value == null ? "—" : `${int.format(value)} kr`;
+const REGION_LABELS: Record<string, string> = { vast: "Göteborg", stockholm: "Stockholm", schweiz: "Schweiz", SE_TOTAL: "Sverige totalt" };
+
+function monthLabel(iso: string) {
+  return new Date(`${iso}T12:00:00`).toLocaleDateString("sv-SE", { month: "long", year: "numeric" });
+}
+
+function StatusBadge({ status, corrected }: { status: string; corrected?: boolean }) {
+  if (corrected) return <Badge variant="outline" className="gap-1 border-warning/40 text-[10px] text-warning"><AlertTriangle className="h-3 w-3" /> Korrigerad</Badge>;
+  const done = status === "klar";
+  return <Badge variant="outline" className={cn("text-[10px]", done ? "border-success/40 text-success" : "border-warning/40 text-warning")}>{done ? "Klar" : "Preliminär"}</Badge>;
+}
+
+function Metrics({ row }: { row: MonthlyStoreReport | MonthlyRegionReport }) {
+  return (
+    <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-5">
+      <div><p className="text-[10px] text-muted-foreground">Summa</p><p className="font-mono text-sm tabular-nums">{money(row.total_sales_sek)}</p></div>
+      <div><p className="text-[10px] text-muted-foreground">Snitt/dag</p><p className="font-mono text-sm tabular-nums">{money(row.avg_sales_per_day_sek)}</p></div>
+      <div><p className="text-[10px] text-muted-foreground">Timmar</p><p className="font-mono text-sm tabular-nums">{dec.format(row.staff_hours)} h</p></div>
+      <div><p className="text-[10px] text-muted-foreground">Personpass</p><p className="font-mono text-sm tabular-nums">{int.format(row.staff_shifts)}</p></div>
+      <div><p className="text-[10px] text-muted-foreground">Dagsrapporter</p><p className="font-mono text-sm tabular-nums">{int.format(row.daily_reports_count)} / {int.format(row.expected_open_days)}</p></div>
+    </div>
+  );
+}
+
+export function MonthlyReportsSection() {
+  const { data: stores = [] } = useStores(true);
+  const storeReports = useMonthlyStoreReports();
+  const regionReports = useMonthlyRegionReports();
+  const [filter, setFilter] = useState("all");
+  const [openMonth, setOpenMonth] = useState<string | null>(null);
+
+  const regions = regionReports.data ?? [];
+  const details = storeReports.data ?? [];
+  const months = useMemo(() => {
+    const map = new Map<string, { year: number; month: number; month_start: string; month_end: string }>();
+    [...regions, ...details].forEach((row) => map.set(`${row.year}-${row.month}`, { year: row.year, month: row.month, month_start: row.month_start, month_end: row.month_end }));
+    return [...map.entries()].map(([key, value]) => ({ key, ...value })).sort((a, b) => b.month_start.localeCompare(a.month_start));
+  }, [regions, details]);
+  const storeName = (id: string) => stores.find((store) => store.id === id)?.name ?? "Butik";
+  const groupFilter = filter !== "all" && filter in REGION_LABELS ? filter : null;
+  const storeFilter = filter !== "all" && !groupFilter ? filter : null;
+  const latest = months[0];
+  const latestRegion = latest ? regions.find((row) => row.group_key === (groupFilter ?? (filter === "all" ? "SE_TOTAL" : "")) && row.year === latest.year && row.month === latest.month) : undefined;
+  const latestStore = latest && storeFilter ? details.find((row) => row.store_id === storeFilter && row.year === latest.year && row.month === latest.month) : undefined;
+  const summary = latestStore ?? latestRegion;
+  const summaryLabel = storeFilter ? storeName(storeFilter) : groupFilter ? REGION_LABELS[groupFilter] : filter === "SE_TOTAL" ? "Sverige totalt" : "Alla butiker";
+
+  if (storeReports.isLoading || regionReports.isLoading) return <div className="flex items-center justify-center py-8"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>;
+  if (storeReports.error || regionReports.error) return <p className="py-6 text-center text-sm text-destructive">Kunde inte läsa månadsrapporterna.</p>;
+  if (months.length === 0) return <p className="py-6 text-center text-sm text-muted-foreground">Inga månadsrapporter ännu.</p>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-muted-foreground">Sammanställs automatiskt från sparade dagsrapporter</p>
+        <Select value={filter} onValueChange={setFilter}><SelectTrigger className="h-8 w-full text-xs sm:w-[240px]"><SelectValue placeholder="Alla butiker och regioner" /></SelectTrigger><SelectContent>
+          <SelectItem value="all">Alla butiker och regioner</SelectItem><SelectItem value="SE_TOTAL">Sverige totalt</SelectItem><SelectItem value="vast">Göteborg</SelectItem><SelectItem value="stockholm">Stockholm</SelectItem><SelectItem value="schweiz">Schweiz</SelectItem>
+          {stores.map((store) => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}
+        </SelectContent></Select>
+      </div>
+
+      {summary && latest && <div className="border-b pb-4"><div className="mb-3 flex flex-wrap items-end justify-between gap-2"><div><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">Senaste månaden</p><p className="mt-1 text-sm font-semibold">{summaryLabel}</p><p className="text-xs capitalize text-muted-foreground">{monthLabel(latest.month_start)}</p></div><StatusBadge status={summary.status} corrected={summary.corrected} /></div><Metrics row={summary} /></div>}
+
+      <div className="divide-y rounded-md border">{months.map((month) => {
+        const monthRegions = regions.filter((row) => row.year === month.year && row.month === month.month && (!groupFilter || row.group_key === groupFilter) && (filter !== "all" || row.group_key === "SE_TOTAL"));
+        const monthStores = details.filter((row) => row.year === month.year && row.month === month.month && (!storeFilter || row.store_id === storeFilter));
+        if (!monthRegions.length && !monthStores.length) return null;
+        const headline = monthRegions.find((row) => row.group_key === (groupFilter ?? "SE_TOTAL")) ?? monthRegions[0];
+        const total = headline?.total_sales_sek ?? monthStores.reduce((sum, row) => sum + Number(row.total_sales_sek), 0);
+        const status = headline?.status ?? (monthStores.length > 0 && monthStores.every((row) => row.status === "klar") ? "klar" : "preliminar");
+        const corrected = headline?.corrected ?? monthStores.some((row) => row.corrected);
+        const open = openMonth === month.key;
+        return <div key={month.key}><button type="button" onClick={() => setOpenMonth(open ? null : month.key)} className="flex w-full items-start gap-2 px-3 py-3 text-left transition-colors hover:bg-muted/40">{open ? <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />}<span className="min-w-0 flex-1"><span className="block text-sm font-medium capitalize">{monthLabel(month.month_start)}</span><span className="mt-0.5 block text-xs text-muted-foreground">{storeFilter ? storeName(storeFilter) : REGION_LABELS[groupFilter ?? "SE_TOTAL"]}</span></span><span className="flex shrink-0 flex-col items-end gap-1"><span className="font-mono text-sm tabular-nums">{money(total)}</span><StatusBadge status={status} corrected={corrected} /></span></button>
+          {open && <div className="space-y-3 bg-muted/20 px-3 pb-4 pt-2">{monthRegions.map((row) => <div key={row.group_key} className="rounded-md border bg-background p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{row.group_label}</span><StatusBadge status={row.status} corrected={row.corrected} /></div>{row.missing_stores?.length ? <p className="mb-2 text-[10px] text-muted-foreground">Saknar månadsrapport: {row.missing_stores.join(", ")}</p> : null}<Metrics row={row} /></div>)}
+            {monthStores.length > 0 && <div><p className="mb-1.5 text-[11px] text-muted-foreground">Butiksnivå</p><div className="divide-y rounded-md border bg-background">{monthStores.map((row) => <div key={row.store_id} className="p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{storeName(row.store_id)}</span><StatusBadge status={row.status} corrected={row.corrected} /></div><Metrics row={row} /></div>)}</div></div>}
+          </div>}
+        </div>;
+      })}</div>
+      <p className="flex items-center gap-1 text-[10px] text-muted-foreground"><PencilLine className="h-3 w-3" /> Korrigerad betyder att en underliggande dagsrapport har ändrats i efterhand.</p>
+    </div>
+  );
+}
