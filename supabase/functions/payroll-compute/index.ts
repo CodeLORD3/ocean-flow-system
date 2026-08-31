@@ -298,7 +298,7 @@ Deno.serve(async (req) => {
   };
 
   const lines: Line[] = [];
-  const weeklyMinutes = new Map<string, number>();
+
 
   const hourlyBase = (emp: Employment) =>
     emp.pay_type === "monthly"
