@@ -195,7 +195,7 @@ function WholesaleOrderAccordionRow({
   const orderLines = order.shop_order_lines?.length || 0;
 
   return (
-    <div className={`relative overflow-hidden border-x border-b border-grid-line transition-all duration-200 ${rowTone.row} ${open ? "z-10 my-2 rounded-md border border-primary/25 bg-primary/[0.04] pl-1.5 shadow-sm" : ""} ${selected && !open ? "ring-1 ring-inset ring-primary" : ""}`}>
+    <div id={`wholesale-order-${order.id}`} className={`relative overflow-hidden border-x border-b border-grid-line transition-all duration-200 ${rowTone.row} ${open ? "z-10 my-2 rounded-md border border-primary/25 bg-primary/[0.04] pl-1.5 shadow-sm" : ""} ${selected && !open ? "ring-1 ring-inset ring-primary" : ""}`}>
       {open && <span className="pointer-events-none absolute bottom-2 left-1.5 top-2 w-1 rounded-full bg-primary/80" aria-hidden />}
       <div className="flex min-w-0 items-stretch">
         {!open && <div className={`w-1 shrink-0 ${rowTone.edge}`} aria-hidden />}
@@ -797,7 +797,7 @@ export default function WholesaleOrders() {
         </CardContent></Card>
       </div>
 
-      <Tabs defaultValue="per-order" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="flex h-auto w-full flex-wrap items-stretch justify-start gap-1 rounded-md border border-grid-line bg-card p-1.5 shadow-sm">
           <TabsTrigger value="per-order" className="flex min-h-12 items-center gap-2 rounded-sm px-5 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
             <Eye className="h-4 w-4" /> Per order
