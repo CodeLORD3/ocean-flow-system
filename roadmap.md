@@ -10,4 +10,5 @@
 - [ ] Verifiera desktop/mobil och kontrollera kvarvarande dokumentpunkter
 - [ ] Samla hela personal-, schema- och tidssystemet under en Personal & Schema-flik
 - [x] Respektera vald rapportinställning (t.ex. Göteborg) i totaler och butiksvy
+- [x] Säkerställ stadsspecifikt väder per butik och färgkodade väderikoner
 - [x] Besvara etapp 4 UI-kontrollfrågorna punkt för punkt med verifierade kod- och sökvägsreferenser
