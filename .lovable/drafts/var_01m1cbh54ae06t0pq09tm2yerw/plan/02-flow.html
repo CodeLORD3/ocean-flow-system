@@ -1,0 +1,47 @@
+<svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" style="font-family: var(--font-sans)">
+  <defs>
+    <marker id="ch" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10" fill="none" stroke="hsl(var(--muted-foreground))" stroke-width="1.5"/>
+    </marker>
+  </defs>
+
+  <rect x="8" y="30" width="150" height="60" rx="8" fill="none" stroke="hsl(var(--muted-foreground))"/>
+  <text x="83" y="55" text-anchor="middle" font-size="14" font-weight="480" fill="hsl(var(--foreground))">Kiosk-stämpling</text>
+  <text x="83" y="74" text-anchor="middle" font-size="12" fill="hsl(var(--muted-foreground))">occurred_at, station</text>
+
+  <rect x="200" y="30" width="150" height="60" rx="8" fill="none" stroke="hsl(var(--muted-foreground))"/>
+  <text x="275" y="55" text-anchor="middle" font-size="14" font-weight="480" fill="hsl(var(--foreground))">time_entries</text>
+  <text x="275" y="74" text-anchor="middle" font-size="12" fill="hsl(var(--muted-foreground))">append-only journal</text>
+
+  <rect x="392" y="30" width="115" height="60" rx="8" fill="none" stroke="hsl(var(--muted-foreground))"/>
+  <text x="449" y="55" text-anchor="middle" font-size="14" font-weight="480" fill="hsl(var(--foreground))">Attest</text>
+  <text x="449" y="74" text-anchor="middle" font-size="12" fill="hsl(var(--muted-foreground))">OB per minut</text>
+
+  <rect x="530" y="30" width="102" height="60" rx="8" fill="none" stroke="hsl(var(--muted-foreground))"/>
+  <text x="581" y="55" text-anchor="middle" font-size="14" font-weight="480" fill="hsl(var(--foreground))">Löneunderlag</text>
+  <text x="581" y="74" text-anchor="middle" font-size="12" fill="hsl(var(--muted-foreground))">rounded_at</text>
+
+  <line x1="158" y1="60" x2="196" y2="60" stroke="hsl(var(--muted-foreground))" marker-end="url(#ch)"/>
+  <line x1="350" y1="60" x2="388" y2="60" stroke="hsl(var(--muted-foreground))" marker-end="url(#ch)"/>
+  <line x1="507" y1="60" x2="526" y2="60" stroke="hsl(var(--muted-foreground))" marker-end="url(#ch)"/>
+
+  <rect x="8" y="150" width="150" height="56" rx="8" fill="none" stroke="hsl(var(--accent))"/>
+  <text x="83" y="173" text-anchor="middle" font-size="14" font-weight="480" fill="hsl(var(--accent-foreground))">Offlinekö misslyckas</text>
+  <text x="83" y="191" text-anchor="middle" font-size="12" fill="hsl(var(--muted-foreground))">raderas aldrig tyst</text>
+
+  <rect x="200" y="150" width="150" height="56" rx="8" fill="none" stroke="hsl(var(--accent))"/>
+  <text x="275" y="173" text-anchor="middle" font-size="14" font-weight="480" fill="hsl(var(--accent-foreground))">clock_sync_failures</text>
+  <text x="275" y="191" text-anchor="middle" font-size="12" fill="hsl(var(--muted-foreground))">avvikelsekö</text>
+
+  <rect x="392" y="150" width="240" height="56" rx="8" fill="none" stroke="hsl(var(--muted-foreground))"/>
+  <text x="512" y="173" text-anchor="middle" font-size="14" font-weight="480" fill="hsl(var(--foreground))">Chef: registrera manuellt / avfärda</text>
+  <text x="512" y="191" text-anchor="middle" font-size="12" fill="hsl(var(--muted-foreground))">skapar tilläggsrad med vem och när</text>
+
+  <line x1="158" y1="178" x2="196" y2="178" stroke="hsl(var(--muted-foreground))" marker-end="url(#ch)"/>
+  <line x1="350" y1="178" x2="388" y2="178" stroke="hsl(var(--muted-foreground))" marker-end="url(#ch)"/>
+  <line x1="512" y1="150" x2="512" y2="96" stroke="hsl(var(--muted-foreground))" stroke-dasharray="4 3" marker-end="url(#ch)"/>
+
+  <circle cx="20" cy="122" r="9" fill="hsl(var(--accent))"/>
+  <text x="20" y="126" text-anchor="middle" font-size="12" fill="hsl(var(--accent-foreground))">1</text>
+  <text x="36" y="126" font-size="12" fill="hsl(var(--muted-foreground))">Nytt: ingen stämpling försvinner — allt hamnar i en kö som en människa måste stänga.</text>
+</svg>
