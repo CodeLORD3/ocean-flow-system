@@ -697,17 +697,17 @@ export default function WholesaleOrders() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-2.5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="flex items-center gap-2 font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            <ShoppingCart className="h-6 w-6 text-primary sm:h-7 sm:w-7" /> Ordrar från butiker
+          <h1 className="flex items-center gap-2 font-heading text-lg font-bold tracking-tight text-foreground sm:text-xl">
+            <ShoppingCart className="h-5 w-5 text-primary" /> Ordrar från butiker
           </h1>
-          <p className="mt-1 text-xs text-muted-foreground">Hantera inkomna beställningar från alla butiker. Uppdatera produktstatus i totalvyn.</p>
         </div>
-        <Button size="lg" className="h-12 gap-2 px-5 text-base" onClick={() => setCreatingOrder(true)}>
-          <Plus className="h-5 w-5" /> Skapa order åt butik
+        <Button size="sm" className="h-9 gap-2 px-3 text-sm" onClick={() => setCreatingOrder(true)}>
+          <Plus className="h-4 w-4" /> Skapa order åt butik
         </Button>
+
       </div>
 
       {/* Inline order creation form */}
