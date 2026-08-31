@@ -116,23 +116,9 @@ const orgNav = [
 ];
 
 const staffNav = [
-  { title: "Personal", url: "/staff", icon: UserCheck },
-  { title: "Frånvaro & bemanning", url: "/hr-control", icon: CalendarCheck },
-  { title: "Personalregister", url: "/employees", icon: IdCard },
-  { title: "På plats nu", url: "/live-staff", icon: Activity },
-  { title: "Stämpelklocka", url: "/clock-stations", icon: Clock },
-  { title: "Rapporterad tid", url: "/time-entries", icon: ClipboardCheck },
-  { title: "Min tid", url: "/my-time", icon: Clock },
-  { title: "Regler & OB", url: "/staff-rules", icon: Settings },
-  { title: "Löneunderlag", url: "/payroll-exports", icon: FileText },
-  { title: "Granska lön", url: "/payroll-review", icon: ClipboardCheck },
-  { title: "Klocka vs PK", url: "/clock-vs-pk", icon: Scale },
-  { title: "Personalkollen", url: "/personalkollen", icon: Plug },
-  { title: "Schema", url: "/staff-schedule", icon: CalendarRange },
-  { title: "Schemaplanering", url: "/schedule-planner", icon: CalendarRange },
-  { title: "Mina pass", url: "/my-shifts", icon: CalendarRange },
-  { title: "Attest", url: "/attestations", icon: ClipboardCheck },
+  { title: "Personal & Schema", url: "/personal", icon: UserCheck },
 ];
+
 
 const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
@@ -174,7 +160,7 @@ const sections: NavSection[] = [
   { label: "Försäljning", items: salesNav, collapsible: true },
   { label: "Inköp & Produktion", items: purchaseNav, collapsible: true },
   { label: "Lagerstyrning", items: inventoryNav, collapsible: true },
-  { label: "Personal", items: staffNav, collapsible: true },
+  { label: "Personal", items: staffNav },
   { label: "Organisation", items: orgNav, collapsible: true },
   { label: "Ekonomi & Rapporter", items: financeNav, collapsible: true },
   { label: "Bokningssidan", items: bookingNav, collapsible: true },

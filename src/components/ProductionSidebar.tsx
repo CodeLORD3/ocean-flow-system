@@ -73,8 +73,7 @@ const salesNav = [
 ];
 
 const orgNav = [
-  { title: "Personal", url: "/staff", icon: UserCheck },
-  { title: "Schema", url: "/staff-schedule", icon: CalendarRange },
+  { title: "Personal & Schema", url: "/personal", icon: UserCheck },
 ];
 
 const bottomNav = [

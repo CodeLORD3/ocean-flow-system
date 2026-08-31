@@ -13,6 +13,9 @@ import Suppliers from "@/pages/Suppliers";
 import Customers from "@/pages/Customers";
 import Stores from "@/pages/Stores";
 import Staff from "@/pages/Staff";
+import PersonalHub from "@/pages/PersonalHub";
+import { WithStaffNav } from "@/components/staff/StaffModuleNav";
+import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
 import Employees from "@/pages/Employees";
 import StaffProfile from "@/pages/StaffProfile";
 import Barcodes from "@/pages/Barcodes";
@@ -110,6 +113,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/customers": { component: <Customers /> },
   "/stores": { component: <Stores /> },
   "/organisation": { component: <OrganisationOverview /> },
+  "/personal": { component: <PersonalHub /> },
   "/staff": { component: <Staff /> },
   "/employees": { component: <Employees /> },
   "/profile": { component: <StaffProfile /> },
@@ -212,6 +216,9 @@ export function KeepAliveTabs() {
         if (!route) return null;
 
         const isActive = tab.path === activeTab;
+        const content = STAFF_MODULE_PATHS.includes(tab.path)
+          ? <WithStaffNav>{route.component}</WithStaffNav>
+          : route.component;
         const allowed = canAccessRoute(site, tab.path);
         return (
           <div
@@ -219,7 +226,7 @@ export function KeepAliveTabs() {
             className="h-full w-full"
             style={{ display: isActive ? "block" : "none" }}
           >
-            {allowed ? route.component : <NoAccessView site={site} path={tab.path} />}
+            {allowed ? content : <NoAccessView site={site} path={tab.path} />}
           </div>
         );
       })}
