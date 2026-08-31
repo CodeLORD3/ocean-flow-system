@@ -144,6 +144,7 @@ export default function WholesaleOrders() {
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [newOrderLines, setNewOrderLines] = useState<WholesaleOrderLine[]>([]);
+  const [expandedDecisionLines, setExpandedDecisionLines] = useState<string[]>([]);
   const [newOrderNote, setNewOrderNote] = useState("");
   const [newOrderDeliveryDate, setNewOrderDeliveryDate] = useState<Date | undefined>(undefined);
   const [newProductSearch, setNewProductSearch] = useState("");
