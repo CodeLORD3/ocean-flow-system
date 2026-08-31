@@ -395,3 +395,83 @@ GRANT EXECUTE ON FUNCTION public.purge_clock_retention() TO service_role;
 
 SELECT cron.schedule('clock-retention-daily', '20 3 * * *', $$SELECT public.purge_clock_retention();$$)
 WHERE NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'clock-retention-daily');
+
+-- ============ F22: stationsvakt med notis endast vid nyhet ====================
+-- Stationens livstecken skrivs redan av requireStation() (clock_stations.last_seen_at).
+-- Vakten jämför mot tröskeln och notifierar bara när läget FAKTISKT ändras.
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS dedupe_key text;
+CREATE UNIQUE INDEX IF NOT EXISTS notifications_dedupe_key_unique
+  ON public.notifications (dedupe_key) WHERE dedupe_key IS NOT NULL;
+
+CREATE OR REPLACE FUNCTION public.check_station_heartbeats(_threshold_minutes integer DEFAULT 30)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  st record;
+  prev_status text;
+  new_status text;
+  offline_count integer := 0;
+  recovered_count integer := 0;
+  event_key text;
+BEGIN
+  IF _threshold_minutes < 1 OR _threshold_minutes > 1440 THEN
+    RAISE EXCEPTION 'Tröskeln måste vara mellan 1 och 1440 minuter';
+  END IF;
+
+  FOR st IN
+    SELECT id, name, store_id, last_seen_at
+    FROM public.clock_stations
+    WHERE status = 'active'
+  LOOP
+    new_status := CASE
+      WHEN st.last_seen_at IS NULL OR st.last_seen_at < now() - make_interval(mins => _threshold_minutes)
+        THEN 'offline' ELSE 'ok' END;
+
+    SELECT w.status INTO prev_status
+    FROM public.clock_station_watchdog w
+    WHERE w.station_id = st.id
+    FOR UPDATE;
+
+    INSERT INTO public.clock_station_watchdog(station_id, last_seen_at, status, alert_count, last_alert_at, updated_at)
+    VALUES (
+      st.id, st.last_seen_at, new_status,
+      CASE WHEN new_status = 'offline' AND COALESCE(prev_status, 'ok') <> 'offline' THEN 1 ELSE 0 END,
+      CASE WHEN new_status = 'offline' AND COALESCE(prev_status, 'ok') <> 'offline' THEN now() ELSE NULL END,
+      now()
+    )
+    ON CONFLICT (station_id) DO UPDATE
+      SET last_seen_at = EXCLUDED.last_seen_at,
+          status = EXCLUDED.status,
+          updated_at = now(),
+          alert_count = public.clock_station_watchdog.alert_count
+            + CASE WHEN EXCLUDED.status = 'offline' AND public.clock_station_watchdog.status <> 'offline' THEN 1 ELSE 0 END,
+          last_alert_at = CASE
+            WHEN EXCLUDED.status = 'offline' AND public.clock_station_watchdog.status <> 'offline'
+              THEN now() ELSE public.clock_station_watchdog.last_alert_at END;
+
+    IF new_status = 'offline' AND COALESCE(prev_status, 'ok') <> 'offline' THEN
+      event_key := 'station_offline:' || st.id::text || ':' || COALESCE(st.last_seen_at::text, 'never');
+      INSERT INTO public.notifications(portal, target_page, store_id, message, entity_type, entity_id, dedupe_key)
+      VALUES ('wholesale', '/clock-stations', st.store_id,
+              'Stämpelklockan "' || st.name || '" har inte hörts av på ' || _threshold_minutes || ' minuter',
+              'clock_station', st.id::text, event_key)
+      ON CONFLICT DO NOTHING;
+      offline_count := offline_count + 1;
+    ELSIF new_status = 'ok' AND prev_status = 'offline' THEN
+      event_key := 'station_recovered:' || st.id::text || ':' || COALESCE(st.last_seen_at::text, 'never');
+      INSERT INTO public.notifications(portal, target_page, store_id, message, entity_type, entity_id, dedupe_key)
+      VALUES ('wholesale', '/clock-stations', st.store_id,
+              'Stämpelklockan "' || st.name || '" är åter online',
+              'clock_station', st.id::text, event_key)
+      ON CONFLICT DO NOTHING;
+      recovered_count := recovered_count + 1;
+    END IF;
+  END LOOP;
+
+  RETURN jsonb_build_object('offline_new', offline_count, 'recovered', recovered_count);
+END;
+$$;
+REVOKE ALL ON FUNCTION public.check_station_heartbeats(integer) FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.check_station_heartbeats(integer) TO authenticated, service_role;
+
+SELECT cron.schedule('clock-station-watchdog', '*/15 * * * *', $$SELECT public.check_station_heartbeats(30);$$)
+WHERE NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'clock-station-watchdog');

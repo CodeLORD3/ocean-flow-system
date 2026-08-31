@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
     cost_center: typeof body.cost_center === "string" ? body.cost_center.slice(0, 30) : null,
     reason: String(body.reason ?? "Offlinepost kunde inte synkroniseras").slice(0, 500),
     attempts: Number.isFinite(Number(body.attempts)) ? Math.max(1, Number(body.attempts)) : 1,
+    status: "open",
   };
   if (!(["in", "ut", "rast_start", "rast_slut"] as string[]).includes(payload.punch_type)) {
     return json(req, { error: "Ogiltig stämplingstyp." }, 400);

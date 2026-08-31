@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { svenskDagStart, svenskDagSista, svenskDatum } from "@/lib/swedishTime";
 
@@ -69,7 +70,33 @@ export interface PendingRegistration {
   created_at: string;
 }
 
+/**
+ * Realtid för klockans admindata: samma mönster som notiser och live-personal.
+ * En kanal räcker — varje tabell invaliderar sin egen frågenyckel.
+ */
+export function useClockRealtime() {
+  const qc = useQueryClient();
+  useEffect(() => {
+    const channel = supabase
+      .channel("clock-admin-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "time_entries" }, () =>
+        qc.invalidateQueries({ queryKey: ["time_entries"] })
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "clock_stations" }, () =>
+        qc.invalidateQueries({ queryKey: ["clock_stations"] })
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "clock_pending_registrations" }, () =>
+        qc.invalidateQueries({ queryKey: ["clock_pending_registrations"] })
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
+}
+
 export function useClockStations() {
+  useClockRealtime();
   return useQuery({
     queryKey: ["clock_stations"],
     queryFn: async () => {
@@ -135,8 +162,8 @@ export function useUpdateStationProfile() {
   });
 }
 
-/** Stämplingar för en period, valfritt filtrerat på enhet. */
 export function useTimeEntries(from: string, to: string, storeId?: string | null) {
+  useClockRealtime();
   return useQuery({
     queryKey: ["time_entries", from, to, storeId ?? "all"],
     queryFn: async () => {

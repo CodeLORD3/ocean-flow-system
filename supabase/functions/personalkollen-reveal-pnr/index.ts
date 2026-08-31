@@ -56,11 +56,23 @@ Deno.serve(async (req) => {
 
   const { data: row, error } = await db
     .from("pk_staff")
-    .select("id, first_name, last_name, pnr_encrypted")
+    .select("id, first_name, last_name, pnr_encrypted, employee_id")
     .eq("id", id)
     .maybeSingle();
   if (error) return json({ error: error.message }, 500);
   if (!row?.pnr_encrypted) return json({ error: "Personnummer saknas" }, 404);
+
+  // Koppla loggen till den interna medarbetaren när Personalkollen-posten är
+  // mappad. Då blir även denna faktiska dekryptering synlig i samma PNR-journal.
+  let employeeId: string | null = null;
+  if (row.employee_id) {
+    const { data: employee } = await db
+      .from("employees")
+      .select("id")
+      .eq("staff_id", row.employee_id)
+      .maybeSingle();
+    employeeId = employee?.id ?? null;
+  }
 
   let value: string;
   try {
@@ -78,8 +90,9 @@ Deno.serve(async (req) => {
   });
   await db.from("pnr_access_log").insert({
     accessed_by: user.id,
-    employee_id: null,
+    employee_id: employeeId,
     inspector_session_id: typeof body.inspector_session_id === "string" ? body.inspector_session_id : null,
+    legal_entity_id: null,
     reason: typeof body.reason === "string" ? body.reason.slice(0, 300) : "Administrativ visning",
   });
 

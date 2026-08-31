@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -58,6 +59,28 @@ export const DEVIATION_LABEL: Record<Attestation["deviation_type"], string> = {
 };
 
 export function useAttestations(storeId: string | null, from: string, to: string) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`attestations-realtime-${storeId ?? "all"}-${from}-${to}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "attestations" },
+        () => queryClient.invalidateQueries({ queryKey: ["attestations"] }),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "time_entries" },
+        () => queryClient.invalidateQueries({ queryKey: ["attestations"] }),
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [queryClient, storeId, from, to]);
+
   return useQuery({
     queryKey: ["attestations", storeId, from, to],
     queryFn: async () => {
