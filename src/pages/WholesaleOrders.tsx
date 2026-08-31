@@ -48,6 +48,7 @@ import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLin
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
 import { logActivity } from "@/hooks/useActivityLog";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
+import { WholesaleTotalOrderedView } from "@/components/orders/WholesaleTotalOrderedView";
 
 type WholesaleOrderLine = {
   product_id: string;
@@ -194,7 +195,7 @@ function WholesaleOrderAccordionRow({
   const orderLines = order.shop_order_lines?.length || 0;
 
   return (
-    <div className={`relative overflow-hidden border-x border-b border-grid-line transition-all duration-200 ${rowTone.row} ${open ? "z-10 my-2 rounded-md border border-primary/25 bg-primary/[0.04] pl-1.5 shadow-sm" : ""} ${selected && !open ? "ring-1 ring-inset ring-primary" : ""}`}>
+    <div id={`wholesale-order-${order.id}`} className={`relative overflow-hidden border-x border-b border-grid-line transition-all duration-200 ${rowTone.row} ${open ? "z-10 my-2 rounded-md border border-primary/25 bg-primary/[0.04] pl-1.5 shadow-sm" : ""} ${selected && !open ? "ring-1 ring-inset ring-primary" : ""}`}>
       {open && <span className="pointer-events-none absolute bottom-2 left-1.5 top-2 w-1 rounded-full bg-primary/80" aria-hidden />}
       <div className="flex min-w-0 items-stretch">
         {!open && <div className={`w-1 shrink-0 ${rowTone.edge}`} aria-hidden />}
@@ -269,6 +270,7 @@ export default function WholesaleOrders() {
   const { data: currentStaff } = useCurrentStaff();
   const loggedInName = staffFullName(currentStaff);
 
+  const [activeTab, setActiveTab] = useState("per-order");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
   const [storeFilter, setStoreFilter] = useState("alla");
@@ -795,7 +797,7 @@ export default function WholesaleOrders() {
         </CardContent></Card>
       </div>
 
-      <Tabs defaultValue="per-order" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="flex h-auto w-full flex-wrap items-stretch justify-start gap-1 rounded-md border border-grid-line bg-card p-1.5 shadow-sm">
           <TabsTrigger value="per-order" className="flex min-h-12 items-center gap-2 rounded-sm px-5 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
             <Eye className="h-4 w-4" /> Per order
@@ -807,90 +809,22 @@ export default function WholesaleOrders() {
           <TabsTrigger value="changes" className="relative flex min-h-12 items-center gap-2 rounded-sm px-5 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><Bell className="h-4 w-4" /> Ändringar <span className={`rounded-sm px-1.5 font-mono text-[11px] tabular-nums ${pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length > 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"}`}>{pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length}</span></TabsTrigger>
         </TabsList>
 
-        {/* TOTAL VIEW — aggregated products across all orders */}
+        {/* TOTAL VIEW — samma produktrolldown som Kundbeställningar */}
         <TabsContent value="total">
-          <Card className="shadow-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-heading">Alla beställda produkter — Totalvy</CardTitle>
-              <CardDescription className="text-xs">
-                Ändra status per produkt. Statusen uppdateras automatiskt i varje butiks order.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {aggregated.length === 0 ? (
-                <p className="text-xs text-muted-foreground py-8 text-center">Inga aktiva beställningar att visa.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                       <tr className="border-b border-border bg-muted/30 h-9">
-                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PRODUKT</th>
-                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">KATEGORI</th>
-                        {retailStores.map(s => (
-                           <th key={s.id} className="px-2.5 py-1 text-right font-medium text-muted-foreground text-[10px] uppercase">
-                             {s.name?.split(" ").pop()}
-                           </th>
-                         ))}
-                         <th className="px-2.5 py-1 text-right font-bold text-primary">TOTAL</th>
-                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ENHET</th>
-                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground min-w-[140px]">STATUS</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(() => {
-                        let lastCat = "";
-                        return aggregated.map(item => {
-                          const showCatHeader = item.category !== lastCat;
-                          lastCat = item.category;
-                          return (
-                            <>
-                              {showCatHeader && (
-                                <tr key={`cat-${item.category}`}>
-                                  <td colSpan={retailStores.length + 5} className="pt-4 pb-1 text-[10px] font-bold text-muted-foreground border-b border-border">
-                                    ▸ {item.category || "ÖVRIGT"}
-                                  </td>
-                                </tr>
-                              )}
-                               <tr key={item.product_id} className="border-b border-border/30 h-9 transition-colors">
-                                 <td className="px-2.5 py-1 font-medium text-foreground">{item.product_name}</td>
-                                 <td className="px-2.5 py-1">
-                                   <Badge variant="outline" className="text-[10px]">{item.category}</Badge>
-                                 </td>
-                                 {retailStores.map(s => (
-                                   <td key={s.id} className="px-2.5 py-1 text-right text-muted-foreground font-mono">
-                                     {item.byStore[s.id]?.qty || <span className="text-muted-foreground/30">–</span>}
-                                   </td>
-                                 ))}
-                                 <td className="px-2.5 py-1 text-right font-bold text-primary font-mono">{item.totalOrdered}</td>
-                                 <td className="px-2.5 py-1 text-muted-foreground">{item.unit}</td>
-                                 <td className="px-2.5 py-1">
-                                  <Select
-                                    value={item.currentStatus || ""}
-                                    onValueChange={(val) => handleProductStatusChange(item, val)}
-                                  >
-                                    <SelectTrigger className="h-7 text-[10px] w-[130px]">
-                                      <SelectValue placeholder="Sätt status..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {LINE_STATUSES.map(s => (
-                                        <SelectItem key={s || "none"} value={s || "pending"} className="text-xs">
-                                          {s || "Ej satt"}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </td>
-                              </tr>
-                            </>
-                          );
-                        });
-                      })()}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <WholesaleTotalOrderedView
+            orders={orders}
+            onOpenOrder={(orderId, productName) => {
+              setActiveTab("per-order");
+              setSearch("");
+              setStatusFilter("Alla");
+              setStoreFilter("alla");
+              setExpandedOrderIds(new Set([orderId]));
+              setTimeout(() => {
+                document.getElementById(`wholesale-order-${orderId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }, 220);
+            }}
+            onStatusChange={(product, status) => handleProductStatusChange({ product_id: "", product_name: product.product_name, category: "", unit: "", totalOrdered: 0, lineIds: product.lineIds, byStore: {}, currentStatus: "" }, status === "pending" ? "" : status)}
+          />
         </TabsContent>
 
         {/* PER ORDER VIEW — samma dag/vecka-flöde som Kundbeställningar */}
