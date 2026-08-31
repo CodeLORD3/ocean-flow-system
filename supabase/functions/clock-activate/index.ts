@@ -5,6 +5,7 @@ import {
   json,
   randomToken,
   service,
+  SESSION_ABSOLUTE_MINUTES,
   SESSION_TTL_MINUTES,
   sessionTokenHash,
 } from "../_shared/clock.ts";
@@ -36,10 +37,13 @@ Deno.serve(async (req) => {
 
   const token = randomToken();
   const expiresAt = new Date(Date.now() + SESSION_TTL_MINUTES * 60_000).toISOString();
+  // Absolut tak: sessionen kan förnyas men aldrig leva längre än ett dygn.
+  const absoluteExpiresAt = new Date(Date.now() + SESSION_ABSOLUTE_MINUTES * 60_000).toISOString();
   const { error } = await db.from("clock_station_sessions").insert({
     station_id: station.id,
     token_hash: await sessionTokenHash(token),
     expires_at: expiresAt,
+    absolute_expires_at: absoluteExpiresAt,
   });
   if (error) return json(req, { error: "Kunde inte aktivera stationen." }, 500);
 
