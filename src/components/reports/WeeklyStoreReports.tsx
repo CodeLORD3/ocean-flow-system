@@ -8,13 +8,16 @@ import {
   type WeeklyStoreReport,
   type WeeklyRegionReport,
 } from "@/hooks/useWeeklyStoreReports";
+import { useDailyReportsRange } from "@/hooks/useDailyReportsRange";
+import { dayRowsFrom, weekDayList } from "@/lib/weeklyReportDays";
+import { weeklyReportPdf, weeklyReportXlsx, type ReportRow } from "@/lib/weeklyReportExport";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ChevronDown, ChevronRight, AlertTriangle, LockKeyhole } from "lucide-react";
+import { Loader2, ChevronDown, ChevronRight, AlertTriangle, LockKeyhole, Printer, FileSpreadsheet, FileDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
