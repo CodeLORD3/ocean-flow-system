@@ -98,6 +98,18 @@ const formatOrderValue = (order: any) => (order.shop_order_lines || []).reduce(
   0,
 );
 
+const printWholesalePackLists = (selectedOrders: any[]) => {
+  if (selectedOrders.length === 0) return;
+  const pages = selectedOrders.map((order) => {
+    const rows = (order.shop_order_lines || []).map((line: any) => `<tr><td class="box"></td><td>${line.products?.name || "–"}</td><td>${line.products?.category || "–"}</td><td class="qty">${line.quantity_ordered || 0}</td><td>${line.unit || line.products?.unit || "–"}</td><td class="qty"></td></tr>`).join("");
+    return `<section class="page"><header><h1>Grossist — packlista</h1><strong>${order.stores?.name || "Okänd butik"}</strong><span>Order ${displayOrderWeek(order)} · Leverans ${orderDate(order) || "–"}</span></header><table><thead><tr><th></th><th>Produkt</th><th>Kategori</th><th>Beställt</th><th>Enhet</th><th>Packat</th></tr></thead><tbody>${rows}</tbody></table><footer>Anteckning: ${order.notes || ""}</footer></section>`;
+  }).join("");
+  const printWindow = window.open("", "_blank", "width=900,height=700");
+  if (!printWindow) return;
+  printWindow.document.write(`<html><head><title>Grossistens packlistor</title><style>body{font-family:Arial,sans-serif;color:#111}.page{page-break-after:always;padding:12mm}.page:last-child{page-break-after:auto}header{display:grid;gap:4px;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:16px}h1{font-size:24px;margin:0}header strong{font-size:18px}header span{color:#555}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #bbb;padding:8px 6px;text-align:left}th{background:#222;color:#fff;text-transform:uppercase;font-size:11px}.box{width:28px;height:20px}.box:after{content:"";display:block;width:14px;height:14px;border:1px solid #333}.qty{text-align:right;width:70px}footer{margin-top:18px;border-top:1px solid #bbb;padding-top:12px}</style></head><body>${pages}<script>window.onload=function(){window.print();window.close()}<\\/script></body></html>`);
+  printWindow.document.close();
+};
+
 const statusColor: Record<string, string> = {
   Ny: "",
   Pågående: "bg-warning/15 text-warning border-warning/20",
