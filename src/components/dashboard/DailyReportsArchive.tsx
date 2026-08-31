@@ -203,6 +203,11 @@ function EditDailyReportDialog({
   const updateReport = useUpdateDailyReport();
   const [draft, setDraft] = useState<DraftReport | null>(null);
 
+  useEffect(() => {
+    if (open && report) setDraft(draftFromReport(report));
+    if (!open) setDraft(null);
+  }, [open, report]);
+
   const setField = <K extends keyof DraftReport>(field: K, value: DraftReport[K]) => {
     setDraft((current) => (current ? { ...current, [field]: value } : current));
   };
