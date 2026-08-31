@@ -462,6 +462,7 @@ export default function MyShifts() {
               <IndustryButton size="touch" variant="secondary" onClick={() => setAbsenceOpen(true)}><Plus className="h-4 w-4" /> Ny frånvaro</IndustryButton>
             </div>
           </div>
+          {sickQueue.length > 0 && <IndustryRow edge="accent-2"><p className="text-sm"><StatusLabel tone="progress">Stämpling köad</StatusLabel> {sickQueue.length} sjukanmälan skickas automatiskt när anslutningen är tillbaka.</p></IndustryRow>}
           {activeSickPeriod && <IndustryRow edge="alert"><p className="text-sm"><StatusLabel tone="alert">Pågående sjukperiod</StatusLabel> Startad {activeSickPeriod.first_day} · karens {activeSickPeriod.karens_applied ? "uttagen" : "inte uttagen"}</p></IndustryRow>}
           {sickUndoSeconds === 0 && sickUndoDate && sickUndoUntil && <p className="ind-muted text-xs">Ångertiden för sjukanmälan har gått ut.</p>}
          {currentBalance && (
