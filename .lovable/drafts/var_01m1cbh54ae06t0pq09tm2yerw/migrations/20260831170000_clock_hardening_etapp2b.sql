@@ -221,13 +221,17 @@ BEGIN
     FROM ins i JOIN outs o ON o.pair_no = i.pair_no AND o.calc_at > i.calc_at
     WHERE public.svensk_dag(i.calc_at) BETWEEN _from AND _to
   ),
+  break_pairs AS (
+    SELECT s.arbetsdag AS day, s.calc_at AS started_at,
+           (SELECT min(e.calc_at) FROM journal e
+             WHERE e.type = 'rast_slut' AND e.calc_at > s.calc_at) AS ended_at
+    FROM journal s WHERE s.type = 'rast_start'
+  ),
   break_totals AS (
-    SELECT x.day,
-           COALESCE(SUM(GREATEST(0, floor(extract(epoch FROM (e.calc_at - s.calc_at)) / 60)), 0), 0)::integer AS break_minutes
-    FROM (SELECT DISTINCT day FROM intervals) x
-    LEFT JOIN journal s ON s.type = 'rast_start' AND s.arbetsdag = x.day
-    LEFT JOIN journal e ON e.type = 'rast_slut' AND e.arbetsdag = x.day AND e.calc_at > s.calc_at
-    GROUP BY x.day
+    SELECT bp.day,
+           COALESCE(SUM(GREATEST(0, floor(extract(epoch FROM (bp.ended_at - bp.started_at)) / 60))), 0)::integer AS break_minutes
+    FROM break_pairs bp WHERE bp.ended_at IS NOT NULL
+    GROUP BY bp.day
   ),
   minutes AS (
     SELECT i.day, i.started_at + (g.n * interval '1 minute') AS minute_at,
@@ -245,7 +249,7 @@ BEGIN
     LIMIT 1
   ),
   classified AS (
-    SELECT m.*,
+    SELECT m.day, m.minute_at, m.break_minutes,
       w.pct, w.wage_code_id,
       CASE WHEN w.pct IS NULL THEN 'regular'
            WHEN w.pct >= 100 THEN 'ob100'
@@ -254,7 +258,7 @@ BEGIN
     LEFT JOIN LATERAL (
       SELECT ow.pct, ow.wage_code_id
       FROM public.ob_windows ow
-      CROSS JOIN employee_scope es
+      LEFT JOIN employee_scope es ON true
       WHERE ow.is_active
         AND (ow.legal_entity_id IS NULL OR ow.legal_entity_id = es.legal_entity_id)
         AND ow.valid_from <= (m.minute_at AT TIME ZONE 'Europe/Stockholm')::date
@@ -271,7 +275,7 @@ BEGIN
     ) w ON true
   ),
   daily AS (
-    SELECT c.arbetsdag AS day,
+    SELECT c.day,
       count(*) FILTER (WHERE c.bucket = 'regular')::integer AS regular_mins,
       count(*) FILTER (WHERE c.bucket = 'ob50')::integer AS ob50_mins,
       count(*) FILTER (WHERE c.bucket = 'ob70')::integer AS ob70_mins,
@@ -280,23 +284,25 @@ BEGIN
       bool_or(c.pct IS NOT NULL AND c.wage_code_id IS NULL) AS missing_wage,
       count(*)::integer AS worked_mins
     FROM classified c
-    GROUP BY c.arbetsdag
+    GROUP BY c.day
   ),
   weekly AS (
     SELECT d.*,
-      sum(d.worked_mins) OVER (PARTITION BY date_trunc('week', d.day) ORDER BY d.day) AS week_after,
-      COALESCE(sum(d.worked_mins) OVER (PARTITION BY date_trunc('week', d.day) ORDER BY d.day ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0) AS week_before,
-      COALESCE((SELECT employment_rate FROM employee_scope), 100) AS employment_rate
+      sum(d.worked_mins) OVER (PARTITION BY date_trunc('week', d.day) ORDER BY d.day)::numeric AS week_after,
+      COALESCE(sum(d.worked_mins) OVER (PARTITION BY date_trunc('week', d.day) ORDER BY d.day ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0)::numeric AS week_before,
+      COALESCE((SELECT es.employment_rate FROM employee_scope es), 100)::numeric AS employment_rate
     FROM daily d
   )
   SELECT w.day,
     w.regular_mins, jsonb_build_object('ob50', w.ob50_mins, 'ob70', w.ob70_mins, 'ob100', w.ob100_mins),
     w.ob50_mins, w.ob70_mins, w.ob100_mins,
-    GREATEST(0, (w.week_after - 2400 * w.employment_rate / 100)
-      - GREATEST(0, w.week_before - 2400 * w.employment_rate / 100))::integer,
-    GREATEST(0, w.week_after - 2400) - GREATEST(0, w.week_before - 2400),
+    -- Mertid: tid över deltidsmåttet men under heltid (2400 min = 40 h/vecka).
+    round(GREATEST(0, LEAST(w.week_after, 2400) - 2400 * w.employment_rate / 100)
+      - GREATEST(0, LEAST(w.week_before, 2400) - 2400 * w.employment_rate / 100))::integer,
+    -- Övertid: tid över heltidsmåttet.
+    round(GREATEST(0, w.week_after - 2400) - GREATEST(0, w.week_before - 2400))::integer,
     w.break_mins, w.worked_mins, COALESCE(w.missing_wage, false),
-    jsonb_build_object('calculation_time', 'rounded_at when present, otherwise occurred_at',
+    jsonb_build_object('calculation_time', 'rounded_at när den finns, annars occurred_at',
       'employment_rate', w.employment_rate, 'week_total_minutes', w.week_after)
   FROM weekly w ORDER BY w.day;
 END;
