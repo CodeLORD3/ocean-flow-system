@@ -824,24 +824,24 @@ export default function WholesaleOrders() {
         <TabsContent value="per-order">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="relative min-w-[220px] flex-1">
+              <div className="relative min-w-[240px] flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Sök order, butik eller produkt"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="h-10 pl-9 text-sm"
+                  className="h-11 pl-9 text-sm"
                 />
               </div>
               <Select value={storeFilter} onValueChange={setStoreFilter}>
-                <SelectTrigger className="h-10 w-[180px] text-sm"><SelectValue placeholder="Alla butiker" /></SelectTrigger>
+                <SelectTrigger className="h-11 w-full text-sm sm:w-[200px]"><SelectValue placeholder="Alla butiker" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="alla">Alla butiker</SelectItem>
                   {retailStores.map((store: any) => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-10 w-[150px] text-sm"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-11 w-full text-sm sm:w-[170px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {["Alla", "Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map((status) => <SelectItem key={status} value={status}>{status === "Alla" ? "Alla statusar" : status}</SelectItem>)}
                 </SelectContent>
