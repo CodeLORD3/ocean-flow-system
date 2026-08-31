@@ -11,6 +11,7 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const ALLOWED_ORIGIN_SUFFIXES = [".lovable.app", ".makrilltrade.com"];
+const ALLOWED_PRIMARY_ORIGIN = "https://makrilltrade.com";
 const ALLOWED_ORIGINS = new Set([
   "https://makrilltrade.com",
   "https://www.makrilltrade.com",
@@ -23,10 +24,12 @@ export function corsHeaders(req: Request) {
   const allowed =
     ALLOWED_ORIGINS.has(origin) || ALLOWED_ORIGIN_SUFFIXES.some((s) => origin.endsWith(s));
   return {
-    "Access-Control-Allow-Origin": allowed && origin ? origin : "*",
+    // Ingen wildcard: en okänd origin får aldrig tala med klockans funktioner.
+    "Access-Control-Allow-Origin": allowed && origin ? origin : ALLOWED_PRIMARY_ORIGIN,
     "Access-Control-Allow-Headers":
       "authorization, x-client-info, apikey, content-type, x-clock-session",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
   };
 }
 
