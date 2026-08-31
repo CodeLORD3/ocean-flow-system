@@ -100,6 +100,12 @@ export async function punch(identifier: string, action: "in" | "ut" | "rast_star
   }, token);
 }
 
+export async function recordClockSyncFailure(payload: Record<string, unknown>) {
+  const token = storedSession();
+  if (!token) throw new Error("Stationen är inte aktiverad.");
+  return call<{ ok: boolean }>("clock-sync-failure", payload, token);
+}
+
 export interface OnSitePerson { first_name: string; initial: string; since: string; on_break: boolean; }
 export async function statusOnSite(): Promise<OnSitePerson[]> {
   const token = storedSession();
