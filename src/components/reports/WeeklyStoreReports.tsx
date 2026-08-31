@@ -11,13 +11,14 @@ import {
 import { useDailyReportsRange } from "@/hooks/useDailyReportsRange";
 import { dayRowsFrom, weekDayList } from "@/lib/weeklyReportDays";
 import { weeklyReportPdf, weeklyReportXlsx, type ReportRow } from "@/lib/weeklyReportExport";
+import { StoreWeekDays } from "@/components/reports/StoreWeekDays";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ChevronDown, ChevronRight, AlertTriangle, LockKeyhole, Printer, FileSpreadsheet, FileDown } from "lucide-react";
+import { Loader2, ChevronDown, ChevronRight, AlertTriangle, LockKeyhole, Printer, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
@@ -181,15 +182,18 @@ export function WeeklyStoreReportsSection() {
       ? REGION_LABELS[groupFilter]
       : "Sverige totalt";
 
-  const exportRows: ReportRow[] = (selectedStoreForExport ? details.filter((row) => row.store_id === selectedStoreForExport) : latestRegions).map((row) => ({
-    label: "store_id" in row ? storeName(row.store_id) : row.group_label,
-    total_sales_sek: row.total_sales_sek,
-    avg_sales_per_day_sek: row.avg_sales_per_day_sek,
-    staff_hours: row.staff_hours,
-    staff_shifts: row.staff_shifts,
-    reports: `${row.daily_reports_count} / ${row.expected_open_days}`,
-    status: row.status,
-  }));
+  const exportRows: ReportRow[] = (selectedStoreForExport
+    ? details.filter((row) => row.store_id === selectedStoreForExport && row.iso_year === latestWeekForExport?.iso_year && row.iso_week === latestWeekForExport?.iso_week)
+    : latestRegions
+  ).map((row) => ({
+      label: "store_id" in row ? storeName(row.store_id) : row.group_label,
+      total_sales_sek: row.total_sales_sek,
+      avg_sales_per_day_sek: row.avg_sales_per_day_sek,
+      staff_hours: row.staff_hours,
+      staff_shifts: row.staff_shifts,
+      reports: `${row.daily_reports_count} / ${row.expected_open_days}`,
+      status: row.status,
+    }));
 
   const exportReport = (format: "pdf" | "xlsx") => {
     if (!latestWeekForExport || !selectedStoreForExport) {
