@@ -121,6 +121,8 @@ const staffNav = [
   { title: "På plats nu", url: "/live-staff", icon: Activity },
   { title: "Stämpelklocka", url: "/clock-stations", icon: Clock },
   { title: "Rapporterad tid", url: "/time-entries", icon: ClipboardCheck },
+  { title: "Regler & OB", url: "/staff-rules", icon: Settings },
+  { title: "Löneunderlag", url: "/payroll-exports", icon: FileText },
   { title: "Klocka vs PK", url: "/clock-vs-pk", icon: Scale },
   { title: "Personalkollen", url: "/personalkollen", icon: Plug },
   { title: "Schema", url: "/staff-schedule", icon: CalendarRange },

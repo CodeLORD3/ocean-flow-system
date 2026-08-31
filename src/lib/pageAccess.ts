@@ -33,6 +33,8 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   "/employees": ADMIN,
   "/clock-stations": ADMIN,
   "/time-entries": ADMIN,
+  "/staff-rules": ADMIN,
+  "/payroll-exports": ADMIN,
   "/clock-vs-pk": ADMIN,
   "/fortnox": ADMIN,
   "/staff-schedule": all(BUTIK, GROSSIST, ADMIN),
