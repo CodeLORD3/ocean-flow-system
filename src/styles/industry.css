@@ -210,21 +210,21 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ------------------------------------- rader och status (vänsterkant + text) */
+/* ------------------------------------- rader och status (inset + text) */
 
 .ind-row {
   display: flex;
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-3) var(--space-4);
-  border-left: 3px solid transparent;
+  box-shadow: inset 3px 0 0 transparent;
 }
 .ind-row + .ind-row { margin-top: var(--space-1); }
-.ind-row--edge-accent { border-left-color: var(--color-accent-600); }
-.ind-row--edge-accent-2 { border-left-color: var(--color-accent-2); }
-.ind-row--edge-neutral { border-left-color: var(--color-neutral-500); }
-.ind-row--edge-strong { border-left-color: var(--color-accent-700); }
-.ind-row--edge-alert { border-left-color: var(--ind-status-alert); }
+.ind-row--edge-accent { box-shadow: inset 3px 0 0 var(--color-accent-600); }
+.ind-row--edge-accent-2 { box-shadow: inset 3px 0 0 var(--color-accent-2); }
+.ind-row--edge-neutral { box-shadow: inset 3px 0 0 var(--color-neutral-500); }
+.ind-row--edge-strong { box-shadow: inset 3px 0 0 var(--color-accent-700); }
+.ind-row--edge-alert { box-shadow: inset 3px 0 0 var(--ind-status-alert); }
 .ind-row--muted { color: var(--ind-muted); }
 
 .ind-status {
@@ -243,8 +243,10 @@
 /* -------------------------------------------------------- sidokö/beslutsrad */
 
 .ind-queue { border-left: 1px solid var(--color-divider); padding-left: var(--space-6); }
-.ind-queue-item { padding: var(--space-3) 0; border-left: 3px solid var(--color-accent-600); padding-left: var(--space-3); }
+.ind-queue-item { padding: var(--space-3) 0; box-shadow: inset 3px 0 0 var(--color-accent-600); padding-left: var(--space-3); }
 .ind-queue-item + .ind-queue-item { border-top: 1px solid var(--color-divider); }
+.ind-absence-badge { box-shadow: inset 3px 0 0 var(--color-warn-600); background: var(--color-warn-100); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); }
+.ind-coverage-short { box-shadow: inset 3px 0 0 var(--color-alert-600); }
 
 .ind-decision {
   display: flex;

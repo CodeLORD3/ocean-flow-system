@@ -629,10 +629,10 @@ export default function StaffSchedule() {
                              <td key={d} className={`align-top px-1 py-1 ${isToday ? "bg-primary/5" : ""}`}>
                                <div className="flex flex-col gap-1">
                                  {absences.map((absence, index) => (
-                                   <div key={`${absence.label}-${index}`} className="rounded-md border-l-2 border-amber-500 bg-amber-500/10 px-1.5 py-1" title={`${absence.label} · ${absence.status === "pending" ? "Väntar på beslut" : "Godkänd"}`}>
-                                     <span className="block truncate text-[10px] font-medium text-amber-700 dark:text-amber-300">{absence.label}</span>
-                                     <span className="block text-[9px] text-amber-700/80 dark:text-amber-300/80">{absence.status === "pending" ? "Väntar på beslut" : "Frånvarande"}</span>
-                                   </div>
+                                    <div key={`${absence.label}-${index}`} className="ind-absence-badge" title={`${absence.label} · ${absence.status === "pending" ? "Väntar på beslut" : "Godkänd"}`}>
+                                      <span className="block truncate text-[10px] font-medium">{absence.label}</span>
+                                      <span className="block text-[9px]">{absence.status === "pending" ? "Väntar på beslut" : "Frånvarande"}</span>
+                                    </div>
                                  ))}
                                  {rows.map((p) => {
                                   const c = shiftCost(p);
@@ -656,9 +656,9 @@ export default function StaffSchedule() {
 
                                 {act ? (
                                   <div
-                                    className={`rounded-md border-l-2 px-1.5 py-1 ${
-                                      act.ongoing ? "border-sky-500 bg-sky-500/10" : "border-emerald-500 bg-emerald-500/10"
-                                    }`}
+                                     className={`rounded-md px-1.5 py-1 ${
+                                       act.ongoing ? "ind-note--warn" : "ind-note--ok"
+                                     }`}
                                     title="Arbetad tid enligt stämpling"
                                   >
                                     <span className="flex items-center gap-1 font-mono text-[11px] font-medium tabular-nums text-foreground">

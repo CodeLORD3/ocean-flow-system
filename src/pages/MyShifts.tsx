@@ -59,6 +59,28 @@ import {
 
 const DEFAULT_CUTOFF = 48;
 
+/** Lokal kö för sjukanmälningar som inte kunde nå servern. */
+const SICK_QUEUE_KEY = (employeeId: string) => `makrilltrade.sick_queue.${employeeId}`;
+
+function readSickQueue(employeeId: string): string[] {
+  try {
+    const raw = window.localStorage.getItem(SICK_QUEUE_KEY(employeeId));
+    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSickQueue(employeeId: string, dates: string[]) {
+  try {
+    if (dates.length) window.localStorage.setItem(SICK_QUEUE_KEY(employeeId), JSON.stringify([...new Set(dates)]));
+    else window.localStorage.removeItem(SICK_QUEUE_KEY(employeeId));
+  } catch {
+    /* lagring kan vara blockerad — anmälan görs då direkt mot servern */
+  }
+}
+
 /** Mina employee_id enligt databasens säkra hjälpfunktion. */
 function useMyEmployeeIds() {
   return useQuery({
@@ -92,10 +114,12 @@ export default function MyShifts() {
   const [swapFor, setSwapFor] = useState<Shift | null>(null);
   const [sickUndoUntil, setSickUndoUntil] = useState<number | null>(null);
   const [sickUndoDate, setSickUndoDate] = useState<string | null>(null);
+  const [sickQueue, setSickQueue] = useState<string[]>([]);
   const [clockNow, setClockNow] = useState(() => Date.now());
   const [swapTo, setSwapTo] = useState<string>("");
   const [availOpen, setAvailOpen] = useState(false);
   const [absenceOpen, setAbsenceOpen] = useState(false);
+  const [otherAbsenceOpen, setOtherAbsenceOpen] = useState(false);
   const [absenceDraft, setAbsenceDraft] = useState({
     absenceTypeId: "",
     startDate: dateKey(new Date()),
@@ -136,9 +160,22 @@ export default function MyShifts() {
   const endSickPeriod = useEndSickPeriod();
 
   const absenceTypeById = useMemo(() => new Map(absenceTypes.map((type) => [type.id, type])), [absenceTypes]);
+  const quickAbsenceTypes = useMemo(() => {
+    const preferredCodes = ["semester", "sjuk", "vab", "komp"];
+    const preferred = preferredCodes
+      .map((code) => absenceTypes.find((type) => type.code === code))
+      .filter((type): type is (typeof absenceTypes)[number] => Boolean(type));
+    const fallback = absenceTypes.filter((type) => !preferred.some((quick) => quick.id === type.id));
+    return [...preferred, ...fallback].slice(0, 4);
+  }, [absenceTypes]);
+  const otherAbsenceTypes = useMemo(
+    () => absenceTypes.filter((type) => !quickAbsenceTypes.some((quick) => quick.id === type.id)),
+    [absenceTypes, quickAbsenceTypes],
+  );
+  const selectedAbsenceType = absenceTypeById.get(absenceDraft.absenceTypeId);
   const currentBalance = vacationBalances[0] ?? null;
   const remainingVacation = currentBalance
-    ? currentBalance.entitled_days + currentBalance.saved_days + currentBalance.manual_adjustment_days - currentBalance.used_days
+    ? currentBalance.earned_days + currentBalance.saved_days + currentBalance.manual_adjustment_days - currentBalance.used_days
     : null;
 
   const published = myShifts.filter((s) => s.status === "published");
@@ -162,6 +199,14 @@ export default function MyShifts() {
   const calendarDays = absenceDraft.endDate && absenceDraft.endDate >= absenceDraft.startDate
     ? Math.floor((new Date(`${absenceDraft.endDate}T12:00:00`).getTime() - new Date(`${absenceDraft.startDate}T12:00:00`).getTime()) / 86_400_000) + 1
     : absenceDraft.startDate ? 1 : 0;
+  const scheduledAbsenceShifts = useMemo(
+    () => absenceShifts.filter((shift) => shift.status === "published"),
+    [absenceShifts],
+  );
+  const requestedVacationDays = selectedAbsenceType?.affects_vacation_balance
+    ? scheduledWorkDays * (Number(absenceDraft.extentPct) / 100)
+    : 0;
+  const balanceAfterRequest = remainingVacation === null ? null : remainingVacation - requestedVacationDays;
 
   useEffect(() => {
     if (sickUndoUntil === null) return;
@@ -169,6 +214,37 @@ export default function MyShifts() {
     return () => window.clearInterval(timer);
   }, [sickUndoUntil]);
   const sickUndoSeconds = sickUndoUntil === null ? 0 : Math.max(0, Math.ceil((sickUndoUntil - clockNow) / 1000));
+
+  /**
+   * Offlinekö för sjukanmälan: anmälan får aldrig tappas när nätet är nere.
+   * Kön ligger lokalt per anställd och skickas om så snart appen är online.
+   */
+  const flushSickQueue = async () => {
+    if (!myId || !navigator.onLine) return;
+    const queued = readSickQueue(myId);
+    if (!queued.length) return;
+    const failed: string[] = [];
+    for (const date of queued) {
+      try {
+        await registerSickDay.mutateAsync({ employeeId: myId, date });
+      } catch {
+        failed.push(date);
+      }
+    }
+    writeSickQueue(myId, failed);
+    setSickQueue(failed);
+    if (failed.length < queued.length) toast.success("Köad sjukanmälan skickad");
+  };
+
+  useEffect(() => {
+    if (!myId) return;
+    setSickQueue(readSickQueue(myId));
+    const onOnline = () => { void flushSickQueue(); };
+    window.addEventListener("online", onOnline);
+    void flushSickQueue();
+    return () => window.removeEventListener("online", onOnline);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myId]);
 
   const shiftRow = (s: Shift, mine: boolean) => {
     const type = s.shift_type_id ? typeById.get(s.shift_type_id) : null;
@@ -392,7 +468,12 @@ export default function MyShifts() {
                 <IndustryButton size="touch" variant="secondary" className="min-h-14 w-full sm:w-auto" disabled={!myId || registerSickDay.isPending} onClick={async () => {
                   if (!myId) return;
                   try { await registerSickDay.mutateAsync({ employeeId: myId, date: today }); setSickUndoDate(today); setSickUndoUntil(Date.now() + 10 * 60_000); toast.success("Sjukdag registrerad"); }
-                  catch (e) { toast.error(e instanceof Error ? e.message : "Kunde inte registrera sjukdag"); }
+                  catch (e) {
+                    const queued = [...readSickQueue(myId), today];
+                    writeSickQueue(myId, queued);
+                    setSickQueue([...new Set(queued)]);
+                    toast.error(`${e instanceof Error ? e.message : "Kunde inte nå servern"} · anmälan köad och skickas automatiskt`);
+                  }
                 }}><Stethoscope className="h-4 w-4" /> Sjuk idag</IndustryButton>
               ) : null}
               {sickUndoSeconds > 0 && sickUndoDate && <IndustryButton size="touch" variant="ghost" className="min-h-14 w-full sm:w-auto" disabled={undoSickPeriod.isPending} onClick={async () => {
@@ -403,6 +484,7 @@ export default function MyShifts() {
               <IndustryButton size="touch" variant="secondary" onClick={() => setAbsenceOpen(true)}><Plus className="h-4 w-4" /> Ny frånvaro</IndustryButton>
             </div>
           </div>
+          {sickQueue.length > 0 && <IndustryRow edge="accent-2"><p className="text-sm"><StatusLabel tone="progress">Stämpling köad</StatusLabel> {sickQueue.length} sjukanmälan skickas automatiskt när anslutningen är tillbaka.</p></IndustryRow>}
           {activeSickPeriod && <IndustryRow edge="alert"><p className="text-sm"><StatusLabel tone="alert">Pågående sjukperiod</StatusLabel> Startad {activeSickPeriod.first_day} · karens {activeSickPeriod.karens_applied ? "uttagen" : "inte uttagen"}</p></IndustryRow>}
           {sickUndoSeconds === 0 && sickUndoDate && sickUndoUntil && <p className="ind-muted text-xs">Ångertiden för sjukanmälan har gått ut.</p>}
          {currentBalance && (
@@ -528,7 +610,7 @@ export default function MyShifts() {
       </Dialog>
 
        {/* Frånvaro */}
-       <Dialog open={absenceOpen} onOpenChange={setAbsenceOpen}>
+       <Dialog open={absenceOpen} onOpenChange={(open) => { setAbsenceOpen(open); if (!open) setOtherAbsenceOpen(false); }}>
          <DialogContent className="ind max-w-md">
            <DialogHeader>
              <DialogTitle className="ind-h2">Ny frånvaroanmälan</DialogTitle>
@@ -536,64 +618,111 @@ export default function MyShifts() {
            <div className="space-y-3">
              <div>
                <Label className="ind-label">Typ</Label>
-               <Select value={absenceDraft.absenceTypeId} onValueChange={(value) => setAbsenceDraft({ ...absenceDraft, absenceTypeId: value })}>
-                 <SelectTrigger className="ind-input"><SelectValue placeholder="Välj frånvarotyp" /></SelectTrigger>
-                 <SelectContent>
-                   {absenceTypes.map((type) => <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>)}
-                 </SelectContent>
-               </Select>
+               <div className="mt-2 grid grid-cols-2 gap-2" role="group" aria-label="Frånvarotyp">
+                 {quickAbsenceTypes.map((type) => (
+                   <IndustryButton
+                     key={type.id}
+                     variant={absenceDraft.absenceTypeId === type.id ? "primary" : "secondary"}
+                     size="touch"
+                     className="min-h-12 justify-start px-3 text-left"
+                     aria-pressed={absenceDraft.absenceTypeId === type.id}
+                     onClick={() => setAbsenceDraft({ ...absenceDraft, absenceTypeId: type.id })}
+                   >
+                     {type.name}
+                   </IndustryButton>
+                 ))}
+               </div>
+               {otherAbsenceTypes.length > 0 && (
+                 <div className="mt-2">
+                   <IndustryButton variant="ghost" size="touch" className="w-full justify-between" onClick={() => setOtherAbsenceOpen((open) => !open)} aria-expanded={otherAbsenceOpen}>
+                     <span>Annat…</span><span aria-hidden="true">{otherAbsenceOpen ? "−" : "+"}</span>
+                   </IndustryButton>
+                   {otherAbsenceOpen && (
+                     <div className="mt-2">
+                       <Select value={otherAbsenceTypes.some((type) => type.id === absenceDraft.absenceTypeId) ? absenceDraft.absenceTypeId : ""} onValueChange={(value) => setAbsenceDraft({ ...absenceDraft, absenceTypeId: value })}>
+                         <SelectTrigger className="ind-input"><SelectValue placeholder="Välj annan frånvarotyp" /></SelectTrigger>
+                         <SelectContent>
+                           {otherAbsenceTypes.map((type) => <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>)}
+                         </SelectContent>
+                       </Select>
+                     </div>
+                   )}
+                 </div>
+               )}
              </div>
+             {selectedAbsenceType?.is_sick && (
+               <div className="ind-note--warn" role="note">
+                 <strong>Sjukfrånvaro</strong><br />
+                 Återinsjuknande inom 5 kalenderdagar hanteras som samma sjukperiod. Registrera friskanmälan när du är tillbaka.
+               </div>
+             )}
               <div className="grid grid-cols-2 gap-3">
                 <div><Label className="ind-label">Från</Label><IndustryInput type="date" value={absenceDraft.startDate} onChange={(e) => setAbsenceDraft({ ...absenceDraft, startDate: e.target.value })} /></div>
                 <div><Label className="ind-label">Till</Label><IndustryInput type="date" min={absenceDraft.startDate} value={absenceDraft.endDate} onChange={(e) => setAbsenceDraft({ ...absenceDraft, endDate: e.target.value })} /></div>
               </div>
-              <IndustryRow edge="accent-2" className="text-sm"><span className="ind-mono">{calendarDays} kalenderdagar</span><span className="ind-muted">·</span><span className="ind-mono">{scheduledWorkDays} arbetsdagar enligt publicerat schema</span></IndustryRow>
-              <div>
-                <Label className="ind-label">Omfattning (%)</Label>
-                <IndustryInput type="number" min="1" max="100" step="1" value={absenceDraft.extentPct} onChange={(e) => setAbsenceDraft({ ...absenceDraft, extentPct: e.target.value })} />
-              </div>
-              <div>
-                <Label className="ind-label">Beräkningsgrund</Label>
-                <Select value={absenceDraft.basis} onValueChange={(value) => setAbsenceDraft({ ...absenceDraft, basis: value as typeof absenceDraft.basis })}>
-                  <SelectTrigger className="ind-input"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="enligt_schema">Enligt schema</SelectItem>
-                    <SelectItem value="halvdag">Halvdag</SelectItem>
-                    <SelectItem value="egen">Egen omfattning</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div><Label className="ind-label">Kommentar</Label><Textarea value={absenceDraft.note} onChange={(e) => setAbsenceDraft({ ...absenceDraft, note: e.target.value })} placeholder="Valfri kommentar" /></div>
-           </div>
-           <DialogFooter>
-             <IndustryButton variant="ghost" onClick={() => setAbsenceOpen(false)}>Avbryt</IndustryButton>
-             <IndustryButton
-               variant="primary"
-               corners
-               disabled={!myId || !absenceDraft.absenceTypeId || !absenceDraft.startDate || (absenceDraft.endDate !== "" && absenceDraft.endDate < absenceDraft.startDate) || createAbsenceRequest.isPending}
-               onClick={async () => {
-                 if (!myId || !absenceDraft.absenceTypeId) return;
-                 try {
-                    await createAbsenceRequest.mutateAsync({
-                      employee_id: myId,
-                      absence_type_id: absenceDraft.absenceTypeId,
-                      start_date: absenceDraft.startDate,
-                      end_date: absenceDraft.endDate || null,
-                      extent_pct: Number(absenceDraft.extentPct),
-                      basis: absenceDraft.basis,
-                      note: absenceDraft.note.trim() || undefined,
-                      store_id: storeId,
-                      legal_entity_id: myEmployment?.legal_entity_id ?? null,
-                    });
-                     setAbsenceOpen(false);
-                    setAbsenceDraft({ absenceTypeId: "", startDate: today, endDate: "", extentPct: "100", basis: "enligt_schema", note: "" });
-                   toast.success("Frånvaroanmälan skickad");
-                 } catch (e) {
-                   toast.error(e instanceof Error ? e.message : "Kunde inte skicka frånvaroanmälan");
-                 }
-               }}
-             >
-               Skicka anmälan
+               <IndustryRow edge="accent-2" className="text-sm"><span className="ind-mono">{calendarDays} kalenderdagar</span><span className="ind-muted">·</span><span className="ind-mono">{scheduledWorkDays} arbetsdagar enligt publicerat schema</span></IndustryRow>
+               {scheduledAbsenceShifts.length > 0 && (
+                 <IndustryRow edge="alert" className="items-start text-sm">
+                   <div>
+                     <strong>Pass som påverkas</strong>
+                     <p className="ind-muted">{scheduledAbsenceShifts.length} publicerat pass under perioden. Chefen avgör om pass öppnas eller avbokas.</p>
+                     <p className="ind-muted text-xs">{scheduledAbsenceShifts.slice(0, 2).map((shift) => `${shift.date} ${shift.start_time.slice(0, 5)}–${shift.end_time.slice(0, 5)}`).join(" · ")}{scheduledAbsenceShifts.length > 2 ? " · …" : ""}</p>
+                   </div>
+                 </IndustryRow>
+               )}
+               {selectedAbsenceType?.affects_vacation_balance && currentBalance && (
+                 <div className="ind-note--ok" role="status">
+                   <strong>{selectedAbsenceType.name}</strong> · {remainingVacation?.toFixed(1)} dagar kvar i år<br />
+                   Efter denna ansökan: <strong>{balanceAfterRequest?.toFixed(1)} dagar</strong>
+                   {currentBalance.expiry_flagged && <span className="ind-note--warn mt-2 block">Sparade dagar behöver planeras före förfallodatum.</span>}
+                 </div>
+               )}
+               <div>
+                 <Label className="ind-label">Omfattning (%)</Label>
+                 <IndustryInput type="number" min="1" max="100" step="1" value={absenceDraft.extentPct} onChange={(e) => setAbsenceDraft({ ...absenceDraft, extentPct: e.target.value })} />
+               </div>
+               <div>
+                 <Label className="ind-label">Beräkningsgrund</Label>
+                 <Select value={absenceDraft.basis} onValueChange={(value) => setAbsenceDraft({ ...absenceDraft, basis: value as typeof absenceDraft.basis })}>
+                   <SelectTrigger className="ind-input"><SelectValue /></SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="enligt_schema">Enligt schema</SelectItem>
+                     <SelectItem value="halvdag">Halvdag</SelectItem>
+                     <SelectItem value="egen">Egen omfattning</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
+               <div><Label className="ind-label">Kommentar</Label><Textarea value={absenceDraft.note} onChange={(e) => setAbsenceDraft({ ...absenceDraft, note: e.target.value })} placeholder="Valfri kommentar" /></div>
+            </div>
+            <DialogFooter>
+              <IndustryButton variant="ghost" onClick={() => setAbsenceOpen(false)}>Avbryt</IndustryButton>
+              <IndustryButton
+                variant="primary"
+                corners
+                disabled={!myId || !absenceDraft.absenceTypeId || !absenceDraft.startDate || (absenceDraft.endDate !== "" && absenceDraft.endDate < absenceDraft.startDate) || createAbsenceRequest.isPending}
+                onClick={async () => {
+                  if (!myId || !absenceDraft.absenceTypeId) return;
+                  try {
+                     await createAbsenceRequest.mutateAsync({
+                       employee_id: myId,
+                       absence_type_id: absenceDraft.absenceTypeId,
+                       start_date: absenceDraft.startDate,
+                       end_date: absenceDraft.endDate || null,
+                       extent_pct: Number(absenceDraft.extentPct),
+                       basis: absenceDraft.basis,
+                       note: absenceDraft.note.trim() || undefined,
+                       store_id: storeId,
+                       legal_entity_id: myEmployment?.legal_entity_id ?? null,
+                     });
+                      setAbsenceOpen(false);
+                     setAbsenceDraft({ absenceTypeId: "", startDate: today, endDate: "", extentPct: "100", basis: "enligt_schema", note: "" });
+                    toast.success("Frånvaroanmälan skickad");
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Kunde inte skicka frånvaroanmälan");
+                  }
+                }}
+              >
+                Skicka ansökan
              </IndustryButton>
            </DialogFooter>
          </DialogContent>

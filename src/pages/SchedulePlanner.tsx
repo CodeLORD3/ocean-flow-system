@@ -128,6 +128,20 @@ export default function SchedulePlanner() {
   );
   const pendingAbsenceRequests = absenceRequests.filter((request) => request.status === "pending");
 
+  /** Frånvaroblock per anställd — både beslutade och väntande spärrar passet. */
+  const absencesByEmployee = useMemo(() => {
+    const map = new Map<string, { from: string; to: string; label: string }[]>();
+    absenceRequests
+      .filter((request) => ["pending", "approved", "auto_approved"].includes(request.status))
+      .forEach((request) => {
+        const from = request.date_from ?? request.start_date;
+        const to = request.date_to ?? request.end_date ?? from;
+        const label = absenceTypeById.get(request.absence_type_id)?.name ?? "Frånvaro";
+        map.set(request.employee_id, [...(map.get(request.employee_id) ?? []), { from, to, label }]);
+      });
+    return map;
+  }, [absenceRequests, absenceTypeById]);
+
   const storeEmployments = useMemo(
     () => employments.filter((e) => e.store_id === storeId && e.is_active),
     [employments, storeId],
@@ -175,6 +189,7 @@ export default function SchedulePlanner() {
       competencies: person.competencies,
       birthDate: person.birthDate,
       employmentRate: person.employmentRate,
+      absences: absencesByEmployee.get(shift.employee_id) ?? [],
       requiredCompetency: shift.shift_type_id ? typeById.get(shift.shift_type_id)?.required_competency : null,
     });
   };
@@ -258,6 +273,7 @@ export default function SchedulePlanner() {
         competencies: r.competencies,
         availability: r.availability as never,
         shifts: shifts.filter((s) => s.employee_id === r.employee_id),
+        absences: absencesByEmployee.get(r.employee_id) ?? [],
       })),
       {
         requiredCompetency: suggestFor.shift_type_id
@@ -265,7 +281,7 @@ export default function SchedulePlanner() {
           : null,
       },
     );
-  }, [suggestFor, roster, shifts, typeById]);
+  }, [suggestFor, roster, shifts, typeById, absencesByEmployee]);
 
   return (
     <IndustryFrame className="ind-page space-y-6 p-4 md:p-6">
@@ -439,11 +455,11 @@ export default function SchedulePlanner() {
                                     onDragStart={() => setDragging(s)}
                                     onClick={() => setEditing(s)}
                                     title={checks.map((c) => `${c.label}: ${c.detail}`).join("\n") || undefined}
-                                    className="ind-card cursor-pointer p-2"
-                                    style={{
-                                      borderLeft: `3px solid var(--color-${type?.color_token ?? "neutral-400"})`,
-                                      opacity: s.status === "draft" ? 0.72 : 1,
-                                    }}
+                                     className="ind-card cursor-pointer p-2"
+                                     style={{
+                                       boxShadow: `inset 3px 0 0 var(--color-${type?.color_token ?? "neutral-400"})`,
+                                       opacity: s.status === "draft" ? 0.72 : 1,
+                                     }}
                                   >
                                     <p className="ind-mono text-sm">
                                       {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
