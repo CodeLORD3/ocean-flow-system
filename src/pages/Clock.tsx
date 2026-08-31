@@ -173,17 +173,26 @@ export default function Clock() {
   const handlePunch = async (action: Action) => {
     const value = identifier.replace(/\s/g, "");
     const name = found?.first_name ?? "";
+    if (action === "in" && workSites.length > 1 && !activeSite) {
+      setError("Välj driftställe innan du stämplar in.");
+      return;
+    }
     setBusy(true);
     setError(null);
     const occurredAt = new Date().toISOString();
+    const context = {
+      workSiteId: activeSite?.id,
+      costCenter: activeSite?.posting_cost_center,
+      ...(await readPosition()),
+    };
     try {
       if (!navigator.onLine) {
-        await enqueuePunch(value, action, occurredAt);
+        await enqueuePunch(value, action, occurredAt, context);
         await refreshQueue();
         showReceipt(name, action, occurredAt, true);
         return;
       }
-      const res = await punch(value, action, occurredAt);
+      const res = await punch(value, action, occurredAt, context);
       if (res.status === "pending_registration") {
         setPending(res.message ?? "Registrering väntar på godkännande.");
         setIdentifier("");
@@ -192,13 +201,19 @@ export default function Clock() {
       showReceipt(res.employee?.first_name ?? name, action, res.entry!.occurred_at);
       void refreshOnSite();
     } catch (e) {
-      // Nätet kan ha dött mellan uppslag och stämpling → köa
+      const msg = e instanceof Error ? e.message : "Stämplingen misslyckades";
+      // Geofence-/valideringsfel ska visas, inte köas.
+      if (/meter|driftställe|Platsåtkomst/i.test(msg)) {
+        setError(msg);
+        setBusy(false);
+        return;
+      }
       try {
-        await enqueuePunch(value, action, occurredAt);
+        await enqueuePunch(value, action, occurredAt, { ...context, offlineQueued: true });
         await refreshQueue();
         showReceipt(name, action, occurredAt, true);
       } catch {
-        setError(e instanceof Error ? e.message : "Stämplingen misslyckades");
+        setError(msg);
       }
     } finally {
       setBusy(false);
