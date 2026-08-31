@@ -236,11 +236,9 @@ export default function PortalCompanyProfile({ companyId }: { companyId: string 
           </h2>
           <div className="divide-y divide-border">
             {documents.map((doc: any) => (
-              <a
+              <StorageLink
                 key={doc.id}
-                href={doc.file_url}
-                target="_blank"
-                rel="noreferrer"
+                url={doc.file_url}
                 className="flex items-center gap-3 py-2 hover:bg-muted/20 px-2 transition-colors"
               >
                 <FileText className="h-4 w-4 text-primary shrink-0" />
@@ -252,7 +250,7 @@ export default function PortalCompanyProfile({ companyId }: { companyId: string 
                   </div>
                 </div>
                 <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" />
-              </a>
+              </StorageLink>
             ))}
           </div>
         </div>
