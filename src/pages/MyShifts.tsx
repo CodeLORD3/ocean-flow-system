@@ -170,6 +170,37 @@ export default function MyShifts() {
   }, [sickUndoUntil]);
   const sickUndoSeconds = sickUndoUntil === null ? 0 : Math.max(0, Math.ceil((sickUndoUntil - clockNow) / 1000));
 
+  /**
+   * Offlinekö för sjukanmälan: anmälan får aldrig tappas när nätet är nere.
+   * Kön ligger lokalt per anställd och skickas om så snart appen är online.
+   */
+  const flushSickQueue = async () => {
+    if (!myId || !navigator.onLine) return;
+    const queued = readSickQueue(myId);
+    if (!queued.length) return;
+    const failed: string[] = [];
+    for (const date of queued) {
+      try {
+        await registerSickDay.mutateAsync({ employeeId: myId, date });
+      } catch {
+        failed.push(date);
+      }
+    }
+    writeSickQueue(myId, failed);
+    setSickQueue(failed);
+    if (failed.length < queued.length) toast.success("Köad sjukanmälan skickad");
+  };
+
+  useEffect(() => {
+    if (!myId) return;
+    setSickQueue(readSickQueue(myId));
+    const onOnline = () => { void flushSickQueue(); };
+    window.addEventListener("online", onOnline);
+    void flushSickQueue();
+    return () => window.removeEventListener("online", onOnline);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myId]);
+
   const shiftRow = (s: Shift, mine: boolean) => {
     const type = s.shift_type_id ? typeById.get(s.shift_type_id) : null;
     const hoursUntil = (new Date(`${s.date}T${s.start_time}`).getTime() - Date.now()) / 3600_000;
