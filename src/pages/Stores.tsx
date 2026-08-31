@@ -39,6 +39,7 @@ export default function Stores() {
   const [form, setForm] = useState({
     name: "", address: "", city: "", phone: "", manager: "", hours: "", sqm: 0,
     inventory_location_id: "",
+    region: "", week_last_open_dow: 7, weekly_report_enabled: true,
   });
 
 
@@ -53,6 +54,9 @@ export default function Stores() {
       hours: store.hours || "",
       sqm: store.sqm || 0,
       inventory_location_id: (store as any).inventory_location_id || "",
+      region: store.region || "",
+      week_last_open_dow: store.week_last_open_dow ?? 7,
+      weekly_report_enabled: store.weekly_report_enabled ?? true,
     });
 
   };
