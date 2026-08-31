@@ -446,7 +446,12 @@ export default function MyShifts() {
                 <IndustryButton size="touch" variant="secondary" className="min-h-14 w-full sm:w-auto" disabled={!myId || registerSickDay.isPending} onClick={async () => {
                   if (!myId) return;
                   try { await registerSickDay.mutateAsync({ employeeId: myId, date: today }); setSickUndoDate(today); setSickUndoUntil(Date.now() + 10 * 60_000); toast.success("Sjukdag registrerad"); }
-                  catch (e) { toast.error(e instanceof Error ? e.message : "Kunde inte registrera sjukdag"); }
+                  catch (e) {
+                    const queued = [...readSickQueue(myId), today];
+                    writeSickQueue(myId, queued);
+                    setSickQueue([...new Set(queued)]);
+                    toast.error(`${e instanceof Error ? e.message : "Kunde inte nå servern"} · anmälan köad och skickas automatiskt`);
+                  }
                 }}><Stethoscope className="h-4 w-4" /> Sjuk idag</IndustryButton>
               ) : null}
               {sickUndoSeconds > 0 && sickUndoDate && <IndustryButton size="touch" variant="ghost" className="min-h-14 w-full sm:w-auto" disabled={undoSickPeriod.isPending} onClick={async () => {
