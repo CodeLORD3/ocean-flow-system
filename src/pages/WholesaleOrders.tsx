@@ -181,22 +181,29 @@ function WholesaleOrderAccordionRow({
   onClose,
 }: WholesaleOrderAccordionRowProps) {
   const rowTone = order.status === "Avbruten"
-    ? { row: "bg-row-off", edge: "bg-row-off-edge" }
+    ? { row: "bg-row-off", hover: "hover:bg-row-off-hover", edge: "bg-row-off-edge", chip: "bg-card text-row-off-text border-row-off-edge" }
     : order.status === "Levererad" || order.status === "Klar / Levererad"
-      ? { row: "bg-row-done", edge: "bg-row-done-edge" }
+      ? { row: "bg-row-done", hover: "hover:bg-row-done-hover", edge: "bg-row-done-edge", chip: "bg-card text-row-done-text border-row-done-edge" }
       : order.status === "Packad"
-        ? { row: "bg-row-ok", edge: "bg-row-ok-edge" }
+        ? { row: "bg-row-ok", hover: "hover:bg-row-ok-hover", edge: "bg-row-ok-edge", chip: "bg-card text-row-ok-text border-row-ok-edge" }
         : order.status === "Pågående"
-          ? { row: "bg-row-warn", edge: "bg-row-warn-edge" }
-          : { row: "bg-row-neutral", edge: "bg-border" };
+          ? { row: "bg-row-warn", hover: "hover:bg-row-warn-hover", edge: "bg-row-warn-edge", chip: "bg-card text-row-warn-text border-row-warn-edge" }
+          : { row: "bg-row-neutral", hover: "hover:bg-row-neutral-hover", edge: "bg-border", chip: "bg-card text-muted-foreground border-grid-line" };
   const productsText = (order.shop_order_lines || [])
     .map((line: any) => `${line.products?.name || "Okänd"} (${line.quantity_ordered || 0} ${line.unit || line.products?.unit || ""})`)
     .join(", ") || "Inga produkter";
   const orderLines = order.shop_order_lines?.length || 0;
+  const statusChip = (
+    <span className={`inline-flex flex-nowrap items-center gap-1 whitespace-nowrap rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight ${rowTone.chip}`}>
+      {statusIcon[order.status]}
+      {order.status}
+    </span>
+  );
 
   return (
-    <div id={`wholesale-order-${order.id}`} className={`relative overflow-hidden border-x border-b border-grid-line transition-all duration-200 ${rowTone.row} ${open ? "z-10 my-2 rounded-md border border-primary/25 bg-primary/[0.04] pl-1.5 shadow-sm" : ""} ${selected && !open ? "ring-1 ring-inset ring-primary" : ""}`}>
-      {open && <span className="pointer-events-none absolute bottom-2 left-1.5 top-2 w-1 rounded-full bg-primary/80" aria-hidden />}
+    <div id={`wholesale-order-${order.id}`} className={`relative overflow-hidden border-x border-b border-grid-line transition-all duration-200 ${rowTone.row} ${open ? "z-10 my-3 rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] pl-2.5 shadow-[0_10px_30px_-18px_hsl(var(--primary)/0.55)]" : ""} ${selected && !open ? "ring-1 ring-inset ring-primary" : ""}`}>
+      {open && <span className="pointer-events-none absolute bottom-2 left-1.5 top-2 w-1.5 rounded-full bg-primary/80" aria-hidden />}
+
       <div className="flex min-w-0 items-stretch">
         {!open && <div className={`w-1 shrink-0 ${rowTone.edge}`} aria-hidden />}
         <div className="flex w-9 shrink-0 items-center justify-center border-r border-grid-line/70">
