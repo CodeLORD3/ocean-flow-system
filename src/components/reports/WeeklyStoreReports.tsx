@@ -260,9 +260,9 @@ export function WeeklyStoreReportsSection() {
           </Select>
         </div>
       </div>
-      {selectedStoreForExport && (
-        <p className="text-[10px] text-muted-foreground">Utskrift och Excel gäller vald butik och senaste tillgängliga vecka.</p>
-      )}
+      <p className="text-[10px] text-muted-foreground">
+        Utskrift och Excel gäller {storeFilter ? "vald butik" : `${summaryLabel} med tillhörande butiker`} och senaste tillgängliga vecka.
+      </p>
 
       {selectedSummary && latestWeek && (
         <div className="border-b pb-4">
