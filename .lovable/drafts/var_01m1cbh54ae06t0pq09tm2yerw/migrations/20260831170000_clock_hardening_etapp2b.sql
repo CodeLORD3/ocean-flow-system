@@ -130,3 +130,11 @@ UPDATE public.clock_stations
    SET profile = jsonb_set(profile, '{rounding}', jsonb_build_object('mode', 'none', 'step', 0), true),
        updated_at = now()
  WHERE NOT (profile ? 'rounding');
+
+-- ============ 7. Spärren räknar misslyckade uppslag ============
+ALTER TABLE public.clock_rate_limits
+  ADD COLUMN IF NOT EXISTS failure_count INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS blocked_until TIMESTAMPTZ;
+
+COMMENT ON COLUMN public.clock_rate_limits.failure_count IS
+  'Misslyckade personnummeruppslag. Lyckade stämplingar spärrar aldrig stationen.';
