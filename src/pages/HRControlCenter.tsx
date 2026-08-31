@@ -149,6 +149,7 @@ export default function HRControlCenter() {
   const lockedFor = new Map((locks.data ?? []).map((lock) => [lock.store_id, lock]));
 
   /** Bemanning per krockdag så chefen ser talet före och efter beslutet. */
+  const hasConflicts = (conflicts.data ?? []).length > 0;
   const conflictDates = (conflicts.data ?? []).map((conflict) => conflict.shift_date);
   const conflictStaffing = useQuery({
     queryKey: ["hr-control-conflict-staffing", absenceReviewId, conflictDates.join(",")],
