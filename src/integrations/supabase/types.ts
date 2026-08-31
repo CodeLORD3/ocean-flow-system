@@ -150,6 +150,53 @@ export type Database = {
           },
         ]
       }
+      absence_days: {
+        Row: {
+          created_at: string
+          date: string
+          employee_id: string
+          extent_pct: number
+          hours: number | null
+          id: string
+          is_overridden: boolean
+          request_id: string
+          shift_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          employee_id: string
+          extent_pct?: number
+          hours?: number | null
+          id?: string
+          is_overridden?: boolean
+          request_id: string
+          shift_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          employee_id?: string
+          extent_pct?: number
+          hours?: number | null
+          id?: string
+          is_overridden?: boolean
+          request_id?: string
+          shift_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "absence_days_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "absence_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       absence_policies: {
         Row: {
           created_at: string
@@ -488,6 +535,8 @@ export type Database = {
           employee_id: string
           id: string
           legal_entity_id: string | null
+          payroll_in: string | null
+          payroll_out: string | null
           shift_id: string | null
           status: string
           store_id: string
@@ -505,6 +554,8 @@ export type Database = {
           employee_id: string
           id?: string
           legal_entity_id?: string | null
+          payroll_in?: string | null
+          payroll_out?: string | null
           shift_id?: string | null
           status?: string
           store_id: string
@@ -522,6 +573,8 @@ export type Database = {
           employee_id?: string
           id?: string
           legal_entity_id?: string | null
+          payroll_in?: string | null
+          payroll_out?: string | null
           shift_id?: string | null
           status?: string
           store_id?: string
@@ -4132,6 +4185,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      employee_day_flags: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          comment: string
+          created_at: string
+          created_by: string | null
+          date: string
+          employee_id: string
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          comment: string
+          created_at?: string
+          created_by?: string | null
+          date: string
+          employee_id: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          comment?: string
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          employee_id?: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       employee_documents: {
         Row: {
@@ -8006,9 +8098,15 @@ export type Database = {
           created_at: string
           exported_at: string | null
           exported_by: string | null
+          forced: boolean
+          forced_at: string | null
+          forced_by: string | null
+          forced_reason: string | null
           fortnox_batch_ref: string | null
           id: string
           legal_entity_id: string
+          locked_at: string | null
+          locked_by: string | null
           period: string
           reviewed_at: string | null
           status: string
@@ -8020,9 +8118,15 @@ export type Database = {
           created_at?: string
           exported_at?: string | null
           exported_by?: string | null
+          forced?: boolean
+          forced_at?: string | null
+          forced_by?: string | null
+          forced_reason?: string | null
           fortnox_batch_ref?: string | null
           id?: string
           legal_entity_id: string
+          locked_at?: string | null
+          locked_by?: string | null
           period: string
           reviewed_at?: string | null
           status?: string
@@ -8034,9 +8138,15 @@ export type Database = {
           created_at?: string
           exported_at?: string | null
           exported_by?: string | null
+          forced?: boolean
+          forced_at?: string | null
+          forced_by?: string | null
+          forced_reason?: string | null
           fortnox_batch_ref?: string | null
           id?: string
           legal_entity_id?: string
+          locked_at?: string | null
+          locked_by?: string | null
           period?: string
           reviewed_at?: string | null
           status?: string
@@ -12337,6 +12447,54 @@ export type Database = {
           },
         ]
       }
+      staffing_needs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date: string
+          id: string
+          note: string | null
+          required_count: number
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date: string
+          id?: string
+          note?: string | null
+          required_count?: number
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          id?: string
+          note?: string | null
+          required_count?: number
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staffing_needs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "staffing_needs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_flow_rules: {
         Row: {
           allowed: boolean
@@ -16016,6 +16174,7 @@ export type Database = {
           store_id: string
         }[]
       }
+      absence_generate_days: { Args: { _request_id: string }; Returns: number }
       absence_policy_for: {
         Args: { _legal_entity_id: string }
         Returns: {
@@ -16451,6 +16610,38 @@ export type Database = {
       post_purchase_report_internal: {
         Args: { p_location_id: string; p_lots: Json; p_report_id: string }
         Returns: string[]
+      }
+      preliminar_manadskostnad: {
+        Args: { _month: string; _store_id: string }
+        Returns: {
+          ar_preliminar: boolean
+          arbetsgivaravgift: number
+          lonekostnad: number
+          minutes: number
+          month: string
+          store_id: string
+          total: number
+        }[]
+      }
+      preliminar_passkostnad: {
+        Args: {
+          _employee_id: string
+          _hypothetical_minutes?: number
+          _month: string
+        }
+        Returns: {
+          ar_preliminar: boolean
+          crosses_youth_threshold: boolean
+          current_employer_fee: number
+          current_minutes: number
+          current_pay: number
+          employee_id: string
+          extra_cost: number
+          hypothetical_employer_fee: number
+          hypothetical_minutes: number
+          hypothetical_pay: number
+          month: string
+        }[]
       }
       preview_stock_zeroing: {
         Args: never

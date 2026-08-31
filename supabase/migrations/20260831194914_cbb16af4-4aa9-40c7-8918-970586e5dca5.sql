@@ -1,0 +1,1 @@
+select table_name, column_name, data_type from information_schema.columns where table_schema='public' and table_name in ('period_locks','payroll_periods','payroll_holidays','work_rules','ob_windows','absence_days','absence_requests') order by table_name, ordinal_position
