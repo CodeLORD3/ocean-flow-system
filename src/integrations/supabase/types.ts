@@ -5984,8 +5984,6 @@ export type Database = {
           created_at: string
           currency: string
           fiscal_year_end: string | null
-          fortnox_access_token: string | null
-          fortnox_refresh_token: string | null
           legal_entity_id: string
           legal_name: string
           locale: string
@@ -6006,8 +6004,6 @@ export type Database = {
           created_at?: string
           currency: string
           fiscal_year_end?: string | null
-          fortnox_access_token?: string | null
-          fortnox_refresh_token?: string | null
           legal_entity_id: string
           legal_name: string
           locale?: string
@@ -6028,8 +6024,6 @@ export type Database = {
           created_at?: string
           currency?: string
           fiscal_year_end?: string | null
-          fortnox_access_token?: string | null
-          fortnox_refresh_token?: string | null
           legal_entity_id?: string
           legal_name?: string
           locale?: string
