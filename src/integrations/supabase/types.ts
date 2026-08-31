@@ -4233,6 +4233,7 @@ export type Database = {
           phone: string | null
           pk_staff_id: string | null
           pnr_encrypted: string | null
+          pnr_encryption_year: number | null
           pnr_hash: string | null
           pnr_last4: string | null
           pnr_masked: string | null
@@ -4261,6 +4262,7 @@ export type Database = {
           phone?: string | null
           pk_staff_id?: string | null
           pnr_encrypted?: string | null
+          pnr_encryption_year?: number | null
           pnr_hash?: string | null
           pnr_last4?: string | null
           pnr_masked?: string | null
@@ -4289,6 +4291,7 @@ export type Database = {
           phone?: string | null
           pk_staff_id?: string | null
           pnr_encrypted?: string | null
+          pnr_encryption_year?: number | null
           pnr_hash?: string | null
           pnr_last4?: string | null
           pnr_masked?: string | null
