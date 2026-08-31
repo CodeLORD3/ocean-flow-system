@@ -9,6 +9,7 @@ export type ReportDay = {
   staff_hours: number;
   staff_shifts: number;
   comment?: string | null;
+  weather?: string | null;
 };
 
 function addDay(iso: string) {

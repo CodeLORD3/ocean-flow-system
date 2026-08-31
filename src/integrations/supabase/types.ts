@@ -13181,6 +13181,66 @@ export type Database = {
           },
         ]
       }
+      store_weather_daily: {
+        Row: {
+          created_at: string
+          fetched_at: string
+          id: string
+          precipitation_mm: number | null
+          source: string
+          store_id: string
+          temp_max: number | null
+          temp_min: number | null
+          weather_code: number | null
+          weather_date: string
+          weather_text: string | null
+          windspeed_max: number | null
+        }
+        Insert: {
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          precipitation_mm?: number | null
+          source?: string
+          store_id: string
+          temp_max?: number | null
+          temp_min?: number | null
+          weather_code?: number | null
+          weather_date: string
+          weather_text?: string | null
+          windspeed_max?: number | null
+        }
+        Update: {
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          precipitation_mm?: number | null
+          source?: string
+          store_id?: string
+          temp_max?: number | null
+          temp_min?: number | null
+          weather_code?: number | null
+          weather_date?: string
+          weather_text?: string | null
+          windspeed_max?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_weather_daily_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_weather_daily_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           active: boolean
@@ -13194,13 +13254,16 @@ export type Database = {
           currency: string
           establishment_id: string | null
           fortnox_customer_number: string | null
+          geocoded_at: string | null
           hours: string | null
           id: string
           inventory_location_id: string | null
           is_wholesale: boolean | null
+          latitude: number | null
           legal_entity_id: string
           locale: string
           logo_url: string | null
+          longitude: number | null
           manager: string | null
           name: string
           phone: string | null
@@ -13209,6 +13272,7 @@ export type Database = {
           slug: string
           sqm: number | null
           unit_type: string
+          weather_timezone: string | null
           week_last_open_dow: number
           weekly_report_enabled: boolean
         }
@@ -13224,13 +13288,16 @@ export type Database = {
           currency: string
           establishment_id?: string | null
           fortnox_customer_number?: string | null
+          geocoded_at?: string | null
           hours?: string | null
           id?: string
           inventory_location_id?: string | null
           is_wholesale?: boolean | null
+          latitude?: number | null
           legal_entity_id: string
           locale: string
           logo_url?: string | null
+          longitude?: number | null
           manager?: string | null
           name: string
           phone?: string | null
@@ -13239,6 +13306,7 @@ export type Database = {
           slug: string
           sqm?: number | null
           unit_type?: string
+          weather_timezone?: string | null
           week_last_open_dow?: number
           weekly_report_enabled?: boolean
         }
@@ -13254,13 +13322,16 @@ export type Database = {
           currency?: string
           establishment_id?: string | null
           fortnox_customer_number?: string | null
+          geocoded_at?: string | null
           hours?: string | null
           id?: string
           inventory_location_id?: string | null
           is_wholesale?: boolean | null
+          latitude?: number | null
           legal_entity_id?: string
           locale?: string
           logo_url?: string | null
+          longitude?: number | null
           manager?: string | null
           name?: string
           phone?: string | null
@@ -13269,6 +13340,7 @@ export type Database = {
           slug?: string
           sqm?: number | null
           unit_type?: string
+          weather_timezone?: string | null
           week_last_open_dow?: number
           weekly_report_enabled?: boolean
         }
