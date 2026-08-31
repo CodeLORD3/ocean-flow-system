@@ -17,4 +17,4 @@
 - [x] Deploy och typ-/produktionsbygge verifierat
 
 ## Dokumentation
-- [ ] Blueprint för stämpelklockan (kod + ordagrann beskrivning av funktioner och kopplingar) — docs/stampelklocka-blueprint.md
+- [x] Blueprint för stämpelklockan (kod + ordagrann beskrivning av funktioner och kopplingar) — docs/stampelklocka-blueprint.md
