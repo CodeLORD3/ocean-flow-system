@@ -246,10 +246,7 @@ function EditDailyReportDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => {
-      if (nextOpen && report) setDraft(draftFromReport(report));
-      onOpenChange(nextOpen);
-    }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Ändra dagsrapport</DialogTitle>
