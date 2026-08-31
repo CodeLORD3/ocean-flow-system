@@ -151,6 +151,17 @@ export function WeeklyStoreReportsSection() {
     );
   };
 
+  const groupFilter = filter !== "all" && filter in REGION_LABELS ? filter : null;
+  const storeFilter = filter !== "all" && !groupFilter ? filter : null;
+  const scopeStoreIds = useMemo(() => {
+    if (storeFilter) return new Set([storeFilter]);
+    if (groupFilter === "SE_TOTAL") {
+      return new Set(stores.filter((store) => store.region === "vast" || store.region === "stockholm").map((store) => store.id));
+    }
+    if (groupFilter) return new Set(stores.filter((store) => store.region === groupFilter).map((store) => store.id));
+    return new Set(stores.filter((store) => store.region).map((store) => store.id));
+  }, [stores, groupFilter, storeFilter]);
+
   if (storeReports.isLoading || regionReports.isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -165,16 +176,7 @@ export function WeeklyStoreReportsSection() {
     return <p className="py-6 text-center text-sm text-muted-foreground">Inga veckorapporter ännu.</p>;
   }
 
-  const groupFilter = filter !== "all" && filter in REGION_LABELS ? filter : null;
-  const storeFilter = filter !== "all" && !groupFilter ? filter : null;
-  const scopeStoreIds = useMemo(() => {
-    if (storeFilter) return new Set([storeFilter]);
-    if (groupFilter === "SE_TOTAL") {
-      return new Set(stores.filter((store) => store.region === "vast" || store.region === "stockholm").map((store) => store.id));
-    }
-    if (groupFilter) return new Set(stores.filter((store) => store.region === groupFilter).map((store) => store.id));
-    return new Set(stores.filter((store) => store.region).map((store) => store.id));
-  }, [stores, groupFilter, storeFilter]);
+
   const latestWeek = weeks[0];
   const latestRegions = latestWeek
     ? regions.filter((row) => row.iso_year === latestWeek.iso_year && row.iso_week === latestWeek.iso_week)
