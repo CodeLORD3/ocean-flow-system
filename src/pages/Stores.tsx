@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { prepareUpload, COMPRESS_PHOTO, COMPRESS_AVATAR } from "@/lib/imageCompress";
 import { motion } from "framer-motion";
-import { MapPin, Phone, Clock, Edit, X, Save, Camera, Store as StoreIcon, CalendarRange } from "lucide-react";
+import { MapPin, Phone, Clock, Edit, X, Save, Camera, Store as StoreIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
