@@ -263,6 +263,33 @@ function WholesaleOrderAccordionRow({
   );
 }
 
+function WholesaleOrderRowHeader({
+  allSelected,
+  onSelectAll,
+}: {
+  allSelected: boolean;
+  onSelectAll: (next: boolean) => void;
+}) {
+  return (
+    <div className="hidden items-center border border-grid-line bg-grid-head text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:flex">
+      <span className="w-1 shrink-0" aria-hidden />
+      <span className="flex w-9 shrink-0 items-center justify-center border-r border-grid-line py-1">
+        <Checkbox checked={allSelected} onCheckedChange={(value) => onSelectAll(!!value)} aria-label="Markera alla" />
+      </span>
+      <span className="flex min-w-0 flex-1 items-center px-2.5 py-1">
+        <span className="w-36 shrink-0 border-r border-grid-line pr-2">Datum</span>
+        <span className="min-w-[11rem] flex-1 border-r border-grid-line px-3">Butik</span>
+        <span className="min-w-0 flex-[1.5] border-r border-grid-line px-3">Produkter</span>
+        <span className="w-16 shrink-0 border-r border-grid-line px-2 text-center">Rader</span>
+        <span className="w-32 shrink-0 border-r border-grid-line px-2">Status</span>
+        <span className="w-24 shrink-0 px-2 text-right">Summa</span>
+        <span className="ml-2 w-3.5 shrink-0" />
+      </span>
+      <span className="w-[156px] shrink-0" aria-hidden />
+    </div>
+  );
+}
+
 export default function WholesaleOrders() {
   const { toast } = useToast();
   const qc = useQueryClient();
