@@ -198,7 +198,11 @@ export function WeeklyStoreReportsSection() {
               <p className="mt-1 text-sm font-semibold">{summaryLabel}</p>
               <p className="text-xs text-muted-foreground">Vecka {latestWeek.iso_week} · {dateLabel(latestWeek.week_start)}–{dateLabel(latestWeek.week_end)}</p>
             </div>
-            <StatusBadge status={selectedSummary.status} drift={"drift_after_lock" in selectedSummary ? selectedSummary.drift_after_lock : false} />
+            <StatusBadge
+              status={selectedSummary.status}
+              drift={"drift_after_lock" in selectedSummary ? selectedSummary.drift_after_lock : false}
+              corrected={selectedSummary.corrected}
+            />
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className="rounded-md border bg-muted/20 px-3 py-2.5">
