@@ -40,9 +40,6 @@ function seDate(iso: string): string {
   return svenskDatum(iso);
 }
 
-function minutesBetween(a: string, b: string): number {
-  return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 60000);
-}
 
 function shiftBounds(date: string, start: string, end: string) {
   return passGranser(date, start, end);

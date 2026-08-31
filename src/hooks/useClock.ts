@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { svenskDagStart, svenskDagSista } from "@/lib/swedishTime";
 
 /**
  * Adminsidan av stämpelklockan (etapp 2).
@@ -142,8 +143,8 @@ export function useTimeEntries(from: string, to: string, storeId?: string | null
       let q = supabase
         .from("time_entries")
         .select("*")
-        .gte("occurred_at", `${from}T00:00:00`)
-        .lte("occurred_at", `${to}T23:59:59`)
+        .gte("occurred_at", svenskDagStart(from).toISOString())
+        .lte("occurred_at", svenskDagSista(to).toISOString())
         .order("occurred_at", { ascending: true });
       if (storeId) q = q.eq("store_id", storeId);
       const { data, error } = await q;

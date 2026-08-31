@@ -10,6 +10,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { svenskTid } from "@/lib/swedishTime";
 import {
   IndustryFrame,
   IndustryButton,
@@ -39,8 +40,7 @@ const ACTION_LABEL: Record<Action, string> = {
   rast_slut: "Rast slutar",
 };
 
-const timeOf = (iso: string) =>
-  new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+const timeOf = (iso: string) => svenskTid(iso).slice(0, 5);
 
 export default function Clock() {
   const [station, setStation] = useState<ClockStationInfo | null>(storedStation());

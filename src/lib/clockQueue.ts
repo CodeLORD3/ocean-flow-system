@@ -1,4 +1,5 @@
 import { punch, recordClockSyncFailure, type PunchContext } from "@/lib/clockApi";
+import { svenskTid } from "@/lib/swedishTime";
 
 const DB_NAME = "mt-clock";
 const DB_VERSION = 2;
@@ -69,7 +70,7 @@ export async function enqueuePunch(identifier: string, action: QueuedPunch["acti
     iv: Array.from(iv), cipher, action, occurred_at: occurredAt,
     work_site_id: context.workSiteId, cost_center: context.costCenter,
     latitude: context.latitude, longitude: context.longitude, accuracy_m: context.accuracyM,
-    label: `Stämpling köad ${new Date(occurredAt).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}`,
+    label: `Stämpling köad ${svenskTid(occurredAt).slice(0, 5)}`,
   } as QueuedPunch));
 }
 
