@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { svenskDagStart, svenskDagSista } from "@/lib/swedishTime";
+import { svenskDagStart, svenskDagSista, svenskDatum, svenskTidpunkt } from "@/lib/swedishTime";
 
 /**
  * Adminsidan av stämpelklockan (etapp 2).
@@ -289,7 +289,7 @@ export function usePkLoggedTimes(from: string, to: string, storeId?: string | nu
         if (!start) continue;
         rows.push({
           employee_id: byUrl.get(r.staff_url as string) ?? null,
-          day: start.slice(0, 10),
+          day: svenskDatum(start),
           start,
           stop,
           seconds: (r.work_time_sec as number | null) ?? 0,
