@@ -41,6 +41,7 @@ import {
   useAbsenceTypes,
   useCreateAbsenceRequest,
   useRegisterSickDay,
+  useVacationBalances,
 } from "@/hooks/useAbsence";
 import {
   DAY_NAMES,
