@@ -128,6 +128,20 @@ export default function SchedulePlanner() {
   );
   const pendingAbsenceRequests = absenceRequests.filter((request) => request.status === "pending");
 
+  /** Frånvaroblock per anställd — både beslutade och väntande spärrar passet. */
+  const absencesByEmployee = useMemo(() => {
+    const map = new Map<string, { from: string; to: string; label: string }[]>();
+    absenceRequests
+      .filter((request) => ["pending", "approved", "auto_approved"].includes(request.status))
+      .forEach((request) => {
+        const from = request.date_from ?? request.start_date;
+        const to = request.date_to ?? request.end_date ?? from;
+        const label = absenceTypeById.get(request.absence_type_id)?.name ?? "Frånvaro";
+        map.set(request.employee_id, [...(map.get(request.employee_id) ?? []), { from, to, label }]);
+      });
+    return map;
+  }, [absenceRequests, absenceTypeById]);
+
   const storeEmployments = useMemo(
     () => employments.filter((e) => e.store_id === storeId && e.is_active),
     [employments, storeId],
