@@ -536,15 +536,15 @@ export default function WholesaleOrders() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5 text-primary" /> Ordrar från butiker
+          <h1 className="flex items-center gap-2 font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            <ShoppingCart className="h-6 w-6 text-primary sm:h-7 sm:w-7" /> Ordrar från butiker
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Hantera inkomna beställningar från alla butiker. Uppdatera produktstatus i totalvyn.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Hantera inkomna beställningar från alla butiker. Uppdatera produktstatus i totalvyn.</p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs" onClick={() => setCreatingOrder(true)}>
-          <Plus className="h-3.5 w-3.5" /> Skapa order åt butik
+        <Button size="lg" className="h-12 gap-2 px-5 text-base" onClick={() => setCreatingOrder(true)}>
+          <Plus className="h-5 w-5" /> Skapa order åt butik
         </Button>
       </div>
 
@@ -685,15 +685,52 @@ export default function WholesaleOrders() {
         </CardContent></Card>
       </div>
 
-      <Tabs defaultValue="per-order" className="space-y-3">
-        <TabsList className="h-8">
-          <TabsTrigger value="per-order" className="text-xs h-7 gap-1"><Eye className="h-3 w-3" /> Per order</TabsTrigger>
-          <TabsTrigger value="total" className="text-xs h-7 gap-1"><ListChecks className="h-3 w-3" /> Totalvy</TabsTrigger>
-          <TabsTrigger value="delivered" className="text-xs h-7 gap-1"><Truck className="h-3 w-3" /> Levererade ({deliveredOrders.length})</TabsTrigger>
-          <TabsTrigger value="archived" className="text-xs h-7 gap-1"><Archive className="h-3 w-3" /> Arkiverade ({archivedOrders.length})</TabsTrigger>
-          <TabsTrigger value="changes" className="text-xs h-7 gap-1 relative">
-            <Bell className="h-3 w-3" /> Ändringar ({pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length})
-            {pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 bg-warning rounded-full animate-pulse" />}
+      <Tabs defaultValue="per-order" className="space-y-4">
+        <TabsList className="flex h-auto w-full flex-wrap items-stretch justify-start gap-1 rounded-sm border border-grid-line bg-card p-1">
+          <TabsTrigger
+            value="per-order"
+            className="flex min-h-11 items-center gap-2 whitespace-nowrap rounded-sm px-4 py-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+          >
+            <Eye className="h-4 w-4" /> Per order
+            <span className="rounded-sm bg-muted px-1.5 font-mono text-[11px] tabular-nums text-muted-foreground">
+              {activeOrders.length}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="total"
+            className="flex min-h-11 items-center gap-2 whitespace-nowrap rounded-sm px-4 py-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+          >
+            <ListChecks className="h-4 w-4" /> Totalvy
+          </TabsTrigger>
+          <TabsTrigger
+            value="delivered"
+            className="flex min-h-11 items-center gap-2 whitespace-nowrap rounded-sm px-4 py-2 text-sm text-muted-foreground data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground"
+          >
+            <Truck className="h-4 w-4" /> Levererade
+            <span className="rounded-sm bg-muted px-1.5 font-mono text-[11px] tabular-nums">{deliveredOrders.length}</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="archived"
+            className="flex min-h-11 items-center gap-2 whitespace-nowrap rounded-sm px-4 py-2 text-sm text-muted-foreground data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground"
+          >
+            <Archive className="h-4 w-4" /> Arkiverade
+            <span className="rounded-sm bg-muted px-1.5 font-mono text-[11px] tabular-nums">{archivedOrders.length}</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="changes"
+            className="relative flex min-h-11 items-center gap-2 whitespace-nowrap rounded-sm px-4 py-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <Bell className="h-4 w-4" /> Ändringar
+            {(() => {
+              const n = pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length;
+              return (
+                <span
+                  className={`rounded-sm px-1.5 font-mono text-[11px] tabular-nums ${n > 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"}`}
+                >
+                  {n}
+                </span>
+              );
+            })()}
           </TabsTrigger>
         </TabsList>
 
@@ -787,24 +824,24 @@ export default function WholesaleOrders() {
         <TabsContent value="per-order">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="relative min-w-[220px] flex-1">
+              <div className="relative min-w-[240px] flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Sök order, butik eller produkt"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="h-10 pl-9 text-sm"
+                  className="h-11 pl-9 text-sm"
                 />
               </div>
               <Select value={storeFilter} onValueChange={setStoreFilter}>
-                <SelectTrigger className="h-10 w-[180px] text-sm"><SelectValue placeholder="Alla butiker" /></SelectTrigger>
+                <SelectTrigger className="h-11 w-full text-sm sm:w-[200px]"><SelectValue placeholder="Alla butiker" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="alla">Alla butiker</SelectItem>
                   {retailStores.map((store: any) => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-10 w-[150px] text-sm"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-11 w-full text-sm sm:w-[170px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {["Alla", "Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map((status) => <SelectItem key={status} value={status}>{status === "Alla" ? "Alla statusar" : status}</SelectItem>)}
                 </SelectContent>
