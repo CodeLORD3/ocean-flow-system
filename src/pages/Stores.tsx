@@ -334,13 +334,11 @@ export default function Stores() {
               </div>
             </div>
             <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={form.weekly_report_enabled}
-                onChange={(e) => setForm(f => ({ ...f, weekly_report_enabled: e.target.checked }))}
-                className="h-4 w-4 accent-primary"
+                onCheckedChange={(checked) => setForm(f => ({ ...f, weekly_report_enabled: checked === true }))}
               />
-              Ingår i veckorapporter
+              <span>Ingår i veckorapporter</span>
             </label>
           </div>
 
