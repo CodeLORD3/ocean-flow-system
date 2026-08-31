@@ -225,11 +225,12 @@ export function useHandlePendingRegistration() {
       employee_id?: string | null;
     }) => {
       if (action === "approved") {
+        if (!employee_id) throw new Error("Välj en anställd innan registreringen godkänns.");
         // RPC:n flyttar klockidentiteten (pnr_hash) till personen så att
         // stämpling fungerar direkt efter godkännande.
         const { error } = await supabase.rpc("clock_pending_approve", {
           _id: id,
-          _employee_id: employee_id!,
+          _employee_id: employee_id,
         });
         if (error) throw error;
         return;

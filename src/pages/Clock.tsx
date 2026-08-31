@@ -147,15 +147,15 @@ export default function Clock() {
         return;
       }
       const res = await lookup(value);
-      if (res.status === "pending_registration") {
+      if (res.status === "pending_registration" || !res.employee) {
         setPending(res.message ?? "Registrering väntar på godkännande.");
         setIdentifier("");
         return;
       }
       setFound({
-        id: res.employee!.id,
-        first_name: res.employee!.first_name,
-        pnr_masked: res.employee!.pnr_masked,
+        id: res.employee.id,
+        first_name: res.employee.first_name,
+        pnr_masked: res.employee.pnr_masked,
         suggested: (res.suggested_action ?? "in") as Action,
       });
     } catch (e) {
@@ -194,12 +194,12 @@ export default function Clock() {
         return;
       }
       const res = await punch(value, action, occurredAt, context);
-      if (res.status === "pending_registration") {
+      if (res.status === "pending_registration" || !res.entry) {
         setPending(res.message ?? "Registrering väntar på godkännande.");
         setIdentifier("");
         return;
       }
-      showReceipt(res.employee?.first_name ?? name, action, res.entry!.occurred_at);
+      showReceipt(res.employee?.first_name ?? name, action, res.entry.occurred_at);
       void refreshOnSite();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stämplingen misslyckades";

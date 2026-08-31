@@ -65,18 +65,15 @@ GRANT SELECT, UPDATE ON public.clock_sync_failures TO authenticated;
 GRANT ALL ON public.clock_sync_failures TO service_role;
 ALTER TABLE public.clock_sync_failures ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "clock_sync_failures_read" ON public.clock_sync_failures;
 CREATE POLICY "clock_sync_failures_read" ON public.clock_sync_failures
   FOR SELECT TO authenticated
   USING (public.can_see_clock_store(store_id, legal_entity_id));
 
-DROP POLICY IF EXISTS "clock_sync_failures_handle" ON public.clock_sync_failures;
 CREATE POLICY "clock_sync_failures_handle" ON public.clock_sync_failures
   FOR UPDATE TO authenticated
   USING (public.can_see_clock_store(store_id, legal_entity_id))
   WITH CHECK (public.can_see_clock_store(store_id, legal_entity_id));
 
-DROP TRIGGER IF EXISTS clock_sync_failures_touch ON public.clock_sync_failures;
 CREATE TRIGGER clock_sync_failures_touch BEFORE UPDATE ON public.clock_sync_failures
   FOR EACH ROW EXECUTE FUNCTION public.hr_touch_updated_at();
 
@@ -101,7 +98,6 @@ GRANT SELECT ON public.pnr_access_log TO authenticated;
 GRANT ALL ON public.pnr_access_log TO service_role;
 ALTER TABLE public.pnr_access_log ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "pnr_access_log_admin_read" ON public.pnr_access_log;
 CREATE POLICY "pnr_access_log_admin_read" ON public.pnr_access_log
   FOR SELECT TO authenticated
   USING (public.is_platform_admin(auth.uid()) OR public.has_role(auth.uid(), 'admin'));
@@ -345,7 +341,6 @@ CREATE TABLE IF NOT EXISTS public.retention_log (
 GRANT SELECT ON public.retention_log TO authenticated;
 GRANT ALL ON public.retention_log TO service_role;
 ALTER TABLE public.retention_log ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS retention_log_admin_read ON public.retention_log;
 CREATE POLICY retention_log_admin_read ON public.retention_log FOR SELECT TO authenticated
   USING (public.is_platform_admin(auth.uid()) OR public.has_role(auth.uid(), 'admin'));
 

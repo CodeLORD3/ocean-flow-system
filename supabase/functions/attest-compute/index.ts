@@ -18,9 +18,9 @@ const cors = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
-const url = Deno.env.get("SUPABASE_URL")!;
-const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+const url = Deno.env.get("SUPABASE_URL") ?? "";
+const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
 const DEFAULT_TOLERANCE = 7;
 
@@ -117,7 +117,9 @@ Deno.serve(async (req) => {
   const byKey = new Map<string, Entry[]>();
   for (const e of entries) {
     const key = `${e.employee_id}|${seDate(e.occurred_at)}`;
-    (byKey.get(key) ?? byKey.set(key, []).get(key)!).push(e);
+    const grouped = byKey.get(key);
+    if (grouped) grouped.push(e);
+    else byKey.set(key, [e]);
   }
 
   const rows: Record<string, unknown>[] = [];
