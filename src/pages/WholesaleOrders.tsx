@@ -276,7 +276,7 @@ function WholesaleOrderRowHeader({
       <span className="flex min-w-0 flex-1 items-center px-2.5 py-1">
         <span className="w-36 shrink-0 border-r border-grid-line pr-2">Datum</span>
         <span className="min-w-[11rem] flex-1 border-r border-grid-line px-3">Butik</span>
-        <span className="min-w-0 flex-[1.5] border-r border-grid-line px-3">Produkter</span>
+        
         <span className="w-16 shrink-0 border-r border-grid-line px-2 text-center">Rader</span>
         <span className="w-32 shrink-0 border-r border-grid-line px-2">Status</span>
         <span className="w-24 shrink-0 px-2 text-right">Summa</span>
