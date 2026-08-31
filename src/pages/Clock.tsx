@@ -333,32 +333,22 @@ export default function Clock() {
               <h2 className="ind-h2">
                 Hej {found.first_name} {found.pnr_masked ? `(${found.pnr_masked})` : ""}
               </h2>
-              <p className="ind-muted text-sm">Föreslaget nästa steg: {ACTION_LABEL[found.suggested]}</p>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <IndustryButton variant="primary" size="kiosk" corners onClick={() => handlePunch("in")} disabled={busy}>
-                IN
-              </IndustryButton>
-              <IndustryButton variant="secondary" size="kiosk" onClick={() => handlePunch("ut")} disabled={busy}>
-                UT
-              </IndustryButton>
-              <IndustryButton
-                variant="secondary"
-                size="kiosk"
-                onClick={() => handlePunch(found.suggested === "rast_slut" ? "rast_slut" : "rast_start")}
-                disabled={busy}
-              >
-                RAST
-              </IndustryButton>
+              {VALID_ACTIONS[found.suggested].includes("in") && (
+                <IndustryButton variant={found.suggested === "in" ? "primary" : "secondary"} size="kiosk" corners onClick={() => handlePunch("in")} disabled={busy}>IN</IndustryButton>
+              )}
+              {VALID_ACTIONS[found.suggested].includes("ut") && (
+                <IndustryButton variant={found.suggested === "ut" ? "primary" : "secondary"} size="kiosk" corners={found.suggested === "ut"} onClick={() => handlePunch("ut")} disabled={busy}>UT</IndustryButton>
+              )}
+              {VALID_ACTIONS[found.suggested].includes("rast_start") && (
+                <IndustryButton variant={found.suggested === "rast_start" ? "primary" : "secondary"} size="kiosk" corners={found.suggested === "rast_start"} onClick={() => handlePunch("rast_start")} disabled={busy}>Rast börjar</IndustryButton>
+              )}
+              {VALID_ACTIONS[found.suggested].includes("rast_slut") && (
+                <IndustryButton variant="primary" size="kiosk" corners onClick={() => handlePunch("rast_slut")} disabled={busy}>Rast slutar</IndustryButton>
+              )}
             </div>
-            <div className="flex gap-3">
-              <IndustryButton variant="ghost" size="touch" onClick={() => handlePunch("rast_slut")} disabled={busy}>
-                Rast slutar
-              </IndustryButton>
-              <IndustryButton variant="ghost" size="touch" onClick={reset}>
-                Avbryt
-              </IndustryButton>
-            </div>
+            <IndustryButton variant="ghost" size="touch" onClick={reset}>Avbryt</IndustryButton>
           </div>
         ) : (
           <div className="space-y-6">
