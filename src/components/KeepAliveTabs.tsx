@@ -36,6 +36,7 @@ import LiveStaff from "@/pages/LiveStaff";
 import Personalkollen from "@/pages/Integrations/Personalkollen";
 import ClockStations from "@/pages/ClockStations";
 import TimeEntriesPage from "@/pages/TimeEntriesPage";
+import MyTime from "@/pages/MyTime";
 import StaffRules from "@/pages/StaffRules";
 import PayrollExports from "@/pages/PayrollExports";
 import PayrollReview from "@/pages/PayrollReview";
@@ -132,6 +133,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/personalkollen": { component: <Personalkollen /> },
   "/clock-stations": { component: <ClockStations /> },
   "/time-entries": { component: <TimeEntriesPage /> },
+  "/my-time": { component: <MyTime /> },
   "/staff-rules": { component: <StaffRules /> },
   "/payroll-exports": { component: <PayrollExports /> },
   "/payroll-review": { component: <PayrollReview /> },

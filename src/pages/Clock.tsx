@@ -181,6 +181,7 @@ export default function Clock() {
     setError(null);
     const occurredAt = new Date().toISOString();
     const context = {
+      clientPunchId: crypto.randomUUID(),
       workSiteId: activeSite?.id,
       costCenter: activeSite?.posting_cost_center,
       ...(await readPosition()),
