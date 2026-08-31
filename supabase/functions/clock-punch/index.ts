@@ -155,7 +155,32 @@ Deno.serve(async (req) => {
 
   const occurredAt = occurredAtInput ?? new Date().toISOString();
   const roundedAt = action === "in" || action === "ut" ? applyRounding(occurredAt, station.profile) : occurredAt;
+
+  // Idempotens: samma knapptryck (client_punch_id) får aldrig bli två journalrader,
+  // hur många gånger offlinekön än försöker synka om.
+  const clientPunchId = typeof body.client_punch_id === "string" && /^[0-9a-f-]{36}$/i.test(body.client_punch_id)
+    ? body.client_punch_id
+    : null;
+  if (clientPunchId) {
+    const { data: existing } = await db
+      .from("time_entries")
+      .select("id, type, occurred_at, registered_at, work_site_id, cost_center, geofence_ok")
+      .eq("employee_id", hit.id)
+      .eq("client_punch_id", clientPunchId)
+      .maybeSingle();
+    if (existing) {
+      return json(req, {
+        status: "punched",
+        duplicate: true,
+        entry: existing,
+        employee: { first_name: hit.first_name, pnr_masked: hit.pnr_masked },
+        expires_at: expiresAt,
+      });
+    }
+  }
+
   const { data: inserted, error } = await db.from("time_entries").insert({
+    client_punch_id: clientPunchId,
     employee_id: hit.id,
     station_id: station.id,
     store_id: station.store_id,
