@@ -7,6 +7,8 @@ import type { Json } from "@/integrations/supabase/types";
 import { useQuery } from "@tanstack/react-query";
 import { IndustryButton, IndustryFrame, IndustryInput, IndustryRow, SectionLabel, StatusLabel } from "@/components/industry";
 
+const callWorktimeRpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>;
+
 interface PayrollRow { employeeId: string; regular: number; ob50: number; ob70: number; ob100: number; overtime: number; mertid: number; missingWage: boolean; source: Record<string, unknown>; }
 interface Workday { regular_minutes: number; ob50_minutes: number; ob70_minutes: number; ob100_minutes: number; overtime_minutes: number; mertid_minutes: number; missing_wage_code: boolean; }
 const dateValue = (date: Date) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(date);
@@ -25,7 +27,7 @@ export default function PayrollExports() {
     enabled: employees.length > 0,
     queryFn: async () => {
       const results = await Promise.all(employees.map(async (employee) => {
-        const { data, error } = await supabase.rpc("berakna_arbetstid", { _employee_id: employee.id, _from: from, _to: to });
+        const { data, error } = await callWorktimeRpc("berakna_arbetstid", { _employee_id: employee.id, _from: from, _to: to });
         if (error) throw error;
         return { employeeId: employee.id, days: (data ?? []) as Workday[] };
       }));

@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { IndustryButton, IndustryFrame, IndustryInput, IndustryRow, SectionLabel, StatusLabel } from "@/components/industry";
 
+const callWorktimeRpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>;
+
 const dateValue = (date: Date) => {
   const parts = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date);
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
@@ -45,7 +47,7 @@ export default function MyTime() {
     enabled: Boolean(employeeIds.data?.length),
     queryFn: async () => {
       const rows = await Promise.all((employeeIds.data ?? []).map(async (employeeId) => {
-        const { data, error } = await supabase.rpc("berakna_arbetstid", { _employee_id: employeeId, _from: from, _to: to });
+        const { data, error } = await callWorktimeRpc("berakna_arbetstid", { _employee_id: employeeId, _from: from, _to: to });
         if (error) throw error;
         return (data ?? []) as Workday[];
       }));
