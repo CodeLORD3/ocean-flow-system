@@ -481,8 +481,9 @@ Deno.serve(async (req) => {
   // Förmåner
   const attendanceDays = new Map<string, Set<string>>();
   (attestations as Attestation[]).forEach((att) => {
-    if (!attendanceDays.has(att.employee_id)) attendanceDays.set(att.employee_id, new Set());
-    attendanceDays.get(att.employee_id)!.add(att.date);
+    const days = attendanceDays.get(att.employee_id);
+    if (days) days.add(att.date);
+    else attendanceDays.set(att.employee_id, new Set([att.date]));
   });
 
   for (const benefit of benefits as {
