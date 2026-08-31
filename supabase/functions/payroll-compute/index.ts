@@ -359,6 +359,37 @@ Deno.serve(async (req) => {
     return round2((gross + vacation) * (1 + rate / 100));
   };
 
+  /**
+   * En enda beräkningsmotor: OB, mertid och övertid hämtas från
+   * public.berakna_arbetstid i databasen. Den här funktionen räknar inte längre
+   * om tiden själv — den översätter motorns minuter till lönerader och kronor.
+   */
+  type Workday = {
+    arbetsdag: string;
+    regular_minutes: number;
+    ob50_minutes: number;
+    ob70_minutes: number;
+    ob100_minutes: number;
+    mertid_minutes: number;
+    overtime_minutes: number;
+    break_minutes: number;
+    total_minutes: number;
+    missing_wage_code: boolean;
+  };
+  const worktime = new Map<string, Workday>();
+  for (const employeeId of employeeIds) {
+    const { data, error } = await db.rpc("berakna_arbetstid", { _employee_id: employeeId, _from: from, _to: to });
+    if (error) {
+      issues.push({ kind: "worktime_engine_failed", detail: error.message, employee_id: employeeId });
+      continue;
+    }
+    for (const day of (data ?? []) as Workday[]) worktime.set(`${employeeId}|${day.arbetsdag}`, day);
+  }
+
+  /** OB-koden hämtas ur avtalspolicyn utifrån procentsatsen, med fast fallback. */
+  const obCodeFor = (policy: Policy | undefined, pct: number, fallback: string) =>
+    (policy?.ob_levels ?? []).find((level) => Number(level.pct) === pct)?.code ?? fallback;
+
   for (const att of attestations as Attestation[]) {
     const emp = employmentByEmployee.get(att.employee_id);
     if (!emp) continue;
@@ -371,15 +402,10 @@ Deno.serve(async (req) => {
       continue;
     }
     const policy = policyFor(emp.agreement_area);
-    const minutes = att.approved_minutes ?? Number(att.computed?.clocked_minutes ?? att.computed?.scheduled_minutes ?? 0);
+    const day = worktime.get(`${att.employee_id}|${att.date}`);
+    const minutes = att.approved_minutes ?? Number(day?.total_minutes ?? att.computed?.clocked_minutes ?? att.computed?.scheduled_minutes ?? 0);
     if (minutes <= 0) continue;
-
-    const firstIn = typeof att.computed?.first_in === "string" ? att.computed.first_in : null;
-    const startMinute = firstIn
-      ? minutesOfDay(new Date(firstIn).toLocaleTimeString("sv-SE", { timeZone: "Europe/Stockholm", hour: "2-digit", minute: "2-digit" }))
-      : minutesOfDay((shiftByKey.get(`${att.employee_id}|${att.date}`)?.start_time ?? "08:00").slice(0, 5));
-
-    const { plainMinutes, obMinutes } = splitOb(att.date, startMinute, minutes, policy?.ob_levels ?? [], holidays);
+    if (day?.missing_wage_code) issues.push({ kind: "missing_wage_code", detail: `OB-period ${att.date} saknar löneart`, employee_id: att.employee_id });
     const costCenter = emp.cost_center ?? null;
 
     // Timavlönade får ARB-timmar, månadsavlönade endast avvikelser (TID som referens)
@@ -394,68 +420,47 @@ Deno.serve(async (req) => {
       });
     }
 
-    for (const [code, obMin] of obMinutes) {
+    for (const [pct, obMin, fallback] of [
+      [50, Number(day?.ob50_minutes ?? 0), "OB50"],
+      [70, Number(day?.ob70_minutes ?? 0), "OB70"],
+      [100, Number(day?.ob100_minutes ?? 0), "OB100"],
+    ] as [number, number, string][]) {
       if (obMin <= 0) continue;
+      const code = obCodeFor(policy, pct, fallback);
       if (mapped.size && !mapped.has(code)) issues.push({ kind: "missing_wage_code", detail: code, employee_id: att.employee_id });
-      const level = (policy?.ob_levels ?? []).find((l) => l.code === code);
       push({
         store_id: att.store_id, employee_id: att.employee_id, employment_id: emp.id,
         line_type: code, line_date: att.date, quantity: round2(obMin / 60),
         cost_center: costCenter, source_ref: att.id, source_type: "attestation",
-        note: level?.name ?? null,
-        preliminary_cost: costOf(emp, obMin / 60, Number(level?.pct ?? 0), policy),
+        note: `OB ${pct} % enligt databasmotorn`,
+        preliminary_cost: costOf(emp, obMin / 60, pct, policy),
       });
     }
-    void plainMinutes;
 
-    // Mertid för deltid: tid över schemalagd tid samma dag
-    const shift = shiftByKey.get(`${att.employee_id}|${att.date}`);
-    const scheduled = shift
-      ? Math.max(0, minutesOfDay(shift.end_time.slice(0, 5)) - minutesOfDay(shift.start_time.slice(0, 5)) - (shift.break_minutes ?? 0))
-      : 0;
-    const extra = scheduled > 0 ? minutes - scheduled : 0;
-    const partTime = Number(emp.employment_rate ?? 100) < 100;
-    const extraRules = (policy?.overtime_rules as { part_time_extra?: { valid_from?: string; first_hours_per_day?: number; first_pct?: number; rest_pct?: number } })?.part_time_extra;
-    if (extra > 0 && partTime) {
-      const ruleActive = !extraRules?.valid_from || att.date >= extraRules.valid_from;
-      const firstBlock = ruleActive ? Math.min(extra, (extraRules?.first_hours_per_day ?? 2) * 60) : extra;
-      const restBlock = extra - firstBlock;
+    // Mertid för deltid — beräknad i databasen mot veckomåttet.
+    const extraRules = (policy?.overtime_rules as { part_time_extra?: { first_pct?: number } })?.part_time_extra;
+    const mertid = Number(day?.mertid_minutes ?? 0);
+    if (mertid > 0) {
       if (mapped.size && !mapped.has("MER")) issues.push({ kind: "missing_wage_code", detail: "MER", employee_id: att.employee_id });
-      if (firstBlock > 0) {
-        push({
-          store_id: att.store_id, employee_id: att.employee_id, employment_id: emp.id,
-          line_type: "MER", line_date: att.date, quantity: round2(firstBlock / 60),
-          cost_center: costCenter, source_ref: att.id, source_type: "attestation",
-          note: `Mertid ${ruleActive ? extraRules?.first_pct ?? 35 : 0} %`,
-          preliminary_cost: costOf(emp, firstBlock / 60, ruleActive ? Number(extraRules?.first_pct ?? 35) : 0, policy),
-        });
-      }
-      if (restBlock > 0) {
-        push({
-          store_id: att.store_id, employee_id: att.employee_id, employment_id: emp.id,
-          line_type: "MER", line_date: att.date, quantity: round2(restBlock / 60),
-          cost_center: costCenter, source_ref: att.id, source_type: "attestation",
-          note: `Mertid ${extraRules?.rest_pct ?? 70} %`,
-          preliminary_cost: costOf(emp, restBlock / 60, Number(extraRules?.rest_pct ?? 70), policy),
-        });
-      }
+      push({
+        store_id: att.store_id, employee_id: att.employee_id, employment_id: emp.id,
+        line_type: "MER", line_date: att.date, quantity: round2(mertid / 60),
+        cost_center: costCenter, source_ref: att.id, source_type: "attestation",
+        note: `Mertid ${extraRules?.first_pct ?? 35} %`,
+        preliminary_cost: costOf(emp, mertid / 60, Number(extraRules?.first_pct ?? 35), policy),
+      });
     }
 
-    // Övertid: veckotröskel per avtalsområde
-    const weekKey = `${att.employee_id}|${isoWeekKey(att.date)}`;
-    const before = weeklyMinutes.get(weekKey) ?? 0;
-    const after = before + minutes;
-    weeklyMinutes.set(weekKey, after);
-    const threshold = Number((policy?.overtime_rules as { weekly_threshold_hours?: number })?.weekly_threshold_hours ?? 40) * 60;
-    const overtime = Math.max(0, after - Math.max(before, threshold));
-    if (after > threshold && overtime > 0 && !partTime) {
+    // Övertid — veckotröskeln avgörs av databasmotorn.
+    const overtime = Number(day?.overtime_minutes ?? 0);
+    if (overtime > 0) {
       const pct = Number((policy?.overtime_rules as { ot_first_pct?: number })?.ot_first_pct ?? 50);
       if (mapped.size && !mapped.has("OT1")) issues.push({ kind: "missing_wage_code", detail: "OT1", employee_id: att.employee_id });
       push({
         store_id: att.store_id, employee_id: att.employee_id, employment_id: emp.id,
         line_type: "OT1", line_date: att.date, quantity: round2(overtime / 60),
         cost_center: costCenter, source_ref: att.id, source_type: "attestation",
-        note: `Övertid ${pct} % över ${threshold / 60} h/vecka`,
+        note: `Övertid ${pct} % enligt databasmotorn`,
         preliminary_cost: costOf(emp, overtime / 60, pct, policy),
       });
     }
