@@ -191,9 +191,6 @@ function WholesaleOrderAccordionRow({
         : order.status === "Pågående"
           ? { row: "bg-row-warn", hover: "hover:bg-row-warn-hover", edge: "bg-row-warn-edge", chip: "bg-card text-row-warn-text border-row-warn-edge" }
           : { row: "bg-row-neutral", hover: "hover:bg-row-neutral-hover", edge: "bg-border", chip: "bg-card text-muted-foreground border-grid-line" };
-  const productsText = (order.shop_order_lines || [])
-    .map((line: any) => `${line.products?.name || "Okänd"} (${line.quantity_ordered || 0} ${line.unit || line.products?.unit || ""})`)
-    .join(", ") || "Inga produkter";
   const orderLines = order.shop_order_lines?.length || 0;
   const statusChip = (
     <span className={`inline-flex flex-nowrap items-center gap-1 whitespace-nowrap rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight ${rowTone.chip}`}>
@@ -220,7 +217,6 @@ function WholesaleOrderAccordionRow({
           <div className="hidden min-h-5 w-full min-w-0 items-center text-xs sm:flex">
             <span className="w-36 shrink-0 border-r border-grid-line/70 pr-3 font-mono text-[11px] font-semibold tabular-nums">{day}<span className="block text-[10px] font-normal text-muted-foreground">{displayOrderWeek(order)}</span></span>
             <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "text-[13px] font-bold tracking-tight" : "font-semibold"}`}>{order.stores?.name || "Okänd butik"}<span className="block text-[10px] font-normal text-muted-foreground">{order.created_by || "–"}</span></span>
-            <span className="min-w-0 flex-[1.5] truncate border-r border-grid-line/70 px-3 text-muted-foreground">{productsText}</span>
             <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 text-center font-mono text-[10px] tabular-nums text-muted-foreground">{orderLines} rader</span>
             <span className="flex w-32 shrink-0 items-center overflow-hidden border-r border-grid-line/70 px-2">{statusChip}</span>
             <span className="w-24 shrink-0 px-2 text-right font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</span>
@@ -232,7 +228,6 @@ function WholesaleOrderAccordionRow({
               <ChevronDown className={`mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
             </div>
             <div className="flex flex-wrap items-center gap-1.5">{statusChip}<span className="font-mono text-[11px] text-muted-foreground">{day} · {orderLines} rader</span></div>
-            <div className="line-clamp-2 text-xs text-muted-foreground">{productsText}</div>
             <div className="font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</div>
           </div>
         </button>
@@ -281,7 +276,7 @@ function WholesaleOrderRowHeader({
       <span className="flex min-w-0 flex-1 items-center px-2.5 py-1">
         <span className="w-36 shrink-0 border-r border-grid-line pr-2">Datum</span>
         <span className="min-w-[11rem] flex-1 border-r border-grid-line px-3">Butik</span>
-        <span className="min-w-0 flex-[1.5] border-r border-grid-line px-3">Produkter</span>
+        
         <span className="w-16 shrink-0 border-r border-grid-line px-2 text-center">Rader</span>
         <span className="w-32 shrink-0 border-r border-grid-line px-2">Status</span>
         <span className="w-24 shrink-0 px-2 text-right">Summa</span>
