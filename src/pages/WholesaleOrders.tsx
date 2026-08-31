@@ -172,6 +172,15 @@ export default function WholesaleOrders() {
     return !allowedWeekdays.has(isoDay);
   };
 
+  const selectedDeliveryRange = useMemo(() => {
+    if (!newOrderDeliveryDate) return null;
+    const start = mondayOf(newOrderDeliveryDate);
+    return weekRange(start);
+  }, [newOrderDeliveryDate]);
+  const decisionNeeds = useCustomerNeedByProduct(selectedDeliveryRange?.from ?? "", selectedDeliveryRange?.to ?? "", selectedCustomer?.store_id ?? null);
+  const outstandingOrdered = useOutstandingOrdered(null);
+  const historyStats = useOrderHistoryStats(4);
+
   const filteredNewProducts = products.filter(p =>
     newProductSearch &&
     (p.name.toLowerCase().includes(newProductSearch.toLowerCase()) ||
