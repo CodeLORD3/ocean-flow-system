@@ -8,3 +8,10 @@
 - [ ] Manuell produktmatchning (kandidatförslag, aldrig automatisk)
 - [ ] Navigation/behörighet + mobil/surfplatta, utan att ändra befintlig styling
 - [ ] Verifiering: veckofilter på leveransdatum, statusfall, separation leveransavvikelse vs behovsdifferens
+
+## Personalmodul: stämpelklocka — Etapp 3 koppling
+- [x] Driftställe och kostnadsställe i stämplingsflödet
+- [x] Geolocation/geofence-validering server-side
+- [x] Krypterad offlinekö med plats- och kostnadskontext
+- [x] Tidsbegränsat inspektörsläge med sessionsjournal
+- [x] Deploy och typ-/produktionsbygge verifierat
