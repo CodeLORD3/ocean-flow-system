@@ -60,6 +60,7 @@ import {
   useDecideShiftRequest,
   useShiftHistory,
 } from "@/hooks/useSchedule";
+import { useAbsenceRequests, useAbsenceTypes, useDecideAbsenceRequest } from "@/hooks/useAbsence";
 import { useAttestations, DEVIATION_LABEL } from "@/hooks/useAttest";
 import {
   DAY_NAMES,
@@ -109,6 +110,8 @@ export default function SchedulePlanner() {
   const { data: competencies = [] } = useEmployeeCompetencies();
   const { data: attestations = [] } = useAttestations(storeId || null, week[0], week[6]);
   const { data: requests = [] } = useShiftRequests(shifts.map((s) => s.id));
+  const { data: absenceRequests = [] } = useAbsenceRequests(undefined, storeId || null);
+  const { data: absenceTypes = [] } = useAbsenceTypes();
 
   const saveShift = useSaveShift();
   const deleteShift = useDeleteShift();
@@ -116,7 +119,14 @@ export default function SchedulePlanner() {
   const fromTemplates = useCreateWeekFromTemplates();
   const copyWeek = useCopyWeek();
   const decideRequest = useDecideShiftRequest();
+  const decideAbsenceRequest = useDecideAbsenceRequest();
   const { data: history = [] } = useShiftHistory(historyFor);
+  const absenceTypeById = useMemo(() => new Map(absenceTypes.map((type) => [type.id, type])), [absenceTypes]);
+  const nameByEmployeeId = useMemo(
+    () => new Map(employees.map((employee) => [employee.id, `${employee.first_name} ${employee.last_name}`])),
+    [employees],
+  );
+  const pendingAbsenceRequests = absenceRequests.filter((request) => request.status === "pending");
 
   const storeEmployments = useMemo(
     () => employments.filter((e) => e.store_id === storeId && e.is_active),

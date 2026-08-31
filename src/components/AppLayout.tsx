@@ -9,7 +9,8 @@ import { BugReportButton } from "@/components/BugReportButton";
 
 
 import { useLocation, useNavigate } from "react-router-dom";
-import { Bell, ChevronRight, Search, User, UserRound, ArrowLeftRight, Factory, Store, ChevronDown, X, Check, LogOut, Shield } from "lucide-react";
+import { ChevronRight, Search, User, UserRound, ArrowLeftRight, Factory, Store, ChevronDown, X, Check, LogOut, Shield } from "lucide-react";
+import { HrNotificationCenter } from "@/components/HrNotificationCenter";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -267,10 +268,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
 
 
+               <HrNotificationCenter />
 
-              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8">
-                <Bell className="h-4 w-4" />
-              </Button>
 
               <AccountMenu />
             </div>
