@@ -2555,6 +2555,47 @@ export type Database = {
           },
         ]
       }
+      customer_product_matches: {
+        Row: {
+          confirmed_by: string | null
+          confirmed_by_name: string | null
+          created_at: string
+          id: string
+          match_key: string
+          product_id: string
+          source_name: string
+          updated_at: string
+        }
+        Insert: {
+          confirmed_by?: string | null
+          confirmed_by_name?: string | null
+          created_at?: string
+          id?: string
+          match_key: string
+          product_id: string
+          source_name: string
+          updated_at?: string
+        }
+        Update: {
+          confirmed_by?: string | null
+          confirmed_by_name?: string | null
+          created_at?: string
+          id?: string
+          match_key?: string
+          product_id?: string
+          source_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_product_matches_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_retail_notes: {
         Row: {
           body: string
@@ -8827,6 +8868,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      purchase_reconciliation_settings: {
+        Row: {
+          average_weeks: number
+          created_at: string
+          id: string
+          surplus_warn_pct: number
+          updated_at: string
+        }
+        Insert: {
+          average_weeks?: number
+          created_at?: string
+          id?: string
+          surplus_warn_pct?: number
+          updated_at?: string
+        }
+        Update: {
+          average_weeks?: number
+          created_at?: string
+          id?: string
+          surplus_warn_pct?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       purchase_report_lines: {
         Row: {
