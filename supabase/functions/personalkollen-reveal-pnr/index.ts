@@ -76,6 +76,12 @@ Deno.serve(async (req) => {
     entity_id: row.id,
     user_id: user.id,
   });
+  await db.from("pnr_access_log").insert({
+    accessed_by: user.id,
+    employee_id: null,
+    inspector_session_id: typeof body.inspector_session_id === "string" ? body.inspector_session_id : null,
+    reason: typeof body.reason === "string" ? body.reason.slice(0, 300) : "Administrativ visning",
+  });
 
   return json({ personal_identification_number: value });
 });
