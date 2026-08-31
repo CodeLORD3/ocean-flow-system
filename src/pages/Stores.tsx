@@ -303,6 +303,44 @@ export default function Stores() {
                 Veckorapportens inventering bokförs mot den här platsen. Utpekad plats, ingen namnmatchning.
               </p>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Region</Label>
+                <Select value={form.region || "none"} onValueChange={(v) => setForm(f => ({ ...f, region: v === "none" ? "" : v }))}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj region" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-xs">Ingen region</SelectItem>
+                    <SelectItem value="vast" className="text-xs">Göteborg</SelectItem>
+                    <SelectItem value="stockholm" className="text-xs">Stockholm</SelectItem>
+                    <SelectItem value="schweiz" className="text-xs">Schweiz</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Veckans sista öppetdag</Label>
+                <Select value={String(form.week_last_open_dow)} onValueChange={(v) => setForm(f => ({ ...f, week_last_open_dow: Number(v) }))}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1" className="text-xs">Måndag</SelectItem>
+                    <SelectItem value="2" className="text-xs">Tisdag</SelectItem>
+                    <SelectItem value="3" className="text-xs">Onsdag</SelectItem>
+                    <SelectItem value="4" className="text-xs">Torsdag</SelectItem>
+                    <SelectItem value="5" className="text-xs">Fredag</SelectItem>
+                    <SelectItem value="6" className="text-xs">Lördag</SelectItem>
+                    <SelectItem value="7" className="text-xs">Söndag</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={form.weekly_report_enabled}
+                onChange={(e) => setForm(f => ({ ...f, weekly_report_enabled: e.target.checked }))}
+                className="h-4 w-4 accent-primary"
+              />
+              Ingår i veckorapporter
+            </label>
           </div>
 
           <DialogFooter>
