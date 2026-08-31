@@ -85,7 +85,9 @@ export function randomToken(bytes = 32): string {
     .join("");
 }
 
-export const SESSION_TTL_MINUTES = 720; // 12 h, förnyas vid varje anrop
+/** Sessionen förnyas i 12-timmarssteg men kan aldrig leva längre än ett dygn. */
+export const SESSION_TTL_MINUTES = 720;
+export const SESSION_ABSOLUTE_MINUTES = 1440;
 
 export interface Station {
   id: string;
@@ -97,10 +99,9 @@ export interface Station {
 }
 
 export interface ClockProfile {
+  /** Avrundning för löneunderlag. Faktisk stämplingstid sparas alltid orörd. */
   rounding?: { mode?: string; step?: number; direction?: string };
-  break?: { mode?: string; auto_after_hours?: number; auto_minutes?: number };
   tolerance_minutes?: number;
-  geofence?: boolean;
 }
 
 /** Läser stationstoken från header eller body och förnyar sessionen. */
@@ -115,11 +116,18 @@ export async function requireStation(
   const hash = await sessionTokenHash(token);
   const { data: session } = await db
     .from("clock_station_sessions")
-    .select("id, station_id, expires_at")
+    .select("id, station_id, expires_at, absolute_expires_at, created_at")
     .eq("token_hash", hash)
     .maybeSingle();
   if (!session) return null;
-  if (new Date(session.expires_at as string).getTime() < Date.now()) {
+
+  const now = Date.now();
+  const absolute = new Date(
+    (session.absolute_expires_at as string | null) ??
+      new Date(new Date(session.created_at as string).getTime() + SESSION_ABSOLUTE_MINUTES * 60_000),
+  ).getTime();
+  const expired = new Date(session.expires_at as string).getTime() < now || absolute < now;
+  if (expired) {
     await db.from("clock_station_sessions").delete().eq("id", session.id);
     return null;
   }
@@ -130,7 +138,10 @@ export async function requireStation(
     .maybeSingle();
   if (!station || station.status !== "active") return null;
 
-  const expiresAt = new Date(Date.now() + SESSION_TTL_MINUTES * 60_000).toISOString();
+  // Förnyelsen får aldrig sträcka sig förbi det absoluta taket.
+  const expiresAt = new Date(
+    Math.min(now + SESSION_TTL_MINUTES * 60_000, absolute),
+  ).toISOString();
   await db
     .from("clock_station_sessions")
     .update({ expires_at: expiresAt, last_used_at: new Date().toISOString() })
@@ -143,7 +154,13 @@ export async function requireStation(
   return { station: station as unknown as Station, sessionId: session.id as string, expiresAt };
 }
 
-/** Max 5 uppslagsförsök per minut per station. */
+/**
+ * Spärren räknar misslyckade uppslag, inte lyckade stämplingar.
+ *
+ * En station med kö av personal ska aldrig bli spärrad av att många personer
+ * stämplar samma minut. Däremot spärras en station som gissar personnummer:
+ * fem misslyckade uppslag inom en minut ger tio minuters karens.
+ */
 export async function checkRateLimit(
   db: SupabaseClient,
   stationId: string,
@@ -152,19 +169,52 @@ export async function checkRateLimit(
   const bucket = new Date(Math.floor(Date.now() / 60_000) * 60_000).toISOString();
   const { data } = await db
     .from("clock_rate_limits")
-    .select("attempts")
+    .select("attempts, failure_count, blocked_until")
     .eq("station_id", stationId)
     .eq("minute_bucket", bucket)
     .maybeSingle();
-  const attempts = (data?.attempts as number | undefined) ?? 0;
-  if (attempts >= max) return false;
-  await db
-    .from("clock_rate_limits")
-    .upsert(
-      { station_id: stationId, minute_bucket: bucket, attempts: attempts + 1 },
-      { onConflict: "station_id,minute_bucket" },
-    );
+  const blockedUntil = data?.blocked_until as string | null | undefined;
+  if (blockedUntil && new Date(blockedUntil).getTime() > Date.now()) return false;
+  const failures = (data?.failure_count as number | undefined) ?? 0;
+  if (failures >= max) return false;
+  await db.from("clock_rate_limits").upsert(
+    {
+      station_id: stationId,
+      minute_bucket: bucket,
+      attempts: ((data?.attempts as number | undefined) ?? 0) + 1,
+      failure_count: failures,
+    },
+    { onConflict: "station_id,minute_bucket" },
+  );
   return true;
+}
+
+/** Registrerar ett misslyckat uppslag och spärrar stationen vid upprepning. */
+export async function registerFailedLookup(
+  db: SupabaseClient,
+  stationId: string,
+  max = 5,
+  blockMinutes = 10,
+): Promise<void> {
+  const bucket = new Date(Math.floor(Date.now() / 60_000) * 60_000).toISOString();
+  const { data } = await db
+    .from("clock_rate_limits")
+    .select("attempts, failure_count")
+    .eq("station_id", stationId)
+    .eq("minute_bucket", bucket)
+    .maybeSingle();
+  const failures = ((data?.failure_count as number | undefined) ?? 0) + 1;
+  await db.from("clock_rate_limits").upsert(
+    {
+      station_id: stationId,
+      minute_bucket: bucket,
+      attempts: (data?.attempts as number | undefined) ?? failures,
+      failure_count: failures,
+      blocked_until:
+        failures >= max ? new Date(Date.now() + blockMinutes * 60_000).toISOString() : null,
+    },
+    { onConflict: "station_id,minute_bucket" },
+  );
 }
 
 /** Avrundar enligt stationsprofilen. */
