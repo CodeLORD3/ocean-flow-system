@@ -4562,6 +4562,7 @@ export type Database = {
           id: string
           next_attempt_at: string | null
           payload: Json
+          read_at: string | null
           recipient: string | null
           sent_at: string | null
           status: string
@@ -4581,6 +4582,7 @@ export type Database = {
           id?: string
           next_attempt_at?: string | null
           payload?: Json
+          read_at?: string | null
           recipient?: string | null
           sent_at?: string | null
           status?: string
@@ -4600,6 +4602,7 @@ export type Database = {
           id?: string
           next_attempt_at?: string | null
           payload?: Json
+          read_at?: string | null
           recipient?: string | null
           sent_at?: string | null
           status?: string
@@ -14007,6 +14010,7 @@ export type Database = {
         Returns: boolean
       }
       hr_daily_checks: { Args: never; Returns: Json }
+      hr_notifications_mark_read: { Args: { _ids?: string[] }; Returns: number }
       hr_notify: {
         Args: {
           _category: string
