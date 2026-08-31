@@ -92,6 +92,7 @@ export async function punch(identifier: string, action: "in" | "ut" | "rast_star
   if (!token) throw new Error("Stationen är inte aktiverad.");
   return call<PunchResult>("clock-punch", {
     mode: "punch", identifier, action, occurred_at: occurredAt,
+    client_punch_id: context.clientPunchId,
     work_site_id: context.workSiteId, cost_center: context.costCenter,
     punch_lat: context.latitude, punch_lng: context.longitude, punch_accuracy_m: context.accuracyM,
     offline_queued: context.offlineQueued,
