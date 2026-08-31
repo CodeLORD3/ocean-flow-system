@@ -13,6 +13,7 @@ import { useStaff } from "@/hooks/useStaff";
 import { useStaffAvatars } from "@/hooks/useStaffAvatars";
 import { usePlannedShiftsRange } from "@/hooks/usePlannedShifts";
 import { useShiftsRange } from "@/hooks/useStaffShifts";
+import { useAbsenceRequests, useAbsenceTypes } from "@/hooks/useAbsence";
 import { PlannedShiftDialog } from "@/components/livestaff/PlannedShiftDialog";
 import { StaffAccessDialog } from "@/components/staff/StaffAccessDialog";
 import { StaffSalaryDialog } from "@/components/staff/StaffSalaryDialog";
@@ -104,6 +105,8 @@ export default function StaffSchedule() {
     rangeTo,
     storeFilter === "all" ? null : storeFilter,
   );
+  const { data: absenceRequests = [] } = useAbsenceRequests(undefined, storeFilter === "all" ? null : storeFilter);
+  const { data: absenceTypes = [] } = useAbsenceTypes();
   const now = useMinuteTick();
   const avatars = useStaffAvatars();
 
@@ -166,6 +169,30 @@ export default function StaffSchedule() {
     });
     return map;
   }, [visibleShifts]);
+
+  const absenceByStaffDay = useMemo(() => {
+    const map = new Map<string, { label: string; status: string }[]>();
+    const typeById = new Map(absenceTypes.map((type) => [type.id, type.name]));
+    absenceRequests
+      .filter((request) => request.status === "pending" || request.status === "approved" || request.status === "auto_approved")
+      .filter((request) => visibleStaffIds.has(request.employee_id))
+      .forEach((request) => {
+        const from = request.date_from ?? request.start_date;
+        const to = request.date_to ?? request.end_date ?? from;
+        const cursor = new Date(`${from}T12:00:00`);
+        const end = new Date(`${to}T12:00:00`);
+        while (cursor <= end) {
+          const day = dateKey(cursor);
+          if ((view === "week" && days.includes(day)) || (view === "calendar" && monthDays.includes(day))) {
+            const key = `${request.employee_id}|${day}`;
+            const item = { label: typeById.get(request.absence_type_id) ?? "Frånvaro", status: request.status };
+            map.set(key, [...(map.get(key) ?? []), item]);
+          }
+          cursor.setDate(cursor.getDate() + 1);
+        }
+      });
+    return map;
+  }, [absenceRequests, absenceTypes, visibleStaffIds, view, days, monthDays]);
 
   /** Kostnad för ett pass — null när personen saknar lön. */
   const shiftCost = (p: PlannedShiftRow): number | null => {
@@ -592,15 +619,22 @@ export default function StaffSchedule() {
                             </div>
                           </div>
                         </td>
-                        {days.map((d) => {
-                          const rows = byStaffDay.get(`${s.id}|${d}`) ?? [];
-                          const act = actualDay(s.id, d);
+                         {days.map((d) => {
+                           const rows = byStaffDay.get(`${s.id}|${d}`) ?? [];
+                           const absences = absenceByStaffDay.get(`${s.id}|${d}`) ?? [];
+                           const act = actualDay(s.id, d);
                           const plannedMin = rows.reduce((a, p) => a + shiftMinutes(p), 0);
                           const isToday = d === dateKey();
                           return (
-                            <td key={d} className={`align-top px-1 py-1 ${isToday ? "bg-primary/5" : ""}`}>
-                              <div className="flex flex-col gap-1">
-                                {rows.map((p) => {
+                             <td key={d} className={`align-top px-1 py-1 ${isToday ? "bg-primary/5" : ""}`}>
+                               <div className="flex flex-col gap-1">
+                                 {absences.map((absence, index) => (
+                                   <div key={`${absence.label}-${index}`} className="rounded-md border-l-2 border-amber-500 bg-amber-500/10 px-1.5 py-1" title={`${absence.label} · ${absence.status === "pending" ? "Väntar på beslut" : "Godkänd"}`}>
+                                     <span className="block truncate text-[10px] font-medium text-amber-700 dark:text-amber-300">{absence.label}</span>
+                                     <span className="block text-[9px] text-amber-700/80 dark:text-amber-300/80">{absence.status === "pending" ? "Väntar på beslut" : "Frånvarande"}</span>
+                                   </div>
+                                 ))}
+                                 {rows.map((p) => {
                                   const c = shiftCost(p);
                                   return (
                                     <button
