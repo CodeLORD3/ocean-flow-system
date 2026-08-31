@@ -13,7 +13,7 @@ interface PayrollRow { employeeId: string; regular: number; ob50: number; ob70: 
 
 const today = () => new Date().toISOString().slice(0, 10);
 const monthStart = () => `${today().slice(0, 7)}-01`;
-const csvCell = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+const csvCell = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 const minutesBetween = (a: string, b: string) => Math.max(0, Math.round((new Date(b).getTime() - new Date(a).getTime()) / 60000));
 
 function effective(entries: Entry[]) {
