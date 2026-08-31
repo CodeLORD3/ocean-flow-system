@@ -206,35 +206,35 @@ function WholesaleOrderAccordionRow({
 
       <div className="flex min-w-0 items-stretch">
         {!open && <div className={`w-1 shrink-0 ${rowTone.edge}`} aria-hidden />}
-        <div className="flex w-9 shrink-0 items-center justify-center border-r border-grid-line/70">
+        <div className="hidden w-9 shrink-0 items-center justify-center border-r border-grid-line/70 sm:flex">
           <Checkbox checked={selected} onCheckedChange={() => onSelect(order.id)} aria-label={`Markera order från ${order.stores?.name || "butik"}`} />
         </div>
-        <Button
+        <button
           type="button"
-          variant="ghost"
           onClick={() => onToggle(order.id)}
           aria-expanded={open}
-          className={`h-auto min-w-0 flex-1 justify-start rounded-none px-2.5 text-left hover:bg-transparent ${open ? "py-3" : "py-2"}`}
+          className={`min-w-0 flex-1 px-2.5 text-left transition-colors ${open ? "py-2.5" : "py-1.5"} ${rowTone.hover}`}
         >
-          <div className="hidden w-full min-w-0 items-center text-xs sm:flex">
+          <div className="hidden min-h-5 w-full min-w-0 items-center text-xs sm:flex">
             <span className="w-36 shrink-0 border-r border-grid-line/70 pr-3 font-mono text-[11px] font-semibold tabular-nums">{day}<span className="block text-[10px] font-normal text-muted-foreground">{displayOrderWeek(order)}</span></span>
-            <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "font-bold" : "font-semibold"}`}>{order.stores?.name || "Okänd butik"}<span className="block text-[10px] font-normal text-muted-foreground">{order.created_by || "–"}</span></span>
-            <span className="min-w-0 flex-[1.5] truncate border-r border-grid-line/70 px-3">{productsText}</span>
-            <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 text-center font-mono text-[11px] tabular-nums">{orderLines} rader</span>
-            <span className="w-28 shrink-0 border-r border-grid-line/70 px-2"><Badge variant="outline" className={`rounded-sm text-[10px] ${statusColor[order.status] || ""}`}>{statusIcon[order.status]}<span className="ml-1">{order.status}</span></Badge></span>
+            <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "text-[13px] font-bold tracking-tight" : "font-semibold"}`}>{order.stores?.name || "Okänd butik"}<span className="block text-[10px] font-normal text-muted-foreground">{order.created_by || "–"}</span></span>
+            <span className="min-w-0 flex-[1.5] truncate border-r border-grid-line/70 px-3 text-muted-foreground">{productsText}</span>
+            <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 text-center font-mono text-[10px] tabular-nums text-muted-foreground">{orderLines} rader</span>
+            <span className="flex w-32 shrink-0 items-center overflow-hidden border-r border-grid-line/70 px-2">{statusChip}</span>
             <span className="w-24 shrink-0 px-2 text-right font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</span>
-            <ChevronDown className={`ml-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+            <ChevronDown className={`ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
           </div>
           <div className="w-full space-y-1 sm:hidden">
             <div className="flex items-start justify-between gap-2">
-              <span className={`min-w-0 flex-1 break-words leading-snug ${open ? "text-[16px] font-bold" : "text-[15px] font-semibold"}`}>{order.stores?.name || "Okänd butik"}</span>
+              <span className={`min-w-0 flex-1 break-words leading-snug ${open ? "text-[17px] font-bold" : "text-[15px] font-semibold"}`}>{order.stores?.name || "Okänd butik"}</span>
               <ChevronDown className={`mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
             </div>
-            <div className="flex flex-wrap items-center gap-1.5"><Badge variant="outline" className={`rounded-sm text-[10px] ${statusColor[order.status] || ""}`}>{statusIcon[order.status]}<span className="ml-1">{order.status}</span></Badge><span className="font-mono text-[11px] text-muted-foreground">{day} · {orderLines} rader</span></div>
+            <div className="flex flex-wrap items-center gap-1.5">{statusChip}<span className="font-mono text-[11px] text-muted-foreground">{day} · {orderLines} rader</span></div>
             <div className="line-clamp-2 text-xs text-muted-foreground">{productsText}</div>
             <div className="font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</div>
           </div>
-        </Button>
+        </button>
+
         <div className="flex shrink-0 items-center gap-1 px-2 sm:border-l sm:border-grid-line/70">
           <Select value={order.status} onValueChange={(value) => onStatusChange(order.id, value)}>
             <SelectTrigger className="hidden h-8 w-[108px] text-xs sm:flex"><SelectValue /></SelectTrigger>
