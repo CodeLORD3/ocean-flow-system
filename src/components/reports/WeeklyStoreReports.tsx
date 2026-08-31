@@ -10,6 +10,7 @@ import {
 } from "@/hooks/useWeeklyStoreReports";
 import { useDailyReportsRange } from "@/hooks/useDailyReportsRange";
 import { dayRowsFrom, weekDayList } from "@/lib/weeklyReportDays";
+import { useStoreWeather, weatherLabel } from "@/hooks/useStoreWeather";
 import { weeklyReportPdf, weeklyReportXlsx, type ReportRow } from "@/lib/weeklyReportExport";
 import { StoreWeekDays } from "@/components/reports/StoreWeekDays";
 import { Badge } from "@/components/ui/badge";
@@ -133,6 +134,12 @@ export function WeeklyStoreReportsSection() {
     latestWeekForExport?.week_end,
   );
 
+  const exportWeather = useStoreWeather(
+    selectedStoreForExport,
+    latestWeekForExport?.week_start,
+    latestWeekForExport?.week_end,
+  );
+
   const storeName = (id: string) => stores.find((s) => s.id === id)?.name ?? "Butik";
   const isClosed = (storeId: string, year: number, week: number) =>
     (closures.data ?? []).some((c) => c.store_id === storeId && c.iso_year === year && c.iso_week === week);
@@ -221,7 +228,7 @@ export function WeeklyStoreReportsSection() {
       ? dayRowsFrom(
           weekDayList(latestWeekForExport.week_start, latestWeekForExport.week_end),
           dailyExport.data ?? [],
-        )
+        ).map((row) => ({ ...row, weather: weatherLabel(exportWeather.data?.get(row.date)) }))
       : undefined;
     const titleLabel = selectedStoreForExport ? storeName(selectedStoreForExport) : summaryLabel;
     const payload = {
