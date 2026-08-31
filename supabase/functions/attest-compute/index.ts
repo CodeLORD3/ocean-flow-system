@@ -8,6 +8,7 @@
  * missat_pass. Anropas både av cron och på begäran från attestvyn.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { passGranser, svenskDagSista, svenskDagStart, svenskDatum } from "../_shared/setime.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -36,7 +37,7 @@ interface Entry {
 
 /** Svenskt datum för en tidpunkt. */
 function seDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("sv-SE", { timeZone: "Europe/Stockholm" });
+  return svenskDatum(iso);
 }
 
 function minutesBetween(a: string, b: string): number {
@@ -44,10 +45,7 @@ function minutesBetween(a: string, b: string): number {
 }
 
 function shiftBounds(date: string, start: string, end: string) {
-  const from = new Date(`${date}T${start.slice(0, 5)}:00+02:00`);
-  const to = new Date(`${date}T${end.slice(0, 5)}:00+02:00`);
-  if (to <= from) to.setDate(to.getDate() + 1);
-  return { from, to };
+  return passGranser(date, start, end);
 }
 
 Deno.serve(async (req) => {
