@@ -81,6 +81,7 @@ export interface PunchResult {
 export interface PunchContext {
   workSiteId?: string;
   costCenter?: string;
+  clientPunchId?: string;
   latitude?: number;
   longitude?: number;
   accuracyM?: number;
