@@ -83,7 +83,7 @@ export default function MyTime() {
       {employeeIds.isLoading || worktime.isLoading ? <Loader2 className="h-5 w-5 animate-spin ind-muted" /> : null}
       {!employeeIds.isLoading && !worktime.isLoading && !(worktime.data ?? []).length ? <IndustryRow edge="neutral"><CalendarDays className="h-4 w-4 ind-muted" /><span className="ind-muted text-sm">Ingen registrerad tid i perioden.</span></IndustryRow> : null}
       {(worktime.data ?? []).map((day) => <IndustryRow key={day.arbetsdag} edge={day.missing_wage_code ? "alert" : "accent"} className="flex-wrap">
-        <span className="min-w-[150px] flex-1 font-medium">{new Intl.DateTimeFormat("sv-SE", { dateStyle: "long", timeZone: "Europe/Stockholm" }).format(new Date(`${day.arbetsdag}T12:00:00+02:00`))}</span>
+        <span className="min-w-[150px] flex-1 font-medium">{new Intl.DateTimeFormat("sv-SE", { dateStyle: "long", timeZone: "Europe/Stockholm" }).format(new Date(`${day.arbetsdag}T12:00:00Z`))}</span>
         <span className="ind-mono">Tot {formatMinutes(Number(day.total_minutes ?? 0))}</span>
         <span className="ind-mono">OB {formatMinutes(Number(day.ob50_minutes ?? 0) + Number(day.ob70_minutes ?? 0) + Number(day.ob100_minutes ?? 0))}</span>
         <span className="ind-mono">Mertid {formatMinutes(Number(day.mertid_minutes ?? 0))}</span>
