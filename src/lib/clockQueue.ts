@@ -1,7 +1,7 @@
 import { punch, recordClockSyncFailure, type PunchContext } from "@/lib/clockApi";
 
 const DB_NAME = "mt-clock";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const QUEUE_STORE = "queue";
 const KEY_STORE = "keys";
 const MAX_QUEUE_AGE_MS = 7 * 365 * 24 * 60 * 60 * 1000;
