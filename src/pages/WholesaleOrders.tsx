@@ -7,7 +7,7 @@ import { isInfiniteStock } from "@/lib/infiniteStock";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
-  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, Plus, CalendarIcon,
+  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, Plus, CalendarIcon, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,8 @@ import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
+import { useCustomerNeedByProduct, useOrderHistoryStats, useOutstandingOrdered } from "@/hooks/usePurchaseReconciliation";
+import { addDays, mondayOf, weekRange } from "@/lib/purchaseReconciliation";
 import { useProducts } from "@/hooks/useProducts";
 import { useTransportSchedules } from "@/hooks/useTransportSchedules";
 import { useStaff } from "@/hooks/useStaff";
@@ -142,6 +144,7 @@ export default function WholesaleOrders() {
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [newOrderLines, setNewOrderLines] = useState<WholesaleOrderLine[]>([]);
+  const [expandedDecisionLines, setExpandedDecisionLines] = useState<string[]>([]);
   const [newOrderNote, setNewOrderNote] = useState("");
   const [newOrderDeliveryDate, setNewOrderDeliveryDate] = useState<Date | undefined>(undefined);
   const [newProductSearch, setNewProductSearch] = useState("");
@@ -168,6 +171,15 @@ export default function WholesaleOrders() {
     const isoDay = jsDay === 0 ? 7 : jsDay;
     return !allowedWeekdays.has(isoDay);
   };
+
+  const selectedDeliveryRange = useMemo(() => {
+    if (!newOrderDeliveryDate) return null;
+    const start = mondayOf(newOrderDeliveryDate);
+    return weekRange(start);
+  }, [newOrderDeliveryDate]);
+  const decisionNeeds = useCustomerNeedByProduct(selectedDeliveryRange?.from ?? "", selectedDeliveryRange?.to ?? "", selectedCustomer?.store_id ?? null);
+  const outstandingOrdered = useOutstandingOrdered(null);
+  const historyStats = useOrderHistoryStats(4);
 
   const filteredNewProducts = products.filter(p =>
     newProductSearch &&

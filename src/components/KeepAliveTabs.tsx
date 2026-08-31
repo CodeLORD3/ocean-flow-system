@@ -23,6 +23,7 @@ import Invoices from "@/pages/Invoices";
 import SizeGrades from "@/pages/SizeGrades";
 import TransformationRecipes from "@/pages/TransformationRecipes";
 import PurchaseReporting from "@/pages/PurchaseReporting";
+import PurchaseReconciliation from "@/pages/PurchaseReconciliation";
 import Pricing from "@/pages/Pricing";
 import ShopReports from "@/pages/ShopReports";
 import PurchaseSchedule from "@/pages/PurchaseSchedule";
@@ -112,6 +113,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/forecasts": { component: <PlaceholderPage title="Prognoser" /> },
   "/invoices": { component: <Invoices /> },
   "/purchase-reporting": { component: <PurchaseReporting /> },
+  "/purchase-reconciliation": { component: <PurchaseReconciliation /> },
   "/size-grades": { component: <SizeGrades /> },
   "/transformation-recipes": { component: <TransformationRecipes /> },
   "/receiving": { component: <Receiving /> },
