@@ -15,3 +15,6 @@
 - [x] Krypterad offlinekö med plats- och kostnadskontext
 - [x] Tidsbegränsat inspektörsläge med sessionsjournal
 - [x] Deploy och typ-/produktionsbygge verifierat
+
+## Dokumentation
+- [x] Blueprint för stämpelklockan (kod + ordagrann beskrivning av funktioner och kopplingar) — docs/stampelklocka-blueprint.md
