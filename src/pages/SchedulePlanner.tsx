@@ -189,6 +189,7 @@ export default function SchedulePlanner() {
       competencies: person.competencies,
       birthDate: person.birthDate,
       employmentRate: person.employmentRate,
+      absences: absencesByEmployee.get(shift.employee_id) ?? [],
       requiredCompetency: shift.shift_type_id ? typeById.get(shift.shift_type_id)?.required_competency : null,
     });
   };
@@ -272,6 +273,7 @@ export default function SchedulePlanner() {
         competencies: r.competencies,
         availability: r.availability as never,
         shifts: shifts.filter((s) => s.employee_id === r.employee_id),
+        absences: absencesByEmployee.get(r.employee_id) ?? [],
       })),
       {
         requiredCompetency: suggestFor.shift_type_id
@@ -279,7 +281,7 @@ export default function SchedulePlanner() {
           : null,
       },
     );
-  }, [suggestFor, roster, shifts, typeById]);
+  }, [suggestFor, roster, shifts, typeById, absencesByEmployee]);
 
   return (
     <IndustryFrame className="ind-page space-y-6 p-4 md:p-6">
