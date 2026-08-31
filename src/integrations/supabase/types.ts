@@ -4186,6 +4186,45 @@ export type Database = {
           },
         ]
       }
+      employee_day_flags: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          comment: string
+          created_at: string
+          created_by: string | null
+          date: string
+          employee_id: string
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          comment: string
+          created_at?: string
+          created_by?: string | null
+          date: string
+          employee_id: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          comment?: string
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          employee_id?: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employee_documents: {
         Row: {
           created_at: string
@@ -12408,6 +12447,54 @@ export type Database = {
           },
         ]
       }
+      staffing_needs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date: string
+          id: string
+          note: string | null
+          required_count: number
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date: string
+          id?: string
+          note?: string | null
+          required_count?: number
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          id?: string
+          note?: string | null
+          required_count?: number
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staffing_needs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "staffing_needs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_flow_rules: {
         Row: {
           allowed: boolean
@@ -16534,6 +16621,26 @@ export type Database = {
           month: string
           store_id: string
           total: number
+        }[]
+      }
+      preliminar_passkostnad: {
+        Args: {
+          _employee_id: string
+          _hypothetical_minutes?: number
+          _month: string
+        }
+        Returns: {
+          ar_preliminar: boolean
+          crosses_youth_threshold: boolean
+          current_employer_fee: number
+          current_minutes: number
+          current_pay: number
+          employee_id: string
+          extra_cost: number
+          hypothetical_employer_fee: number
+          hypothetical_minutes: number
+          hypothetical_pay: number
+          month: string
         }[]
       }
       preview_stock_zeroing: {
