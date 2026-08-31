@@ -16367,6 +16367,10 @@ export type Database = {
       employee_is_self: { Args: { _employee_id: string }; Returns: boolean }
       employee_pnr_key: { Args: never; Returns: string }
       employee_pnr_key_for_year: { Args: { _year: number }; Returns: string }
+      end_sick_period: {
+        Args: { _employee_id: string; _last_day?: string }
+        Returns: Json
+      }
       entity_series_code: {
         Args: { _legal_entity_id: string }
         Returns: string
@@ -16755,6 +16759,10 @@ export type Database = {
       stock_write_allowed: { Args: never; Returns: boolean }
       sumup_name_key: { Args: { _name: string }; Returns: string }
       svensk_dag: { Args: { _grans?: string; _ts: string }; Returns: string }
+      undo_sick_period: {
+        Args: { _employee_id: string; _first_day: string }
+        Returns: Json
+      }
       unpost_purchase_report: { Args: { _report_id: string }; Returns: Json }
       user_company_ids: { Args: { _user_id: string }; Returns: string[] }
       user_portals: { Args: { _user_id: string }; Returns: string[] }
