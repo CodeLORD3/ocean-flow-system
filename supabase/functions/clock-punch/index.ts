@@ -65,6 +65,9 @@ Deno.serve(async (req) => {
   }
 
   if (!hit || !hit.is_active) {
+    // Okänd person: stämplingen får inte kastas bort. Vi lägger upp en
+    // provisorisk personal så att tiden kan bokföras, och en post i
+    // granskningskön så att en chef kopplar den till rätt anställd.
     const pendingRow = {
       pnr_hash: hash,
       pnr_masked: pnr ? maskPnr(pnr) : null,
@@ -80,7 +83,34 @@ Deno.serve(async (req) => {
       if (existing) await db.from("clock_pending_registrations").update({ attempts: ((existing.attempts as number) ?? 1) + 1 }).eq("id", existing.id);
       else await db.from("clock_pending_registrations").insert(pendingRow);
     } else await db.from("clock_pending_registrations").insert(pendingRow);
-    return json(req, { status: "pending_registration", message: "Registrering väntar på godkännande.", expires_at: expiresAt });
+
+    // Spärren räknar bara misslyckade uppslag.
+    await registerFailedLookup(db, station.id);
+
+    if (!hit) {
+      const statedName = body.stated_name ? String(body.stated_name).slice(0, 120).trim() : "";
+      const [firstName, ...restName] = statedName.split(/\s+/).filter(Boolean);
+      const { data: provisional } = await db
+        .from("employees")
+        .insert({
+          first_name: firstName || "Oidentifierad",
+          last_name: restName.join(" ") || (pnr ? maskPnr(pnr) : "stämpling"),
+          pnr_hash: hash,
+          pnr_masked: pnr ? maskPnr(pnr) : null,
+          alt_clock_identifier: pnr ? null : rawIdentifier,
+          status: "provisional",
+          is_active: false,
+          notes: "Provisorisk post skapad av stämpelklockan vid okänt personnummer.",
+        })
+        .select("id, first_name, last_name, pnr_masked, is_active")
+        .maybeSingle();
+      if (provisional) hit = { ...(provisional as EmployeeHit), is_active: true };
+    }
+
+    if (!hit) {
+      return json(req, { status: "pending_registration", message: "Registrering väntar på godkännande.", expires_at: expiresAt });
+    }
+    provisionalPunch = true;
   }
 
   const dayStart = new Date();
