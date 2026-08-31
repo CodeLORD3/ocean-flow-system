@@ -348,7 +348,7 @@ export function CustomerOrderRow({
 
             {/* Kundnamnet börjar alltid på samma x-position — källan står i egen kolumn efter namnet. */}
             <span
-              className={`flex min-w-[14rem] shrink-0 flex-1 items-center whitespace-nowrap border-r border-grid-line/70 pl-3 pr-5 ${
+              className={`flex min-w-[14rem] shrink flex-1 items-center overflow-hidden whitespace-nowrap border-r border-grid-line/70 pl-3 pr-5 ${
                 isOpen ? "text-[13px] font-bold tracking-tight" : "font-semibold"
               }`}
             >
@@ -368,14 +368,15 @@ export function CustomerOrderRow({
                       navigate(`/customer-orders/kund/${order.customer_id}`);
                     }
                   }}
-                  className="cursor-pointer whitespace-nowrap leading-tight hover:text-primary hover:underline"
+                  className="cursor-pointer truncate leading-tight hover:text-primary hover:underline"
                 >
                   {name}
                 </span>
               ) : (
-                <span className="whitespace-nowrap leading-tight">{name}</span>
+                <span className="truncate leading-tight">{name}</span>
               )}
             </span>
+
 
             {/* Stamkund: antal beställningar. Nya kunder (1 order) visas utan stjärna. */}
             <span className="flex w-12 shrink-0 items-center justify-center gap-0.5 whitespace-nowrap border-r border-grid-line/70 px-2">
