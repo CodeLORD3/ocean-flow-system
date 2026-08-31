@@ -3,13 +3,13 @@
  * efter lyckad synk. Köade poster har en tydlig kontext så kostnadsstället
  * inte tappas när nätet återkommer.
  */
-import { punch, type PunchContext } from "@/lib/clockApi";
+import { punch, recordClockSyncFailure, type PunchContext } from "@/lib/clockApi";
 
 const DB_NAME = "mt-clock";
 const DB_VERSION = 1;
 const QUEUE_STORE = "queue";
 const KEY_STORE = "keys";
-const MAX_QUEUE_AGE_MS = 72 * 60 * 60 * 1000;
+const MAX_QUEUE_AGE_MS = 7 * 365 * 24 * 60 * 60 * 1000;
 
 export interface QueuedPunch {
   id?: number;
