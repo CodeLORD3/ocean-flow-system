@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronDown, ChevronRight, FileText, Factory, Receipt, CalendarRange } from "lucide-react";
 import { DailyReportsArchive } from "@/components/dashboard/DailyReportsArchive";
 import { WeeklyStoreReportsSection } from "@/components/reports/WeeklyStoreReports";
+import { useRealtimeReportUpdates } from "@/hooks/useWeeklyStoreReports";
 import { useState } from "react";
 
 function WholesaleReportsPage() {
+  useRealtimeReportUpdates();
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [productionOpen, setProductionOpen] = useState(false);
   const [dailyOpen, setDailyOpen] = useState(false);
@@ -16,7 +18,13 @@ function WholesaleReportsPage() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Rapporter</h2>
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">Rapporter & analys</p>
+          <h2 className="mt-1 text-xl font-semibold tracking-tight">Rapporter</h2>
+        </div>
+        <p className="hidden text-xs text-muted-foreground sm:block">Liveuppdaterad</p>
+      </div>
 
       <Card>
         <CardHeader
