@@ -19,6 +19,12 @@
 ## Dokumentation
 - [x] Blueprint för stämpelklockan (kod + ordagrann beskrivning av funktioner och kopplingar) — docs/stampelklocka-blueprint.md
 
+## PRIO: Låst dagsrapport som ändras ska räkna om hela kedjan
+- [ ] Ändring i dagsrapport efter låsning ska låsa upp, räkna om och låsa igen vecko- och månadsrapport
+- [ ] Ingen kvarvarande "Avviker efter låsning" — låsta summor ska ersättas med de nya
+- [ ] Samma kedja åt andra hållet: ändring i vecko-/månadsrapport speglas till dagsrapport
+
+
 ## Personalmodul: Etapp 5 — löneunderlag, förmåner & Fortnox-automation
 - [ ] Datamodell för versionerade lönepolicyer, löneperioder, lönerader, löneartsmappning, förmåner, avdrag, skattetabeller och arbetsgivaravgifter
 - [ ] Beräkningsmotor som är master för enheter; kronor endast preliminära KPI-/granskningsvärden
