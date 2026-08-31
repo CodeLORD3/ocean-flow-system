@@ -28,6 +28,16 @@ export function weatherIcon(code?: number | null): LucideIcon {
   return Cloud;
 }
 
+/** Semantisk färg per vädertyp, utan hårdkodade färgvärden. */
+export function weatherIconClass(code?: number | null, windy = false) {
+  if (windy) return "text-warning";
+  if (code === 0 || (code != null && code <= 2)) return "text-warning";
+  if (code != null && code >= 95) return "text-destructive";
+  if (code != null && code >= 51 && code <= 86) return "text-accent";
+  if (code === 45 || code === 48 || code === 3) return "text-muted-foreground";
+  return "text-primary";
+}
+
 /** Symmetrisk vädercell: ikon, text och temperatur i fasta kolumner. */
 export function WeatherCell({
   day,
@@ -57,14 +67,15 @@ export function WeatherCell({
 
   const Icon = weatherIcon(day.weather_code);
   const windy = Number(day.windspeed_max ?? 0) > 30;
+  const iconClass = weatherIconClass(day.weather_code, windy);
   const temp = day.temp_max == null ? null : `${Math.round(Number(day.temp_max))}°`;
 
   return (
     <div className="grid grid-cols-[1rem_1fr_3.25rem] items-center gap-1.5">
-      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+      <Icon className={`h-4 w-4 shrink-0 ${iconClass}`} aria-hidden />
       <span className="flex min-w-0 items-center gap-1 truncate">
         <span className="truncate">{day.weather_text ?? "—"}</span>
-        {windy && <Wind className="h-3 w-3 shrink-0 text-muted-foreground" aria-label="Blåsigt" />}
+        {windy && <Wind className="h-3 w-3 shrink-0 text-warning" aria-label="Blåsigt" />}
       </span>
       <span className="text-right font-mono tabular-nums text-muted-foreground">{temp ?? "—"}</span>
     </div>
