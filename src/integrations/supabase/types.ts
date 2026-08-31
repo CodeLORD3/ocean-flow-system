@@ -4868,6 +4868,50 @@ export type Database = {
           },
         ]
       }
+      inspector_sessions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          reason: string
+          revoked_at: string | null
+          starts_at: string
+          token_hash: string
+          work_site_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          reason: string
+          revoked_at?: string | null
+          starts_at?: string
+          token_hash: string
+          work_site_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          reason?: string
+          revoked_at?: string | null
+          starts_at?: string
+          token_hash?: string
+          work_site_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspector_sessions_work_site_id_fkey"
+            columns: ["work_site_id"]
+            isOneToOne: false
+            referencedRelation: "work_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instruments: {
         Row: {
           active: boolean
@@ -6975,6 +7019,121 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payroll_export_lines: {
+        Row: {
+          correction_period: string | null
+          created_at: string
+          employee_id: string
+          export_id: string
+          extra_minutes: number
+          id: string
+          ob_100_minutes: number
+          ob_50_minutes: number
+          ob_70_minutes: number
+          overtime_minutes: number
+          regular_minutes: number
+          source_snapshot: Json
+          wage_code_missing: boolean
+          work_site_id: string | null
+        }
+        Insert: {
+          correction_period?: string | null
+          created_at?: string
+          employee_id: string
+          export_id: string
+          extra_minutes?: number
+          id?: string
+          ob_100_minutes?: number
+          ob_50_minutes?: number
+          ob_70_minutes?: number
+          overtime_minutes?: number
+          regular_minutes?: number
+          source_snapshot?: Json
+          wage_code_missing?: boolean
+          work_site_id?: string | null
+        }
+        Update: {
+          correction_period?: string | null
+          created_at?: string
+          employee_id?: string
+          export_id?: string
+          extra_minutes?: number
+          id?: string
+          ob_100_minutes?: number
+          ob_50_minutes?: number
+          ob_70_minutes?: number
+          overtime_minutes?: number
+          regular_minutes?: number
+          source_snapshot?: Json
+          wage_code_missing?: boolean
+          work_site_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_export_lines_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_export_lines_export_id_fkey"
+            columns: ["export_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_exports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_export_lines_work_site_id_fkey"
+            columns: ["work_site_id"]
+            isOneToOne: false
+            referencedRelation: "work_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_exports: {
+        Row: {
+          blocked_reason: string | null
+          created_at: string
+          exported_at: string | null
+          exported_by: string | null
+          fortnox_reference: string | null
+          id: string
+          legal_entity_id: string | null
+          period_end: string
+          period_start: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          blocked_reason?: string | null
+          created_at?: string
+          exported_at?: string | null
+          exported_by?: string | null
+          fortnox_reference?: string | null
+          id?: string
+          legal_entity_id?: string | null
+          period_end: string
+          period_start: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          blocked_reason?: string | null
+          created_at?: string
+          exported_at?: string | null
+          exported_by?: string | null
+          fortnox_reference?: string | null
+          id?: string
+          legal_entity_id?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       payroll_holidays: {
         Row: {
