@@ -685,47 +685,47 @@ export default function WholesaleOrders() {
         </CardContent></Card>
       </div>
 
-      <Tabs defaultValue="per-order" className="space-y-3">
+      <Tabs defaultValue="per-order" className="space-y-4">
         <TabsList className="flex h-auto w-full flex-wrap items-stretch justify-start gap-1 rounded-sm border border-grid-line bg-card p-1">
           <TabsTrigger
             value="per-order"
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-2 text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+            className="flex min-h-11 items-center gap-2 whitespace-nowrap rounded-sm px-4 py-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
           >
             <Eye className="h-4 w-4" /> Per order
-            <span className="rounded-sm bg-muted px-1 font-mono text-[10px] tabular-nums text-muted-foreground data-[state=active]:bg-background/20">
+            <span className="rounded-sm bg-muted px-1.5 font-mono text-[11px] tabular-nums text-muted-foreground">
               {activeOrders.length}
             </span>
           </TabsTrigger>
           <TabsTrigger
             value="total"
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-2 text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+            className="flex min-h-11 items-center gap-2 whitespace-nowrap rounded-sm px-4 py-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
           >
             <ListChecks className="h-4 w-4" /> Totalvy
           </TabsTrigger>
           <TabsTrigger
             value="delivered"
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-2 text-xs text-muted-foreground data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground"
+            className="flex min-h-11 items-center gap-2 whitespace-nowrap rounded-sm px-4 py-2 text-sm text-muted-foreground data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground"
           >
             <Truck className="h-4 w-4" /> Levererade
-            <span className="rounded-sm bg-muted px-1 font-mono text-[10px] tabular-nums">{deliveredOrders.length}</span>
+            <span className="rounded-sm bg-muted px-1.5 font-mono text-[11px] tabular-nums">{deliveredOrders.length}</span>
           </TabsTrigger>
           <TabsTrigger
             value="archived"
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-2 text-xs text-muted-foreground data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground"
+            className="flex min-h-11 items-center gap-2 whitespace-nowrap rounded-sm px-4 py-2 text-sm text-muted-foreground data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground"
           >
             <Archive className="h-4 w-4" /> Arkiverade
-            <span className="rounded-sm bg-muted px-1 font-mono text-[10px] tabular-nums">{archivedOrders.length}</span>
+            <span className="rounded-sm bg-muted px-1.5 font-mono text-[11px] tabular-nums">{archivedOrders.length}</span>
           </TabsTrigger>
           <TabsTrigger
             value="changes"
-            className="relative flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-2 text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            className="relative flex min-h-11 items-center gap-2 whitespace-nowrap rounded-sm px-4 py-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
             <Bell className="h-4 w-4" /> Ändringar
             {(() => {
               const n = pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length;
               return (
                 <span
-                  className={`rounded-sm px-1 font-mono text-[10px] tabular-nums ${n > 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"}`}
+                  className={`rounded-sm px-1.5 font-mono text-[11px] tabular-nums ${n > 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"}`}
                 >
                   {n}
                 </span>
