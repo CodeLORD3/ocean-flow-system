@@ -182,33 +182,35 @@ export function WeeklyStoreReportsSection() {
       ? REGION_LABELS[groupFilter]
       : "Sverige totalt";
 
-  const exportRows: ReportRow[] = (selectedStoreForExport
+  const exportSource = selectedStoreForExport
     ? details.filter((row) => row.store_id === selectedStoreForExport && row.iso_year === latestWeekForExport?.iso_year && row.iso_week === latestWeekForExport?.iso_week)
-    : latestRegions
-  ).map((row) => ({
-      label: "store_id" in row ? storeName(row.store_id) : row.group_label,
-      total_sales_sek: row.total_sales_sek,
-      avg_sales_per_day_sek: row.avg_sales_per_day_sek,
-      staff_hours: row.staff_hours,
-      staff_shifts: row.staff_shifts,
-      reports: `${row.daily_reports_count} / ${row.expected_open_days}`,
-      status: row.status,
-    }));
+    : groupFilter
+      ? latestRegions.filter((row) => row.group_key === groupFilter)
+      : latestRegions;
+  const exportRows: ReportRow[] = exportSource.map((row) => ({
+    label: "store_id" in row ? storeName(row.store_id) : row.group_label,
+    total_sales_sek: row.total_sales_sek,
+    avg_sales_per_day_sek: row.avg_sales_per_day_sek,
+    staff_hours: row.staff_hours,
+    staff_shifts: row.staff_shifts,
+    reports: `${row.daily_reports_count} / ${row.expected_open_days}`,
+    status: row.status,
+  }));
 
   const exportReport = (format: "pdf" | "xlsx") => {
-    if (!latestWeekForExport || !selectedStoreForExport) {
-      toast({ title: "Välj en butik först", description: "Dag-för-dag-export kan göras efter att en butik valts." });
-      return;
-    }
-    const days = dayRowsFrom(
-      weekDayList(latestWeekForExport.week_start, latestWeekForExport.week_end),
-      dailyExport.data ?? [],
-    );
+    if (!latestWeekForExport) return;
+    const days = selectedStoreForExport
+      ? dayRowsFrom(
+          weekDayList(latestWeekForExport.week_start, latestWeekForExport.week_end),
+          dailyExport.data ?? [],
+        )
+      : undefined;
+    const titleLabel = selectedStoreForExport ? storeName(selectedStoreForExport) : summaryLabel;
     const payload = {
-      title: `${storeName(selectedStoreForExport)} · vecka ${latestWeekForExport.iso_week}`,
+      title: `${titleLabel} · vecka ${latestWeekForExport.iso_week}`,
       subtitle: `${latestWeekForExport.week_start} – ${latestWeekForExport.week_end}`,
       rows: exportRows,
-      days: [{ storeLabel: storeName(selectedStoreForExport), rows: days }],
+      ...(days ? { days: [{ storeLabel: titleLabel, rows: days }] } : {}),
     };
     if (format === "pdf") weeklyReportPdf(payload);
     else weeklyReportXlsx(payload);
