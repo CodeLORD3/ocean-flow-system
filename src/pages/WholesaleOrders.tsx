@@ -282,7 +282,7 @@ function WholesaleOrderRowHeader({
         <span className="w-24 shrink-0 px-2 text-right">Summa</span>
         <span className="ml-2 w-3.5 shrink-0" />
       </span>
-      <span className="w-[156px] shrink-0" aria-hidden />
+      <span className="w-[196px] shrink-0" aria-hidden />
     </div>
   );
 }
@@ -1337,21 +1337,32 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
       </div>
        <div className="overflow-x-auto">
          <table className="w-full table-fixed text-xs">
-
-          <thead>
-
-            <tr className="border-b border-border bg-muted/30">
-              <th className="px-2 py-1 text-left font-medium text-muted-foreground">Produkt</th>
-              <th className="px-2 py-1 text-left font-medium text-muted-foreground">Enhet</th>
-              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Beställt</th>
-              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Lager</th>
-              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Packat</th>
-              <th className="px-2 py-1 text-left font-medium text-muted-foreground">Avvikelse</th>
-              <th className="px-2 py-1 text-left font-medium text-muted-foreground min-w-[160px]">Status</th>
-              <th className="px-2 py-1 text-center font-medium text-muted-foreground">Åtgärd</th>
-              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Värde (kr)</th>
-            </tr>
-          </thead>
+           <colgroup>
+             <col />
+             <col className="w-14" />
+             <col className="w-16" />
+             <col className="w-16" />
+             <col className="w-16" />
+             <col className="w-24" />
+             <col className="w-40" />
+             <col className="w-14" />
+             <col className="w-40" />
+             <col className="w-24" />
+           </colgroup>
+           <thead>
+             <tr className="border-b border-border bg-muted/30">
+               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Produkt</th>
+               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Enhet</th>
+               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Beställt</th>
+               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Lager</th>
+               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Packat</th>
+               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Avvikelse</th>
+               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Status</th>
+               <th className="px-2 py-1 text-center font-medium text-muted-foreground">Bild</th>
+               <th className="px-2 py-1 text-center font-medium text-muted-foreground">Åtgärd</th>
+               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Värde (kr)</th>
+             </tr>
+           </thead>
           <tbody>
             {(() => {
               const allLines = order.shop_order_lines || [];
@@ -1401,20 +1412,12 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   currentStatus === "Pågående" ? "bg-warning/10" :
                   ""
                 }`}>
-                  <td className="px-2 py-0.5 font-medium text-foreground">
-                    <div className="flex items-center gap-2">
-                      <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="w-7 h-5" />
-                      <span>{line.products?.name || "–"}</span>
-                      <OrderPhotosButton
-                        compact
-                        entityType={ORDER_LINE_PHOTO_ENTITY}
-                        entityId={line.id}
-                        productId={line.product_id}
-                        title={line.products?.name || "Orderrad"}
-                      />
-
-                    </div>
-                  </td>
+                   <td className="min-w-0 px-2 py-0.5 font-medium text-foreground">
+                     <div className="flex min-w-0 items-center gap-2">
+                       <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="h-5 w-7 shrink-0" />
+                       <span className="truncate">{line.products?.name || "–"}</span>
+                     </div>
+                   </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
                   <td className={`px-2 py-0.5 text-right font-mono ${infiniteStock ? "text-success" : availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
@@ -1489,7 +1492,17 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="px-2 py-0.5 text-center">
+                   <td className="px-2 py-0.5 text-center">
+                     <OrderPhotosButton
+                       compact
+                       entityType={ORDER_LINE_PHOTO_ENTITY}
+                       entityId={line.id}
+                       productId={line.product_id}
+                       title={line.products?.name || "Orderrad"}
+                     />
+                   </td>
+                   <td className="px-2 py-0.5 text-center">
+
                     {!isUnavailable && (
                       <div className="flex items-center justify-center gap-1">
                         <Button
