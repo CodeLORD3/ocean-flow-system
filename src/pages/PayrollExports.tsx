@@ -3,6 +3,7 @@ import { Download, FileText, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmployees } from "@/hooks/useEmployees";
+import type { Json } from "@/integrations/supabase/types";
 import { useQuery } from "@tanstack/react-query";
 import { IndustryButton, IndustryFrame, IndustryInput, IndustryRow, SectionLabel, StatusLabel } from "@/components/industry";
 
