@@ -4,7 +4,7 @@
  * ENDA globala tokenfilen. Alla vyer refererar variabler/klasser härifrån —
  * ingen vy får hårdkoda hex-färger.
  */
-@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@500;600;700&display=swap');
+/* Typsnitt laddas lokalt eller via dokumentets head; CSS importerar inga externa URL:er. */
 
 :root {
   --color-bg: #f2f2f3;
@@ -34,9 +34,9 @@
   --shadow-lg: 0 12px 32px color-mix(in srgb, #2b2b2d 22%, transparent);
 
   /* Funktionella färgsteg (0a) — bakgrund 100, färg 600, text/kant 800. */
-  --color-alert-100:#fbecea; --color-alert-600:#a8382f; --color-alert-800:#6d221c;
-  --color-warn-100:#fbf2dd; --color-warn-600:#9a7412; --color-warn-800:#63490a;
-  --color-ok-100:#e9f2ec; --color-ok-600:#3f7350; --color-ok-800:#284a34;
+  --color-alert-100:#fbeeeb; --color-alert-600:#a1402f; --color-alert-800:#84321f;
+  --color-warn-100:#fdf6e7;  --color-warn-600:#9d6f1e;  --color-warn-800:#7a5518;
+  --color-ok-100:#edf5f0;    --color-ok-600:#2f6b4f;    --color-ok-800:#245139;
 
   /* Härledda värden — muted-text hålls mörk nog för WCAG AA på surface. */
   --ind-muted: color-mix(in srgb, var(--color-text) 68%, var(--color-surface));
