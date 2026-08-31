@@ -1335,8 +1335,9 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
           title={`Order ${order.order_number || ""}`}
         />
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
+       <div className="overflow-x-auto">
+         <table className="w-full table-fixed text-xs">
+
           <thead>
 
             <tr className="border-b border-border bg-muted/30">
