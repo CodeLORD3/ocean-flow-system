@@ -132,11 +132,8 @@ export default function TimeEntriesPage() {
     setCorrecting(entry);
     setForm((f) => ({
       ...f,
-      date: entry.occurred_at.slice(0, 10),
-      time: new Date(entry.occurred_at).toLocaleTimeString("sv-SE", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      date: svenskDatum(entry.occurred_at),
+      time: svenskTid(entry.occurred_at).slice(0, 5),
       note: "",
     }));
   };
@@ -201,7 +198,7 @@ export default function TimeEntriesPage() {
   );
 
   if (inspector) {
-    const printedAt = new Date().toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" });
+    const printedAt = `${svenskDatum()} ${svenskTid()}`;
     const unitLabel = storeId ? storeName.get(storeId) ?? "–" : "Alla enheter";
     return (
       <div className="fixed inset-0 z-50 ind-inspect overflow-auto p-6 print:p-0">
@@ -212,7 +209,7 @@ export default function TimeEntriesPage() {
               {unitLabel} · {from} – {to}
             </h1>
             {inspectorExpiresAt && (
-              <p className="ind-muted text-xs">Kontrollsession aktiv till {new Date(inspectorExpiresAt).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}</p>
+              <p className="ind-muted text-xs">Kontrollsession aktiv till {svenskTid(inspectorExpiresAt).slice(0, 5)}</p>
             )}
           </div>
           <div className="flex gap-2">

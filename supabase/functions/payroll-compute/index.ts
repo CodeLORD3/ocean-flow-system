@@ -19,6 +19,7 @@
  * exporterade rader lämnas orörda så att rättelsediffen kan göras vid export.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { svenskaDagar } from "../_shared/clockDate.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -433,8 +434,7 @@ Deno.serve(async (req) => {
     if (mapped.size && !mapped.has(code)) issues.push({ kind: "missing_wage_code", detail: code, employee_id: req.employee_id });
     const start = req.start_date > from ? req.start_date : from;
     const end = req.end_date < to ? req.end_date : to;
-    for (let d = new Date(`${start}T12:00:00Z`); d <= new Date(`${end}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + 1)) {
-      const day = d.toISOString().slice(0, 10);
+    for (const day of svenskaDagar(start, end)) {
       push({
         store_id: req.store_id ?? emp.store_id, employee_id: req.employee_id, employment_id: emp.id,
         line_type: code, line_date: day, quantity: 1, extent_pct: Number(req.extent_pct ?? 100),
@@ -450,8 +450,7 @@ Deno.serve(async (req) => {
     const end = (sick.last_day ?? to) < to ? (sick.last_day ?? to) : to;
     if (end < start) continue;
     if (mapped.size && !mapped.has("SJK")) issues.push({ kind: "missing_wage_code", detail: "SJK", employee_id: sick.employee_id });
-    for (let d = new Date(`${start}T12:00:00Z`); d <= new Date(`${end}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + 1)) {
-      const day = d.toISOString().slice(0, 10);
+    for (const day of svenskaDagar(start, end)) {
       push({
         store_id: emp.store_id, employee_id: sick.employee_id, employment_id: emp.id,
         line_type: "SJK", line_date: day, quantity: 1, extent_pct: 100,

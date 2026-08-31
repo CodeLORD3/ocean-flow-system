@@ -6,6 +6,7 @@
  * därför fram genom att rätta bort ersatta/ogiltigförklarade rader.
  */
 import type { TimeEntry } from "@/hooks/useClock";
+import { svenskDatum, svenskTid } from "@/lib/swedishTime";
 
 export interface DaySummary {
   employee_id: string;
@@ -30,7 +31,7 @@ export function effectiveEntries(entries: TimeEntry[]): TimeEntry[] {
     .sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
 }
 
-const dayOf = (iso: string) => iso.slice(0, 10);
+const dayOf = (iso: string) => svenskDatum(iso);
 
 export function summarizeDays(entries: TimeEntry[]): DaySummary[] {
   const effective = effectiveEntries(entries);
@@ -84,7 +85,7 @@ export function summarizeDays(entries: TimeEntry[]): DaySummary[] {
 }
 
 export const hhmm = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }) : "–";
+  iso ? svenskTid(iso).slice(0, 5) : "–";
 
 export function durationLabel(seconds: number): string {
   const total = Math.max(0, Math.round(seconds / 60));
