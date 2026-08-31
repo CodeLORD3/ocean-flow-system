@@ -14,6 +14,7 @@ import {
   pnrHash,
   PUNCH_TYPES,
   registerFailedLookup,
+  resetFailedLookup,
   requireStation,
   service,
   type PunchType,
@@ -116,9 +117,8 @@ Deno.serve(async (req) => {
     }
   }
 
-  const dayStart = new Date();
-  dayStart.setHours(0, 0, 0, 0);
-  const { data: recent } = await db.from("time_entries").select("id, type, occurred_at").eq("employee_id", hit.id).gte("occurred_at", dayStart.toISOString()).order("occurred_at", { ascending: false }).limit(1);
+  await resetFailedLookup(db, station.id);
+  const { data: recent } = await db.from("time_entries").select("id, type, occurred_at").eq("employee_id", hit.id).order("occurred_at", { ascending: false }).limit(1);
   const last = recent?.[0]?.type as PunchType | undefined;
   const suggested: PunchType = last === "in" || last === "rast_slut" ? "ut" : last === "rast_start" ? "rast_slut" : "in";
   if (mode === "lookup") return json(req, { status: "found", employee: { id: hit.id, first_name: hit.first_name, pnr_masked: hit.pnr_masked ?? (pnr ? maskPnr(pnr) : null) }, last_type: last ?? null, suggested_action: suggested, expires_at: expiresAt });

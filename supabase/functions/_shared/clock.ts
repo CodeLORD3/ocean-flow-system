@@ -154,67 +154,35 @@ export async function requireStation(
   return { station: station as unknown as Station, sessionId: session.id as string, expiresAt };
 }
 
-/**
- * Spärren räknar misslyckade uppslag, inte lyckade stämplingar.
- *
- * En station med kö av personal ska aldrig bli spärrad av att många personer
- * stämplar samma minut. Däremot spärras en station som gissar personnummer:
- * fem misslyckade uppslag inom en minut ger tio minuters karens.
- */
-export async function checkRateLimit(
-  db: SupabaseClient,
-  stationId: string,
-  max = 5,
-): Promise<boolean> {
-  const bucket = new Date(Math.floor(Date.now() / 60_000) * 60_000).toISOString();
+/** Spärrar endast misslyckade uppslag: fem fel i samma minut ger 60 sekunder. */
+export async function checkRateLimit(db: SupabaseClient, stationId: string): Promise<boolean> {
   const { data } = await db
     .from("clock_rate_limits")
-    .select("attempts, failure_count, blocked_until")
+    .select("blocked_until")
     .eq("station_id", stationId)
-    .eq("minute_bucket", bucket)
+    .not("blocked_until", "is", null)
+    .order("minute_bucket", { ascending: false })
+    .limit(1)
     .maybeSingle();
-  const blockedUntil = data?.blocked_until as string | null | undefined;
-  if (blockedUntil && new Date(blockedUntil).getTime() > Date.now()) return false;
-  const failures = (data?.failure_count as number | undefined) ?? 0;
-  if (failures >= max) return false;
-  await db.from("clock_rate_limits").upsert(
-    {
-      station_id: stationId,
-      minute_bucket: bucket,
-      attempts: ((data?.attempts as number | undefined) ?? 0) + 1,
-      failure_count: failures,
-    },
-    { onConflict: "station_id,minute_bucket" },
-  );
-  return true;
+  return !data?.blocked_until || new Date(String(data.blocked_until)).getTime() <= Date.now();
 }
 
-/** Registrerar ett misslyckat uppslag och spärrar stationen vid upprepning. */
-export async function registerFailedLookup(
-  db: SupabaseClient,
-  stationId: string,
-  max = 5,
-  blockMinutes = 10,
-): Promise<void> {
+/** Registrerar ett fel. Lyckade uppslag måste anropa resetFailedLookup. */
+export async function registerFailedLookup(db: SupabaseClient, stationId: string, max = 5): Promise<void> {
   const bucket = new Date(Math.floor(Date.now() / 60_000) * 60_000).toISOString();
-  const { data } = await db
-    .from("clock_rate_limits")
-    .select("attempts, failure_count")
-    .eq("station_id", stationId)
-    .eq("minute_bucket", bucket)
-    .maybeSingle();
+  const { data } = await db.from("clock_rate_limits").select("attempts, failure_count").eq("station_id", stationId).eq("minute_bucket", bucket).maybeSingle();
   const failures = ((data?.failure_count as number | undefined) ?? 0) + 1;
-  await db.from("clock_rate_limits").upsert(
-    {
-      station_id: stationId,
-      minute_bucket: bucket,
-      attempts: (data?.attempts as number | undefined) ?? failures,
-      failure_count: failures,
-      blocked_until:
-        failures >= max ? new Date(Date.now() + blockMinutes * 60_000).toISOString() : null,
-    },
-    { onConflict: "station_id,minute_bucket" },
-  );
+  await db.from("clock_rate_limits").upsert({
+    station_id: stationId,
+    minute_bucket: bucket,
+    attempts: ((data?.attempts as number | undefined) ?? 0) + 1,
+    failure_count: failures,
+    blocked_until: failures >= max ? new Date(Date.now() + 60_000).toISOString() : null,
+  }, { onConflict: "station_id,minute_bucket" });
+}
+
+export async function resetFailedLookup(db: SupabaseClient, stationId: string): Promise<void> {
+  await db.from("clock_rate_limits").update({ failure_count: 0, blocked_until: null }).eq("station_id", stationId);
 }
 
 /** Avrundar enligt stationsprofilen. */

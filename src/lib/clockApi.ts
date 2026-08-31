@@ -100,6 +100,12 @@ export async function punch(identifier: string, action: "in" | "ut" | "rast_star
   }, token);
 }
 
+export async function switchAllocation(identifier: string, workSiteId: string) {
+  const token = storedSession();
+  if (!token) throw new Error("Stationen är inte aktiverad.");
+  return call<{ ok: true; employee: { first_name: string }; allocation: { id: string; cost_center: string } }>("clock-switch-allocation", { identifier, work_site_id: workSiteId }, token);
+}
+
 export async function recordClockSyncFailure(payload: Record<string, unknown>) {
   const token = storedSession();
   if (!token) throw new Error("Stationen är inte aktiverad.");
