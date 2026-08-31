@@ -189,6 +189,7 @@ export default function HRControlCenter() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex h-auto flex-wrap justify-start gap-1">
           <TabsTrigger value="absence">Frånvarokö {pending.length > 0 && `(${pending.length})`}</TabsTrigger>
+          <TabsTrigger value="vacation">Semesterår</TabsTrigger>
           <TabsTrigger value="coverage">Täckningskarta</TabsTrigger>
           <TabsTrigger value="shared">Delad personal</TabsTrigger>
           <TabsTrigger value="locks">Periodlås</TabsTrigger>
