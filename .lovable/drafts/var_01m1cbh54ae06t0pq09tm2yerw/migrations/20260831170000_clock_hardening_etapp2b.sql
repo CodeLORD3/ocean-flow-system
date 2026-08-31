@@ -200,57 +200,76 @@ BEGIN
            COALESCE(te.rounded_at, te.occurred_at) AS calc_at
     FROM public.time_entries te
     WHERE te.employee_id = _employee_id
-      AND te.occurred_at >= (_from::timestamp AT TIME ZONE 'Europe/Stockholm') - interval '1 day'
-      AND te.occurred_at < ((_to + 1)::timestamp AT TIME ZONE 'Europe/Stockholm') + interval '1 day'
+      AND te.occurred_at >= (_from::timestamp AT TIME ZONE 'Europe/Stockholm') - interval '2 days'
+      AND te.occurred_at < ((_to + 1)::timestamp AT TIME ZONE 'Europe/Stockholm') + interval '2 days'
       AND NOT EXISTS (SELECT 1 FROM public.time_entries c WHERE c.corrects_entry_id = te.id)
       AND te.correction_kind IS DISTINCT FROM 'void'
   ),
-  ins AS (
-    SELECT j.*, row_number() OVER (ORDER BY j.calc_at, j.id) AS pair_no
-    FROM journal j WHERE j.type = 'in'
+  -- Paring sker på närmaste efterföljande stämpling i tid, aldrig positionsvis.
+  -- En glömd utstämpling ger då bara ett saknat par, inte förskjutna par efteråt.
+  work_ordered AS (
+    SELECT j.*, lead(j.type) OVER (ORDER BY j.calc_at, j.id) AS next_type,
+           lead(j.calc_at) OVER (ORDER BY j.calc_at, j.id) AS next_at
+    FROM journal j WHERE j.type IN ('in', 'ut')
   ),
-  outs AS (
-    SELECT j.*, row_number() OVER (ORDER BY j.calc_at, j.id) AS pair_no
-    FROM journal j WHERE j.type = 'ut'
+  raw_intervals AS (
+    SELECT w.calc_at AS started_at, w.next_at AS ended_at
+    FROM work_ordered w
+    WHERE w.type = 'in' AND w.next_type = 'ut' AND w.next_at > w.calc_at
   ),
-  intervals AS (
-    SELECT public.svensk_dag(i.calc_at) AS day,
-           i.calc_at AS started_at,
-           o.calc_at AS ended_at,
-           GREATEST(0, floor(extract(epoch FROM (o.calc_at - i.calc_at)) / 60))::integer AS raw_minutes
-    FROM ins i JOIN outs o ON o.pair_no = i.pair_no AND o.calc_at > i.calc_at
-    WHERE public.svensk_dag(i.calc_at) BETWEEN _from AND _to
-  ),
-  break_pairs AS (
-    SELECT s.arbetsdag AS day, s.calc_at AS started_at,
-           (SELECT min(e.calc_at) FROM journal e
-             WHERE e.type = 'rast_slut' AND e.calc_at > s.calc_at) AS ended_at
-    FROM journal s WHERE s.type = 'rast_start'
+  break_ordered AS (
+    SELECT j.*, lead(j.type) OVER (ORDER BY j.calc_at, j.id) AS next_type,
+           lead(j.calc_at) OVER (ORDER BY j.calc_at, j.id) AS next_at
+    FROM journal j WHERE j.type IN ('rast_start', 'rast_slut')
   ),
   break_windows AS (
-    SELECT bp.day, bp.started_at, bp.ended_at
-    FROM break_pairs bp WHERE bp.ended_at IS NOT NULL AND bp.ended_at > bp.started_at
+    SELECT b.calc_at AS started_at, b.next_at AS ended_at
+    FROM break_ordered b
+    WHERE b.type = 'rast_start' AND b.next_type = 'rast_slut' AND b.next_at > b.calc_at
+      AND EXISTS (SELECT 1 FROM raw_intervals ri
+                   WHERE b.calc_at >= ri.started_at AND b.next_at <= ri.ended_at)
   ),
-  break_totals AS (
-    SELECT bw.day,
-           COALESCE(SUM(GREATEST(0, floor(extract(epoch FROM (bw.ended_at - bw.started_at)) / 60))), 0)::integer AS break_minutes
-    FROM break_windows bw
-    GROUP BY bw.day
+  -- Nattpass delas vid svensk dygnsgräns så att minuterna hamnar på rätt
+  -- arbetsdag och rätt ISO-vecka för mertid och övertid.
+  intervals AS (
+    SELECT d.day,
+           GREATEST(ri.started_at, (d.day::timestamp AT TIME ZONE 'Europe/Stockholm')) AS started_at,
+           LEAST(ri.ended_at, ((d.day + 1)::timestamp AT TIME ZONE 'Europe/Stockholm')) AS ended_at
+    FROM raw_intervals ri
+    CROSS JOIN LATERAL generate_series(
+      public.svensk_dag(ri.started_at),
+      public.svensk_dag(ri.ended_at - interval '1 microsecond'),
+      interval '1 day'
+    ) AS d(day)
+    WHERE d.day BETWEEN _from AND _to
+  ),
+  sized AS (
+    SELECT i.day, i.started_at, i.ended_at,
+           GREATEST(0, floor(extract(epoch FROM (i.ended_at - i.started_at)) / 60))::integer AS raw_minutes
+    FROM intervals i WHERE i.ended_at > i.started_at
   ),
   -- Rastminuter är inte arbetad tid: de plockas bort minut för minut, så att
   -- varken ordinarie tid, OB eller övertid räknar med rasten.
   minutes AS (
-    SELECT i.day, i.started_at + (g.n * interval '1 minute') AS minute_at,
-           COALESCE(b.break_minutes, 0) AS break_minutes
-    FROM intervals i
-    CROSS JOIN LATERAL generate_series(0, i.raw_minutes - 1) AS g(n)
-    LEFT JOIN break_totals b ON b.day = i.day
-    WHERE i.raw_minutes > 0
+    SELECT s.day, s.started_at + (g.n * interval '1 minute') AS minute_at
+    FROM sized s
+    CROSS JOIN LATERAL generate_series(0, s.raw_minutes - 1) AS g(n)
+    WHERE s.raw_minutes > 0
       AND NOT EXISTS (
         SELECT 1 FROM break_windows bw
-        WHERE i.started_at + (g.n * interval '1 minute') >= bw.started_at
-          AND i.started_at + (g.n * interval '1 minute') < bw.ended_at
+        WHERE s.started_at + (g.n * interval '1 minute') >= bw.started_at
+          AND s.started_at + (g.n * interval '1 minute') < bw.ended_at
       )
+  ),
+  -- Rast räknas per arbetsdag utifrån rastens faktiska minuter i dygnet.
+  break_totals AS (
+    SELECT s.day,
+           COALESCE(SUM(GREATEST(0, floor(extract(epoch FROM (
+             LEAST(bw.ended_at, s.ended_at) - GREATEST(bw.started_at, s.started_at)
+           )) / 60))), 0)::integer AS break_minutes
+    FROM sized s
+    JOIN break_windows bw ON bw.started_at < s.ended_at AND bw.ended_at > s.started_at
+    GROUP BY s.day
   ),
   employee_scope AS (
     SELECT em.legal_entity_id, COALESCE(em.employment_rate, 100)::numeric AS employment_rate
