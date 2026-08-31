@@ -9,14 +9,12 @@ import { BugReportButton } from "@/components/BugReportButton";
 
 
 import { useLocation, useNavigate } from "react-router-dom";
-import { ChevronRight, Search, User, UserRound, ArrowLeftRight, Factory, Store, ChevronDown, X, Check, LogOut, Shield } from "lucide-react";
+import { ChevronRight, Search, UserRound, ArrowLeftRight, Factory, Store, ChevronDown, X, LogOut, Shield } from "lucide-react";
 import { HrNotificationCenter } from "@/components/HrNotificationCenter";
-import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { useSite } from "@/contexts/SiteContext";
 import { useTabs } from "@/contexts/TabsContext";
 import { useAllowedStores } from "@/components/StoreSwitcher";
