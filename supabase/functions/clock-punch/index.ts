@@ -53,7 +53,6 @@ Deno.serve(async (req) => {
   if (!(await checkRateLimit(db, station.id))) return json(req, { error: "För många försök. Vänta en minut och försök igen." }, 429);
 
   const pnr = normalizePnr(rawIdentifier);
-  let provisionalPunch = false;
   let hit: EmployeeHit | null = null;
   let hash: string | null = null;
   if (pnr) {
@@ -107,7 +106,7 @@ Deno.serve(async (req) => {
       if (provisional) hit = { ...(provisional as EmployeeHit), is_active: true };
     }
 
-    if (!hit) {
+    if (!hit || !hit.is_active) {
       return json(req, { status: "pending_registration", message: "Registrering väntar på godkännande.", expires_at: expiresAt });
     }
     // En uppslagning ska fortfarande kräva chefens godkännande. Vid en faktisk
@@ -115,7 +114,6 @@ Deno.serve(async (req) => {
     if (mode === "lookup") {
       return json(req, { status: "pending_registration", message: "Registrering väntar på godkännande.", expires_at: expiresAt });
     }
-    provisionalPunch = true;
   }
 
   const dayStart = new Date();
@@ -155,7 +153,6 @@ Deno.serve(async (req) => {
     }
   }
 
-  const occurredRaw = occurredAtInput ?? new Date().toISOString();
   const occurredAt = occurredAtInput ?? new Date().toISOString();
   const roundedAt = action === "in" || action === "ut" ? applyRounding(occurredAt, station.profile) : occurredAt;
   const { data: inserted, error } = await db.from("time_entries").insert({

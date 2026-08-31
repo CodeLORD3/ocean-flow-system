@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { corsHeaders } from "../_shared/clock.ts";
+import { svenskDagSista, svenskDatum } from "../_shared/setime.ts";
 
 /**
  * Stänger alla stämplingar som startade före dagens datum (Stockholm-tid).
@@ -17,14 +18,8 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const now = new Date();
-    const localDate = new Intl.DateTimeFormat("sv-SE", {
-      timeZone: "Europe/Stockholm",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(now);
-    const startOfToday = new Date(`${localDate}T00:00:00+02:00`);
+    const localDate = svenskDatum();
+    const startOfToday = svenskDagSista(localDate);
 
     const { data: openRows, error: readErr } = await supabase
       .from("staff_shifts")
@@ -43,14 +38,8 @@ Deno.serve(async (req) => {
     const closed: { id: string; closed_at: string }[] = [];
 
     for (const row of openRows ?? []) {
-      // Slutet av passets EGET dygn i Stockholm-tid.
-      const shiftDay = new Intl.DateTimeFormat("sv-SE", {
-        timeZone: "Europe/Stockholm",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).format(new Date(row.clocked_in_at));
-      const closeAt = new Date(`${shiftDay}T23:59:59+02:00`);
+      const shiftDay = svenskDatum(new Date(row.clocked_in_at));
+      const closeAt = svenskDagSista(shiftDay);
 
       const { error } = await supabase
         .from("staff_shifts")
