@@ -148,6 +148,28 @@ export default function HRControlCenter() {
   const selectedRequest = pending.find((request) => request.id === absenceReviewId) ?? null;
   const lockedFor = new Map((locks.data ?? []).map((lock) => [lock.store_id, lock]));
 
+  /** Bemanning per krockdag så chefen ser talet före och efter beslutet. */
+  const conflictDates = (conflicts.data ?? []).map((conflict) => conflict.shift_date);
+  const conflictStaffing = useQuery({
+    queryKey: ["hr-control-conflict-staffing", absenceReviewId, conflictDates.join(",")],
+    enabled: conflictDates.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("shifts")
+        .select("store_id, date, employee_id, status")
+        .in("date", conflictDates)
+        .eq("status", "published");
+      if (error) throw error;
+      const counts = new Map<string, number>();
+      (data ?? []).forEach((shift) => {
+        if (!shift.employee_id) return;
+        const mapKey = `${shift.store_id}:${shift.date}`;
+        counts.set(mapKey, (counts.get(mapKey) ?? 0) + 1);
+      });
+      return counts;
+    },
+  });
+
   return (
     <IndustryFrame className="ind-page space-y-5 p-4 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
