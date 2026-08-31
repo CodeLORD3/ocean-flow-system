@@ -8,7 +8,7 @@ import { isInfiniteStock } from "@/lib/infiniteStock";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
-  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, Plus, CalendarIcon, ChevronDown, ChevronRight, CheckSquare,
+  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, Plus, CalendarIcon, ChevronDown, ChevronRight, CheckSquare, Camera,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,7 @@ import DeliveryNote from "@/components/DeliveryNote";
 import { moveStockToTransport } from "@/lib/stockTransfer";
 import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLineStatus";
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
+import { useEntityImageCounts } from "@/hooks/useEntityImages";
 import { logActivity } from "@/hooks/useActivityLog";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { WholesaleTotalOrderedView } from "@/components/orders/WholesaleTotalOrderedView";
@@ -160,8 +161,9 @@ type WholesaleOrderAccordionRowProps = {
   day: string;
   open: boolean;
   selected: boolean;
-  stores: any[];
-  onToggle: (id: string) => void;
+   stores: any[];
+   photoCount?: number;
+   onToggle: (id: string) => void;
   onSelect: (id: string) => void;
   onStatusChange: (id: string, status: string) => void;
   onPrint: (order: any) => void;
@@ -175,6 +177,7 @@ function WholesaleOrderAccordionRow({
   open,
   selected,
   stores,
+  photoCount = 0,
   onToggle,
   onSelect,
   onStatusChange,
