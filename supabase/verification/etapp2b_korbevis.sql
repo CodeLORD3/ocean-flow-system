@@ -162,3 +162,40 @@ BEGIN
   RAISE NOTICE 'w. nattpass 11 mars: % min (förväntat 300)', v_result.total_minutes;
 END $$;
 ROLLBACK;
+
+-- o) Attest, Min tid, avvikelsekö och löneexport ska visa identiska minuttal för
+-- samma person och dag. attest-compute gör ingen egen tidsberäkning — den läser
+-- berakna_arbetstid(). Kör attest-compute för dagen först, ersätt <emp>/<dag>.
+WITH emp AS (SELECT '<emp>'::uuid AS id), dag AS (SELECT '<dag>'::date AS d),
+motor AS (SELECT x.* FROM emp, dag, public.berakna_arbetstid(emp.id, dag.d, dag.d) x)
+SELECT 'o. attest' AS bevis, (a.computed->>'clocked_minutes')::int AS minuter,
+       (a.computed->>'break_minutes')::int AS rast, a.status AS status
+FROM public.attestations a, emp, dag WHERE a.employee_id = emp.id AND a.date = dag.d
+UNION ALL SELECT 'o. Min tid', m.total_minutes, m.break_minutes, 'motor' FROM motor m
+UNION ALL SELECT 'o. löneexport', m.total_minutes, m.break_minutes, 'motor' FROM motor m
+UNION ALL SELECT 'o. avvikelsekö', (a.computed->>'clocked_minutes')::int,
+       (a.computed->>'break_minutes')::int, a.deviation_type
+FROM public.attestations a, emp, dag WHERE a.employee_id = emp.id AND a.date = dag.d;
+
+-- q) Nattpass över tidsomställningen 2026-10-24 22:00 (+02) → 2026-10-25 06:00 (+01).
+-- I UTC: 2026-10-24 20:00Z → 2026-10-25 05:00Z = 540 minuter, eftersom den lokala
+-- 02-timmen inträffar två gånger och räknas per verklig förekomst.
+BEGIN;
+DO $$
+DECLARE v_emp uuid; v_total integer; v_in timestamptz := '2026-10-24 22:00:00+02';
+        v_out timestamptz := '2026-10-25 06:00:00+01';
+BEGIN
+  INSERT INTO public.employees (first_name, last_name, is_active)
+  VALUES ('Körbevis', 'Etapp2b q', true) RETURNING id INTO v_emp;
+  INSERT INTO public.time_entries (employee_id, type, occurred_at, source)
+  VALUES (v_emp, 'in', v_in, 'manual'), (v_emp, 'ut', v_out, 'manual');
+  RAISE NOTICE 'q. occurred_at UTC: % → % (% min spann)',
+    to_char(v_in AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'),
+    to_char(v_out AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'),
+    extract(epoch FROM (v_out - v_in)) / 60;
+  SELECT COALESCE(sum(x.total_minutes), 0) INTO v_total
+  FROM public.berakna_arbetstid(v_emp, date '2026-10-24', date '2026-10-25') x;
+  RAISE NOTICE 'q. dubbel 02-timme: % min (facit 540)', v_total;
+  IF v_total <> 540 THEN RAISE EXCEPTION 'q. FEL: % min, facit 540', v_total; END IF;
+END $$;
+ROLLBACK;
