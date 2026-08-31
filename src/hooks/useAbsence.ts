@@ -108,6 +108,7 @@ export function useCreateAbsenceRequest() {
       end_date?: string | null;
       extent_pct: number;
       note?: string;
+      basis?: "enligt_schema" | "halvdag" | "egen";
       store_id?: string | null;
       legal_entity_id?: string | null;
     }) => {
