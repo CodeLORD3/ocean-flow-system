@@ -14010,7 +14010,6 @@ export type Database = {
         Returns: boolean
       }
       hr_daily_checks: { Args: never; Returns: Json }
-      hr_notifications_mark_read: { Args: { _ids?: string[] }; Returns: number }
       hr_notify: {
         Args: {
           _category: string
