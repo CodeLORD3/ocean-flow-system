@@ -754,8 +754,10 @@ Status i nuvarande stämpelklockkod:
 
 - journal, efterregistrering och correction: implementerat
 - låsta perioder för correction: implementerat server-side
-- full automatisk jämförelse mot schemalagt pass i `time-entries`: inte den centrala beräkningen i denna vy
-- attestknapp för markerade dagsrader: inte färdig i `TimeEntriesPage`; UI:t säger fortfarande att attest kommer i etapp 3
+- attestmotorn: implementerad i edge function `attest-compute`, som matchar `time_entries` mot publicerade `shifts` per person och svenskt datum, räknar rast av `rast_start`/`rast_slut`-par och sätter `auto_approved` inom stationens `tolerance_minutes` (default 7) eller `flagged` med avvikelsetyp (`sen_in`, `tidig_ut`, `missad_rast`, `oplanerad_tid`, `missat_pass`). Korrigerade poster räknas bort via `corrects_entry_id`.
+- attestbeslut: implementerat i `/attestations` (`src/pages/Attestations.tsx` + `src/hooks/useAttest.ts`) med bulkbeslut, underlagsval (schematid, stämplad tid, justerad tid), loggning av `decided_by`/`decided_at` samt låsning och loggad upplåsning av period.
+- attestknapp direkt i `TimeEntriesPage`: inte implementerad — beslut fattas i attestvyn, inte i journalvyn
+- automatisk jämförelse mot schemalagt pass sker i `attest-compute`, inte i `time-entries`-vyn
 
 ---
 
@@ -987,9 +989,9 @@ Tabellen finns med RLS och relationer, men klockan skapar inte automatiskt flera
 
 Stationsprofilen har auto-rastfält, men den centrala `time_entries`-skrivningen skapar inte i den granskade funktionen automatiskt en `rast_start`/`rast_slut`-post efter X timmar. Automatisk rast behöver därför verifieras eller implementeras innan den marknadsförs som aktiv funktion.
 
-### 14.5 Attestflödet i rapporterad tid är inte färdigt
+### 14.5 Attest sker i egen vy, inte i journalvyn
 
-`TimeEntriesPage` kan markera dagsrader, men visar att attest kommer i senare etapp. Attestationsmodellen finns i databasen och används av schemaflöden, men en komplett attestknapp från denna vy är inte klar.
+Attest är implementerat, men beslutet fattas i `/attestations` och inte från `TimeEntriesPage`. Den som arbetar i journalvyn måste därför byta vy för att attestera. Kvarstående begränsning: `attest-compute` antar sommartidsoffset (+02:00) när schemapassets gränser byggs, vilket bör bytas till korrekt zonhantering före löneskarp drift.
 
 ### 14.6 Auto-clock-out har en separat legacy-väg
 
@@ -1151,6 +1153,6 @@ supabase/functions/personalkollen-sync/
 
 ## Slutsats
 
-Riktningen är en servervaliderad, revisionsbar och offline-tålig stämpelklocka där `time_entries` är den historiska sanningen. Kioskflödet, stationssäkerheten, maskerad identifiering, offlinekö, geofence, journal/rättelser, inspektörsläge, OB-underlag och Personalkollen-jämförelse finns i den nuvarande implementationen.
+Riktningen är en servervaliderad, revisionsbar och offline-tålig stämpelklocka där `time_entries` är den historiska sanningen. Kioskflödet, stationssäkerheten, maskerad identifiering, offlinekö, geofence, journal/rättelser, inspektörsläge, attest med avvikelser och periodlås, OB-underlag och Personalkollen-jämförelse finns i den nuvarande implementationen.
 
-De största punkterna att inte överskatta är den direkta Fortnox-löneexporten, automatisk regel-enforcement, komplett `time_allocations`, full attest från tidsvyn och relationen mellan nya `time_entries` och den separata legacy-funktionen för automatisk stängning av `staff_shifts`.
+De största punkterna att inte överskatta är den direkta Fortnox-löneexporten, automatisk regel-enforcement av dygns-/veckovila, komplett `time_allocations`, tidszonsantagandet i attestberäkningen och relationen mellan nya `time_entries` och den separata legacy-funktionen för automatisk stängning av `staff_shifts`.
