@@ -62,7 +62,7 @@ function weekLabel(date: Date) {
 
 function CandidatePicker({ sourceName, onClose }: { sourceName: string; onClose: () => void }) {
   const { toast } = useToast();
-  const { data: candidates = [] } = useMatchCandidates(sourceName);
+  const candidates = useMatchCandidates(sourceName);
   const { data: currentStaff } = useCurrentStaff();
   const confirm = useConfirmProductMatch();
   const [selectedId, setSelectedId] = useState("");
