@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const storeId: string | null = body.store_id ?? null;
   const cron: boolean = Boolean(body.cron);
-  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Stockholm" });
+  const today = svenskDatum();
   const from: string = body.from ?? today;
   const to: string = body.to ?? from;
 
@@ -90,8 +90,8 @@ Deno.serve(async (req) => {
   const { data: shifts, error: shiftErr } = await shiftQuery;
   if (shiftErr) return json({ error: shiftErr.message }, 500);
 
-  const fromIso = new Date(`${from}T00:00:00+02:00`).toISOString();
-  const toIso = new Date(`${to}T23:59:59+02:00`).toISOString();
+  const fromIso = svenskDagStart(from).toISOString();
+  const toIso = svenskDagSista(to).toISOString();
   let entryQuery = db
     .from("time_entries")
     .select("id, employee_id, store_id, legal_entity_id, station_id, type, occurred_at, corrects_entry_id")
