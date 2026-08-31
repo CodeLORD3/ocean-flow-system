@@ -612,24 +612,34 @@ export default function WholesaleOrders() {
                 {newOrderLines.length > 0 && (
                   <div className="space-y-2">
                     <Separator />
-                    <div className="text-xs font-medium text-muted-foreground">{newOrderLines.length} produkt{newOrderLines.length > 1 ? "er" : ""} tillagda</div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-xs font-medium text-muted-foreground">{newOrderLines.length} produkt{newOrderLines.length > 1 ? "er" : ""} tillagda</div>
+                      {selectedDeliveryRange && <Badge variant="outline" className="text-[10px] font-normal">Kundbehov för leveransveckan</Badge>}
+                    </div>
                     <div className="overflow-x-auto">
-                      <table className="w-full text-xs">
-                        <thead><tr className="border-b border-border"><th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th><th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th><th className="pb-2 text-right font-medium text-muted-foreground w-32">Antal</th><th className="pb-2 w-8"></th></tr></thead>
+                      <table className="w-full min-w-[640px] text-xs">
+                        <thead><tr className="border-b border-border"><th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th><th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th><th className="pb-2 text-right font-medium text-muted-foreground">Kundbehov</th><th className="pb-2 text-right font-medium text-muted-foreground">Redan beställt</th><th className="pb-2 text-right font-medium text-muted-foreground w-28">Ny mängd</th><th className="pb-2 text-right font-medium text-muted-foreground">Täckning</th><th className="pb-2 w-8"></th></tr></thead>
                         <tbody>
-                          {newOrderLines.map((line, idx) => (
-                            <tr key={line.product_id} className="border-b border-border/30">
-                              <td className="py-2 font-medium text-foreground">{line.product_name}</td>
-                              <td className="py-2 text-muted-foreground">{line.unit}</td>
-                              <td className="py-2 text-right"><Input type="number" step="0.1" value={line.quantity} onChange={e => updateNewLine(idx, e.target.value)} className="h-7 text-xs w-24 ml-auto text-right" placeholder="0" autoFocus={idx === 0} /></td>
-                              <td className="py-2"><Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeNewLine(idx)}><X className="h-3 w-3" /></Button></td>
-                            </tr>
-                          ))}
+                          {newOrderLines.map((line, idx) => {
+                            const decision = decisionByProduct.get(line.product_id);
+                            if (!decision) return null;
+                            return (<React.Fragment key={line.product_id}>
+                              <tr className="border-b border-border/30">
+                                <td className="py-2 font-medium text-foreground">{line.product_name}</td><td className="py-2 text-muted-foreground">{line.unit}</td>
+                                <td className="py-2 text-right font-mono tabular-nums">{dashIfZero(decision.need, line.unit)}</td><td className="py-2 text-right font-mono tabular-nums">{dashIfZero(decision.outstanding, line.unit)}</td>
+                                <td className="py-2 text-right"><Input type="number" step="0.1" value={line.quantity} onChange={e => updateNewLine(idx, e.target.value)} className="h-7 w-24 ml-auto text-right text-xs" placeholder="0" autoFocus={idx === 0} /></td>
+                                <td className="py-2 text-right"><button type="button" className="inline-flex items-center gap-1.5" onClick={() => toggleDecisionLine(line.product_id)} title="Visa beslutsunderlag"><Badge variant={decision.status === "tackt" ? "outline" : decision.status === "ingen_behov" ? "secondary" : "destructive"}>{decision.status === "tackt" ? "Täckt" : decision.status === "ingen_behov" ? "Inget behov" : "Saknas"}</Badge><ChevronDown className={cn("h-3 w-3 transition-transform", expandedDecisionLines.includes(line.product_id) && "rotate-180")} /></button></td>
+                                <td className="py-2"><Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeNewLine(idx)}><X className="h-3 w-3" /></Button></td>
+                              </tr>
+                              {expandedDecisionLines.includes(line.product_id) && <tr className="border-b border-border/20 bg-muted/20"><td colSpan={7} className="px-3 py-2 text-[10px] text-muted-foreground"><div className="flex flex-wrap gap-x-4 gap-y-1"><span>Efter order: <strong className="font-mono text-foreground">{qtyText(decision.coverage, line.unit)} {line.unit}</strong></span><span>Behov kvar: <strong className="font-mono text-foreground">{qtyText(Math.max(decision.need - decision.coverage, 0), line.unit)} {line.unit}</strong></span><span>Snitt 4 veckor: <strong className="font-mono text-foreground">{qtyText(decision.average, line.unit)} {line.unit}</strong></span><span>Förra veckan: <strong className="font-mono text-foreground">{qtyText(decision.lastWeek, line.unit)} {line.unit}</strong></span>{decision.duplicate && <span className="font-medium text-warning">Öppen order finns redan för produkten.</span>}</div></td></tr>}
+                            </React.Fragment>);
+                          })}
                         </tbody>
                       </table>
                     </div>
                   </div>
                 )}
+                {selectedDeliveryRange && uncoveredNeeds.length > 0 && <div className="border border-warning/30 bg-warning/5 p-3 space-y-2"><div className="flex items-center gap-2 text-xs font-medium text-warning"><AlertTriangle className="h-3.5 w-3.5" /> Kundbehov som ännu inte ligger på ordern</div><div className="flex flex-wrap gap-1.5">{uncoveredNeeds.map(({ product, need, outstanding }) => <button key={product.id} type="button" className="inline-flex items-center gap-1 border border-border bg-background px-2 py-1 text-[10px] hover:bg-muted" onClick={() => addNewProduct(product)}><Plus className="h-3 w-3" /> {product.name} ({qtyText(Math.max(need - outstanding, 0), product.unit)} {product.unit})</button>)}</div></div>}
                 <div className="space-y-1.5">
                   <Label className="text-xs">Önskat avgångsdatum <span className="text-destructive">*</span></Label>
                   <Popover>
