@@ -313,6 +313,8 @@ export default function WholesaleOrders() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
   const [storeFilter, setStoreFilter] = useState("alla");
+  const [showHistory, setShowHistory] = useState(false);
+
   const [marked, setMarked] = useState<string[]>([]);
   const [expandedOrderIds, setExpandedOrderIds] = useState<Set<string>>(new Set());
   const toggleExpandOrder = (id: string) => setExpandedOrderIds(prev => {
