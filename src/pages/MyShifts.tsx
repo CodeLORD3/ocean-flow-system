@@ -156,6 +156,18 @@ export default function MyShifts() {
   );
 
   const totalMinutes = published.reduce((sum, s) => sum + shiftMinutes(s), 0);
+  const todayShifts = published.filter((shift) => shift.date === today);
+  const scheduledWorkDays = new Set(absenceShifts.filter((shift) => shift.status === "published").map((shift) => shift.date)).size;
+  const calendarDays = absenceDraft.endDate && absenceDraft.endDate >= absenceDraft.startDate
+    ? Math.floor((new Date(`${absenceDraft.endDate}T12:00:00`).getTime() - new Date(`${absenceDraft.startDate}T12:00:00`).getTime()) / 86_400_000) + 1
+    : absenceDraft.startDate ? 1 : 0;
+
+  useEffect(() => {
+    if (sickUndoUntil === null) return;
+    const timer = window.setInterval(() => setClockNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [sickUndoUntil]);
+  const sickUndoSeconds = sickUndoUntil === null ? 0 : Math.max(0, Math.ceil((sickUndoUntil - clockNow) / 1000));
 
   const shiftRow = (s: Shift, mine: boolean) => {
     const type = s.shift_type_id ? typeById.get(s.shift_type_id) : null;
