@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useStores } from "@/hooks/useStores";
 import { useStaff } from "@/hooks/useStaff";
 import { useActorNames } from "@/hooks/useActorNames";
+import { EDIT_FIELD_LABELS, useAllDailyReportEdits, useDailyReportEdits } from "@/hooks/useMonthlyReports";
 import {
   formatWeekdayDate,
   type DailyReport,
@@ -201,6 +202,7 @@ function EditDailyReportDialog({
   nameOf: (id: string) => string;
 }) {
   const updateReport = useUpdateDailyReport();
+  const edits = useDailyReportEdits(report?.id);
   const [draft, setDraft] = useState<DraftReport | null>(null);
 
   useEffect(() => {
@@ -253,6 +255,9 @@ function EditDailyReportDialog({
           <DialogDescription>
             {report ? `${formatWeekdayDate(report.report_date)} · ändringen sparas i samma rapport` : ""}
           </DialogDescription>
+          {report && edits.data && edits.data.length > 0 && (
+            <Badge variant="outline" className="w-fit border-warning/40 text-warning">Korrigerad tidigare · {edits.data.length} ändringar</Badge>
+          )}
         </DialogHeader>
         {draft && report && (
           <div className="space-y-6 py-2">
@@ -282,7 +287,7 @@ function EditDailyReportDialog({
                   <p className="text-sm font-semibold">Bemanning</p>
                   <p className="text-xs text-muted-foreground">Justera tider eller ta bort en felaktig rad.</p>
                 </div>
-                <span className="text-xs text-muted-foreground">Ändra befintliga pass</span>
+                <span className="text-xs text-muted-foreground">Ändra pass och timmar</span>
               </div>
               <StaffDraftRows entries={draft.staff_entries} onChange={(entries) => setField("staff_entries", entries)} nameOf={nameOf} />
               <div className="space-y-1.5">
@@ -310,6 +315,27 @@ function EditDailyReportDialog({
             </section>
           </div>
         )}
+        {edits.data && edits.data.length > 0 && (
+          <section className="border-t pt-4">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold">Ändringslogg</p>
+                <p className="text-xs text-muted-foreground">Varje korrigering sparas med ursprungligt och nytt värde.</p>
+              </div>
+              <Badge variant="outline">{edits.data.length} ändringar</Badge>
+            </div>
+            <div className="max-h-48 divide-y overflow-y-auto rounded-md border bg-muted/10">
+              {edits.data.map((edit) => (
+                <div key={edit.id} className="grid gap-1 px-3 py-2 text-xs sm:grid-cols-[130px_minmax(0,1fr)_minmax(0,1fr)_120px] sm:items-start sm:gap-3">
+                  <span className="font-medium">{EDIT_FIELD_LABELS[edit.field] ?? edit.field}</span>
+                  <span className="break-words text-muted-foreground"><span className="mr-1 text-[10px] uppercase tracking-wide">Från</span>{edit.old_value ?? "—"}</span>
+                  <span className="break-words"><span className="mr-1 text-[10px] uppercase tracking-wide text-primary">Till</span>{edit.new_value ?? "—"}</span>
+                  <span className="text-muted-foreground">{nameOf(edit.changed_by) ?? "Okänd"}<br />{new Date(edit.changed_at).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" })}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Avbryt</Button>
           <Button type="button" onClick={() => void save()} disabled={!draft || updateReport.isPending}>
@@ -328,11 +354,13 @@ export function DailyReportsArchive() {
   const { data: stores = [] } = useStores(true);
   const { data: staff = [] } = useStaff();
   const { nameOf } = useActorNames();
+  const { data: reportEdits = [] } = useAllDailyReportEdits();
   const [storeFilter, setStoreFilter] = useState<string>("all");
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState<DailyReport | null>(null);
 
   const isAdmin = (currentStaff?.portal_access ?? []).includes("admin");
+  const correctedReportIds = useMemo(() => new Set(reportEdits.map((edit) => edit.report_id)), [reportEdits]);
   const storeName = (id: string) => stores.find((store) => store.id === id)?.name ?? "Butik";
   const staffName = (id: string) => {
     const person = staff.find((entry) => entry.id === id);
@@ -399,7 +427,7 @@ export function DailyReportsArchive() {
                     </button>
                     <button type="button" onClick={() => setOpenId(open ? null : report.id)} className="min-w-0 text-left">
                       <span className="block truncate text-sm font-semibold">{storeName(report.store_id)}</span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">{formatWeekdayDate(report.report_date)}</span>
+                      <span className="mt-0.5 block flex flex-wrap items-center gap-2 text-xs text-muted-foreground">{formatWeekdayDate(report.report_date)}{correctedReportIds.has(report.id) && <Badge variant="outline" className="border-warning/40 px-1.5 py-0 text-[9px] text-warning">Korrigerad</Badge>}</span>
                     </button>
                     <span className="hidden truncate text-xs text-muted-foreground md:block">{nameOf(report.created_by) ?? "Okänd rapportör"}</span>
                     <span className="col-start-2 row-start-1 text-right font-mono text-sm font-medium tabular-nums md:col-auto md:row-auto">{nf(report.gross_sales)} kr</span>
@@ -409,6 +437,9 @@ export function DailyReportsArchive() {
 
                   {open && (
                     <div className="border-t bg-muted/10 px-4 pb-5 pt-4 md:px-12">
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
+                        {correctedReportIds.has(report.id) && <Badge variant="outline" className="border-warning/40 text-warning">Korrigerad efter inskick</Badge>}
+                      </div>
                       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
                         <Metric label="Brutto" value={`${nf(report.gross_sales)} kr`} emphasis />
                         <Metric label="Netto" value={`${nf(report.net_sales)} kr`} />

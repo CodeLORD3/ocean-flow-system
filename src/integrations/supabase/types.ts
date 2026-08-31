@@ -138,6 +138,13 @@ export type Database = {
             foreignKeyName: "abp_consignments_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "abp_consignments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -324,6 +331,13 @@ export type Database = {
             foreignKeyName: "absence_requests_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "absence_requests_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -415,6 +429,13 @@ export type Database = {
           store_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "activity_logs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "activity_logs_store_id_fkey"
             columns: ["store_id"]
@@ -520,6 +541,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shifts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attestations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "attestations_store_id_fkey"
@@ -674,6 +702,69 @@ export type Database = {
             referencedColumns: ["batch_id"]
           },
         ]
+      }
+      benefits: {
+        Row: {
+          active: boolean
+          annual_limit: number | null
+          basis: number | null
+          basis_unit: string | null
+          benefit_type: string
+          calculation_rule: Json
+          created_at: string
+          employee_id: string
+          employment_id: string | null
+          id: string
+          legal_entity_id: string
+          meals_included: boolean
+          notes: string | null
+          receipt_ref: string | null
+          store_id: string | null
+          updated_at: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          active?: boolean
+          annual_limit?: number | null
+          basis?: number | null
+          basis_unit?: string | null
+          benefit_type: string
+          calculation_rule?: Json
+          created_at?: string
+          employee_id: string
+          employment_id?: string | null
+          id?: string
+          legal_entity_id: string
+          meals_included?: boolean
+          notes?: string | null
+          receipt_ref?: string | null
+          store_id?: string | null
+          updated_at?: string
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          active?: boolean
+          annual_limit?: number | null
+          basis?: number | null
+          basis_unit?: string | null
+          benefit_type?: string
+          calculation_rule?: Json
+          created_at?: string
+          employee_id?: string
+          employment_id?: string | null
+          id?: string
+          legal_entity_id?: string
+          meals_included?: boolean
+          notes?: string | null
+          receipt_ref?: string | null
+          store_id?: string | null
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: []
       }
       booking_block_audit: {
         Row: {
@@ -1059,6 +1150,13 @@ export type Database = {
             foreignKeyName: "checklist_days_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "checklist_days_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -1260,6 +1358,13 @@ export type Database = {
             foreignKeyName: "checklist_template_items_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -1307,6 +1412,13 @@ export type Database = {
           weekdays?: number[]
         }
         Relationships: [
+          {
+            foreignKeyName: "checklist_templates_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "checklist_templates_store_id_fkey"
             columns: ["store_id"]
@@ -1480,6 +1592,13 @@ export type Database = {
             foreignKeyName: "clock_pending_registrations_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "clock_pending_registrations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -1582,6 +1701,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "clock_stations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "clock_stations_store_id_fkey"
             columns: ["store_id"]
@@ -1855,6 +1981,13 @@ export type Database = {
             foreignKeyName: "compliance_requirements_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "compliance_requirements_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -1976,6 +2109,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "storage_locations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "control_points_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "control_points_store_id_fkey"
@@ -2550,6 +2690,13 @@ export type Database = {
             foreignKeyName: "customer_orders_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "customer_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -2768,6 +2915,13 @@ export type Database = {
             foreignKeyName: "customers_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "customers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -2907,6 +3061,13 @@ export type Database = {
             foreignKeyName: "customers_retail_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "customers_retail_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -2996,6 +3157,50 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_report_edits: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          field: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          report_date: string
+          report_id: string
+          store_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          field: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          report_date: string
+          report_id: string
+          store_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          field?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          report_date?: string
+          report_id?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_report_edits_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_reports: {
         Row: {
           comment: string | null
@@ -3070,6 +3275,13 @@ export type Database = {
           waste_items?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "daily_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "daily_reports_store_id_fkey"
             columns: ["store_id"]
@@ -3258,6 +3470,13 @@ export type Database = {
             foreignKeyName: "daily_stock_sheets_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "daily_stock_sheets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -3402,6 +3621,13 @@ export type Database = {
             foreignKeyName: "delivery_notes_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "delivery_notes_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -3458,6 +3684,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shop_orders"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_receiving_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "delivery_receiving_reports_store_id_fkey"
@@ -3704,6 +3937,13 @@ export type Database = {
             foreignKeyName: "deviations_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "deviations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -3920,6 +4160,57 @@ export type Database = {
           },
         ]
       }
+      employer_contribution_rules: {
+        Row: {
+          active: boolean
+          birth_year_from: number | null
+          birth_year_to: number | null
+          contribution_rate: number
+          created_at: string
+          growth_support_note: string | null
+          id: string
+          legal_entity_id: string | null
+          pension_rate: number | null
+          rule_name: string
+          salary_cap: number | null
+          updated_at: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          active?: boolean
+          birth_year_from?: number | null
+          birth_year_to?: number | null
+          contribution_rate: number
+          created_at?: string
+          growth_support_note?: string | null
+          id?: string
+          legal_entity_id?: string | null
+          pension_rate?: number | null
+          rule_name: string
+          salary_cap?: number | null
+          updated_at?: string
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          active?: boolean
+          birth_year_from?: number | null
+          birth_year_to?: number | null
+          contribution_rate?: number
+          created_at?: string
+          growth_support_note?: string | null
+          id?: string
+          legal_entity_id?: string | null
+          pension_rate?: number | null
+          rule_name?: string
+          salary_cap?: number | null
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: []
+      }
       employments: {
         Row: {
           agreement_area: string
@@ -4037,6 +4328,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "legal_entities"
             referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "employments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "employments_store_id_fkey"
@@ -4539,6 +4837,84 @@ export type Database = {
         }
         Relationships: []
       }
+      fortnox_wage_code_map: {
+        Row: {
+          active: boolean
+          agreement_area: string
+          created_at: string
+          fortnox_code: string
+          id: string
+          legal_entity_id: string
+          line_type: string
+          notes: string | null
+          paxml_code: string | null
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          agreement_area?: string
+          created_at?: string
+          fortnox_code: string
+          id?: string
+          legal_entity_id: string
+          line_type: string
+          notes?: string | null
+          paxml_code?: string | null
+          transaction_type?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          agreement_area?: string
+          created_at?: string
+          fortnox_code?: string
+          id?: string
+          legal_entity_id?: string
+          line_type?: string
+          notes?: string | null
+          paxml_code?: string | null
+          transaction_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      holiday_calendar: {
+        Row: {
+          country_code: string
+          created_at: string
+          holiday_date: string
+          id: string
+          is_half_day: boolean
+          is_public_holiday: boolean
+          label: string
+          legal_entity_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          country_code?: string
+          created_at?: string
+          holiday_date: string
+          id?: string
+          is_half_day?: boolean
+          is_public_holiday?: boolean
+          label: string
+          legal_entity_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          holiday_date?: string
+          id?: string
+          is_half_day?: boolean
+          is_public_holiday?: boolean
+          label?: string
+          legal_entity_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hr_notification_preferences: {
         Row: {
           category: string
@@ -4973,6 +5349,13 @@ export type Database = {
             foreignKeyName: "instruments_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "instruments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -5177,6 +5560,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "storage_locations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "inventory_reports_store_id_fkey"
@@ -5398,6 +5788,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lf_pension_exports: {
+        Row: {
+          created_at: string
+          downloaded_at: string | null
+          downloaded_by: string | null
+          file_path: string | null
+          format_version: string
+          generated_by: string | null
+          id: string
+          legal_entity_id: string
+          payroll_period_id: string
+          row_count: number
+        }
+        Insert: {
+          created_at?: string
+          downloaded_at?: string | null
+          downloaded_by?: string | null
+          file_path?: string | null
+          format_version?: string
+          generated_by?: string | null
+          id?: string
+          legal_entity_id: string
+          payroll_period_id: string
+          row_count?: number
+        }
+        Update: {
+          created_at?: string
+          downloaded_at?: string | null
+          downloaded_by?: string | null
+          file_path?: string | null
+          format_version?: string
+          generated_by?: string | null
+          id?: string
+          legal_entity_id?: string
+          payroll_period_id?: string
+          row_count?: number
+        }
+        Relationships: []
       }
       lot_documents: {
         Row: {
@@ -6096,6 +6525,13 @@ export type Database = {
             foreignKeyName: "major_holidays_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "major_holidays_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -6304,6 +6740,13 @@ export type Database = {
             foreignKeyName: "margin_targets_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "margin_targets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -6399,6 +6842,13 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "meeting_protocols_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "meeting_protocols_store_id_fkey"
             columns: ["store_id"]
@@ -6506,6 +6956,13 @@ export type Database = {
             foreignKeyName: "nimpos_reconciliations_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "nimpos_reconciliations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -6567,6 +7024,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "nimpos_store_map_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "nimpos_store_map_store_id_fkey"
             columns: ["store_id"]
@@ -6729,6 +7193,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "notifications_store_id_fkey"
             columns: ["store_id"]
@@ -7015,10 +7486,80 @@ export type Database = {
             foreignKeyName: "payments_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "payments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
+      }
+      payroll_deductions: {
+        Row: {
+          active: boolean
+          amount: number
+          amount_period: string
+          consent_document_ref: string | null
+          created_at: string
+          deduction_type: string
+          employee_id: string
+          employment_id: string | null
+          enforcement_reference: string | null
+          id: string
+          legal_basis: string | null
+          legal_entity_id: string
+          notes: string | null
+          protected_amount: number | null
+          store_id: string | null
+          updated_at: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          active?: boolean
+          amount?: number
+          amount_period?: string
+          consent_document_ref?: string | null
+          created_at?: string
+          deduction_type: string
+          employee_id: string
+          employment_id?: string | null
+          enforcement_reference?: string | null
+          id?: string
+          legal_basis?: string | null
+          legal_entity_id: string
+          notes?: string | null
+          protected_amount?: number | null
+          store_id?: string | null
+          updated_at?: string
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          amount_period?: string
+          consent_document_ref?: string | null
+          created_at?: string
+          deduction_type?: string
+          employee_id?: string
+          employment_id?: string | null
+          enforcement_reference?: string | null
+          id?: string
+          legal_basis?: string | null
+          legal_entity_id?: string
+          notes?: string | null
+          protected_amount?: number | null
+          store_id?: string | null
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: []
       }
       payroll_export_lines: {
         Row: {
@@ -7092,6 +7633,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payroll_export_log: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          fortnox_result_id: string | null
+          http_status: number | null
+          id: string
+          legal_entity_id: string
+          payload: Json
+          payroll_period_id: string
+          request_key: string | null
+          response_payload: Json | null
+          retry_count: number
+          status: string
+          transaction_type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          fortnox_result_id?: string | null
+          http_status?: number | null
+          id?: string
+          legal_entity_id: string
+          payload?: Json
+          payroll_period_id: string
+          request_key?: string | null
+          response_payload?: Json | null
+          retry_count?: number
+          status?: string
+          transaction_type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          fortnox_result_id?: string | null
+          http_status?: number | null
+          id?: string
+          legal_entity_id?: string
+          payload?: Json
+          payroll_period_id?: string
+          request_key?: string | null
+          response_payload?: Json | null
+          retry_count?: number
+          status?: string
+          transaction_type?: string
+        }
+        Relationships: []
       }
       payroll_exports: {
         Row: {
@@ -7171,6 +7763,174 @@ export type Database = {
         }
         Relationships: []
       }
+      payroll_lines: {
+        Row: {
+          cost_center: string | null
+          created_at: string
+          employee_id: string
+          employment_id: string | null
+          export_status: string
+          extent_pct: number | null
+          fortnox_transaction_id: string | null
+          id: string
+          legal_entity_id: string
+          line_date: string
+          line_type: string
+          note: string | null
+          period_id: string
+          preliminary_cost: number | null
+          quantity: number
+          source_ref: string | null
+          source_type: string | null
+          store_id: string | null
+          unit_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          cost_center?: string | null
+          created_at?: string
+          employee_id: string
+          employment_id?: string | null
+          export_status?: string
+          extent_pct?: number | null
+          fortnox_transaction_id?: string | null
+          id?: string
+          legal_entity_id: string
+          line_date: string
+          line_type: string
+          note?: string | null
+          period_id: string
+          preliminary_cost?: number | null
+          quantity?: number
+          source_ref?: string | null
+          source_type?: string | null
+          store_id?: string | null
+          unit_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          cost_center?: string | null
+          created_at?: string
+          employee_id?: string
+          employment_id?: string | null
+          export_status?: string
+          extent_pct?: number | null
+          fortnox_transaction_id?: string | null
+          id?: string
+          legal_entity_id?: string
+          line_date?: string
+          line_type?: string
+          note?: string | null
+          period_id?: string
+          preliminary_cost?: number | null
+          quantity?: number
+          source_ref?: string | null
+          source_type?: string | null
+          store_id?: string | null
+          unit_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payroll_periods: {
+        Row: {
+          computed_at: string | null
+          correction_reason: string | null
+          created_at: string
+          exported_at: string | null
+          exported_by: string | null
+          fortnox_batch_ref: string | null
+          id: string
+          legal_entity_id: string
+          period: string
+          reviewed_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          computed_at?: string | null
+          correction_reason?: string | null
+          created_at?: string
+          exported_at?: string | null
+          exported_by?: string | null
+          fortnox_batch_ref?: string | null
+          id?: string
+          legal_entity_id: string
+          period: string
+          reviewed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          computed_at?: string | null
+          correction_reason?: string | null
+          created_at?: string
+          exported_at?: string | null
+          exported_by?: string | null
+          fortnox_batch_ref?: string | null
+          id?: string
+          legal_entity_id?: string
+          period?: string
+          reviewed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payroll_policies: {
+        Row: {
+          agreement_area: string
+          benefit_rules: Json
+          created_at: string
+          holiday_rules: Json
+          id: string
+          legal_entity_id: string
+          no_ob_and_overtime_overlap: boolean
+          notes: string | null
+          ob_levels: Json
+          overtime_rules: Json
+          policy_name: string
+          updated_at: string
+          vacation_reserve_pct: number
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          agreement_area?: string
+          benefit_rules?: Json
+          created_at?: string
+          holiday_rules?: Json
+          id?: string
+          legal_entity_id: string
+          no_ob_and_overtime_overlap?: boolean
+          notes?: string | null
+          ob_levels?: Json
+          overtime_rules?: Json
+          policy_name: string
+          updated_at?: string
+          vacation_reserve_pct?: number
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          agreement_area?: string
+          benefit_rules?: Json
+          created_at?: string
+          holiday_rules?: Json
+          id?: string
+          legal_entity_id?: string
+          no_ob_and_overtime_overlap?: boolean
+          notes?: string | null
+          ob_levels?: Json
+          overtime_rules?: Json
+          policy_name?: string
+          updated_at?: string
+          vacation_reserve_pct?: number
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: []
+      }
       period_locks: {
         Row: {
           id: string
@@ -7206,6 +7966,13 @@ export type Database = {
           unlocked_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "period_locks_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "period_locks_store_id_fkey"
             columns: ["store_id"]
@@ -7303,6 +8070,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "pk_connections"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pk_costgroups_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "pk_costgroups_store_id_fkey"
@@ -7780,6 +8554,13 @@ export type Database = {
             foreignKeyName: "pk_workplaces_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "pk_workplaces_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -7930,6 +8711,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "staff_access"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_cashiers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "pos_cashiers_store_id_fkey"
@@ -8300,6 +9088,13 @@ export type Database = {
             foreignKeyName: "pos_transactions_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "pos_transactions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -8463,6 +9258,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "legal_entities"
             referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "price_lists_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "price_lists_store_id_fkey"
@@ -8845,6 +9647,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "production_orders_store_id_fkey"
@@ -9605,6 +10414,13 @@ export type Database = {
             foreignKeyName: "schedule_events_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "schedule_events_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -9648,6 +10464,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "schedule_imports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "schedule_imports_store_id_fkey"
             columns: ["store_id"]
@@ -9856,6 +10679,13 @@ export type Database = {
             foreignKeyName: "shift_templates_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "shift_templates_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -9979,6 +10809,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shift_types"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "shifts_store_id_fkey"
@@ -10189,6 +11026,13 @@ export type Database = {
             foreignKeyName: "shop_orders_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "shop_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -10274,6 +11118,13 @@ export type Database = {
             foreignKeyName: "shop_reports_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "shop_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -10323,6 +11174,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "shop_wishes_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "shop_wishes_store_id_fkey"
             columns: ["store_id"]
@@ -10442,6 +11300,13 @@ export type Database = {
             foreignKeyName: "shopify_product_map_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "shopify_product_map_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -10501,6 +11366,13 @@ export type Database = {
             foreignKeyName: "shopify_shops_default_store_id_fkey"
             columns: ["default_store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "shopify_shops_default_store_id_fkey"
+            columns: ["default_store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -10545,6 +11417,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "shopify_store_map_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "shopify_store_map_store_id_fkey"
             columns: ["store_id"]
@@ -10629,6 +11508,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shopify_shops"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopify_webhook_events_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "shopify_webhook_events_store_id_fkey"
@@ -10902,6 +11788,13 @@ export type Database = {
             foreignKeyName: "staff_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "staff_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -10955,6 +11848,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "staff_access"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_planned_shifts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "staff_planned_shifts_store_id_fkey"
@@ -11114,6 +12014,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "staff_access"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_shifts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "staff_shifts_store_id_fkey"
@@ -11484,6 +12391,13 @@ export type Database = {
             foreignKeyName: "storage_locations_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "storage_locations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -11527,6 +12441,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "legal_entities"
             referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "store_company_periods_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "store_company_periods_store_id_fkey"
@@ -11600,6 +12521,13 @@ export type Database = {
             foreignKeyName: "store_opening_hours_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_opening_hours_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -11644,6 +12572,13 @@ export type Database = {
             foreignKeyName: "store_order_settings_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: true
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_order_settings_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -11682,6 +12617,13 @@ export type Database = {
             foreignKeyName: "store_sidebar_prefs_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_sidebar_prefs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -11716,6 +12658,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "store_sidebar_sections_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "store_sidebar_sections_store_id_fkey"
             columns: ["store_id"]
@@ -11760,6 +12709,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "store_special_days_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "store_special_days_store_id_fkey"
             columns: ["store_id"]
@@ -11978,6 +12934,13 @@ export type Database = {
             foreignKeyName: "sumup_catalog_audits_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "sumup_catalog_audits_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -12104,6 +13067,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "legal_entities"
             referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "sumup_merchants_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "sumup_merchants_store_id_fkey"
@@ -12499,6 +13469,51 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_tables: {
+        Row: {
+          created_at: string
+          fixed_tax: number
+          id: string
+          income_from: number
+          income_to: number | null
+          percentage: number
+          source_ref: string | null
+          table_number: number
+          tax_column: number
+          tax_kind: string
+          tax_year: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fixed_tax?: number
+          id?: string
+          income_from: number
+          income_to?: number | null
+          percentage?: number
+          source_ref?: string | null
+          table_number: number
+          tax_column: number
+          tax_kind?: string
+          tax_year: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fixed_tax?: number
+          id?: string
+          income_from?: number
+          income_to?: number | null
+          percentage?: number
+          source_ref?: string | null
+          table_number?: number
+          tax_column?: number
+          tax_kind?: string
+          tax_year?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tenants: {
         Row: {
           active: boolean
@@ -12603,6 +13618,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "time_entries"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_allocations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "time_allocations_store_id_fkey"
@@ -12717,6 +13739,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clock_stations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "time_entries_store_id_fkey"
@@ -13940,6 +14969,13 @@ export type Database = {
             foreignKeyName: "weekly_reports_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "weekly_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -13978,6 +15014,13 @@ export type Database = {
             foreignKeyName: "weekly_store_report_closures_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "weekly_store_report_closures_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -13986,6 +15029,8 @@ export type Database = {
       weekly_store_reports: {
         Row: {
           avg_sales_per_day_sek: number
+          corrected: boolean
+          corrected_at: string | null
           created_at: string
           daily_reports_count: number
           drift_after_lock: boolean
@@ -14007,6 +15052,8 @@ export type Database = {
         }
         Insert: {
           avg_sales_per_day_sek?: number
+          corrected?: boolean
+          corrected_at?: string | null
           created_at?: string
           daily_reports_count?: number
           drift_after_lock?: boolean
@@ -14028,6 +15075,8 @@ export type Database = {
         }
         Update: {
           avg_sales_per_day_sek?: number
+          corrected?: boolean
+          corrected_at?: string | null
           created_at?: string
           daily_reports_count?: number
           drift_after_lock?: boolean
@@ -14048,6 +15097,13 @@ export type Database = {
           week_start?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "weekly_store_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "weekly_store_reports_store_id_fkey"
             columns: ["store_id"]
@@ -14179,6 +15235,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "work_sites_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
           {
             foreignKeyName: "work_sites_store_id_fkey"
             columns: ["store_id"]
@@ -14328,6 +15391,13 @@ export type Database = {
             foreignKeyName: "storage_locations_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "storage_locations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -14362,6 +15432,50 @@ export type Database = {
           },
         ]
       }
+      monthly_region_reports: {
+        Row: {
+          avg_sales_per_day_sek: number | null
+          corrected: boolean | null
+          daily_reports_count: number | null
+          diff_kr: number | null
+          diff_procent: number | null
+          expected_open_days: number | null
+          group_key: string | null
+          group_label: string | null
+          missing_stores: string[] | null
+          month: number | null
+          month_end: string | null
+          month_start: string | null
+          prev_total_sales_sek: number | null
+          staff_hours: number | null
+          staff_shifts: number | null
+          status: string | null
+          total_sales_sek: number | null
+          year: number | null
+        }
+        Relationships: []
+      }
+      monthly_store_reports: {
+        Row: {
+          active: boolean | null
+          avg_sales_per_day_sek: number | null
+          corrected: boolean | null
+          daily_reports_count: number | null
+          expected_open_days: number | null
+          month: number | null
+          month_end: string | null
+          month_start: string | null
+          region: string | null
+          staff_hours: number | null
+          staff_shifts: number | null
+          status: string | null
+          store_id: string | null
+          store_name: string | null
+          total_sales_sek: number | null
+          year: number | null
+        }
+        Relationships: []
+      }
       pos_price_overview: {
         Row: {
           barcode: string | null
@@ -14389,6 +15503,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "legal_entities"
             referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "price_lists_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "price_lists_store_id_fkey"
@@ -14445,6 +15566,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "legal_entities"
             referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "staff_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
           },
           {
             foreignKeyName: "staff_store_id_fkey"
@@ -14559,6 +15687,7 @@ export type Database = {
           wanted_date: string
         }[]
       }
+      can_edit_daily_report_admin: { Args: never; Returns: boolean }
       can_manage_employee_folder: { Args: { _name: string }; Returns: boolean }
       can_manage_schedule: {
         Args: { _legal_entity_id: string; _store_id: string }
@@ -14967,6 +16096,10 @@ export type Database = {
         Returns: number
       }
       recompute_weekly_store_report: {
+        Args: { _date: string; _store_id: string }
+        Returns: undefined
+      }
+      refresh_weekly_corrected_flag: {
         Args: { _date: string; _store_id: string }
         Returns: undefined
       }

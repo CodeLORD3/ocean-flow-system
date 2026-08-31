@@ -20,7 +20,10 @@ export type WeeklyStoreReport = {
   locked_at: string | null;
   drift_after_lock: boolean;
   drift_note: string | null;
+  corrected?: boolean;
+  corrected_at?: string | null;
 };
+
 
 export type WeeklyRegionReport = {
   group_key: string;
@@ -36,6 +39,7 @@ export type WeeklyRegionReport = {
   daily_reports_count: number;
   expected_open_days: number;
   status: string;
+  corrected?: boolean;
   missing_stores: string[] | null;
   prev_total_sales_sek: number | null;
   diff_kr: number | null;
@@ -61,10 +65,21 @@ export function useRealtimeReportUpdates() {
         qc.invalidateQueries({ queryKey: ["daily-report"] });
         qc.invalidateQueries({ queryKey: ["weekly-store-reports"] });
         qc.invalidateQueries({ queryKey: ["weekly-region-reports"] });
+        qc.invalidateQueries({ queryKey: ["monthly-store-reports"] });
+        qc.invalidateQueries({ queryKey: ["monthly-region-reports"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "daily_report_edits" }, () => {
+        qc.invalidateQueries({ queryKey: ["daily-report-edits"] });
+        qc.invalidateQueries({ queryKey: ["weekly-store-reports"] });
+        qc.invalidateQueries({ queryKey: ["weekly-region-reports"] });
+        qc.invalidateQueries({ queryKey: ["monthly-store-reports"] });
+        qc.invalidateQueries({ queryKey: ["monthly-region-reports"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "weekly_store_reports" }, () => {
         qc.invalidateQueries({ queryKey: ["weekly-store-reports"] });
         qc.invalidateQueries({ queryKey: ["weekly-region-reports"] });
+        qc.invalidateQueries({ queryKey: ["monthly-store-reports"] });
+        qc.invalidateQueries({ queryKey: ["monthly-region-reports"] });
       })
       .subscribe();
 

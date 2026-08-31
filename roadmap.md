@@ -18,3 +18,13 @@
 
 ## Dokumentation
 - [x] Blueprint för stämpelklockan (kod + ordagrann beskrivning av funktioner och kopplingar) — docs/stampelklocka-blueprint.md
+
+## Personalmodul: Etapp 5 — löneunderlag, förmåner & Fortnox-automation
+- [ ] Datamodell för versionerade lönepolicyer, löneperioder, lönerader, löneartsmappning, förmåner, avdrag, skattetabeller och arbetsgivaravgifter
+- [ ] Beräkningsmotor som är master för enheter; kronor endast preliminära KPI-/granskningsvärden
+- [ ] Granskningsvy per bolag/period med felkö, person- och dagdetalj samt periodlås
+- [ ] Fortnox lönescope/omauktorisering, idempotent export, rate limit, retry, logg och rättelseexport
+- [ ] PAXml 2.2-export som lönesystemsoberoende exit-väg
+- [ ] Kostnadsställe-, kontrakterade timmar- och semesterskuldsrapporter
+- [ ] Förmåns-/avdragsregler, skattetabellimport och arbetsgivaravgiftsregler
+- [ ] RLS-verifiering på bolags-/butiksnivå och acceptanstest enligt Etapp 5-underlaget
