@@ -7,7 +7,7 @@ import { useVacationBalances, type VacationBalance } from "@/hooks/useAbsence";
 
 const svDate = (value: string | null) => value ? new Intl.DateTimeFormat("sv-SE", { dateStyle: "long" }).format(new Date(`${value}T12:00:00`)) : "—";
 const days = (value: number) => value.toLocaleString("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-const remaining = (row: VacationBalance) => row.entitled_days + row.saved_days + row.manual_adjustment_days - row.used_days;
+const remaining = (row: VacationBalance) => row.earned_days + row.saved_days + row.manual_adjustment_days - row.used_days;
 
 function suggestDate(row: VacationBalance) {
   const start = new Date(`${row.vacation_year}-04-01T12:00:00`);
