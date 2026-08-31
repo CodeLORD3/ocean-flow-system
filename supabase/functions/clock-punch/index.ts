@@ -13,6 +13,7 @@ import {
   normalizePnr,
   pnrHash,
   PUNCH_TYPES,
+  registerFailedLookup,
   requireStation,
   service,
   type PunchType,
@@ -52,6 +53,7 @@ Deno.serve(async (req) => {
   if (!(await checkRateLimit(db, station.id))) return json(req, { error: "För många försök. Vänta en minut och försök igen." }, 429);
 
   const pnr = normalizePnr(rawIdentifier);
+  let provisionalPunch = false;
   let hit: EmployeeHit | null = null;
   let hash: string | null = null;
   if (pnr) {
@@ -84,9 +86,7 @@ Deno.serve(async (req) => {
       else await db.from("clock_pending_registrations").insert(pendingRow);
     } else await db.from("clock_pending_registrations").insert(pendingRow);
 
-    // Spärren räknar bara misslyckade uppslag.
     await registerFailedLookup(db, station.id);
-
     if (!hit) {
       const statedName = body.stated_name ? String(body.stated_name).slice(0, 120).trim() : "";
       const [firstName, ...restName] = statedName.split(/\s+/).filter(Boolean);
@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
           alt_clock_identifier: pnr ? null : rawIdentifier,
           status: "provisional",
           is_active: false,
-          notes: "Provisorisk post skapad av stämpelklockan vid okänt personnummer.",
+          notes: "Provisorisk post skapad av stämpelklockan vid okänd identitet.",
         })
         .select("id, first_name, last_name, pnr_masked, is_active")
         .maybeSingle();
@@ -108,6 +108,11 @@ Deno.serve(async (req) => {
     }
 
     if (!hit) {
+      return json(req, { status: "pending_registration", message: "Registrering väntar på godkännande.", expires_at: expiresAt });
+    }
+    // En uppslagning ska fortfarande kräva chefens godkännande. Vid en faktisk
+    // offline-/klockstämpling går vi vidare och skriver journalraden.
+    if (mode === "lookup") {
       return json(req, { status: "pending_registration", message: "Registrering väntar på godkännande.", expires_at: expiresAt });
     }
     provisionalPunch = true;
@@ -151,7 +156,8 @@ Deno.serve(async (req) => {
   }
 
   const occurredRaw = occurredAtInput ?? new Date().toISOString();
-  const occurredAt = action === "in" || action === "ut" ? applyRounding(occurredRaw, station.profile) : occurredRaw;
+  const occurredAt = occurredAtInput ?? new Date().toISOString();
+  const roundedAt = action === "in" || action === "ut" ? applyRounding(occurredAt, station.profile) : occurredAt;
   const { data: inserted, error } = await db.from("time_entries").insert({
     employee_id: hit.id,
     station_id: station.id,
@@ -168,6 +174,7 @@ Deno.serve(async (req) => {
     synced_at: new Date().toISOString(),
     type: action,
     occurred_at: occurredAt,
+    rounded_at: roundedAt,
     registered_at: new Date().toISOString(),
     source: "clock",
     note: body.note ? String(body.note).slice(0, 500) : null,
