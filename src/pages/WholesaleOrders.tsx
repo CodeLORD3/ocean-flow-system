@@ -1346,18 +1346,18 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
         />
       </div>
        <div className="overflow-x-auto">
-         <table className="w-full table-fixed text-xs">
+         <table className="w-full min-w-[1040px] table-fixed text-xs">
            <colgroup>
-             <col />
+             <col className="w-[240px]" />
              <col className="w-14" />
              <col className="w-16" />
              <col className="w-16" />
              <col className="w-16" />
              <col className="w-24" />
-             <col className="w-40" />
-             <col className="w-14" />
-             <col className="w-40" />
-             <col className="w-24" />
+             <col className="w-32" />
+             <col className="w-12" />
+             <col className="w-36" />
+             <col className="w-20" />
            </colgroup>
            <thead>
              <tr className="border-b border-border bg-muted/30">
