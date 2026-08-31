@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStores } from "@/hooks/useStores";
 import { useEmployees, useAllEmployments } from "@/hooks/useEmployees";
 import { useAbsenceRequests, useAbsenceTypes, useAbsenceConflicts, useDecideAbsenceRequest } from "@/hooks/useAbsence";
+import { VacationYearView } from "@/components/hr/VacationYearView";
 import { dateKey, DAY_NAMES, weekDates } from "@/lib/schedule";
 
 const swedishDate = (value: string) => new Intl.DateTimeFormat("sv-SE", { day: "numeric", month: "short" }).format(new Date(`${value}T12:00:00`));
@@ -188,6 +189,7 @@ export default function HRControlCenter() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex h-auto flex-wrap justify-start gap-1">
           <TabsTrigger value="absence">Frånvarokö {pending.length > 0 && `(${pending.length})`}</TabsTrigger>
+          <TabsTrigger value="vacation">Semesterår</TabsTrigger>
           <TabsTrigger value="coverage">Täckningskarta</TabsTrigger>
           <TabsTrigger value="shared">Delad personal</TabsTrigger>
           <TabsTrigger value="locks">Periodlås</TabsTrigger>
@@ -203,6 +205,9 @@ export default function HRControlCenter() {
               <p className="ind-muted mt-3 text-sm">Nästa deadline: periodlåset för {period} behöver vara klart innan löneunderlaget beräknas.</p>
             </SideQueue>
           </div>
+        </TabsContent>
+        <TabsContent value="vacation" className="mt-5">
+          <VacationYearView />
         </TabsContent>
         <TabsContent value="coverage" className="mt-5 space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3"><div><SectionLabel>Vecka</SectionLabel><Input type="date" value={anchor} onChange={(event) => setAnchor(event.target.value)} /></div><p className="ind-muted text-sm">Tal visar schemalagd bemanning mot mål från aktiva passmallar.</p></div>

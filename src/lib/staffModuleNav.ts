@@ -58,7 +58,7 @@ export const STAFF_MODULE_GROUPS: StaffNavGroup[] = [
     label: "Frånvaro",
     desc: "Sjukanmälan, semester, saldon och notiser",
     items: [
-      { title: "Frånvaro & bemanning", url: "/hr-control", icon: CalendarCheck, desc: "Ansökningar, sjukperioder, semestersaldon och notiser" },
+      { title: "Frånvaro & bemanning", url: "/hr-control", icon: CalendarCheck, desc: "Ansökningar, semesterår, sjukperioder, saldon och notiser" },
     ],
   },
   {

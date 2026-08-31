@@ -18,8 +18,12 @@ export interface AbsenceRequest {
   absence_type_id: string;
   start_date: string;
   end_date: string | null;
+  date_from?: string | null;
+  date_to?: string | null;
   extent_pct: number;
+  basis?: string | null;
   note: string | null;
+  reason?: string | null;
   status: string;
   store_id: string | null;
   legal_entity_id: string | null;
@@ -70,7 +74,7 @@ export function useAbsenceRequests(employeeId?: string | null, storeId?: string 
     queryFn: async () => {
       let query = supabase
         .from("absence_requests")
-        .select("id, employee_id, absence_type_id, start_date, end_date, extent_pct, note, status, store_id, legal_entity_id, days_count, created_at, decided_at, decision_note")
+        .select("id, employee_id, absence_type_id, start_date, end_date, date_from, date_to, extent_pct, basis, note, reason, status, store_id, legal_entity_id, days_count, created_at, decided_at, decision_note")
         .order("start_date", { ascending: false })
         .limit(200);
       if (employeeId) query = query.eq("employee_id", employeeId);
@@ -108,6 +112,7 @@ export function useCreateAbsenceRequest() {
       end_date?: string | null;
       extent_pct: number;
       note?: string;
+      basis?: "enligt_schema" | "halvdag" | "egen";
       store_id?: string | null;
       legal_entity_id?: string | null;
     }) => {
@@ -115,7 +120,7 @@ export function useCreateAbsenceRequest() {
       const { data, error } = await supabase
         .from("absence_requests")
         .insert({ ...input, created_by: userData.user?.id ?? null })
-        .select("id, employee_id, absence_type_id, start_date, end_date, extent_pct, note, status, store_id, legal_entity_id, days_count, created_at, decided_at, decision_note")
+        .select("id, employee_id, absence_type_id, start_date, end_date, date_from, date_to, extent_pct, basis, note, reason, status, store_id, legal_entity_id, days_count, created_at, decided_at, decision_note")
         .single();
       if (error) throw error;
       return data as AbsenceRequest;
