@@ -8,10 +8,8 @@ ALTER TABLE public.time_entries
 COMMENT ON COLUMN public.time_entries.rounded_at IS
   'Avrundad tidpunkt för löneunderlag. occurred_at är alltid den faktiska stämplingen.';
 
--- Systemgenererade utstämplingar ska kunna skiljas från klockans egna.
-ALTER TABLE public.time_entries DROP CONSTRAINT IF EXISTS time_entries_source_check;
-ALTER TABLE public.time_entries ADD CONSTRAINT time_entries_source_check
-  CHECK (source = ANY (ARRAY['clock', 'manual', 'correction', 'import', 'system']));
+-- Nya systemposter får värdet via en senare additiv utvidgning när den behövs.
+-- Den befintliga source-begränsningen lämnas orörd i detta utkast.
 
 -- ============ 2. Stationssession: absolut tak ============
 ALTER TABLE public.clock_station_sessions
@@ -27,10 +25,6 @@ COMMENT ON COLUMN public.clock_station_sessions.absolute_expires_at IS
 -- ============ 3. Provisorisk person vid okänt personnummer ============
 ALTER TABLE public.employees
   ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
-
-ALTER TABLE public.employees DROP CONSTRAINT IF EXISTS employees_status_chk;
-ALTER TABLE public.employees ADD CONSTRAINT employees_status_chk
-  CHECK (status = ANY (ARRAY['active', 'provisional', 'archived']));
 
 COMMENT ON COLUMN public.employees.status IS
   'provisional = skapad av klockan vid okänt personnummer, väntar på granskning.';
@@ -379,7 +373,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-DROP TRIGGER IF EXISTS attestations_no_self_attest ON public.attestations;
 CREATE TRIGGER attestations_no_self_attest BEFORE INSERT OR UPDATE ON public.attestations
   FOR EACH ROW EXECUTE FUNCTION public.block_self_attestation();
 
@@ -403,17 +396,7 @@ $$;
 REVOKE ALL ON FUNCTION public.purge_clock_retention() FROM public, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.purge_clock_retention() TO service_role;
 
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_publication_rel pr JOIN pg_class c ON c.oid = pr.prrelid JOIN pg_publication p ON p.oid = pr.prpubid WHERE p.pubname = 'supabase_realtime' AND c.relname = 'time_entries') THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.time_entries;
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_publication_rel pr JOIN pg_class c ON c.oid = pr.prrelid JOIN pg_publication p ON p.oid = pr.prpubid WHERE p.pubname = 'supabase_realtime' AND c.relname = 'attestations') THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.attestations;
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_publication_rel pr JOIN pg_class c ON c.oid = pr.prrelid JOIN pg_publication p ON p.oid = pr.prpubid WHERE p.pubname = 'supabase_realtime' AND c.relname = 'clock_sync_failures') THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.clock_sync_failures;
-  END IF;
-END $$;
+-- Realtime aktiveras separat efter att utkastet accepterats, via projektets backendkonfiguration.
 
 SELECT cron.schedule('clock-retention-daily', '20 3 * * *', $$SELECT public.purge_clock_retention();$$)
 WHERE NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'clock-retention-daily');

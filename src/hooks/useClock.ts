@@ -276,8 +276,8 @@ export function usePkLoggedTimes(from: string, to: string, storeId?: string | nu
       const { data, error } = await supabase
         .from("pk_logged_times")
         .select("staff_url, start, stop, real_start, real_stop, work_time_sec, is_canceled")
-        .gte("start", `${from}T00:00:00`)
-        .lte("start", `${to}T23:59:59`);
+        .gte("start", svenskDagStart(from).toISOString())
+        .lte("start", svenskDagSista(to).toISOString());
       if (error) throw error;
 
       const rows: PkDayRow[] = [];

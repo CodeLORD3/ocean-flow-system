@@ -13,7 +13,7 @@ export function svenskaDagar(start: string, end: string): string[] {
   const cursor = new Date(`${start}T12:00:00Z`);
   const stop = new Date(`${end}T12:00:00Z`);
   while (cursor <= stop) {
-    days.push(cursor.toISOString().slice(0, 10));
+    days.push(svenskDatum(cursor));
     cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
   return days;
