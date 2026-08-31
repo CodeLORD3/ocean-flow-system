@@ -24,8 +24,8 @@ function StatusBadge({ status, corrected }: { status: string; corrected?: boolea
 function Metrics({ row }: { row: MonthlyStoreReport | MonthlyRegionReport }) {
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-5">
-      <div><p className="text-[10px] text-muted-foreground">Summa</p><p className="font-mono text-sm tabular-nums">{money(row.total_sales_sek)}</p></div>
-      <div><p className="text-[10px] text-muted-foreground">Snitt/dag</p><p className="font-mono text-sm tabular-nums">{money(row.avg_sales_per_day_sek)}</p></div>
+      <div><p className="text-[10px] text-muted-foreground">Nettoomsättning</p><p className="font-mono text-sm tabular-nums">{money(row.total_sales_sek)}</p></div>
+      <div><p className="text-[10px] text-muted-foreground">Netto snitt/dag</p><p className="font-mono text-sm tabular-nums">{money(row.avg_sales_per_day_sek)}</p></div>
       <div><p className="text-[10px] text-muted-foreground">Timmar</p><p className="font-mono text-sm tabular-nums">{dec.format(row.staff_hours)} h</p></div>
       <div><p className="text-[10px] text-muted-foreground">Personpass</p><p className="font-mono text-sm tabular-nums">{int.format(row.staff_shifts)}</p></div>
       <div><p className="text-[10px] text-muted-foreground">Dagsrapporter</p><p className="font-mono text-sm tabular-nums">{int.format(row.daily_reports_count)} / {int.format(row.expected_open_days)}</p></div>

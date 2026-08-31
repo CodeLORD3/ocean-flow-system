@@ -61,11 +61,11 @@ function Metrics({ row, comparison }: { row: WeeklyStoreReport | WeeklyRegionRep
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-5">
       <div>
-        <p className="text-[10px] text-muted-foreground">Summa</p>
+        <p className="text-[10px] text-muted-foreground">Nettoomsättning</p>
         <p className="font-mono text-sm tabular-nums">{money(row.total_sales_sek)}</p>
       </div>
       <div>
-        <p className="text-[10px] text-muted-foreground">Snitt/dag</p>
+        <p className="text-[10px] text-muted-foreground">Netto snitt/dag</p>
         <p className="font-mono text-sm tabular-nums">{money(row.avg_sales_per_day_sek)}</p>
       </div>
       <div>
@@ -264,11 +264,11 @@ export function WeeklyStoreReportsSection() {
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className="rounded-md border bg-muted/20 px-3 py-2.5">
-              <p className="text-[10px] text-muted-foreground">Summa</p>
+              <p className="text-[10px] text-muted-foreground">Nettoomsättning</p>
               <p className="mt-1 font-mono text-sm font-semibold tabular-nums">{money(selectedSummary.total_sales_sek)}</p>
             </div>
             <div className="rounded-md border bg-muted/20 px-3 py-2.5">
-              <p className="text-[10px] text-muted-foreground">Snitt/dag</p>
+              <p className="text-[10px] text-muted-foreground">Netto snitt/dag</p>
               <p className="mt-1 font-mono text-sm tabular-nums">{money(selectedSummary.avg_sales_per_day_sek)}</p>
             </div>
             <div className="rounded-md border bg-muted/20 px-3 py-2.5">
