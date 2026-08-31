@@ -192,7 +192,7 @@ export default function PayrollReview() {
       )}
 
       {(blockingIssues.length > 0 || unlockedStores.length > 0 || issues.length > 0) && (
-        <SideQueue className="mt-6">
+        <SideQueue label={`Felkö (${issues.length + unlockedStores.length})`} className="mt-6">
           <SectionLabel className="mb-2">Felkö ({issues.length + unlockedStores.length})</SectionLabel>
           {unlockedStores.map((storeId) => (
             <QueueItem key={storeId}>
