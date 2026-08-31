@@ -78,10 +78,17 @@ Deno.serve(async (req) => {
     });
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !serviceRoleKey) return json({ error: "Serverkonfiguration saknas" }, 500);
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Inloggning krävs" }, 401);
+    const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? serviceRoleKey);
+    const { data: { user }, error: authError } = await authClient.auth.getUser(authHeader.slice(7));
+    if (authError || !user) return json({ error: "Ogiltig inloggning" }, 401);
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const payload = await req.json().catch(() => ({}));
     const storeId = String(payload.store_id ?? "");

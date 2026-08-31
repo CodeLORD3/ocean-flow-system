@@ -5,6 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { weeklyReportPdf, weeklyReportXlsx, type ReportRow } from "@/lib/weeklyReportExport";
+import { StoreWeekDays } from "@/components/reports/StoreWeekDays";
+import { useDailyReportsRange } from "@/hooks/useDailyReportsRange";
+import { dayRowsFrom, weekDayList } from "@/lib/weeklyReportDays";
+import { useStoreWeather, weatherLabel } from "@/hooks/useStoreWeather";
 import { Loader2, ChevronDown, ChevronRight, AlertTriangle, PencilLine, Printer, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +63,12 @@ export function MonthlyReportsSection() {
     return new Set(stores.filter((store) => store.region).map((store) => store.id));
   }, [stores, groupFilter, storeFilter]);
   const latest = months[0];
+  const dailyExport = useDailyReportsRange(
+    storeFilter,
+    latest?.month_start,
+    latest?.month_end,
+  );
+  const exportWeather = useStoreWeather(storeFilter, latest?.month_start, latest?.month_end);
   const latestRegion = latest ? regions.find((row) => row.group_key === (groupFilter ?? (filter === "all" ? "SE_TOTAL" : "")) && row.year === latest.year && row.month === latest.month) : undefined;
   const latestStore = latest && storeFilter ? details.find((row) => row.store_id === storeFilter && row.year === latest.year && row.month === latest.month) : undefined;
   const summary = latestStore ?? latestRegion;
@@ -87,6 +97,17 @@ export function MonthlyReportsSection() {
       title: `${summaryLabel} · ${monthLabel(latest.month_start)}`,
       subtitle: `${latest.month_start} – ${latest.month_end}`,
       rows: exportRows,
+      ...(storeFilter && latest
+        ? {
+            days: [{
+              storeLabel: summaryLabel,
+              rows: dayRowsFrom(
+                weekDayList(latest.month_start, latest.month_end),
+                dailyExport.data ?? [],
+              ).map((row) => ({ ...row, weather: weatherLabel(exportWeather.data?.get(row.date)) })),
+            }],
+          }
+        : {}),
     };
     if (format === "pdf") weeklyReportPdf(payload);
     else weeklyReportXlsx(payload);
@@ -125,7 +146,7 @@ export function MonthlyReportsSection() {
         const open = openMonth === month.key;
         return <div key={month.key}><button type="button" onClick={() => setOpenMonth(open ? null : month.key)} className="flex w-full items-start gap-2 px-3 py-3 text-left transition-colors hover:bg-muted/40">{open ? <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />}<span className="min-w-0 flex-1"><span className="block text-sm font-medium capitalize">{monthLabel(month.month_start)}</span><span className="mt-0.5 block text-xs text-muted-foreground">{storeFilter ? storeName(storeFilter) : REGION_LABELS[groupFilter ?? "SE_TOTAL"]}</span></span><span className="flex shrink-0 flex-col items-end gap-1"><span className="font-mono text-sm tabular-nums">{money(total)}</span><StatusBadge status={status} corrected={corrected} /></span></button>
           {open && <div className="space-y-3 bg-muted/20 px-3 pb-4 pt-2">{monthRegions.map((row) => <div key={row.group_key} className="rounded-md border bg-background p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{row.group_label}</span><StatusBadge status={row.status} corrected={row.corrected} /></div>{row.missing_stores?.length ? <p className="mb-2 text-[10px] text-muted-foreground">Saknar månadsrapport: {row.missing_stores.join(", ")}</p> : null}<Metrics row={row} /></div>)}
-            {monthStores.length > 0 && <div><p className="mb-1.5 text-[11px] text-muted-foreground">Butiksnivå</p><div className="divide-y rounded-md border bg-background">{monthStores.map((row) => <div key={row.store_id} className="p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{storeName(row.store_id)}</span><StatusBadge status={row.status} corrected={row.corrected} /></div><Metrics row={row} /></div>)}</div></div>}
+            {monthStores.length > 0 && <div><p className="mb-1.5 text-[11px] text-muted-foreground">Butiksnivå</p><div className="divide-y rounded-md border bg-background">{monthStores.map((row) => <div key={row.store_id} className="p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{storeName(row.store_id)}</span><StatusBadge status={row.status} corrected={row.corrected} /></div><Metrics row={row} />{open && storeFilter && <StoreWeekDays storeId={row.store_id} weekStart={month.month_start} weekEnd={month.month_end} />}</div>)}</div></div>}
           </div>}
         </div>;
       })}</div>
