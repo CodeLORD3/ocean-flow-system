@@ -115,19 +115,6 @@ const monthBounds = (period: string) => {
   const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
   return { from, to: `${period}-${String(last).padStart(2, "0")}` };
 };
-const minutesOfDay = (hhmm: string) => {
-  const [h, m] = hhmm.split(":").map(Number);
-  return h * 60 + (m || 0);
-};
-/** ISO-vecka som nyckel, för veckotröskeln på övertid. */
-const isoWeekKey = (date: string) => {
-  const d = new Date(`${date}T12:00:00Z`);
-  const day = (d.getUTCDay() + 6) % 7;
-  d.setUTCDate(d.getUTCDate() - day + 3);
-  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
-  const week = 1 + Math.round(((d.getTime() - firstThursday.getTime()) / 86400000 - 3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7);
-  return `${d.getUTCFullYear()}-${String(week).padStart(2, "0")}`;
-};
 
 // OB-, mertids- och övertidsfördelningen görs numera enbart av
 // public.berakna_arbetstid i databasen. Ingen parallell logik får finnas här.
