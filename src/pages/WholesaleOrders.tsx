@@ -33,7 +33,7 @@ import { useStores } from "@/hooks/useStores";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
 import { useCustomerNeedByProduct, useOrderHistoryStats, useOutstandingOrdered } from "@/hooks/usePurchaseReconciliation";
-import { addDays, mondayOf, weekRange, qtyText, dashIfZero } from "@/lib/purchaseReconciliation";
+import { addDays, mondayOf, weekRange } from "@/lib/purchaseReconciliation";
 import { useProducts } from "@/hooks/useProducts";
 import { useTransportSchedules } from "@/hooks/useTransportSchedules";
 import { useStaff } from "@/hooks/useStaff";
@@ -187,58 +187,6 @@ export default function WholesaleOrders() {
      p.sku.toLowerCase().includes(newProductSearch.toLowerCase())) &&
     !newOrderLines.find(l => l.product_id === p.id)
   ).slice(0, 8);
-
-  /**
-   * Beslutsstöd per orderrad. Kundbehov gäller leveransveckan för det valda
-   * avgångsdatumet, "redan beställt" är utestående mängd i andra öppna ordrar.
-   * Täckning räknas live medan mängden skrivs in.
-   */
-  const decisionByProduct = useMemo(() => {
-    const out = new Map<string, {
-      need: number; outstanding: number; typed: number; coverage: number;
-      status: "saknas" | "tackt" | "ingen_behov"; duplicate: boolean;
-      average: number; lastWeek: number;
-    }>();
-    for (const line of newOrderLines) {
-      const need = decisionNeeds.data.get(line.product_id) ?? 0;
-      const outstanding = outstandingOrdered.data.get(line.product_id) ?? 0;
-      const typed = Number(line.quantity || 0);
-      const coverage = outstanding + typed;
-      out.set(line.product_id, {
-        need,
-        outstanding,
-        typed,
-        coverage,
-        status: need <= 0.005 ? "ingen_behov" : coverage + 0.005 < need ? "saknas" : "tackt",
-        duplicate: outstanding > 0.005,
-        average: historyStats.data.get(line.product_id)?.average ?? 0,
-        lastWeek: historyStats.data.get(line.product_id)?.lastWeek ?? 0,
-      });
-    }
-    return out;
-  }, [newOrderLines, decisionNeeds.data, outstandingOrdered.data, historyStats.data]);
-
-  /** Kundbehov för leveransveckan som ännu inte finns på ordern. */
-  const uncoveredNeeds = useMemo(() => {
-    if (!selectedDeliveryRange) return [];
-    const onOrder = new Set(newOrderLines.map(l => l.product_id));
-    const rows: { product: any; need: number; outstanding: number }[] = [];
-    for (const [productId, need] of decisionNeeds.data.entries()) {
-      if (onOrder.has(productId) || need <= 0.005) continue;
-      const outstanding = outstandingOrdered.data.get(productId) ?? 0;
-      if (outstanding + 0.005 >= need) continue;
-      const product = products.find(p => p.id === productId);
-      if (!product) continue;
-      rows.push({ product, need, outstanding });
-    }
-    return rows.sort((a, b) => (b.need - b.outstanding) - (a.need - a.outstanding)).slice(0, 12);
-  }, [selectedDeliveryRange, newOrderLines, decisionNeeds.data, outstandingOrdered.data, products]);
-
-  const toggleDecisionLine = (productId: string) =>
-    setExpandedDecisionLines(prev =>
-      prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId],
-    );
-
 
   const addNewProduct = (p: any) => {
     setNewOrderLines(prev => [{
@@ -612,34 +560,24 @@ export default function WholesaleOrders() {
                 {newOrderLines.length > 0 && (
                   <div className="space-y-2">
                     <Separator />
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-xs font-medium text-muted-foreground">{newOrderLines.length} produkt{newOrderLines.length > 1 ? "er" : ""} tillagda</div>
-                      {selectedDeliveryRange && <Badge variant="outline" className="text-[10px] font-normal">Kundbehov för leveransveckan</Badge>}
-                    </div>
+                    <div className="text-xs font-medium text-muted-foreground">{newOrderLines.length} produkt{newOrderLines.length > 1 ? "er" : ""} tillagda</div>
                     <div className="overflow-x-auto">
-                      <table className="w-full min-w-[640px] text-xs">
-                        <thead><tr className="border-b border-border"><th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th><th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th><th className="pb-2 text-right font-medium text-muted-foreground">Kundbehov</th><th className="pb-2 text-right font-medium text-muted-foreground">Redan beställt</th><th className="pb-2 text-right font-medium text-muted-foreground w-28">Ny mängd</th><th className="pb-2 text-right font-medium text-muted-foreground">Täckning</th><th className="pb-2 w-8"></th></tr></thead>
+                      <table className="w-full text-xs">
+                        <thead><tr className="border-b border-border"><th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th><th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th><th className="pb-2 text-right font-medium text-muted-foreground w-32">Antal</th><th className="pb-2 w-8"></th></tr></thead>
                         <tbody>
-                          {newOrderLines.map((line, idx) => {
-                            const decision = decisionByProduct.get(line.product_id);
-                            if (!decision) return null;
-                            return (<React.Fragment key={line.product_id}>
-                              <tr className="border-b border-border/30">
-                                <td className="py-2 font-medium text-foreground">{line.product_name}</td><td className="py-2 text-muted-foreground">{line.unit}</td>
-                                <td className="py-2 text-right font-mono tabular-nums">{dashIfZero(decision.need, line.unit)}</td><td className="py-2 text-right font-mono tabular-nums">{dashIfZero(decision.outstanding, line.unit)}</td>
-                                <td className="py-2 text-right"><Input type="number" step="0.1" value={line.quantity} onChange={e => updateNewLine(idx, e.target.value)} className="h-7 w-24 ml-auto text-right text-xs" placeholder="0" autoFocus={idx === 0} /></td>
-                                <td className="py-2 text-right"><button type="button" className="inline-flex items-center gap-1.5" onClick={() => toggleDecisionLine(line.product_id)} title="Visa beslutsunderlag"><Badge variant={decision.status === "tackt" ? "outline" : decision.status === "ingen_behov" ? "secondary" : "destructive"}>{decision.status === "tackt" ? "Täckt" : decision.status === "ingen_behov" ? "Inget behov" : "Saknas"}</Badge><ChevronDown className={cn("h-3 w-3 transition-transform", expandedDecisionLines.includes(line.product_id) && "rotate-180")} /></button></td>
-                                <td className="py-2"><Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeNewLine(idx)}><X className="h-3 w-3" /></Button></td>
-                              </tr>
-                              {expandedDecisionLines.includes(line.product_id) && <tr className="border-b border-border/20 bg-muted/20"><td colSpan={7} className="px-3 py-2 text-[10px] text-muted-foreground"><div className="flex flex-wrap gap-x-4 gap-y-1"><span>Efter order: <strong className="font-mono text-foreground">{qtyText(decision.coverage, line.unit)} {line.unit}</strong></span><span>Behov kvar: <strong className="font-mono text-foreground">{qtyText(Math.max(decision.need - decision.coverage, 0), line.unit)} {line.unit}</strong></span><span>Snitt 4 veckor: <strong className="font-mono text-foreground">{qtyText(decision.average, line.unit)} {line.unit}</strong></span><span>Förra veckan: <strong className="font-mono text-foreground">{qtyText(decision.lastWeek, line.unit)} {line.unit}</strong></span>{decision.duplicate && <span className="font-medium text-warning">Öppen order finns redan för produkten.</span>}</div></td></tr>}
-                            </React.Fragment>);
-                          })}
+                          {newOrderLines.map((line, idx) => (
+                            <tr key={line.product_id} className="border-b border-border/30">
+                              <td className="py-2 font-medium text-foreground">{line.product_name}</td>
+                              <td className="py-2 text-muted-foreground">{line.unit}</td>
+                              <td className="py-2 text-right"><Input type="number" step="0.1" value={line.quantity} onChange={e => updateNewLine(idx, e.target.value)} className="h-7 text-xs w-24 ml-auto text-right" placeholder="0" autoFocus={idx === 0} /></td>
+                              <td className="py-2"><Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeNewLine(idx)}><X className="h-3 w-3" /></Button></td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </div>
                   </div>
                 )}
-                {selectedDeliveryRange && uncoveredNeeds.length > 0 && <div className="border border-warning/30 bg-warning/5 p-3 space-y-2"><div className="flex items-center gap-2 text-xs font-medium text-warning"><AlertTriangle className="h-3.5 w-3.5" /> Kundbehov som ännu inte ligger på ordern</div><div className="flex flex-wrap gap-1.5">{uncoveredNeeds.map(({ product, need, outstanding }) => <button key={product.id} type="button" className="inline-flex items-center gap-1 border border-border bg-background px-2 py-1 text-[10px] hover:bg-muted" onClick={() => addNewProduct(product)}><Plus className="h-3 w-3" /> {product.name} ({qtyText(Math.max(need - outstanding, 0), product.unit)} {product.unit})</button>)}</div></div>}
                 <div className="space-y-1.5">
                   <Label className="text-xs">Önskat avgångsdatum <span className="text-destructive">*</span></Label>
                   <Popover>
