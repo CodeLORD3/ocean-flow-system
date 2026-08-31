@@ -297,8 +297,11 @@ export type Database = {
       absence_requests: {
         Row: {
           absence_type_id: string
+          basis: string
           created_at: string
           created_by: string | null
+          date_from: string | null
+          date_to: string | null
           days_count: number | null
           decided_at: string | null
           decided_by: string | null
@@ -309,6 +312,7 @@ export type Database = {
           id: string
           legal_entity_id: string | null
           note: string | null
+          reason: string | null
           start_date: string
           status: string
           store_id: string | null
@@ -316,8 +320,11 @@ export type Database = {
         }
         Insert: {
           absence_type_id: string
+          basis?: string
           created_at?: string
           created_by?: string | null
+          date_from?: string | null
+          date_to?: string | null
           days_count?: number | null
           decided_at?: string | null
           decided_by?: string | null
@@ -328,6 +335,7 @@ export type Database = {
           id?: string
           legal_entity_id?: string | null
           note?: string | null
+          reason?: string | null
           start_date: string
           status?: string
           store_id?: string | null
@@ -335,8 +343,11 @@ export type Database = {
         }
         Update: {
           absence_type_id?: string
+          basis?: string
           created_at?: string
           created_by?: string | null
+          date_from?: string | null
+          date_to?: string | null
           days_count?: number | null
           decided_at?: string | null
           decided_by?: string | null
@@ -347,6 +358,7 @@ export type Database = {
           id?: string
           legal_entity_id?: string | null
           note?: string | null
+          reason?: string | null
           start_date?: string
           status?: string
           store_id?: string | null
