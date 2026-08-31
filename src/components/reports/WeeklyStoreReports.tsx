@@ -107,6 +107,7 @@ export function WeeklyStoreReportsSection() {
   const { toast } = useToast();
   const [filter, setFilter] = useState("all");
   const [openWeek, setOpenWeek] = useState<string | null>(null);
+  const [openStore, setOpenStore] = useState<string | null>(null);
 
   const regions = regionReports.data ?? [];
   const details = storeReports.data ?? [];
@@ -122,6 +123,14 @@ export function WeeklyStoreReportsSection() {
       .map(([key, value]) => ({ key, ...value }))
       .sort((a, b) => b.week_start.localeCompare(a.week_start));
   }, [regions, details]);
+
+  const latestWeekForExport = weeks[0];
+  const selectedStoreForExport = filter !== "all" && !(filter in REGION_LABELS) ? filter : null;
+  const dailyExport = useDailyReportsRange(
+    selectedStoreForExport,
+    latestWeekForExport?.week_start,
+    latestWeekForExport?.week_end,
+  );
 
   const storeName = (id: string) => stores.find((s) => s.id === id)?.name ?? "Butik";
   const isClosed = (storeId: string, year: number, week: number) =>
