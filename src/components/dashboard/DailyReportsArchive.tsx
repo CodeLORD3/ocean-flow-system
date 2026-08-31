@@ -280,9 +280,7 @@ function EditDailyReportDialog({
                   <p className="text-sm font-semibold">Bemanning</p>
                   <p className="text-xs text-muted-foreground">Justera tider eller ta bort en felaktig rad.</p>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={() => setField("staff_entries", [...draft.staff_entries, { staff_id: "", start: "", end: "" }])} disabled>
-                  <Plus /> Lägg till rad
-                </Button>
+                <span className="text-xs text-muted-foreground">Ändra befintliga pass</span>
               </div>
               <StaffDraftRows entries={draft.staff_entries} onChange={(entries) => setField("staff_entries", entries)} nameOf={nameOf} />
               <div className="space-y-1.5">
