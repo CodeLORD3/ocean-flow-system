@@ -3,14 +3,16 @@ import ShopReportsPage from "./ShopReports";
 import PurchaseReportsArchive from "./PurchaseReportsArchive";
 import ProductionReportsArchive from "./ProductionReportsArchive";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronDown, ChevronRight, FileText, Factory, Receipt } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Factory, Receipt, CalendarRange } from "lucide-react";
 import { DailyReportsArchive } from "@/components/dashboard/DailyReportsArchive";
+import { WeeklyStoreReportsSection } from "@/components/reports/WeeklyStoreReports";
 import { useState } from "react";
 
 function WholesaleReportsPage() {
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [productionOpen, setProductionOpen] = useState(false);
   const [dailyOpen, setDailyOpen] = useState(false);
+  const [weeklyOpen, setWeeklyOpen] = useState(false);
 
   return (
     <div className="space-y-4">
