@@ -387,13 +387,13 @@ export default function MyShifts() {
                   try { await endSickPeriod.mutateAsync({ employeeId: myId, lastDay: today }); toast.success("Friskanmälan registrerad"); }
                   catch (e) { toast.error(e instanceof Error ? e.message : "Kunde inte registrera friskanmälan"); }
                 }}><Stethoscope className="h-4 w-4" /> Friskanmäl idag</IndustryButton>
-              ) : (
-                <IndustryButton size="touch" variant="secondary" className="min-h-14 w-full sm:w-auto" disabled={!myId || todayShifts.length === 0 || registerSickDay.isPending} onClick={async () => {
+              ) : todayShifts.length > 0 ? (
+                <IndustryButton size="touch" variant="secondary" className="min-h-14 w-full sm:w-auto" disabled={!myId || registerSickDay.isPending} onClick={async () => {
                   if (!myId) return;
                   try { await registerSickDay.mutateAsync({ employeeId: myId, date: today }); setSickUndoDate(today); setSickUndoUntil(Date.now() + 10 * 60_000); toast.success("Sjukdag registrerad"); }
                   catch (e) { toast.error(e instanceof Error ? e.message : "Kunde inte registrera sjukdag"); }
                 }}><Stethoscope className="h-4 w-4" /> Sjuk idag</IndustryButton>
-              )}
+              ) : null
               {sickUndoSeconds > 0 && sickUndoDate && <IndustryButton size="touch" variant="ghost" className="min-h-14 w-full sm:w-auto" disabled={undoSickPeriod.isPending} onClick={async () => {
                 if (!myId) return;
                 try { await undoSickPeriod.mutateAsync({ employeeId: myId, firstDay: sickUndoDate }); setSickUndoUntil(null); setSickUndoDate(null); toast.success("Sjukanmälan ångrad"); }
@@ -403,6 +403,7 @@ export default function MyShifts() {
             </div>
           </div>
           {activeSickPeriod && <IndustryRow edge="alert"><p className="text-sm"><StatusLabel tone="alert">Pågående sjukperiod</StatusLabel> Startad {activeSickPeriod.first_day} · karens {activeSickPeriod.karens_applied ? "uttagen" : "inte uttagen"}</p></IndustryRow>}
+          {sickUndoSeconds === 0 && sickUndoDate && sickUndoUntil && <p className="ind-muted text-xs">Ångertiden för sjukanmälan har gått ut.</p>}
          {currentBalance && (
            <IndustryRow edge={currentBalance.expiry_flagged ? "alert" : "accent-2"}>
              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
