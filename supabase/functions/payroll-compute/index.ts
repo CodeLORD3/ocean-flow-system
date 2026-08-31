@@ -129,36 +129,8 @@ const isoWeekKey = (date: string) => {
   return `${d.getUTCFullYear()}-${String(week).padStart(2, "0")}`;
 };
 
-/**
- * Delar ett dagspass i OB-fönster med minutprecision. Passet uttrycks som
- * start-minut på dygnet plus längd, vilket räcker eftersom attestunderlaget är
- * per dag. Överlappande fönster löses med högsta procent.
- */
-function splitOb(date: string, startMinute: number, minutes: number, levels: ObLevel[], holidays: Map<string, Holiday>) {
-  const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
-  const holiday = holidays.get(date);
-  const isHoliday = Boolean(holiday?.is_public_holiday);
-  const halfDayFrom = holiday?.is_half_day ? 12 * 60 : null;
-  const perCode = new Map<string, number>();
-  let plain = 0;
-
-  for (let offset = 0; offset < minutes; offset += 1) {
-    const minute = (startMinute + offset) % 1440;
-    const treatAsHoliday = isHoliday || (halfDayFrom !== null && minute >= halfDayFrom);
-    const matching = levels.filter((level) => {
-      if (level.holiday || treatAsHoliday) {
-        if (!level.holiday && !(level.weekdays ?? []).includes(weekday)) return false;
-      } else if (level.weekdays && !level.weekdays.includes(weekday)) return false;
-      const from = minutesOfDay(level.from);
-      const to = level.to === "24:00" ? 1440 : minutesOfDay(level.to);
-      return minute >= from && minute < to;
-    });
-    const best = matching.sort((a, b) => b.pct - a.pct)[0];
-    if (!best) plain += 1;
-    else perCode.set(best.code, (perCode.get(best.code) ?? 0) + 1);
-  }
-  return { plainMinutes: plain, obMinutes: perCode };
-}
+// OB-, mertids- och övertidsfördelningen görs numera enbart av
+// public.berakna_arbetstid i databasen. Ingen parallell logik får finnas här.
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
