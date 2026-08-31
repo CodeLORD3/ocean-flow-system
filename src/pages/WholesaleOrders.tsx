@@ -191,9 +191,6 @@ function WholesaleOrderAccordionRow({
         : order.status === "Pågående"
           ? { row: "bg-row-warn", hover: "hover:bg-row-warn-hover", edge: "bg-row-warn-edge", chip: "bg-card text-row-warn-text border-row-warn-edge" }
           : { row: "bg-row-neutral", hover: "hover:bg-row-neutral-hover", edge: "bg-border", chip: "bg-card text-muted-foreground border-grid-line" };
-  const productsText = (order.shop_order_lines || [])
-    .map((line: any) => `${line.products?.name || "Okänd"} (${line.quantity_ordered || 0} ${line.unit || line.products?.unit || ""})`)
-    .join(", ") || "Inga produkter";
   const orderLines = order.shop_order_lines?.length || 0;
   const statusChip = (
     <span className={`inline-flex flex-nowrap items-center gap-1 whitespace-nowrap rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight ${rowTone.chip}`}>
