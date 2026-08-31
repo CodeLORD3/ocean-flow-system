@@ -1346,18 +1346,18 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
         />
       </div>
        <div className="overflow-x-auto">
-         <table className="w-full table-fixed text-xs">
+         <table className="w-full min-w-[1040px] table-fixed text-xs">
            <colgroup>
-             <col />
+             <col className="w-[240px]" />
              <col className="w-14" />
              <col className="w-16" />
              <col className="w-16" />
              <col className="w-16" />
              <col className="w-24" />
-             <col className="w-40" />
-             <col className="w-14" />
-             <col className="w-40" />
-             <col className="w-24" />
+             <col className="w-32" />
+             <col className="w-12" />
+             <col className="w-36" />
+             <col className="w-20" />
            </colgroup>
            <thead>
              <tr className="border-b border-border bg-muted/30">
@@ -1425,7 +1425,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                    <td className="min-w-0 px-2 py-0.5 font-medium text-foreground">
                      <div className="flex min-w-0 items-center gap-2">
                        <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="h-5 w-7 shrink-0" />
-                       <span className="truncate">{line.products?.name || "–"}</span>
+                       <span className="truncate" title={line.products?.name || undefined}>{line.products?.name || "–"}</span>
                      </div>
                    </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
