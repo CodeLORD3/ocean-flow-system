@@ -103,6 +103,8 @@ type Line = {
   source_type?: string | null;
   note?: string | null;
   preliminary_cost?: number | null;
+  line_key?: string | null;
+  correction_action?: string;
   export_status: string;
 };
 
@@ -162,6 +164,24 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
+  // Behörighet: löneunderlag får bara beräknas av inloggad löne-/bolagsadmin.
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  const asUser = createClient(url, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+    auth: { persistSession: false },
+  });
+  const { data: userData } = await asUser.auth.getUser();
+  const user = userData?.user;
+  if (!user) return json({ error: "Unauthorized" }, 401);
+
+  const db = createClient(url, serviceKey);
+  const { data: roleRows } = await db.from("user_roles").select("role").eq("user_id", user.id);
+  const roles = new Set(((roleRows ?? []) as { role: string }[]).map((r) => r.role));
+  if (!["admin", "company_admin", "platform_admin"].some((r) => roles.has(r))) {
+    return json({ error: "Behörighet saknas för löneunderlag" }, 403);
+  }
+
   const body = await req.json().catch(() => ({}));
   const legalEntityId: string | undefined = body.legal_entity_id;
   const period: string | undefined = body.period;
@@ -169,8 +189,6 @@ Deno.serve(async (req) => {
   if (!legalEntityId || !period || !/^\d{4}-\d{2}$/.test(period)) {
     return json({ error: "legal_entity_id och period (YYYY-MM) krävs" }, 400);
   }
-
-  const db = createClient(url, serviceKey);
   const { from, to } = monthBounds(period);
   const issues: { kind: string; detail: string; employee_id?: string }[] = [];
 

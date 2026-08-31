@@ -8,6 +8,8 @@ export const FORTNOX_SCOPES = [
   "customer", "article", "invoice", "price", "payment", "companyinformation", "settings",
   // Digital post: arkivplats/inbox och registrerade leverantörsfakturor.
   "archive", "supplierinvoice",
+  // Lön: närvaro-, frånvaro- och lönetransaktioner samt anställda (etapp 5).
+  "salary",
 ];
 
 export const LEGAL_ENTITIES: Record<string, string> = {

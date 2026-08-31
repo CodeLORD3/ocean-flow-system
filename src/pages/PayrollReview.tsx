@@ -7,7 +7,7 @@
  */
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronDown, ChevronRight, Loader2, RefreshCw, ShieldAlert } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronRight, Download, Loader2, RefreshCw, Send, ShieldAlert } from "lucide-react";
 import {
   DecisionBar,
   DecisionMetric,
@@ -30,6 +30,8 @@ import {
   PERIOD_STATUS_LABEL,
   currentPeriod,
   useComputePayroll,
+  useExportPayroll,
+  usePayrollExportLog,
   usePayrollLines,
   usePayrollPeriods,
   useSetPeriodStatus,
@@ -61,7 +63,9 @@ export default function PayrollReview() {
   const periods = usePayrollPeriods(activeEntity || null);
   const periodRow = (periods.data ?? []).find((p) => p.period === period) ?? null;
   const lines = usePayrollLines(periodRow?.id ?? null);
+  const exportLog = usePayrollExportLog(periodRow?.id ?? null);
   const compute = useComputePayroll();
+  const exportPayroll = useExportPayroll();
   const setStatus = useSetPeriodStatus();
 
   const employeeName = useMemo(
@@ -104,6 +108,7 @@ export default function PayrollReview() {
 
   const blockingIssues = issues.filter((i) => i.kind !== "wellness_over_limit");
   const canReview = periodRow && rows.length > 0 && blockingIssues.length === 0 && unlockedStores.length === 0;
+  const canExport = canReview && periodRow && ["reviewed", "exported", "reexported"].includes(periodRow.status);
 
   const runCompute = async (force = false) => {
     if (!activeEntity) return;
@@ -127,6 +132,37 @@ export default function PayrollReview() {
     }
   };
 
+  const exportToFortnox = async () => {
+    if (!activeEntity) return;
+    try {
+      const result = await exportPayroll.mutateAsync({ legalEntityId: activeEntity, period, mode: "fortnox" });
+      if (result.failures?.length) toast.warning(`${result.sent ?? 0} rader skickades, ${result.failures.length} misslyckades`);
+      else toast.success(`Löneunderlaget skickades — ${result.sent ?? 0} rader`);
+    } catch (e) {
+      const error = e as Error & { issues?: ComputeIssue[] };
+      if (error.issues?.length) setIssues(error.issues);
+      toast.error(error.message || "Kunde inte skicka löneunderlaget");
+    }
+  };
+
+  const downloadPaxml = async () => {
+    if (!activeEntity) return;
+    try {
+      const result = await exportPayroll.mutateAsync({ legalEntityId: activeEntity, period, mode: "paxml" });
+      if (!result.xml) throw new Error("PAXml-filen kunde inte skapas");
+      const blob = new Blob([result.xml], { type: "application/xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `makrilltrade-paxml-${period}.xml`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast.success("PAXml 2.2 är klar för nedladdning");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte skapa PAXml-filen");
+    }
+  };
+
   return (
     <IndustryFrame className="p-4 sm:p-6">
       <DecisionBar>
@@ -143,6 +179,12 @@ export default function PayrollReview() {
           </IndustryButton>
           <IndustryButton variant="primary" size="touch" onClick={() => void markReviewed()} disabled={!canReview || setStatus.isPending}>
             <CheckCircle2 className="h-4 w-4" /> Markera granskad
+          </IndustryButton>
+          <IndustryButton variant="primary" size="touch" onClick={() => void exportToFortnox()} disabled={!canExport || exportPayroll.isPending}>
+            {exportPayroll.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Skicka till Fortnox
+          </IndustryButton>
+          <IndustryButton variant="secondary" size="touch" onClick={() => void downloadPaxml()} disabled={!canExport || exportPayroll.isPending}>
+            <Download className="h-4 w-4" /> PAXml 2.2
           </IndustryButton>
         </div>
       </DecisionBar>
@@ -166,7 +208,7 @@ export default function PayrollReview() {
         <div className="space-y-1">
           <Label className="text-xs">Status</Label>
           <div className="pt-1.5">
-            <StatusLabel tone={periodRow?.status === "reviewed" || periodRow?.status === "exported" ? "ok" : periodRow ? "progress" : "neutral"}>
+            <StatusLabel tone={periodRow?.status === "reviewed" || periodRow?.status === "exported" || periodRow?.status === "reexported" ? "ok" : periodRow ? "progress" : "neutral"}>
               {periodRow ? PERIOD_STATUS_LABEL[periodRow.status] : "Ej beräknad"}
             </StatusLabel>
           </div>
@@ -279,6 +321,23 @@ export default function PayrollReview() {
           })
         )}
       </section>
+
+      {exportLog.data && exportLog.data.length > 0 && (
+        <section className="mt-8">
+          <SectionLabel className="mb-2">Exportlogg</SectionLabel>
+          <div className="space-y-1">
+            {exportLog.data.slice(0, 8).map((log) => (
+              <IndustryRow key={log.id} edge={log.status === "error" ? "alert" : "neutral"} className="flex-wrap text-sm">
+                <StatusLabel tone={log.status === "sent" ? "ok" : log.status === "error" ? "alert" : "progress"}>{log.status}</StatusLabel>
+                <span>{log.transaction_type}</span>
+                <span className="ind-muted">{new Date(log.created_at).toLocaleString("sv-SE")}</span>
+                {log.http_status && <span className="ind-mono">HTTP {log.http_status}</span>}
+                {log.error_message && <span className="text-destructive">{log.error_message}</span>}
+              </IndustryRow>
+            ))}
+          </div>
+        </section>
+      )}
 
       <p className="ind-muted mt-6 text-xs">
         Preliminära kronor beräknas med timlön/månadslön, semesterlönereserv och arbetsgivaravgift enligt aktuella regler.

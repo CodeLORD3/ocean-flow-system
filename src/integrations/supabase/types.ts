@@ -7765,6 +7765,7 @@ export type Database = {
       }
       payroll_lines: {
         Row: {
+          correction_action: string
           cost_center: string | null
           created_at: string
           employee_id: string
@@ -7775,6 +7776,7 @@ export type Database = {
           id: string
           legal_entity_id: string
           line_date: string
+          line_key: string | null
           line_type: string
           note: string | null
           period_id: string
@@ -7787,6 +7789,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          correction_action?: string
           cost_center?: string | null
           created_at?: string
           employee_id: string
@@ -7797,6 +7800,7 @@ export type Database = {
           id?: string
           legal_entity_id: string
           line_date: string
+          line_key?: string | null
           line_type: string
           note?: string | null
           period_id: string
@@ -7809,6 +7813,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          correction_action?: string
           cost_center?: string | null
           created_at?: string
           employee_id?: string
@@ -7819,6 +7824,7 @@ export type Database = {
           id?: string
           legal_entity_id?: string
           line_date?: string
+          line_key?: string | null
           line_type?: string
           note?: string | null
           period_id?: string

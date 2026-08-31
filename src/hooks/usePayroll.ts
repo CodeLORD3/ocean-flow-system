@@ -176,3 +176,72 @@ export function useWageCodeMap(legalEntityId: string | null) {
     },
   });
 }
+
+export interface PayrollExportLogRow {
+  id: string;
+  transaction_type: string;
+  status: string;
+  http_status: number | null;
+  error_message: string | null;
+  created_at: string;
+}
+
+export function usePayrollExportLog(periodId: string | null) {
+  return useQuery({
+    queryKey: ["payroll-export-log", periodId],
+    enabled: !!periodId,
+    queryFn: async () => {
+      const id = periodId;
+      if (!id) return [] as PayrollExportLogRow[];
+      const { data, error } = await supabase
+        .from("payroll_export_log")
+        .select("id, transaction_type, status, http_status, error_message, created_at")
+        .eq("payroll_period_id", id)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []) as PayrollExportLogRow[];
+    },
+  });
+}
+
+export interface PayrollExportResult {
+  mode: "fortnox" | "paxml";
+  sent?: number;
+  skipped?: number;
+  remaining?: number;
+  failures?: { line_id: string; message: string }[];
+  issues?: ComputeIssue[];
+  lines?: number;
+  xml?: string;
+  status?: string;
+  error?: string;
+}
+
+/**
+ * Export av löneunderlaget. mode "fortnox" postar enheter till Fortnox Lön,
+ * mode "paxml" hämtar PAXml 2.2 utan att röra Fortnox.
+ */
+export function useExportPayroll() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ legalEntityId, period, mode }: { legalEntityId: string; period: string; mode: "fortnox" | "paxml" }) => {
+      const { data, error } = await supabase.functions.invoke("fortnox-payroll-export", {
+        body: { legal_entity_id: legalEntityId, period, mode },
+      });
+      if (error) throw error;
+      const result = data as PayrollExportResult;
+      if (result?.error) {
+        const err = new Error(result.error) as Error & { issues?: ComputeIssue[] };
+        err.issues = result.issues;
+        throw err;
+      }
+      return result;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["payroll-periods"] });
+      qc.invalidateQueries({ queryKey: ["payroll-lines"] });
+      qc.invalidateQueries({ queryKey: ["payroll-export-log"] });
+    },
+  });
+}
