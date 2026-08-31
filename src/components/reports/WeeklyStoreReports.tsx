@@ -25,7 +25,14 @@ const REGION_LABELS: Record<string, string> = { vast: "Göteborg", stockholm: "S
 const dateLabel = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
 
-function StatusBadge({ status, drift }: { status: string; drift?: boolean }) {
+function StatusBadge({ status, drift, corrected }: { status: string; drift?: boolean; corrected?: boolean }) {
+  if (corrected && !drift) {
+    return (
+      <Badge variant="outline" className="gap-1 border-success/40 text-[10px] text-success">
+        Korrigerad och omlåst
+      </Badge>
+    );
+  }
   if (drift) {
     return (
       <Badge variant="outline" className="gap-1 border-destructive/40 text-[10px] text-destructive">
