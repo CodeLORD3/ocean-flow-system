@@ -495,6 +495,48 @@ export default function SchedulePlanner() {
 
             <SideQueue label="Att besluta" empty="Inget väntar just nu.">
               <div className="space-y-2">
+                {pendingAbsenceRequests.map((request) => (
+                  <QueueItem key={request.id}>
+                    <SectionLabel>Frånvaro</SectionLabel>
+                    <p className="text-sm">
+                      {absenceTypeById.get(request.absence_type_id)?.name ?? "Frånvaro"} · {request.start_date}{request.end_date ? ` – ${request.end_date}` : ""}
+                    </p>
+                    <p className="ind-muted text-xs">
+                      {nameByEmployeeId.get(request.employee_id) ?? "Okänd medarbetare"} · {request.extent_pct}%
+                    </p>
+                    {request.note && <p className="ind-muted text-xs">{request.note}</p>}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <IndustryButton
+                        variant="primary"
+                        disabled={decideAbsenceRequest.isPending}
+                        onClick={async () => {
+                          try {
+                            await decideAbsenceRequest.mutateAsync({ requestId: request.id, decision: "approved" });
+                            toast.success("Frånvaro godkänd");
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Kunde inte godkänna frånvaron");
+                          }
+                        }}
+                      >
+                        Godkänn
+                      </IndustryButton>
+                      <IndustryButton
+                        variant="ghost"
+                        disabled={decideAbsenceRequest.isPending}
+                        onClick={async () => {
+                          try {
+                            await decideAbsenceRequest.mutateAsync({ requestId: request.id, decision: "rejected" });
+                            toast.success("Frånvaro avslagen");
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Kunde inte avslå frånvaron");
+                          }
+                        }}
+                      >
+                        Avslå
+                      </IndustryButton>
+                    </div>
+                  </QueueItem>
+                ))}
                 {pending.map((r) => {
                   const shift = shifts.find((s) => s.id === r.shift_id);
                   return (
