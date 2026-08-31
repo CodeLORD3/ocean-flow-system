@@ -167,10 +167,14 @@ export function WeeklyStoreReportsSection() {
 
   const groupFilter = filter !== "all" && filter in REGION_LABELS ? filter : null;
   const storeFilter = filter !== "all" && !groupFilter ? filter : null;
-  const regionStoreIds = useMemo(
-    () => new Set(stores.filter((store) => store.region === groupFilter).map((store) => store.id)),
-    [stores, groupFilter],
-  );
+  const scopeStoreIds = useMemo(() => {
+    if (storeFilter) return new Set([storeFilter]);
+    if (groupFilter === "SE_TOTAL") {
+      return new Set(stores.filter((store) => store.region === "vast" || store.region === "stockholm").map((store) => store.id));
+    }
+    if (groupFilter) return new Set(stores.filter((store) => store.region === groupFilter).map((store) => store.id));
+    return new Set(stores.filter((store) => store.region).map((store) => store.id));
+  }, [stores, groupFilter, storeFilter]);
   const latestWeek = weeks[0];
   const latestRegions = latestWeek
     ? regions.filter((row) => row.iso_year === latestWeek.iso_year && row.iso_week === latestWeek.iso_week)
@@ -186,12 +190,20 @@ export function WeeklyStoreReportsSection() {
       ? REGION_LABELS[groupFilter]
       : "Sverige totalt";
 
-  const exportSource = selectedStoreForExport
-    ? details.filter((row) => row.store_id === selectedStoreForExport && row.iso_year === latestWeekForExport?.iso_year && row.iso_week === latestWeekForExport?.iso_week)
+  const exportStoreRows = latestWeekForExport
+    ? details.filter(
+        (row) =>
+          row.iso_year === latestWeekForExport.iso_year &&
+          row.iso_week === latestWeekForExport.iso_week &&
+          scopeStoreIds.has(row.store_id),
+      )
+    : [];
+  const exportRegionRows = selectedStoreForExport
+    ? []
     : groupFilter
       ? latestRegions.filter((row) => row.group_key === groupFilter)
-      : latestRegions;
-  const exportRows: ReportRow[] = exportSource.map((row) => ({
+      : latestRegions.filter((row) => row.group_key === "SE_TOTAL");
+  const exportRows: ReportRow[] = [...exportRegionRows, ...exportStoreRows].map((row) => ({
     label: "store_id" in row ? storeName(row.store_id) : row.group_label,
     total_sales_sek: row.total_sales_sek,
     avg_sales_per_day_sek: row.avg_sales_per_day_sek,
@@ -248,9 +260,9 @@ export function WeeklyStoreReportsSection() {
           </Select>
         </div>
       </div>
-      {selectedStoreForExport && (
-        <p className="text-[10px] text-muted-foreground">Utskrift och Excel gäller vald butik och senaste tillgängliga vecka.</p>
-      )}
+      <p className="text-[10px] text-muted-foreground">
+        Utskrift och Excel gäller {storeFilter ? "vald butik" : `${summaryLabel} med tillhörande butiker`} och senaste tillgängliga vecka.
+      </p>
 
       {selectedSummary && latestWeek && (
         <div className="border-b pb-4">
@@ -295,7 +307,7 @@ export function WeeklyStoreReportsSection() {
           );
           const weekStores = details.filter(
             (r) => r.iso_year === week.iso_year && r.iso_week === week.iso_week &&
-              (storeFilter ? r.store_id === storeFilter : groupFilter ? regionStoreIds.has(r.store_id) : true),
+              scopeStoreIds.has(r.store_id),
           );
           if (weekRegions.length === 0 && weekStores.length === 0) return null;
 

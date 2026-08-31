@@ -3,7 +3,9 @@ import { useStores } from "@/hooks/useStores";
 import { useMonthlyRegionReports, useMonthlyStoreReports, type MonthlyRegionReport, type MonthlyStoreReport } from "@/hooks/useMonthlyReports";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ChevronDown, ChevronRight, AlertTriangle, PencilLine } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { weeklyReportPdf, weeklyReportXlsx, type ReportRow } from "@/lib/weeklyReportExport";
+import { Loader2, ChevronDown, ChevronRight, AlertTriangle, PencilLine, Printer, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
@@ -50,15 +52,45 @@ export function MonthlyReportsSection() {
   const storeName = (id: string) => stores.find((store) => store.id === id)?.name ?? "Butik";
   const groupFilter = filter !== "all" && filter in REGION_LABELS ? filter : null;
   const storeFilter = filter !== "all" && !groupFilter ? filter : null;
-  const regionStoreIds = useMemo(
-    () => new Set(stores.filter((store) => store.region === groupFilter).map((store) => store.id)),
-    [stores, groupFilter],
-  );
+  const scopeStoreIds = useMemo(() => {
+    if (storeFilter) return new Set([storeFilter]);
+    if (groupFilter === "SE_TOTAL") return new Set(stores.filter((store) => store.region === "vast" || store.region === "stockholm").map((store) => store.id));
+    if (groupFilter) return new Set(stores.filter((store) => store.region === groupFilter).map((store) => store.id));
+    return new Set(stores.filter((store) => store.region).map((store) => store.id));
+  }, [stores, groupFilter, storeFilter]);
   const latest = months[0];
   const latestRegion = latest ? regions.find((row) => row.group_key === (groupFilter ?? (filter === "all" ? "SE_TOTAL" : "")) && row.year === latest.year && row.month === latest.month) : undefined;
   const latestStore = latest && storeFilter ? details.find((row) => row.store_id === storeFilter && row.year === latest.year && row.month === latest.month) : undefined;
   const summary = latestStore ?? latestRegion;
   const summaryLabel = storeFilter ? storeName(storeFilter) : groupFilter ? REGION_LABELS[groupFilter] : filter === "SE_TOTAL" ? "Sverige totalt" : "Alla butiker";
+
+  const exportRows: ReportRow[] = useMemo(() => {
+    if (!latest) return [];
+    const regionRows = storeFilter
+      ? []
+      : regions.filter((row) => row.year === latest.year && row.month === latest.month && row.group_key === (groupFilter ?? "SE_TOTAL"));
+    const storeRows = details.filter((row) => row.year === latest.year && row.month === latest.month && scopeStoreIds.has(row.store_id));
+    return [...regionRows, ...storeRows].map((row) => ({
+      label: "store_id" in row ? storeName(row.store_id) : row.group_label,
+      total_sales_sek: row.total_sales_sek,
+      avg_sales_per_day_sek: row.avg_sales_per_day_sek,
+      staff_hours: row.staff_hours,
+      staff_shifts: row.staff_shifts,
+      reports: `${row.daily_reports_count} / ${row.expected_open_days}`,
+      status: row.status,
+    }));
+  }, [latest, regions, details, scopeStoreIds, groupFilter, storeFilter, stores]);
+
+  const exportReport = (format: "pdf" | "xlsx") => {
+    if (!latest) return;
+    const payload = {
+      title: `${summaryLabel} · ${monthLabel(latest.month_start)}`,
+      subtitle: `${latest.month_start} – ${latest.month_end}`,
+      rows: exportRows,
+    };
+    if (format === "pdf") weeklyReportPdf(payload);
+    else weeklyReportXlsx(payload);
+  };
 
   if (storeReports.isLoading || regionReports.isLoading) return <div className="flex items-center justify-center py-8"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>;
   if (storeReports.error || regionReports.error) return <p className="py-6 text-center text-sm text-destructive">Kunde inte läsa månadsrapporterna.</p>;
@@ -68,10 +100,14 @@ export function MonthlyReportsSection() {
     <div className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">Sammanställs automatiskt från sparade dagsrapporter</p>
+        <div className="flex flex-wrap items-center gap-2">
+        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => exportReport("pdf")}><Printer className="h-3.5 w-3.5" /> Skriv ut</Button>
+        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => exportReport("xlsx")}><FileSpreadsheet className="h-3.5 w-3.5" /> Excel</Button>
         <Select value={filter} onValueChange={setFilter}><SelectTrigger className="h-8 w-full text-xs sm:w-[240px]"><SelectValue placeholder="Alla butiker och regioner" /></SelectTrigger><SelectContent>
           <SelectItem value="all">Alla butiker och regioner</SelectItem><SelectItem value="SE_TOTAL">Sverige totalt</SelectItem><SelectItem value="vast">Göteborg</SelectItem><SelectItem value="stockholm">Stockholm</SelectItem><SelectItem value="schweiz">Schweiz</SelectItem>
           {stores.map((store) => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}
         </SelectContent></Select>
+        </div>
       </div>
 
       {summary && latest && <div className="border-b pb-4"><div className="mb-3 flex flex-wrap items-end justify-between gap-2"><div><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">Senaste månaden</p><p className="mt-1 text-sm font-semibold">{summaryLabel}</p><p className="text-xs capitalize text-muted-foreground">{monthLabel(latest.month_start)}</p></div><StatusBadge status={summary.status} corrected={summary.corrected} /></div><Metrics row={summary} /></div>}
@@ -80,7 +116,7 @@ export function MonthlyReportsSection() {
         const monthRegions = regions.filter((row) => row.year === month.year && row.month === month.month &&
           (filter === "all" ? row.group_key === "SE_TOTAL" : Boolean(groupFilter) && row.group_key === groupFilter));
         const monthStores = details.filter((row) => row.year === month.year && row.month === month.month &&
-          (storeFilter ? row.store_id === storeFilter : groupFilter ? regionStoreIds.has(row.store_id) : true));
+          scopeStoreIds.has(row.store_id));
         if (!monthRegions.length && !monthStores.length) return null;
         const headline = monthRegions.find((row) => row.group_key === (groupFilter ?? "SE_TOTAL")) ?? monthRegions[0];
         const total = headline?.total_sales_sek ?? monthStores.reduce((sum, row) => sum + Number(row.total_sales_sek), 0);
