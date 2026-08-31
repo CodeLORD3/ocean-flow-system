@@ -300,7 +300,7 @@ export function WeeklyStoreReportsSection() {
                                   {row.locked_at && <LockKeyhole className="h-3 w-3 text-muted-foreground" />}
                                 </span>
                                 <div className="flex items-center gap-2">
-                                  <StatusBadge status={row.status} drift={row.drift_after_lock} />
+                                  <StatusBadge status={row.status} drift={row.drift_after_lock} corrected={row.corrected} />
                                   <Button
                                     variant="outline"
                                     size="sm"
