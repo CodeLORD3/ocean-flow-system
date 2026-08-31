@@ -332,12 +332,20 @@ export default function WholesaleOrders() {
   const archivedOrders = orders.filter((o: any) => o.status === "Arkiverad");
   const deliveredOrders = activeOrders.filter((o: any) => o.status === "Levererad" || o.status === "Klar / Levererad");
 
-  // Filter orders (active only)
+  // Filter orders (active only), including product names for fast order lookup.
   const filteredOrders = activeOrders.filter((o: any) => {
-    const matchSearch = !search || displayOrderWeek(o).includes(search) || (o.stores?.name || "").toLowerCase().includes(search.toLowerCase());
+    const needle = search.trim().toLowerCase();
+    const productsText = (o.shop_order_lines || []).map((line: any) => line.products?.name || "").join(" ").toLowerCase();
+    const matchSearch = !needle || displayOrderWeek(o).toLowerCase().includes(needle) || (o.stores?.name || "").toLowerCase().includes(needle) || productsText.includes(needle);
     const matchStatus = statusFilter === "Alla" || o.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchStore = storeFilter === "alla" || o.store_id === storeFilter;
+    return matchSearch && matchStatus && matchStore;
   });
+
+  const groupedFilteredOrders = useMemo(() => groupByWeek(filteredOrders), [filteredOrders]);
+  const allFilteredMarked = filteredOrders.length > 0 && filteredOrders.every((order: any) => marked.includes(order.id));
+  const toggleMarked = (id: string) => setMarked((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  const markAllFiltered = () => setMarked(allFilteredMarked ? marked.filter((id) => !filteredOrders.some((order: any) => order.id === id)) : [...new Set([...marked, ...filteredOrders.map((order: any) => order.id)])]);
 
   const totalOrders = activeOrders.length;
   const newOrders = activeOrders.filter((o: any) => o.status === "Ny").length;
