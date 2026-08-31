@@ -150,6 +150,53 @@ export type Database = {
           },
         ]
       }
+      absence_days: {
+        Row: {
+          created_at: string
+          date: string
+          employee_id: string
+          extent_pct: number
+          hours: number | null
+          id: string
+          is_overridden: boolean
+          request_id: string
+          shift_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          employee_id: string
+          extent_pct?: number
+          hours?: number | null
+          id?: string
+          is_overridden?: boolean
+          request_id: string
+          shift_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          employee_id?: string
+          extent_pct?: number
+          hours?: number | null
+          id?: string
+          is_overridden?: boolean
+          request_id?: string
+          shift_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "absence_days_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "absence_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       absence_policies: {
         Row: {
           created_at: string
@@ -488,6 +535,8 @@ export type Database = {
           employee_id: string
           id: string
           legal_entity_id: string | null
+          payroll_in: string | null
+          payroll_out: string | null
           shift_id: string | null
           status: string
           store_id: string
@@ -505,6 +554,8 @@ export type Database = {
           employee_id: string
           id?: string
           legal_entity_id?: string | null
+          payroll_in?: string | null
+          payroll_out?: string | null
           shift_id?: string | null
           status?: string
           store_id: string
@@ -522,6 +573,8 @@ export type Database = {
           employee_id?: string
           id?: string
           legal_entity_id?: string | null
+          payroll_in?: string | null
+          payroll_out?: string | null
           shift_id?: string | null
           status?: string
           store_id?: string
@@ -8006,9 +8059,15 @@ export type Database = {
           created_at: string
           exported_at: string | null
           exported_by: string | null
+          forced: boolean
+          forced_at: string | null
+          forced_by: string | null
+          forced_reason: string | null
           fortnox_batch_ref: string | null
           id: string
           legal_entity_id: string
+          locked_at: string | null
+          locked_by: string | null
           period: string
           reviewed_at: string | null
           status: string
@@ -8020,9 +8079,15 @@ export type Database = {
           created_at?: string
           exported_at?: string | null
           exported_by?: string | null
+          forced?: boolean
+          forced_at?: string | null
+          forced_by?: string | null
+          forced_reason?: string | null
           fortnox_batch_ref?: string | null
           id?: string
           legal_entity_id: string
+          locked_at?: string | null
+          locked_by?: string | null
           period: string
           reviewed_at?: string | null
           status?: string
@@ -8034,9 +8099,15 @@ export type Database = {
           created_at?: string
           exported_at?: string | null
           exported_by?: string | null
+          forced?: boolean
+          forced_at?: string | null
+          forced_by?: string | null
+          forced_reason?: string | null
           fortnox_batch_ref?: string | null
           id?: string
           legal_entity_id?: string
+          locked_at?: string | null
+          locked_by?: string | null
           period?: string
           reviewed_at?: string | null
           status?: string
@@ -16016,6 +16087,7 @@ export type Database = {
           store_id: string
         }[]
       }
+      absence_generate_days: { Args: { _request_id: string }; Returns: number }
       absence_policy_for: {
         Args: { _legal_entity_id: string }
         Returns: {
@@ -16451,6 +16523,18 @@ export type Database = {
       post_purchase_report_internal: {
         Args: { p_location_id: string; p_lots: Json; p_report_id: string }
         Returns: string[]
+      }
+      preliminar_manadskostnad: {
+        Args: { _month: string; _store_id: string }
+        Returns: {
+          ar_preliminar: boolean
+          arbetsgivaravgift: number
+          lonekostnad: number
+          minutes: number
+          month: string
+          store_id: string
+          total: number
+        }[]
       }
       preview_stock_zeroing: {
         Args: never
