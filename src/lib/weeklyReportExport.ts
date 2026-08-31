@@ -37,7 +37,7 @@ export interface WeeklyExportPayload {
   days?: { storeLabel: string; rows: DayRow[] }[];
 }
 
-const HEAD = ["Enhet", "Summa (kr)", "Snitt/dag (kr)", "Timmar", "Personpass", "Dagsrapporter", "Status"];
+const HEAD = ["Enhet", "Nettoomsättning (kr)", "Netto snitt/dag (kr)", "Timmar", "Personpass", "Dagsrapporter", "Status"];
 const DAY_HEAD = ["Datum", "Dag", "Brutto (kr)", "Netto (kr)", "Kvitton", "Timmar", "Pass"];
 
 export function weeklyReportPdf(payload: WeeklyExportPayload) {

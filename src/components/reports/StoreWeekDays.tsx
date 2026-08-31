@@ -37,7 +37,7 @@ export function StoreWeekDays({
           <tr>
             <th className="px-2 py-1.5 text-left font-medium">Dag</th>
             <th className="px-2 py-1.5 text-right font-medium">Brutto</th>
-            <th className="px-2 py-1.5 text-right font-medium">Netto</th>
+            <th className="px-2 py-1.5 text-right font-medium">Nettoomsättning</th>
             <th className="px-2 py-1.5 text-right font-medium">Kvitton</th>
             <th className="px-2 py-1.5 text-right font-medium">Timmar</th>
             <th className="px-2 py-1.5 text-right font-medium">Pass</th>
