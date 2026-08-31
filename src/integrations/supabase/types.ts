@@ -1607,16 +1607,22 @@ export type Database = {
       clock_rate_limits: {
         Row: {
           attempts: number
+          blocked_until: string | null
+          failure_count: number
           minute_bucket: string
           station_id: string
         }
         Insert: {
           attempts?: number
+          blocked_until?: string | null
+          failure_count?: number
           minute_bucket: string
           station_id: string
         }
         Update: {
           attempts?: number
+          blocked_until?: string | null
+          failure_count?: number
           minute_bucket?: string
           station_id?: string
         }
@@ -1624,6 +1630,7 @@ export type Database = {
       }
       clock_station_sessions: {
         Row: {
+          absolute_expires_at: string | null
           created_at: string
           expires_at: string
           id: string
@@ -1632,6 +1639,7 @@ export type Database = {
           token_hash: string
         }
         Insert: {
+          absolute_expires_at?: string | null
           created_at?: string
           expires_at: string
           id?: string
@@ -1640,6 +1648,7 @@ export type Database = {
           token_hash: string
         }
         Update: {
+          absolute_expires_at?: string | null
           created_at?: string
           expires_at?: string
           id?: string
@@ -1652,6 +1661,41 @@ export type Database = {
             foreignKeyName: "clock_station_sessions_station_id_fkey"
             columns: ["station_id"]
             isOneToOne: false
+            referencedRelation: "clock_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clock_station_watchdog: {
+        Row: {
+          alert_count: number
+          last_alert_at: string | null
+          last_seen_at: string | null
+          station_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          alert_count?: number
+          last_alert_at?: string | null
+          last_seen_at?: string | null
+          station_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          alert_count?: number
+          last_alert_at?: string | null
+          last_seen_at?: string | null
+          station_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clock_station_watchdog_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: true
             referencedRelation: "clock_stations"
             referencedColumns: ["id"]
           },
@@ -1713,6 +1757,114 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clock_sync_failures: {
+        Row: {
+          attempts: number
+          cost_center: string | null
+          created_at: string
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          identifier_cipher: string | null
+          identifier_iv: string | null
+          identifier_masked: string | null
+          legal_entity_id: string | null
+          occurred_at: string
+          punch_type: string
+          queued_at: string | null
+          reason: string
+          resolution_note: string | null
+          resolved_entry_id: string | null
+          station_id: string | null
+          status: string
+          store_id: string | null
+          updated_at: string
+          work_site_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          cost_center?: string | null
+          created_at?: string
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          identifier_cipher?: string | null
+          identifier_iv?: string | null
+          identifier_masked?: string | null
+          legal_entity_id?: string | null
+          occurred_at: string
+          punch_type: string
+          queued_at?: string | null
+          reason: string
+          resolution_note?: string | null
+          resolved_entry_id?: string | null
+          station_id?: string | null
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+          work_site_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          cost_center?: string | null
+          created_at?: string
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          identifier_cipher?: string | null
+          identifier_iv?: string | null
+          identifier_masked?: string | null
+          legal_entity_id?: string | null
+          occurred_at?: string
+          punch_type?: string
+          queued_at?: string | null
+          reason?: string
+          resolution_note?: string | null
+          resolved_entry_id?: string | null
+          station_id?: string | null
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+          work_site_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clock_sync_failures_resolved_entry_id_fkey"
+            columns: ["resolved_entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clock_sync_failures_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "clock_stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clock_sync_failures_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "clock_sync_failures_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clock_sync_failures_work_site_id_fkey"
+            columns: ["work_site_id"]
+            isOneToOne: false
+            referencedRelation: "work_sites"
             referencedColumns: ["id"]
           },
         ]
@@ -4081,12 +4233,14 @@ export type Database = {
           phone: string | null
           pk_staff_id: string | null
           pnr_encrypted: string | null
+          pnr_encryption_year: number | null
           pnr_hash: string | null
           pnr_last4: string | null
           pnr_masked: string | null
           postal_code: string | null
           profile_image_url: string | null
           staff_id: string | null
+          status: string
           updated_at: string
         }
         Insert: {
@@ -4108,12 +4262,14 @@ export type Database = {
           phone?: string | null
           pk_staff_id?: string | null
           pnr_encrypted?: string | null
+          pnr_encryption_year?: number | null
           pnr_hash?: string | null
           pnr_last4?: string | null
           pnr_masked?: string | null
           postal_code?: string | null
           profile_image_url?: string | null
           staff_id?: string | null
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -4135,12 +4291,14 @@ export type Database = {
           phone?: string | null
           pk_staff_id?: string | null
           pnr_encrypted?: string | null
+          pnr_encryption_year?: number | null
           pnr_hash?: string | null
           pnr_last4?: string | null
           pnr_masked?: string | null
           postal_code?: string | null
           profile_image_url?: string | null
           staff_id?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: [
@@ -7158,6 +7316,7 @@ export type Database = {
       notifications: {
         Row: {
           created_at: string
+          dedupe_key: string | null
           entity_id: string | null
           entity_type: string | null
           id: string
@@ -7170,6 +7329,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          dedupe_key?: string | null
           entity_id?: string | null
           entity_type?: string | null
           id?: string
@@ -7182,6 +7342,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          dedupe_key?: string | null
           entity_id?: string | null
           entity_type?: string | null
           id?: string
@@ -8609,6 +8770,101 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pnr_access_log: {
+        Row: {
+          accessed_by: string | null
+          created_at: string
+          employee_id: string | null
+          id: string
+          inspector_session_id: string | null
+          legal_entity_id: string | null
+          period_from: string | null
+          period_to: string | null
+          reason: string | null
+          store_id: string | null
+        }
+        Insert: {
+          accessed_by?: string | null
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          inspector_session_id?: string | null
+          legal_entity_id?: string | null
+          period_from?: string | null
+          period_to?: string | null
+          reason?: string | null
+          store_id?: string | null
+        }
+        Update: {
+          accessed_by?: string | null
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          inspector_session_id?: string | null
+          legal_entity_id?: string | null
+          period_from?: string | null
+          period_to?: string | null
+          reason?: string | null
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pnr_access_log_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pnr_access_log_inspector_session_id_fkey"
+            columns: ["inspector_session_id"]
+            isOneToOne: false
+            referencedRelation: "inspector_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pnr_access_log_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "pnr_access_log_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pnr_key_years: {
+        Row: {
+          beskattningsar: number
+          is_active: boolean
+          note: string | null
+          rotated_at: string
+          rotated_by: string | null
+          vault_secret_name: string
+        }
+        Insert: {
+          beskattningsar: number
+          is_active?: boolean
+          note?: string | null
+          rotated_at?: string
+          rotated_by?: string | null
+          vault_secret_name: string
+        }
+        Update: {
+          beskattningsar?: number
+          is_active?: boolean
+          note?: string | null
+          rotated_at?: string
+          rotated_by?: string | null
+          vault_secret_name?: string
+        }
+        Relationships: []
       }
       portal_settings: {
         Row: {
@@ -10322,6 +10578,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      retention_log: {
+        Row: {
+          deleted_at: string
+          deleted_by: string | null
+          id: string
+          metadata: Json
+          retention_reason: string
+          row_id: string | null
+          table_name: string
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_by?: string | null
+          id?: string
+          metadata?: Json
+          retention_reason: string
+          row_id?: string | null
+          table_name: string
+        }
+        Update: {
+          deleted_at?: string
+          deleted_by?: string | null
+          id?: string
+          metadata?: Json
+          retention_reason?: string
+          row_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
       }
       schedule_events: {
         Row: {
@@ -13650,6 +13936,9 @@ export type Database = {
       }
       time_entries: {
         Row: {
+          arbetsdag: string | null
+          beskattningsar: number | null
+          client_punch_id: string | null
           correction_kind: string | null
           corrects_entry_id: string | null
           cost_center: string | null
@@ -13667,6 +13956,7 @@ export type Database = {
           punch_lat: number | null
           punch_lng: number | null
           registered_at: string
+          rounded_at: string | null
           source: string
           station_id: string | null
           store_id: string | null
@@ -13675,6 +13965,9 @@ export type Database = {
           work_site_id: string | null
         }
         Insert: {
+          arbetsdag?: string | null
+          beskattningsar?: number | null
+          client_punch_id?: string | null
           correction_kind?: string | null
           corrects_entry_id?: string | null
           cost_center?: string | null
@@ -13692,6 +13985,7 @@ export type Database = {
           punch_lat?: number | null
           punch_lng?: number | null
           registered_at?: string
+          rounded_at?: string | null
           source?: string
           station_id?: string | null
           store_id?: string | null
@@ -13700,6 +13994,9 @@ export type Database = {
           work_site_id?: string | null
         }
         Update: {
+          arbetsdag?: string | null
+          beskattningsar?: number | null
+          client_punch_id?: string | null
           correction_kind?: string | null
           corrects_entry_id?: string | null
           cost_center?: string | null
@@ -13717,6 +14014,7 @@ export type Database = {
           punch_lat?: number | null
           punch_lng?: number | null
           registered_at?: string
+          rounded_at?: string | null
           source?: string
           station_id?: string | null
           store_id?: string | null
@@ -15752,6 +16050,24 @@ export type Database = {
         Args: { _count?: number; _days_back?: number }
         Returns: Json
       }
+      berakna_arbetstid: {
+        Args: { _employee_id: string; _from: string; _to: string }
+        Returns: {
+          arbetsdag: string
+          break_minutes: number
+          mertid_minutes: number
+          missing_wage_code: boolean
+          ob_minutes: Json
+          ob100_minutes: number
+          ob50_minutes: number
+          ob70_minutes: number
+          overtime_minutes: number
+          regular_minutes: number
+          source: Json
+          total_minutes: number
+        }[]
+      }
+      beskattningsar: { Args: { _ts: string }; Returns: number }
       booking_status_day: { Args: { _day?: string }; Returns: Json }
       booking_volume_by_day: {
         Args: { _days?: number; _from?: string }
@@ -15779,7 +16095,19 @@ export type Database = {
       can_see_employee: { Args: { _employee_id: string }; Returns: boolean }
       can_see_employee_folder: { Args: { _name: string }; Returns: boolean }
       can_see_store: { Args: { _store_id: string }; Returns: boolean }
+      check_station_heartbeats: {
+        Args: { _threshold_minutes?: number }
+        Returns: Json
+      }
       clock_code_hash: { Args: { _code: string }; Returns: string }
+      clock_inspector_reveal_pnr: {
+        Args: {
+          _employee_id: string
+          _inspector_session_id: string
+          _reason?: string
+        }
+        Returns: string
+      }
       clock_pending_approve: {
         Args: { _employee_id: string; _id: string }
         Returns: Json
@@ -15879,6 +16207,7 @@ export type Database = {
       }
       employee_is_self: { Args: { _employee_id: string }; Returns: boolean }
       employee_pnr_key: { Args: never; Returns: string }
+      employee_pnr_key_for_year: { Args: { _year: number }; Returns: string }
       entity_series_code: {
         Args: { _legal_entity_id: string }
         Returns: string
@@ -16146,6 +16475,8 @@ export type Database = {
         Returns: boolean
       }
       purge_booking_otp: { Args: never; Returns: number }
+      purge_clock_retention: { Args: never; Returns: Json }
+      purge_clock_years: { Args: { _keep_years?: number }; Returns: Json }
       purge_sms_log_phones: { Args: never; Returns: number }
       rebuild_stock_from_movements: { Args: never; Returns: Json }
       recalc_product_day_price: {
@@ -16232,6 +16563,7 @@ export type Database = {
       stock_reconciliation_check: { Args: { _source?: string }; Returns: Json }
       stock_write_allowed: { Args: never; Returns: boolean }
       sumup_name_key: { Args: { _name: string }; Returns: string }
+      svensk_dag: { Args: { _grans?: string; _ts: string }; Returns: string }
       unpost_purchase_report: { Args: { _report_id: string }; Returns: Json }
       user_company_ids: { Args: { _user_id: string }; Returns: string[] }
       user_portals: { Args: { _user_id: string }; Returns: string[] }
