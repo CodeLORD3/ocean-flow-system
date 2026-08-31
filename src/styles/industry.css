@@ -33,13 +33,44 @@
   --shadow-md: 0 3px 10px color-mix(in srgb, #2b2b2d 16%, transparent);
   --shadow-lg: 0 12px 32px color-mix(in srgb, #2b2b2d 22%, transparent);
 
+  /* Funktionella färgsteg (0a) — bakgrund 100, färg 600, text/kant 800. */
+  --color-alert-100:#fbecea; --color-alert-600:#a8382f; --color-alert-800:#6d221c;
+  --color-warn-100:#fbf2dd; --color-warn-600:#9a7412; --color-warn-800:#63490a;
+  --color-ok-100:#e9f2ec; --color-ok-600:#3f7350; --color-ok-800:#284a34;
+
   /* Härledda värden — muted-text hålls mörk nog för WCAG AA på surface. */
   --ind-muted: color-mix(in srgb, var(--color-text) 68%, var(--color-surface));
-  --ind-status-ok: var(--color-accent-700);
-  --ind-status-progress: #8a6a12;
-  --ind-status-alert: #8f2f2a;
+  --ind-status-ok: var(--color-ok-800);
+  --ind-status-progress: var(--color-warn-800);
+  --ind-status-alert: var(--color-alert-800);
   --ind-status-neutral: var(--color-neutral-600);
 }
+
+/* Alla tal i personalmodulen sätts med jämnbreda siffror (regel 8). */
+.ind table, .ind .ind-num, .ind input[type="time"], .ind input[type="date"] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.ind-note--alert { background: var(--color-alert-100); color: var(--color-alert-800); }
+.ind-note--warn { background: var(--color-warn-100); color: var(--color-warn-800); }
+.ind-note--ok { background: var(--color-ok-100); color: var(--color-ok-800); }
+.ind-note--alert, .ind-note--warn, .ind-note--ok {
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: 14px;
+}
+
+/* Kioskens stora klocka (7b) */
+.ind-clock {
+  font-family: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(56px, 12vw, 104px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
 
 /* ---------------------------------------------------------------- grund */
 

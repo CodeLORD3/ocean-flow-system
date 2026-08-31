@@ -40,7 +40,19 @@ const ACTION_LABEL: Record<Action, string> = {
   rast_slut: "Rast slutar",
 };
 
+/**
+ * Bara giltiga val visas (7d). Efter en instämpling går det att gå på rast
+ * eller stämpla ut; under rast är enda vägen "Rast slutar".
+ */
+const VALID_ACTIONS: Record<Action, Action[]> = {
+  in: ["in"],
+  ut: ["ut", "rast_start"],
+  rast_start: ["rast_start", "ut"],
+  rast_slut: ["rast_slut"],
+};
+
 const timeOf = (iso: string) => svenskTid(iso).slice(0, 5);
+
 
 export default function Clock() {
   const [station, setStation] = useState<ClockStationInfo | null>(storedStation());
@@ -265,14 +277,15 @@ export default function Clock() {
   return (
     <IndustryFrame className="min-h-screen p-4 sm:p-8">
       <div className="mx-auto max-w-3xl">
-        <header className="flex items-start justify-between gap-4 pb-6">
+        <header className="grid items-center gap-3 pb-6 sm:grid-cols-[1fr_auto_1fr]">
           <div>
             <SectionLabel>{station?.name ?? "Stämpelklocka"}</SectionLabel>
             <p className="ind-h3">{station?.store_name ?? "Försäljningsställe"}</p>
           </div>
-          <p className="ind-h2 ind-mono">
+          <p className="ind-clock" aria-label="Aktuell tid">
             {new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}
           </p>
+          <span />
         </header>
 
         {!online && (
@@ -320,32 +333,22 @@ export default function Clock() {
               <h2 className="ind-h2">
                 Hej {found.first_name} {found.pnr_masked ? `(${found.pnr_masked})` : ""}
               </h2>
-              <p className="ind-muted text-sm">Föreslaget nästa steg: {ACTION_LABEL[found.suggested]}</p>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <IndustryButton variant="primary" size="kiosk" corners onClick={() => handlePunch("in")} disabled={busy}>
-                IN
-              </IndustryButton>
-              <IndustryButton variant="secondary" size="kiosk" onClick={() => handlePunch("ut")} disabled={busy}>
-                UT
-              </IndustryButton>
-              <IndustryButton
-                variant="secondary"
-                size="kiosk"
-                onClick={() => handlePunch(found.suggested === "rast_slut" ? "rast_slut" : "rast_start")}
-                disabled={busy}
-              >
-                RAST
-              </IndustryButton>
+              {VALID_ACTIONS[found.suggested].includes("in") && (
+                <IndustryButton variant={found.suggested === "in" ? "primary" : "secondary"} size="kiosk" corners onClick={() => handlePunch("in")} disabled={busy}>IN</IndustryButton>
+              )}
+              {VALID_ACTIONS[found.suggested].includes("ut") && (
+                <IndustryButton variant={found.suggested === "ut" ? "primary" : "secondary"} size="kiosk" corners={found.suggested === "ut"} onClick={() => handlePunch("ut")} disabled={busy}>UT</IndustryButton>
+              )}
+              {VALID_ACTIONS[found.suggested].includes("rast_start") && (
+                <IndustryButton variant={found.suggested === "rast_start" ? "primary" : "secondary"} size="kiosk" corners={found.suggested === "rast_start"} onClick={() => handlePunch("rast_start")} disabled={busy}>Rast börjar</IndustryButton>
+              )}
+              {VALID_ACTIONS[found.suggested].includes("rast_slut") && (
+                <IndustryButton variant="primary" size="kiosk" corners onClick={() => handlePunch("rast_slut")} disabled={busy}>Rast slutar</IndustryButton>
+              )}
             </div>
-            <div className="flex gap-3">
-              <IndustryButton variant="ghost" size="touch" onClick={() => handlePunch("rast_slut")} disabled={busy}>
-                Rast slutar
-              </IndustryButton>
-              <IndustryButton variant="ghost" size="touch" onClick={reset}>
-                Avbryt
-              </IndustryButton>
-            </div>
+            <IndustryButton variant="ghost" size="touch" onClick={reset}>Avbryt</IndustryButton>
           </div>
         ) : (
           <div className="space-y-6">
