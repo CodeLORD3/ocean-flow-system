@@ -281,6 +281,29 @@ export default function Clock() {
           </div>
         )}
 
+        {workSites.length > 1 && (
+          <div className="mb-4 space-y-2">
+            <SectionLabel>Driftställe · kostnadsställe</SectionLabel>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {workSites.map((site) => (
+                <IndustryButton
+                  key={site.id}
+                  variant={activeSite?.id === site.id ? "primary" : "secondary"}
+                  size="touch"
+                  onClick={() => setSiteId(site.id)}
+                >
+                  <span className="flex flex-col items-start leading-tight">
+                    <span>{site.name}</span>
+                    <span className="ind-mono text-xs opacity-70">{site.posting_cost_center}</span>
+                  </span>
+                </IndustryButton>
+              ))}
+            </div>
+          </div>
+        )}
+
+
+
         {receipt ? (
           <div className="ind-accent-surface p-8 space-y-2">
             <SectionLabel>{ACTION_LABEL[receipt.action]} registrerad</SectionLabel>
