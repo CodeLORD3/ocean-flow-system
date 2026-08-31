@@ -602,7 +602,7 @@ export default function MyShifts() {
       </Dialog>
 
        {/* Frånvaro */}
-       <Dialog open={absenceOpen} onOpenChange={setAbsenceOpen}>
+       <Dialog open={absenceOpen} onOpenChange={(open) => { setAbsenceOpen(open); if (!open) setOtherAbsenceOpen(false); }}>
          <DialogContent className="ind max-w-md">
            <DialogHeader>
              <DialogTitle className="ind-h2">Ny frånvaroanmälan</DialogTitle>
@@ -610,13 +610,44 @@ export default function MyShifts() {
            <div className="space-y-3">
              <div>
                <Label className="ind-label">Typ</Label>
-               <Select value={absenceDraft.absenceTypeId} onValueChange={(value) => setAbsenceDraft({ ...absenceDraft, absenceTypeId: value })}>
-                 <SelectTrigger className="ind-input"><SelectValue placeholder="Välj frånvarotyp" /></SelectTrigger>
-                 <SelectContent>
-                   {absenceTypes.map((type) => <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>)}
-                 </SelectContent>
-               </Select>
+               <div className="mt-2 grid grid-cols-2 gap-2" role="group" aria-label="Frånvarotyp">
+                 {quickAbsenceTypes.map((type) => (
+                   <IndustryButton
+                     key={type.id}
+                     variant={absenceDraft.absenceTypeId === type.id ? "primary" : "secondary"}
+                     size="touch"
+                     className="min-h-12 justify-start px-3 text-left"
+                     aria-pressed={absenceDraft.absenceTypeId === type.id}
+                     onClick={() => setAbsenceDraft({ ...absenceDraft, absenceTypeId: type.id })}
+                   >
+                     {type.name}
+                   </IndustryButton>
+                 ))}
+               </div>
+               {otherAbsenceTypes.length > 0 && (
+                 <div className="mt-2">
+                   <IndustryButton variant="ghost" size="touch" className="w-full justify-between" onClick={() => setOtherAbsenceOpen((open) => !open)} aria-expanded={otherAbsenceOpen}>
+                     <span>Annat…</span><span aria-hidden="true">{otherAbsenceOpen ? "−" : "+"}</span>
+                   </IndustryButton>
+                   {otherAbsenceOpen && (
+                     <div className="mt-2">
+                       <Select value={otherAbsenceTypes.some((type) => type.id === absenceDraft.absenceTypeId) ? absenceDraft.absenceTypeId : ""} onValueChange={(value) => setAbsenceDraft({ ...absenceDraft, absenceTypeId: value })}>
+                         <SelectTrigger className="ind-input"><SelectValue placeholder="Välj annan frånvarotyp" /></SelectTrigger>
+                         <SelectContent>
+                           {otherAbsenceTypes.map((type) => <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>)}
+                         </SelectContent>
+                       </Select>
+                     </div>
+                   )}
+                 </div>
+               )}
              </div>
+             {selectedAbsenceType?.is_sick && (
+               <div className="ind-note--warn" role="note">
+                 <strong>Sjukfrånvaro</strong><br />
+                 Återinsjuknande inom 5 kalenderdagar hanteras som samma sjukperiod. Registrera friskanmälan när du är tillbaka.
+               </div>
+             )}
               <div className="grid grid-cols-2 gap-3">
                 <div><Label className="ind-label">Från</Label><IndustryInput type="date" value={absenceDraft.startDate} onChange={(e) => setAbsenceDraft({ ...absenceDraft, startDate: e.target.value })} /></div>
                 <div><Label className="ind-label">Till</Label><IndustryInput type="date" min={absenceDraft.startDate} value={absenceDraft.endDate} onChange={(e) => setAbsenceDraft({ ...absenceDraft, endDate: e.target.value })} /></div>
