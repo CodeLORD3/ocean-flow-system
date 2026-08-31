@@ -40,7 +40,19 @@ const ACTION_LABEL: Record<Action, string> = {
   rast_slut: "Rast slutar",
 };
 
+/**
+ * Bara giltiga val visas (7d). Efter en instämpling går det att gå på rast
+ * eller stämpla ut; under rast är enda vägen "Rast slutar".
+ */
+const VALID_ACTIONS: Record<Action, Action[]> = {
+  in: ["in"],
+  ut: ["ut", "rast_start"],
+  rast_start: ["rast_start", "ut"],
+  rast_slut: ["rast_slut"],
+};
+
 const timeOf = (iso: string) => svenskTid(iso).slice(0, 5);
+
 
 export default function Clock() {
   const [station, setStation] = useState<ClockStationInfo | null>(storedStation());
