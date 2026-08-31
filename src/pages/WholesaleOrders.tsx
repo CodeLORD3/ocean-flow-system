@@ -221,8 +221,11 @@ function WholesaleOrderAccordionRow({
             <span className="w-36 shrink-0 border-r border-grid-line/70 pr-3 font-mono text-[11px] font-semibold tabular-nums">{day}<span className="block text-[10px] font-normal text-muted-foreground">{displayOrderWeek(order)}</span></span>
             <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "text-[13px] font-bold tracking-tight" : "font-semibold"}`}>{order.stores?.name || "Okänd butik"}<span className="block text-[10px] font-normal text-muted-foreground">{order.created_by || "–"}</span></span>
             <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 text-center font-mono text-[10px] tabular-nums text-muted-foreground">{orderLines} rader</span>
-            <span className="flex w-32 shrink-0 items-center overflow-hidden border-r border-grid-line/70 px-2">{statusChip}</span>
-            <span className="w-24 shrink-0 px-2 text-right font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</span>
+             <span className="flex w-32 shrink-0 items-center overflow-hidden border-r border-grid-line/70 px-2">{statusChip}</span>
+             <span className="flex w-12 shrink-0 items-center justify-center border-r border-grid-line/70 px-2">
+               {photoCount > 0 && <span className="flex items-center gap-0.5 font-mono text-[10px] tabular-nums text-muted-foreground" title={`${photoCount} interna bilder på beställningen`}><Camera className="h-3.5 w-3.5" aria-label="Bilder finns" />{photoCount}</span>}
+             </span>
+             <span className="w-24 shrink-0 px-2 text-right font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</span>
             <ChevronDown className={`ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
           </div>
           <div className="w-full space-y-1 sm:hidden">
