@@ -5,6 +5,7 @@ import { MapPin, Phone, Clock, Edit, X, Save, Camera, Store as StoreIcon } from 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -39,6 +40,7 @@ export default function Stores() {
   const [form, setForm] = useState({
     name: "", address: "", city: "", phone: "", manager: "", hours: "", sqm: 0,
     inventory_location_id: "",
+    region: "", week_last_open_dow: 7, weekly_report_enabled: true,
   });
 
 
@@ -53,6 +55,9 @@ export default function Stores() {
       hours: store.hours || "",
       sqm: store.sqm || 0,
       inventory_location_id: (store as any).inventory_location_id || "",
+      region: store.region || "",
+      week_last_open_dow: store.week_last_open_dow ?? 7,
+      weekly_report_enabled: store.weekly_report_enabled ?? true,
     });
 
   };
@@ -104,6 +109,9 @@ export default function Stores() {
         hours: form.hours || null,
         sqm: form.sqm || null,
         inventory_location_id: form.inventory_location_id || null,
+        region: form.region || null,
+        week_last_open_dow: form.week_last_open_dow,
+        weekly_report_enabled: form.weekly_report_enabled,
       } as any,
 
       {
@@ -296,6 +304,42 @@ export default function Stores() {
                 Veckorapportens inventering bokförs mot den här platsen. Utpekad plats, ingen namnmatchning.
               </p>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Region</Label>
+                <Select value={form.region || "none"} onValueChange={(v) => setForm(f => ({ ...f, region: v === "none" ? "" : v }))}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj region" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-xs">Ingen region</SelectItem>
+                    <SelectItem value="vast" className="text-xs">Göteborg</SelectItem>
+                    <SelectItem value="stockholm" className="text-xs">Stockholm</SelectItem>
+                    <SelectItem value="schweiz" className="text-xs">Schweiz</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Veckans sista öppetdag</Label>
+                <Select value={String(form.week_last_open_dow)} onValueChange={(v) => setForm(f => ({ ...f, week_last_open_dow: Number(v) }))}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1" className="text-xs">Måndag</SelectItem>
+                    <SelectItem value="2" className="text-xs">Tisdag</SelectItem>
+                    <SelectItem value="3" className="text-xs">Onsdag</SelectItem>
+                    <SelectItem value="4" className="text-xs">Torsdag</SelectItem>
+                    <SelectItem value="5" className="text-xs">Fredag</SelectItem>
+                    <SelectItem value="6" className="text-xs">Lördag</SelectItem>
+                    <SelectItem value="7" className="text-xs">Söndag</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Checkbox
+                checked={form.weekly_report_enabled}
+                onCheckedChange={(checked) => setForm(f => ({ ...f, weekly_report_enabled: checked === true }))}
+              />
+              <span>Ingår i veckorapporter</span>
+            </label>
           </div>
 
           <DialogFooter>
