@@ -893,13 +893,29 @@ export default function WholesaleOrders() {
             <div className="overflow-hidden rounded-md border border-grid-line bg-card shadow-sm">
               <WholesaleOrderRowHeader allSelected={allFilteredMarked} onSelectAll={markAllFiltered} />
               {filteredOrders.length === 0 && <div className="px-3 py-12 text-center text-sm text-muted-foreground">Inga ordrar att visa.</div>}
-              {groupedFilteredOrders.map((week) => <div key={week.key}>
+              {filteredOrders.length > 0 && currentOrders.length === 0 && <div className="px-3 py-8 text-center text-sm text-muted-foreground">Inga aktuella ordrar idag eller framåt.</div>}
+              {groupedCurrentOrders.map((week) => <div key={week.key}>
                 <div className="flex items-center gap-3 border-b-2 border-primary bg-primary/10 px-3 py-2"><span className="text-[12px] font-bold uppercase tracking-wide text-foreground">Vecka {week.week}</span><span className="truncate text-[11px] text-muted-foreground">{rangeLabel([...week.days.keys()])}</span><span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">{week.count} order</span></div>
-                {[...week.days.entries()].map(([day, dayOrders]) => <div key={day}>
-                  <div className="flex items-center gap-2 border-b border-grid-line bg-muted px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><span className="truncate">{dayLabel(day)}</span><span className="font-mono normal-case tabular-nums">{dayOrders.length} order</span></div>
+                {[...week.days.entries()].map(([day, dayOrders]) => <div key={day} className={day === todayIso ? "bg-primary/[0.04]" : undefined}>
+                  <div className={`flex items-center gap-2 border-b px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide ${day === todayIso ? "border-primary/40 bg-primary/15 text-foreground" : "border-grid-line bg-muted text-muted-foreground"}`}><span className="truncate">{dayLabel(day)}</span>{day === todayIso && <Badge className="rounded-sm px-1.5 py-0 text-[10px]">Idag</Badge>}<span className="font-mono normal-case tabular-nums">{dayOrders.length} order</span></div>
                   {dayOrders.map((order: any) => <WholesaleOrderAccordionRow key={order.id} order={order} day={day} open={expandedOrderIds.has(order.id)} selected={marked.includes(order.id)} stores={stores} photoCount={photoCounts?.[order.id] ?? 0} onToggle={toggleExpandOrder} onSelect={toggleMarked} onStatusChange={handleOrderStatusChange} onPrint={setPackingSlipOrder} onArchive={setArchiveConfirmOrder} onClose={collapseOrder} />)}
                 </div>)}
               </div>)}
+              {historicOrders.length > 0 && <div className="border-t border-grid-line">
+                <button type="button" onClick={() => setShowHistory((v) => !v)} className="flex w-full items-center gap-2 bg-muted/60 px-3 py-2.5 text-left text-[12px] font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-muted">
+                  <ChevronRight className={`h-4 w-4 transition-transform ${showHistory ? "rotate-90" : ""}`} />
+                  <span>Historiska ordrar</span>
+                  <span className="ml-auto font-mono text-[11px] normal-case tabular-nums">{historicOrders.length} order</span>
+                </button>
+                {showHistory && groupedHistoricOrders.map((week) => <div key={week.key}>
+                  <div className="flex items-center gap-3 border-b border-grid-line bg-muted/40 px-3 py-2"><span className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground">Vecka {week.week}</span><span className="truncate text-[11px] text-muted-foreground">{rangeLabel([...week.days.keys()])}</span><span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">{week.count} order</span></div>
+                  {[...week.days.entries()].map(([day, dayOrders]) => <div key={day}>
+                    <div className="flex items-center gap-2 border-b border-grid-line bg-muted px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><span className="truncate">{dayLabel(day)}</span><span className="font-mono normal-case tabular-nums">{dayOrders.length} order</span></div>
+                    {dayOrders.map((order: any) => <WholesaleOrderAccordionRow key={order.id} order={order} day={day} open={expandedOrderIds.has(order.id)} selected={marked.includes(order.id)} stores={stores} photoCount={photoCounts?.[order.id] ?? 0} onToggle={toggleExpandOrder} onSelect={toggleMarked} onStatusChange={handleOrderStatusChange} onPrint={setPackingSlipOrder} onArchive={setArchiveConfirmOrder} onClose={collapseOrder} />)}
+                  </div>)}
+                </div>)}
+              </div>}
+
             </div>
           </div>
         </TabsContent>
