@@ -13,6 +13,7 @@ const MAX_QUEUE_AGE_MS = 7 * 365 * 24 * 60 * 60 * 1000;
 
 export interface QueuedPunch {
   id?: number;
+  client_punch_id: string;
   iv: number[];
   cipher: ArrayBuffer;
   action: "in" | "ut" | "rast_start" | "rast_slut";
