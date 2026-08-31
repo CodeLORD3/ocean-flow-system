@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStores } from "@/hooks/useStores";
 import { useEmployees, useAllEmployments } from "@/hooks/useEmployees";
 import { useAbsenceRequests, useAbsenceTypes, useAbsenceConflicts, useDecideAbsenceRequest } from "@/hooks/useAbsence";
+import { VacationYearView } from "@/components/hr/VacationYearView";
 import { dateKey, DAY_NAMES, weekDates } from "@/lib/schedule";
 
 const swedishDate = (value: string) => new Intl.DateTimeFormat("sv-SE", { day: "numeric", month: "short" }).format(new Date(`${value}T12:00:00`));
