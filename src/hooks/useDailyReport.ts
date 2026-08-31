@@ -73,6 +73,29 @@ export function useSaveDailyReport() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["daily-report", vars.store_id] });
+      qc.invalidateQueries({ queryKey: ["daily-reports", "all"] });
+    },
+  });
+}
+
+export function useUpdateDailyReport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: Partial<DailyReport> & { id: string }) => {
+      const { data, error } = await (supabase as any)
+        .from("daily_reports")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as DailyReport;
+    },
+    onSuccess: (report) => {
+      qc.invalidateQueries({ queryKey: ["daily-report", report.store_id] });
+      qc.invalidateQueries({ queryKey: ["daily-reports", "all"] });
+      qc.invalidateQueries({ queryKey: ["weekly-store-reports"] });
+      qc.invalidateQueries({ queryKey: ["weekly-region-reports"] });
     },
   });
 }
