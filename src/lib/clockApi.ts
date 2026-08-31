@@ -13,6 +13,8 @@ export interface ClockStationInfo {
   id: string;
   name: string;
   store_name: string | null;
+  store_id?: string | null;
+  legal_entity_id?: string | null;
   profile: Record<string, unknown>;
 }
 
