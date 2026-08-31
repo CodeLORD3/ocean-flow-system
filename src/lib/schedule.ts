@@ -155,7 +155,8 @@ export interface RuleCheck {
     | "tillganglighet"
     | "kompetens"
     | "mertid"
-    | "overlapp";
+    | "overlapp"
+    | "franvaro";
   severity: CheckSeverity;
   label: string;
   detail: string;
@@ -170,6 +171,8 @@ export interface RuleContext {
   /** Sysselsättningsgrad 0–1 (1 = heltid). */
   employmentRate: number;
   requiredCompetency?: string | null;
+  /** Godkända eller väntande frånvaroblock för personen. */
+  absences?: { from: string; to: string; label?: string }[];
   /** Heltidsmått per vecka i minuter. */
   fullTimeWeekMinutes?: number;
 }
@@ -216,6 +219,17 @@ export function checkShift(
       });
       break;
     }
+  }
+
+  // Frånvaro — behandlas som ett block även när det ännu inte är beslutat.
+  const absence = (ctx.absences ?? []).find((a) => a.from <= candidate.date && a.to >= candidate.date);
+  if (absence) {
+    checks.push({
+      code: "franvaro",
+      severity: "block",
+      label: "Frånvaro registrerad",
+      detail: `${absence.label ? `${absence.label} · ` : ""}${absence.from}${absence.to !== absence.from ? `–${absence.to}` : ""}.`,
+    });
   }
 
   // Dygnsvila 11 h
@@ -392,6 +406,7 @@ export function suggestCandidates(
       birthDate: c.birthDate,
       employmentRate: c.employmentRate,
       requiredCompetency: opts.requiredCompetency,
+      absences: c.absences,
       fullTimeWeekMinutes: fullTime,
     });
     const absence = (c.absences ?? []).find((a) => a.from <= shift.date && a.to >= shift.date);
@@ -422,9 +437,9 @@ export function suggestCandidates(
       reasons.push("Inget tillgänglighetshinder");
     }
 
-    if (absence) {
-      score -= 80;
-      reasons.push(`Frånvaro: ${absence.label}`);
+    if (absence || checks.some((k) => k.code === "franvaro")) {
+      score -= 100;
+      reasons.push(`Frånvaro: ${absence?.label ?? "registrerad"}`);
     }
 
     const rest = checks.find((k) => k.code === "dygnsvila");
@@ -452,7 +467,7 @@ export function suggestCandidates(
     if (checks.some((k) => k.code === "mertid")) reasons.push("Skulle ge mertid");
 
     const blocked =
-      !hasCompetency || Boolean(absence) || checks.some((k) => k.severity === "block");
+      !hasCompetency || Boolean(absence) || checks.some((k) => k.code === "franvaro" || k.severity === "block");
 
     return {
       employee_id: c.employee_id,

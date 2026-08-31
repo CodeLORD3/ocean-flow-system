@@ -548,11 +548,22 @@ export default function MyShifts() {
                 <div><Label className="ind-label">Till</Label><IndustryInput type="date" min={absenceDraft.startDate} value={absenceDraft.endDate} onChange={(e) => setAbsenceDraft({ ...absenceDraft, endDate: e.target.value })} /></div>
               </div>
               <IndustryRow edge="accent-2" className="text-sm"><span className="ind-mono">{calendarDays} kalenderdagar</span><span className="ind-muted">·</span><span className="ind-mono">{scheduledWorkDays} arbetsdagar enligt publicerat schema</span></IndustryRow>
-             <div>
-               <Label className="ind-label">Omfattning (%)</Label>
-               <IndustryInput type="number" min="1" max="100" step="1" value={absenceDraft.extentPct} onChange={(e) => setAbsenceDraft({ ...absenceDraft, extentPct: e.target.value })} />
-             </div>
-             <div><Label className="ind-label">Kommentar</Label><Textarea value={absenceDraft.note} onChange={(e) => setAbsenceDraft({ ...absenceDraft, note: e.target.value })} placeholder="Valfri kommentar" /></div>
+              <div>
+                <Label className="ind-label">Omfattning (%)</Label>
+                <IndustryInput type="number" min="1" max="100" step="1" value={absenceDraft.extentPct} onChange={(e) => setAbsenceDraft({ ...absenceDraft, extentPct: e.target.value })} />
+              </div>
+              <div>
+                <Label className="ind-label">Beräkningsgrund</Label>
+                <Select value={absenceDraft.basis} onValueChange={(value) => setAbsenceDraft({ ...absenceDraft, basis: value as typeof absenceDraft.basis })}>
+                  <SelectTrigger className="ind-input"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="enligt_schema">Enligt schema</SelectItem>
+                    <SelectItem value="halvdag">Halvdag</SelectItem>
+                    <SelectItem value="egen">Egen omfattning</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label className="ind-label">Kommentar</Label><Textarea value={absenceDraft.note} onChange={(e) => setAbsenceDraft({ ...absenceDraft, note: e.target.value })} placeholder="Valfri kommentar" /></div>
            </div>
            <DialogFooter>
              <IndustryButton variant="ghost" onClick={() => setAbsenceOpen(false)}>Avbryt</IndustryButton>
@@ -563,18 +574,19 @@ export default function MyShifts() {
                onClick={async () => {
                  if (!myId || !absenceDraft.absenceTypeId) return;
                  try {
-                   await createAbsenceRequest.mutateAsync({
-                     employee_id: myId,
-                     absence_type_id: absenceDraft.absenceTypeId,
-                     start_date: absenceDraft.startDate,
-                     end_date: absenceDraft.endDate || null,
-                     extent_pct: Number(absenceDraft.extentPct),
-                     note: absenceDraft.note.trim() || undefined,
-                     store_id: storeId,
-                     legal_entity_id: myEmployment?.legal_entity_id ?? null,
-                   });
-                    setAbsenceOpen(false);
-                   setAbsenceDraft({ absenceTypeId: "", startDate: today, endDate: "", extentPct: "100", note: "" });
+                    await createAbsenceRequest.mutateAsync({
+                      employee_id: myId,
+                      absence_type_id: absenceDraft.absenceTypeId,
+                      start_date: absenceDraft.startDate,
+                      end_date: absenceDraft.endDate || null,
+                      extent_pct: Number(absenceDraft.extentPct),
+                      basis: absenceDraft.basis,
+                      note: absenceDraft.note.trim() || undefined,
+                      store_id: storeId,
+                      legal_entity_id: myEmployment?.legal_entity_id ?? null,
+                    });
+                     setAbsenceOpen(false);
+                    setAbsenceDraft({ absenceTypeId: "", startDate: today, endDate: "", extentPct: "100", basis: "enligt_schema", note: "" });
                    toast.success("Frånvaroanmälan skickad");
                  } catch (e) {
                    toast.error(e instanceof Error ? e.message : "Kunde inte skicka frånvaroanmälan");
