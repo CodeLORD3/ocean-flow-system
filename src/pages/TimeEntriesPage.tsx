@@ -5,6 +5,7 @@
  * och en korrigering skapar source='correction' med referens till originalet.
  */
 import { useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   IndustryFrame,
@@ -52,6 +53,8 @@ export default function TimeEntriesPage() {
   const [to, setTo] = useState(today());
   const [storeId, setStoreId] = useState<string>("");
   const [inspector, setInspector] = useState(false);
+  const [inspectorSessionId, setInspectorSessionId] = useState<string | null>(null);
+  const [inspectorExpiresAt, setInspectorExpiresAt] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [manualOpen, setManualOpen] = useState(false);
   const [correcting, setCorrecting] = useState<TimeEntry | null>(null);
@@ -137,6 +140,34 @@ export default function TimeEntriesPage() {
     }));
   };
 
+  const openInspector = async () => {
+    const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+    const token = crypto.randomUUID();
+    const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`INSPECTOR:${token}`));
+    const tokenHash = Array.from(new Uint8Array(bytes)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    const { data, error } = await supabase
+      .from("inspector_sessions")
+      .insert({ token_hash: tokenHash, work_site_id: null, expires_at: expiresAt, reason: "Personalliggare visad för kontroll" })
+      .select("id")
+      .single();
+    if (error) {
+      toast.error("Kunde inte öppna inspektörsläget");
+      return;
+    }
+    setInspectorSessionId(data.id);
+    setInspectorExpiresAt(expiresAt);
+    setInspector(true);
+  };
+
+  const closeInspector = async () => {
+    if (inspectorSessionId) {
+      await supabase.from("inspector_sessions").update({ revoked_at: new Date().toISOString() }).eq("id", inspectorSessionId);
+    }
+    setInspectorSessionId(null);
+    setInspectorExpiresAt(null);
+    setInspector(false);
+  };
+
   const ledgerRows = summaries.filter((s) => s.first_in || s.last_out);
 
   const filters = (
@@ -174,17 +205,20 @@ export default function TimeEntriesPage() {
     return (
       <div className="fixed inset-0 z-50 ind-inspect overflow-auto p-6 print:p-0">
         <div className="flex items-center justify-between mb-6 ind-print-hidden">
-          <div>
+           <div>
             <SectionLabel>Elektronisk personalliggare — låst läge</SectionLabel>
             <h1 className="ind-h2">
               {unitLabel} · {from} – {to}
             </h1>
+            {inspectorExpiresAt && (
+              <p className="ind-muted text-xs">Kontrollsession aktiv till {new Date(inspectorExpiresAt).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}</p>
+            )}
           </div>
           <div className="flex gap-2">
             <IndustryButton variant="secondary" onClick={() => window.print()}>
               <Printer className="h-4 w-4" /> Skriv ut / PDF
             </IndustryButton>
-            <IndustryButton variant="ghost" onClick={() => setInspector(false)}>
+            <IndustryButton variant="ghost" onClick={() => void closeInspector()}>
               <X className="h-4 w-4" /> Stäng
             </IndustryButton>
           </div>
@@ -273,9 +307,9 @@ export default function TimeEntriesPage() {
           <IndustryButton variant="secondary" size="touch" onClick={() => setManualOpen(true)}>
             <Plus className="h-4 w-4" /> Efterregistrera
           </IndustryButton>
-          <IndustryButton variant="secondary" size="touch" onClick={() => setInspector(true)}>
-            <ShieldCheck className="h-4 w-4" /> Visa för Skatteverket
-          </IndustryButton>
+           <IndustryButton variant="secondary" size="touch" onClick={() => void openInspector()}>
+             <ShieldCheck className="h-4 w-4" /> Visa för Skatteverket
+           </IndustryButton>
         </div>
       </DecisionBar>
 
