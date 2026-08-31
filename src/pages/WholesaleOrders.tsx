@@ -904,11 +904,11 @@ export default function WholesaleOrders() {
                 </div>)}
               </div>)}
               {historicOrders.length > 0 && <div className="border-t border-grid-line">
-                <button type="button" onClick={() => setShowHistory((v) => !v)} className="flex w-full items-center gap-2 bg-muted/60 px-3 py-2.5 text-left text-[12px] font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-muted">
+                <Button type="button" variant="ghost" onClick={() => setShowHistory((v) => !v)} className="flex h-auto w-full items-center justify-start gap-2 rounded-none bg-muted/60 px-3 py-2.5 text-left text-[12px] font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-muted">
                   <ChevronRight className={`h-4 w-4 transition-transform ${showHistory ? "rotate-90" : ""}`} />
                   <span>Historiska ordrar</span>
                   <span className="ml-auto font-mono text-[11px] normal-case tabular-nums">{historicOrders.length} order</span>
-                </button>
+                </Button>
                 {showHistory && groupedHistoricOrders.map((week) => <div key={week.key}>
                   <div className="flex items-center gap-3 border-b border-grid-line bg-muted/40 px-3 py-2"><span className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground">Vecka {week.week}</span><span className="truncate text-[11px] text-muted-foreground">{rangeLabel([...week.days.keys()])}</span><span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">{week.count} order</span></div>
                   {[...week.days.entries()].map(([day, dayOrders]) => <div key={day}>
