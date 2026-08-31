@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -48,6 +49,30 @@ export type WeeklyClosure = {
   iso_week: number;
   reason: string | null;
 };
+
+export function useRealtimeReportUpdates() {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("reports-live-updates")
+      .on("postgres_changes", { event: "*", schema: "public", table: "daily_reports" }, () => {
+        qc.invalidateQueries({ queryKey: ["daily-reports", "all"] });
+        qc.invalidateQueries({ queryKey: ["daily-report"] });
+        qc.invalidateQueries({ queryKey: ["weekly-store-reports"] });
+        qc.invalidateQueries({ queryKey: ["weekly-region-reports"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "weekly_store_reports" }, () => {
+        qc.invalidateQueries({ queryKey: ["weekly-store-reports"] });
+        qc.invalidateQueries({ queryKey: ["weekly-region-reports"] });
+      })
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [qc]);
+}
 
 export function useWeeklyStoreReports() {
   return useQuery({
