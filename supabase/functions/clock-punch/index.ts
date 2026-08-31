@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  const { data: inserted, error } = await db.from("time_entries").insert({
+  const entryPayload = {
     client_punch_id: clientPunchId,
     employee_id: hit.id,
     station_id: station.id,
@@ -200,7 +200,16 @@ Deno.serve(async (req) => {
     registered_at: new Date().toISOString(),
     source: "clock",
     note: body.note ? String(body.note).slice(0, 500) : null,
-  }).select("id, type, occurred_at, registered_at, work_site_id, cost_center, geofence_ok").single();
+  };
+  const { data: inserted, error } = await db
+    .from("time_entries")
+    .upsert(entryPayload, { onConflict: "employee_id,client_punch_id", ignoreDuplicates: true })
+    .select("id, type, occurred_at, registered_at, work_site_id, cost_center, geofence_ok")
+    .maybeSingle();
   if (error) { console.error("clock-punch insert failed", error.message); return json(req, { error: "Kunde inte spara stämplingen." }, 500); }
+  if (!inserted && clientPunchId) {
+    const { data: existing } = await db.from("time_entries").select("id, type, occurred_at, registered_at, work_site_id, cost_center, geofence_ok").eq("employee_id", hit.id).eq("client_punch_id", clientPunchId).maybeSingle();
+    return json(req, { status: "punched", duplicate: true, entry: existing, employee: { first_name: hit.first_name, pnr_masked: hit.pnr_masked }, expires_at: expiresAt });
+  }
   return json(req, { status: "punched", entry: inserted, employee: { first_name: hit.first_name, pnr_masked: hit.pnr_masked }, expires_at: expiresAt });
 });
