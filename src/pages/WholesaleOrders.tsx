@@ -81,7 +81,7 @@ function isoWeek(iso: string) {
 }
 function groupByWeek(list: any[]) {
   const weeks = new Map<string, { week: number; year: number; days: Map<string, any[]> }>();
-  [...list].sort((a, b) => orderDate(a).localeCompare(orderDate(b))).forEach((order) => {
+  [...list].sort((a, b) => orderDate(b).localeCompare(orderDate(a))).forEach((order) => {
     const date = orderDate(order);
     const { week, year } = isoWeek(date || new Date().toISOString().slice(0, 10));
     const key = `${year}-${String(week).padStart(2, "0")}`;
@@ -91,7 +91,9 @@ function groupByWeek(list: any[]) {
     entry.days.set(date, dayOrders);
     weeks.set(key, entry);
   });
-  return [...weeks.entries()].map(([key, entry]) => ({ key, ...entry, count: [...entry.days.values()].flat().length }));
+  return [...weeks.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([key, entry]) => ({ key, ...entry, count: [...entry.days.values()].flat().length }));
 }
 
 const formatOrderValue = (order: any) => (order.shop_order_lines || []).reduce(
