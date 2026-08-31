@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
   if (latitude !== null && (latitude < -90 || latitude > 90) || longitude !== null && (longitude < -180 || longitude > 180)) return json(req, { error: "Ogiltig platsinformation." }, 400);
   let distance: number | null = null;
   let geofenceOk: boolean | null = null;
-  if (workSite?.geofence_lat !== null && workSite?.geofence_lng !== null) {
+  if (workSite && workSite.geofence_lat !== null && workSite.geofence_lng !== null) {
     if (latitude === null || longitude === null) {
       if (workSite.allow_mobile_punch) return json(req, { error: "Platsåtkomst krävs för mobil stämpling." }, 403);
     } else {

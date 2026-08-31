@@ -55,7 +55,23 @@ export default function Clock() {
   const [online, setOnline] = useState(navigator.onLine);
   const [queued, setQueued] = useState(0);
   const [onSite, setOnSite] = useState<OnSitePerson[]>([]);
+  const [siteId, setSiteId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const workSites = station?.work_sites ?? [];
+  const activeSite = workSites.find((s) => s.id === siteId) ?? (workSites.length === 1 ? workSites[0] : null);
+
+  /** Hämtar position när driftstället har geofence. Tyst fallback utan position. */
+  const readPosition = useCallback(async () => {
+    if (!navigator.geolocation) return {};
+    return new Promise<{ latitude?: number; longitude?: number; accuracyM?: number }>((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracyM: pos.coords.accuracy }),
+        () => resolve({}),
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 30_000 },
+      );
+    });
+  }, []);
 
   const refreshQueue = useCallback(async () => {
     setQueued(await queuedCount().catch(() => 0));
@@ -157,17 +173,26 @@ export default function Clock() {
   const handlePunch = async (action: Action) => {
     const value = identifier.replace(/\s/g, "");
     const name = found?.first_name ?? "";
+    if (action === "in" && workSites.length > 1 && !activeSite) {
+      setError("Välj driftställe innan du stämplar in.");
+      return;
+    }
     setBusy(true);
     setError(null);
     const occurredAt = new Date().toISOString();
+    const context = {
+      workSiteId: activeSite?.id,
+      costCenter: activeSite?.posting_cost_center,
+      ...(await readPosition()),
+    };
     try {
       if (!navigator.onLine) {
-        await enqueuePunch(value, action, occurredAt);
+        await enqueuePunch(value, action, occurredAt, context);
         await refreshQueue();
         showReceipt(name, action, occurredAt, true);
         return;
       }
-      const res = await punch(value, action, occurredAt);
+      const res = await punch(value, action, occurredAt, context);
       if (res.status === "pending_registration") {
         setPending(res.message ?? "Registrering väntar på godkännande.");
         setIdentifier("");
@@ -176,13 +201,19 @@ export default function Clock() {
       showReceipt(res.employee?.first_name ?? name, action, res.entry!.occurred_at);
       void refreshOnSite();
     } catch (e) {
-      // Nätet kan ha dött mellan uppslag och stämpling → köa
+      const msg = e instanceof Error ? e.message : "Stämplingen misslyckades";
+      // Geofence-/valideringsfel ska visas, inte köas.
+      if (/meter|driftställe|Platsåtkomst/i.test(msg)) {
+        setError(msg);
+        setBusy(false);
+        return;
+      }
       try {
-        await enqueuePunch(value, action, occurredAt);
+        await enqueuePunch(value, action, occurredAt, { ...context, offlineQueued: true });
         await refreshQueue();
         showReceipt(name, action, occurredAt, true);
       } catch {
-        setError(e instanceof Error ? e.message : "Stämplingen misslyckades");
+        setError(msg);
       }
     } finally {
       setBusy(false);
@@ -249,6 +280,29 @@ export default function Clock() {
             {queued > 0 && <span className="ind-muted text-sm ind-mono">{queued} i kö</span>}
           </div>
         )}
+
+        {workSites.length > 1 && (
+          <div className="mb-4 space-y-2">
+            <SectionLabel>Driftställe · kostnadsställe</SectionLabel>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {workSites.map((site) => (
+                <IndustryButton
+                  key={site.id}
+                  variant={activeSite?.id === site.id ? "primary" : "secondary"}
+                  size="touch"
+                  onClick={() => setSiteId(site.id)}
+                >
+                  <span className="flex flex-col items-start leading-tight">
+                    <span>{site.name}</span>
+                    <span className="ind-mono text-xs opacity-70">{site.posting_cost_center}</span>
+                  </span>
+                </IndustryButton>
+              ))}
+            </div>
+          </div>
+        )}
+
+
 
         {receipt ? (
           <div className="ind-accent-surface p-8 space-y-2">
