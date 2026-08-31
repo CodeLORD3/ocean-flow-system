@@ -74,7 +74,7 @@ export function useAbsenceRequests(employeeId?: string | null, storeId?: string 
     queryFn: async () => {
       let query = supabase
         .from("absence_requests")
-        .select("id, employee_id, absence_type_id, start_date, end_date, extent_pct, note, status, store_id, legal_entity_id, days_count, created_at, decided_at, decision_note")
+        .select("id, employee_id, absence_type_id, start_date, end_date, date_from, date_to, extent_pct, basis, note, reason, status, store_id, legal_entity_id, days_count, created_at, decided_at, decision_note")
         .order("start_date", { ascending: false })
         .limit(200);
       if (employeeId) query = query.eq("employee_id", employeeId);
