@@ -227,12 +227,18 @@ BEGIN
              WHERE e.type = 'rast_slut' AND e.calc_at > s.calc_at) AS ended_at
     FROM journal s WHERE s.type = 'rast_start'
   ),
-  break_totals AS (
-    SELECT bp.day,
-           COALESCE(SUM(GREATEST(0, floor(extract(epoch FROM (bp.ended_at - bp.started_at)) / 60))), 0)::integer AS break_minutes
-    FROM break_pairs bp WHERE bp.ended_at IS NOT NULL
-    GROUP BY bp.day
+  break_windows AS (
+    SELECT bp.day, bp.started_at, bp.ended_at
+    FROM break_pairs bp WHERE bp.ended_at IS NOT NULL AND bp.ended_at > bp.started_at
   ),
+  break_totals AS (
+    SELECT bw.day,
+           COALESCE(SUM(GREATEST(0, floor(extract(epoch FROM (bw.ended_at - bw.started_at)) / 60))), 0)::integer AS break_minutes
+    FROM break_windows bw
+    GROUP BY bw.day
+  ),
+  -- Rastminuter är inte arbetad tid: de plockas bort minut för minut, så att
+  -- varken ordinarie tid, OB eller övertid räknar med rasten.
   minutes AS (
     SELECT i.day, i.started_at + (g.n * interval '1 minute') AS minute_at,
            COALESCE(b.break_minutes, 0) AS break_minutes
@@ -240,6 +246,11 @@ BEGIN
     CROSS JOIN LATERAL generate_series(0, i.raw_minutes - 1) AS g(n)
     LEFT JOIN break_totals b ON b.day = i.day
     WHERE i.raw_minutes > 0
+      AND NOT EXISTS (
+        SELECT 1 FROM break_windows bw
+        WHERE i.started_at + (g.n * interval '1 minute') >= bw.started_at
+          AND i.started_at + (g.n * interval '1 minute') < bw.ended_at
+      )
   ),
   employee_scope AS (
     SELECT em.legal_entity_id, COALESCE(em.employment_rate, 100)::numeric AS employment_rate
