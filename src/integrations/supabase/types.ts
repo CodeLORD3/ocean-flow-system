@@ -7765,6 +7765,7 @@ export type Database = {
       }
       payroll_lines: {
         Row: {
+          correction_action: string
           cost_center: string | null
           created_at: string
           employee_id: string
@@ -7775,6 +7776,7 @@ export type Database = {
           id: string
           legal_entity_id: string
           line_date: string
+          line_key: string | null
           line_type: string
           note: string | null
           period_id: string
@@ -7787,6 +7789,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          correction_action?: string
           cost_center?: string | null
           created_at?: string
           employee_id: string
@@ -7797,6 +7800,7 @@ export type Database = {
           id?: string
           legal_entity_id: string
           line_date: string
+          line_key?: string | null
           line_type: string
           note?: string | null
           period_id: string
@@ -7809,6 +7813,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          correction_action?: string
           cost_center?: string | null
           created_at?: string
           employee_id?: string
@@ -7819,6 +7824,7 @@ export type Database = {
           id?: string
           legal_entity_id?: string
           line_date?: string
+          line_key?: string | null
           line_type?: string
           note?: string | null
           period_id?: string
@@ -14833,6 +14839,72 @@ export type Database = {
           },
         ]
       }
+      weekly_report_relocks: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          id: string
+          iso_week: number
+          iso_year: number
+          new_daily_reports_count: number | null
+          new_staff_hours: number | null
+          new_staff_shifts: number | null
+          new_total_sales_sek: number | null
+          prev_daily_reports_count: number | null
+          prev_staff_hours: number | null
+          prev_staff_shifts: number | null
+          prev_total_sales_sek: number | null
+          store_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          iso_week: number
+          iso_year: number
+          new_daily_reports_count?: number | null
+          new_staff_hours?: number | null
+          new_staff_shifts?: number | null
+          new_total_sales_sek?: number | null
+          prev_daily_reports_count?: number | null
+          prev_staff_hours?: number | null
+          prev_staff_shifts?: number | null
+          prev_total_sales_sek?: number | null
+          store_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          iso_week?: number
+          iso_year?: number
+          new_daily_reports_count?: number | null
+          new_staff_hours?: number | null
+          new_staff_shifts?: number | null
+          new_total_sales_sek?: number | null
+          prev_daily_reports_count?: number | null
+          prev_staff_hours?: number | null
+          prev_staff_shifts?: number | null
+          prev_total_sales_sek?: number | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_report_relocks_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "weekly_report_relocks_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weekly_report_sales_lines: {
         Row: {
           amount: number
@@ -15041,6 +15113,8 @@ export type Database = {
           iso_year: number
           locked_at: string | null
           region: string | null
+          relock_count: number
+          relocked_at: string | null
           staff_hours: number
           staff_shifts: number
           status: string
@@ -15064,6 +15138,8 @@ export type Database = {
           iso_year: number
           locked_at?: string | null
           region?: string | null
+          relock_count?: number
+          relocked_at?: string | null
           staff_hours?: number
           staff_shifts?: number
           status?: string
@@ -15087,6 +15163,8 @@ export type Database = {
           iso_year?: number
           locked_at?: string | null
           region?: string | null
+          relock_count?: number
+          relocked_at?: string | null
           staff_hours?: number
           staff_shifts?: number
           status?: string

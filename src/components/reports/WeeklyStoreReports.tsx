@@ -25,7 +25,14 @@ const REGION_LABELS: Record<string, string> = { vast: "Göteborg", stockholm: "S
 const dateLabel = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
 
-function StatusBadge({ status, drift }: { status: string; drift?: boolean }) {
+function StatusBadge({ status, drift, corrected }: { status: string; drift?: boolean; corrected?: boolean }) {
+  if (corrected && !drift) {
+    return (
+      <Badge variant="outline" className="gap-1 border-success/40 text-[10px] text-success">
+        Korrigerad och omlåst
+      </Badge>
+    );
+  }
   if (drift) {
     return (
       <Badge variant="outline" className="gap-1 border-destructive/40 text-[10px] text-destructive">
@@ -191,7 +198,11 @@ export function WeeklyStoreReportsSection() {
               <p className="mt-1 text-sm font-semibold">{summaryLabel}</p>
               <p className="text-xs text-muted-foreground">Vecka {latestWeek.iso_week} · {dateLabel(latestWeek.week_start)}–{dateLabel(latestWeek.week_end)}</p>
             </div>
-            <StatusBadge status={selectedSummary.status} drift={"drift_after_lock" in selectedSummary ? selectedSummary.drift_after_lock : false} />
+            <StatusBadge
+              status={selectedSummary.status}
+              drift={"drift_after_lock" in selectedSummary ? selectedSummary.drift_after_lock : false}
+              corrected={selectedSummary.corrected}
+            />
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className="rounded-md border bg-muted/20 px-3 py-2.5">
@@ -289,7 +300,7 @@ export function WeeklyStoreReportsSection() {
                                   {row.locked_at && <LockKeyhole className="h-3 w-3 text-muted-foreground" />}
                                 </span>
                                 <div className="flex items-center gap-2">
-                                  <StatusBadge status={row.status} drift={row.drift_after_lock} />
+                                  <StatusBadge status={row.status} drift={row.drift_after_lock} corrected={row.corrected} />
                                   <Button
                                     variant="outline"
                                     size="sm"

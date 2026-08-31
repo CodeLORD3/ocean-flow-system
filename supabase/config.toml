@@ -97,3 +97,9 @@ verify_jwt = false
 
 [functions.fortnox-inbox-intake]
 verify_jwt = false
+
+[functions.fortnox-payroll-export]
+verify_jwt = false
+
+[functions.payroll-compute]
+verify_jwt = false
