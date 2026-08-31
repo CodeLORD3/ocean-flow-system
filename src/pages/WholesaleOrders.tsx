@@ -697,17 +697,17 @@ export default function WholesaleOrders() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-2.5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="flex items-center gap-2 font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            <ShoppingCart className="h-6 w-6 text-primary sm:h-7 sm:w-7" /> Ordrar från butiker
+          <h1 className="flex items-center gap-2 font-heading text-lg font-bold tracking-tight text-foreground sm:text-xl">
+            <ShoppingCart className="h-5 w-5 text-primary" /> Ordrar från butiker
           </h1>
-          <p className="mt-1 text-xs text-muted-foreground">Hantera inkomna beställningar från alla butiker. Uppdatera produktstatus i totalvyn.</p>
         </div>
-        <Button size="lg" className="h-12 gap-2 px-5 text-base" onClick={() => setCreatingOrder(true)}>
-          <Plus className="h-5 w-5" /> Skapa order åt butik
+        <Button size="sm" className="h-9 gap-2 px-3 text-sm" onClick={() => setCreatingOrder(true)}>
+          <Plus className="h-4 w-4" /> Skapa order åt butik
         </Button>
+
       </div>
 
       {/* Inline order creation form */}
@@ -827,37 +827,26 @@ export default function WholesaleOrders() {
         </Card>
       )}
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Totalt ordrar</p>
-          <p className="text-xl font-heading font-bold text-foreground">{totalOrders}</p>
-        </CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Nya</p>
-          <p className="text-xl font-heading font-bold text-primary">{newOrders}</p>
-        </CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Under behandling</p>
-          <p className="text-xl font-heading font-bold text-warning">{inProgress}</p>
-        </CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Unika produkter</p>
-          <p className="text-xl font-heading font-bold text-foreground">{aggregated.length}</p>
-        </CardContent></Card>
+      {/* KPIs — kompakt rad */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border border-grid-line bg-card px-3 py-1.5 text-xs shadow-sm">
+        <span className="text-muted-foreground">Totalt <span className="font-mono font-bold tabular-nums text-foreground">{totalOrders}</span></span>
+        <span className="text-muted-foreground">Nya <span className="font-mono font-bold tabular-nums text-primary">{newOrders}</span></span>
+        <span className="text-muted-foreground">Under behandling <span className="font-mono font-bold tabular-nums text-warning">{inProgress}</span></span>
+        <span className="text-muted-foreground">Unika produkter <span className="font-mono font-bold tabular-nums text-foreground">{aggregated.length}</span></span>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="flex h-auto w-full flex-wrap items-stretch justify-start gap-1 rounded-md border border-grid-line bg-card p-1.5 shadow-sm">
-          <TabsTrigger value="per-order" className="flex min-h-12 items-center gap-2 rounded-sm px-5 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
-            <Eye className="h-4 w-4" /> Per order
-            <span className="rounded-sm bg-muted px-1.5 font-mono text-[11px] tabular-nums text-muted-foreground data-[state=active]:bg-background/20">{activeOrders.length}</span>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-2">
+        <TabsList className="flex h-auto w-full flex-wrap items-stretch justify-start gap-1 rounded-md border border-grid-line bg-card p-1 shadow-sm">
+          <TabsTrigger value="per-order" className="flex min-h-8 items-center gap-1.5 rounded-sm px-3 py-1 text-xs font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
+            <Eye className="h-3.5 w-3.5" /> Per order
+            <span className="rounded-sm bg-muted px-1 font-mono text-[10px] tabular-nums text-muted-foreground data-[state=active]:bg-background/20">{activeOrders.length}</span>
           </TabsTrigger>
-          <TabsTrigger value="total" className="flex min-h-12 items-center gap-2 rounded-sm px-5 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><ListChecks className="h-4 w-4" /> Totalvy</TabsTrigger>
-          <TabsTrigger value="delivered" className="flex min-h-12 items-center gap-2 rounded-sm px-5 py-2.5 text-sm text-muted-foreground transition-all data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><Truck className="h-4 w-4" /> Levererade <span className="rounded-sm bg-muted px-1.5 font-mono text-[11px] tabular-nums">{deliveredOrders.length}</span></TabsTrigger>
-          <TabsTrigger value="archived" className="flex min-h-12 items-center gap-2 rounded-sm px-5 py-2.5 text-sm text-muted-foreground transition-all data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><Archive className="h-4 w-4" /> Arkiverade <span className="rounded-sm bg-muted px-1.5 font-mono text-[11px] tabular-nums">{archivedOrders.length}</span></TabsTrigger>
-          <TabsTrigger value="changes" className="relative flex min-h-12 items-center gap-2 rounded-sm px-5 py-2.5 text-sm font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><Bell className="h-4 w-4" /> Ändringar <span className={`rounded-sm px-1.5 font-mono text-[11px] tabular-nums ${pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length > 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"}`}>{pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length}</span></TabsTrigger>
+          <TabsTrigger value="total" className="flex min-h-8 items-center gap-1.5 rounded-sm px-3 py-1 text-xs font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><ListChecks className="h-3.5 w-3.5" /> Totalvy</TabsTrigger>
+          <TabsTrigger value="delivered" className="flex min-h-8 items-center gap-1.5 rounded-sm px-3 py-1 text-xs text-muted-foreground transition-all data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><Truck className="h-3.5 w-3.5" /> Levererade <span className="rounded-sm bg-muted px-1 font-mono text-[10px] tabular-nums">{deliveredOrders.length}</span></TabsTrigger>
+          <TabsTrigger value="archived" className="flex min-h-8 items-center gap-1.5 rounded-sm px-3 py-1 text-xs text-muted-foreground transition-all data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><Archive className="h-3.5 w-3.5" /> Arkiverade <span className="rounded-sm bg-muted px-1 font-mono text-[10px] tabular-nums">{archivedOrders.length}</span></TabsTrigger>
+          <TabsTrigger value="changes" className="relative flex min-h-8 items-center gap-1.5 rounded-sm px-3 py-1 text-xs font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><Bell className="h-3.5 w-3.5" /> Ändringar <span className={`rounded-sm px-1 font-mono text-[10px] tabular-nums ${pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length > 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"}`}>{pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length}</span></TabsTrigger>
         </TabsList>
+
 
         {/* TOTAL VIEW — samma produktrolldown som Kundbeställningar */}
         <TabsContent value="total">
