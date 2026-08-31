@@ -1,5 +1,6 @@
 # Arbetsplan: Personalmodul enligt designleverans
 
+- [ ] Jämför Etapp 4 UI-prompten mot befintlig kod och komplettera alla saknade UI-flöden
 - [ ] Slutför tokens, global tal-/tidsformattering och dokumentera designbesluten
 - [ ] Slutför frånvaroperioder med härledda dagrader och notiser
 - [ ] Slutför klockans kodformat, kioskregister, offlineetiketter och giltiga åtgärder
