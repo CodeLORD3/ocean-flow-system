@@ -101,6 +101,7 @@ export default function MyShifts() {
     startDate: dateKey(new Date()),
     endDate: "",
     extentPct: "100",
+    basis: "enligt_schema" as "enligt_schema" | "halvdag" | "egen",
     note: "",
   });
   const [availDraft, setAvailDraft] = useState({ date: dateKey(new Date()), from_time: "08:00", to_time: "17:00", type: "onskar" });
