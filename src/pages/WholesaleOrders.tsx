@@ -232,7 +232,7 @@ function WholesaleOrderAccordionRow({
           </div>
         </button>
 
-        <div className="flex shrink-0 items-center gap-1 px-2 sm:border-l sm:border-grid-line/70">
+        <div className="flex shrink-0 items-center justify-end gap-1 px-2 sm:w-[196px] sm:border-l sm:border-grid-line/70">
           <Select value={order.status} onValueChange={(value) => onStatusChange(order.id, value)}>
             <SelectTrigger className="hidden h-8 w-[108px] text-xs sm:flex"><SelectValue /></SelectTrigger>
             <SelectContent>{["Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}</SelectContent>
