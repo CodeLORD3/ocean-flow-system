@@ -46,6 +46,7 @@ const absenceKeys = {
   all: ["absence"] as const,
   requests: (employeeId?: string, storeId?: string | null) => ["absence", "requests", employeeId ?? "all", storeId ?? "all"] as const,
   balances: (employeeId?: string) => ["absence", "balances", employeeId ?? "all"] as const,
+  sick: (employeeId?: string | null) => ["absence", "sick", employeeId ?? "none"] as const,
 };
 
 export function useAbsenceTypes() {
@@ -158,6 +159,34 @@ export function useAbsenceConflicts(requestId?: string | null) {
   });
 }
 
+export interface SickPeriod {
+  id: string;
+  employee_id: string;
+  first_day: string;
+  last_day: string | null;
+  karens_applied: boolean;
+  created_at: string;
+}
+
+export function useActiveSickPeriod(employeeId?: string | null) {
+  return useQuery({
+    queryKey: absenceKeys.sick(employeeId),
+    enabled: Boolean(employeeId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sick_periods")
+        .select("id, employee_id, first_day, last_day, karens_applied, created_at")
+        .eq("employee_id", employeeId as string)
+        .is("last_day", null)
+        .order("first_day", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as SickPeriod | null;
+    },
+  });
+}
+
 export function useRegisterSickDay() {
   const client = useQueryClient();
   return useMutation({
@@ -167,6 +196,30 @@ export function useRegisterSickDay() {
         _first_day: input.date,
         _last_day: null,
       });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: absenceKeys.all }),
+  });
+}
+
+export function useUndoSickPeriod() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { employeeId: string; firstDay: string }) => {
+      const { data, error } = await supabase.rpc("undo_sick_period", { _employee_id: input.employeeId, _first_day: input.firstDay });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: absenceKeys.all }),
+  });
+}
+
+export function useEndSickPeriod() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { employeeId: string; lastDay?: string | null }) => {
+      const { data, error } = await supabase.rpc("end_sick_period", { _employee_id: input.employeeId, _last_day: input.lastDay ?? null });
       if (error) throw error;
       return data;
     },

@@ -39,6 +39,7 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   "/wholesale": { title: "Produktion & Grossist", breadcrumb: ["Hem", "Organisation", "Grossist"] },
   "/reports": { title: "Rapporter & Analys", breadcrumb: ["Hem", "Rapporter"] },
   "/staff": { title: "Personalhantering", breadcrumb: ["Hem", "HR", "Personal"] },
+  "/hr-control": { title: "Frånvaro & bemanning", breadcrumb: ["Hem", "HR", "Frånvaro & bemanning"] },
   "/settings": { title: "Systeminställningar", breadcrumb: ["Hem", "Administration", "Inställningar"] },
   "/products": { title: "Produkter", breadcrumb: ["Hem", "Lagerstyrning", "Produkter"] },
   "/receiving": { title: "Inleveranser", breadcrumb: ["Hem", "Lagerstyrning", "Inleveranser"] },

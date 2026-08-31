@@ -117,6 +117,7 @@ const orgNav = [
 
 const staffNav = [
   { title: "Personal", url: "/staff", icon: UserCheck },
+  { title: "Frånvaro & bemanning", url: "/hr-control", icon: CalendarCheck },
   { title: "Personalregister", url: "/employees", icon: IdCard },
   { title: "På plats nu", url: "/live-staff", icon: Activity },
   { title: "Stämpelklocka", url: "/clock-stations", icon: Clock },

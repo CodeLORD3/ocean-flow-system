@@ -38,6 +38,7 @@ import ClockStations from "@/pages/ClockStations";
 import TimeEntriesPage from "@/pages/TimeEntriesPage";
 import MyTime from "@/pages/MyTime";
 import StaffRules from "@/pages/StaffRules";
+import HRControlCenter from "@/pages/HRControlCenter";
 import PayrollExports from "@/pages/PayrollExports";
 import PayrollReview from "@/pages/PayrollReview";
 import ClockVsPk from "@/pages/ClockVsPk";
@@ -135,6 +136,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/time-entries": { component: <TimeEntriesPage /> },
   "/my-time": { component: <MyTime /> },
   "/staff-rules": { component: <StaffRules /> },
+  "/hr-control": { component: <HRControlCenter /> },
   "/payroll-exports": { component: <PayrollExports /> },
   "/payroll-review": { component: <PayrollReview /> },
   "/clock-vs-pk": { component: <ClockVsPk /> },
