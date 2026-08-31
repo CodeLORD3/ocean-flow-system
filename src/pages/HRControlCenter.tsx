@@ -219,7 +219,53 @@ export default function HRControlCenter() {
       </Tabs>
 
       <Dialog open={Boolean(selectedRequest)} onOpenChange={(open) => !open && setAbsenceReviewId(null)}>
-        <DialogContent className="ind max-w-lg"><DialogHeader><DialogTitle className="ind-h2">Granska frånvaro</DialogTitle></DialogHeader>{selectedRequest && <div className="space-y-4"><div className="ind-note--warn"><p className="font-medium">{employeeName.get(selectedRequest.employee_id) ?? "Okänd medarbetare"}</p><p>{typeName.get(selectedRequest.absence_type_id) ?? "Frånvaro"} · {selectedRequest.start_date}{selectedRequest.end_date ? ` – ${selectedRequest.end_date}` : ""}</p></div><div><SectionLabel>Pass som påverkas</SectionLabel>{conflicts.isLoading ? <p className="ind-muted text-sm">Kontrollerar…</p> : conflicts.data?.length ? <div className="space-y-1">{conflicts.data.map((conflict) => <IndustryRow key={conflict.shift_id} edge="alert"><AlertTriangle className="h-4 w-4" /><span>{conflict.shift_date} · {conflict.start_time.slice(0, 5)}–{conflict.end_time.slice(0, 5)} · bemanning behöver ses över</span></IndustryRow>)}</div> : <p className="ind-note--ok">Inga schemakrockar hittades.</p>}</div><div><SectionLabel>Skäl vid avslag</SectionLabel><Textarea value={rejectReason} onChange={(event) => setRejectReason(event.target.value)} placeholder="Krävs om ansökan avslås" /></div></div>}<DialogFooter><IndustryButton variant="ghost" onClick={() => setAbsenceReviewId(null)}>Avbryt</IndustryButton><IndustryButton variant="secondary" disabled={!rejectReason.trim() || decideAbsence.isPending} onClick={() => selectedRequest && void decide(selectedRequest.id, "rejected")}>Avslå</IndustryButton><IndustryButton variant="primary" disabled={decideAbsence.isPending} onClick={() => selectedRequest && void decide(selectedRequest.id, "approved")}>Godkänn</IndustryButton></DialogFooter></DialogContent>
+        <DialogContent className="ind max-w-lg">
+          <DialogHeader><DialogTitle className="ind-h2">{hasConflicts ? "Passen blir obemannade" : "Granska frånvaro"}</DialogTitle></DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="ind-note--warn">
+                <p className="font-medium">{employeeName.get(selectedRequest.employee_id) ?? "Okänd medarbetare"}</p>
+                <p>{typeName.get(selectedRequest.absence_type_id) ?? "Frånvaro"} · {swedishDate(selectedRequest.start_date)}{selectedRequest.end_date ? ` – ${swedishDate(selectedRequest.end_date)}` : ""} · {selectedRequest.extent_pct} %</p>
+              </div>
+              <div>
+                <SectionLabel>Pass som påverkas</SectionLabel>
+                {conflicts.isLoading ? <p className="ind-muted text-sm">Kontrollerar…</p> : hasConflicts ? (
+                  <div className="space-y-1">
+                    {conflicts.data?.map((conflict) => {
+                      const before = conflictStaffing.data?.get(`${conflict.store_id}:${conflict.shift_date}`) ?? 1;
+                      return (
+                        <IndustryRow key={conflict.shift_id} edge="alert" className="flex-wrap gap-2">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span className="min-w-[220px] flex-1">{storeName.get(conflict.store_id) ?? "Enhet"} · {swedishDate(conflict.shift_date)} <span className="ind-mono">{conflict.start_time.slice(0, 5)}–{conflict.end_time.slice(0, 5)}</span></span>
+                          <StatusLabel tone="alert">Bemanning <span className="ind-mono">{before} → {Math.max(0, before - 1)}</span></StatusLabel>
+                        </IndustryRow>
+                      );
+                    })}
+                  </div>
+                ) : <p className="ind-note--ok">Inga schemakrockar hittades.</p>}
+              </div>
+              {hasConflicts && (
+                <div className="space-y-2">
+                  <SectionLabel>Vad ska hända med passet?</SectionLabel>
+                  <label className="flex cursor-pointer items-start gap-2 text-sm">
+                    <input type="radio" name="conflict-action" className="mt-1" checked={conflictAction === "open_shift"} onChange={() => setConflictAction("open_shift")} />
+                    <span><strong>Öppna passet för anmälan</strong><span className="ind-muted block text-xs">Passet blir synligt för kollegor i enheten som kan ta det.</span></span>
+                  </label>
+                  <label className="flex cursor-pointer items-start gap-2 text-sm">
+                    <input type="radio" name="conflict-action" className="mt-1" checked={conflictAction === "cancel_shift"} onChange={() => setConflictAction("cancel_shift")} />
+                    <span><strong>Avboka passet</strong><span className="ind-muted block text-xs">Bemanningen sänks och ingen ersättare söks.</span></span>
+                  </label>
+                </div>
+              )}
+              <div><SectionLabel>Skäl vid avslag</SectionLabel><Textarea value={rejectReason} onChange={(event) => setRejectReason(event.target.value)} placeholder="Krävs om ansökan avslås" /></div>
+            </div>
+          )}
+          <DialogFooter>
+            <IndustryButton variant="ghost" onClick={() => setAbsenceReviewId(null)}>Avbryt</IndustryButton>
+            <IndustryButton variant="secondary" disabled={!rejectReason.trim() || decideAbsence.isPending} onClick={() => selectedRequest && void decide(selectedRequest.id, "rejected", hasConflicts)}>Avslå</IndustryButton>
+            <IndustryButton variant="primary" disabled={decideAbsence.isPending} onClick={() => selectedRequest && void decide(selectedRequest.id, "approved", hasConflicts)}>Godkänn frånvaron</IndustryButton>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </IndustryFrame>
   );
