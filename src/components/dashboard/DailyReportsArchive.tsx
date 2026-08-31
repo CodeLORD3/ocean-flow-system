@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -203,6 +203,11 @@ function EditDailyReportDialog({
   const updateReport = useUpdateDailyReport();
   const [draft, setDraft] = useState<DraftReport | null>(null);
 
+  useEffect(() => {
+    if (open && report) setDraft(draftFromReport(report));
+    if (!open) setDraft(null);
+  }, [open, report]);
+
   const setField = <K extends keyof DraftReport>(field: K, value: DraftReport[K]) => {
     setDraft((current) => (current ? { ...current, [field]: value } : current));
   };
@@ -241,10 +246,7 @@ function EditDailyReportDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => {
-      if (nextOpen && report) setDraft(draftFromReport(report));
-      onOpenChange(nextOpen);
-    }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Ändra dagsrapport</DialogTitle>
