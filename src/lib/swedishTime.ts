@@ -28,6 +28,16 @@ export function svenskTid(value: string | number | Date = new Date()): string {
   }).format(new Date(value)).replace(/\./g, ":");
 }
 
+/** Dygnets början i svensk tid. */
+export function svenskDagStart(datum: string): Date {
+  return svenskTidpunkt(datum, "00:00:00");
+}
+
+/** Sista sekunden i det svenska dygnet. */
+export function svenskDagSista(datum: string): Date {
+  return svenskTidpunkt(datum, "23:59:59");
+}
+
 export function svenskTidpunkt(date: string, time: string): Date {
   const wallClock = `${date}T${time.slice(0, 5)}:00Z`;
   const naive = new Date(wallClock);
