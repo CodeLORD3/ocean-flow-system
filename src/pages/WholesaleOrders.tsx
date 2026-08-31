@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { OrderPhotosButton, ORDER_PHOTO_ENTITY, ORDER_LINE_PHOTO_ENTITY } from "@/components/orders/OrderPhotos";
@@ -7,7 +8,7 @@ import { isInfiniteStock } from "@/lib/infiniteStock";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
-  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, Plus, CalendarIcon, ChevronDown, ChevronRight,
+  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, Plus, CalendarIcon, ChevronDown, ChevronRight, CheckSquare,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -63,6 +64,52 @@ function getStoreZoneKey(store: { city: string; name: string }): string {
   return "international";
 }
 
+const orderDate = (order: any) => order.desired_delivery_date || order.shop_order_lines?.find((line: any) => line.delivery_date)?.delivery_date || order.created_at?.slice(0, 10) || "";
+const dayLabel = (iso: string) => {
+  if (!iso) return "Utan leveransdatum";
+  const pretty = new Date(`${iso}T00:00:00`).toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" });
+  return pretty.charAt(0).toUpperCase() + pretty.slice(1);
+};
+function isoWeek(iso: string) {
+  const d = new Date(`${iso}T00:00:00`);
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return { week: Math.ceil(((t.getTime() - yearStart.getTime()) / 86400000 + 1) / 7), year: t.getUTCFullYear() };
+}
+function groupByWeek(list: any[]) {
+  const weeks = new Map<string, { week: number; year: number; days: Map<string, any[]> }>();
+  [...list].sort((a, b) => orderDate(a).localeCompare(orderDate(b))).forEach((order) => {
+    const date = orderDate(order);
+    const { week, year } = isoWeek(date || new Date().toISOString().slice(0, 10));
+    const key = `${year}-${String(week).padStart(2, "0")}`;
+    const entry = weeks.get(key) ?? { week, year, days: new Map<string, any[]>() };
+    const dayOrders = entry.days.get(date) ?? [];
+    dayOrders.push(order);
+    entry.days.set(date, dayOrders);
+    weeks.set(key, entry);
+  });
+  return [...weeks.entries()].map(([key, entry]) => ({ key, ...entry, count: [...entry.days.values()].flat().length }));
+}
+
+const formatOrderValue = (order: any) => (order.shop_order_lines || []).reduce(
+  (sum: number, line: any) => sum + Number(line.quantity_ordered || 0) * Number(line.products?.wholesale_price || 0),
+  0,
+);
+
+const printWholesalePackLists = (selectedOrders: any[]) => {
+  if (selectedOrders.length === 0) return;
+  const pages = selectedOrders.map((order) => {
+    const rows = (order.shop_order_lines || []).map((line: any) => `<tr><td class="box"></td><td>${line.products?.name || "–"}</td><td>${line.products?.category || "–"}</td><td class="qty">${line.quantity_ordered || 0}</td><td>${line.unit || line.products?.unit || "–"}</td><td class="qty"></td></tr>`).join("");
+    return `<section class="page"><header><h1>Grossist — packlista</h1><strong>${order.stores?.name || "Okänd butik"}</strong><span>Order ${displayOrderWeek(order)} · Leverans ${orderDate(order) || "–"}</span></header><table><thead><tr><th></th><th>Produkt</th><th>Kategori</th><th>Beställt</th><th>Enhet</th><th>Packat</th></tr></thead><tbody>${rows}</tbody></table><footer>Anteckning: ${order.notes || ""}</footer></section>`;
+  }).join("");
+  const printWindow = window.open("", "_blank", "width=900,height=700");
+  if (!printWindow) return;
+  printWindow.document.write(`<html><head><title>Grossistens packlistor</title><style>body{font-family:Arial,sans-serif;color:#111}.page{page-break-after:always;padding:12mm}.page:last-child{page-break-after:auto}header{display:grid;gap:4px;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:16px}h1{font-size:24px;margin:0}header strong{font-size:18px}header span{color:#555}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #bbb;padding:8px 6px;text-align:left}th{background:#222;color:#fff;text-transform:uppercase;font-size:11px}.box{width:28px;height:20px}.box:after{content:"";display:block;width:14px;height:14px;border:1px solid #333}.qty{text-align:right;width:70px}footer{margin-top:18px;border-top:1px solid #bbb;padding-top:12px}</style></head><body>${pages}<script>window.onload=function(){window.print();window.close()}<\\/script></body></html>`);
+  printWindow.document.close();
+};
+
 const statusColor: Record<string, string> = {
   Ny: "",
   Pågående: "bg-warning/15 text-warning border-warning/20",
@@ -114,6 +161,8 @@ export default function WholesaleOrders() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
+  const [storeFilter, setStoreFilter] = useState("alla");
+  const [marked, setMarked] = useState<string[]>([]);
   const [expandedOrderIds, setExpandedOrderIds] = useState<Set<string>>(new Set());
   const toggleExpandOrder = (id: string) => setExpandedOrderIds(prev => {
     const next = new Set(prev);
@@ -300,12 +349,20 @@ export default function WholesaleOrders() {
   const archivedOrders = orders.filter((o: any) => o.status === "Arkiverad");
   const deliveredOrders = activeOrders.filter((o: any) => o.status === "Levererad" || o.status === "Klar / Levererad");
 
-  // Filter orders (active only)
+  // Filter orders (active only), including product names for fast order lookup.
   const filteredOrders = activeOrders.filter((o: any) => {
-    const matchSearch = !search || displayOrderWeek(o).includes(search) || (o.stores?.name || "").toLowerCase().includes(search.toLowerCase());
+    const needle = search.trim().toLowerCase();
+    const productsText = (o.shop_order_lines || []).map((line: any) => line.products?.name || "").join(" ").toLowerCase();
+    const matchSearch = !needle || displayOrderWeek(o).toLowerCase().includes(needle) || (o.stores?.name || "").toLowerCase().includes(needle) || productsText.includes(needle);
     const matchStatus = statusFilter === "Alla" || o.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchStore = storeFilter === "alla" || o.store_id === storeFilter;
+    return matchSearch && matchStatus && matchStore;
   });
+
+  const groupedFilteredOrders = useMemo(() => groupByWeek(filteredOrders), [filteredOrders]);
+  const allFilteredMarked = filteredOrders.length > 0 && filteredOrders.every((order: any) => marked.includes(order.id));
+  const toggleMarked = (id: string) => setMarked((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  const markAllFiltered = () => setMarked(allFilteredMarked ? marked.filter((id) => !filteredOrders.some((order: any) => order.id === id)) : [...new Set([...marked, ...filteredOrders.map((order: any) => order.id)])]);
 
   const totalOrders = activeOrders.length;
   const newOrders = activeOrders.filter((o: any) => o.status === "Ny").length;
@@ -726,209 +783,92 @@ export default function WholesaleOrders() {
           </Card>
         </TabsContent>
 
-        {/* PER ORDER VIEW */}
+        {/* PER ORDER VIEW — samma dag/vecka-flöde som Kundbeställningar */}
         <TabsContent value="per-order">
           <div className="space-y-3">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="relative flex-1 max-w-xs">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input placeholder="Sök vecka eller butik..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-[220px] flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Sök order, butik eller produkt"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-10 pl-9 text-sm"
+                />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-8 text-xs w-36"><SelectValue /></SelectTrigger>
+              <Select value={storeFilter} onValueChange={setStoreFilter}>
+                <SelectTrigger className="h-10 w-[180px] text-sm"><SelectValue placeholder="Alla butiker" /></SelectTrigger>
                 <SelectContent>
-                  {["Alla", "Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
-                    <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
-                  )}
+                  <SelectItem value="alla">Alla butiker</SelectItem>
+                  {retailStores.map((store: any) => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <div className="ml-auto flex items-center gap-1.5 bg-muted/50 rounded-md px-3 py-1.5 border border-border">
-                <span className="text-[10px] text-muted-foreground font-medium">Totalt ordervärde (aktiva):</span>
-                <span className="text-xs font-mono font-semibold text-foreground">
-                  {activeOrders.reduce((sum: number, o: any) =>
-                    sum + (o.shop_order_lines || []).reduce((s: number, l: any) => s + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0)
-                  , 0).toFixed(2)} kr
-                </span>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-10 w-[150px] text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {["Alla", "Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map((status) => <SelectItem key={status} value={status}>{status === "Alla" ? "Alla statusar" : status}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 border border-grid-line bg-card px-3 py-2">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Checkbox checked={allFilteredMarked} onCheckedChange={markAllFiltered} aria-label="Markera alla synliga ordrar" />
+                <span>{filteredOrders.length} synliga ordrar</span>
+                {marked.length > 0 && <Badge variant="secondary" className="rounded-sm">{marked.length} markerade</Badge>}
+              </div>
+              <div className="flex items-center gap-2">
+                {marked.length > 0 && <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => printWholesalePackLists(orders.filter((order: any) => marked.includes(order.id)))}><Printer className="h-3.5 w-3.5" /> Skriv ut markerade</Button>}
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">Aktivt värde {activeOrders.reduce((sum: number, order: any) => sum + formatOrderValue(order), 0).toFixed(2)} kr</span>
               </div>
             </div>
 
-            <Card className="shadow-card">
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-[10px]">
-                    <thead>
-                       <tr className="border-b border-border bg-muted/30 h-7">
-                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground w-20"></th>
-                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">V.</th>
-                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">DATUM</th>
-                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">BUTIK</th>
-                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ÖN.LEV.</th>
-                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">BEST.AV</th>
-                          <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">RAD</th>
-                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PRODUKTER</th>
-                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ANT.</th>
-                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">STATUS</th>
-                           <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">VÄRDE</th>
-                           <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">PACKAT</th>
-                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PACK.</th>
-                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">LEV.R.</th>
-                          <th className="px-1.5 py-0.5 text-center font-medium text-muted-foreground">PS</th>
-                          <th className="px-1.5 py-0.5 text-center font-medium text-muted-foreground">FS</th>
-                          <th className="px-1.5 py-0.5 text-center font-medium text-muted-foreground">ARK.</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredOrders.length === 0 && (
-                          <tr><td colSpan={17} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
-                       )}
-                       {filteredOrders.map((o: any) => (
-                         <React.Fragment key={o.id}>
-                          <tr className={`border-b h-7 transition-colors cursor-pointer hover:bg-muted/30 ${expandedOrderIds.has(o.id) ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : "border-border"} ${o.status === "Pågående" ? "bg-warning/10" : o.status === "Packad" ? "bg-success/10" : o.status === "Skickad" ? "bg-primary/10" : o.status === "Levererad" || o.status === "Klar / Levererad" ? "bg-primary/25" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
-                            <td className="px-1.5 py-0.5" onClick={e => e.stopPropagation()}>
-                              {o.status === "Ny" && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-5 px-1.5 text-[9px] gap-0.5 bg-warning/10 border-warning/30 text-warning hover:bg-warning/20"
-                                  onClick={() => handleOrderStatusChange(o.id, "Pågående")}
-                                >
-                                  <Package className="h-2.5 w-2.5" />
-                                  Packa
-                                </Button>
-                              )}
-                            </td>
-                            <td className="px-1.5 py-0.5 font-mono font-medium text-foreground">{displayOrderWeek(o)}</td>
-                            <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
-                            <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{o.stores?.name || "–"}</td>
-                            <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{(o as any).desired_delivery_date || "–"}</td>
-                            <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] whitespace-nowrap">{o.created_by || "–"}</td>
-                            <td className="px-1.5 py-0.5 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
-                            <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] max-w-32 truncate">
-                              {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered}${l.unit || ""})`).join(", ") || "–"}
-                            </td>
-                            <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] max-w-20 truncate">{o.notes || "–"}</td>
-                            <td className="px-1.5 py-0.5" onClick={e => e.stopPropagation()}>
-                             <Select value={o.status} onValueChange={(val) => handleOrderStatusChange(o.id, val)}>
-                               <SelectTrigger className="h-5 text-[9px] w-[80px]">
-                                 <SelectValue />
-                               </SelectTrigger>
-                               <SelectContent>
-                                 {["Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
-                                   <SelectItem key={s} value={s} className="text-[10px]">{s}</SelectItem>
-                                 )}
-                               </SelectContent>
-                             </Select>
-                           </td>
-                           <td className="px-1.5 py-0.5 text-right font-mono text-foreground text-[9px] whitespace-nowrap">
-                             {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(0)}kr
-                           </td>
-                            <td className="px-1.5 py-0.5 text-right font-mono text-foreground text-[9px] whitespace-nowrap">
-                              {(() => {
-                                const packedValue = (o.shop_order_lines || []).reduce(
-                                  (sum: number, l: any) => sum + getPackedLineValue(l),
-                                  0,
-                                );
+            <div className="hidden overflow-hidden rounded-sm border border-grid-line bg-card md:block">
+              <table className="w-full text-xs">
+                <thead className="bg-muted text-[10px] uppercase tracking-wide text-muted-foreground">
+                  <tr className="border-b border-grid-line">
+                    <th className="w-10 px-2 py-2"><span className="sr-only">Markera</span></th>
+                    <th className="px-2 py-2 text-left">Leverans</th><th className="px-2 py-2 text-left">Butik</th><th className="px-2 py-2 text-left">Produkter</th>
+                    <th className="px-2 py-2 text-right">Rader</th><th className="px-2 py-2 text-left">Status</th><th className="px-2 py-2 text-right">Värde</th><th className="w-28 px-2 py-2 text-right">Åtgärd</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.length === 0 && <tr><td colSpan={8} className="px-3 py-12 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>}
+                  {groupedFilteredOrders.map((week) => <React.Fragment key={week.key}>
+                    <tr className="border-b border-grid-line bg-primary/10"><td colSpan={8} className="px-3 py-2"><div className="flex items-center gap-2"><span className="font-semibold text-foreground">Vecka {week.week}</span><span className="text-[11px] text-muted-foreground">{week.count} ordrar</span></div></td></tr>
+                    {[...week.days.entries()].map(([day, dayOrders]) => <React.Fragment key={day}>
+                      <tr className="border-b border-grid-line bg-muted"><td colSpan={8} className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{dayLabel(day)} <span className="ml-2 font-mono normal-case">{dayOrders.length} order</span></td></tr>
+                      {dayOrders.map((o: any) => {
+                        const isOpen = expandedOrderIds.has(o.id);
+                        const rowTone = o.status === "Avbruten" ? "bg-row-off" : o.status === "Levererad" || o.status === "Klar / Levererad" ? "bg-row-done" : o.status === "Packad" ? "bg-row-ok" : o.status === "Pågående" ? "bg-row-warn" : "bg-row-neutral";
+                        return <React.Fragment key={o.id}>
+                          <tr className={`border-b border-grid-line transition-colors ${rowTone} ${isOpen ? "ring-1 ring-inset ring-primary" : "hover:bg-muted/60"}`}>
+                            <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}><Checkbox checked={marked.includes(o.id)} onCheckedChange={() => toggleMarked(o.id)} aria-label={`Markera order från ${o.stores?.name || "butik"}`} /></td>
+                            <td className="cursor-pointer px-2 py-2 font-mono tabular-nums" onClick={() => toggleExpandOrder(o.id)}><span className="font-semibold">{day}</span><span className="block text-[10px] text-muted-foreground">{displayOrderWeek(o)} · {new Date(o.created_at).toLocaleDateString("sv-SE")}</span></td>
+                            <td className="cursor-pointer px-2 py-2 font-semibold" onClick={() => toggleExpandOrder(o.id)}>{o.stores?.name || "Okänd butik"}<span className="block text-[10px] font-normal text-muted-foreground">{o.created_by || "–"}</span></td>
+                            <td className="max-w-[28rem] cursor-pointer px-2 py-2" onClick={() => toggleExpandOrder(o.id)}><div className="truncate">{(o.shop_order_lines || []).map((line: any) => `${line.products?.name || "Okänd"} (${line.quantity_ordered || 0} ${line.unit || line.products?.unit || ""})`).join(", ") || "–"}</div>{o.notes && <div className="truncate text-[10px] text-muted-foreground">{o.notes}</div>}</td>
+                            <td className="px-2 py-2 text-right font-mono tabular-nums">{o.shop_order_lines?.length || 0}</td>
+                            <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}><Select value={o.status} onValueChange={(value) => handleOrderStatusChange(o.id, value)}><SelectTrigger className="h-8 w-[110px] text-xs"><SelectValue /></SelectTrigger><SelectContent>{["Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}</SelectContent></Select></td>
+                            <td className="px-2 py-2 text-right font-mono font-semibold tabular-nums">{formatOrderValue(o).toFixed(0)} kr</td>
+                            <td className="px-2 py-2 text-right" onClick={(e) => e.stopPropagation()}><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" title="Öppna order" onClick={() => toggleExpandOrder(o.id)}>{isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</Button><Button variant="ghost" size="icon" className="h-8 w-8" title="Skriv ut packlista" onClick={() => setPackingSlipOrder(o)}><Printer className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8" title="Arkivera order" onClick={() => setArchiveConfirmOrder(o)}><Archive className="h-4 w-4" /></Button></div></td>
+                          </tr>
+                          {isOpen && <tr><td colSpan={8} className="p-0"><div className="border-b-2 border-l-2 border-primary bg-primary/5 px-3 py-3"><div className="mb-2 flex items-center justify-between"><div><span className="font-semibold">Order {displayOrderWeek(o)} — {o.stores?.name || "Okänd butik"}</span><Badge variant="outline" className="ml-2 rounded-sm text-[10px]">{o.status}</Badge></div><Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => collapseOrder(o.id)}><X className="mr-1 h-3 w-3" /> Stäng</Button></div><div className="mb-2 text-xs text-muted-foreground">Skapad {new Date(o.created_at).toLocaleString("sv-SE")}{o.desired_delivery_date && <> · Önskad leverans <span className="font-medium text-foreground">{o.desired_delivery_date}</span></>}</div><WholesaleOrderDetail order={o} onClose={() => collapseOrder(o.id)} stores={stores} /></div></td></tr>}
+                        </React.Fragment>;
+                      })}
+                    </React.Fragment>)}
+                  </React.Fragment>)}
+                </tbody>
+              </table>
+            </div>
 
-                                return packedValue > 0 ? `${packedValue.toFixed(0)}kr` : "–";
-                              })()}
-                            </td>
-                           <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] whitespace-nowrap">{o.packer_name || "–"}</td>
-                           <td className="px-1.5 py-0.5" onClick={e => e.stopPropagation()}>
-                             {(() => {
-                               const reports = reportsByOrder.get(o.id);
-                               if (!reports || reports.length === 0) {
-                                 return <span className="text-[9px] text-muted-foreground/40">–</span>;
-                               }
-                               const hasIssues = reports.some((r: any) => r.status === "Rapporterad");
-                               return (
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
-                                   className={`h-5 text-[9px] gap-0.5 px-1 ${hasIssues ? "text-warning" : "text-success"}`}
-                                   onClick={() => setReportViewOrder(o)}
-                                 >
-                                   {hasIssues ? <AlertTriangle className="h-2.5 w-2.5" /> : <CheckCircle2 className="h-2.5 w-2.5" />}
-                                   {hasIssues ? "Avv." : "OK"}
-                                 </Button>
-                               );
-                             })()}
-                           </td>
-                           <td className="px-1.5 py-0.5 text-center" onClick={e => e.stopPropagation()}>
-                             <Button
-                               variant="ghost"
-                               size="sm"
-                               className="h-5 text-[9px] px-1 text-muted-foreground hover:text-foreground"
-                               onClick={() => setPackingSlipOrder(o)}
-                             >
-                               <Printer className="h-2.5 w-2.5" />
-                             </Button>
-                           </td>
-                           <td className="px-1.5 py-0.5 text-center" onClick={e => e.stopPropagation()}>
-                             {["Packad", "Skickad", "Levererad"].includes(o.status) ? (
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 className="h-5 text-[9px] px-1 text-muted-foreground hover:text-foreground"
-                                 onClick={() => setDeliveryNoteOrder(o)}
-                               >
-                                 <Printer className="h-2.5 w-2.5" />
-                               </Button>
-                             ) : (
-                               <span className="text-[9px] text-muted-foreground/40">–</span>
-                             )}
-                           </td>
-                           <td className="px-1.5 py-0.5 text-center" onClick={e => e.stopPropagation()}>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-5 text-[9px] px-1 text-muted-foreground hover:text-foreground"
-                                onClick={() => setArchiveConfirmOrder(o)}
-                              >
-                                <Archive className="h-2.5 w-2.5" />
-                              </Button>
-                           </td>
-                         </tr>
-                         {/* Inline expandable order detail */}
-                          {expandedOrderIds.has(o.id) && (
-                            <tr>
-                              <td colSpan={15} className="p-0">
-                                <div className="border-l-2 border-l-primary border-b-2 border-b-primary/20 bg-primary/5 px-4 py-3">
-                                 <div className="flex items-center justify-between mb-3">
-                                   <div className="flex items-center gap-2">
-                                     <h3 className="font-heading text-sm font-semibold">
-                                       Order vecka {displayOrderWeek(o)} — {o.stores?.name || "Okänd butik"}
-                                     </h3>
-                                     <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
-                                       {statusIcon[o.status]}
-                                       {o.status}
-                                     </Badge>
-                                   </div>
-                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); collapseOrder(o.id); }}>
-                                     <X className="h-3 w-3 mr-1" /> Stäng
-                                   </Button>
-                                 </div>
-                                 <div className="text-xs text-muted-foreground mb-2">
-                                   Skapad {new Date(o.created_at).toLocaleDateString("sv-SE")}
-                                   {(o as any).desired_delivery_date && (
-                                     <> · Önskat leveransdatum: <span className="font-medium text-foreground">{(o as any).desired_delivery_date}</span></>
-                                   )}
-                                 </div>
-                                 {o.notes && (
-                                   <div className="bg-muted/30 rounded-md p-2 text-xs text-muted-foreground mb-3">
-                                     <span className="font-medium text-foreground">Anteckning:</span> {o.notes}
-                                   </div>
-                                 )}
-                                  <WholesaleOrderDetail order={o} onClose={() => collapseOrder(o.id)} stores={stores} />
-                               </div>
-                             </td>
-                           </tr>
-                         )}
-                       </React.Fragment>))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-2 md:hidden">
+              {filteredOrders.length === 0 && <div className="border border-grid-line bg-card px-3 py-12 text-center text-sm text-muted-foreground">Inga ordrar att visa.</div>}
+              {groupedFilteredOrders.flatMap((week) => [...week.days.entries()].flatMap(([day, dayOrders]) => dayOrders.map((o: any) => ({ day, o })))).map(({ day, o }) => {
+                const isOpen = expandedOrderIds.has(o.id);
+                const statusClass = o.status === "Avbruten" ? "bg-row-off" : o.status === "Levererad" || o.status === "Klar / Levererad" ? "bg-row-done" : o.status === "Packad" ? "bg-row-ok" : o.status === "Pågående" ? "bg-row-warn" : "bg-row-neutral";
+                return <div key={o.id} className={`overflow-hidden border border-grid-line ${statusClass} ${marked.includes(o.id) ? "ring-1 ring-inset ring-primary" : ""}`}><div className="flex items-start gap-2 p-3"><Checkbox className="mt-0.5" checked={marked.includes(o.id)} onCheckedChange={() => toggleMarked(o.id)} aria-label={`Markera order från ${o.stores?.name || "butik"}`} /><Button type="button" variant="ghost" className="h-auto min-w-0 flex-1 justify-start p-0 text-left hover:bg-transparent" onClick={() => toggleExpandOrder(o.id)}><div className="w-full"><div className="flex items-center justify-between gap-2"><span className="font-semibold">{o.stores?.name || "Okänd butik"}</span><Badge variant="outline" className="rounded-sm text-[10px]">{o.status}</Badge></div><div className="mt-1 text-xs text-muted-foreground">{day} · {displayOrderWeek(o)}</div><div className="mt-2 line-clamp-2 text-xs">{(o.shop_order_lines || []).map((line: any) => `${line.products?.name || "Okänd"} (${line.quantity_ordered || 0} ${line.unit || line.products?.unit || ""})`).join(", ") || "–"}</div><div className="mt-2 flex items-center justify-between text-xs"><span>{o.shop_order_lines?.length || 0} rader</span><span className="font-mono font-semibold">{formatOrderValue(o).toFixed(0)} kr</span></div></div></Button><Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" title="Skriv ut packlista" onClick={() => setPackingSlipOrder(o)}><Printer className="h-4 w-4" /></Button></div>{isOpen && <div className="border-t border-grid-line bg-primary/5 p-2"><WholesaleOrderDetail order={o} onClose={() => collapseOrder(o.id)} stores={stores} /></div>}</div>;
+              })}
+            </div>
           </div>
         </TabsContent>
 
