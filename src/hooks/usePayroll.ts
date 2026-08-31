@@ -73,10 +73,12 @@ export function usePayrollPeriods(legalEntityId: string | null) {
     queryKey: ["payroll-periods", legalEntityId],
     enabled: !!legalEntityId,
     queryFn: async () => {
+      const id = legalEntityId;
+      if (!id) return [] as PayrollPeriod[];
       const { data, error } = await supabase
         .from("payroll_periods")
         .select("*")
-        .eq("legal_entity_id", legalEntityId!)
+        .eq("legal_entity_id", id)
         .order("period", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as PayrollPeriod[];
@@ -89,10 +91,12 @@ export function usePayrollLines(periodId: string | null) {
     queryKey: ["payroll-lines", periodId],
     enabled: !!periodId,
     queryFn: async () => {
+      const id = periodId;
+      if (!id) return [] as PayrollLine[];
       const { data, error } = await supabase
         .from("payroll_lines")
         .select("*")
-        .eq("period_id", periodId!)
+        .eq("period_id", id)
         .order("line_date", { ascending: true });
       if (error) throw error;
       return (data ?? []) as unknown as PayrollLine[];
@@ -142,10 +146,12 @@ export function usePayrollPolicies(legalEntityId: string | null) {
     queryKey: ["payroll-policies", legalEntityId],
     enabled: !!legalEntityId,
     queryFn: async () => {
+      const id = legalEntityId;
+      if (!id) return [];
       const { data, error } = await supabase
         .from("payroll_policies")
         .select("*")
-        .eq("legal_entity_id", legalEntityId!)
+        .eq("legal_entity_id", id)
         .order("valid_from", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -158,10 +164,12 @@ export function useWageCodeMap(legalEntityId: string | null) {
     queryKey: ["fortnox-wage-code-map", legalEntityId],
     enabled: !!legalEntityId,
     queryFn: async () => {
+      const id = legalEntityId;
+      if (!id) return [];
       const { data, error } = await supabase
         .from("fortnox_wage_code_map")
         .select("*")
-        .eq("legal_entity_id", legalEntityId!)
+        .eq("legal_entity_id", id)
         .order("line_type", { ascending: true });
       if (error) throw error;
       return data ?? [];

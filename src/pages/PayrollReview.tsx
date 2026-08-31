@@ -93,8 +93,9 @@ export default function PayrollReview() {
   const byEmployee = useMemo(() => {
     const map = new Map<string, PayrollLine[]>();
     rows.forEach((line) => {
-      if (!map.has(line.employee_id)) map.set(line.employee_id, []);
-      map.get(line.employee_id)!.push(line);
+      const employeeLines = map.get(line.employee_id);
+      if (employeeLines) employeeLines.push(line);
+      else map.set(line.employee_id, [line]);
     });
     return [...map.entries()].sort((a, b) =>
       (employeeName.get(a[0]) ?? a[0]).localeCompare(employeeName.get(b[0]) ?? b[0], "sv"),
