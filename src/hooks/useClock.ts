@@ -34,6 +34,15 @@ export interface TimeEntry {
   station_id: string | null;
   store_id: string | null;
   legal_entity_id: string | null;
+  work_site_id: string | null;
+  cost_center: string | null;
+  punch_lat: number | null;
+  punch_lng: number | null;
+  punch_accuracy_m: number | null;
+  distance_m: number | null;
+  geofence_ok: boolean | null;
+  offline_queued: boolean;
+  synced_at: string | null;
   type: "in" | "ut" | "rast_start" | "rast_slut";
   occurred_at: string;
   registered_at: string;
@@ -152,6 +161,8 @@ export function useCreateTimeEntry() {
       employee_id: string;
       store_id: string | null;
       station_id?: string | null;
+      work_site_id?: string | null;
+      cost_center?: string | null;
       type: TimeEntry["type"];
       occurred_at: string;
       note?: string | null;
@@ -166,6 +177,8 @@ export function useCreateTimeEntry() {
           employee_id: input.employee_id,
           store_id: input.store_id,
           station_id: input.station_id ?? null,
+          work_site_id: input.work_site_id ?? null,
+          cost_center: input.cost_center ?? null,
           type: input.type,
           occurred_at: input.occurred_at,
           source: isCorrection ? "correction" : "manual",

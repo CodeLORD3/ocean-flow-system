@@ -36,6 +36,8 @@ import LiveStaff from "@/pages/LiveStaff";
 import Personalkollen from "@/pages/Integrations/Personalkollen";
 import ClockStations from "@/pages/ClockStations";
 import TimeEntriesPage from "@/pages/TimeEntriesPage";
+import StaffRules from "@/pages/StaffRules";
+import PayrollExports from "@/pages/PayrollExports";
 import ClockVsPk from "@/pages/ClockVsPk";
 import FortnoxSettings from "@/pages/FortnoxSettings";
 
@@ -129,6 +131,8 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/personalkollen": { component: <Personalkollen /> },
   "/clock-stations": { component: <ClockStations /> },
   "/time-entries": { component: <TimeEntriesPage /> },
+  "/staff-rules": { component: <StaffRules /> },
+  "/payroll-exports": { component: <PayrollExports /> },
   "/clock-vs-pk": { component: <ClockVsPk /> },
   "/on-site-now": { component: <LiveStaff /> },
   "/staff-schedule": { component: <StaffSchedule /> },

@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
   if (req.method !== "POST") return json(req, { error: "Method not allowed" }, 405);
 
-  let body: Record<string, unknown> = {};
+  let body: Record<string, unknown>;
   try {
     body = await req.json();
   } catch {
@@ -21,22 +21,18 @@ Deno.serve(async (req) => {
   }
 
   const code = String(body.activation_code ?? "").trim();
-  if (code.length < 8) {
-    return json(req, { error: "Ange en giltig aktiveringskod (minst 8 tecken)." }, 400);
-  }
+  if (code.length < 8) return json(req, { error: "Ange en giltig aktiveringskod (minst 8 tecken)." }, 400);
 
   const db = service();
   const hash = await clockCodeHash(code);
   const { data: station } = await db
     .from("clock_stations")
-    .select("id, name, store_id, status, profile")
+    .select("id, name, store_id, legal_entity_id, status, profile")
     .eq("activation_code_hash", hash)
     .maybeSingle();
 
   if (!station) return json(req, { error: "Aktiveringskoden gäller inte." }, 401);
-  if (station.status !== "active") {
-    return json(req, { error: "Stationen är återkallad. Kontakta administratör." }, 403);
-  }
+  if (station.status !== "active") return json(req, { error: "Stationen är återkallad. Kontakta administratör." }, 403);
 
   const token = randomToken();
   const expiresAt = new Date(Date.now() + SESSION_TTL_MINUTES * 60_000).toISOString();
@@ -55,14 +51,28 @@ Deno.serve(async (req) => {
     storeName = (store?.name as string | undefined) ?? null;
   }
 
+  let workSites: Array<{ id: string; name: string; posting_cost_center: string; geofence_radius_m: number; allow_mobile_punch: boolean }> = [];
+  let siteQuery = db
+    .from("work_sites")
+    .select("id, name, posting_cost_center, geofence_radius_m, allow_mobile_punch")
+    .eq("is_active", true)
+    .order("sort_order");
+  if (station.store_id) siteQuery = siteQuery.eq("store_id", station.store_id);
+  else if (station.legal_entity_id) siteQuery = siteQuery.eq("legal_entity_id", station.legal_entity_id);
+  const { data: sites } = await siteQuery;
+  workSites = (sites ?? []) as typeof workSites;
+
   return json(req, {
     session_token: token,
     expires_at: expiresAt,
     station: {
       id: station.id,
       name: station.name,
+      store_id: station.store_id,
+      legal_entity_id: station.legal_entity_id,
       store_name: storeName,
       profile: station.profile,
+      work_sites: workSites,
     },
   });
 });
