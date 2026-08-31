@@ -1,5 +1,5 @@
 import { Loader2 } from "lucide-react";
-import { useDailyReportsRange, entryHours } from "@/hooks/useDailyReportsRange";
+import { useDailyReportsRange } from "@/hooks/useDailyReportsRange";
 import { weekDayList, dayRowsFrom } from "@/lib/weeklyReportDays";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
@@ -66,9 +66,7 @@ export function StoreWeekDays({
         </tbody>
       </table>
       {rows.every((d) => d.gross_sales == null) && (
-        <p className="px-2 py-2 text-[10px] text-muted-foreground">
-          Inga dagsrapporter sparade för veckan. {entryHours(null) === 0 ? "" : ""}
-        </p>
+        <p className="px-2 py-2 text-[10px] text-muted-foreground">Inga dagsrapporter sparade för veckan.</p>
       )}
     </div>
   );

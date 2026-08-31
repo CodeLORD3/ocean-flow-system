@@ -25,6 +25,11 @@
 - [ ] Samma kedja åt andra hållet: ändring i vecko-/månadsrapport speglas till dagsrapport
 
 
+## Rapporter: daglig butiksvy och export
+- [x] Butiks-/region-dropdown på veckoöversikten
+- [x] Klickbar butik med dag-för-dag-visning
+- [x] Utskrift och Excel-export av rapportens siffror
+
 ## Personalmodul: Etapp 5 — löneunderlag, förmåner & Fortnox-automation
 - [ ] Datamodell för versionerade lönepolicyer, löneperioder, lönerader, löneartsmappning, förmåner, avdrag, skattetabeller och arbetsgivaravgifter
 - [ ] Beräkningsmotor som är master för enheter; kronor endast preliminära KPI-/granskningsvärden
