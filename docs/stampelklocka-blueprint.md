@@ -989,9 +989,9 @@ Tabellen finns med RLS och relationer, men klockan skapar inte automatiskt flera
 
 Stationsprofilen har auto-rastfält, men den centrala `time_entries`-skrivningen skapar inte i den granskade funktionen automatiskt en `rast_start`/`rast_slut`-post efter X timmar. Automatisk rast behöver därför verifieras eller implementeras innan den marknadsförs som aktiv funktion.
 
-### 14.5 Attestflödet i rapporterad tid är inte färdigt
+### 14.5 Attest sker i egen vy, inte i journalvyn
 
-`TimeEntriesPage` kan markera dagsrader, men visar att attest kommer i senare etapp. Attestationsmodellen finns i databasen och används av schemaflöden, men en komplett attestknapp från denna vy är inte klar.
+Attest är implementerat, men beslutet fattas i `/attestations` och inte från `TimeEntriesPage`. Den som arbetar i journalvyn måste därför byta vy för att attestera. Kvarstående begränsning: `attest-compute` antar sommartidsoffset (+02:00) när schemapassets gränser byggs, vilket bör bytas till korrekt zonhantering före löneskarp drift.
 
 ### 14.6 Auto-clock-out har en separat legacy-väg
 
