@@ -28,6 +28,16 @@ export function weatherIcon(code?: number | null): LucideIcon {
   return Cloud;
 }
 
+/** Semantisk färg per vädertyp, utan hårdkodade färgvärden. */
+export function weatherIconClass(code?: number | null, windy = false) {
+  if (windy) return "text-warning";
+  if (code === 0 || (code != null && code <= 2)) return "text-warning";
+  if (code != null && code >= 95) return "text-destructive";
+  if (code != null && code >= 51 && code <= 86) return "text-accent";
+  if (code === 45 || code === 48 || code === 3) return "text-muted-foreground";
+  return "text-primary";
+}
+
 /** Symmetrisk vädercell: ikon, text och temperatur i fasta kolumner. */
 export function WeatherCell({
   day,
