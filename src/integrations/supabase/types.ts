@@ -8836,6 +8836,33 @@ export type Database = {
           },
         ]
       }
+      pnr_key_years: {
+        Row: {
+          beskattningsar: number
+          is_active: boolean
+          note: string | null
+          rotated_at: string
+          rotated_by: string | null
+          vault_secret_name: string
+        }
+        Insert: {
+          beskattningsar: number
+          is_active?: boolean
+          note?: string | null
+          rotated_at?: string
+          rotated_by?: string | null
+          vault_secret_name: string
+        }
+        Update: {
+          beskattningsar?: number
+          is_active?: boolean
+          note?: string | null
+          rotated_at?: string
+          rotated_by?: string | null
+          vault_secret_name?: string
+        }
+        Relationships: []
+      }
       portal_settings: {
         Row: {
           display_name: string | null
@@ -13907,6 +13934,7 @@ export type Database = {
       time_entries: {
         Row: {
           arbetsdag: string | null
+          beskattningsar: number | null
           client_punch_id: string | null
           correction_kind: string | null
           corrects_entry_id: string | null
@@ -13935,6 +13963,7 @@ export type Database = {
         }
         Insert: {
           arbetsdag?: string | null
+          beskattningsar?: number | null
           client_punch_id?: string | null
           correction_kind?: string | null
           corrects_entry_id?: string | null
@@ -13963,6 +13992,7 @@ export type Database = {
         }
         Update: {
           arbetsdag?: string | null
+          beskattningsar?: number | null
           client_punch_id?: string | null
           correction_kind?: string | null
           corrects_entry_id?: string | null
@@ -16034,6 +16064,7 @@ export type Database = {
           total_minutes: number
         }[]
       }
+      beskattningsar: { Args: { _ts: string }; Returns: number }
       booking_status_day: { Args: { _day?: string }; Returns: Json }
       booking_volume_by_day: {
         Args: { _days?: number; _from?: string }
@@ -16173,6 +16204,7 @@ export type Database = {
       }
       employee_is_self: { Args: { _employee_id: string }; Returns: boolean }
       employee_pnr_key: { Args: never; Returns: string }
+      employee_pnr_key_for_year: { Args: { _year: number }; Returns: string }
       entity_series_code: {
         Args: { _legal_entity_id: string }
         Returns: string
@@ -16441,6 +16473,7 @@ export type Database = {
       }
       purge_booking_otp: { Args: never; Returns: number }
       purge_clock_retention: { Args: never; Returns: Json }
+      purge_clock_years: { Args: { _keep_years?: number }; Returns: Json }
       purge_sms_log_phones: { Args: never; Returns: number }
       rebuild_stock_from_movements: { Args: never; Returns: Json }
       recalc_product_day_price: {
