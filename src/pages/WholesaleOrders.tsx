@@ -48,6 +48,7 @@ import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLin
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
 import { logActivity } from "@/hooks/useActivityLog";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
+import { WholesaleTotalOrderedView } from "@/components/orders/WholesaleTotalOrderedView";
 
 type WholesaleOrderLine = {
   product_id: string;
@@ -269,6 +270,7 @@ export default function WholesaleOrders() {
   const { data: currentStaff } = useCurrentStaff();
   const loggedInName = staffFullName(currentStaff);
 
+  const [activeTab, setActiveTab] = useState("per-order");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
   const [storeFilter, setStoreFilter] = useState("alla");
