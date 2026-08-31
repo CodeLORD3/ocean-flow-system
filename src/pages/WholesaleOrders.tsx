@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { OrderPhotosButton, ORDER_PHOTO_ENTITY, ORDER_LINE_PHOTO_ENTITY } from "@/components/orders/OrderPhotos";
