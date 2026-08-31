@@ -59,6 +59,28 @@ import {
 
 const DEFAULT_CUTOFF = 48;
 
+/** Lokal kö för sjukanmälningar som inte kunde nå servern. */
+const SICK_QUEUE_KEY = (employeeId: string) => `makrilltrade.sick_queue.${employeeId}`;
+
+function readSickQueue(employeeId: string): string[] {
+  try {
+    const raw = window.localStorage.getItem(SICK_QUEUE_KEY(employeeId));
+    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSickQueue(employeeId: string, dates: string[]) {
+  try {
+    if (dates.length) window.localStorage.setItem(SICK_QUEUE_KEY(employeeId), JSON.stringify([...new Set(dates)]));
+    else window.localStorage.removeItem(SICK_QUEUE_KEY(employeeId));
+  } catch {
+    /* lagring kan vara blockerad — anmälan görs då direkt mot servern */
+  }
+}
+
 /** Mina employee_id enligt databasens säkra hjälpfunktion. */
 function useMyEmployeeIds() {
   return useQuery({
@@ -92,6 +114,7 @@ export default function MyShifts() {
   const [swapFor, setSwapFor] = useState<Shift | null>(null);
   const [sickUndoUntil, setSickUndoUntil] = useState<number | null>(null);
   const [sickUndoDate, setSickUndoDate] = useState<string | null>(null);
+  const [sickQueue, setSickQueue] = useState<string[]>([]);
   const [clockNow, setClockNow] = useState(() => Date.now());
   const [swapTo, setSwapTo] = useState<string>("");
   const [availOpen, setAvailOpen] = useState(false);
