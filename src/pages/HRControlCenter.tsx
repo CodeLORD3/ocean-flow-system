@@ -33,6 +33,7 @@ export default function HRControlCenter() {
   const [absenceReviewId, setAbsenceReviewId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [activeTab, setActiveTab] = useState("absence");
+  const [conflictAction, setConflictAction] = useState<"open_shift" | "cancel_shift">("open_shift");
 
   const absenceRequests = useAbsenceRequests(undefined, activeStoreId || null);
   const absenceTypes = useAbsenceTypes();

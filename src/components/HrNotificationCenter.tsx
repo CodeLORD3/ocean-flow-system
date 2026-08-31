@@ -5,13 +5,20 @@ import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useHrNotifications } from "@/hooks/useHrNotifications";
 
-const targetFor = (template: string) => template.startsWith("las_") || template.startsWith("absence") || template.startsWith("sick") || template === "vacation_expiry" ? "/my-shifts" : "/my-shifts";
+const targetFor = (template: string) => (template === "absence_pending" ? "/hr-control" : "/my-shifts");
+/**
+ * Integritetsregel: en notis avslöjar aldrig frånvarotyp eller hälsodetalj.
+ * Därför "Frånvaroansökan"/"Frånvaro", aldrig "Sjukanmälan" eller "VAB".
+ */
 const titleFor = (template: string) => ({
+  absence_pending: "Frånvaroansökan att behandla",
   absence_approved: "Frånvaro godkänd",
   absence_rejected: "Frånvaro avslagen",
   sick_day15: "HR-påminnelse",
   karens_warning: "HR-varning",
   vacation_expiry: "Semester att planera",
+  las_probation: "Anställning att se över",
+  las_conversion: "Anställning att se över",
 }[template] ?? "HR-notis");
 
 export function HrNotificationCenter() {
