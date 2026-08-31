@@ -754,8 +754,10 @@ Status i nuvarande stämpelklockkod:
 
 - journal, efterregistrering och correction: implementerat
 - låsta perioder för correction: implementerat server-side
-- full automatisk jämförelse mot schemalagt pass i `time-entries`: inte den centrala beräkningen i denna vy
-- attestknapp för markerade dagsrader: inte färdig i `TimeEntriesPage`; UI:t säger fortfarande att attest kommer i etapp 3
+- attestmotorn: implementerad i edge function `attest-compute`, som matchar `time_entries` mot publicerade `shifts` per person och svenskt datum, räknar rast av `rast_start`/`rast_slut`-par och sätter `auto_approved` inom stationens `tolerance_minutes` (default 7) eller `flagged` med avvikelsetyp (`sen_in`, `tidig_ut`, `missad_rast`, `oplanerad_tid`, `missat_pass`). Korrigerade poster räknas bort via `corrects_entry_id`.
+- attestbeslut: implementerat i `/attestations` (`src/pages/Attestations.tsx` + `src/hooks/useAttest.ts`) med bulkbeslut, underlagsval (schematid, stämplad tid, justerad tid), loggning av `decided_by`/`decided_at` samt låsning och loggad upplåsning av period.
+- attestknapp direkt i `TimeEntriesPage`: inte implementerad — beslut fattas i attestvyn, inte i journalvyn
+- automatisk jämförelse mot schemalagt pass sker i `attest-compute`, inte i `time-entries`-vyn
 
 ---
 
