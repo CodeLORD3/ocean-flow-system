@@ -1,7 +1,8 @@
 import { Loader2 } from "lucide-react";
 import { useDailyReportsRange } from "@/hooks/useDailyReportsRange";
 import { weekDayList, dayRowsFrom } from "@/lib/weeklyReportDays";
-import { useStoreWeather, weatherLabel } from "@/hooks/useStoreWeather";
+import { useStoreWeather } from "@/hooks/useStoreWeather";
+import { WeatherCell } from "./WeatherCell";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -31,7 +32,6 @@ export function StoreWeekDays({
   }
 
   const rows = dayRowsFrom(weekDayList(weekStart, weekEnd), data ?? []);
-  const weatherFor = (date: string) => weatherLabel(weather.data?.get(date));
 
   return (
     <div className="mt-2 overflow-x-auto rounded-md border bg-background">
@@ -41,7 +41,7 @@ export function StoreWeekDays({
             <th className="px-2 py-1.5 text-left font-medium">Dag</th>
             <th className="px-2 py-1.5 text-right font-medium">Brutto</th>
             <th className="px-2 py-1.5 text-right font-medium">Nettoomsättning</th>
-            <th className="px-2 py-1.5 text-left font-medium">Väder</th>
+            <th className="w-[11rem] px-2 py-1.5 text-left font-medium">Väder</th>
             <th className="px-2 py-1.5 text-right font-medium">Kvitton</th>
             <th className="px-2 py-1.5 text-right font-medium">Timmar</th>
             <th className="px-2 py-1.5 text-right font-medium">Pass</th>
@@ -60,8 +60,8 @@ export function StoreWeekDays({
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">
                 {d.net_sales == null ? "—" : `${int.format(d.net_sales)} kr`}
               </td>
-              <td className="whitespace-nowrap px-2 py-1.5 text-muted-foreground">
-                {weather.isLoading ? "…" : weatherFor(d.date)}
+              <td className="w-[11rem] px-2 py-1.5">
+                <WeatherCell day={weather.data?.get(d.date)} loading={weather.isLoading} />
               </td>
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">
                 {d.receipt_count == null ? "—" : int.format(d.receipt_count)}
