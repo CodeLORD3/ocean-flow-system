@@ -4994,6 +4994,71 @@ export type Database = {
         }
         Relationships: []
       }
+      fortnox_employees: {
+        Row: {
+          confirmed: boolean
+          created_at: string
+          employee_number: string
+          employment_date: string | null
+          first_name: string | null
+          id: string
+          inactive: boolean
+          last_name: string | null
+          legal_entity_code: string
+          match_method: string | null
+          matched_employee_id: string | null
+          pnr_hash: string | null
+          pnr_last4: string | null
+          raw: Json | null
+          synced_at: string
+          updated_at: string
+        }
+        Insert: {
+          confirmed?: boolean
+          created_at?: string
+          employee_number: string
+          employment_date?: string | null
+          first_name?: string | null
+          id?: string
+          inactive?: boolean
+          last_name?: string | null
+          legal_entity_code: string
+          match_method?: string | null
+          matched_employee_id?: string | null
+          pnr_hash?: string | null
+          pnr_last4?: string | null
+          raw?: Json | null
+          synced_at?: string
+          updated_at?: string
+        }
+        Update: {
+          confirmed?: boolean
+          created_at?: string
+          employee_number?: string
+          employment_date?: string | null
+          first_name?: string | null
+          id?: string
+          inactive?: boolean
+          last_name?: string | null
+          legal_entity_code?: string
+          match_method?: string | null
+          matched_employee_id?: string | null
+          pnr_hash?: string | null
+          pnr_last4?: string | null
+          raw?: Json | null
+          synced_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fortnox_employees_matched_employee_id_fkey"
+            columns: ["matched_employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fortnox_invoice_jobs: {
         Row: {
           attempts: number
@@ -16484,6 +16549,30 @@ export type Database = {
           p_payload: Json
         }
         Returns: string
+      }
+      fortnox_link_employee: {
+        Args: {
+          p_actor_id: string
+          p_employee_id: string
+          p_employee_number: string
+          p_entity: string
+        }
+        Returns: string
+      }
+      fortnox_match_employees: {
+        Args: { p_actor_id: string; p_entity: string }
+        Returns: {
+          action: string
+          current_number: string
+          employee_id: string
+          employee_number: string
+          employment_id: string
+          fortnox_name: string
+          inactive: boolean
+          makrilltrade_name: string
+          match_method: string
+          pnr_last4: string
+        }[]
       }
       fortnox_on_invoice_cancelled: {
         Args: {
