@@ -19,3 +19,4 @@
 - [x] Importera och koppla FSAB:s anställda från Fortnox via säker matchning
 - [ ] Förbättra administrationsflödet med veckoschema, schemaläggning och målintervall 15–20 % för personal/försäljning
 - [ ] Kontrollera varför Mensurs bilder från Ålsten saknas i Bildflödet och rätta synlighet/urval
+- [ ] Bygg om Personal & Schema med designspecens vecko-/dagvy, avtalstak och Kommer och går-panel
