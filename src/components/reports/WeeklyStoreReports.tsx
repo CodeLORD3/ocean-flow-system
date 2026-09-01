@@ -24,11 +24,20 @@ import { cn } from "@/lib/utils";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-const money = (v: number | null | undefined) => (v == null ? "—" : `${int.format(v)} kr`);
+const num = (v: unknown): number | null => {
+  const n = typeof v === "number" ? v : v == null || v === "" ? NaN : Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+const money = (v: unknown) => { const n = num(v); return n == null ? "—" : `${int.format(n)} kr`; };
+const intFmt = (v: unknown) => { const n = num(v); return n == null ? "—" : int.format(n); };
+const decFmt = (v: unknown) => { const n = num(v); return n == null ? "—" : dec.format(n); };
 const REGION_LABELS: Record<string, string> = { vast: "Göteborg", stockholm: "Stockholm", schweiz: "Schweiz", SE_TOTAL: "Sverige totalt" };
 
-const dateLabel = (iso: string) =>
-  new Date(`${iso}T12:00:00`).toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+const dateLabel = (iso?: string | null) => {
+  if (!iso) return "—";
+  const d = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+};
 
 function StatusBadge({ status, drift, corrected }: { status: string; drift?: boolean; corrected?: boolean }) {
   if (corrected && !drift) {
@@ -71,16 +80,16 @@ function Metrics({ row, comparison }: { row: WeeklyStoreReport | WeeklyRegionRep
       </div>
       <div>
         <p className="text-[10px] text-muted-foreground">Timmar</p>
-        <p className="font-mono text-sm tabular-nums">{dec.format(row.staff_hours)} h</p>
+        <p className="font-mono text-sm tabular-nums">{decFmt(row.staff_hours)} h</p>
       </div>
       <div>
         <p className="text-[10px] text-muted-foreground">Personpass</p>
-        <p className="font-mono text-sm tabular-nums">{int.format(row.staff_shifts)}</p>
+        <p className="font-mono text-sm tabular-nums">{intFmt(row.staff_shifts)}</p>
       </div>
       <div>
         <p className="text-[10px] text-muted-foreground">Dagsrapporter</p>
         <p className="font-mono text-sm tabular-nums">
-          {int.format(row.daily_reports_count)} / {int.format(row.expected_open_days)}
+          {intFmt(row.daily_reports_count)} / {intFmt(row.expected_open_days)}
         </p>
       </div>
       {comparison && (
@@ -91,7 +100,7 @@ function Metrics({ row, comparison }: { row: WeeklyStoreReport | WeeklyRegionRep
           ) : (
             <p className={cn("font-mono text-sm tabular-nums", comparison.diff_kr >= 0 ? "text-success" : "text-destructive")}>
               {comparison.diff_kr >= 0 ? "+" : ""}{money(comparison.diff_kr)}
-              {comparison.diff_procent != null && ` · ${comparison.diff_procent >= 0 ? "+" : ""}${dec.format(comparison.diff_procent)}%`}
+              {comparison.diff_procent != null && ` · ${comparison.diff_procent >= 0 ? "+" : ""}${decFmt(comparison.diff_procent)}%`}
             </p>
           )}
         </div>
@@ -117,13 +126,13 @@ export function WeeklyStoreReportsSection() {
   const weeks = useMemo(() => {
     const map = new Map<string, { iso_year: number; iso_week: number; week_start: string; week_end: string }>();
     [...regions, ...details].forEach((r) =>
-      map.set(`${r.iso_year}-${r.iso_week}`, {
+      r && map.set(`${r.iso_year}-${r.iso_week}`, {
         iso_year: r.iso_year, iso_week: r.iso_week, week_start: r.week_start, week_end: r.week_end,
       }),
     );
     return [...map.entries()]
       .map(([key, value]) => ({ key, ...value }))
-      .sort((a, b) => b.week_start.localeCompare(a.week_start));
+      .sort((a, b) => String(b.week_start ?? "").localeCompare(String(a.week_start ?? "")));
   }, [regions, details]);
 
   const latestWeekForExport = weeks[0];
@@ -298,11 +307,11 @@ export function WeeklyStoreReportsSection() {
             </div>
             <div className="rounded-md border bg-muted/20 px-3 py-2.5">
               <p className="text-[10px] text-muted-foreground">Bemanning</p>
-              <p className="mt-1 font-mono text-sm tabular-nums">{dec.format(selectedSummary.staff_hours)} h · {int.format(selectedSummary.staff_shifts)} pass</p>
+              <p className="mt-1 font-mono text-sm tabular-nums">{decFmt(selectedSummary.staff_hours)} h · {intFmt(selectedSummary.staff_shifts)} pass</p>
             </div>
             <div className="rounded-md border bg-muted/20 px-3 py-2.5">
               <p className="text-[10px] text-muted-foreground">Dagsrapporter</p>
-              <p className="mt-1 font-mono text-sm tabular-nums">{int.format(selectedSummary.daily_reports_count)} / {int.format(selectedSummary.expected_open_days)}</p>
+              <p className="mt-1 font-mono text-sm tabular-nums">{intFmt(selectedSummary.daily_reports_count)} / {intFmt(selectedSummary.expected_open_days)}</p>
             </div>
           </div>
         </div>
@@ -324,7 +333,7 @@ export function WeeklyStoreReportsSection() {
             weekRegions.find((r) => r.group_key === (groupFilter ?? "SE_TOTAL")) ?? weekRegions[0] ?? null;
           const headlineTotal = headline
             ? headline.total_sales_sek
-            : weekStores.reduce((sum, r) => sum + Number(r.total_sales_sek), 0);
+            : weekStores.reduce((sum, r) => sum + (num(r.total_sales_sek) ?? 0), 0);
           const headlineStatus = headline?.status ?? (weekStores.every((r) => r.status !== "pagaende") ? "klar" : "pagaende");
           const open = openWeek === week.key;
 
@@ -345,7 +354,7 @@ export function WeeklyStoreReportsSection() {
                     Vecka {week.iso_week}, {dateLabel(week.week_start)}–{dateLabel(week.week_end)}
                   </span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
-                    {storeFilter ? storeName(storeFilter) : REGION_LABELS[groupFilter ?? "SE_TOTAL"]}
+                    {storeFilter ? storeName(storeFilter) : REGION_LABELS[groupFilter ?? "SE_TOTAL"] ?? "Sverige totalt"}
                   </span>
                 </span>
                 <span className="flex shrink-0 flex-col items-end gap-1">
