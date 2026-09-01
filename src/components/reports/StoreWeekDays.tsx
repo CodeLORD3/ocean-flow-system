@@ -6,6 +6,12 @@ import { WeatherCell } from "./WeatherCell";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const num = (v: unknown): number | null => {
+  const n = typeof v === "number" ? v : v == null || v === "" ? NaN : Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+const intFmt = (v: unknown) => { const n = num(v); return n == null ? "—" : int.format(n); };
+const decFmt = (v: unknown) => { const n = num(v); return n == null ? "—" : dec.format(n); };
 
 /** Dag-för-dag-tabell för en butik under en vecka. */
 export function StoreWeekDays({
@@ -52,22 +58,22 @@ export function StoreWeekDays({
             <tr key={d.date} className={d.gross_sales == null ? "text-muted-foreground" : ""}>
               <td className="px-2 py-1.5">
                 <span className="font-medium">{d.weekday}</span>{" "}
-                <span className="text-muted-foreground">{d.date.slice(5)}</span>
+                <span className="text-muted-foreground">{String(d.date ?? "").slice(5)}</span>
               </td>
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">
-                {d.gross_sales == null ? "—" : `${int.format(d.gross_sales)} kr`}
+                {num(d.gross_sales) == null ? "—" : `${intFmt(d.gross_sales)} kr`}
               </td>
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">
-                {d.net_sales == null ? "—" : `${int.format(d.net_sales)} kr`}
+                {num(d.net_sales) == null ? "—" : `${intFmt(d.net_sales)} kr`}
               </td>
               <td className="w-[11rem] px-2 py-1.5">
                 <WeatherCell day={weather.data?.get(d.date)} loading={weather.isLoading} />
               </td>
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">
-                {d.receipt_count == null ? "—" : int.format(d.receipt_count)}
+                {intFmt(d.receipt_count)}
               </td>
-              <td className="px-2 py-1.5 text-right font-mono tabular-nums">{dec.format(d.staff_hours)}</td>
-              <td className="px-2 py-1.5 text-right font-mono tabular-nums">{int.format(d.staff_shifts)}</td>
+              <td className="px-2 py-1.5 text-right font-mono tabular-nums">{decFmt(d.staff_hours)}</td>
+              <td className="px-2 py-1.5 text-right font-mono tabular-nums">{intFmt(d.staff_shifts)}</td>
             </tr>
           ))}
         </tbody>
