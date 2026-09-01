@@ -28,6 +28,9 @@ import {
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
 import { canAccessRoute } from "@/lib/pageAccess";
+import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
+import { canOpenStaffPage, staffLevelOf } from "@/lib/staffModuleAccess";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useChatUnread } from "@/hooks/useChat";
@@ -99,6 +102,8 @@ export function ProductionSidebar() {
   const { getCount, markAsRead } = useNotifications();
   const chatUnread = useChatUnread();
   const incomingTransfers = useIncomingTransferCount(null);
+  const { staff } = useStaffAuth();
+  const staffLevel = staffLevelOf(staff);
   const { hiddenUrls, itemOrder, sectionLabels, sectionOrder } = useLocalSidebarPrefs("production");
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const LOCKED_URLS = ["/organisation"];
@@ -133,9 +138,10 @@ export function ProductionSidebar() {
             fallback: sIdx,
             items: section.items
               .filter(
-                (item) =>
-                  canAccessRoute("production", item.url) &&
-                  (LOCKED_URLS.includes(item.url) || !hiddenUrls.includes(item.url))
+                 (item) =>
+                   canAccessRoute("production", item.url) &&
+                   (!STAFF_MODULE_PATHS.includes(item.url) || canOpenStaffPage(staffLevel, item.url)) &&
+                   (LOCKED_URLS.includes(item.url) || !hiddenUrls.includes(item.url))
               )
               .map((item, i) => ({ ...item, sortOrder: itemOrder.get(item.url) ?? i, fallback: i }))
               .sort((a, b) => a.sortOrder - b.sortOrder || a.fallback - b.fallback),

@@ -72,6 +72,9 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { canAccessRoute } from "@/lib/pageAccess";
+import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
+import { canOpenStaffPage, staffLevelOf } from "@/lib/staffModuleAccess";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: BarChart3 },
@@ -178,6 +181,8 @@ export function AppSidebar() {
   const { getCount, markAsRead } = useNotifications();
   const chatUnread = useChatUnread();
   const incomingTransfers = useIncomingTransferCount(null);
+  const { staff } = useStaffAuth();
+  const staffLevel = staffLevelOf(staff);
 
   // Varje sektion kan fällas ihop så att alla kategorier syns i korta fönster.
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
@@ -213,6 +218,10 @@ export function AppSidebar() {
   }, [location.pathname]);
 
   const renderSection = (section: NavSection) => {
+    const visibleItems = section.items.filter(
+      (item) => !STAFF_MODULE_PATHS.includes(item.url) || canOpenStaffPage(staffLevel, item.url),
+    );
+    if (!visibleItems.length) return null;
     if (section.collapsible) {
       const open = isSectionOpen(section);
       return (
@@ -228,7 +237,7 @@ export function AppSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {section.items.map((item) => (
+                  {visibleItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild isActive={isActive(item.url)}>
                         <NavLink to={item.url} end onClick={closeMobileSidebar}>
@@ -252,7 +261,7 @@ export function AppSidebar() {
         <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            {section.items.map((item) => (
+            {visibleItems.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild isActive={isActive(item.url)}>
                   <NavLink to={item.url} end onClick={closeMobileSidebar}>

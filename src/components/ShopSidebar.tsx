@@ -25,6 +25,9 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { canAccessRoute } from "@/lib/pageAccess";
+import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
+import { canOpenStaffPage, staffLevelOf } from "@/lib/staffModuleAccess";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 
 const overviewNav = [
@@ -99,6 +102,8 @@ export function ShopSidebar() {
   const { data: stores } = useStores();
   const activeStore = stores?.find(s => s.id === activeStoreId);
   const incomingTransfers = useIncomingTransferCount(activeStoreId || null);
+  const { staff } = useStaffAuth();
+  const staffLevel = staffLevelOf(staff);
 
   const { hiddenUrls, itemOrder, sectionLabels, sectionOrder } = useStoreSidebarPrefs();
   const [customizeOpen, setCustomizeOpen] = useState(false);
@@ -114,6 +119,7 @@ export function ShopSidebar() {
         .filter(
           item =>
             canAccessRoute("shop", item.url) &&
+            (!STAFF_MODULE_PATHS.includes(item.url) || canOpenStaffPage(staffLevel, item.url)) &&
             (LOCKED_URLS.includes(item.url) || !hiddenUrls.includes(item.url))
         )
         .map((item, i) => ({ ...item, sortOrder: itemOrder.get(item.url) ?? i, fallback: i }))
