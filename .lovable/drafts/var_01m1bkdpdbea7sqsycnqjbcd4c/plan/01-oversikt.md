@@ -1,18 +1,25 @@
-# Schema: gör Personal & Schema lik referensdesignen
+# Schema vecka & dag enligt designleveransen
 
-Sidan Personal & Schema (`/staff-schedule`) byggs om visuellt så den följer den uppladdade prototypen. Ingen ändring i schemalogik, kostnadsberäkning, behörigheter eller databas — bara layout, typografi och komponentstruktur.
+Designspecen ändrar inte målet — Personal & Schema (`/staff-schedule`) byggs om visuellt — men den ersätter min gissning med exakta mått, regler och tokens. Planen nedan följer designleveransens avsnitt 0a, 3b och 10 samt designkoden i avsnitt B. Ingen ändring i schemalogik, kostnadsberäkning, behörigheter eller databas.
 
-## Varför det inte ser ut så idag
+## Vad specen slår fast som jag inte hade med
 
-Dagens sida är byggd med vanliga kort (`Card`) och en bred tabell: rubrik med Vecka/Kalender-knappar, en filterrad, fyra KPI-kort och en veckotabell där varje rad är en anställd. Prototypen har istället en mörk arbetsytehuvud, Vecka/Dag som segmenterad växlare, beslutsrad med nyckeltal i mono, butiker som korta koder istället för färgade etiketter, och en högerpanel för dagens detaljer. Det är alltså två olika layouter, inte en trasig sida.
+- **Funktionsfärger som tokens** (alert/warn/ok i tre steg: 100 platta, 600 kant/prick, 800 text). Text får aldrig sättas i ett 600-steg.
+- **Status = 3 px mättad vänsterkant plus textetikett.** Färg är aldrig ensam bärare.
+- **Färg kodar status, aldrig enhet.** Enheter får monokoder i grå platta (B01–B07, GRO, ADM) med namnet primärt och koden sekundärt.
+- **Alla tal i mono, tabulära, högerställda.** Tid som `8 h 11 min`, aldrig `8,11`.
+- **Alla belopp märks preliminära, märkningen sitter på talet.**
+- **Luft istället för linjer** — sektionsetiketter, inte ramar och zebra.
+- **Tomläget föreslår**: en oschemalagd vecka visar tre förslag (Kopiera vecka N med passantal, Importera från fil, Börja tomt) — aldrig ett tomt rutnät med plusknapp.
+- **Publicering är en handling för hela veckan** med kostnaden i knappen: "Publicera vecka 36 — 318,5 timmar, 62 940 kr preliminärt".
+- **Dagvyn** är banor per person över en tidsaxel, med panelen "Kommer och går" till höger (328 px).
 
-## Vad som byggs
+## Vyerna som byggs
 
-1. **Arbetsytehuvud** — mörk rad med titel, vecka/datumnavigering, enhets- och stadsfilter samt primär åtgärd (Planera pass). Ersätter dagens rubrik plus separat filterkort.
-2. **Segmenterad vyväxlare** — Vecka | Dag | Kalender i ett spår istället för tre lösa knappar. Dagvyn är ny som vy, men använder befintlig passdata för valt datum.
-3. **Beslutsrad med nyckeltal** — planerade timmar, lönekostnad, andel av omsättning och antal som kräver åtgärd, i en tät rad med monosiffror istället för fyra stora kort.
-4. **Veckogrid** — samma data som idag, men med tydliga kolumnlinjer, tonad dagkolumn för idag, kompakta passblock och butikskoder (t.ex. B03, GRO) i stället för långa etiketter.
-5. **Dagpanel** — höger sida visar valt pass/dag: personens namn, tid, enhet, avvikelse mot stämpling och avtalsinformation kopplad till anställningen.
-6. **Status- och legendspråk** — Publicerat, Utkast, Regelbrott, Öppet pass som enhetliga statusmärken.
+**Veckovy.** Person mot veckodag. Vänsterkolumn 176 px med namn och anställningsform. Sju dagkolumner, helgen med sänkt bakgrund. Högerkolumn 132 px med veckans timmar mot avtalstak som tal plus delad stapel där mertidsdelen är bärnsten. Nederst en täckningsrad per dag, bemanning mot behov. Passen i cellerna: 3 px vänsterkant i statusfärg, tid i mono, grundpasskod under. Regelbrott får dessutom hel 1,5 px ram och orsaken förkortad ("Vila 7 h").
 
-Allt görs responsivt: på telefon och surfplatta staplas beslutsraden, gridet scrollar horisontellt och dagpanelen blir en panel underifrån.
+**Dagvy.** Banor per person över tidsaxel 04–18 (eller enhetens öppettider plus två timmar). Pass som block med grundpass och kostnadsställe. Under banorna en bemanningsgraf per halvtimme mot kapacitet, där överbelastning är alert-färgad med minuttalet skrivet.
+
+**Kopplingspanel vid valt pass.** Person, tider, kostnadsställen, lönekostnad (preliminär), veckans timmar mot grad, regelstatus med paragrafhänvisning och alltid två åtgärdsförslag — aldrig bara ett nej.
+
+**Beslutsrad överst.** Ett larm, ett verktyg och ett mätvärde ser olika ut — inte tre likvärdiga kort.
