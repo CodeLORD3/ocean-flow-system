@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { FORTNOX_JOB_STATUS_LABEL } from "@/lib/fortnoxStatus";
 import { FortnoxCancelDraftButton } from "@/components/orders/FortnoxCancelDraftButton";
 import { FortnoxImportCustomersDialog } from "@/components/fortnox/FortnoxImportCustomersDialog";
+import { FortnoxImportEmployeesDialog } from "@/components/fortnox/FortnoxImportEmployeesDialog";
 
 const ENTITIES = [
   { code: "de-no1", name: "DE No.1 AB" },
@@ -261,6 +262,7 @@ export default function FortnoxSettings() {
       <Tabs defaultValue="customers">
         <TabsList>
           <TabsTrigger value="customers">Kundmatchning</TabsTrigger>
+          <TabsTrigger value="employees">Anställda</TabsTrigger>
           <TabsTrigger value="jobs">Fakturajobb</TabsTrigger>
         </TabsList>
 
@@ -307,6 +309,25 @@ export default function FortnoxSettings() {
                   ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="employees" className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {ENTITIES.map((e) => (
+              <Button key={e.code} size="sm" variant={entity === e.code ? "default" : "outline"} onClick={() => setEntity(e.code)}>
+                {e.name}
+              </Button>
+            ))}
+          </div>
+          <Card>
+            <CardContent className="p-4">
+              <FortnoxImportEmployeesDialog
+                legalEntityCode={entity}
+                entityName={ENTITIES.find((e) => e.code === entity)?.name ?? entity}
+                disabled={connByCode.get(entity)?.status !== "connected"}
+              />
             </CardContent>
           </Card>
         </TabsContent>
