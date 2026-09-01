@@ -12,3 +12,7 @@
 - [x] Respektera vald rapportinställning (t.ex. Göteborg) i totaler och butiksvy
 - [x] Säkerställ stadsspecifikt väder per butik och färgkodade väderikoner
 - [x] Besvara etapp 4 UI-kontrollfrågorna punkt för punkt med verifierade kod- och sökvägsreferenser
+- [x] Härda stämpelklockan: autostängning, faktisk vilokontroll, journalvalidering och nattlig attestkörning
+- [x] Koppla offlinekön till journalvyn med manuell registrering och avfärdande med skäl
+- [x] Kostnadsställebyte i kiosken samt beslutbar liggarplikt per driftställe
+- [ ] Driftpunkter kvar: klockidentitet för fyra anställda, stationsutrullning per försäljningsställe, övertidsjournal, skarp verifiering av lönekedjan och GDPR-rutin i skrift
