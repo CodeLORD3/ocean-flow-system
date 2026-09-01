@@ -50,6 +50,22 @@ export default function StaffRules() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["staff-rules-settings"] }),
   });
 
+  /** Liggarplikten måste beslutas per driftställe, inte lämnas som "utred". */
+  const updateLedger = useMutation({
+    mutationFn: async ({ id, value }: { id: string; value: string }) => {
+      const { error } = await supabase
+        .from("work_sites")
+        .update({ ledger_required: value as "ja" | "nej" | "utred" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["staff-rules-settings"] });
+      toast.success("Liggarplikten uppdaterad");
+    },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Kunde inte spara liggarplikten"),
+  });
+
   const addHoliday = async () => {
     if (!holiday.date || !holiday.name.trim()) return;
     setSaving(true);
@@ -93,7 +109,43 @@ export default function StaffRules() {
             <section className="space-y-1"><SectionLabel>OB-fönster · minutbaserat</SectionLabel>{windows.map((window) => <IndustryRow key={window.id} edge="accent" className="flex-wrap"><div className="min-w-[240px] flex-1"><p className="font-medium">{window.name}</p><p className="ind-muted text-xs">{window.day_kind} · {window.start_time.slice(0, 5)}–{window.end_time.slice(0, 5)} · {window.agreement_source ?? ""}</p></div><strong className="ind-mono">{window.pct} %</strong><StatusLabel tone={window.wage_code_id ? "ok" : "alert"}>{window.wage_code_id ? `Löneart ${wageById.get(window.wage_code_id) ?? "kopplad"}` : "Löneart saknas"}</StatusLabel></IndustryRow>)}</section>
             <section className="space-y-1"><SectionLabel>Lönearter</SectionLabel>{wages.map((wage) => <IndustryRow key={wage.id}><span className="ind-mono w-24">{wage.code}</span><span>{wage.name}</span><StatusLabel tone={wage.is_active ? "ok" : "neutral"}>{wage.is_active ? "Aktiv" : "Inaktiv"}</StatusLabel></IndustryRow>)}</section>
           </TabsContent>
-          <TabsContent value="sites" className="space-y-1"><SectionLabel>Kontering per driftställe</SectionLabel>{sites.map((site) => <IndustryRow key={site.id} edge="neutral" className="flex-wrap"><div className="flex-1"><p className="font-medium">{site.name}</p><p className="ind-muted text-xs">Platslås {site.geofence_radius_m} m · {site.allow_mobile_punch ? "Mobil tillåten" : "Endast terminal"}</p></div><span className="ind-mono font-semibold">KST {site.posting_cost_center}</span><StatusLabel tone={site.ledger_required === "ja" ? "ok" : site.ledger_required === "utred" ? "progress" : "neutral"}>{site.ledger_required === "utred" ? "Liggarplikt: Utred" : `Liggarplikt: ${site.ledger_required}`}</StatusLabel></IndustryRow>)}</TabsContent>
+          <TabsContent value="sites" className="space-y-3">
+            <div>
+              <SectionLabel>Kontering och liggarplikt per driftställe</SectionLabel>
+              <p className="ind-muted mt-1 text-xs">
+                Liggarplikten ska beslutas per driftställe. Så länge ett driftställe står som "Utred" är det oklart om
+                personalliggaren måste kunna visas vid kontroll.
+              </p>
+            </div>
+            <div className="space-y-1">
+              {sites.map((site) => (
+                <IndustryRow key={site.id} edge={site.ledger_required === "utred" ? "accent-2" : "neutral"} className="flex-wrap">
+                  <div className="min-w-[200px] flex-1">
+                    <p className="font-medium">{site.name}</p>
+                    <p className="ind-muted text-xs">
+                      Platslås {site.geofence_radius_m} m · {site.allow_mobile_punch ? "Mobil tillåten" : "Endast terminal"}
+                    </p>
+                  </div>
+                  <span className="ind-mono font-semibold">KST {site.posting_cost_center}</span>
+                  <div className="flex items-center gap-1">
+                    {(["ja", "nej", "utred"] as const).map((option) => (
+                      <IndustryButton
+                        key={option}
+                        variant={site.ledger_required === option ? "primary" : "secondary"}
+                        disabled={updateLedger.isPending}
+                        onClick={() => updateLedger.mutate({ id: site.id, value: option })}
+                      >
+                        {option === "ja" ? "Liggarplikt" : option === "nej" ? "Ingen plikt" : "Utred"}
+                      </IndustryButton>
+                    ))}
+                  </div>
+                  <StatusLabel tone={site.ledger_required === "ja" ? "ok" : site.ledger_required === "utred" ? "progress" : "neutral"}>
+                    {site.ledger_required === "utred" ? "Beslut saknas" : `Liggarplikt: ${site.ledger_required}`}
+                  </StatusLabel>
+                </IndustryRow>
+              ))}
+            </div>
+          </TabsContent>
           <TabsContent value="holidays" className="space-y-4"><div className="flex flex-wrap items-end gap-2"><div><SectionLabel>Datum</SectionLabel><IndustryInput type="date" value={holiday.date} onChange={(e) => setHoliday((v) => ({ ...v, date: e.target.value }))} /></div><div><SectionLabel>Namn</SectionLabel><IndustryInput placeholder="T.ex. Julafton" value={holiday.name} onChange={(e) => setHoliday((v) => ({ ...v, name: e.target.value }))} /></div><IndustryButton variant="primary" corners disabled={saving} onClick={addHoliday}><Plus className="h-4 w-4" />Lägg till</IndustryButton></div><div className="space-y-1">{holidays.map((item) => <IndustryRow key={item.id} className="flex-wrap"><span className="ind-mono w-28">{item.holiday_date}</span><span className="flex-1">{item.name}</span>{item.is_major_holiday && <StatusLabel tone="progress">Storhelg</StatusLabel>}</IndustryRow>)}</div></TabsContent>
           <TabsContent value="templates" className="mt-5"><ShiftTemplatesPanel /></TabsContent>
         </Tabs>

@@ -33,8 +33,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Plus, Pencil, Printer, ShieldCheck, X } from "lucide-react";
-import { useTimeEntries, useCreateTimeEntry, type TimeEntry } from "@/hooks/useClock";
+import { AlertTriangle, Loader2, Plus, Pencil, Printer, ShieldCheck, X } from "lucide-react";
+import {
+  useTimeEntries,
+  useCreateTimeEntry,
+  useClockSyncFailures,
+  useDismissSyncFailure,
+  useRegisterSyncFailure,
+  type ClockSyncFailure,
+  type TimeEntry,
+} from "@/hooks/useClock";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useStores } from "@/hooks/useStores";
 import {
@@ -59,11 +67,16 @@ export default function TimeEntriesPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [manualOpen, setManualOpen] = useState(false);
   const [correcting, setCorrecting] = useState<TimeEntry | null>(null);
+  const [failure, setFailure] = useState<ClockSyncFailure | null>(null);
+  const [failureForm, setFailureForm] = useState({ employee_id: "", note: "" });
 
   const { data: stores = [] } = useStores();
   const { data: employees = [] } = useEmployees(true);
   const { data: entries = [], isLoading } = useTimeEntries(from, to, storeId || null);
+  const { data: syncFailures = [] } = useClockSyncFailures("open");
   const createEntry = useCreateTimeEntry();
+  const registerFailure = useRegisterSyncFailure();
+  const dismissFailure = useDismissSyncFailure();
 
   const [form, setForm] = useState({
     employee_id: "",
@@ -137,6 +150,40 @@ export default function TimeEntriesPage() {
       note: "",
     }));
   };
+
+  const submitFailureRegistration = async () => {
+    if (!failure) return;
+    try {
+      await registerFailure.mutateAsync({
+        id: failure.id,
+        employee_id: failureForm.employee_id,
+        occurred_at: failure.occurred_at,
+        punch_type: failure.punch_type,
+        store_id: failure.store_id,
+        station_id: failure.station_id,
+        work_site_id: failure.work_site_id,
+        cost_center: failure.cost_center,
+        note: failureForm.note,
+      });
+      toast.success("Stämplingen är registrerad i journalen");
+      setFailure(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte registrera stämplingen");
+    }
+  };
+
+  const submitFailureDismissal = async () => {
+    if (!failure) return;
+    try {
+      await dismissFailure.mutateAsync({ id: failure.id, note: failureForm.note });
+      toast.success("Posten avfärdad med skäl");
+      setFailure(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte avfärda posten");
+    }
+  };
+
+
 
   const openInspector = async () => {
     const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
@@ -313,6 +360,29 @@ export default function TimeEntriesPage() {
 
       <div className="mt-4">{filters}</div>
 
+      {syncFailures.length > 0 && (
+        <section className="mt-6 space-y-2">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <SectionLabel>Offlineposter som kräver åtgärd ({syncFailures.length})</SectionLabel>
+          </div>
+          <p className="ind-muted text-sm">
+            Dessa stämplingar kunde inte synkroniseras automatiskt. Registrera dem i journalen eller avfärda dem med ett dokumenterat skäl.
+          </p>
+          {syncFailures.map((item) => (
+            <IndustryRow key={item.id} edge="alert" className="flex-wrap">
+              <div className="min-w-[220px] flex-1">
+                <p className="font-medium">{item.identifier_masked ?? "Offlinepost"} · {TYPE_LABEL[item.punch_type]}</p>
+                <p className="ind-muted text-xs">{svenskDatum(item.occurred_at)} {svenskTid(item.occurred_at)} · {item.reason}</p>
+              </div>
+              <IndustryButton variant="secondary" size="touch" onClick={() => { setFailure(item); setFailureForm({ employee_id: "", note: "" }); }}>
+                Hantera
+              </IndustryButton>
+            </IndustryRow>
+          ))}
+        </section>
+      )}
+
       <section className="mt-6">
         <SectionLabel className="mb-2">Dagslista</SectionLabel>
         {isLoading ? (
@@ -398,6 +468,44 @@ export default function TimeEntriesPage() {
         })}
       </section>
 
+
+      {/* Misslyckad offlinestämpling */}
+      <Dialog open={Boolean(failure)} onOpenChange={(open) => !open && setFailure(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hantera offlinepost</DialogTitle>
+          </DialogHeader>
+          {failure && (
+            <div className="space-y-4">
+              <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-sm">
+                <p className="font-medium">{TYPE_LABEL[failure.punch_type]} · {svenskDatum(failure.occurred_at)} {svenskTid(failure.occurred_at)}</p>
+                <p className="mt-1 text-muted-foreground">{failure.reason}</p>
+              </div>
+              <div className="space-y-1">
+                <Label>Person</Label>
+                <Select value={failureForm.employee_id} onValueChange={(v) => setFailureForm((f) => ({ ...f, employee_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Välj person" /></SelectTrigger>
+                  <SelectContent>
+                    {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.first_name} {e.last_name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>Åtgärdsanteckning</Label>
+                <Input value={failureForm.note} onChange={(e) => setFailureForm((f) => ({ ...f, note: e.target.value }))} placeholder="Varför registreras eller avfärdas posten?" />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button variant="ghost" className="text-destructive" onClick={() => void submitFailureDismissal()} disabled={dismissFailure.isPending || !failureForm.note.trim()}>
+              Avfärda med skäl
+            </Button>
+            <Button onClick={() => void submitFailureRegistration()} disabled={registerFailure.isPending || !failureForm.employee_id}>
+              Registrera i journal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Manuell efterregistrering */}
       <Dialog open={manualOpen} onOpenChange={setManualOpen}>
