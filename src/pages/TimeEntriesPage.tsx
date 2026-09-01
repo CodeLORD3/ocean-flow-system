@@ -67,11 +67,16 @@ export default function TimeEntriesPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [manualOpen, setManualOpen] = useState(false);
   const [correcting, setCorrecting] = useState<TimeEntry | null>(null);
+  const [failure, setFailure] = useState<ClockSyncFailure | null>(null);
+  const [failureForm, setFailureForm] = useState({ employee_id: "", note: "" });
 
   const { data: stores = [] } = useStores();
   const { data: employees = [] } = useEmployees(true);
   const { data: entries = [], isLoading } = useTimeEntries(from, to, storeId || null);
+  const { data: syncFailures = [] } = useClockSyncFailures("open");
   const createEntry = useCreateTimeEntry();
+  const registerFailure = useRegisterSyncFailure();
+  const dismissFailure = useDismissSyncFailure();
 
   const [form, setForm] = useState({
     employee_id: "",
