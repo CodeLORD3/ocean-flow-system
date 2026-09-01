@@ -371,7 +371,8 @@ export function DailyReportsArchive() {
     () => (storeFilter === "all" ? reports : reports.filter((report) => report.store_id === storeFilter)),
     [reports, storeFilter],
   );
-  const totalSales = useMemo(() => rows.reduce((sum, report) => sum + (report.gross_sales ?? 0), 0), [rows]);
+  /* Listan visar nettoomsättning — det är talet som följs upp per dag. */
+  const totalNetSales = useMemo(() => rows.reduce((sum, report) => sum + (report.net_sales ?? 0), 0), [rows]);
   const totalReceipts = useMemo(() => rows.reduce((sum, report) => sum + (report.receipt_count ?? 0), 0), [rows]);
   const totalStaffHours = useMemo(() => rows.reduce((sum, report) => sum + totalHours(report.staff_entries ?? []), 0), [rows]);
 
@@ -401,7 +402,7 @@ export function DailyReportsArchive() {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Metric label="Rapporter" value={nf(rows.length)} emphasis />
-        <Metric label="Brutto totalt" value={`${nf(totalSales)} kr`} />
+        <Metric label="Nettoomsättning totalt" value={`${nf(totalNetSales)} kr`} />
         <Metric label="Kvitton totalt" value={nf(totalReceipts)} />
         <Metric label="Bemanning" value={`${totalStaffHours.toFixed(1)} h`} />
       </div>
@@ -411,7 +412,7 @@ export function DailyReportsArchive() {
       ) : (
         <div className="overflow-hidden rounded-md border border-border/80">
           <div className="hidden grid-cols-[minmax(0,1fr)_150px_130px_100px] gap-4 border-b bg-muted/30 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid">
-            <span>Butik och datum</span><span>Rapportör</span><span className="text-right">Brutto</span><span className="text-right">Bemanning</span>
+            <span>Butik och datum</span><span>Rapportör</span><span className="text-right">Nettoomsättning</span><span className="text-right">Bemanning</span>
           </div>
           <div className="divide-y divide-border/70">
             {rows.map((report) => {
@@ -430,7 +431,7 @@ export function DailyReportsArchive() {
                       <span className="mt-0.5 block flex flex-wrap items-center gap-2 text-xs text-muted-foreground">{formatWeekdayDate(report.report_date)}{correctedReportIds.has(report.id) && <Badge variant="outline" className="border-warning/40 px-1.5 py-0 text-[9px] text-warning">Korrigerad</Badge>}</span>
                     </button>
                     <span className="hidden truncate text-xs text-muted-foreground md:block">{nameOf(report.created_by) ?? "Okänd rapportör"}</span>
-                    <span className="col-start-2 row-start-1 text-right font-mono text-sm font-medium tabular-nums md:col-auto md:row-auto">{nf(report.gross_sales)} kr</span>
+                    <span className="col-start-2 row-start-1 text-right font-mono text-sm font-medium tabular-nums md:col-auto md:row-auto">{nf(report.net_sales)} kr</span>
                     <span className="col-start-2 row-start-2 flex justify-end gap-2 text-xs text-muted-foreground md:col-auto md:row-auto md:justify-end"><Users className="h-3.5 w-3.5" />{(report.staff_entries ?? []).length} · {reportHours.toFixed(1)} h</span>
                     {isAdmin && <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(report)} className="col-start-2 row-start-3 ml-auto md:col-auto md:row-auto"><Edit3 /> Ändra</Button>}
                   </div>
@@ -441,10 +442,10 @@ export function DailyReportsArchive() {
                         {correctedReportIds.has(report.id) && <Badge variant="outline" className="border-warning/40 text-warning">Korrigerad efter inskick</Badge>}
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                        <Metric label="Brutto" value={`${nf(report.gross_sales)} kr`} emphasis />
-                        <Metric label="Netto" value={`${nf(report.net_sales)} kr`} />
+                        <Metric label="Nettoomsättning" value={`${nf(report.net_sales)} kr`} emphasis />
+                        <Metric label="Brutto" value={`${nf(report.gross_sales)} kr`} />
                         <Metric label="Kvitton" value={nf(report.receipt_count)} />
-                        <Metric label="Snittköp" value={report.receipt_count ? `${((report.gross_sales ?? 0) / report.receipt_count).toFixed(2)} kr` : "—"} />
+                        <Metric label="Snittköp" value={report.receipt_count ? `${((report.net_sales ?? 0) / report.receipt_count).toFixed(2)} kr` : "—"} />
                         <Metric label="Största köp" value={`${nf(report.largest_sale)} kr`} />
                       </div>
 
