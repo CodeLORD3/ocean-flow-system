@@ -475,8 +475,16 @@ export default function StaffSchedule() {
           <Card className="shadow-card">
             <CardContent className="p-3">
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Kostnad av omsättning</p>
-              <p className="mt-0.5 font-mono text-lg tabular-nums text-foreground">
+              <p className={`mt-0.5 font-mono text-lg tabular-nums ${ratioTone(weekTotals.cost, weekTotals.revenue)}`}>
                 {ratio(weekTotals.cost, weekTotals.revenue) ?? "Omsättningsdata saknas"}
+              </p>
+              <p className="text-[10px] tabular-nums text-muted-foreground">
+                Mål: 15–20 %
+                {ratioStatus(weekTotals.cost, weekTotals.revenue) && (
+                  <span className={`ml-1 font-medium ${ratioTone(weekTotals.cost, weekTotals.revenue)}`}>
+                    · {ratioStatus(weekTotals.cost, weekTotals.revenue)}
+                  </span>
+                )}
               </p>
               {weekTotals.revenue !== null && (
                 <p className="text-[10px] tabular-nums text-muted-foreground">
