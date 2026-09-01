@@ -50,14 +50,16 @@ export function useImageFeed(limit = 300) {
       if (error) throw error;
       const images = (imgs || []) as EntityImage[];
 
-      // Namnuppslagningen går via en scope-oberoende funktion. Tabellen stores är
-      // bolagsfiltrerad, så ett direktanrop skulle dölja butiker från andra bolag
-      // ("Okänd enhet") och tömma enhetsfiltret i flödet.
+      // Namnuppslagningen går via en scope-oberoende funktion. Om en äldre
+      // deployment saknar EXECUTE-rättigheten ska inte det stoppa hela flödet:
+      // bilderna är redan läsbara och butikstabellen har en säker läs-policy.
       let storeMap = new Map<string, { name: string; city: string | null }>();
       const { data: stores, error: sErr } = await supabase.rpc("image_feed_store_labels");
-      if (sErr) throw sErr;
+      const labelRows = sErr
+        ? (await supabase.from("stores").select("id, name, city")).data
+        : stores;
       storeMap = new Map(
-        (stores || []).map((s: any) => [s.id as string, { name: s.name as string, city: (s.city ?? null) as string | null }]),
+        (labelRows || []).map((s: any) => [s.id as string, { name: s.name as string, city: (s.city ?? null) as string | null }]),
       );
 
 
