@@ -269,3 +269,109 @@
   .ind-print-hidden { display: none !important; }
   .ind-inspect { padding: 0; }
 }
+
+/* ------------------------------------------------ schema: vecka och dag (10) */
+
+/* Pass i veckogriden: 3 px vänsterkant i statusfärg, aldrig färg som ensam
+   bärare — tid i mono och grundpasskod står alltid skrivna. */
+.ind-shift {
+  width: 100%;
+  text-align: left;
+  background: var(--color-neutral-100);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  box-shadow: inset 3px 0 0 var(--color-neutral-500);
+  border: 1px solid transparent;
+}
+.ind-shift--published { box-shadow: inset 3px 0 0 var(--color-accent-600); }
+.ind-shift--draft { box-shadow: inset 3px 0 0 var(--color-warn-600); background: var(--color-warn-100); }
+.ind-shift--open { box-shadow: inset 3px 0 0 var(--color-accent-2); border-style: dashed; border-color: var(--color-divider); }
+/* Regelbrott: kant plus hel 1,5 px ram och orsaken i förkortad form. */
+.ind-shift--violation {
+  box-shadow: inset 3px 0 0 var(--color-alert-600);
+  border: 1.5px solid var(--color-alert-600);
+  background: var(--color-alert-100);
+}
+.ind-shift:focus-visible { outline: 2px solid var(--color-accent-700); outline-offset: 2px; }
+.ind-shift__time { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; font-size: 12px; font-weight: 500; }
+.ind-shift__code { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ind-muted); }
+.ind-shift__violation { font-size: 10px; color: var(--color-alert-800); }
+
+/* Enhetens monokod: grå platta, aldrig statusfärg (regel 6). */
+.ind-monocode {
+  display: inline-block;
+  background: var(--color-neutral-200);
+  color: var(--color-neutral-800);
+  border-radius: var(--radius-sm);
+  padding: 0 4px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Veckogrid: luft istället för linjer, helgen med sänkt bakgrund. */
+.ind-grid-head { color: var(--ind-muted); font-size: 12px; }
+.ind-grid-weekend { background: var(--color-surface); }
+.ind-grid-today { box-shadow: inset 0 2px 0 var(--color-accent-600); }
+.ind-grid-row + .ind-grid-row { border-top: 1px solid var(--color-divider); }
+.ind-grid-sticky { position: sticky; left: 0; z-index: 2; background: var(--color-bg); }
+
+/* Timmar mot avtalstak: delad stapel där mertidsdelen är bärnsten. */
+.ind-cap-bar { height: 6px; border-radius: 3px; background: var(--color-neutral-300); overflow: hidden; display: flex; }
+.ind-cap-bar__base { background: var(--color-accent-600); }
+.ind-cap-bar__extra { background: var(--color-warn-600); }
+
+/* Dagvyns banor och bemanningsgraf. */
+.ind-lane { position: relative; height: 26px; background: var(--color-surface); border-radius: var(--radius-sm); }
+.ind-lane__block {
+  position: absolute; top: 3px; bottom: 3px;
+  background: var(--color-neutral-100);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 3px 0 0 var(--color-accent-600);
+  padding: 0 4px;
+  overflow: hidden;
+  text-align: left;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ind-lane__block--violation { box-shadow: inset 3px 0 0 var(--color-alert-600); border: 1.5px solid var(--color-alert-600); }
+.ind-lane__block:focus-visible { outline: 2px solid var(--color-accent-700); outline-offset: 1px; }
+.ind-axis-tick { border-left: 1px solid var(--color-divider); }
+.ind-load-bar { background: var(--color-neutral-300); }
+.ind-load-bar--over { background: var(--color-alert-600); }
+
+/* Kopplingspanel och "Kommer och går". */
+.ind-side-panel { background: var(--color-neutral-100); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+
+/* ----------------------------------------------------------- Personal & schema */
+.ind-workspace-header {
+  background: var(--color-accent-900);
+  color: var(--color-neutral-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+.ind-workspace { background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+.ind-header-chip, .ind-meta-chip { display: inline-flex; align-items: center; min-height: 32px; padding: 0 var(--space-3); border: 1px solid var(--color-divider); border-radius: var(--radius-md); color: var(--ind-muted); font-size: 12px; }
+.ind-workspace-header .ind-header-chip { border-color: color-mix(in srgb, var(--color-accent-200) 30%, transparent); color: var(--color-accent-200); }
+.ind-select { min-height: 36px; height: 36px; background: var(--color-neutral-100); border-color: var(--color-divider); color: var(--color-text); font-family: var(--font-body); font-size: 13px; }
+.ind-date-control { min-height: 36px; height: 36px; background: var(--color-neutral-100); color: var(--color-text); }
+.ind-icon-action, .ind-add-shift { border: 0; background: transparent; color: var(--color-accent-700); cursor: pointer; }
+.ind-icon-action { display: inline-flex; padding: 4px; border-radius: var(--radius-sm); }
+.ind-icon-action:hover, .ind-add-shift:hover { background: var(--color-accent-100); }
+.ind-add-shift { display: inline-flex; align-items: center; gap: 3px; padding: 2px 4px; font-size: 10px; color: var(--ind-muted); }
+.ind-empty-state { display: flex; min-height: 320px; flex-direction: column; align-items: center; justify-content: center; padding: var(--space-8); text-align: center; color: var(--ind-muted); }
+.ind-schema-footer { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); border-top: 1px solid var(--color-divider); padding: var(--space-3) var(--space-4); font-size: 11px; color: var(--ind-muted); }
+.ind-schema-footer > span { display: inline-flex; align-items: center; gap: 6px; }
+.ind-legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.ind-legend-dot--accent { background: var(--color-accent-600); }
+.ind-legend-dot--ok { background: var(--color-ok-600); }
+.ind-legend-dot--warn { background: var(--color-warn-600); }
+.ind-footer-alert { color: var(--color-alert-800); }
+.ind-decision__action { min-width: 132px; padding-left: var(--space-5); border-left: 1px solid var(--color-divider); }
+@media (max-width: 700px) {
+  .ind-decision { gap: var(--space-4); }
+  .ind-decision__value { font-size: 28px; }
+  .ind-decision__action { border-left: 0; padding-left: 0; }
+  .ind-workspace-header .ind-btn { min-height: 40px; }
+}
