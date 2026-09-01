@@ -402,7 +402,7 @@ export function DailyReportsArchive() {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Metric label="Rapporter" value={nf(rows.length)} emphasis />
-        <Metric label="Brutto totalt" value={`${nf(totalSales)} kr`} />
+        <Metric label="Nettoomsättning totalt" value={`${nf(totalNetSales)} kr`} />
         <Metric label="Kvitton totalt" value={nf(totalReceipts)} />
         <Metric label="Bemanning" value={`${totalStaffHours.toFixed(1)} h`} />
       </div>
