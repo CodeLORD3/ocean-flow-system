@@ -263,8 +263,29 @@ export default function StaffSchedule() {
     };
   }, [days, visibleShifts, rateMap, revenue.data, scopeStoreIds, factor, actualMap, visibleStaffIds]);
 
-  const ratio = (cost: number, rev: number | null) =>
-    rev && rev > 0 && cost > 0 ? `${((cost / rev) * 100).toFixed(1)} %` : null;
+  const ratioValue = (cost: number, rev: number | null) =>
+    rev && rev > 0 && cost > 0 ? (cost / rev) * 100 : null;
+
+  const ratio = (cost: number, rev: number | null) => {
+    const value = ratioValue(cost, rev);
+    return value === null ? null : `${value.toFixed(1)} %`;
+  };
+
+  /** Målet för personalkostnad är 15–20 % av försäljningen. */
+  const ratioTone = (cost: number, rev: number | null) => {
+    const value = ratioValue(cost, rev);
+    if (value === null) return "text-muted-foreground";
+    if (value >= 15 && value <= 20) return "text-emerald-500";
+    if (value < 15) return "text-amber-500";
+    return "text-rose-500";
+  };
+
+  const ratioStatus = (cost: number, rev: number | null) => {
+    const value = ratioValue(cost, rev);
+    if (value === null) return null;
+    if (value >= 15 && value <= 20) return "Inom mål";
+    return value < 15 ? "Under mål" : "Över mål";
+  };
 
   const staffWeek = (staffId: string) => {
     const rows = visibleShifts.filter((p) => p.staff_id === staffId && days.includes(p.shift_date));
@@ -454,8 +475,16 @@ export default function StaffSchedule() {
           <Card className="shadow-card">
             <CardContent className="p-3">
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Kostnad av omsättning</p>
-              <p className="mt-0.5 font-mono text-lg tabular-nums text-foreground">
+              <p className={`mt-0.5 font-mono text-lg tabular-nums ${ratioTone(weekTotals.cost, weekTotals.revenue)}`}>
                 {ratio(weekTotals.cost, weekTotals.revenue) ?? "Omsättningsdata saknas"}
+              </p>
+              <p className="text-[10px] tabular-nums text-muted-foreground">
+                Mål: 15–20 %
+                {ratioStatus(weekTotals.cost, weekTotals.revenue) && (
+                  <span className={`ml-1 font-medium ${ratioTone(weekTotals.cost, weekTotals.revenue)}`}>
+                    · {ratioStatus(weekTotals.cost, weekTotals.revenue)}
+                  </span>
+                )}
               </p>
               {weekTotals.revenue !== null && (
                 <p className="text-[10px] tabular-nums text-muted-foreground">
