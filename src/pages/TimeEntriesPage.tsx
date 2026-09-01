@@ -360,6 +360,29 @@ export default function TimeEntriesPage() {
 
       <div className="mt-4">{filters}</div>
 
+      {syncFailures.length > 0 && (
+        <section className="mt-6 space-y-2">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <SectionLabel>Offlineposter som kräver åtgärd ({syncFailures.length})</SectionLabel>
+          </div>
+          <p className="ind-muted text-sm">
+            Dessa stämplingar kunde inte synkroniseras automatiskt. Registrera dem i journalen eller avfärda dem med ett dokumenterat skäl.
+          </p>
+          {syncFailures.map((item) => (
+            <IndustryRow key={item.id} edge="alert" className="flex-wrap">
+              <div className="min-w-[220px] flex-1">
+                <p className="font-medium">{item.identifier_masked ?? "Offlinepost"} · {TYPE_LABEL[item.punch_type]}</p>
+                <p className="ind-muted text-xs">{svenskDatum(item.occurred_at)} {svenskTid(item.occurred_at)} · {item.reason}</p>
+              </div>
+              <IndustryButton variant="secondary" size="touch" onClick={() => { setFailure(item); setFailureForm({ employee_id: "", note: "" }); }}>
+                Hantera
+              </IndustryButton>
+            </IndustryRow>
+          ))}
+        </section>
+      )}
+
       <section className="mt-6">
         <SectionLabel className="mb-2">Dagslista</SectionLabel>
         {isLoading ? (
