@@ -1,16 +1,10 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarRange, ChevronLeft, ChevronRight, Plus, Users, Wallet, ShieldCheck, CalendarDays, Table2, Clock, Timer } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { CalendarRange, ChevronLeft, ChevronRight, Plus, Users, Wallet, ShieldCheck, Table2, CalendarDays } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStores } from "@/hooks/useStores";
 import { useStaff } from "@/hooks/useStaff";
-import { useStaffAvatars } from "@/hooks/useStaffAvatars";
 import { usePlannedShiftsRange } from "@/hooks/usePlannedShifts";
 import { useShiftsRange } from "@/hooks/useStaffShifts";
 import { useAbsenceRequests, useAbsenceTypes } from "@/hooks/useAbsence";
@@ -20,41 +14,33 @@ import { StaffSalaryDialog } from "@/components/staff/StaffSalaryDialog";
 import { useEffectiveRates } from "@/hooks/useSalaryHistory";
 import { usePayrollOverhead, useStoreRevenueRange } from "@/hooks/useStaffKpi";
 import { useMinuteTick } from "@/hooks/useLiveStaff";
-import { buildActualMap, diffTone, signedMinutes } from "@/lib/scheduleCompare";
-import { dateKey, formatMinutes, type PlannedShiftRow } from "@/lib/liveStaff";
-import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
-
+import { buildActualMap } from "@/lib/scheduleCompare";
+import { dateKey, type PlannedShiftRow } from "@/lib/liveStaff";
+import { formatHm, formatKrPrel, storeMonocode, minutesOfTime } from "@/lib/scheduleFormat";
+import { DayLaneView } from "@/components/schedule/DayLaneView";
+import { WeekGridView } from "@/components/schedule/WeekGridView";
+import { IndustryButton, SectionLabel } from "@/components/industry";
+import type { ComingGoingEvent, WeekRow } from "@/components/schedule/scheduleViewTypes";
 
 const DAY_NAMES = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
 
-/** Måndagen i veckan för ett datum. */
 function mondayOf(day: string): Date {
   const d = new Date(`${day}T12:00:00`);
-  const shift = (d.getDay() + 6) % 7;
-  d.setDate(d.getDate() - shift);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   return d;
 }
 
-function minutesOf(time: string): number {
-  return Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
-}
-
 function shiftMinutes(p: PlannedShiftRow): number {
-  return Math.max(0, minutesOf(p.end_time) - minutesOf(p.start_time));
+  return Math.max(0, minutesOfTime(p.end_time) - minutesOfTime(p.start_time));
 }
 
-/** ISO-veckonummer — samma numrering som personalen använder i praktiken. */
 function isoWeek(d: Date): number {
   const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const dayNr = (t.getUTCDay() + 6) % 7;
-  t.setUTCDate(t.getUTCDate() - dayNr + 3);
+  t.setUTCDate(t.getUTCDate() - ((t.getUTCDay() + 6) % 7) + 3);
   const firstThursday = new Date(Date.UTC(t.getUTCFullYear(), 0, 4));
-  const firstDayNr = (firstThursday.getUTCDay() + 6) % 7;
-  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNr + 3);
+  firstThursday.setUTCDate(firstThursday.getUTCDate() - ((firstThursday.getUTCDay() + 6) % 7) + 3);
   return 1 + Math.round((t.getTime() - firstThursday.getTime()) / (7 * 24 * 3600 * 1000));
 }
-
-const kr = (v: number) => `${Math.round(v).toLocaleString("sv-SE")} kr`;
 
 export default function StaffSchedule() {
   const [anchor, setAnchor] = useState(() => dateKey());
