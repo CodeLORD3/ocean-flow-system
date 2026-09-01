@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarRange, ChevronLeft, ChevronRight, Plus, Users, Wallet, ShieldCheck, Table2, CalendarDays } from "lucide-react";
+import { CalendarRange, ChevronLeft, ChevronRight, Plus, Table2, CalendarDays, Upload, Copy, FilePlus2, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStores } from "@/hooks/useStores";
@@ -14,153 +14,106 @@ import { StaffSalaryDialog } from "@/components/staff/StaffSalaryDialog";
 import { useEffectiveRates } from "@/hooks/useSalaryHistory";
 import { usePayrollOverhead, useStoreRevenueRange } from "@/hooks/useStaffKpi";
 import { useMinuteTick } from "@/hooks/useLiveStaff";
-import { buildActualMap } from "@/lib/scheduleCompare";
+import { buildActualMap, localDay, hhmm } from "@/lib/scheduleCompare";
 import { dateKey, type PlannedShiftRow } from "@/lib/liveStaff";
 import { formatHm, formatKrPrel, storeMonocode, minutesOfTime } from "@/lib/scheduleFormat";
 import { DayLaneView } from "@/components/schedule/DayLaneView";
 import { WeekGridView } from "@/components/schedule/WeekGridView";
 import { IndustryButton, SectionLabel } from "@/components/industry";
-import type { ComingGoingEvent, WeekRow } from "@/components/schedule/scheduleViewTypes";
+import type { AbsenceMark, ActualMark, ComingGoingEvent, DayCell, ShiftCellItem, WeekRow } from "@/components/schedule/scheduleViewTypes";
 
 const DAY_NAMES = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
 
 function mondayOf(day: string): Date {
-  const d = new Date(`${day}T12:00:00`);
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return d;
+  const date = new Date(`${day}T12:00:00`);
+  date.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+  return date;
 }
 
-function shiftMinutes(p: PlannedShiftRow): number {
-  return Math.max(0, minutesOfTime(p.end_time) - minutesOfTime(p.start_time));
+function shiftMinutes(shift: PlannedShiftRow): number {
+  return Math.max(0, minutesOfTime(shift.end_time) - minutesOfTime(shift.start_time));
 }
 
-function isoWeek(d: Date): number {
-  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  t.setUTCDate(t.getUTCDate() - ((t.getUTCDay() + 6) % 7) + 3);
-  const firstThursday = new Date(Date.UTC(t.getUTCFullYear(), 0, 4));
+function isoWeek(date: Date): number {
+  const value = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  value.setUTCDate(value.getUTCDate() - ((value.getUTCDay() + 6) % 7) + 3);
+  const firstThursday = new Date(Date.UTC(value.getUTCFullYear(), 0, 4));
   firstThursday.setUTCDate(firstThursday.getUTCDate() - ((firstThursday.getUTCDay() + 6) % 7) + 3);
-  return 1 + Math.round((t.getTime() - firstThursday.getTime()) / (7 * 24 * 3600 * 1000));
+  return 1 + Math.round((value.getTime() - firstThursday.getTime()) / (7 * 24 * 3600 * 1000));
+}
+
+function dateRange(anchor: string): string[] {
+  const monday = mondayOf(anchor);
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(monday);
+    date.setDate(date.getDate() + index);
+    return dateKey(date);
+  });
+}
+
+function capForStaff(staff: any): number | null {
+  const explicitHours = Number(staff.weekly_hours ?? staff.hours_per_week ?? staff.contracted_hours);
+  if (Number.isFinite(explicitHours) && explicitHours > 0) return Math.round(explicitHours * 60);
+  const rate = Number(staff.employment_rate ?? staff.employment_percentage);
+  if (Number.isFinite(rate) && rate > 0) return Math.round(40 * 60 * (rate > 1 ? rate / 100 : rate));
+  return null;
 }
 
 export default function StaffSchedule() {
   const [anchor, setAnchor] = useState(() => dateKey());
   const [storeFilter, setStoreFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("all");
-  const [view, setView] = useState<"week" | "calendar">("week");
-
-  const { data: stores = [] } = useStores(true);
-  const { data: staff = [], isLoading: staffLoading } = useStaff();
-
-  const cities = useMemo(
-    () => Array.from(new Set(stores.map((s: any) => s.city).filter(Boolean))).sort() as string[],
-    [stores],
-  );
-
-  const monday = useMemo(() => mondayOf(anchor), [anchor]);
-  const days = useMemo(
-    () =>
-      Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(monday);
-        d.setDate(d.getDate() + i);
-        return dateKey(d);
-      }),
-    [monday],
-  );
-
-  // Kalendervyn läser hela månaden, veckovyn bara den valda veckan.
-  const monthDays = useMemo(() => {
-    const base = new Date(`${anchor}T12:00:00`);
-    const first = new Date(base.getFullYear(), base.getMonth(), 1);
-    const last = new Date(base.getFullYear(), base.getMonth() + 1, 0);
-    const out: string[] = [];
-    for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) out.push(dateKey(new Date(d)));
-    return out;
-  }, [anchor]);
-
-  const rangeFrom = view === "week" ? days[0] : monthDays[0];
-  const rangeTo = view === "week" ? days[6] : monthDays[monthDays.length - 1];
-
-  const { data: planned = [], isLoading } = usePlannedShiftsRange(
-    rangeFrom,
-    rangeTo,
-    storeFilter === "all" ? null : storeFilter,
-  );
-
-  const { data: actualShifts = [] } = useShiftsRange(
-    rangeFrom,
-    rangeTo,
-    storeFilter === "all" ? null : storeFilter,
-  );
-  const { data: absenceRequests = [] } = useAbsenceRequests(undefined, storeFilter === "all" ? null : storeFilter);
-  const { data: absenceTypes = [] } = useAbsenceTypes();
-  const now = useMinuteTick();
-  const avatars = useStaffAvatars();
-
-  const rates = useEffectiveRates(rangeFrom);
-  const overhead = usePayrollOverhead();
-  const revenue = useStoreRevenueRange(rangeFrom, rangeTo);
-
-  const rateMap = rates.data ?? new Map<string, number | null>();
-  const factor = 1 + Math.max(0, overhead.data ?? 0) / 100;
-
-  /** Arbetad tid per anställd och dag — pågående pass räknas mot nu. */
-  const actualMap = useMemo(
-    () => buildActualMap(actualShifts, now.getTime()),
-    [actualShifts, now],
-  );
-
-
+  const [view, setView] = useState<"week" | "day">("week");
+  const [dayViewDate, setDayViewDate] = useState(() => dateKey());
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogDay, setDialogDay] = useState(days[0]);
+  const [dialogDay, setDialogDay] = useState(() => dateKey());
   const [dialogStore, setDialogStore] = useState<string | null>(null);
   const [editing, setEditing] = useState<PlannedShiftRow | null>(null);
   const [salaryStaff, setSalaryStaff] = useState<any | null>(null);
   const [accessStaff, setAccessStaff] = useState<any | null>(null);
 
-  const storeById = useMemo(() => new Map(stores.map((s: any) => [s.id, s])), [stores]);
-  const storeName = (id: string | null) => (id ? (storeById.get(id) as any)?.name ?? "Ingen enhet" : "Ingen enhet");
+  const { data: stores = [] } = useStores(true);
+  const { data: staff = [], isLoading: staffLoading } = useStaff();
+  const days = useMemo(() => dateRange(anchor), [anchor]);
+  const selectedDay = view === "day" ? dayViewDate : days[0];
+  const { data: planned = [], isLoading: plannedLoading } = usePlannedShiftsRange(days[0], days[6], storeFilter === "all" ? null : storeFilter);
+  const { data: actualShifts = [] } = useShiftsRange(days[0], days[6], storeFilter === "all" ? null : storeFilter);
+  const { data: absenceRequests = [] } = useAbsenceRequests(undefined, storeFilter === "all" ? null : storeFilter);
+  const { data: absenceTypes = [] } = useAbsenceTypes();
+  const now = useMinuteTick();
+  const actualMap = useMemo(() => buildActualMap(actualShifts, now.getTime()), [actualShifts, now]);
+  const rates = useEffectiveRates(days[0]);
+  const overhead = usePayrollOverhead();
+  const revenue = useStoreRevenueRange(days[0], days[6]);
+  const rateMap = rates.data ?? new Map<string, number | null>();
+  const costFactor = 1 + Math.max(0, overhead.data ?? 0) / 100;
 
-  // Butiker som ingår i den aktuella filtreringen — styr vilken omsättning
-  // personalkostnaden jämförs mot.
+  const storeById = useMemo(() => new Map(stores.map((store: any) => [store.id, store])), [stores]);
+  const storeName = (id: string | null) => (id ? (storeById.get(id) as any)?.name ?? "Ingen enhet" : "Ingen enhet");
+  const cities = useMemo(() => Array.from(new Set(stores.map((store: any) => store.city).filter(Boolean))).sort() as string[], [stores]);
   const scopeStoreIds = useMemo(() => {
     if (storeFilter !== "all") return [storeFilter];
-    return stores
-      .filter((s: any) => cityFilter === "all" || s.city === cityFilter)
-      .map((s: any) => s.id as string);
+    return stores.filter((store: any) => cityFilter === "all" || store.city === cityFilter).map((store: any) => store.id as string);
   }, [stores, storeFilter, cityFilter]);
 
-  const staffIdsWithShifts = useMemo(() => new Set(planned.map((p) => p.staff_id)), [planned]);
-
-  const staffRows = useMemo(() => {
-    return staff.filter((s: any) => {
-      if (staffIdsWithShifts.has(s.id)) return true;
-      if (storeFilter !== "all") return s.store_id === storeFilter || (s.allowed_store_ids ?? []).includes(storeFilter);
+  const filteredStaff = useMemo(() => {
+    const plannedIds = new Set(planned.map((shift) => shift.staff_id));
+    return staff.filter((person: any) => {
+      if (plannedIds.has(person.id)) return true;
+      if (storeFilter !== "all") return person.store_id === storeFilter || (person.allowed_store_ids ?? []).includes(storeFilter);
       if (cityFilter === "all") return true;
-      const ids: string[] = [...(s.store_id ? [s.store_id] : []), ...(s.allowed_store_ids ?? [])];
+      const ids: string[] = [...(person.store_id ? [person.store_id] : []), ...(person.allowed_store_ids ?? [])];
       return ids.some((id) => (storeById.get(id) as any)?.city === cityFilter);
     });
-  }, [staff, storeFilter, cityFilter, staffIdsWithShifts, storeById]);
+  }, [staff, planned, storeFilter, cityFilter, storeById]);
 
-  const visibleStaffIds = useMemo(() => new Set(staffRows.map((s: any) => s.id)), [staffRows]);
-  const visibleShifts = useMemo(
-    () => planned.filter((p) => visibleStaffIds.has(p.staff_id)),
-    [planned, visibleStaffIds],
-  );
-
-  const byStaffDay = useMemo(() => {
-    const map = new Map<string, PlannedShiftRow[]>();
-    visibleShifts.forEach((p) => {
-      const key = `${p.staff_id}|${p.shift_date}`;
-      map.set(key, [...(map.get(key) ?? []), p]);
-    });
-    return map;
-  }, [visibleShifts]);
-
-  const absenceByStaffDay = useMemo(() => {
-    const map = new Map<string, { label: string; status: string }[]>();
-    const typeById = new Map(absenceTypes.map((type) => [type.id, type.name]));
+  const visibleStaffIds = useMemo(() => new Set(filteredStaff.map((person: any) => person.id)), [filteredStaff]);
+  const visibleShifts = useMemo(() => planned.filter((shift) => visibleStaffIds.has(shift.staff_id)), [planned, visibleStaffIds]);
+  const absenceMap = useMemo(() => {
+    const map = new Map<string, AbsenceMark[]>();
+    const names = new Map(absenceTypes.map((type) => [type.id, type.name]));
     absenceRequests
-      .filter((request) => request.status === "pending" || request.status === "approved" || request.status === "auto_approved")
+      .filter((request) => ["pending", "approved", "auto_approved"].includes(request.status))
       .filter((request) => visibleStaffIds.has(request.employee_id))
       .forEach((request) => {
         const from = request.date_from ?? request.start_date;
@@ -169,630 +122,179 @@ export default function StaffSchedule() {
         const end = new Date(`${to}T12:00:00`);
         while (cursor <= end) {
           const day = dateKey(cursor);
-          if ((view === "week" && days.includes(day)) || (view === "calendar" && monthDays.includes(day))) {
+          if (days.includes(day)) {
             const key = `${request.employee_id}|${day}`;
-            const item = { label: typeById.get(request.absence_type_id) ?? "Frånvaro", status: request.status };
-            map.set(key, [...(map.get(key) ?? []), item]);
+            const mark = { label: names.get(request.absence_type_id) ?? "Frånvaro", status: request.status };
+            map.set(key, [...(map.get(key) ?? []), mark]);
           }
           cursor.setDate(cursor.getDate() + 1);
         }
       });
     return map;
-  }, [absenceRequests, absenceTypes, visibleStaffIds, view, days, monthDays]);
+  }, [absenceRequests, absenceTypes, visibleStaffIds, days]);
 
-  /** Kostnad för ett pass — null när personen saknar lön. */
-  const shiftCost = (p: PlannedShiftRow): number | null => {
-    const rate = rateMap.get(p.staff_id);
+  const costForShift = (shift: PlannedShiftRow): number | null => {
+    const rate = rateMap.get(shift.staff_id);
     if (rate === null || rate === undefined || !Number.isFinite(rate)) return null;
-    return (shiftMinutes(p) / 60) * rate * factor;
+    return (shiftMinutes(shift) / 60) * rate * costFactor;
   };
 
-  /** Arbetad tid (och ev. pågående pass) för en anställd en dag. */
-  const actualDay = (staffId: string, day: string) => actualMap.get(`${staffId}|${day}`) ?? null;
-
-  /** Summerad arbetad tid för alla synliga anställda en dag. */
-  const actualDayTotal = (day: string) => {
-    let minutes = 0;
-    let ongoing = false;
-    visibleStaffIds.forEach((id) => {
-      const a = actualMap.get(`${id}|${day}`);
-      if (!a) return;
-      minutes += a.minutes;
-      ongoing = ongoing || a.ongoing;
+  const rows = useMemo<WeekRow[]>(() => {
+    const shiftsByCell = new Map<string, PlannedShiftRow[]>();
+    visibleShifts.forEach((shift) => {
+      const key = `${shift.staff_id}|${shift.shift_date}`;
+      shiftsByCell.set(key, [...(shiftsByCell.get(key) ?? []), shift]);
     });
-    return { minutes, ongoing };
-  };
-
-  interface DayTotals {
-    minutes: number;
-    cost: number;
-    unratedMinutes: number;
-    revenue: number | null;
-    shifts: number;
-  }
-
-  const dayTotals = (day: string): DayTotals => {
-    const rows = visibleShifts.filter((p) => p.shift_date === day);
-    let cost = 0;
-    let minutes = 0;
-    let unratedMinutes = 0;
-    rows.forEach((p) => {
-      const m = shiftMinutes(p);
-      minutes += m;
-      const c = shiftCost(p);
-      if (c === null) unratedMinutes += m;
-      else cost += c;
-    });
-    const revMap = revenue.data;
-    let rev: number | null = null;
-    if (revMap) {
-      scopeStoreIds.forEach((id) => {
-        const entry = revMap.get(`${id}|${day}`);
-        if (entry) rev = (rev ?? 0) + entry.amount;
+    return filteredStaff.map((person: any) => {
+      const personShifts = visibleShifts.filter((shift) => shift.staff_id === person.id);
+      const weekMinutes = personShifts.reduce((total, shift) => total + shiftMinutes(shift), 0);
+      const capMinutes = capForStaff(person);
+      const costValues = personShifts.map(costForShift);
+      const costPrel = costValues.some((cost) => cost !== null) ? costValues.reduce((total, cost) => total + (cost ?? 0), 0) : null;
+      const cells: DayCell[] = days.map((day) => {
+        const cellShifts = shiftsByCell.get(`${person.id}|${day}`) ?? [];
+        const actual = actualMap.get(`${person.id}|${day}`) ?? null;
+        const shifts: ShiftCellItem[] = cellShifts.map((shift) => ({
+          shift,
+          code: "PASS",
+          storeName: storeName(shift.store_id),
+          status: "published",
+          violation: null,
+          costPrel: costForShift(shift),
+        }));
+        return {
+          day,
+          shifts,
+          absences: absenceMap.get(`${person.id}|${day}`) ?? [],
+          actual: actual as ActualMark | null,
+          plannedMinutes: cellShifts.reduce((total, shift) => total + shiftMinutes(shift), 0),
+        };
       });
-    }
-    return { minutes, cost, unratedMinutes, revenue: rev, shifts: rows.length };
-  };
-
-  const weekTotals = useMemo(() => {
-    const list = days.map(dayTotals);
-    const worked = days.map(actualDayTotal);
-    return {
-      minutes: list.reduce((a, t) => a + t.minutes, 0),
-      cost: list.reduce((a, t) => a + t.cost, 0),
-      unratedMinutes: list.reduce((a, t) => a + t.unratedMinutes, 0),
-      workedMinutes: worked.reduce((a, t) => a + t.minutes, 0),
-      workedOngoing: worked.some((t) => t.ongoing),
-      revenue: list.some((t) => t.revenue !== null)
-        ? list.reduce((a, t) => a + (t.revenue ?? 0), 0)
-        : null,
-    };
-  }, [days, visibleShifts, rateMap, revenue.data, scopeStoreIds, factor, actualMap, visibleStaffIds]);
-
-  const ratioValue = (cost: number, rev: number | null) =>
-    rev && rev > 0 && cost > 0 ? (cost / rev) * 100 : null;
-
-  const ratio = (cost: number, rev: number | null) => {
-    const value = ratioValue(cost, rev);
-    return value === null ? null : `${value.toFixed(1)} %`;
-  };
-
-  /** Målet för personalkostnad är 15–20 % av försäljningen. */
-  const ratioTone = (cost: number, rev: number | null) => {
-    const value = ratioValue(cost, rev);
-    if (value === null) return "text-muted-foreground";
-    if (value >= 15 && value <= 20) return "text-emerald-500";
-    if (value < 15) return "text-amber-500";
-    return "text-rose-500";
-  };
-
-  const ratioStatus = (cost: number, rev: number | null) => {
-    const value = ratioValue(cost, rev);
-    if (value === null) return null;
-    if (value >= 15 && value <= 20) return "Inom mål";
-    return value < 15 ? "Under mål" : "Över mål";
-  };
-
-  const staffWeek = (staffId: string) => {
-    const rows = visibleShifts.filter((p) => p.staff_id === staffId && days.includes(p.shift_date));
-    const minutes = rows.reduce((a, p) => a + shiftMinutes(p), 0);
-    const costs = rows.map(shiftCost);
-    const hasRate = costs.some((c) => c !== null);
-    let worked = 0;
-    let ongoing = false;
-    days.forEach((d) => {
-      const a = actualMap.get(`${staffId}|${d}`);
-      if (!a) return;
-      worked += a.minutes;
-      ongoing = ongoing || a.ongoing;
+      const homeName = person.store_id ? storeName(person.store_id) : person.workplace ?? "Ingen hemmaenhet";
+      return {
+        staffId: person.id,
+        name: `${person.first_name ?? ""} ${person.last_name ?? ""}`.trim() || "Namnlös personal",
+        secondary: `${homeName}${person.workplace ? ` · ${person.workplace}` : ""}`,
+        avatarUrl: person.profile_image_url ?? null,
+        weekMinutes,
+        capMinutes,
+        extraMinutes: capMinutes ? Math.max(0, weekMinutes - capMinutes) : 0,
+        costPrel,
+        cells,
+      };
     });
-    return {
-      minutes,
-      worked,
-      ongoing,
-      cost: hasRate ? costs.reduce((a, c) => a + (c ?? 0), 0) : null,
-    };
-  };
+  }, [filteredStaff, visibleShifts, days, actualMap, absenceMap, rateMap, costFactor, storeById]);
 
+  const weekMinutes = rows.reduce((total, row) => total + row.weekMinutes, 0);
+  const weekCost = rows.reduce((total, row) => total + (row.costPrel ?? 0), 0);
+  const actualMinutes = Array.from(actualMap.values()).reduce((total, value) => total + value.minutes, 0);
+  const missingRates = rows.filter((row) => row.costPrel === null && row.weekMinutes > 0).length;
+  const totalRevenue = revenue.data ? scopeStoreIds.reduce((total, id) => total + days.reduce((sum, day) => sum + (revenue.data?.get(`${id}|${day}`)?.amount ?? 0), 0), 0) : null;
+  const laborRatio = totalRevenue && totalRevenue > 0 && weekCost > 0 ? (weekCost / totalRevenue) * 100 : null;
+  const extraCount = rows.filter((row) => row.extraMinutes > 0).length;
 
-  const openDialog = (staffId: string | null, day: string, shift: PlannedShiftRow | null) => {
+  const openDialog = (staffId: string | null, day: string, shiftId?: string) => {
+    const shift = shiftId ? visibleShifts.find((item) => item.id === shiftId) ?? null : null;
     setDialogDay(day);
-    setDialogStore(shift?.store_id ?? (storeFilter === "all" ? null : storeFilter));
+    setDialogStore(shift?.store_id ?? (storeFilter === "all" ? stores[0]?.id ?? null : storeFilter));
     setEditing(shift);
     setDialogOpen(true);
   };
 
   const shiftPeriod = (delta: number) => {
-    const d = new Date(`${anchor}T12:00:00`);
-    if (view === "week") d.setDate(d.getDate() + delta * 7);
-    else d.setMonth(d.getMonth() + delta);
-    setAnchor(dateKey(d));
+    const next = new Date(`${anchor}T12:00:00`);
+    next.setDate(next.getDate() + delta * 7);
+    const nextKey = dateKey(next);
+    setAnchor(nextKey);
+    setDayViewDate(nextKey);
   };
 
-  // Kalenderrutnät: tomma celler före månadens första dag så veckodagarna
-  // hamnar i rätt kolumn (måndag först).
-  const calendarCells = useMemo(() => {
-    const first = new Date(`${monthDays[0]}T12:00:00`);
-    const pad = (first.getDay() + 6) % 7;
-    return [...Array.from({ length: pad }, () => null as string | null), ...monthDays];
-  }, [monthDays]);
+  const dayEvents = useMemo<ComingGoingEvent[]>(() => {
+    return actualShifts
+      .filter((shift) => localDay(shift.clocked_in_at) === selectedDay || (shift.clocked_out_at && localDay(shift.clocked_out_at) === selectedDay))
+      .flatMap((shift) => {
+        const person = staff.find((item: any) => item.id === shift.staff_id) as any;
+        const name = person ? `${person.first_name} ${person.last_name}` : "Okänd personal";
+        const events: ComingGoingEvent[] = [];
+        if (localDay(shift.clocked_in_at) === selectedDay) events.push({ minutes: minutesOfTime(hhmm(shift.clocked_in_at)), kind: "in", name, storeCode: storeMonocode(storeName(shift.store_id)), consequence: null });
+        if (shift.clocked_out_at && localDay(shift.clocked_out_at) === selectedDay) events.push({ minutes: minutesOfTime(hhmm(shift.clocked_out_at)), kind: "out", name, storeCode: storeMonocode(storeName(shift.store_id)), consequence: null });
+        return events;
+      })
+      .sort((a, b) => a.minutes - b.minutes);
+  }, [actualShifts, selectedDay, staff, storeById]);
 
-  const monthLabel = new Date(`${anchor}T12:00:00`).toLocaleDateString("sv-SE", { month: "long", year: "numeric" });
-
-  const missingSalary = staffRows.filter((s: any) => {
-    const r = rateMap.get(s.id);
-    return r === null || r === undefined;
-  }).length;
+  const emptyState = visibleShifts.length === 0 && !plannedLoading && !staffLoading;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h1 className="flex items-center gap-2 text-xl font-heading font-bold text-foreground">
-            <CalendarRange className="h-5 w-5 text-primary" /> Schema & personalkalender
-          </h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Planera pass per vecka, se personalkostnad per dag och vecka samt andel av omsättningen från dagsrapporten.
-          </p>
+    <motion.main initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="ind min-h-full p-3 sm:p-5">
+      <div className="mx-auto max-w-[1600px]">
+        <header className="ind-workspace-header ind-corners px-4 py-4 sm:px-6">
+          <span className="ind-corner-b" aria-hidden="true" />
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <SectionLabel className="text-[var(--color-accent-200)]">Makrill Trade · Personal & schema</SectionLabel>
+              <h1 className="ind-h1 mt-1 text-[var(--color-neutral-100)]">Schemaöversikt</h1>
+              <p className="mt-1 max-w-2xl text-sm text-[var(--color-accent-200)]">Planera bemanning, följ avtalsutrymme och se vad som händer på golvet.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <IndustryButton variant={view === "week" ? "primary" : "secondary"} onClick={() => setView("week")}><Table2 size={15} /> Vecka</IndustryButton>
+              <IndustryButton variant={view === "day" ? "primary" : "secondary"} onClick={() => { setView("day"); setDayViewDate(days[0]); }}><CalendarDays size={15} /> Dag</IndustryButton>
+              <IndustryButton variant="primary" corners onClick={() => openDialog(null, selectedDay)}><Plus size={15} /> Planera pass</IndustryButton>
+            </div>
+          </div>
+          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-[color-mix(in_srgb,var(--color-accent-200)_24%,transparent)] pt-3">
+            <IndustryButton variant="ghost" onClick={() => shiftPeriod(-1)} aria-label="Föregående vecka"><ChevronLeft size={17} /></IndustryButton>
+            <Input type="date" className="ind-input ind-date-control w-[150px]" value={view === "day" ? dayViewDate : anchor} onChange={(event) => { const value = event.target.value || dateKey(); setAnchor(value); setDayViewDate(value); }} />
+            <IndustryButton variant="ghost" onClick={() => shiftPeriod(1)} aria-label="Nästa vecka"><ChevronRight size={17} /></IndustryButton>
+            <span className="ind-header-chip ind-num">V{isoWeek(mondayOf(anchor))} · {days[0]}–{days[6]}</span>
+            <Select value={cityFilter} onValueChange={(value) => { setCityFilter(value); setStoreFilter("all"); }}>
+              <SelectTrigger className="ind-select w-40"><SelectValue placeholder="Alla städer" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">Alla städer</SelectItem>{cities.map((city) => <SelectItem key={city} value={city}>{city}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={storeFilter} onValueChange={setStoreFilter}>
+              <SelectTrigger className="ind-select w-48"><SelectValue placeholder="Alla enheter" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">Alla enheter</SelectItem>{stores.filter((store: any) => cityFilter === "all" || store.city === cityFilter).map((store: any) => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        </header>
+
+        <section className="ind-decision mt-4" aria-label="Beslutsrad">
+          <div><SectionLabel>Planerad tid</SectionLabel><p className="ind-decision__value ind-num">{formatHm(weekMinutes)}</p></div>
+          <div><SectionLabel>Arbetad tid</SectionLabel><p className="ind-decision__value ind-num">{formatHm(actualMinutes)}</p></div>
+          <div><SectionLabel>Personalkostnad</SectionLabel><p className="ind-decision__value ind-num">{weekCost > 0 ? formatKrPrel(weekCost) : "—"}</p></div>
+          <div><SectionLabel>Arbete / omsättning</SectionLabel><p className={`ind-decision__value ind-num ${laborRatio === null ? "ind-muted" : laborRatio <= 20 ? "ind-status--ok" : "ind-status--alert"}`}>{laborRatio === null ? "—" : `${laborRatio.toFixed(1)} %`}</p></div>
+          <div className="ind-decision__action"><SectionLabel>Åtgärd krävs</SectionLabel><p className={`ind-decision__value ind-num ${extraCount > 0 || missingRates > 0 ? "ind-status--alert" : "ind-status--ok"}`}>{extraCount + missingRates || "0"}</p><span className="text-xs ind-muted">{extraCount ? `${extraCount} över avtal` : missingRates ? `${missingRates} utan lön` : "Inget akut"}</span></div>
+        </section>
+
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <div><SectionLabel>{view === "week" ? "Veckoplan" : "Dagens bemanning"}</SectionLabel><p className="mt-1 text-sm ind-muted">{view === "week" ? "Tid, avtalstak och faktisk närvaro i samma arbetsyta." : "Tidslinje från öppning till stängning."}</p></div>
+          {overhead.data ? <span className="ind-meta-chip ind-num">Påslag {overhead.data} %</span> : null}
         </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant={view === "week" ? "default" : "outline"}
-            size="sm"
-            className="h-8 gap-1 text-xs"
-            onClick={() => setView("week")}
-          >
-            <Table2 className="h-3.5 w-3.5" /> Vecka
-          </Button>
-          <Button
-            variant={view === "calendar" ? "default" : "outline"}
-            size="sm"
-            className="h-8 gap-1 text-xs"
-            onClick={() => setView("calendar")}
-          >
-            <CalendarDays className="h-3.5 w-3.5" /> Kalender
-          </Button>
-          <Button size="sm" className="h-8 gap-1 text-xs" onClick={() => openDialog(null, days[0], null)}>
-            <Plus className="h-3.5 w-3.5" /> Planera pass
-          </Button>
-        </div>
+
+        <section className="ind-workspace mt-3" aria-label="Schema">
+          {emptyState ? (
+            <div className="ind-empty-state">
+              <CalendarRange size={28} />
+              <h2 className="ind-h3 mt-3">Ingen planering för vecka {isoWeek(mondayOf(anchor))}</h2>
+              <p className="mt-1 max-w-md text-sm ind-muted">Välj hur du vill börja. Du kan lägga första passet direkt eller importera ett befintligt schema.</p>
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
+                <IndustryButton variant="primary" onClick={() => openDialog(null, days[0])}><Plus size={15} /> Börja tomt</IndustryButton>
+                <IndustryButton variant="secondary" onClick={() => window.location.assign("/schedule-planner")}><Upload size={15} /> Importera schema</IndustryButton>
+                <IndustryButton variant="ghost" onClick={() => shiftPeriod(-1)}><Copy size={15} /> Föregående vecka</IndustryButton>
+              </div>
+            </div>
+          ) : view === "week" ? (
+            <WeekGridView rows={rows} days={days} today={dateKey()} onShiftClick={openDialog} onSalaryClick={(id) => setSalaryStaff(staff.find((person: any) => person.id === id) ?? null)} storeName={storeName} />
+          ) : (
+            <DayLaneView day={selectedDay} rows={rows} events={dayEvents} onShiftClick={openDialog} onAdd={(staffId, day) => openDialog(staffId, day)} />
+          )}
+          {!emptyState && rows.length > 0 ? <footer className="ind-schema-footer"><span><span className="ind-legend-dot ind-legend-dot--accent" /> Planerat</span><span><span className="ind-legend-dot ind-legend-dot--ok" /> Stämplat</span><span><span className="ind-legend-dot ind-legend-dot--warn" /> Över avtal / väntar</span>{missingRates > 0 ? <span className="ind-footer-alert"><AlertTriangle size={13} /> {missingRates} person(er) saknar löneunderlag</span> : null}</footer> : null}
+        </section>
       </div>
 
-      <Card className="shadow-card">
-        <CardContent className="flex flex-wrap items-center gap-2 p-3">
-          <div className="flex items-center gap-1">
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => shiftPeriod(-1)} aria-label="Föregående period">
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </Button>
-            <Input
-              type="date"
-              className="h-8 w-36 text-xs"
-              value={anchor}
-              onChange={(e) => setAnchor(e.target.value || dateKey())}
-            />
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => shiftPeriod(1)} aria-label="Nästa period">
-              <ChevronRight className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-          <Select value={cityFilter} onValueChange={(v) => { setCityFilter(v); setStoreFilter("all"); }}>
-            <SelectTrigger className="h-8 w-40 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">Alla städer</SelectItem>
-              {cities.map((c) => (
-                <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={storeFilter} onValueChange={setStoreFilter}>
-            <SelectTrigger className="h-8 w-48 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">Alla enheter</SelectItem>
-              {stores
-                .filter((s: any) => cityFilter === "all" || s.city === cityFilter)
-                .map((s: any) => (
-                  <SelectItem key={s.id} value={s.id} className="text-xs">{s.name}</SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-          {view === "week" ? (
-            <Badge variant="secondary" className="text-[10px] tabular-nums">
-              Vecka {isoWeek(monday)} · {days[0]} – {days[6]}
-            </Badge>
-          ) : (
-            <Badge variant="secondary" className="text-[10px] capitalize">{monthLabel}</Badge>
-          )}
-          {overhead.data ? (
-            <Badge variant="outline" className="text-[10px] tabular-nums">
-              Påslag {overhead.data} %
-            </Badge>
-          ) : null}
-          {missingSalary > 0 && (
-            <Badge variant="outline" className="border-amber-500/40 text-[10px] text-amber-500">
-              {missingSalary} utan lön
-            </Badge>
-          )}
-        </CardContent>
-      </Card>
-
-      {view === "week" && (
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="shadow-card">
-            <CardContent className="p-3">
-              <p className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                <CalendarRange className="h-3 w-3" /> Planerad tid
-              </p>
-              <p className="mt-0.5 font-mono text-lg tabular-nums text-foreground">{formatMinutes(weekTotals.minutes)}</p>
-            </CardContent>
-          </Card>
-          <Card className="shadow-card">
-            <CardContent className="p-3">
-              <p className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                <Timer className="h-3 w-3" /> Arbetad tid
-              </p>
-              <p className="mt-0.5 flex items-baseline gap-2 font-mono text-lg tabular-nums text-foreground">
-                {formatMinutes(weekTotals.workedMinutes)}
-                {weekTotals.workedOngoing && (
-                  <span className="flex items-center gap-1 font-sans text-[10px] font-medium text-sky-500">
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-500" /> live
-                  </span>
-                )}
-              </p>
-              {weekTotals.minutes > 0 && (
-                <p className={`text-[10px] tabular-nums ${diffTone(weekTotals.workedMinutes - weekTotals.minutes, weekTotals.workedOngoing)}`}>
-                  {signedMinutes(weekTotals.workedMinutes - weekTotals.minutes)} mot schema
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card">
-            <CardContent className="p-3">
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Personalkostnad vecka</p>
-              <p className="mt-0.5 font-mono text-lg tabular-nums text-foreground">
-                {weekTotals.cost > 0 ? kr(weekTotals.cost) : "Lön saknas"}
-              </p>
-              {weekTotals.unratedMinutes > 0 && weekTotals.cost > 0 && (
-                <p className="text-[10px] text-amber-500">
-                  {formatMinutes(weekTotals.unratedMinutes)} utan lön inräknad
-                </p>
-              )}
-            </CardContent>
-          </Card>
-          <Card className="shadow-card">
-            <CardContent className="p-3">
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Kostnad av omsättning</p>
-              <p className={`mt-0.5 font-mono text-lg tabular-nums ${ratioTone(weekTotals.cost, weekTotals.revenue)}`}>
-                {ratio(weekTotals.cost, weekTotals.revenue) ?? "Omsättningsdata saknas"}
-              </p>
-              <p className="text-[10px] tabular-nums text-muted-foreground">
-                Mål: 15–20 %
-                {ratioStatus(weekTotals.cost, weekTotals.revenue) && (
-                  <span className={`ml-1 font-medium ${ratioTone(weekTotals.cost, weekTotals.revenue)}`}>
-                    · {ratioStatus(weekTotals.cost, weekTotals.revenue)}
-                  </span>
-                )}
-              </p>
-              {weekTotals.revenue !== null && (
-                <p className="text-[10px] tabular-nums text-muted-foreground">
-                  Omsättning {kr(weekTotals.revenue)}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      <Card className="shadow-card">
-        <CardContent className="p-0">
-          {isLoading || staffLoading ? (
-            <div className="space-y-2 p-3">
-              {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-8 w-full" />)}
-            </div>
-          ) : view === "calendar" ? (
-            <div className="p-3">
-              <div className="grid grid-cols-7 gap-1">
-                {DAY_NAMES.map((d) => (
-                  <div key={d} className="pb-1 text-center text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                    {d}
-                  </div>
-                ))}
-                {calendarCells.map((day, i) =>
-                  day === null ? (
-                    <div key={`pad-${i}`} />
-                  ) : (
-                    (() => {
-                      const t = dayTotals(day);
-                      const pct = ratio(t.cost, t.revenue);
-                      const isToday = day === dateKey();
-                      return (
-                        <button
-                          key={day}
-                          type="button"
-                          onClick={() => { setAnchor(day); setView("week"); }}
-                          className={`min-h-[76px] rounded border p-1.5 text-left transition-colors hover:border-primary/50 ${
-                            isToday ? "border-primary/60 bg-primary/5" : "border-border bg-card"
-                          }`}
-                        >
-                          <div className="flex items-baseline justify-between">
-                            <span className="font-mono text-xs tabular-nums text-foreground">{day.slice(8)}</span>
-                            {t.shifts > 0 && (
-                              <span className="text-[10px] tabular-nums text-muted-foreground">{t.shifts} pass</span>
-                            )}
-                          </div>
-                          {t.minutes > 0 || actualDayTotal(day).minutes > 0 ? (
-                            <div className="mt-1 space-y-0.5">
-                              <p className="font-mono text-[10px] tabular-nums text-muted-foreground">
-                                plan {formatMinutes(t.minutes)}
-                              </p>
-                              <p
-                                className={`font-mono text-[10px] tabular-nums ${
-                                  actualDayTotal(day).ongoing ? "text-sky-500" : "text-emerald-500"
-                                }`}
-                              >
-                                arb {formatMinutes(actualDayTotal(day).minutes)}
-                              </p>
-                              <p className="font-mono text-[11px] tabular-nums text-foreground">
-                                {t.cost > 0 ? kr(t.cost) : "—"}
-                              </p>
-                              {pct && (
-                                <p className="font-mono text-[10px] tabular-nums text-primary">{pct} av oms.</p>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="mt-1 text-[10px] text-muted-foreground">Inga pass</p>
-                          )}
-
-                        </button>
-                      );
-                    })()
-                  ),
-                )}
-              </div>
-              <p className="mt-2 text-[10px] text-muted-foreground">
-                Klicka på en dag för att öppna veckan. Kostnaden räknas på planerade pass och gällande lön; omsättningen
-                hämtas från kassan eller dagsrapporten.
-              </p>
-            </div>
-          ) : staffRows.length === 0 ? (
-            <div className="p-8 text-center">
-              <Users className="mx-auto h-6 w-6 text-muted-foreground" />
-              <p className="mt-2 text-xs text-muted-foreground">
-                Ingen personal att schemalägga för den här enheten.
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1040px] border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40">
-                    <th className="sticky left-0 z-10 w-[250px] bg-muted/40 px-2 py-2 text-left font-medium text-muted-foreground">
-                      Anställd
-                    </th>
-                    {days.map((d, i) => {
-                      const isToday = d === dateKey();
-                      return (
-                        <th
-                          key={d}
-                          className={`px-2 py-1.5 text-left font-medium ${
-                            isToday ? "bg-primary/10 text-primary" : "text-muted-foreground"
-                          }`}
-                        >
-                          <span className="block text-[10px] uppercase tracking-wide">{DAY_NAMES[i]}</span>
-                          <span className="block font-mono text-[11px] tabular-nums">{d.slice(8)}/{d.slice(5, 7)}</span>
-                        </th>
-                      );
-                    })}
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Vecka</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {staffRows.map((s: any) => {
-                    const wk = staffWeek(s.id);
-                    const home = s.store_id ? (storeById.get(s.store_id) as any) : null;
-                    const extra = (s.allowed_store_ids ?? []).filter((id: string) => id !== s.store_id).length;
-                    const rate = rateMap.get(s.id);
-                    const initials = `${s.first_name?.[0] ?? ""}${s.last_name?.[0] ?? ""}`.toUpperCase();
-                    return (
-                      <tr key={s.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/20">
-                        <td className="sticky left-0 z-10 max-w-[250px] border-r border-border bg-card px-2 py-1.5">
-                          <div className="flex items-center gap-1.5">
-                            <Avatar className="h-7 w-7 shrink-0">
-                              <AvatarImage src={thumbUrl(avatars[s.id], THUMB_AVATAR)} alt="" />
-                              <AvatarFallback className="text-[9px]">{initials || "?"}</AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0 flex-1">
-                              <span className="block truncate font-medium text-foreground">
-                                {s.first_name} {s.last_name}
-                              </span>
-                              <div className="flex flex-wrap items-center gap-1">
-                                {home && (
-                                  <Badge variant="secondary" className="px-1 py-0 text-[9px]">
-                                    {home.name}{home.city ? ` · ${home.city}` : ""}
-                                  </Badge>
-                                )}
-                                {extra > 0 && (
-                                  <Badge variant="outline" className="px-1 py-0 text-[9px]">+{extra}</Badge>
-                                )}
-                                <span className="font-mono text-[9px] tabular-nums text-muted-foreground">
-                                  {rate ? `${Math.round(rate)} kr/h` : "lön saknas"}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex shrink-0 flex-col">
-                              <Button variant="ghost" size="icon" className="h-5 w-5" title="Lön" onClick={() => setSalaryStaff(s)}>
-                                <Wallet className={`h-3 w-3 ${rate ? "text-emerald-500" : "text-amber-500"}`} />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-5 w-5"
-                                title="Behörighet (stad/butik)"
-                                onClick={() => setAccessStaff(s)}
-                              >
-                                <ShieldCheck className="h-3 w-3 text-muted-foreground" />
-                              </Button>
-                            </div>
-                          </div>
-                        </td>
-                         {days.map((d) => {
-                           const rows = byStaffDay.get(`${s.id}|${d}`) ?? [];
-                           const absences = absenceByStaffDay.get(`${s.id}|${d}`) ?? [];
-                           const act = actualDay(s.id, d);
-                          const plannedMin = rows.reduce((a, p) => a + shiftMinutes(p), 0);
-                          const isToday = d === dateKey();
-                          return (
-                             <td key={d} className={`align-top px-1 py-1 ${isToday ? "bg-primary/5" : ""}`}>
-                               <div className="flex flex-col gap-1">
-                                 {absences.map((absence, index) => (
-                                    <div key={`${absence.label}-${index}`} className="ind-absence-badge" title={`${absence.label} · ${absence.status === "pending" ? "Väntar på beslut" : "Godkänd"}`}>
-                                      <span className="block truncate text-[10px] font-medium">{absence.label}</span>
-                                      <span className="block text-[9px]">{absence.status === "pending" ? "Väntar på beslut" : "Frånvarande"}</span>
-                                    </div>
-                                 ))}
-                                 {rows.map((p) => {
-                                  const c = shiftCost(p);
-                                  return (
-                                    <button
-                                      key={p.id}
-                                      type="button"
-                                      onClick={() => openDialog(s.id, d, p)}
-                                      className="group rounded-md border-l-2 border-primary bg-primary/10 px-1.5 py-1 text-left transition-colors hover:bg-primary/20"
-                                    >
-                                      <span className="block font-mono text-[11px] font-medium tabular-nums text-foreground">
-                                        {p.start_time.slice(0, 5)}–{p.end_time.slice(0, 5)}
-                                      </span>
-                                      <span className="block truncate text-[9px] text-muted-foreground">
-                                        {storeName(p.store_id)}
-                                        {c !== null ? ` · ${kr(c)}` : ""}
-                                      </span>
-                                    </button>
-                                  );
-                                })}
-
-                                {act ? (
-                                  <div
-                                     className={`rounded-md px-1.5 py-1 ${
-                                       act.ongoing ? "ind-note--warn" : "ind-note--ok"
-                                     }`}
-                                    title="Arbetad tid enligt stämpling"
-                                  >
-                                    <span className="flex items-center gap-1 font-mono text-[11px] font-medium tabular-nums text-foreground">
-                                      <Clock className="h-2.5 w-2.5 shrink-0" />
-                                      {formatMinutes(act.minutes)}
-                                      {act.ongoing && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-500" />}
-                                    </span>
-                                    <span className="block font-mono text-[9px] tabular-nums text-muted-foreground">
-                                      {act.firstIn}–{act.lastOut ?? "nu"}
-                                    </span>
-                                    {plannedMin > 0 && (
-                                      <span className={`block text-[9px] tabular-nums ${diffTone(act.minutes - plannedMin, act.ongoing)}`}>
-                                        {signedMinutes(act.minutes - plannedMin)}
-                                      </span>
-                                    )}
-                                  </div>
-                                ) : plannedMin > 0 ? (
-                                  <span className="px-1.5 text-[9px] text-muted-foreground">Ej stämplat</span>
-                                ) : null}
-
-                                <button
-                                  type="button"
-                                  onClick={() => openDialog(s.id, d, null)}
-                                  className="rounded-md border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground opacity-60 transition-all hover:border-primary/50 hover:text-foreground hover:opacity-100"
-                                  aria-label={`Planera pass ${d}`}
-                                >
-                                  + pass
-                                </button>
-                              </div>
-                            </td>
-                          );
-                        })}
-                        <td className="px-2 py-1.5 text-right tabular-nums">
-                          <span className="block font-mono text-[11px] text-muted-foreground">
-                            plan {formatMinutes(wk.minutes)}
-                          </span>
-                          <span className="block font-mono text-[11px] font-medium text-foreground">
-                            arb {formatMinutes(wk.worked)}
-                          </span>
-                          {wk.minutes > 0 && (
-                            <span className={`block font-mono text-[10px] ${diffTone(wk.worked - wk.minutes, wk.ongoing)}`}>
-                              {signedMinutes(wk.worked - wk.minutes)}
-                            </span>
-                          )}
-                          <span className="block font-mono text-[10px] text-muted-foreground">
-                            {wk.cost !== null && wk.cost > 0 ? kr(wk.cost) : "—"}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t border-border bg-muted/30">
-                    <td className="sticky left-0 z-10 bg-muted/30 px-2 py-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                      Plan / arbetad / kostnad
-                    </td>
-                    {days.map((d) => {
-                      const t = dayTotals(d);
-                      const w = actualDayTotal(d);
-                      const pct = ratio(t.cost, t.revenue);
-                      return (
-                        <td key={d} className="px-2 py-1.5 font-mono text-[10px] tabular-nums">
-                          <span className="block text-muted-foreground">{formatMinutes(t.minutes)}</span>
-                          <span className={`block ${w.ongoing ? "text-sky-500" : "text-foreground"}`}>
-                            {formatMinutes(w.minutes)}
-                          </span>
-                          <span className="block text-foreground">{t.cost > 0 ? kr(t.cost) : "—"}</span>
-                          <span className="block text-primary">{pct ?? ""}</span>
-                        </td>
-                      );
-                    })}
-                    <td className="px-2 py-1.5 text-right font-mono text-[10px] tabular-nums">
-                      <span className="block text-muted-foreground">{formatMinutes(weekTotals.minutes)}</span>
-                      <span className="block text-foreground">{formatMinutes(weekTotals.workedMinutes)}</span>
-                      <span className="block text-foreground">{weekTotals.cost > 0 ? kr(weekTotals.cost) : "—"}</span>
-                      <span className="block text-primary">{ratio(weekTotals.cost, weekTotals.revenue) ?? ""}</span>
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-              <div className="flex flex-wrap items-center gap-3 border-t border-border px-3 py-2 text-[10px] text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <span className="h-2.5 w-1 rounded bg-primary" /> Planerat pass
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="h-2.5 w-1 rounded bg-emerald-500" /> Arbetad tid (stämplat)
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="h-2.5 w-1 rounded bg-sky-500" /> Pågår just nu
-                </span>
-                <span>+/− visar arbetad tid mot planerat pass.</span>
-              </div>
-            </div>
-          )}
-
-        </CardContent>
-      </Card>
-
-      <PlannedShiftDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        storeId={dialogStore ?? stores[0]?.id ?? ""}
-        storeName={storeName(dialogStore ?? stores[0]?.id ?? null)}
-        day={dialogDay}
-        editing={editing}
-      />
-
-      <StaffSalaryDialog
-        open={!!salaryStaff}
-        onOpenChange={(o) => !o && setSalaryStaff(null)}
-        staff={salaryStaff}
-      />
-
-      <StaffAccessDialog
-        open={!!accessStaff}
-        onOpenChange={(o) => !o && setAccessStaff(null)}
-        staff={accessStaff}
-      />
-    </motion.div>
+      <PlannedShiftDialog open={dialogOpen} onOpenChange={setDialogOpen} storeId={dialogStore ?? stores[0]?.id ?? ""} storeName={storeName(dialogStore)} day={dialogDay} editing={editing} />
+      <StaffSalaryDialog open={!!salaryStaff} onOpenChange={(open) => !open && setSalaryStaff(null)} staff={salaryStaff} />
+      <StaffAccessDialog open={!!accessStaff} onOpenChange={(open) => !open && setAccessStaff(null)} staff={accessStaff} />
+    </motion.main>
   );
 }
