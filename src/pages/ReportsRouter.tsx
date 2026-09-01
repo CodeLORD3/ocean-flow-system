@@ -9,6 +9,7 @@ import { WeeklyStoreReportsSection } from "@/components/reports/WeeklyStoreRepor
 import { MonthlyReportsSection } from "@/components/reports/MonthlyReports";
 import { useRealtimeReportUpdates } from "@/hooks/useWeeklyStoreReports";
 import { useState } from "react";
+import { SectionErrorBoundary } from "@/components/reports/SectionErrorBoundary";
 
 function WholesaleReportsPage() {
   useRealtimeReportUpdates();
@@ -41,7 +42,9 @@ function WholesaleReportsPage() {
         </CardHeader>
         {purchaseOpen && (
           <CardContent className="pt-0 px-4 pb-4">
-            <PurchaseReportsArchive />
+            <SectionErrorBoundary title="Inköpsrapporter">
+              <PurchaseReportsArchive />
+            </SectionErrorBoundary>
           </CardContent>
         )}
       </Card>
@@ -59,7 +62,9 @@ function WholesaleReportsPage() {
         </CardHeader>
         {productionOpen && (
           <CardContent className="pt-0 px-4 pb-4">
-            <ProductionReportsArchive />
+            <SectionErrorBoundary title="Produktionsrapporter">
+              <ProductionReportsArchive />
+            </SectionErrorBoundary>
           </CardContent>
         )}
       </Card>
@@ -76,7 +81,9 @@ function WholesaleReportsPage() {
         </CardHeader>
         {dailyOpen && (
           <CardContent className="pt-0 px-4 pb-4">
-            <DailyReportsArchive />
+            <SectionErrorBoundary title="Dagsrapporter">
+              <DailyReportsArchive />
+            </SectionErrorBoundary>
           </CardContent>
         )}
       </Card>
@@ -94,7 +101,9 @@ function WholesaleReportsPage() {
         </CardHeader>
         {weeklyOpen && (
           <CardContent className="pt-0 px-4 pb-4">
-            <WeeklyStoreReportsSection />
+            <SectionErrorBoundary title="Veckorapporter">
+              <WeeklyStoreReportsSection />
+            </SectionErrorBoundary>
           </CardContent>
         )}
       </Card>
@@ -112,7 +121,9 @@ function WholesaleReportsPage() {
         </CardHeader>
         {monthlyOpen && (
           <CardContent className="pt-0 px-4 pb-4">
-            <MonthlyReportsSection />
+            <SectionErrorBoundary title="Månadsrapporter">
+              <MonthlyReportsSection />
+            </SectionErrorBoundary>
           </CardContent>
         )}
       </Card>
