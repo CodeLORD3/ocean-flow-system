@@ -469,6 +469,44 @@ export default function TimeEntriesPage() {
       </section>
 
 
+      {/* Misslyckad offlinestämpling */}
+      <Dialog open={Boolean(failure)} onOpenChange={(open) => !open && setFailure(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hantera offlinepost</DialogTitle>
+          </DialogHeader>
+          {failure && (
+            <div className="space-y-4">
+              <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-sm">
+                <p className="font-medium">{TYPE_LABEL[failure.punch_type]} · {svenskDatum(failure.occurred_at)} {svenskTid(failure.occurred_at)}</p>
+                <p className="mt-1 text-muted-foreground">{failure.reason}</p>
+              </div>
+              <div className="space-y-1">
+                <Label>Person</Label>
+                <Select value={failureForm.employee_id} onValueChange={(v) => setFailureForm((f) => ({ ...f, employee_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Välj person" /></SelectTrigger>
+                  <SelectContent>
+                    {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.first_name} {e.last_name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>Åtgärdsanteckning</Label>
+                <Input value={failureForm.note} onChange={(e) => setFailureForm((f) => ({ ...f, note: e.target.value }))} placeholder="Varför registreras eller avfärdas posten?" />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button variant="ghost" className="text-destructive" onClick={() => void submitFailureDismissal()} disabled={dismissFailure.isPending || !failureForm.note.trim()}>
+              Avfärda med skäl
+            </Button>
+            <Button onClick={() => void submitFailureRegistration()} disabled={registerFailure.isPending || !failureForm.employee_id}>
+              Registrera i journal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Manuell efterregistrering */}
       <Dialog open={manualOpen} onOpenChange={setManualOpen}>
         <DialogContent>
