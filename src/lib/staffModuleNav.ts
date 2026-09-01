@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import type { SiteMode } from "@/contexts/SiteContext";
 import { canAccessRoute } from "@/lib/pageAccess";
+import { canOpenStaffPage, type StaffLevel } from "@/lib/staffModuleAccess";
 
 /**
  * En enda källa för hela personalmodulen (personal, tid, schema, frånvaro,
