@@ -431,7 +431,7 @@ export function DailyReportsArchive() {
                       <span className="mt-0.5 block flex flex-wrap items-center gap-2 text-xs text-muted-foreground">{formatWeekdayDate(report.report_date)}{correctedReportIds.has(report.id) && <Badge variant="outline" className="border-warning/40 px-1.5 py-0 text-[9px] text-warning">Korrigerad</Badge>}</span>
                     </button>
                     <span className="hidden truncate text-xs text-muted-foreground md:block">{nameOf(report.created_by) ?? "Okänd rapportör"}</span>
-                    <span className="col-start-2 row-start-1 text-right font-mono text-sm font-medium tabular-nums md:col-auto md:row-auto">{nf(report.gross_sales)} kr</span>
+                    <span className="col-start-2 row-start-1 text-right font-mono text-sm font-medium tabular-nums md:col-auto md:row-auto">{nf(report.net_sales)} kr</span>
                     <span className="col-start-2 row-start-2 flex justify-end gap-2 text-xs text-muted-foreground md:col-auto md:row-auto md:justify-end"><Users className="h-3.5 w-3.5" />{(report.staff_entries ?? []).length} · {reportHours.toFixed(1)} h</span>
                     {isAdmin && <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(report)} className="col-start-2 row-start-3 ml-auto md:col-auto md:row-auto"><Edit3 /> Ändra</Button>}
                   </div>
