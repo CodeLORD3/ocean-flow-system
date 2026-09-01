@@ -412,7 +412,7 @@ export function DailyReportsArchive() {
       ) : (
         <div className="overflow-hidden rounded-md border border-border/80">
           <div className="hidden grid-cols-[minmax(0,1fr)_150px_130px_100px] gap-4 border-b bg-muted/30 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid">
-            <span>Butik och datum</span><span>Rapportör</span><span className="text-right">Brutto</span><span className="text-right">Bemanning</span>
+            <span>Butik och datum</span><span>Rapportör</span><span className="text-right">Nettoomsättning</span><span className="text-right">Bemanning</span>
           </div>
           <div className="divide-y divide-border/70">
             {rows.map((report) => {
