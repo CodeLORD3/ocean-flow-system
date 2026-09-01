@@ -280,6 +280,123 @@ export function useHandlePendingRegistration() {
   });
 }
 
+/**
+ * Misslyckade offlinestämplingar. Kön får aldrig vara tyst: varje post ska
+ * antingen efterregistreras som en riktig journalrad eller avfärdas med skäl.
+ */
+export interface ClockSyncFailure {
+  id: string;
+  station_id: string | null;
+  store_id: string | null;
+  legal_entity_id: string | null;
+  identifier_masked: string | null;
+  punch_type: "in" | "ut" | "rast_start" | "rast_slut";
+  occurred_at: string;
+  queued_at: string | null;
+  work_site_id: string | null;
+  cost_center: string | null;
+  reason: string;
+  attempts: number;
+  status: "open" | "registered" | "dismissed";
+  resolution_note: string | null;
+  resolved_entry_id: string | null;
+  handled_at: string | null;
+  created_at: string;
+}
+
+export function useClockSyncFailures(status: ClockSyncFailure["status"] = "open") {
+  return useQuery({
+    queryKey: ["clock_sync_failures", status],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clock_sync_failures")
+        .select("*")
+        .eq("status", status)
+        .order("occurred_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as ClockSyncFailure[];
+    },
+  });
+}
+
+/** Avfärdar en offlinepost med obligatoriskt skäl. Posten raderas aldrig. */
+export function useDismissSyncFailure() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, note }: { id: string; note: string }) => {
+      if (!note.trim()) throw new Error("Ange ett skäl innan posten avfärdas.");
+      const { data: user } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("clock_sync_failures")
+        .update({
+          status: "dismissed",
+          resolution_note: note.trim(),
+          handled_by: user.user?.id ?? null,
+          handled_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["clock_sync_failures"] }),
+  });
+}
+
+/**
+ * Registrerar en offlinepost manuellt: skapar en riktig journalrad och kopplar
+ * felposten till den, så spåret från förlorad stämpling till journal är komplett.
+ */
+export function useRegisterSyncFailure() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      employee_id: string;
+      occurred_at: string;
+      punch_type: TimeEntry["type"];
+      store_id: string | null;
+      station_id: string | null;
+      work_site_id: string | null;
+      cost_center: string | null;
+      note: string;
+    }) => {
+      if (!input.employee_id) throw new Error("Välj vilken person stämplingen gäller.");
+      const { data: user } = await supabase.auth.getUser();
+      const { data: entry, error: entryError } = await supabase
+        .from("time_entries")
+        .insert({
+          employee_id: input.employee_id,
+          store_id: input.store_id,
+          station_id: input.station_id,
+          work_site_id: input.work_site_id,
+          cost_center: input.cost_center,
+          type: input.punch_type,
+          occurred_at: input.occurred_at,
+          source: "manual",
+          created_by: user.user?.id ?? null,
+          note: input.note.trim() || "Efterregistrerad förlorad offlinestämpling",
+        })
+        .select("id")
+        .single();
+      if (entryError) throw entryError;
+      const { error } = await supabase
+        .from("clock_sync_failures")
+        .update({
+          status: "registered",
+          resolved_entry_id: entry.id,
+          resolution_note: input.note.trim() || "Efterregistrerad från offlinekön",
+          handled_by: user.user?.id ?? null,
+          handled_at: new Date().toISOString(),
+        })
+        .eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["clock_sync_failures"] });
+      qc.invalidateQueries({ queryKey: ["time_entries"] });
+    },
+  });
+}
+
 /** Personalkollens rapporterade tider för parallellkörningsvyn. */
 export interface PkDayRow {
   employee_id: string | null;
