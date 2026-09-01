@@ -89,9 +89,15 @@ export const STAFF_MODULE_GROUPS: StaffNavGroup[] = [
 /** Alla rutter som hör till personalmodulen. */
 export const STAFF_MODULE_PATHS = STAFF_MODULE_GROUPS.flatMap(g => g.items.map(i => i.url));
 
-/** Grupper filtrerade på vad portalen får se. Tomma grupper faller bort. */
-export function staffGroupsForSite(site: SiteMode): StaffNavGroup[] {
+/**
+ * Grupper filtrerade på vad portalen får se och vad nivån (rollen) får se.
+ * Tomma grupper faller bort.
+ */
+export function staffGroupsForSite(site: SiteMode, level: StaffLevel = "admin"): StaffNavGroup[] {
   return STAFF_MODULE_GROUPS
-    .map(g => ({ ...g, items: g.items.filter(i => canAccessRoute(site, i.url)) }))
+    .map(g => ({
+      ...g,
+      items: g.items.filter(i => canAccessRoute(site, i.url) && canOpenStaffPage(level, i.url)),
+    }))
     .filter(g => g.items.length > 0);
 }
