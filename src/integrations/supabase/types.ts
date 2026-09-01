@@ -16283,6 +16283,7 @@ export type Database = {
         Args: { _customer_id: string; _reason?: string }
         Returns: Json
       }
+      auto_close_open_time_entries: { Args: never; Returns: number }
       autofeature_daily_images: {
         Args: { _count?: number; _days_back?: number }
         Returns: Json
@@ -16787,6 +16788,10 @@ export type Database = {
       }
       register_sick_period: {
         Args: { _employee_id: string; _first_day: string; _last_day?: string }
+        Returns: Json
+      }
+      run_time_compliance_checks: {
+        Args: { _from?: string; _to?: string }
         Returns: Json
       }
       service_set_employee_pnr: {

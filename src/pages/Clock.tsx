@@ -26,6 +26,7 @@ import {
   statusOnSite,
   storedSession,
   storedStation,
+  switchAllocation,
   type ClockStationInfo,
   type OnSitePerson,
 } from "@/lib/clockApi";
@@ -233,6 +234,27 @@ export default function Clock() {
     }
   };
 
+  const handleSwitchAllocation = async () => {
+    const value = identifier.replace(/\s/g, "");
+    if (!value || !found || !activeSite) {
+      setError("Välj driftställe innan du byter kostnadsställe.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await switchAllocation(value, activeSite.id);
+      setReceipt({ name: res.employee.first_name, action: "in", at: new Date().toISOString() });
+      reset();
+      setTimeout(() => setReceipt(null), 3000);
+      void refreshOnSite();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Kunde inte byta kostnadsställe");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   // ---------- Steg 1: aktivering ----------
   if (!activated) {
     return (
@@ -348,6 +370,14 @@ export default function Clock() {
                 <IndustryButton variant="primary" size="kiosk" corners onClick={() => handlePunch("rast_slut")} disabled={busy}>Rast slutar</IndustryButton>
               )}
             </div>
+            {workSites.length > 1 && (
+              <div className="space-y-2 border-t border-[var(--color-divider)] pt-4">
+                <SectionLabel>Byt kostnadsställe under pågående pass</SectionLabel>
+                <IndustryButton variant="secondary" size="touch" onClick={handleSwitchAllocation} disabled={busy || !activeSite}>
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Byt till valt driftställe"}
+                </IndustryButton>
+              </div>
+            )}
             <IndustryButton variant="ghost" size="touch" onClick={reset}>Avbryt</IndustryButton>
           </div>
         ) : (
