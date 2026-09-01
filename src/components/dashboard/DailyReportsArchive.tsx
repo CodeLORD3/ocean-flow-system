@@ -442,10 +442,10 @@ export function DailyReportsArchive() {
                         {correctedReportIds.has(report.id) && <Badge variant="outline" className="border-warning/40 text-warning">Korrigerad efter inskick</Badge>}
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                        <Metric label="Brutto" value={`${nf(report.gross_sales)} kr`} emphasis />
-                        <Metric label="Netto" value={`${nf(report.net_sales)} kr`} />
+                        <Metric label="Nettoomsättning" value={`${nf(report.net_sales)} kr`} emphasis />
+                        <Metric label="Brutto" value={`${nf(report.gross_sales)} kr`} />
                         <Metric label="Kvitton" value={nf(report.receipt_count)} />
-                        <Metric label="Snittköp" value={report.receipt_count ? `${((report.gross_sales ?? 0) / report.receipt_count).toFixed(2)} kr` : "—"} />
+                        <Metric label="Snittköp" value={report.receipt_count ? `${((report.net_sales ?? 0) / report.receipt_count).toFixed(2)} kr` : "—"} />
                         <Metric label="Största köp" value={`${nf(report.largest_sale)} kr`} />
                       </div>
 
