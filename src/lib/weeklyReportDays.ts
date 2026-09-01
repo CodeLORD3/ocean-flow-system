@@ -32,21 +32,30 @@ function hours(entries: DailyReport["staff_entries"]) {
   }, 0);
 }
 
-export function weekDayList(from: string, to: string) {
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+export function weekDayList(from?: string | null, to?: string | null) {
+  if (!from || !to || !ISO_DATE.test(from) || !ISO_DATE.test(to) || from > to) return [];
   const days: string[] = [];
   let current = from;
-  while (current <= to) {
+  // Skydd mot ogiltiga datum som annars kan snurra i evighet.
+  for (let guard = 0; current <= to && guard < 400; guard += 1) {
     days.push(current);
-    current = addDay(current);
+    const next = addDay(current);
+    if (!ISO_DATE.test(next) || next <= current) break;
+    current = next;
   }
   return days;
 }
 
-export function dayRowsFrom(days: string[], reports: DailyReport[]): ReportDay[] {
-  const byDate = new Map(reports.map((report) => [report.report_date, report]));
-  return days.map((date) => {
+export function dayRowsFrom(days: string[], reports: DailyReport[] | null | undefined): ReportDay[] {
+  const byDate = new Map((reports ?? []).filter(Boolean).map((report) => [report.report_date, report]));
+  return (days ?? []).filter(Boolean).map((date) => {
     const report = byDate.get(date);
-    const weekday = new Date(`${date}T12:00:00`).toLocaleDateString("sv-SE", { weekday: "short" });
+    const parsed = new Date(`${date}T12:00:00`);
+    const weekday = Number.isNaN(parsed.getTime())
+      ? "—"
+      : parsed.toLocaleDateString("sv-SE", { weekday: "short" });
     return {
       date,
       weekday: weekday.charAt(0).toUpperCase() + weekday.slice(1),
