@@ -371,7 +371,8 @@ export function DailyReportsArchive() {
     () => (storeFilter === "all" ? reports : reports.filter((report) => report.store_id === storeFilter)),
     [reports, storeFilter],
   );
-  const totalSales = useMemo(() => rows.reduce((sum, report) => sum + (report.gross_sales ?? 0), 0), [rows]);
+  /* Listan visar nettoomsättning — det är talet som följs upp per dag. */
+  const totalNetSales = useMemo(() => rows.reduce((sum, report) => sum + (report.net_sales ?? 0), 0), [rows]);
   const totalReceipts = useMemo(() => rows.reduce((sum, report) => sum + (report.receipt_count ?? 0), 0), [rows]);
   const totalStaffHours = useMemo(() => rows.reduce((sum, report) => sum + totalHours(report.staff_entries ?? []), 0), [rows]);
 
