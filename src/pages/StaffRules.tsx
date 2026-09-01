@@ -50,6 +50,22 @@ export default function StaffRules() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["staff-rules-settings"] }),
   });
 
+  /** Liggarplikten måste beslutas per driftställe, inte lämnas som "utred". */
+  const updateLedger = useMutation({
+    mutationFn: async ({ id, value }: { id: string; value: string }) => {
+      const { error } = await supabase
+        .from("work_sites")
+        .update({ ledger_required: value as "ja" | "nej" | "utred" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["staff-rules-settings"] });
+      toast.success("Liggarplikten uppdaterad");
+    },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Kunde inte spara liggarplikten"),
+  });
+
   const addHoliday = async () => {
     if (!holiday.date || !holiday.name.trim()) return;
     setSaving(true);

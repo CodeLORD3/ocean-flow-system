@@ -33,8 +33,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Plus, Pencil, Printer, ShieldCheck, X } from "lucide-react";
-import { useTimeEntries, useCreateTimeEntry, type TimeEntry } from "@/hooks/useClock";
+import { AlertTriangle, Loader2, Plus, Pencil, Printer, ShieldCheck, X } from "lucide-react";
+import {
+  useTimeEntries,
+  useCreateTimeEntry,
+  useClockSyncFailures,
+  useDismissSyncFailure,
+  useRegisterSyncFailure,
+  type ClockSyncFailure,
+  type TimeEntry,
+} from "@/hooks/useClock";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useStores } from "@/hooks/useStores";
 import {
