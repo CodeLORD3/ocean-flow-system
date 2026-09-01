@@ -18,6 +18,9 @@ export interface StaffProfile {
   allowed_store_id?: string | null;
   allowed_store_ids: string[];
   must_change_password: boolean;
+  /** Rollen styr vad kontot får göra inom personalmodulen. */
+  primary_role: string | null;
+  is_platform_admin: boolean;
 }
 
 interface AuthContextValue {
