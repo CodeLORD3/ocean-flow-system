@@ -151,6 +151,40 @@ export default function TimeEntriesPage() {
     }));
   };
 
+  const submitFailureRegistration = async () => {
+    if (!failure) return;
+    try {
+      await registerFailure.mutateAsync({
+        id: failure.id,
+        employee_id: failureForm.employee_id,
+        occurred_at: failure.occurred_at,
+        punch_type: failure.punch_type,
+        store_id: failure.store_id,
+        station_id: failure.station_id,
+        work_site_id: failure.work_site_id,
+        cost_center: failure.cost_center,
+        note: failureForm.note,
+      });
+      toast.success("Stämplingen är registrerad i journalen");
+      setFailure(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte registrera stämplingen");
+    }
+  };
+
+  const submitFailureDismissal = async () => {
+    if (!failure) return;
+    try {
+      await dismissFailure.mutateAsync({ id: failure.id, note: failureForm.note });
+      toast.success("Posten avfärdad med skäl");
+      setFailure(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte avfärda posten");
+    }
+  };
+
+
+
   const openInspector = async () => {
     const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
     const token = crypto.randomUUID();
