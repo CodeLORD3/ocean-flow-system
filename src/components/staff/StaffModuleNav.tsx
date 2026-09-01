@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { LayoutGrid } from "lucide-react";
 import { useSite } from "@/contexts/SiteContext";
 import { staffGroupsForSite } from "@/lib/staffModuleNav";
+import { staffLevelOf } from "@/lib/staffModuleAccess";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 /**
  * Gemensam flikrad för hela personalmodulen. Ligger högst upp på varje
