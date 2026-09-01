@@ -103,3 +103,6 @@ verify_jwt = false
 
 [functions.payroll-compute]
 verify_jwt = false
+
+[functions.fortnox-import-employees]
+verify_jwt = false
