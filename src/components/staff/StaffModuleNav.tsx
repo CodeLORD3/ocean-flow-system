@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { LayoutGrid } from "lucide-react";
 import { useSite } from "@/contexts/SiteContext";
 import { staffGroupsForSite } from "@/lib/staffModuleNav";
+import { staffLevelOf } from "@/lib/staffModuleAccess";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 /**
  * Gemensam flikrad för hela personalmodulen. Ligger högst upp på varje
@@ -11,8 +13,9 @@ import { staffGroupsForSite } from "@/lib/staffModuleNav";
  */
 export function StaffModuleNav() {
   const { site } = useSite();
+  const { staff } = useStaffAuth();
   const location = useLocation();
-  const groups = staffGroupsForSite(site);
+  const groups = staffGroupsForSite(site, staffLevelOf(staff));
   const items = groups.flatMap(g => g.items);
   if (items.length === 0) return null;
 

@@ -2,7 +2,9 @@ import { NavLink } from "react-router-dom";
 import { Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useSite } from "@/contexts/SiteContext";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { staffGroupsForSite } from "@/lib/staffModuleNav";
+import { staffLevelOf, staffLevelLabel } from "@/lib/staffModuleAccess";
 import { StaffModuleNav } from "@/components/staff/StaffModuleNav";
 
 /**
@@ -11,7 +13,9 @@ import { StaffModuleNav } from "@/components/staff/StaffModuleNav";
  */
 export default function PersonalHub() {
   const { site } = useSite();
-  const groups = staffGroupsForSite(site);
+  const { staff } = useStaffAuth();
+  const level = staffLevelOf(staff);
+  const groups = staffGroupsForSite(site, level);
 
   return (
     <div className="h-full overflow-auto p-4">
@@ -24,7 +28,7 @@ export default function PersonalHub() {
         <div>
           <h1 className="text-lg font-semibold leading-tight">Personal &amp; Schema</h1>
           <p className="text-xs text-muted-foreground">
-            Hela personalmodulen på ett ställe — personal, tid, schema, frånvaro, attest och lön.
+            {level === "employee" ? "Dina pass, tider, frånvaro och profil." : `Personalmodulen · ${staffLevelLabel(level)}.`}
           </p>
         </div>
       </div>
