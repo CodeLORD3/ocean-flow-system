@@ -17,3 +17,5 @@
 - [x] Kostnadsställebyte i kiosken samt beslutbar liggarplikt per driftställe
 - [ ] Driftpunkter kvar: klockidentitet för fyra anställda, stationsutrullning per försäljningsställe, övertidsjournal, skarp verifiering av lönekedjan och GDPR-rutin i skrift
 - [x] Importera och koppla FSAB:s anställda från Fortnox via säker matchning
+- [ ] Förbättra administrationsflödet med veckoschema, schemaläggning och målintervall 15–20 % för personal/försäljning
+- [ ] Kontrollera varför Mensurs bilder från Ålsten saknas i Bildflödet och rätta synlighet/urval
