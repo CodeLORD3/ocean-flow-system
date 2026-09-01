@@ -99,6 +99,8 @@ import BookingHolidays from "@/pages/BookingHolidays";
 import { NoAccessView } from "@/components/NoAccessView";
 import { useSite } from "@/contexts/SiteContext";
 import { canAccessRoute } from "@/lib/pageAccess";
+import { canOpenStaffPage, staffLevelOf } from "@/lib/staffModuleAccess";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 interface RouteEntry {
   component: React.ReactNode;
@@ -205,6 +207,8 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
 export function KeepAliveTabs() {
   const { tabs, activeTab } = useTabs();
   const { site } = useSite();
+  const { staff } = useStaffAuth();
+  const staffLevel = staffLevelOf(staff);
 
   return (
     <>
@@ -216,10 +220,11 @@ export function KeepAliveTabs() {
         if (!route) return null;
 
         const isActive = tab.path === activeTab;
-        const content = STAFF_MODULE_PATHS.includes(tab.path)
+        const isStaffRoute = STAFF_MODULE_PATHS.includes(tab.path);
+        const content = isStaffRoute
           ? <WithStaffNav>{route.component}</WithStaffNav>
           : route.component;
-        const allowed = canAccessRoute(site, tab.path);
+        const allowed = canAccessRoute(site, tab.path) && (!isStaffRoute || canOpenStaffPage(staffLevel, tab.path));
         return (
           <div
             key={tab.path}

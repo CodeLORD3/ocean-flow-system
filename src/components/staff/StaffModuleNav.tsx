@@ -13,8 +13,9 @@ import { useStaffAuth } from "@/contexts/StaffAuthContext";
  */
 export function StaffModuleNav() {
   const { site } = useSite();
+  const { staff } = useStaffAuth();
   const location = useLocation();
-  const groups = staffGroupsForSite(site);
+  const groups = staffGroupsForSite(site, staffLevelOf(staff));
   const items = groups.flatMap(g => g.items);
   if (items.length === 0) return null;
 
