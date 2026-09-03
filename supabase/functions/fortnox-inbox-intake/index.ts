@@ -59,32 +59,42 @@ const mimeFor = (name: string) => {
   return "application/octet-stream";
 };
 
-/** Laddar ner en arkivfil som binär. fortnoxRequest kan bara JSON, så vi hämtar själva. */
-async function downloadFile(sb: SupabaseClient, entity: string, fileId: string): Promise<Uint8Array> {
+/**
+ * Laddar ner en fil som binär. fortnoxRequest kan bara JSON, så vi hämtar själva.
+ * Inboxfiler ligger under /inbox/{id}, arkivfiler under /archive/{id}.
+ */
+async function downloadFile(
+  sb: SupabaseClient,
+  entity: string,
+  fileId: string,
+  base: "inbox" | "archive",
+): Promise<Uint8Array> {
   const token = await getAccessToken(sb, entity);
-  const res = await fetch(`${FORTNOX_API}/archive/${encodeURIComponent(fileId)}`, {
+  const res = await fetch(`${FORTNOX_API}/${base}/${encodeURIComponent(fileId)}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: "application/octet-stream" },
   });
   if (!res.ok) throw new Error(`Kunde inte hämta fil ${fileId} från Fortnox (${res.status})`);
   return new Uint8Array(await res.arrayBuffer());
 }
 
-type ArchiveFile = { id: string; name: string; path: string; date: string | null };
+type ArchiveFile = { id: string; name: string; path: string; date: string | null; base: "inbox" | "archive" };
 
-/** Läser en arkivmapp (via ?path= eller ?folderid=) och returnerar filer + undermappar. */
+/** Läser en mapp i inbox eller arkiv och returnerar filer + undermappar. */
 async function readFolder(
   sb: SupabaseClient,
   entity: string,
+  base: "inbox" | "archive",
   query: string,
   label: string,
 ): Promise<{ files: ArchiveFile[]; folders: { id: string; name: string }[] }> {
-  const res = await fortnoxRequest<any>(sb, entity, "GET", `/archive/${query}`);
+  const res = await fortnoxRequest<any>(sb, entity, "GET", `/${base}/${query}`);
   const folder = res?.Folder ?? res;
   const files: ArchiveFile[] = (folder?.Files ?? [])
     .map((f: any) => ({
       id: String(f.Id ?? f.ArchiveFileId ?? ""),
       name: String(f.Name ?? "fil"),
       path: label,
+      base,
       date: (() => {
         const raw = f.CreatedAt ?? f.Created ?? f.Date ?? f.UploadDate ?? null;
         return raw ? String(raw).slice(0, 10) : null;
@@ -97,6 +107,7 @@ async function readFolder(
     .filter((f: { id: string }) => f.id);
   return { files, folders };
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
