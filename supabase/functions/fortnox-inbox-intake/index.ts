@@ -393,6 +393,7 @@ Deno.serve(async (req) => {
       try {
         const list = await fortnoxRequest<any>(sb, entity, "GET", "/supplierinvoices?limit=50&sortorder=descending");
         for (const head of (list?.SupplierInvoices ?? [])) {
+          if (outOfTime()) { partial = true; break; }
           const nr = String(head.GivenNumber ?? head.DocumentNumber ?? "");
           if (!nr) continue;
           // Historiska fakturor hoppas över — bara från startgränsen och framåt.
