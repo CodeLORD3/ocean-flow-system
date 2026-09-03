@@ -375,3 +375,75 @@
   .ind-decision__action { border-left: 0; padding-left: 0; }
   .ind-workspace-header .ind-btn { min-height: 40px; }
 }
+
+/* ------------------------------------------------- personalmodulens flikrad */
+
+.ind-tabrail {
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-divider);
+}
+.ind-tabrail__track {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ind-tabrail__track::-webkit-scrollbar { display: none; }
+.ind-tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  min-height: 34px;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 13.5px;
+  letter-spacing: 0.01em;
+  color: var(--ind-muted);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color .12s ease, border-color .12s ease, background-color .12s ease;
+}
+.ind-tab:hover { color: var(--color-text); background: var(--color-neutral-200); }
+.ind-tab--active {
+  color: var(--color-accent-800);
+  border-bottom-color: var(--color-accent-600);
+  background: var(--color-accent-100);
+}
+.ind-tabrail__sep { flex: 0 0 auto; width: 1px; height: 18px; background: var(--color-divider); }
+
+/* ------------------------------------------------------ modulnav (kortlänk) */
+
+.ind-modcard {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-divider);
+  border-left: 3px solid var(--color-accent-500);
+  border-radius: var(--radius-md);
+  height: 100%;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+.ind-modcard:hover { background: var(--color-accent-100); border-left-color: var(--color-accent-700); }
+.ind-modcard__title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 16px;
+  line-height: 1.2;
+}
+.ind-modcard__desc { font-size: 13px; line-height: 1.4; color: var(--ind-muted); }
+.ind-modcard__icon { color: var(--color-accent-700); flex: 0 0 auto; margin-top: 2px; }
+
+.ind-groupnum {
+  font-family: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--color-neutral-100);
+  background: var(--color-accent-700);
+  border-radius: var(--radius-sm);
+  padding: 0 6px;
+}
