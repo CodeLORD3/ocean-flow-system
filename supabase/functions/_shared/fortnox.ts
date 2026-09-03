@@ -6,8 +6,9 @@ export const FORTNOX_AUTH_URL = "https://apps.fortnox.se/oauth-v1/auth";
 export const FORTNOX_TOKEN_URL = "https://apps.fortnox.se/oauth-v1/token";
 export const FORTNOX_SCOPES = [
   "customer", "article", "invoice", "price", "payment", "companyinformation", "settings",
-  // Digital post: arkivplats/inbox och registrerade leverantörsfakturor.
-  "archive", "supplierinvoice",
+  // Digital post: arkivplats, inkorg (digital inbox) och registrerade leverantörsfakturor.
+  "archive", "inbox", "supplierinvoice",
+
   // Lön: närvaro-, frånvaro- och lönetransaktioner samt anställda (etapp 5).
   "salary",
 ];

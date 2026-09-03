@@ -59,32 +59,42 @@ const mimeFor = (name: string) => {
   return "application/octet-stream";
 };
 
-/** Laddar ner en arkivfil som binär. fortnoxRequest kan bara JSON, så vi hämtar själva. */
-async function downloadFile(sb: SupabaseClient, entity: string, fileId: string): Promise<Uint8Array> {
+/**
+ * Laddar ner en fil som binär. fortnoxRequest kan bara JSON, så vi hämtar själva.
+ * Inboxfiler ligger under /inbox/{id}, arkivfiler under /archive/{id}.
+ */
+async function downloadFile(
+  sb: SupabaseClient,
+  entity: string,
+  fileId: string,
+  base: "inbox" | "archive",
+): Promise<Uint8Array> {
   const token = await getAccessToken(sb, entity);
-  const res = await fetch(`${FORTNOX_API}/archive/${encodeURIComponent(fileId)}`, {
+  const res = await fetch(`${FORTNOX_API}/${base}/${encodeURIComponent(fileId)}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: "application/octet-stream" },
   });
   if (!res.ok) throw new Error(`Kunde inte hämta fil ${fileId} från Fortnox (${res.status})`);
   return new Uint8Array(await res.arrayBuffer());
 }
 
-type ArchiveFile = { id: string; name: string; path: string; date: string | null };
+type ArchiveFile = { id: string; name: string; path: string; date: string | null; base: "inbox" | "archive" };
 
-/** Läser en arkivmapp (via ?path= eller ?folderid=) och returnerar filer + undermappar. */
+/** Läser en mapp i inbox eller arkiv och returnerar filer + undermappar. */
 async function readFolder(
   sb: SupabaseClient,
   entity: string,
+  base: "inbox" | "archive",
   query: string,
   label: string,
 ): Promise<{ files: ArchiveFile[]; folders: { id: string; name: string }[] }> {
-  const res = await fortnoxRequest<any>(sb, entity, "GET", `/archive/${query}`);
+  const res = await fortnoxRequest<any>(sb, entity, "GET", `/${base}/${query}`);
   const folder = res?.Folder ?? res;
   const files: ArchiveFile[] = (folder?.Files ?? [])
     .map((f: any) => ({
       id: String(f.Id ?? f.ArchiveFileId ?? ""),
       name: String(f.Name ?? "fil"),
       path: label,
+      base,
       date: (() => {
         const raw = f.CreatedAt ?? f.Created ?? f.Date ?? f.UploadDate ?? null;
         return raw ? String(raw).slice(0, 10) : null;
@@ -97,6 +107,7 @@ async function readFolder(
     .filter((f: { id: string }) => f.id);
   return { files, folders };
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -111,14 +122,17 @@ Deno.serve(async (req) => {
   const includeArchive = body.archive !== false;
   const includeInvoices = body.invoices !== false;
   /**
-   * Startgräns: bara post från och med detta datum hämtas — aldrig historik.
-   * Standard = dagens datum (svensk tid). Kan överstyras med { since: "YYYY-MM-DD" }.
+   * Startgräns: bara post från och med detta datum hämtas — aldrig hela historiken.
+   * Standard = 14 dagar bakåt (svensk tid), så färsk post inte missas när
+   * körningen sker någon dag efter att filen kom in. Överstyrs med { since }.
    */
+  const daysBack = typeof body.days === "number" && body.days > 0 ? Math.min(body.days, 120) : 14;
   const since =
     typeof body.since === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.since)
       ? body.since
-      : new Date(Date.now() + 2 * 3600_000).toISOString().slice(0, 10);
+      : new Date(Date.now() + 2 * 3600_000 - daysBack * 86_400_000).toISOString().slice(0, 10);
   const tooOld = (date?: string | null) => !!date && date.slice(0, 10) < since;
+
 
 
   const { data: run } = await sb
@@ -170,18 +184,24 @@ Deno.serve(async (req) => {
 
     for (const path of INBOX_PATHS) {
       try {
-        const { files } = await readFolder(sb, entity, `?path=${path}`, path);
+        // Digital post ligger i inbox-API:t (/inbox/?path=inbox_s), inte i arkivet.
+        const { files, folders } = await readFolder(sb, entity, "inbox", `?path=${path}`, path);
         candidates.push(...files);
-      } catch {
-        // Vissa Fortnox-konton stödjer inte ?path=inbox — inkorgen hittas då som
-        // vanlig arkivmapp i traverseringen nedan.
+        for (const folder of folders) {
+          try {
+            const sub = await readFolder(sb, entity, "inbox", `?folderid=${folder.id}`, `${path}/${folder.name}`);
+            candidates.push(...sub.files);
+          } catch { /* hoppa över undermappar vi inte får läsa */ }
+        }
+      } catch (e) {
+        results.push({ source: `inbox:${path}`, action: "kunde_inte_lasas", error: String(e instanceof Error ? e.message : e) });
       }
     }
 
 
     if (includeArchive) {
       try {
-        const root = await readFolder(sb, entity, "", "arkiv");
+        const root = await readFolder(sb, entity, "archive", "", "arkiv");
         candidates.push(...root.files);
         let level = root.folders.map((f) => ({ ...f, depth: 1 }));
         while (level.length && level[0].depth <= MAX_DEPTH) {
@@ -189,7 +209,7 @@ Deno.serve(async (req) => {
           for (const folder of level) {
             if (candidates.length >= limit * 3) break;
             try {
-              const sub = await readFolder(sb, entity, `?folderid=${folder.id}`, `arkiv/${folder.name}`);
+              const sub = await readFolder(sb, entity, "archive", `?folderid=${folder.id}`, `arkiv/${folder.name}`);
               candidates.push(...sub.files);
               next.push(...sub.folders.map((f) => ({ ...f, depth: folder.depth + 1 })));
             } catch { /* hoppa över mappar vi inte får läsa */ }
@@ -202,6 +222,7 @@ Deno.serve(async (req) => {
     }
 
     for (const file of candidates) {
+
       if (stored >= limit) break;
       if (!isDoc(file.name)) { skipped++; continue; }
       if (tooOld(file.date)) { skipped++; continue; }
@@ -219,7 +240,7 @@ Deno.serve(async (req) => {
 
       let bytes: Uint8Array;
       try {
-        bytes = await downloadFile(sb, entity, file.id);
+        bytes = await downloadFile(sb, entity, file.id, file.base);
       } catch (e) {
         results.push({ file: file.name, action: "nedladdning_misslyckades", error: String(e instanceof Error ? e.message : e) });
         continue;
