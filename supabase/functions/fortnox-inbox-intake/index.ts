@@ -184,18 +184,24 @@ Deno.serve(async (req) => {
 
     for (const path of INBOX_PATHS) {
       try {
-        const { files } = await readFolder(sb, entity, `?path=${path}`, path);
+        // Digital post ligger i inbox-API:t (/inbox/?path=inbox_s), inte i arkivet.
+        const { files, folders } = await readFolder(sb, entity, "inbox", `?path=${path}`, path);
         candidates.push(...files);
-      } catch {
-        // Vissa Fortnox-konton stödjer inte ?path=inbox — inkorgen hittas då som
-        // vanlig arkivmapp i traverseringen nedan.
+        for (const folder of folders) {
+          try {
+            const sub = await readFolder(sb, entity, "inbox", `?folderid=${folder.id}`, `${path}/${folder.name}`);
+            candidates.push(...sub.files);
+          } catch { /* hoppa över undermappar vi inte får läsa */ }
+        }
+      } catch (e) {
+        results.push({ source: `inbox:${path}`, action: "kunde_inte_lasas", error: String(e instanceof Error ? e.message : e) });
       }
     }
 
 
     if (includeArchive) {
       try {
-        const root = await readFolder(sb, entity, "", "arkiv");
+        const root = await readFolder(sb, entity, "archive", "", "arkiv");
         candidates.push(...root.files);
         let level = root.folders.map((f) => ({ ...f, depth: 1 }));
         while (level.length && level[0].depth <= MAX_DEPTH) {
@@ -203,7 +209,7 @@ Deno.serve(async (req) => {
           for (const folder of level) {
             if (candidates.length >= limit * 3) break;
             try {
-              const sub = await readFolder(sb, entity, `?folderid=${folder.id}`, `arkiv/${folder.name}`);
+              const sub = await readFolder(sb, entity, "archive", `?folderid=${folder.id}`, `arkiv/${folder.name}`);
               candidates.push(...sub.files);
               next.push(...sub.folders.map((f) => ({ ...f, depth: folder.depth + 1 })));
             } catch { /* hoppa över mappar vi inte får läsa */ }
@@ -216,6 +222,7 @@ Deno.serve(async (req) => {
     }
 
     for (const file of candidates) {
+
       if (stored >= limit) break;
       if (!isDoc(file.name)) { skipped++; continue; }
       if (tooOld(file.date)) { skipped++; continue; }
