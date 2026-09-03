@@ -485,13 +485,27 @@ Deno.serve(async (req) => {
       }
     }
 
-    return await finish({ ok: true, fetched, stored, skipped, invoices, unread_without_attachment: 0, results });
+    const scopeMsg = "Fortnox-kopplingen saknar behörighet till Digital inkorg. Klicka Koppla om och godkänn inkorgsbehörigheten.";
+    if (inboxScopeMissing) {
+      await sb.from("fortnox_connections")
+        .update({ last_error: scopeMsg })
+        .eq("legal_entity_code", entity);
+    }
+
+    return await finish({
+      ok: true,
+      fetched, stored, skipped, invoices, partial,
+      inbox_scope_missing: inboxScopeMissing,
+      error: inboxScopeMissing ? scopeMsg : null,
+      unread_without_attachment: 0,
+      results,
+    });
   } catch (e) {
     console.error("fortnox-inbox-intake error:", e);
     return await finish({
       ok: false,
       error: e instanceof Error ? e.message : "okänt fel",
-      fetched, stored, skipped,
+      fetched, stored, skipped, partial,
       unread_without_attachment: 0,
     }, 500);
   }
