@@ -1,0 +1,1 @@
+ALTER TABLE public.mail_intake_runs ADD COLUMN IF NOT EXISTS partial boolean NOT NULL DEFAULT false;
