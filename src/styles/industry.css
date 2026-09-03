@@ -447,3 +447,32 @@
   border-radius: var(--radius-sm);
   padding: 0 6px;
 }
+
+.ind-schedule-topline { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-6); }
+.ind-schedule-controls { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); padding-top: var(--space-3); border-top: 1px solid color-mix(in srgb, var(--color-accent-200) 24%, transparent); }
+.ind-period-control { display: inline-flex; align-items: center; gap: var(--space-1); }
+.ind-period-control .ind-btn { min-width: 32px; padding-left: var(--space-2); padding-right: var(--space-2); }
+.ind-period-control .ind-input { width: 142px; }
+.ind-period-label { display: inline-flex; align-items: baseline; gap: var(--space-2); color: var(--color-accent-200); font-family: var(--font-heading); font-size: 14px; white-space: nowrap; }
+.ind-period-label .ind-num { font-size: 18px; color: var(--color-neutral-100); }
+.ind-filter-group { display: inline-flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
+.ind-filter-label { color: var(--color-accent-200); font-family: var(--font-heading); font-size: 12px; text-transform: uppercase; letter-spacing: .07em; }
+.ind-control-divider { height: 24px; width: 1px; background: color-mix(in srgb, var(--color-accent-200) 24%, transparent); }
+.ind-view-switch { display: inline-flex; align-items: center; padding: 3px; border: 1px solid color-mix(in srgb, var(--color-accent-200) 30%, transparent); border-radius: var(--radius-md); }
+.ind-view-switch .ind-btn { min-height: 32px; padding: var(--space-2) var(--space-3); color: var(--color-accent-200); }
+.ind-view-switch .ind-btn:hover { background: color-mix(in srgb, var(--color-accent-200) 12%, transparent); color: var(--color-neutral-100); }
+.ind-view-switch .ind-btn.ind-view-switch__item--active { background: var(--color-accent-600); color: var(--color-neutral-100); }
+.ind-metric { min-width: 145px; }
+.ind-section-heading { display: flex; align-items: end; justify-content: space-between; gap: var(--space-4); }
+@media (max-width: 700px) {
+  .ind-schedule-topline { display: block; }
+  .ind-schedule-topline > .flex { margin-top: var(--space-4); }
+  .ind-schedule-controls { align-items: stretch; }
+  .ind-period-label { order: 2; }
+  .ind-schedule-controls > .ind-btn { order: 3; }
+  .ind-control-divider { display: none; }
+  .ind-filter-group { width: 100%; order: 4; }
+  .ind-filter-group .ind-select { flex: 1 1 145px; width: auto; }
+  .ind-metric { min-width: 120px; }
+  .ind-section-heading { align-items: flex-start; }
+}
