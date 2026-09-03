@@ -133,6 +133,26 @@ Deno.serve(async (req) => {
       : new Date(Date.now() + 2 * 3600_000 - daysBack * 86_400_000).toISOString().slice(0, 10);
   const tooOld = (date?: string | null) => !!date && date.slice(0, 10) < since;
 
+  /**
+   * Tidsbudget: edge-funktioner har begränsad CPU/väggtid. När budgeten nästan är
+   * slut avslutas körningen snyggt med partial=true, så nästa schemalagda körning
+   * fortsätter med resterande filer istället för att hela körningen kraschar.
+   */
+  const startedMs = Date.now();
+  const budgetMs = typeof body.budget_ms === "number" && body.budget_ms > 5_000
+    ? Math.min(body.budget_ms, 240_000)
+    : 90_000;
+  const outOfTime = () => Date.now() - startedMs > budgetMs;
+  let partial = false;
+
+  /** Saknad inbox-behörighet i OAuth-kopplingen → tydligt fel istället för generiskt 403. */
+  const isScopeError = (msg: string) => {
+    const hay = msg.toLowerCase();
+    return hay.includes("scope") || hay.includes("behörighet") || hay.includes("not authorized") ||
+      hay.includes("unauthorized") || hay.includes("(403)") || hay.includes("403");
+  };
+  let inboxScopeMissing = false;
+
 
 
   const { data: run } = await sb
