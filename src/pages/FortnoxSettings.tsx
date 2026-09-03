@@ -85,6 +85,40 @@ export default function FortnoxSettings() {
     },
   });
 
+  // Automatisk hämtning av Fortnox-post: körningar loggas i mail_intake_runs.
+  const intakeRuns = useQuery({
+    queryKey: ["fortnox_intake_runs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mail_intake_runs")
+        .select("id, folder, started_at, finished_at, ok, fetched, stored, skipped, error, partial")
+        .like("folder", "fortnox:%")
+        .order("started_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 60_000,
+  });
+
+  const runIntake = useMutation({
+    mutationFn: async (code: string) => {
+      const { data, error } = await supabase.functions.invoke("fortnox-inbox-intake", {
+        body: { entity: code, days: 7, limit: 25 },
+      });
+      if (error) throw error;
+      if (data?.error && data?.ok === false) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (d: any) => {
+      if (d?.inbox_scope_missing) toast.error(d.error);
+      else toast.success(`${d?.stored ?? 0} nya dokument hämtade (${d?.skipped ?? 0} hoppade över)${d?.partial ? " – delvis klar, fortsätter nästa körning" : ""}`);
+      qc.invalidateQueries({ queryKey: ["fortnox_intake_runs"] });
+      qc.invalidateQueries({ queryKey: ["fortnox_connections"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const jobs = useQuery({
     queryKey: ["fortnox_invoice_jobs"],
     queryFn: async () => {
