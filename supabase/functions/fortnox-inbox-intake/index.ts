@@ -122,14 +122,17 @@ Deno.serve(async (req) => {
   const includeArchive = body.archive !== false;
   const includeInvoices = body.invoices !== false;
   /**
-   * Startgräns: bara post från och med detta datum hämtas — aldrig historik.
-   * Standard = dagens datum (svensk tid). Kan överstyras med { since: "YYYY-MM-DD" }.
+   * Startgräns: bara post från och med detta datum hämtas — aldrig hela historiken.
+   * Standard = 14 dagar bakåt (svensk tid), så färsk post inte missas när
+   * körningen sker någon dag efter att filen kom in. Överstyrs med { since }.
    */
+  const daysBack = typeof body.days === "number" && body.days > 0 ? Math.min(body.days, 120) : 14;
   const since =
     typeof body.since === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.since)
       ? body.since
-      : new Date(Date.now() + 2 * 3600_000).toISOString().slice(0, 10);
+      : new Date(Date.now() + 2 * 3600_000 - daysBack * 86_400_000).toISOString().slice(0, 10);
   const tooOld = (date?: string | null) => !!date && date.slice(0, 10) < since;
+
 
 
   const { data: run } = await sb
