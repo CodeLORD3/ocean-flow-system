@@ -214,12 +214,14 @@ Deno.serve(async (req) => {
           } catch { /* hoppa över undermappar vi inte får läsa */ }
         }
       } catch (e) {
-        results.push({ source: `inbox:${path}`, action: "kunde_inte_lasas", error: String(e instanceof Error ? e.message : e) });
+        const msg = String(e instanceof Error ? e.message : e);
+        if (isScopeError(msg)) inboxScopeMissing = true;
+        results.push({ source: `inbox:${path}`, action: "kunde_inte_lasas", error: msg });
       }
     }
 
 
-    if (includeArchive) {
+    if (includeArchive && !outOfTime()) {
       try {
         const root = await readFolder(sb, entity, "archive", "", "arkiv");
         candidates.push(...root.files);
