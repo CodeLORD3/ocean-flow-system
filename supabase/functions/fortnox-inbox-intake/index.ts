@@ -162,9 +162,11 @@ Deno.serve(async (req) => {
     .single();
   const runId = run?.id as string | undefined;
 
+  const RUN_COLUMNS = ["ok", "fetched", "stored", "skipped", "error", "partial", "unread_without_attachment"];
   const finish = async (patch: Json, status = 200) => {
     if (runId) {
-      const { results: _drop, ...columns } = patch as Json & { results?: unknown };
+      const columns: Json = {};
+      for (const key of RUN_COLUMNS) if (key in patch) columns[key] = (patch as Json)[key];
       await sb.from("mail_intake_runs")
         .update({ finished_at: new Date().toISOString(), ...columns })
         .eq("id", runId);
