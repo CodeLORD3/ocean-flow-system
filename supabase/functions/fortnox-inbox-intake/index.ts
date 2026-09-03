@@ -245,6 +245,7 @@ Deno.serve(async (req) => {
 
     for (const file of candidates) {
 
+      if (outOfTime()) { partial = true; break; }
       if (stored >= limit) break;
       if (!isDoc(file.name)) { skipped++; continue; }
       if (tooOld(file.date)) { skipped++; continue; }
