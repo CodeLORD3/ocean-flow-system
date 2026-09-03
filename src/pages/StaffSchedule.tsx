@@ -230,44 +230,52 @@ export default function StaffSchedule() {
       <div className="mx-auto max-w-[1600px]">
         <header className="ind-workspace-header ind-corners px-4 py-4 sm:px-6">
           <span className="ind-corner-b" aria-hidden="true" />
-          <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="ind-schedule-topline">
             <div>
               <SectionLabel className="text-[var(--color-accent-200)]">Makrill Trade · Personal & schema</SectionLabel>
               <h1 className="ind-h1 mt-1 text-[var(--color-neutral-100)]">Schemaöversikt</h1>
-              <p className="mt-1 max-w-2xl text-sm text-[var(--color-accent-200)]">Planera bemanning, följ avtalsutrymme och se vad som händer på golvet.</p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <IndustryButton variant={view === "week" ? "primary" : "secondary"} onClick={() => setView("week")}><Table2 size={15} /> Vecka</IndustryButton>
-              <IndustryButton variant={view === "day" ? "primary" : "secondary"} onClick={() => { setView("day"); setDayViewDate(days[0]); }}><CalendarDays size={15} /> Dag</IndustryButton>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="ind-view-switch" role="group" aria-label="Välj schemavy">
+                <IndustryButton className={view === "week" ? "ind-view-switch__item--active" : "ind-view-switch__item"} variant="ghost" aria-pressed={view === "week"} onClick={() => setView("week")}><Table2 size={15} /> Vecka</IndustryButton>
+                <IndustryButton className={view === "day" ? "ind-view-switch__item--active" : "ind-view-switch__item"} variant="ghost" aria-pressed={view === "day"} onClick={() => { setView("day"); setDayViewDate(days[0]); }}><CalendarDays size={15} /> Dag</IndustryButton>
+              </div>
               <IndustryButton variant="primary" corners onClick={() => openDialog(null, selectedDay)}><Plus size={15} /> Planera pass</IndustryButton>
             </div>
           </div>
-          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-[color-mix(in_srgb,var(--color-accent-200)_24%,transparent)] pt-3">
-            <IndustryButton variant="ghost" onClick={() => shiftPeriod(-1)} aria-label="Föregående vecka"><ChevronLeft size={17} /></IndustryButton>
-            <Input type="date" className="ind-input ind-date-control w-[150px]" value={view === "day" ? dayViewDate : anchor} onChange={(event) => { const value = event.target.value || dateKey(); setAnchor(value); setDayViewDate(value); }} />
-            <IndustryButton variant="ghost" onClick={() => shiftPeriod(1)} aria-label="Nästa vecka"><ChevronRight size={17} /></IndustryButton>
-            <span className="ind-header-chip ind-num">V{isoWeek(mondayOf(anchor))} · {days[0]}–{days[6]}</span>
-            <Select value={cityFilter} onValueChange={(value) => { setCityFilter(value); setStoreFilter("all"); }}>
-              <SelectTrigger className="ind-select w-40"><SelectValue placeholder="Alla städer" /></SelectTrigger>
-              <SelectContent><SelectItem value="all">Alla städer</SelectItem>{cities.map((city) => <SelectItem key={city} value={city}>{city}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={storeFilter} onValueChange={setStoreFilter}>
-              <SelectTrigger className="ind-select w-48"><SelectValue placeholder="Alla enheter" /></SelectTrigger>
-              <SelectContent><SelectItem value="all">Alla enheter</SelectItem>{stores.filter((store: any) => cityFilter === "all" || store.city === cityFilter).map((store: any) => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}</SelectContent>
-            </Select>
+          <div className="ind-schedule-controls">
+            <div className="ind-period-control" aria-label="Period">
+              <IndustryButton variant="ghost" onClick={() => shiftPeriod(-1)} aria-label="Föregående vecka"><ChevronLeft size={17} /></IndustryButton>
+              <Input type="date" aria-label="Välj datum" className="ind-input ind-date-control" value={view === "day" ? dayViewDate : anchor} onChange={(event) => { const value = event.target.value || dateKey(); setAnchor(value); setDayViewDate(value); }} />
+              <IndustryButton variant="ghost" onClick={() => shiftPeriod(1)} aria-label="Nästa vecka"><ChevronRight size={17} /></IndustryButton>
+            </div>
+            <div className="ind-period-label"><span className="ind-num">V{isoWeek(mondayOf(anchor))}</span><span>{days[0]} – {days[6]}</span></div>
+            <IndustryButton variant="secondary" onClick={() => { const today = dateKey(); setAnchor(today); setDayViewDate(today); }}>Idag</IndustryButton>
+            <span className="ind-control-divider" aria-hidden="true" />
+            <div className="ind-filter-group">
+              <span className="ind-filter-label">Visa</span>
+              <Select value={cityFilter} onValueChange={(value) => { setCityFilter(value); setStoreFilter("all"); }}>
+                <SelectTrigger className="ind-select w-40"><SelectValue placeholder="Alla städer" /></SelectTrigger>
+                <SelectContent><SelectItem value="all">Alla städer</SelectItem>{cities.map((city) => <SelectItem key={city} value={city}>{city}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={storeFilter} onValueChange={setStoreFilter}>
+                <SelectTrigger className="ind-select w-48"><SelectValue placeholder="Alla enheter" /></SelectTrigger>
+                <SelectContent><SelectItem value="all">Alla enheter</SelectItem>{stores.filter((store: any) => cityFilter === "all" || store.city === cityFilter).map((store: any) => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
           </div>
         </header>
 
         <section className="ind-decision mt-4" aria-label="Beslutsrad">
-          <div><SectionLabel>Planerad tid</SectionLabel><p className="ind-decision__value ind-num">{formatHm(weekMinutes)}</p></div>
-          <div><SectionLabel>Arbetad tid</SectionLabel><p className="ind-decision__value ind-num">{formatHm(actualMinutes)}</p></div>
-          <div><SectionLabel>Personalkostnad</SectionLabel><p className="ind-decision__value ind-num">{weekCost > 0 ? formatKrPrel(weekCost) : "—"}</p></div>
-          <div><SectionLabel>Arbete / omsättning</SectionLabel><p className={`ind-decision__value ind-num ${laborRatio === null ? "ind-muted" : laborRatio <= 20 ? "ind-status--ok" : "ind-status--alert"}`}>{laborRatio === null ? "—" : `${laborRatio.toFixed(1)} %`}</p></div>
+          <div className="ind-metric"><SectionLabel>Planerad tid</SectionLabel><p className="ind-decision__value ind-num">{formatHm(weekMinutes)}</p></div>
+          <div className="ind-metric"><SectionLabel>Arbetad tid</SectionLabel><p className="ind-decision__value ind-num">{formatHm(actualMinutes)}</p></div>
+          <div className="ind-metric"><SectionLabel>Personalkostnad</SectionLabel><p className="ind-decision__value ind-num">{weekCost > 0 ? formatKrPrel(weekCost) : "—"}</p></div>
+          <div className="ind-metric"><SectionLabel>Arbete / omsättning</SectionLabel><p className={`ind-decision__value ind-num ${laborRatio === null ? "ind-muted" : laborRatio <= 20 ? "ind-status--ok" : "ind-status--alert"}`}>{laborRatio === null ? "—" : `${laborRatio.toFixed(1)} %`}</p></div>
           <div className="ind-decision__action"><SectionLabel>Åtgärd krävs</SectionLabel><p className={`ind-decision__value ind-num ${extraCount > 0 || missingRates > 0 ? "ind-status--alert" : "ind-status--ok"}`}>{extraCount + missingRates || "0"}</p><span className="text-xs ind-muted">{extraCount ? `${extraCount} över avtal` : missingRates ? `${missingRates} utan lön` : "Inget akut"}</span></div>
         </section>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <div><SectionLabel>{view === "week" ? "Veckoplan" : "Dagens bemanning"}</SectionLabel><p className="mt-1 text-sm ind-muted">{view === "week" ? "Tid, avtalstak och faktisk närvaro i samma arbetsyta." : "Tidslinje från öppning till stängning."}</p></div>
+        <div className="ind-section-heading mt-5">
+          <div><SectionLabel>{view === "week" ? "Veckoplan" : "Dagens bemanning"}</SectionLabel><h2 className="ind-h3 mt-1">{view === "week" ? "Bemanning per dag" : "Bemanning över dagen"}</h2></div>
           {overhead.data ? <span className="ind-meta-chip ind-num">Påslag {overhead.data} %</span> : null}
         </div>
 
@@ -276,7 +284,7 @@ export default function StaffSchedule() {
             <div className="ind-empty-state">
               <CalendarRange size={28} />
               <h2 className="ind-h3 mt-3">Ingen planering för vecka {isoWeek(mondayOf(anchor))}</h2>
-              <p className="mt-1 max-w-md text-sm ind-muted">Välj hur du vill börja. Du kan lägga första passet direkt eller importera ett befintligt schema.</p>
+              <p className="mt-1 max-w-md text-sm ind-muted">Lägg till ett pass eller importera ett schema för att komma igång.</p>
               <div className="mt-5 flex flex-wrap justify-center gap-2">
                 <IndustryButton variant="primary" onClick={() => openDialog(null, days[0])}><Plus size={15} /> Börja tomt</IndustryButton>
                 <IndustryButton variant="secondary" onClick={() => window.location.assign("/schedule-planner")}><Upload size={15} /> Importera schema</IndustryButton>

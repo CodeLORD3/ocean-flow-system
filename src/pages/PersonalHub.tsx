@@ -1,16 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { Users } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { ArrowUpRight, Users } from "lucide-react";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { staffGroupsForSite } from "@/lib/staffModuleNav";
 import { staffLevelOf, staffLevelLabel } from "@/lib/staffModuleAccess";
 import { StaffModuleNav } from "@/components/staff/StaffModuleNav";
 
-/**
- * Samlad ingång till hela personalmodulen: personal, tid, schema, frånvaro,
- * attest och lön. Varje kort länkar till den befintliga sidan.
- */
+/** Samlad ingång till personalmodulen, med rollstyrda länkar. */
 export default function PersonalHub() {
   const { site } = useSite();
   const { staff } = useStaffAuth();
@@ -18,49 +14,54 @@ export default function PersonalHub() {
   const groups = staffGroupsForSite(site, level);
 
   return (
-    <div className="h-full overflow-auto p-4">
+    <div className="ind h-full overflow-auto p-3 sm:p-5">
       <StaffModuleNav />
 
-      <div className="mb-4 flex items-center gap-2">
-        <div className="rounded-md bg-primary/15 p-2">
-          <Users className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-lg font-semibold leading-tight">Personal &amp; Schema</h1>
-          <p className="text-xs text-muted-foreground">
-            {level === "employee" ? "Dina pass, tider, frånvaro och profil." : `Personalmodulen · ${staffLevelLabel(level)}.`}
-          </p>
-        </div>
-      </div>
-
-      <div className="space-y-5">
-        {groups.map((group, gi) => (
-          <section key={group.label}>
-            <div className="mb-2 flex items-baseline gap-2">
-              <h2 className="text-sm font-semibold tabular-nums">
-                <span className="mr-2 text-muted-foreground">{gi + 1}.</span>
-                {group.label}
-              </h2>
-              <span className="text-xs text-muted-foreground">{group.desc}</span>
+      <main className="mx-auto max-w-[1400px]">
+        <header className="mb-7 flex flex-wrap items-end justify-between gap-5 border-b border-[var(--color-divider)] pb-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-accent-700)] text-[var(--color-neutral-100)]">
+              <Users size={20} />
             </div>
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {group.items.map((item) => (
-                <NavLink key={item.url} to={item.url} end className="block">
-                  <Card className="h-full border-border/60 p-3 transition-colors hover:border-primary/40 hover:bg-muted/40">
-                    <div className="flex items-start gap-2.5">
-                      <item.icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium">{item.title}</div>
-                        <div className="text-xs leading-snug text-muted-foreground">{item.desc}</div>
+            <div>
+              <span className="ind-label">Makrill Trade · Personal</span>
+              <h1 className="ind-h1 mt-1">Personal &amp; Schema</h1>
+              <p className="mt-2 max-w-xl text-sm ind-muted">
+                {level === "employee" ? "Dina pass, tider, frånvaro och profil." : `Personalmodulen · ${staffLevelLabel(level)}.`}
+              </p>
+            </div>
+          </div>
+          <span className="ind-meta-chip ind-num">{groups.reduce((sum, group) => sum + group.items.length, 0)} funktioner</span>
+        </header>
+
+        <div className="space-y-8">
+          {groups.map((group, gi) => (
+            <section key={group.label} aria-labelledby={`staff-group-${gi}`}>
+              <div className="mb-3 flex items-center gap-2 border-b border-[var(--color-divider)] pb-2">
+                <span className="ind-groupnum">{String(gi + 1).padStart(2, "0")}</span>
+                <h2 id={`staff-group-${gi}`} className="ind-h3">{group.label}</h2>
+                <span className="text-xs ind-muted">{group.desc}</span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {group.items.map((item) => (
+                  <NavLink key={item.url} to={item.url} end className="group block">
+                    <div className="ind-modcard">
+                      <item.icon className="ind-modcard__icon" size={19} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="ind-modcard__title">{item.title}</div>
+                          <ArrowUpRight size={15} className="shrink-0 text-[var(--ind-muted)] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                        </div>
+                        <div className="ind-modcard__desc mt-1">{item.desc}</div>
                       </div>
                     </div>
-                  </Card>
-                </NavLink>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
+                  </NavLink>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </main>
     </div>
   );
 }
