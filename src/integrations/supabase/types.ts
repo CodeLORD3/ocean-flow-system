@@ -6721,6 +6721,7 @@ export type Database = {
           folder: string | null
           id: string
           ok: boolean
+          partial: boolean
           skipped: number
           started_at: string
           stored: number
@@ -6734,6 +6735,7 @@ export type Database = {
           folder?: string | null
           id?: string
           ok?: boolean
+          partial?: boolean
           skipped?: number
           started_at?: string
           stored?: number
@@ -6747,6 +6749,7 @@ export type Database = {
           folder?: string | null
           id?: string
           ok?: boolean
+          partial?: boolean
           skipped?: number
           started_at?: string
           stored?: number

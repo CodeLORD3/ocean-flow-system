@@ -133,6 +133,26 @@ Deno.serve(async (req) => {
       : new Date(Date.now() + 2 * 3600_000 - daysBack * 86_400_000).toISOString().slice(0, 10);
   const tooOld = (date?: string | null) => !!date && date.slice(0, 10) < since;
 
+  /**
+   * Tidsbudget: edge-funktioner har begränsad CPU/väggtid. När budgeten nästan är
+   * slut avslutas körningen snyggt med partial=true, så nästa schemalagda körning
+   * fortsätter med resterande filer istället för att hela körningen kraschar.
+   */
+  const startedMs = Date.now();
+  const budgetMs = typeof body.budget_ms === "number" && body.budget_ms > 5_000
+    ? Math.min(body.budget_ms, 240_000)
+    : 90_000;
+  const outOfTime = () => Date.now() - startedMs > budgetMs;
+  let partial = false;
+
+  /** Saknad inbox-behörighet i OAuth-kopplingen → tydligt fel istället för generiskt 403. */
+  const isScopeError = (msg: string) => {
+    const hay = msg.toLowerCase();
+    return hay.includes("scope") || hay.includes("behörighet") || hay.includes("not authorized") ||
+      hay.includes("unauthorized") || hay.includes("(403)") || hay.includes("403");
+  };
+  let inboxScopeMissing = false;
+
 
 
   const { data: run } = await sb
@@ -142,9 +162,11 @@ Deno.serve(async (req) => {
     .single();
   const runId = run?.id as string | undefined;
 
+  const RUN_COLUMNS = ["ok", "fetched", "stored", "skipped", "error", "partial", "unread_without_attachment"];
   const finish = async (patch: Json, status = 200) => {
     if (runId) {
-      const { results: _drop, ...columns } = patch as Json & { results?: unknown };
+      const columns: Json = {};
+      for (const key of RUN_COLUMNS) if (key in patch) columns[key] = (patch as Json)[key];
       await sb.from("mail_intake_runs")
         .update({ finished_at: new Date().toISOString(), ...columns })
         .eq("id", runId);
@@ -194,12 +216,14 @@ Deno.serve(async (req) => {
           } catch { /* hoppa över undermappar vi inte får läsa */ }
         }
       } catch (e) {
-        results.push({ source: `inbox:${path}`, action: "kunde_inte_lasas", error: String(e instanceof Error ? e.message : e) });
+        const msg = String(e instanceof Error ? e.message : e);
+        if (isScopeError(msg)) inboxScopeMissing = true;
+        results.push({ source: `inbox:${path}`, action: "kunde_inte_lasas", error: msg });
       }
     }
 
 
-    if (includeArchive) {
+    if (includeArchive && !outOfTime()) {
       try {
         const root = await readFolder(sb, entity, "archive", "", "arkiv");
         candidates.push(...root.files);
@@ -223,6 +247,7 @@ Deno.serve(async (req) => {
 
     for (const file of candidates) {
 
+      if (outOfTime()) { partial = true; break; }
       if (stored >= limit) break;
       if (!isDoc(file.name)) { skipped++; continue; }
       if (tooOld(file.date)) { skipped++; continue; }
@@ -366,10 +391,11 @@ Deno.serve(async (req) => {
 
     // ---------- 3: Registrerade leverantörsfakturor ----------
     let invoices = 0;
-    if (includeInvoices) {
+    if (includeInvoices && !outOfTime()) {
       try {
         const list = await fortnoxRequest<any>(sb, entity, "GET", "/supplierinvoices?limit=50&sortorder=descending");
         for (const head of (list?.SupplierInvoices ?? [])) {
+          if (outOfTime()) { partial = true; break; }
           const nr = String(head.GivenNumber ?? head.DocumentNumber ?? "");
           if (!nr) continue;
           // Historiska fakturor hoppas över — bara från startgränsen och framåt.
@@ -461,13 +487,27 @@ Deno.serve(async (req) => {
       }
     }
 
-    return await finish({ ok: true, fetched, stored, skipped, invoices, unread_without_attachment: 0, results });
+    const scopeMsg = "Fortnox-kopplingen saknar behörighet till Digital inkorg. Klicka Koppla om och godkänn inkorgsbehörigheten.";
+    if (inboxScopeMissing) {
+      await sb.from("fortnox_connections")
+        .update({ last_error: scopeMsg })
+        .eq("legal_entity_code", entity);
+    }
+
+    return await finish({
+      ok: true,
+      fetched, stored, skipped, invoices, partial,
+      inbox_scope_missing: inboxScopeMissing,
+      error: inboxScopeMissing ? scopeMsg : null,
+      unread_without_attachment: 0,
+      results,
+    });
   } catch (e) {
     console.error("fortnox-inbox-intake error:", e);
     return await finish({
       ok: false,
       error: e instanceof Error ? e.message : "okänt fel",
-      fetched, stored, skipped,
+      fetched, stored, skipped, partial,
       unread_without_attachment: 0,
     }, 500);
   }

@@ -85,6 +85,40 @@ export default function FortnoxSettings() {
     },
   });
 
+  // Automatisk hämtning av Fortnox-post: körningar loggas i mail_intake_runs.
+  const intakeRuns = useQuery({
+    queryKey: ["fortnox_intake_runs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mail_intake_runs")
+        .select("id, folder, started_at, finished_at, ok, fetched, stored, skipped, error, partial")
+        .like("folder", "fortnox:%")
+        .order("started_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 60_000,
+  });
+
+  const runIntake = useMutation({
+    mutationFn: async (code: string) => {
+      const { data, error } = await supabase.functions.invoke("fortnox-inbox-intake", {
+        body: { entity: code, days: 7, limit: 25 },
+      });
+      if (error) throw error;
+      if (data?.error && data?.ok === false) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (d: any) => {
+      if (d?.inbox_scope_missing) toast.error(d.error);
+      else toast.success(`${d?.stored ?? 0} nya dokument hämtade (${d?.skipped ?? 0} hoppade över)${d?.partial ? " – delvis klar, fortsätter nästa körning" : ""}`);
+      qc.invalidateQueries({ queryKey: ["fortnox_intake_runs"] });
+      qc.invalidateQueries({ queryKey: ["fortnox_connections"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const jobs = useQuery({
     queryKey: ["fortnox_invoice_jobs"],
     queryFn: async () => {
@@ -256,6 +290,72 @@ export default function FortnoxSettings() {
               </div>
             );
           })}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Automatisk hämtning av Fortnox-post</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              Posten hämtas automatiskt varje timme (minut 20) med sju dagars bakåtblick. Allt landar som utkast
+              i mejlinloppet – ingenting bokförs automatiskt.
+            </p>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={runIntake.isPending}
+              onClick={() => runIntake.mutate(entity)}
+            >
+              {runIntake.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <RefreshCw className="mr-1 h-3 w-3" />}
+              Hämta nu
+            </Button>
+          </div>
+
+          {(connections.data ?? []).some((c: any) =>
+            typeof c.last_error === "string" && c.last_error.includes("Digital inkorg")) && (
+            <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+              <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+              <span>
+                Kopplingen saknar behörighet till Fortnox digitala inkorg. Klicka <strong>Koppla om</strong> ovan och
+                godkänn inkorgsbehörigheten i Fortnox.
+              </span>
+            </div>
+          )}
+
+          {intakeRuns.isLoading ? (
+            <div className="py-4 text-center"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></div>
+          ) : (intakeRuns.data ?? []).length === 0 ? (
+            <div className="py-4 text-center text-sm text-muted-foreground">Ingen hämtning har körts än.</div>
+          ) : (
+            <div className="divide-y divide-border rounded-md border border-border">
+              {(intakeRuns.data ?? []).map((r: any) => (
+                <div key={r.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs">
+                  <div className="min-w-0">
+                    <div className="font-mono tabular-nums">
+                      {new Date(r.started_at).toLocaleString("sv-SE")} · {String(r.folder).replace("fortnox:", "")}
+                    </div>
+                    <div className="font-mono tabular-nums text-muted-foreground">
+                      {r.stored ?? 0} sparade · {r.fetched ?? 0} hämtade · {r.skipped ?? 0} hoppade över
+                    </div>
+                    {r.error && <div className="break-all text-destructive">{r.error}</div>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {r.partial && <Badge variant="outline">Delvis klar</Badge>}
+                    {!r.finished_at ? (
+                      <Badge variant="outline">Pågår</Badge>
+                    ) : r.ok ? (
+                      <Badge className="bg-emerald-600/15 text-emerald-400 border-emerald-600/30">Klar</Badge>
+                    ) : (
+                      <Badge variant="destructive">Fel</Badge>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
