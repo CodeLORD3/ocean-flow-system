@@ -389,7 +389,7 @@ Deno.serve(async (req) => {
 
     // ---------- 3: Registrerade leverantörsfakturor ----------
     let invoices = 0;
-    if (includeInvoices) {
+    if (includeInvoices && !outOfTime()) {
       try {
         const list = await fortnoxRequest<any>(sb, entity, "GET", "/supplierinvoices?limit=50&sortorder=descending");
         for (const head of (list?.SupplierInvoices ?? [])) {
