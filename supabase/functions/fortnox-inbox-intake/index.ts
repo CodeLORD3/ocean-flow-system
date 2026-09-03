@@ -240,7 +240,7 @@ Deno.serve(async (req) => {
 
       let bytes: Uint8Array;
       try {
-        bytes = await downloadFile(sb, entity, file.id);
+        bytes = await downloadFile(sb, entity, file.id, file.base);
       } catch (e) {
         results.push({ file: file.name, action: "nedladdning_misslyckades", error: String(e instanceof Error ? e.message : e) });
         continue;
