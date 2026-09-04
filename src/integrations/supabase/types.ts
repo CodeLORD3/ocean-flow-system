@@ -16724,6 +16724,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      order_line_batches: {
+        Args: { _reference_id: string; _reference_type: string }
+        Returns: {
+          batches: string
+          product_id: string
+        }[]
+      }
       period_is_locked: {
         Args: { _date: string; _store_id: string }
         Returns: boolean
