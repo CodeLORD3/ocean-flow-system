@@ -1,22 +1,5 @@
-# Arbetsplan: Personalmodul enligt designleverans
+# Roadmap
 
-- [x] Jämför Etapp 4 UI-prompten mot befintlig kod och komplettera sjuk-/frånvaroflöden
-- [x] Lägg in funktionsfärger som Industry-tokens och ta bort extern CSS-fontimport
-- [ ] Slutför frånvaroperioder med härledda dagrader och notiser
-- [x] Lägg till redigerbara passmallar per enhet
-- [x] Bygg täckningskarta och delad personal för admin
-- [ ] Slutför schema- och attestvyer enligt rolldown-/tomlägeskraven
-- [ ] Slutför periodlås, preliminär kostnad, avvikelsekö och löne-/Fortnoxöversikt
-- [ ] Verifiera desktop/mobil och kontrollera kvarvarande dokumentpunkter
-- [ ] Samla hela personal-, schema- och tidssystemet under en Personal & Schema-flik
-- [x] Respektera vald rapportinställning (t.ex. Göteborg) i totaler och butiksvy
-- [x] Säkerställ stadsspecifikt väder per butik och färgkodade väderikoner
-- [x] Besvara etapp 4 UI-kontrollfrågorna punkt för punkt med verifierade kod- och sökvägsreferenser
-- [x] Härda stämpelklockan: autostängning, faktisk vilokontroll, journalvalidering och nattlig attestkörning
-- [x] Koppla offlinekön till journalvyn med manuell registrering och avfärdande med skäl
-- [x] Kostnadsställebyte i kiosken samt beslutbar liggarplikt per driftställe
-- [ ] Driftpunkter kvar: klockidentitet för fyra anställda, stationsutrullning per försäljningsställe, övertidsjournal, skarp verifiering av lönekedjan och GDPR-rutin i skrift
-- [x] Importera och koppla FSAB:s anställda från Fortnox via säker matchning
-- [ ] Förbättra administrationsflödet med veckoschema, schemaläggning och målintervall 15–20 % för personal/försäljning
-- [ ] Kontrollera varför Mensurs bilder från Ålsten saknas i Bildflödet och rätta synlighet/urval
-- [x] Bygg om Personal & Schema med designspecens vecko-/dagvy, avtalstak och Kommer och går-panel
+- [x] Kartlägg inköp → parti → lagerrörelse → order → faktura
+- [x] Automatisera saknade kopplingar och backfill
+- [x] Verifiera spårbarheten med verkliga data

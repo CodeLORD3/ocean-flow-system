@@ -16352,6 +16352,10 @@ export type Database = {
         Returns: Json
       }
       auto_close_open_time_entries: { Args: never; Returns: number }
+      auto_trace_purchase_report: {
+        Args: { _report_id: string }
+        Returns: Json
+      }
       autofeature_daily_images: {
         Args: { _count?: number; _days_back?: number }
         Returns: Json
@@ -16934,6 +16938,27 @@ export type Database = {
       stock_write_allowed: { Args: never; Returns: boolean }
       sumup_name_key: { Args: { _name: string }; Returns: string }
       svensk_dag: { Args: { _grans?: string; _ts: string }; Returns: string }
+      trace_lot_to_invoices: {
+        Args: { _lot_id: string }
+        Returns: {
+          catch_area: string
+          fortnox_document_number: string
+          invoice_status: string
+          lot_id: string
+          lot_number: string
+          movement_at: string
+          movement_id: string
+          movement_type: string
+          order_id: string
+          order_number: string
+          product_name: string
+          purchase_date: string
+          purchase_report_id: string
+          supplier_lot_id: string
+          supplier_name: string
+          vessel_name: string
+        }[]
+      }
       undo_sick_period: {
         Args: { _employee_id: string; _first_day: string }
         Returns: Json
