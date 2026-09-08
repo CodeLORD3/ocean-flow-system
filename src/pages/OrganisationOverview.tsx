@@ -34,6 +34,7 @@ import { useState } from "react";
 import { ChecklistCard } from "@/components/checklist/ChecklistCard";
 import { useChecklistTemplates, templateAppliesOn, todayIso } from "@/hooks/useChecklist";
 import { DailyReportCard } from "@/components/dashboard/DailyReportCard";
+import { StockReportCard } from "@/components/inventory/StockReportCard";
 import { PurchaseWeekCard } from "@/components/dashboard/PurchaseWeekCard";
 import { OnDutyStaff } from "@/components/staff/OnDutyStaff";
 import { useQuery } from "@tanstack/react-query";
