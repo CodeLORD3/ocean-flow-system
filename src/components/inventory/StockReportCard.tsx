@@ -6,10 +6,12 @@ import {
   History,
   Loader2,
   Plus,
+  Printer,
   Search,
   Trash2,
   Undo2,
 } from "lucide-react";
+import { generateStockCountSheetPdf } from "@/lib/stockCountSheetPdf";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,9 +105,11 @@ function ArchiveDetail({ sheetId }: { sheetId: string }) {
  */
 export function StockReportCard({
   storeId,
+  storeName,
   compact = false,
 }: {
   storeId: string;
+  storeName?: string | null;
   compact?: boolean;
 }) {
   const { data: products = [] } = useProducts();
