@@ -485,7 +485,7 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
         <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Dagens lagerrapport
         </h2>
-        <StockReportCard storeId={storeId} compact />
+        <StockReportCard storeId={storeId} storeName={storeName} compact />
       </section>
 
       {others.length > 0 && (

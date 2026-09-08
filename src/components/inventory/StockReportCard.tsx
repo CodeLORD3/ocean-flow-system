@@ -6,10 +6,12 @@ import {
   History,
   Loader2,
   Plus,
+  Printer,
   Search,
   Trash2,
   Undo2,
 } from "lucide-react";
+import { generateStockCountSheetPdf } from "@/lib/stockCountSheetPdf";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,9 +105,11 @@ function ArchiveDetail({ sheetId }: { sheetId: string }) {
  */
 export function StockReportCard({
   storeId,
+  storeName,
   compact = false,
 }: {
   storeId: string;
+  storeName?: string | null;
   compact?: boolean;
 }) {
   const { data: products = [] } = useProducts();
@@ -389,6 +393,18 @@ export function StockReportCard({
     </Dialog>
   );
 
+  const handlePrintSheet = () => {
+    if (!products.length) {
+      toast.error("Inga produkter att skriva ut ännu");
+      return;
+    }
+    generateStockCountSheetPdf(
+      products.map((p: any) => ({ name: p.name, unit: p.unit, category: p.category })),
+      { storeName, date: todayStockholm() },
+    );
+    toast.success("Räknebladet laddas ner");
+  };
+
   const headerBlock = (
     <CardHeader className="pb-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -409,6 +425,14 @@ export function StockReportCard({
             variant="ghost"
             size="sm"
             className="h-8 px-2 text-[11px]"
+            onClick={handlePrintSheet}
+          >
+            <Printer className="mr-1 h-3.5 w-3.5" /> Skriv ut blankett
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-[11px]"
             onClick={() => setArchiveOpen(true)}
           >
             <History className="mr-1 h-3.5 w-3.5" /> Arkiv
@@ -418,7 +442,7 @@ export function StockReportCard({
       <p className="text-[11px] text-muted-foreground">
         {submitted
           ? `Klar för i dag — inskickad av ${report?.closed_by || staffName}.`
-          : "Sök produkt, ange mängd i produktens enhet och bekräfta. Skicka in när allt är räknat."}
+          : "Sök produkt, ange mängd i produktens enhet och bekräfta. Skicka in när allt är räknat. Dålig täckning i kylen? Skriv ut blanketten och fyll i för hand."}
       </p>
     </CardHeader>
   );
