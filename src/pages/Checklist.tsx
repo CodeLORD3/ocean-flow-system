@@ -32,6 +32,7 @@ import { ChecklistTable } from "@/components/checklist/ChecklistTable";
 import { ChecklistCopyDialog } from "@/components/checklist/ChecklistCopyDialog";
 import { ChecklistRestoreDialog } from "@/components/checklist/ChecklistRestoreDialog";
 import { DailyReportCard } from "@/components/dashboard/DailyReportCard";
+import { StockReportCard } from "@/components/inventory/StockReportCard";
 import { useTabs } from "@/contexts/TabsContext";
 
 
@@ -478,6 +479,13 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
           </p>
         )}
 
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Dagens lagerrapport
+        </h2>
+        <StockReportCard storeId={storeId} compact />
       </section>
 
       {others.length > 0 && (
