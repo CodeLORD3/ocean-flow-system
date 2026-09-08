@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useProducts } from "@/hooks/useProducts";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import {
   useAddStockReportLine,
@@ -120,6 +121,8 @@ export function StockReportCard({
   const [selected, setSelected] = useState<any | null>(null);
   const [qty, setQty] = useState("");
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const isMobile = useIsMobile();
   const [openSheet, setOpenSheet] = useState<any | null>(null);
 
   const lines = report?.lines ?? [];
