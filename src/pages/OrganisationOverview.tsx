@@ -441,7 +441,7 @@ export default function OrganisationOverview() {
       )}
 
       {/* Shop: daglig lagerrapport */}
-      {isShop && <StockReportCard storeId={activeStoreId!} />}
+      {isShop && <StockReportCard storeId={activeStoreId!} storeName={activeStoreName} />}
 
 
 
