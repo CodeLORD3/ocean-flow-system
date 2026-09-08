@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useProducts } from "@/hooks/useProducts";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import {
   useAddStockReportLine,
@@ -120,6 +121,8 @@ export function StockReportCard({
   const [selected, setSelected] = useState<any | null>(null);
   const [qty, setQty] = useState("");
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const isMobile = useIsMobile();
   const [openSheet, setOpenSheet] = useState<any | null>(null);
 
   const lines = report?.lines ?? [];
@@ -178,252 +181,300 @@ export function StockReportCard({
   const kgTotal = lines.filter((l) => !isPieces(l.unit)).reduce((s, l) => s + l.counted_qty_kg, 0);
   const pcsTotal = lines.filter((l) => isPieces(l.unit)).reduce((s, l) => s + l.counted_qty_kg, 0);
 
-  return (
-    <Card
-      className={cn(
-        "shadow-card",
-        submitted && "border-emerald-600/50 bg-emerald-500/5",
-      )}
-    >
-      <CardHeader className="pb-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-1.5 text-sm font-heading">
-            {submitted ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            ) : (
-              <Boxes className="h-4 w-4 text-primary" />
-            )}
-            Lagerrapport
-            <span className="text-[11px] font-normal text-muted-foreground">
-              {todayStockholm()}
-            </span>
-          </CardTitle>
-          <div className="flex items-center gap-1.5">
-            {submitted && (
-              <Badge className="bg-emerald-600 text-[10px] hover:bg-emerald-600">Inskickad</Badge>
-            )}
+  const searchBlock = !submitted ? (
+    <div className="space-y-2">
+      {selected ? (
+        <div className="space-y-2 rounded-md border border-primary/40 bg-primary/5 p-2">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">{selected.name}</p>
+            <p className="text-[10px] text-muted-foreground">
+              {selected.category || "Övrigt"} · anges i {unitLabel(selected.unit)}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Input
+              autoFocus
+              inputMode="decimal"
+              value={qty}
+              onChange={(e) => setQty(e.target.value.replace(/[^0-9.,]/g, ""))}
+              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+              placeholder="0"
+              className="h-12 w-24 text-center text-lg tabular-nums"
+            />
+            <span className="text-xs text-muted-foreground">{unitLabel(selected.unit)}</span>
+            <Button className="h-12 flex-1" onClick={handleAdd} disabled={addLine.isPending}>
+              {addLine.isPending ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="mr-1 h-4 w-4" />
+              )}
+              Bekräfta
+            </Button>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-[11px]"
-              onClick={() => setArchiveOpen(true)}
+              className="h-12"
+              onClick={() => {
+                setSelected(null);
+                setQty("");
+              }}
             >
-              <History className="mr-1 h-3.5 w-3.5" /> Arkiv
+              Avbryt
             </Button>
           </div>
         </div>
-        <p className="text-[11px] text-muted-foreground">
-          {submitted
-            ? `Klar för i dag — inskickad av ${report?.closed_by || staffName}.`
-            : "Sök produkt, ange mängd i produktens enhet och bekräfta. Skicka in när allt är räknat."}
-        </p>
-      </CardHeader>
+      ) : (
+        <div className="space-y-1">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Sök produkt…"
+              className="h-12 pl-8 text-base"
+            />
+          </div>
+          {matches.length > 0 && (
+            <div className="max-h-64 overflow-auto rounded-md border border-border bg-card">
+              {matches.map((p: any) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    setSelected(p);
+                    setQty("");
+                  }}
+                  className="flex w-full items-center justify-between gap-2 border-b border-border/40 px-3 py-3 text-left last:border-0 hover:bg-accent/50"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium">{p.name}</span>
+                    <span className="block truncate text-[10px] text-muted-foreground">
+                      {p.category || "Övrigt"} · {unitLabel(p.unit)}
+                    </span>
+                  </span>
+                  {addedIds.has(p.id) ? (
+                    <Badge variant="secondary" className="shrink-0 text-[10px]">
+                      Tillagd
+                    </Badge>
+                  ) : (
+                    <Plus className="h-4 w-4 shrink-0 text-primary" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  ) : null;
 
+  const listBlock =
+    lines.length === 0 ? (
+      <p className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+        Inga produkter tillagda än.
+      </p>
+    ) : (
+      <div className={cn("space-y-2", compact && !isMobile && "max-h-72 overflow-auto pr-1")}>
+        {groupByCategory(lines).map((g) => (
+          <div key={g.category}>
+            <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {g.category}
+            </p>
+            {g.rows.map((l) => (
+              <div
+                key={l.id}
+                className="flex items-center gap-2 border-b border-border/30 py-2 last:border-0"
+              >
+                <span className="min-w-0 flex-1 truncate text-sm">{l.product_name}</span>
+                <span className="shrink-0 text-sm font-semibold tabular-nums">
+                  {fmtQty(l.counted_qty_kg)} {unitLabel(l.unit)}
+                </span>
+                {!submitted && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    aria-label={`Ta bort ${l.product_name}`}
+                    onClick={() => removeLine.mutate({ lineId: l.id, sheetId: report!.id })}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+
+  const totalsText = (
+    <>
+      {lines.length} produkter ·{" "}
+      <span className="font-medium text-foreground tabular-nums">
+        {kgTotal > 0 && `${fmtQty(kgTotal)} kg`}
+        {kgTotal > 0 && pcsTotal > 0 && " · "}
+        {pcsTotal > 0 && `${fmtQty(pcsTotal)} st`}
+        {kgTotal === 0 && pcsTotal === 0 && fmtQty(totalQty)}
+      </span>
+    </>
+  );
+
+  const footerBlock =
+    lines.length > 0 ? (
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2">
+        <p className="text-[11px] text-muted-foreground">{totalsText}</p>
+        {submitted ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9"
+            onClick={() => reopen.mutate(report!.id)}
+            disabled={reopen.isPending}
+          >
+            <Undo2 className="mr-1 h-3.5 w-3.5" /> Öppna igen
+          </Button>
+        ) : (
+          <Button
+            className="h-11 flex-1 bg-emerald-600 hover:bg-emerald-700 sm:flex-none"
+            onClick={handleSubmit}
+            disabled={submit.isPending}
+          >
+            {submit.isPending ? (
+              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+            ) : (
+              <Check className="mr-1 h-4 w-4" />
+            )}
+            Skicka in
+          </Button>
+        )}
+      </div>
+    ) : null;
+
+  const archiveDialog = (
+    <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
+      <DialogContent className="max-h-[85vh] overflow-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Tidigare lagerrapporter</DialogTitle>
+        </DialogHeader>
+        {archive.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Inga tidigare rapporter än.</p>
+        ) : (
+          <div className="space-y-1">
+            {archive.map((s: any) => (
+              <div key={s.id} className="rounded-md border border-border">
+                <button
+                  type="button"
+                  onClick={() => setOpenSheet(openSheet?.id === s.id ? null : s)}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-accent/50"
+                >
+                  <span className="text-xs font-medium">{s.sheet_date}</span>
+                  <span className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                    {s.line_count} produkter
+                    {s.status === "godkand" ? (
+                      <Badge className="bg-emerald-600 text-[10px] hover:bg-emerald-600">
+                        Inskickad
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-[10px]">
+                        Utkast
+                      </Badge>
+                    )}
+                  </span>
+                </button>
+                {openSheet?.id === s.id && <ArchiveDetail sheetId={s.id} />}
+              </div>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+
+  const headerBlock = (
+    <CardHeader className="pb-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <CardTitle className="flex items-center gap-1.5 text-sm font-heading">
+          {submitted ? (
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          ) : (
+            <Boxes className="h-4 w-4 text-primary" />
+          )}
+          Lagerrapport
+          <span className="text-[11px] font-normal text-muted-foreground">{todayStockholm()}</span>
+        </CardTitle>
+        <div className="flex items-center gap-1.5">
+          {submitted && (
+            <Badge className="bg-emerald-600 text-[10px] hover:bg-emerald-600">Inskickad</Badge>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-[11px]"
+            onClick={() => setArchiveOpen(true)}
+          >
+            <History className="mr-1 h-3.5 w-3.5" /> Arkiv
+          </Button>
+        </div>
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        {submitted
+          ? `Klar för i dag — inskickad av ${report?.closed_by || staffName}.`
+          : "Sök produkt, ange mängd i produktens enhet och bekräfta. Skicka in när allt är räknat."}
+      </p>
+    </CardHeader>
+  );
+
+  // Mobil: kortet visar status och öppnar ifyllningen i helskärm så att
+  // träfflistan och de tillagda raderna aldrig hamnar bakom tangentbordet.
+  if (isMobile) {
+    return (
+      <Card className={cn("shadow-card", submitted && "border-emerald-600/50 bg-emerald-500/5")}>
+        {headerBlock}
+        <CardContent className="space-y-3">
+          {isLoading ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Laddar dagens rapport…
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              {lines.length > 0 ? totalsText : "Inga produkter tillagda än."}
+            </p>
+          )}
+          <Button className="h-12 w-full" onClick={() => setEditorOpen(true)}>
+            <Boxes className="mr-1.5 h-4 w-4" />
+            {submitted ? "Visa dagens lagerrapport" : lines.length > 0 ? "Fortsätt fylla i" : "Fyll i lagerrapport"}
+          </Button>
+        </CardContent>
+
+        <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
+          <DialogContent className="flex h-[100dvh] max-h-[100dvh] w-screen max-w-none flex-col gap-3 rounded-none p-4 sm:max-w-none">
+            <DialogHeader className="shrink-0 text-left">
+              <DialogTitle className="text-base">Lagerrapport {todayStockholm()}</DialogTitle>
+            </DialogHeader>
+            <div className="shrink-0">{searchBlock}</div>
+            <div className="min-h-0 flex-1 overflow-y-auto">{listBlock}</div>
+            <div className="shrink-0 bg-background">{footerBlock}</div>
+          </DialogContent>
+        </Dialog>
+
+        {archiveDialog}
+      </Card>
+    );
+  }
+
+  return (
+    <Card className={cn("shadow-card", submitted && "border-emerald-600/50 bg-emerald-500/5")}>
+      {headerBlock}
       <CardContent className="space-y-3">
         {isLoading && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" /> Laddar dagens rapport…
           </div>
         )}
-
-        {/* Sök + mängd */}
-        {!submitted && (
-          <div className="space-y-2">
-            {selected ? (
-              <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 p-2">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium">{selected.name}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {selected.category || "Övrigt"} · anges i {unitLabel(selected.unit)}
-                  </p>
-                </div>
-                <Input
-                  autoFocus
-                  inputMode="decimal"
-                  value={qty}
-                  onChange={(e) => setQty(e.target.value.replace(/[^0-9.,]/g, ""))}
-                  onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-                  placeholder="0"
-                  className="h-10 w-24 text-center text-base tabular-nums"
-                />
-                <span className="text-xs text-muted-foreground">{unitLabel(selected.unit)}</span>
-                <Button size="sm" className="h-10" onClick={handleAdd} disabled={addLine.isPending}>
-                  <Check className="mr-1 h-4 w-4" /> Bekräfta
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-10"
-                  onClick={() => {
-                    setSelected(null);
-                    setQty("");
-                  }}
-                >
-                  Avbryt
-                </Button>
-              </div>
-            ) : (
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Sök produkt…"
-                  className="h-10 pl-8"
-                />
-                {matches.length > 0 && (
-                  <div className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-md border border-border bg-popover shadow-lg">
-                    {matches.map((p: any) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => {
-                          setSelected(p);
-                          setQty("");
-                        }}
-                        className="flex w-full items-center justify-between gap-2 border-b border-border/40 px-3 py-2 text-left last:border-0 hover:bg-accent/50"
-                      >
-                        <span className="min-w-0">
-                          <span className="block truncate text-xs font-medium">{p.name}</span>
-                          <span className="block truncate text-[10px] text-muted-foreground">
-                            {p.category || "Övrigt"} · {unitLabel(p.unit)}
-                          </span>
-                        </span>
-                        {addedIds.has(p.id) ? (
-                          <Badge variant="secondary" className="shrink-0 text-[10px]">
-                            Tillagd
-                          </Badge>
-                        ) : (
-                          <Plus className="h-4 w-4 shrink-0 text-primary" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Lista per kategori */}
-        {lines.length === 0 ? (
-          <p className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-            Inga produkter tillagda än.
-          </p>
-        ) : (
-          <div className={cn("space-y-2", compact && "max-h-72 overflow-auto pr-1")}>
-            {groupByCategory(lines).map((g) => (
-              <div key={g.category}>
-                <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  {g.category}
-                </p>
-                {g.rows.map((l) => (
-                  <div
-                    key={l.id}
-                    className="flex items-center gap-2 border-b border-border/30 py-1.5 last:border-0"
-                  >
-                    <span className="min-w-0 flex-1 truncate text-xs">{l.product_name}</span>
-                    <span className="shrink-0 text-xs font-semibold tabular-nums">
-                      {fmtQty(l.counted_qty_kg)} {unitLabel(l.unit)}
-                    </span>
-                    {!submitted && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                        aria-label={`Ta bort ${l.product_name}`}
-                        onClick={() =>
-                          removeLine.mutate({ lineId: l.id, sheetId: report!.id })
-                        }
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Summering + skicka in */}
-        {lines.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2">
-            <p className="text-[11px] text-muted-foreground">
-              {lines.length} produkter ·{" "}
-              <span className="font-medium text-foreground tabular-nums">
-                {kgTotal > 0 && `${fmtQty(kgTotal)} kg`}
-                {kgTotal > 0 && pcsTotal > 0 && " · "}
-                {pcsTotal > 0 && `${fmtQty(pcsTotal)} st`}
-                {kgTotal === 0 && pcsTotal === 0 && fmtQty(totalQty)}
-              </span>
-            </p>
-            {submitted ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8"
-                onClick={() => reopen.mutate(report!.id)}
-                disabled={reopen.isPending}
-              >
-                <Undo2 className="mr-1 h-3.5 w-3.5" /> Öppna igen
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                className="h-9 bg-emerald-600 hover:bg-emerald-700"
-                onClick={handleSubmit}
-                disabled={submit.isPending}
-              >
-                {submit.isPending ? (
-                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="mr-1 h-4 w-4" />
-                )}
-                Skicka in
-              </Button>
-            )}
-          </div>
-        )}
+        {searchBlock}
+        {listBlock}
+        {footerBlock}
       </CardContent>
-
-      <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
-        <DialogContent className="max-h-[85vh] overflow-auto sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Tidigare lagerrapporter</DialogTitle>
-          </DialogHeader>
-          {archive.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Inga tidigare rapporter än.</p>
-          ) : (
-            <div className="space-y-1">
-              {archive.map((s: any) => (
-                <div key={s.id} className="rounded-md border border-border">
-                  <button
-                    type="button"
-                    onClick={() => setOpenSheet(openSheet?.id === s.id ? null : s)}
-                    className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-accent/50"
-                  >
-                    <span className="text-xs font-medium">{s.sheet_date}</span>
-                    <span className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                      {s.line_count} produkter
-                      {s.status === "godkand" ? (
-                        <Badge className="bg-emerald-600 text-[10px] hover:bg-emerald-600">
-                          Inskickad
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-[10px]">
-                          Utkast
-                        </Badge>
-                      )}
-                    </span>
-                  </button>
-                  {openSheet?.id === s.id && <ArchiveDetail sheetId={s.id} />}
-                </div>
-              ))}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {archiveDialog}
     </Card>
   );
 }

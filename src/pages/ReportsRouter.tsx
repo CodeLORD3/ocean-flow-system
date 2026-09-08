@@ -30,15 +30,17 @@ function WholesaleReportsPage() {
       </div>
 
       <Card>
-        <CardHeader
-          className="cursor-pointer hover:bg-muted/30 transition-colors py-3 px-4"
-          onClick={() => setPurchaseOpen(!purchaseOpen)}
-        >
-          <div className="flex items-center gap-2">
+        <CardHeader className="p-0">
+          <button
+            type="button"
+            aria-expanded={purchaseOpen}
+            onClick={() => setPurchaseOpen(!purchaseOpen)}
+            className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
+          >
             {purchaseOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
             <FileText className="h-4 w-4 text-primary" />
             <CardTitle className="text-sm font-medium">Inköpsrapporter</CardTitle>
-          </div>
+          </button>
         </CardHeader>
         {purchaseOpen && (
           <CardContent className="pt-0 px-4 pb-4">
@@ -50,15 +52,17 @@ function WholesaleReportsPage() {
       </Card>
 
       <Card>
-        <CardHeader
-          className="cursor-pointer hover:bg-muted/30 transition-colors py-3 px-4"
-          onClick={() => setProductionOpen(!productionOpen)}
-        >
-          <div className="flex items-center gap-2">
+        <CardHeader className="p-0">
+          <button
+            type="button"
+            aria-expanded={productionOpen}
+            onClick={() => setProductionOpen(!productionOpen)}
+            className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
+          >
             {productionOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
             <Factory className="h-4 w-4 text-primary" />
             <CardTitle className="text-sm font-medium">Produktionsrapporter</CardTitle>
-          </div>
+          </button>
         </CardHeader>
         {productionOpen && (
           <CardContent className="pt-0 px-4 pb-4">
@@ -69,15 +73,17 @@ function WholesaleReportsPage() {
         )}
       </Card>
       <Card>
-        <CardHeader
-          className="cursor-pointer hover:bg-muted/30 transition-colors py-3 px-4"
-          onClick={() => setDailyOpen(!dailyOpen)}
-        >
-          <div className="flex items-center gap-2">
+        <CardHeader className="p-0">
+          <button
+            type="button"
+            aria-expanded={dailyOpen}
+            onClick={() => setDailyOpen(!dailyOpen)}
+            className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
+          >
             {dailyOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
             <Receipt className="h-4 w-4 text-primary" />
             <CardTitle className="text-sm font-medium">Dagsrapporter (butiker)</CardTitle>
-          </div>
+          </button>
         </CardHeader>
         {dailyOpen && (
           <CardContent className="pt-0 px-4 pb-4">
@@ -89,15 +95,17 @@ function WholesaleReportsPage() {
       </Card>
 
       <Card>
-        <CardHeader
-          className="cursor-pointer hover:bg-muted/30 transition-colors py-3 px-4"
-          onClick={() => setWeeklyOpen(!weeklyOpen)}
-        >
-          <div className="flex items-center gap-2">
+        <CardHeader className="p-0">
+          <button
+            type="button"
+            aria-expanded={weeklyOpen}
+            onClick={() => setWeeklyOpen(!weeklyOpen)}
+            className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
+          >
             {weeklyOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
             <CalendarRange className="h-4 w-4 text-primary" />
             <CardTitle className="text-sm font-medium">Veckorapporter</CardTitle>
-          </div>
+          </button>
         </CardHeader>
         {weeklyOpen && (
           <CardContent className="pt-0 px-4 pb-4">
@@ -109,15 +117,17 @@ function WholesaleReportsPage() {
       </Card>
 
       <Card>
-        <CardHeader
-          className="cursor-pointer hover:bg-muted/30 transition-colors py-3 px-4"
-          onClick={() => setMonthlyOpen(!monthlyOpen)}
-        >
-          <div className="flex items-center gap-2">
+        <CardHeader className="p-0">
+          <button
+            type="button"
+            aria-expanded={monthlyOpen}
+            onClick={() => setMonthlyOpen(!monthlyOpen)}
+            className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
+          >
             {monthlyOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
             <CalendarDays className="h-4 w-4 text-primary" />
             <CardTitle className="text-sm font-medium">Månadsrapporter</CardTitle>
-          </div>
+          </button>
         </CardHeader>
         {monthlyOpen && (
           <CardContent className="pt-0 px-4 pb-4">
