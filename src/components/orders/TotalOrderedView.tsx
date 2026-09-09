@@ -632,7 +632,7 @@ export function TotalOrderedView({
                   {/* Kolumnrubriker */}
                   <div className="hidden items-center gap-2.5 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80 md:flex">
                     <span className="w-3" />
-                    <span className="w-8" />
+                    <span className="w-7" />
                     <span className="min-w-0 flex-1">Produkt</span>
                     <button
                       type="button"
