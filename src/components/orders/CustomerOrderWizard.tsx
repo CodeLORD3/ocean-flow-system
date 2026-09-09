@@ -47,7 +47,13 @@ import {
   fetchTodaysPrice,
   NewOrderLineInput,
 } from "@/hooks/useCustomerOrders";
-import { RetailCustomer, shelfLifeWarning } from "@/lib/customerOrders";
+import {
+  RetailCustomer,
+  shelfLifeWarning,
+  needsDeliveryAddress,
+  OrderType,
+} from "@/lib/customerOrders";
+import { OrderTypeIcon } from "@/components/orders/OrderTypeIcon";
 import { qtyText } from "@/lib/retailCustomerStats";
 import { getStoreCurrency } from "@/lib/currency";
 import {
@@ -119,6 +125,8 @@ export function CustomerOrderWizard({
 
   const [category, setCategory] = useState("vanlig");
   const [status, setStatus] = useState("ny");
+  const [orderType, setOrderType] = useState<OrderType>("upphamtning");
+  const [address, setAddress] = useState({ street: "", postal_code: "", city: "" });
   const [wantedDate, setWantedDate] = useState(new Date().toISOString().slice(0, 10));
   const [wantedTime, setWantedTime] = useState("");
   const [source, setSource] = useState("telefon");
