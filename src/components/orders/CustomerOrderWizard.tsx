@@ -705,7 +705,38 @@ export function CustomerOrderWizard({
           <Card>
             <CardContent className="grid gap-3 p-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Label htmlFor="wiz-store">Hämtningsbutik</Label>
+                <Label>Leveranssätt</Label>
+                <div className="mt-1 grid grid-cols-3 gap-2">
+                  {(
+                    [
+                      { value: "upphamtning", label: "Upphämtning" },
+                      { value: "leverans", label: "Leverans" },
+                      { value: "postas", label: "Postas" },
+                    ] as const
+                  ).map((opt) => (
+                    <Button
+                      key={opt.value}
+                      type="button"
+                      variant={orderType === opt.value ? "default" : "outline"}
+                      className="h-12 justify-center gap-1.5 text-xs sm:text-sm"
+                      onClick={() => setOrderType(opt.value)}
+                    >
+                      <OrderTypeIcon orderType={opt.value} className="h-4 w-4" />
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
+                {orderType === "postas" && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Postas skickas med extern transportör, till exempel Posten eller annan
+                    leveranstjänst.
+                  </p>
+                )}
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="wiz-store">
+                  {orderType === "upphamtning" ? "Hämtningsbutik" : "Butik som skickar"}
+                </Label>
                 <Select value={pickupStoreId} onValueChange={setPickupStoreId}>
                   <SelectTrigger id="wiz-store" className="h-12">
                     <SelectValue />
@@ -725,7 +756,9 @@ export function CustomerOrderWizard({
                 )}
               </div>
               <div>
-                <Label htmlFor="wiz-date">Hämtningsdatum</Label>
+                <Label htmlFor="wiz-date">
+                  {orderType === "upphamtning" ? "Hämtningsdatum" : "Leveransdatum"}
+                </Label>
                 <Input
                   id="wiz-date"
                   type="date"
@@ -735,7 +768,9 @@ export function CustomerOrderWizard({
                 />
               </div>
               <div>
-                <Label htmlFor="wiz-time">Hämtningstid</Label>
+                <Label htmlFor="wiz-time">
+                  {orderType === "upphamtning" ? "Hämtningstid" : "Tid"}
+                </Label>
                 <Input
                   id="wiz-time"
                   type="time"
@@ -744,8 +779,44 @@ export function CustomerOrderWizard({
                   onChange={(e) => setWantedTime(e.target.value)}
                 />
               </div>
+
+              {needsDeliveryAddress(orderType) && (
+                <>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="wiz-street">Gatuadress</Label>
+                    <Input
+                      id="wiz-street"
+                      className="h-12"
+                      value={address.street}
+                      onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="wiz-zip">Postnummer</Label>
+                    <Input
+                      id="wiz-zip"
+                      className="h-12"
+                      value={address.postal_code}
+                      onChange={(e) => setAddress({ ...address, postal_code: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="wiz-city">Ort</Label>
+                    <Input
+                      id="wiz-city"
+                      className="h-12"
+                      value={address.city}
+                      onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
               <div className="sm:col-span-2">
-                <Label htmlFor="wiz-note">Anteckning till hämtningen</Label>
+                <Label htmlFor="wiz-note">
+                  {orderType === "upphamtning"
+                    ? "Anteckning till hämtningen"
+                    : "Anteckning till leveransen"}
+                </Label>
                 <Textarea
                   id="wiz-note"
                   placeholder="t.ex. ring innan avhämtning, extra is"
@@ -753,6 +824,7 @@ export function CustomerOrderWizard({
                   onChange={(e) => setNote(e.target.value)}
                 />
               </div>
+
 
               <div className="space-y-2 sm:col-span-2">
                 <div className="rounded-md bg-muted p-3 text-xs">
