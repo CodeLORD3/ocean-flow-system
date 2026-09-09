@@ -1,16 +1,18 @@
-// Läser ut det riktiga felmeddelandet ur ett misslyckat edge function-anrop.
-export async function edgeErrorMessage(error: any, data?: any): Promise<string> {
-  const fromData = data?.error;
-  if (typeof fromData === "string" && fromData) return fromData;
+/**
+ * Plockar ut det riktiga felmeddelandet ur ett misslyckat edge-funktionsanrop.
+ * Utan detta visas bara "Edge Function returned a non-2xx status code".
+ */
+export async function edgeErrorMessage(error: unknown, fallback = "Något gick fel"): Promise<string> {
+  const ctx = (error as any)?.context;
   try {
-    const res = error?.context;
-    if (res && typeof res.json === "function") {
-      const body = await res.clone().json();
+    if (ctx && typeof ctx.json === "function") {
+      const body = await ctx.clone?.().json?.() ?? (await ctx.json());
       if (body?.error) return String(body.error);
-      if (body?.message) return String(body.message);
     }
   } catch {
-    // ignorera parsningsfel och fall tillbaka nedan
+    // ignoreras – vi faller tillbaka på standardmeddelandet
   }
-  return error?.message || "Okänt fel";
+  const msg = (error as any)?.message;
+  if (msg && !/non-2xx status code/i.test(msg)) return String(msg);
+  return fallback;
 }
