@@ -293,6 +293,7 @@ export function InlineOrderEdit({
             <SelectContent>
               <SelectItem value="upphamtning">Upphämtning</SelectItem>
               <SelectItem value="leverans">Leverans</SelectItem>
+              <SelectItem value="postas">Postas (extern transportör)</SelectItem>
             </SelectContent>
           </Select>
         </div>

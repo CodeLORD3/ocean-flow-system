@@ -83,7 +83,7 @@ interface DraftLine extends NewOrderLineInput {
   locked_from_scaling?: boolean;
 }
 
-const STEP_TITLES = ["Lägg till produkter", "Välj kund", "Hämtning", "Bekräfta"];
+const STEP_TITLES = ["Lägg till produkter", "Välj kund", "Leveranssätt", "Bekräfta"];
 
 /**
  * Guidat flöde i fyra steg: produkter, kund, hämtning, bekräfta.
@@ -213,6 +213,20 @@ export function CustomerOrderWizard({
   useEffect(() => {
     if (customer) setExcludedAllergens(customer.excluded_allergens || []);
   }, [customer]);
+
+  /* Adressen fylls från kundkortet när ordern ska levereras eller postas. */
+  useEffect(() => {
+    if (!customer || !needsDeliveryAddress(orderType)) return;
+    setAddress((prev) =>
+      prev.street || prev.postal_code || prev.city
+        ? prev
+        : {
+            street: customer.street ?? "",
+            postal_code: customer.postal_code ?? "",
+            city: customer.city ?? "",
+          },
+    );
+  }, [customer, orderType]);
 
   /* Cateringrader räknas om när gästantalet ändras. Låsta rader står kvar. */
   useEffect(() => {
