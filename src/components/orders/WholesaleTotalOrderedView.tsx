@@ -155,7 +155,7 @@ export function WholesaleTotalOrderedView({
         const lineValue = quantity * price;
         value += lineValue;
         const key = `${line.product_id || name}__${unit}`;
-        const row = group.rows.get(key) ?? {
+        const row: ProductRow = group.rows.get(key) ?? {
           key,
           productId: line.products?.id || line.product_id || null,
           imageUrl: line.products?.image_url || null,
@@ -166,18 +166,31 @@ export function WholesaleTotalOrderedView({
           value: 0,
           lineIds: [],
           statuses: [],
+          statusTotals: {},
+          packed: 0,
+          ordered: 0,
+          unavailable: 0,
+          open: 0,
           orders: [],
         };
+        const lineStatus = line.status || "";
         row.total += quantity;
         row.value += lineValue;
         row.lineIds.push(line.id);
-        if (line.status && !row.statuses.includes(line.status)) row.statuses.push(line.status);
+        const statusKey = lineStatus || "Ej satt";
+        row.statusTotals[statusKey] = (row.statusTotals[statusKey] || 0) + quantity;
+        if (PACKED_STATUSES.includes(lineStatus)) row.packed += quantity;
+        else if (ORDERED_STATUSES.includes(lineStatus)) row.ordered += quantity;
+        else if (lineStatus === "Ej tillgänglig") row.unavailable += quantity;
+        else row.open += quantity;
+        if (lineStatus && !row.statuses.includes(lineStatus)) row.statuses.push(lineStatus);
         const previous = row.orders.find((item) => item.id === order.id);
         if (previous) {
           previous.quantity += quantity;
           previous.value += lineValue;
+          if (previous.status !== lineStatus) previous.status = previous.status ? "Delvis" : lineStatus;
         } else {
-          row.orders.push({ id: order.id, orderNumber: order.order_number || order.id.slice(0, 8), storeName: order.stores?.name || "Okänd butik", quantity, value: lineValue, wantedDate: date });
+          row.orders.push({ id: order.id, orderNumber: order.order_number || order.id.slice(0, 8), storeName: order.stores?.name || "Okänd butik", quantity, value: lineValue, wantedDate: date, status: lineStatus });
         }
         group.rows.set(key, row);
       });
