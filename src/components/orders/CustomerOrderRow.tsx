@@ -42,6 +42,7 @@ import {
   CustomerOrder,
   ORDER_STATUS_LABELS,
   ORDER_TYPE_LABELS,
+  needsDeliveryAddress,
   PACK_STATUS_LABELS,
   LINE_PACK_LABELS,
   isUncollected,
@@ -58,6 +59,7 @@ import { ProductThumb } from "@/components/products/ProductThumb";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import { OrderAuditLine } from "./OrderAuditLine";
 import { getStoreCurrency } from "@/lib/currency";
+import { OrderTypeIcon } from "@/components/orders/OrderTypeIcon";
 import { CurrencyAmount } from "@/components/orders/CurrencyAmount";
 
 
@@ -274,8 +276,13 @@ export function CustomerOrderRow({
   );
 
   /* Leveranstyp: lastbil för hemleverans, butiksikon för upphämtning. */
-  const isDelivery = order.order_type === "leverans";
-  const deliveryLabel = isDelivery ? "Hemleverans" : "Upphämtning i butik";
+  const isDelivery = order.order_type !== "upphamtning";
+  const deliveryLabel =
+    order.order_type === "postas"
+      ? "Postas med extern transportör"
+      : isDelivery
+        ? "Hemleverans"
+        : "Upphämtning i butik";
   const deliveryIcon = (
     <span
       className="inline-flex items-center"
@@ -283,11 +290,7 @@ export function CustomerOrderRow({
       aria-label={deliveryLabel}
       role="img"
     >
-      {isDelivery ? (
-        <Truck className="h-3.5 w-3.5 text-primary" aria-hidden />
-      ) : (
-        <Store className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-      )}
+      <OrderTypeIcon orderType={order.order_type} />
     </span>
   );
 
@@ -694,7 +697,8 @@ export function CustomerOrderRow({
                   {PACK_STATUS_LABELS[order.pack_status] ?? order.pack_status}
                   {packedCount > 0 && active.length > 0 ? ` ${packedCount}/${active.length}` : ""}
                 </span>
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="gap-1 text-[10px]">
+                  <OrderTypeIcon orderType={order.order_type} className="h-3 w-3" />
                   {ORDER_TYPE_LABELS[order.order_type] ?? order.order_type}
                 </Badge>
                 {order.category === "catering" && (
@@ -773,7 +777,7 @@ export function CustomerOrderRow({
                     <div className="text-muted-foreground">{order.guest_count} gäster</div>
                   ) : null}
                 </div>
-                {order.order_type === "leverans" && (
+                {needsDeliveryAddress(order.order_type) && (
                   <div className="flex items-start gap-1.5 text-muted-foreground">
                     <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                     <span>
@@ -856,7 +860,11 @@ export function CustomerOrderRow({
                     onClick={() => handOver.mutate({ order })}
                   >
                     <HandCoins className="mr-1 h-3.5 w-3.5" />
-                    {order.order_type === "leverans" ? "Markera levererad" : "Markera hämtad"}
+                    {order.order_type === "postas"
+                      ? "Markera skickad"
+                      : order.order_type === "leverans"
+                        ? "Markera levererad"
+                        : "Markera hämtad"}
                   </Button>
                 )}
                 {!readOnly && canEdit && !cancelled && handedOver && !paid && (

@@ -35,6 +35,7 @@ import {
   LINE_PACK_LABELS,
   ORDER_STATUS_LABELS,
   ORDER_TYPE_LABELS,
+  needsDeliveryAddress,
   totalDeviates,
   weightDeviates,
   isUncollected,
@@ -199,7 +200,7 @@ export function CustomerOrderCard({
       allergyNote: order.allergy_note,
       excludedAllergens: (order.excluded_allergens || []).map(allergenLabel),
       deliveryAddress:
-        order.order_type === "leverans"
+        needsDeliveryAddress(order.order_type)
           ? [order.delivery_street, order.delivery_postal_code, order.delivery_city]
               .filter(Boolean)
               .join(", ")
@@ -451,12 +452,20 @@ export function CustomerOrderCard({
                     className="h-12"
                     onClick={() =>
                       setStatus(
-                        order.order_type === "leverans" ? "levererad" : "avhamtad",
-                        order.order_type === "leverans" ? "Ordern är levererad" : "Ordern är avhämtad",
+                        order.order_type === "upphamtning" ? "avhamtad" : "levererad",
+                        order.order_type === "upphamtning"
+                          ? "Ordern är avhämtad"
+                          : order.order_type === "postas"
+                            ? "Ordern är skickad"
+                            : "Ordern är levererad",
                       )
                     }
                   >
-                    {order.order_type === "leverans" ? "Levererad" : "Avhämtad"}
+                    {order.order_type === "postas"
+                      ? "Skickad"
+                      : order.order_type === "leverans"
+                        ? "Levererad"
+                        : "Avhämtad"}
                   </Button>
                 )}
                 {order.status === "forfragan" && (
@@ -518,7 +527,7 @@ export function CustomerOrderCard({
                 <div className="text-muted-foreground">
                   {order.customers_retail?.phone || order.customer_phone_snapshot || "Telefon saknas"}
                 </div>
-                {order.order_type === "leverans" && (
+                {needsDeliveryAddress(order.order_type) && (
                   <div className="text-muted-foreground">
                     {[order.delivery_street, order.delivery_postal_code, order.delivery_city]
                       .filter(Boolean)

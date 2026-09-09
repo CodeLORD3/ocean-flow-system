@@ -47,7 +47,13 @@ import {
   fetchTodaysPrice,
   NewOrderLineInput,
 } from "@/hooks/useCustomerOrders";
-import { RetailCustomer, shelfLifeWarning } from "@/lib/customerOrders";
+import {
+  RetailCustomer,
+  shelfLifeWarning,
+  needsDeliveryAddress,
+  OrderType,
+} from "@/lib/customerOrders";
+import { OrderTypeIcon } from "@/components/orders/OrderTypeIcon";
 import { qtyText } from "@/lib/retailCustomerStats";
 import { getStoreCurrency } from "@/lib/currency";
 import {
@@ -77,7 +83,7 @@ interface DraftLine extends NewOrderLineInput {
   locked_from_scaling?: boolean;
 }
 
-const STEP_TITLES = ["Lägg till produkter", "Välj kund", "Hämtning", "Bekräfta"];
+const STEP_TITLES = ["Lägg till produkter", "Välj kund", "Leveranssätt", "Bekräfta"];
 
 /**
  * Guidat flöde i fyra steg: produkter, kund, hämtning, bekräfta.
@@ -119,6 +125,8 @@ export function CustomerOrderWizard({
 
   const [category, setCategory] = useState("vanlig");
   const [status, setStatus] = useState("ny");
+  const [orderType, setOrderType] = useState<OrderType>("upphamtning");
+  const [address, setAddress] = useState({ street: "", postal_code: "", city: "" });
   const [wantedDate, setWantedDate] = useState(new Date().toISOString().slice(0, 10));
   const [wantedTime, setWantedTime] = useState("");
   const [source, setSource] = useState("telefon");
@@ -163,14 +171,15 @@ export function CustomerOrderWizard({
       checkCapacity({
         date: wantedDate,
         time: wantedTime || null,
-        orderType: "upphamtning",
+        // Postas följer leveransreglerna eftersom varan lämnar butiken.
+        orderType: orderType === "upphamtning" ? "upphamtning" : "leverans",
         category,
         settings,
         specialDays,
         holidays,
         sameDayOrders,
       }),
-    [wantedDate, wantedTime, category, settings, specialDays, holidays, sameDayOrders],
+    [wantedDate, wantedTime, orderType, category, settings, specialDays, holidays, sameDayOrders],
   );
 
   const window_ = useMemo(
@@ -193,6 +202,8 @@ export function CustomerOrderWizard({
       setNote("");
       setStatus("ny");
       setCategory("vanlig");
+      setOrderType("upphamtning");
+      setAddress({ street: "", postal_code: "", city: "" });
       setShowMore(false);
       setPickupStoreId(storeId);
     }
@@ -202,6 +213,20 @@ export function CustomerOrderWizard({
   useEffect(() => {
     if (customer) setExcludedAllergens(customer.excluded_allergens || []);
   }, [customer]);
+
+  /* Adressen fylls från kundkortet när ordern ska levereras eller postas. */
+  useEffect(() => {
+    if (!customer || !needsDeliveryAddress(orderType)) return;
+    setAddress((prev) =>
+      prev.street || prev.postal_code || prev.city
+        ? prev
+        : {
+            street: customer.street ?? "",
+            postal_code: customer.postal_code ?? "",
+            city: customer.city ?? "",
+          },
+    );
+  }, [customer, orderType]);
 
   /* Cateringrader räknas om när gästantalet ändras. Låsta rader står kvar. */
   useEffect(() => {
@@ -314,14 +339,14 @@ export function CustomerOrderWizard({
         customer_id: customer.id,
         customer_name_snapshot: customer.name,
         customer_phone_snapshot: customer.phone,
-        order_type: "upphamtning",
+        order_type: orderType,
         category,
         status,
         wanted_date: wantedDate,
         wanted_time: wantedTime || null,
-        delivery_street: null,
-        delivery_postal_code: null,
-        delivery_city: null,
+        delivery_street: needsDeliveryAddress(orderType) ? address.street || null : null,
+        delivery_postal_code: needsDeliveryAddress(orderType) ? address.postal_code || null : null,
+        delivery_city: needsDeliveryAddress(orderType) ? address.city || null : null,
         guest_count: category === "catering" && guestCount ? Number(guestCount) : null,
         allergy_note: allergyNote || null,
         excluded_allergens: excludedAllergens,
@@ -705,7 +730,38 @@ export function CustomerOrderWizard({
           <Card>
             <CardContent className="grid gap-3 p-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Label htmlFor="wiz-store">Hämtningsbutik</Label>
+                <Label>Leveranssätt</Label>
+                <div className="mt-1 grid grid-cols-3 gap-2">
+                  {(
+                    [
+                      { value: "upphamtning", label: "Upphämtning" },
+                      { value: "leverans", label: "Leverans" },
+                      { value: "postas", label: "Postas" },
+                    ] as const
+                  ).map((opt) => (
+                    <Button
+                      key={opt.value}
+                      type="button"
+                      variant={orderType === opt.value ? "default" : "outline"}
+                      className="h-12 justify-center gap-1.5 text-xs sm:text-sm"
+                      onClick={() => setOrderType(opt.value)}
+                    >
+                      <OrderTypeIcon orderType={opt.value} className="h-4 w-4" />
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
+                {orderType === "postas" && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Postas skickas med extern transportör, till exempel Posten eller annan
+                    leveranstjänst.
+                  </p>
+                )}
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="wiz-store">
+                  {orderType === "upphamtning" ? "Hämtningsbutik" : "Butik som skickar"}
+                </Label>
                 <Select value={pickupStoreId} onValueChange={setPickupStoreId}>
                   <SelectTrigger id="wiz-store" className="h-12">
                     <SelectValue />
@@ -725,7 +781,9 @@ export function CustomerOrderWizard({
                 )}
               </div>
               <div>
-                <Label htmlFor="wiz-date">Hämtningsdatum</Label>
+                <Label htmlFor="wiz-date">
+                  {orderType === "upphamtning" ? "Hämtningsdatum" : "Leveransdatum"}
+                </Label>
                 <Input
                   id="wiz-date"
                   type="date"
@@ -735,7 +793,9 @@ export function CustomerOrderWizard({
                 />
               </div>
               <div>
-                <Label htmlFor="wiz-time">Hämtningstid</Label>
+                <Label htmlFor="wiz-time">
+                  {orderType === "upphamtning" ? "Hämtningstid" : "Tid"}
+                </Label>
                 <Input
                   id="wiz-time"
                   type="time"
@@ -744,8 +804,44 @@ export function CustomerOrderWizard({
                   onChange={(e) => setWantedTime(e.target.value)}
                 />
               </div>
+
+              {needsDeliveryAddress(orderType) && (
+                <>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="wiz-street">Gatuadress</Label>
+                    <Input
+                      id="wiz-street"
+                      className="h-12"
+                      value={address.street}
+                      onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="wiz-zip">Postnummer</Label>
+                    <Input
+                      id="wiz-zip"
+                      className="h-12"
+                      value={address.postal_code}
+                      onChange={(e) => setAddress({ ...address, postal_code: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="wiz-city">Ort</Label>
+                    <Input
+                      id="wiz-city"
+                      className="h-12"
+                      value={address.city}
+                      onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
               <div className="sm:col-span-2">
-                <Label htmlFor="wiz-note">Anteckning till hämtningen</Label>
+                <Label htmlFor="wiz-note">
+                  {orderType === "upphamtning"
+                    ? "Anteckning till hämtningen"
+                    : "Anteckning till leveransen"}
+                </Label>
                 <Textarea
                   id="wiz-note"
                   placeholder="t.ex. ring innan avhämtning, extra is"
@@ -753,6 +849,7 @@ export function CustomerOrderWizard({
                   onChange={(e) => setNote(e.target.value)}
                 />
               </div>
+
 
               <div className="space-y-2 sm:col-span-2">
                 <div className="rounded-md bg-muted p-3 text-xs">

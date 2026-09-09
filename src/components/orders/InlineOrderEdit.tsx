@@ -25,6 +25,7 @@ import {
 import {
   CustomerOrder,
   CustomerOrderLine,
+  needsDeliveryAddress,
   ORDER_STATUS_LABELS,
   LINE_PACK_LABELS,
 } from "@/lib/customerOrders";
@@ -183,9 +184,9 @@ export function InlineOrderEdit({
           guest_count: guestCount ? Number(guestCount) : null,
           allergy_note: allergyNote || null,
           note: note || null,
-          delivery_street: orderType === "leverans" ? address.street || null : null,
-          delivery_postal_code: orderType === "leverans" ? address.postal_code || null : null,
-          delivery_city: orderType === "leverans" ? address.city || null : null,
+          delivery_street: needsDeliveryAddress(orderType) ? address.street || null : null,
+          delivery_postal_code: needsDeliveryAddress(orderType) ? address.postal_code || null : null,
+          delivery_city: needsDeliveryAddress(orderType) ? address.city || null : null,
           estimated_total: Math.round(total * 100) / 100,
         },
         event: {
@@ -293,6 +294,7 @@ export function InlineOrderEdit({
             <SelectContent>
               <SelectItem value="upphamtning">Upphämtning</SelectItem>
               <SelectItem value="leverans">Leverans</SelectItem>
+              <SelectItem value="postas">Postas (extern transportör)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -315,7 +317,7 @@ export function InlineOrderEdit({
         </div>
       </div>
 
-      {orderType === "leverans" && (
+      {needsDeliveryAddress(orderType) && (
         <div className="grid gap-2 sm:grid-cols-4">
           <div className="space-y-1 sm:col-span-2">
             <Label className="text-xs">Gatuadress</Label>

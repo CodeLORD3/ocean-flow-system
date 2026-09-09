@@ -1,0 +1,2 @@
+ALTER TABLE public.customer_orders DROP CONSTRAINT IF EXISTS customer_orders_order_type_check;
+ALTER TABLE public.customer_orders ADD CONSTRAINT customer_orders_order_type_check CHECK (order_type IN ('upphamtning','leverans','postas'));
