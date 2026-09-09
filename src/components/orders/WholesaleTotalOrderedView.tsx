@@ -230,10 +230,10 @@ export function WholesaleTotalOrderedView({
   };
 
   const printList = () => {
-    const rows = groups.flatMap((group) => group.rows.map((row) => `<tr><td>${group.label}</td><td>${row.category}</td><td>${row.name}</td><td>${qtyText(row.total, row.unit)} ${row.unit}</td><td>${moneyText(row.value)} kr</td></tr>`)).join("");
+    const rows = groups.flatMap((group) => group.rows.map((row) => `<tr><td>${group.label}</td><td>${row.category}</td><td>${row.name}</td><td>${qtyText(row.total, row.unit)} ${row.unit}</td><td>${qtyText(row.packed, row.unit)}</td><td>${qtyText(row.ordered, row.unit)}</td><td>${qtyText(row.open, row.unit)}</td><td>${moneyText(row.value)} kr</td></tr>`)).join("");
     const windowRef = window.open("", "_blank", "width=900,height=700");
     if (!windowRef) return;
-    windowRef.document.write(`<html><head><title>Grossistens totallista</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#111}h1{margin:0 0 4px}p{color:#555}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:8px;border-bottom:1px solid #bbb;text-align:left}th{background:#222;color:#fff;font-size:11px;text-transform:uppercase}</style></head><body><h1>Grossistens totallista</h1><p>${from} – ${to}</p><table><thead><tr><th>Period</th><th>Kategori</th><th>Produkt</th><th>Mängd</th><th>Värde</th></tr></thead><tbody>${rows}</tbody></table><script>window.onload=function(){window.print();window.close()}<\/script></body></html>`);
+    windowRef.document.write(`<html><head><title>Grossistens totallista</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#111}h1{margin:0 0 4px}p{color:#555}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:8px;border-bottom:1px solid #bbb;text-align:left}th{background:#222;color:#fff;font-size:11px;text-transform:uppercase}</style></head><body><h1>Grossistens totallista</h1><p>${from} – ${to}</p><table><thead><tr><th>Period</th><th>Kategori</th><th>Produkt</th><th>Mängd</th><th>Packat</th><th>Beställt</th><th>Kvar</th><th>Värde</th></tr></thead><tbody>${rows}</tbody></table><script>window.onload=function(){window.print();window.close()}<\/script></body></html>`);
     windowRef.document.close();
   };
 
