@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { edgeErrorMessage } from "@/lib/edgeError";
 import { FileUp, Loader2, ExternalLink, RefreshCw } from "lucide-react";
 import { fortnoxDraftCreatedText, fortnoxJobStatusLabel } from "@/lib/fortnoxStatus";
 import { FortnoxCancelDraftButton } from "./FortnoxCancelDraftButton";
@@ -44,7 +45,7 @@ export function ShopOrderFortnoxButton({ orderId }: { orderId: string }) {
       body: { order_id: orderId },
     });
     setSending(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(await edgeErrorMessage(error));
     if (data?.error) return toast.error(data.error);
     toast.success(
       data.already_sent
@@ -60,7 +61,7 @@ export function ShopOrderFortnoxButton({ orderId }: { orderId: string }) {
       body: { order_id: orderId },
     });
     setSyncing(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(await edgeErrorMessage(error));
     if (data?.error) return toast.error(data.error);
     const r = data?.results?.[0];
     if (r?.error) return toast.error(r.error);
