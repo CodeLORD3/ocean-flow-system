@@ -59,6 +59,7 @@ type OrderLink = {
   quantity: number;
   value: number;
   wantedDate: string;
+  status: string;
 };
 type ProductRow = {
   key: string;
@@ -71,11 +72,29 @@ type ProductRow = {
   value: number;
   lineIds: string[];
   statuses: string[];
+  statusTotals: Record<string, number>;
+  packed: number;
+  ordered: number;
+  unavailable: number;
+  open: number;
   orders: OrderLink[];
 };
 type Group = { key: string; label: string; orderCount: number; rows: ProductRow[] };
 
 const statusOptions = ["", "Pågående", "Beställd", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
+
+/** Packat = klart att leverera. Beställt = inköpt/producerat men inte packat. */
+const PACKED_STATUSES = ["Packad", "Skickad"];
+const ORDERED_STATUSES = ["Beställd", "Producerad"];
+
+const statusChipClass = (status: string) =>
+  PACKED_STATUSES.includes(status)
+    ? "bg-success/15 text-success ring-success/30"
+    : ORDERED_STATUSES.includes(status)
+      ? "bg-primary/10 text-primary ring-primary/25"
+      : status === "Ej tillgänglig"
+        ? "bg-destructive/10 text-destructive ring-destructive/25"
+        : "bg-muted text-muted-foreground ring-border/60";
 
 export function WholesaleTotalOrderedView({
   orders,
