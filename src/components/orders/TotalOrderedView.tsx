@@ -630,9 +630,9 @@ export function TotalOrderedView({
               {groupOpen && (
                 <CardContent className="space-y-0 px-2 pb-2 pt-0 md:px-3">
                   {/* Kolumnrubriker */}
-                  <div className="hidden items-center gap-3 px-2 py-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80 md:flex">
+                  <div className="hidden items-center gap-2.5 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80 md:flex">
                     <span className="w-3" />
-                    <span className="w-8" />
+                    <span className="w-7" />
                     <span className="min-w-0 flex-1">Produkt</span>
                     <button
                       type="button"
@@ -656,7 +656,7 @@ export function TotalOrderedView({
                     return (
                       <Fragment key={key}>
                         {newCategory && (
-                          <div className="mt-3 flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-1 first:mt-0">
+                          <div className="mt-2 flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-0.5 first:mt-0">
                             <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                               {r.category}
                             </span>
@@ -682,7 +682,7 @@ export function TotalOrderedView({
                         <button
                           type="button"
                           onClick={() => toggle(openRows, setOpenRows, key)}
-                          className="flex w-full items-center gap-3 overflow-hidden rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-muted/40"
+                          className="flex w-full items-center gap-2.5 overflow-hidden rounded-xl px-2 py-0.5 text-left transition-colors hover:bg-muted/40"
                         >
                           {isOpen ? (
                             <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
@@ -695,7 +695,7 @@ export function TotalOrderedView({
                             alt={r.name}
                             productId={r.productId}
                             static
-                            className="h-6 w-8 shrink-0 rounded-md"
+                            className="h-5 w-7 shrink-0 rounded"
                           />
                           <span
                             className={`min-w-0 flex-1 truncate tracking-tight ${
