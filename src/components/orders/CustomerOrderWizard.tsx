@@ -171,14 +171,15 @@ export function CustomerOrderWizard({
       checkCapacity({
         date: wantedDate,
         time: wantedTime || null,
-        orderType: "upphamtning",
+        // Postas följer leveransreglerna eftersom varan lämnar butiken.
+        orderType: orderType === "upphamtning" ? "upphamtning" : "leverans",
         category,
         settings,
         specialDays,
         holidays,
         sameDayOrders,
       }),
-    [wantedDate, wantedTime, category, settings, specialDays, holidays, sameDayOrders],
+    [wantedDate, wantedTime, orderType, category, settings, specialDays, holidays, sameDayOrders],
   );
 
   const window_ = useMemo(
@@ -201,6 +202,8 @@ export function CustomerOrderWizard({
       setNote("");
       setStatus("ny");
       setCategory("vanlig");
+      setOrderType("upphamtning");
+      setAddress({ street: "", postal_code: "", city: "" });
       setShowMore(false);
       setPickupStoreId(storeId);
     }
@@ -322,14 +325,14 @@ export function CustomerOrderWizard({
         customer_id: customer.id,
         customer_name_snapshot: customer.name,
         customer_phone_snapshot: customer.phone,
-        order_type: "upphamtning",
+        order_type: orderType,
         category,
         status,
         wanted_date: wantedDate,
         wanted_time: wantedTime || null,
-        delivery_street: null,
-        delivery_postal_code: null,
-        delivery_city: null,
+        delivery_street: needsDeliveryAddress(orderType) ? address.street || null : null,
+        delivery_postal_code: needsDeliveryAddress(orderType) ? address.postal_code || null : null,
+        delivery_city: needsDeliveryAddress(orderType) ? address.city || null : null,
         guest_count: category === "catering" && guestCount ? Number(guestCount) : null,
         allergy_note: allergyNote || null,
         excluded_allergens: excludedAllergens,
