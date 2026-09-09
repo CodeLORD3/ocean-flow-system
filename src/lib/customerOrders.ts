@@ -9,7 +9,7 @@ import { recordMovement, currentStaffId } from "@/lib/stockLedger";
  * så att inventering och rapporter kan skilja kundorder från diskförsäljning.
  */
 
-export type OrderType = "upphamtning" | "leverans";
+export type OrderType = "upphamtning" | "leverans" | "postas";
 export type OrderCategory = "vanlig" | "catering";
 export type OrderPackStatus = "opackad" | "pagaende" | "packad";
 export type LinePackStatus = "opackad" | "packad" | "restnoterad" | "struken";
@@ -51,7 +51,16 @@ export const LINE_PACK_LABELS: Record<LinePackStatus, string> = {
 export const ORDER_TYPE_LABELS: Record<OrderType, string> = {
   upphamtning: "Upphämtning",
   leverans: "Leverans",
+  postas: "Postas",
 };
+
+/** Postas och leverans går ut ur butiken och behöver adress. */
+export const needsDeliveryAddress = (t: string | null | undefined) =>
+  t === "leverans" || t === "postas";
+
+/** Postas = extern transportör (Posten eller annan leveranstjänst). */
+export const isExternalCarrier = (t: string | null | undefined) => t === "postas";
+
 
 export const SOURCE_LABELS: Record<string, string> = {
   telefon: "Telefon",
