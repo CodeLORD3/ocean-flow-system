@@ -220,7 +220,7 @@ export function WholesaleTotalOrderedView({
   };
 
   const exportCsv = () => {
-    const rows = [["Period", "Kategori", "Produkt", "Enhet", "Mängd", "Värde", "Antal ordrar", "Butiker"], ...groups.flatMap((group) => group.rows.map((row) => [group.label, row.category, row.name, row.unit, qtyText(row.total, row.unit), moneyText(row.value), String(row.orders.length), row.orders.map((order) => `${order.storeName} (${qtyText(order.quantity, row.unit)})`).join(" | ")]))];
+    const rows = [["Period", "Kategori", "Produkt", "Enhet", "Mängd", "Packat", "Beställt", "Kvar", "Värde", "Antal ordrar", "Butiker"], ...groups.flatMap((group) => group.rows.map((row) => [group.label, row.category, row.name, row.unit, qtyText(row.total, row.unit), qtyText(row.packed, row.unit), qtyText(row.ordered, row.unit), qtyText(row.open, row.unit), moneyText(row.value), String(row.orders.length), row.orders.map((order) => `${order.storeName} (${qtyText(order.quantity, row.unit)}${order.status ? `, ${order.status}` : ""})`).join(" | ")]))];
     const csv = rows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(";")).join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
