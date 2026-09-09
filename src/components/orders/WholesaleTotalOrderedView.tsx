@@ -59,6 +59,7 @@ type OrderLink = {
   quantity: number;
   value: number;
   wantedDate: string;
+  status: string;
 };
 type ProductRow = {
   key: string;
@@ -71,11 +72,29 @@ type ProductRow = {
   value: number;
   lineIds: string[];
   statuses: string[];
+  statusTotals: Record<string, number>;
+  packed: number;
+  ordered: number;
+  unavailable: number;
+  open: number;
   orders: OrderLink[];
 };
 type Group = { key: string; label: string; orderCount: number; rows: ProductRow[] };
 
 const statusOptions = ["", "Pågående", "Beställd", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
+
+/** Packat = klart att leverera. Beställt = inköpt/producerat men inte packat. */
+const PACKED_STATUSES = ["Packad", "Skickad"];
+const ORDERED_STATUSES = ["Beställd", "Producerad"];
+
+const statusChipClass = (status: string) =>
+  PACKED_STATUSES.includes(status)
+    ? "bg-success/15 text-success ring-success/30"
+    : ORDERED_STATUSES.includes(status)
+      ? "bg-primary/10 text-primary ring-primary/25"
+      : status === "Ej tillgänglig"
+        ? "bg-destructive/10 text-destructive ring-destructive/25"
+        : "bg-muted text-muted-foreground ring-border/60";
 
 export function WholesaleTotalOrderedView({
   orders,
@@ -136,7 +155,7 @@ export function WholesaleTotalOrderedView({
         const lineValue = quantity * price;
         value += lineValue;
         const key = `${line.product_id || name}__${unit}`;
-        const row = group.rows.get(key) ?? {
+        const row: ProductRow = group.rows.get(key) ?? {
           key,
           productId: line.products?.id || line.product_id || null,
           imageUrl: line.products?.image_url || null,
@@ -147,18 +166,31 @@ export function WholesaleTotalOrderedView({
           value: 0,
           lineIds: [],
           statuses: [],
+          statusTotals: {},
+          packed: 0,
+          ordered: 0,
+          unavailable: 0,
+          open: 0,
           orders: [],
         };
+        const lineStatus = line.status || "";
         row.total += quantity;
         row.value += lineValue;
         row.lineIds.push(line.id);
-        if (line.status && !row.statuses.includes(line.status)) row.statuses.push(line.status);
+        const statusKey = lineStatus || "Ej satt";
+        row.statusTotals[statusKey] = (row.statusTotals[statusKey] || 0) + quantity;
+        if (PACKED_STATUSES.includes(lineStatus)) row.packed += quantity;
+        else if (ORDERED_STATUSES.includes(lineStatus)) row.ordered += quantity;
+        else if (lineStatus === "Ej tillgänglig") row.unavailable += quantity;
+        else row.open += quantity;
+        if (lineStatus && !row.statuses.includes(lineStatus)) row.statuses.push(lineStatus);
         const previous = row.orders.find((item) => item.id === order.id);
         if (previous) {
           previous.quantity += quantity;
           previous.value += lineValue;
+          if (previous.status !== lineStatus) previous.status = previous.status ? "Delvis" : lineStatus;
         } else {
-          row.orders.push({ id: order.id, orderNumber: order.order_number || order.id.slice(0, 8), storeName: order.stores?.name || "Okänd butik", quantity, value: lineValue, wantedDate: date });
+          row.orders.push({ id: order.id, orderNumber: order.order_number || order.id.slice(0, 8), storeName: order.stores?.name || "Okänd butik", quantity, value: lineValue, wantedDate: date, status: lineStatus });
         }
         group.rows.set(key, row);
       });
@@ -188,7 +220,7 @@ export function WholesaleTotalOrderedView({
   };
 
   const exportCsv = () => {
-    const rows = [["Period", "Kategori", "Produkt", "Enhet", "Mängd", "Värde", "Antal ordrar", "Butiker"], ...groups.flatMap((group) => group.rows.map((row) => [group.label, row.category, row.name, row.unit, qtyText(row.total, row.unit), moneyText(row.value), String(row.orders.length), row.orders.map((order) => `${order.storeName} (${qtyText(order.quantity, row.unit)})`).join(" | ")]))];
+    const rows = [["Period", "Kategori", "Produkt", "Enhet", "Mängd", "Packat", "Beställt", "Kvar", "Värde", "Antal ordrar", "Butiker"], ...groups.flatMap((group) => group.rows.map((row) => [group.label, row.category, row.name, row.unit, qtyText(row.total, row.unit), qtyText(row.packed, row.unit), qtyText(row.ordered, row.unit), qtyText(row.open, row.unit), moneyText(row.value), String(row.orders.length), row.orders.map((order) => `${order.storeName} (${qtyText(order.quantity, row.unit)}${order.status ? `, ${order.status}` : ""})`).join(" | ")]))];
     const csv = rows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(";")).join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
@@ -198,10 +230,10 @@ export function WholesaleTotalOrderedView({
   };
 
   const printList = () => {
-    const rows = groups.flatMap((group) => group.rows.map((row) => `<tr><td>${group.label}</td><td>${row.category}</td><td>${row.name}</td><td>${qtyText(row.total, row.unit)} ${row.unit}</td><td>${moneyText(row.value)} kr</td></tr>`)).join("");
+    const rows = groups.flatMap((group) => group.rows.map((row) => `<tr><td>${group.label}</td><td>${row.category}</td><td>${row.name}</td><td>${qtyText(row.total, row.unit)} ${row.unit}</td><td>${qtyText(row.packed, row.unit)}</td><td>${qtyText(row.ordered, row.unit)}</td><td>${qtyText(row.open, row.unit)}</td><td>${moneyText(row.value)} kr</td></tr>`)).join("");
     const windowRef = window.open("", "_blank", "width=900,height=700");
     if (!windowRef) return;
-    windowRef.document.write(`<html><head><title>Grossistens totallista</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#111}h1{margin:0 0 4px}p{color:#555}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:8px;border-bottom:1px solid #bbb;text-align:left}th{background:#222;color:#fff;font-size:11px;text-transform:uppercase}</style></head><body><h1>Grossistens totallista</h1><p>${from} – ${to}</p><table><thead><tr><th>Period</th><th>Kategori</th><th>Produkt</th><th>Mängd</th><th>Värde</th></tr></thead><tbody>${rows}</tbody></table><script>window.onload=function(){window.print();window.close()}<\/script></body></html>`);
+    windowRef.document.write(`<html><head><title>Grossistens totallista</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#111}h1{margin:0 0 4px}p{color:#555}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:8px;border-bottom:1px solid #bbb;text-align:left}th{background:#222;color:#fff;font-size:11px;text-transform:uppercase}</style></head><body><h1>Grossistens totallista</h1><p>${from} – ${to}</p><table><thead><tr><th>Period</th><th>Kategori</th><th>Produkt</th><th>Mängd</th><th>Packat</th><th>Beställt</th><th>Kvar</th><th>Värde</th></tr></thead><tbody>${rows}</tbody></table><script>window.onload=function(){window.print();window.close()}<\/script></body></html>`);
     windowRef.document.close();
   };
 
@@ -231,7 +263,21 @@ export function WholesaleTotalOrderedView({
           const newCategory = index === 0 || group.rows[index - 1].category !== row.category;
           const categoryRows = group.rows.filter((item) => item.category === row.category);
           const currentStatus = row.statuses.length === 1 ? row.statuses[0] : "";
-          return <Fragment key={rowKey}>{newCategory && <div className="mt-3 flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-1 first:mt-0"><span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{row.category}</span><span className="font-mono text-[9px] tabular-nums text-muted-foreground/70">{categoryRows.length} varor</span></div>}<div className={`relative ${isOpen ? "my-1 rounded-xl bg-primary/[0.04] ring-1 ring-inset ring-primary/15" : "border-b border-border/40"}`}>{isOpen && <span className="absolute bottom-2 left-0 top-2 w-[3px] rounded-full bg-primary/70" />}<button type="button" onClick={() => toggle(openRows, setOpenRows, rowKey)} className="flex w-full items-center gap-3 overflow-hidden rounded-xl px-2 py-2 text-left transition-colors hover:bg-muted/40">{isOpen ? <ChevronDown className="h-3 w-3 shrink-0 text-primary" /> : <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/70" />}<ProductThumb src={row.imageUrl} alt={row.name} productId={row.productId} static className="h-8 w-10 shrink-0 rounded-md" /><span className={`min-w-0 flex-1 truncate tracking-tight ${isOpen ? "text-xs font-semibold md:text-[13px]" : "text-[11px] font-medium md:text-xs"}`}>{row.name}</span><span className="hidden shrink-0 text-right font-mono text-[11px] tabular-nums text-muted-foreground sm:block sm:w-28">{moneyText(row.value)} kr</span><span className="shrink-0 whitespace-nowrap text-right font-mono text-[11px] font-semibold tabular-nums text-primary md:w-24 md:text-xs">{qtyText(row.total, row.unit)} {row.unit}</span><span className="shrink-0 whitespace-nowrap text-right font-mono text-[10px] tabular-nums text-muted-foreground md:w-16 md:text-[11px]">{row.orders.length} st</span></button>{isOpen && <div className="grid gap-2 px-2 pb-2 md:pl-8 lg:grid-cols-[1fr,260px]"><div className="overflow-hidden rounded-xl bg-background/60 ring-1 ring-inset ring-border/50"><div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Butiksordrar ({row.orders.length})</div><div className="divide-y divide-border/40">{visibleOrders.map((order) => <button type="button" key={`${rowKey}-${order.id}`} onClick={() => onOpenOrder?.(order.id, row.name)} disabled={!onOpenOrder} className="grid w-full grid-cols-[auto,1fr] gap-x-2 gap-y-0.5 px-2.5 py-2 text-left text-[11px] transition-colors hover:bg-muted/50 md:flex md:flex-wrap md:items-baseline md:text-xs"><span className="font-mono text-primary underline-offset-2 hover:underline">{order.orderNumber}</span><span className="min-w-0 truncate md:flex-1">{order.storeName}</span><span className="col-span-2 font-mono font-semibold tabular-nums md:w-24 md:text-right">{qtyText(order.quantity, row.unit)} {row.unit}</span><span className="col-span-2 text-muted-foreground md:w-24 md:text-right">{order.wantedDate}</span></button>)}</div>{row.orders.length > 5 && <Button variant="ghost" size="sm" className="h-8 w-full rounded-none text-[11px]" onClick={() => toggle(showAll, setShowAll, rowKey)}>{showAll.includes(rowKey) ? "Visa färre" : `Visa alla ${row.orders.length} ordrar`}</Button>}</div><div className="rounded-xl bg-background/60 p-2.5 ring-1 ring-inset ring-border/50"><div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Samlade värden</div><div className="flex items-baseline gap-2 py-0.5 text-xs"><span className="min-w-0 flex-1 text-muted-foreground">Beställt</span><span className="font-mono font-semibold tabular-nums text-primary">{qtyText(row.total, row.unit)} {row.unit}</span></div><div className="flex items-baseline gap-2 py-0.5 text-xs"><span className="min-w-0 flex-1 text-muted-foreground">Värde</span><span className="font-mono font-semibold tabular-nums">{moneyText(row.value)} kr</span></div><div className="mt-2 border-t border-border/50 pt-2"><div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Status för alla orderrader</div><Select value={currentStatus} onValueChange={(value) => onStatusChange?.({ product_name: row.name, lineIds: row.lineIds }, value)}><SelectTrigger className="h-8 text-[11px]"><SelectValue placeholder="Sätt status…" /></SelectTrigger><SelectContent>{statusOptions.map((status) => <SelectItem key={status || "none"} value={status || "pending"} className="text-xs">{status || "Ej satt"}</SelectItem>)}</SelectContent></Select></div></div></div>}</div></Fragment>;
+          const remaining = row.open;
+          const chip =
+            row.total > 0 && row.packed >= row.total - 0.0001
+              ? { text: "Packad", cls: "bg-success/15 text-success ring-success/30" }
+              : row.packed > 0
+                ? { text: `${qtyText(row.packed, row.unit)} av ${qtyText(row.total, row.unit)} packat`, cls: "bg-warning/15 text-warning ring-warning/30" }
+                : row.total > 0 && row.ordered >= row.total - 0.0001
+                  ? { text: "Beställd", cls: "bg-primary/10 text-primary ring-primary/25" }
+                  : row.ordered > 0
+                    ? { text: `${qtyText(row.ordered, row.unit)} av ${qtyText(row.total, row.unit)} beställt`, cls: "bg-primary/10 text-primary ring-primary/25" }
+                    : row.unavailable > 0 && remaining <= 0.0001
+                      ? { text: "Ej tillgänglig", cls: "bg-destructive/10 text-destructive ring-destructive/25" }
+                      : { text: "Ej hanterad", cls: "bg-muted text-muted-foreground ring-border/60" };
+          const breakdown = Object.entries(row.statusTotals).sort((a, b) => b[1] - a[1]);
+          return <Fragment key={rowKey}>{newCategory && <div className="mt-3 flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-1 first:mt-0"><span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{row.category}</span><span className="font-mono text-[9px] tabular-nums text-muted-foreground/70">{categoryRows.length} varor</span></div>}<div className={`relative ${isOpen ? "my-1 rounded-xl bg-primary/[0.04] ring-1 ring-inset ring-primary/15" : "border-b border-border/40"}`}>{isOpen && <span className="absolute bottom-2 left-0 top-2 w-[3px] rounded-full bg-primary/70" />}<button type="button" onClick={() => toggle(openRows, setOpenRows, rowKey)} className="flex w-full items-center gap-3 overflow-hidden rounded-xl px-2 py-2 text-left transition-colors hover:bg-muted/40">{isOpen ? <ChevronDown className="h-3 w-3 shrink-0 text-primary" /> : <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/70" />}<ProductThumb src={row.imageUrl} alt={row.name} productId={row.productId} static className="h-8 w-10 shrink-0 rounded-md" /><span className={`min-w-0 flex-1 truncate tracking-tight ${isOpen ? "text-xs font-semibold md:text-[13px]" : "text-[11px] font-medium md:text-xs"}`}>{row.name}</span><span className={`hidden shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[9px] font-semibold ring-1 ring-inset sm:inline ${chip.cls}`}>{chip.text}</span><span className="hidden shrink-0 text-right font-mono text-[11px] tabular-nums text-muted-foreground md:block md:w-28">{moneyText(row.value)} kr</span><span className="shrink-0 whitespace-nowrap text-right font-mono text-[11px] font-semibold tabular-nums text-primary md:w-24 md:text-xs">{qtyText(row.total, row.unit)} {row.unit}</span><span className="shrink-0 whitespace-nowrap text-right font-mono text-[10px] tabular-nums text-muted-foreground md:w-16 md:text-[11px]">{row.orders.length} st</span></button>{!isOpen && <div className="px-2 pb-1.5 sm:hidden"><span className={`inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold ring-1 ring-inset ${chip.cls}`}>{chip.text}</span></div>}{isOpen && <div className="grid gap-2 px-2 pb-2 md:pl-8 lg:grid-cols-[1fr,260px]"><div className="overflow-hidden rounded-xl bg-background/60 ring-1 ring-inset ring-border/50"><div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Butiksordrar ({row.orders.length})</div><div className="divide-y divide-border/40">{visibleOrders.map((order) => <button type="button" key={`${rowKey}-${order.id}`} onClick={() => onOpenOrder?.(order.id, row.name)} disabled={!onOpenOrder} className="grid w-full grid-cols-[auto,1fr] gap-x-2 gap-y-0.5 px-2.5 py-2 text-left text-[11px] transition-colors hover:bg-muted/50 md:flex md:flex-wrap md:items-baseline md:text-xs"><span className="font-mono text-primary underline-offset-2 hover:underline">{order.orderNumber}</span><span className="min-w-0 truncate md:flex-1">{order.storeName}</span><span className={`col-span-2 justify-self-start whitespace-nowrap rounded-full px-2 py-0.5 text-[9px] font-semibold ring-1 ring-inset ${statusChipClass(order.status)}`}>{order.status || "Ej hanterad"}</span><span className="col-span-2 font-mono font-semibold tabular-nums md:w-24 md:text-right">{qtyText(order.quantity, row.unit)} {row.unit}</span><span className="col-span-2 text-muted-foreground md:w-24 md:text-right">{order.wantedDate}</span></button>)}</div>{row.orders.length > 5 && <Button variant="ghost" size="sm" className="h-8 w-full rounded-none text-[11px]" onClick={() => toggle(showAll, setShowAll, rowKey)}>{showAll.includes(rowKey) ? "Visa färre" : `Visa alla ${row.orders.length} ordrar`}</Button>}</div><div className="rounded-xl bg-background/60 p-2.5 ring-1 ring-inset ring-border/50"><div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Samlade värden</div><div className="flex items-baseline gap-2 py-0.5 text-xs"><span className="min-w-0 flex-1 text-muted-foreground">Beställt totalt</span><span className="font-mono font-semibold tabular-nums text-primary">{qtyText(row.total, row.unit)} {row.unit}</span></div><div className="flex items-baseline gap-2 py-0.5 text-xs"><span className="min-w-0 flex-1 text-muted-foreground">Packat</span><span className="font-mono font-semibold tabular-nums text-success">{qtyText(row.packed, row.unit)} {row.unit}</span></div><div className="flex items-baseline gap-2 py-0.5 text-xs"><span className="min-w-0 flex-1 text-muted-foreground">Beställt hos leverantör</span><span className="font-mono font-semibold tabular-nums">{qtyText(row.ordered, row.unit)} {row.unit}</span></div><div className="flex items-baseline gap-2 py-0.5 text-xs"><span className="min-w-0 flex-1 text-muted-foreground">Kvar att hantera</span><span className={`font-mono font-semibold tabular-nums ${remaining > 0.0001 ? "text-warning" : "text-muted-foreground"}`}>{qtyText(remaining, row.unit)} {row.unit}</span></div><div className="flex items-baseline gap-2 py-0.5 text-xs"><span className="min-w-0 flex-1 text-muted-foreground">Värde</span><span className="font-mono font-semibold tabular-nums">{moneyText(row.value)} kr</span></div><div className="mt-2 border-t border-border/50 pt-2"><div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Fördelning per status</div><div className="flex flex-wrap gap-1">{breakdown.map(([status, qty]) => <span key={status} className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ring-1 ring-inset ${statusChipClass(status === "Ej satt" ? "" : status)}`}>{status === "Ej satt" ? "Ej hanterad" : status} {qtyText(qty, row.unit)} {row.unit}</span>)}</div></div><div className="mt-2 border-t border-border/50 pt-2"><div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Status för alla orderrader</div><Select value={currentStatus} onValueChange={(value) => onStatusChange?.({ product_name: row.name, lineIds: row.lineIds }, value)}><SelectTrigger className="h-8 text-[11px]"><SelectValue placeholder="Sätt status…" /></SelectTrigger><SelectContent>{statusOptions.map((status) => <SelectItem key={status || "none"} value={status || "pending"} className="text-xs">{status || "Ej satt"}</SelectItem>)}</SelectContent></Select></div></div></div>}</div></Fragment>;
         })}</CardContent>}</Card>;
       })}
     </div>
