@@ -94,6 +94,7 @@ export default function DailyReport() {
   const [staffRows, setStaffRows] = useState<Record<string, StaffRow>>({});
   const [extraIds, setExtraIds] = useState<string[]>([]);
   const [waste, setWaste] = useState<WasteItem[]>([]);
+  const [wasteRaw, setWasteRaw] = useState<Record<string, string>>({});
   const [comment, setComment] = useState("");
   const [hydrated, setHydrated] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
