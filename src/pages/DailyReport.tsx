@@ -606,14 +606,15 @@ export default function DailyReport() {
                             className="w-24 h-11 text-base font-mono tabular-nums"
                             inputMode="decimal"
                             enterKeyHint="next"
-                            value={w.weight_kg ?? ""}
-                            onChange={(e) =>
+                            value={wasteRaw[`w${i}`] ?? (w.weight_kg ?? "")}
+                            onChange={(e) => {
+                              const t = decText(e.target.value);
+                              setWasteRaw((p) => ({ ...p, [`w${i}`]: t }));
                               setWaste((prev) =>
-                                prev.map((x, j) =>
-                                  j === i ? { ...x, weight_kg: num(e.target.value) } : x,
-                                ),
-                              )
-                            }
+                                prev.map((x, j) => (j === i ? { ...x, weight_kg: num(t) } : x)),
+                              );
+                            }}
+                            onBlur={() => setWasteRaw((p) => { const n = { ...p }; delete n[`w${i}`]; return n; })}
                           />
                         </td>
                         <td className="py-1.5 pr-2">
@@ -621,15 +622,17 @@ export default function DailyReport() {
                             className="w-24 h-11 text-base font-mono tabular-nums"
                             inputMode="decimal"
                             enterKeyHint="next"
-                            value={w.value_sek ?? ""}
-                            onChange={(e) =>
+                            value={wasteRaw[`v${i}`] ?? (w.value_sek ?? "")}
+                            onChange={(e) => {
+                              const t = decText(e.target.value);
+                              setWasteRaw((p) => ({ ...p, [`v${i}`]: t }));
                               setWaste((prev) =>
-                                prev.map((x, j) =>
-                                  j === i ? { ...x, value_sek: num(e.target.value) } : x,
-                                ),
-                              )
-                            }
+                                prev.map((x, j) => (j === i ? { ...x, value_sek: num(t) } : x)),
+                              );
+                            }}
+                            onBlur={() => setWasteRaw((p) => { const n = { ...p }; delete n[`v${i}`]; return n; })}
                           />
+
                         </td>
                         <td className="py-1.5 pr-2">
                           <Select
