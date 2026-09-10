@@ -54,6 +54,14 @@ function num(v: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Tillåter siffror och ett decimaltecken medan man skriver, t.ex. "1," eller "1.5". */
+function decText(v: string): string {
+  const cleaned = v.replace(/[^\d.,]/g, "");
+  const i = cleaned.search(/[.,]/);
+  if (i === -1) return cleaned;
+  return cleaned.slice(0, i + 1) + cleaned.slice(i + 1).replace(/[.,]/g, "");
+}
+
 function hoursBetween(start: string, end: string) {
   if (!start || !end) return 0;
   const [sh, sm] = start.split(":").map(Number);
@@ -86,6 +94,7 @@ export default function DailyReport() {
   const [staffRows, setStaffRows] = useState<Record<string, StaffRow>>({});
   const [extraIds, setExtraIds] = useState<string[]>([]);
   const [waste, setWaste] = useState<WasteItem[]>([]);
+  const [wasteRaw, setWasteRaw] = useState<Record<string, string>>({});
   const [comment, setComment] = useState("");
   const [hydrated, setHydrated] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
@@ -597,14 +606,15 @@ export default function DailyReport() {
                             className="w-24 h-11 text-base font-mono tabular-nums"
                             inputMode="decimal"
                             enterKeyHint="next"
-                            value={w.weight_kg ?? ""}
-                            onChange={(e) =>
+                            value={wasteRaw[`w${i}`] ?? (w.weight_kg ?? "")}
+                            onChange={(e) => {
+                              const t = decText(e.target.value);
+                              setWasteRaw((p) => ({ ...p, [`w${i}`]: t }));
                               setWaste((prev) =>
-                                prev.map((x, j) =>
-                                  j === i ? { ...x, weight_kg: num(e.target.value) } : x,
-                                ),
-                              )
-                            }
+                                prev.map((x, j) => (j === i ? { ...x, weight_kg: num(t) } : x)),
+                              );
+                            }}
+                            onBlur={() => setWasteRaw((p) => { const n = { ...p }; delete n[`w${i}`]; return n; })}
                           />
                         </td>
                         <td className="py-1.5 pr-2">
@@ -612,15 +622,17 @@ export default function DailyReport() {
                             className="w-24 h-11 text-base font-mono tabular-nums"
                             inputMode="decimal"
                             enterKeyHint="next"
-                            value={w.value_sek ?? ""}
-                            onChange={(e) =>
+                            value={wasteRaw[`v${i}`] ?? (w.value_sek ?? "")}
+                            onChange={(e) => {
+                              const t = decText(e.target.value);
+                              setWasteRaw((p) => ({ ...p, [`v${i}`]: t }));
                               setWaste((prev) =>
-                                prev.map((x, j) =>
-                                  j === i ? { ...x, value_sek: num(e.target.value) } : x,
-                                ),
-                              )
-                            }
+                                prev.map((x, j) => (j === i ? { ...x, value_sek: num(t) } : x)),
+                              );
+                            }}
+                            onBlur={() => setWasteRaw((p) => { const n = { ...p }; delete n[`v${i}`]; return n; })}
                           />
+
                         </td>
                         <td className="py-1.5 pr-2">
                           <Select
