@@ -54,6 +54,14 @@ function num(v: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Tillåter siffror och ett decimaltecken medan man skriver, t.ex. "1," eller "1.5". */
+function decText(v: string): string {
+  const cleaned = v.replace(/[^\d.,]/g, "");
+  const i = cleaned.search(/[.,]/);
+  if (i === -1) return cleaned;
+  return cleaned.slice(0, i + 1) + cleaned.slice(i + 1).replace(/[.,]/g, "");
+}
+
 function hoursBetween(start: string, end: string) {
   if (!start || !end) return 0;
   const [sh, sm] = start.split(":").map(Number);
