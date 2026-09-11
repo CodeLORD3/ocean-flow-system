@@ -778,6 +778,19 @@ export function TotalOrderedView({
                           <span className="shrink-0 whitespace-nowrap text-right font-mono text-[11px] font-semibold tabular-nums text-primary md:w-24 md:text-xs">
                             {qtyText(r.total, r.unit)} {r.unit}
                           </span>
+                          {/* Diff = kvar att packa. På mobil visas den som liten etikett. */}
+                          <span
+                            className={`shrink-0 whitespace-nowrap text-right font-mono text-[10px] tabular-nums md:w-20 md:text-[11px] ${
+                              state === "packad"
+                                ? "text-success"
+                                : state === "delvis"
+                                  ? "text-warning"
+                                  : "text-muted-foreground/70"
+                            }`}
+                            title={`Packat ${qtyText(r.packed, r.unit)} ${r.unit} — ${PACK_LABEL[state]}`}
+                          >
+                            {state === "packad" ? "0" : qtyText(remaining, r.unit)} {r.unit}
+                          </span>
                           <span className="shrink-0 whitespace-nowrap text-right font-mono text-[10px] tabular-nums text-muted-foreground md:w-16 md:text-[11px]">
                             {r.orders.length} st
                           </span>
