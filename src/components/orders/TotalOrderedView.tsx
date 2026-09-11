@@ -262,17 +262,21 @@ export function TotalOrderedView({
         row.productId = row.productId ?? l.products?.id ?? null;
         row.imageUrl = row.imageUrl ?? l.products?.image_url ?? null;
         row.total += qty;
+        row.packed += packedQty;
         row.value += lineValue;
 
         const existing = row.orders.find((x) => x.orderNumber === o.order_number);
-        if (existing) existing.quantity += qty;
-        else
+        if (existing) {
+          existing.quantity += qty;
+          existing.packed += packedQty;
+        } else
           row.orders.push({
             orderId: o.id,
             orderNumber: o.order_number,
             customer: customerName(o),
             storeName: o.stores?.name ?? "",
             quantity: qty,
+            packed: packedQty,
             orderType: o.order_type ?? "",
             wantedDate: o.wanted_date,
           });
