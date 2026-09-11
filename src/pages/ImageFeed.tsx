@@ -114,8 +114,8 @@ export default function ImageFeed() {
             <span className="truncate">Bildflöde</span>
           </h1>
           <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
-            Utvalda bilder från alla butiker och grossisten. Markera en bild med stjärnan i
-            &quot;Bilder från butiken&quot; på Översikt för att lägga upp den här.
+            Alla bilder från butikerna och grossisten hamnar här automatiskt. Stjärnmärk en bild i
+            &quot;Bilder från butiken&quot; på Översikt så hamnar den först den dagen.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
