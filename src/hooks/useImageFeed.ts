@@ -40,11 +40,12 @@ export function useImageFeed(limit = 1500) {
   return useQuery({
     queryKey: ["image-feed", limit],
     queryFn: async () => {
+      // Alla bilder från butiker och portaler hamnar automatiskt i flödet.
+      // Stjärnmärkta (is_featured) sorteras först inom varje dag.
       const { data: imgs, error } = await supabase
         .from("entity_images")
         .select("*")
         .in("entity_type", ["store", PORTAL_IMAGE_ENTITY_TYPE])
-        .eq("is_featured", true)
         .order("created_at", { ascending: false })
         .limit(limit);
       if (error) throw error;
