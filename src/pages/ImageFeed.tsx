@@ -202,10 +202,7 @@ export default function ImageFeed() {
             Senaste bilderna: {dayLabel(latestDay)}
           </Badge>
           {latestDay !== dayKey(new Date().toISOString()) && (
-            <span>
-              Inga bilder är utvalda idag ännu — stjärnmärk dagens bilder i &quot;Bilder från
-              butiken&quot; på Översikt så syns de här.
-            </span>
+            <span>Inga bilder är uppladdade idag ännu.</span>
           )}
         </div>
       )}
