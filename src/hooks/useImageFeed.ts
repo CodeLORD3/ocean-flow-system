@@ -36,7 +36,7 @@ export type FeedSource = {
   favoriteCount: number;
 };
 
-export function useImageFeed(limit = 300) {
+export function useImageFeed(limit = 1500) {
   return useQuery({
     queryKey: ["image-feed", limit],
     queryFn: async () => {
