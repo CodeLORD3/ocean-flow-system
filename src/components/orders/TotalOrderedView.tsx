@@ -322,7 +322,20 @@ export function TotalOrderedView({
 
   const exportCsv = () => {
     const rows: string[][] = [
-      ["Period", "Kategori", "Produkt", "Enhet", "Mängd", "Värde", "Antal ordrar", "Leveranssätt", "Ordrar"],
+      [
+        "Period",
+        "Kategori",
+        "Produkt",
+        "Enhet",
+        "Mängd",
+        "Packat",
+        "Diff",
+        "Packstatus",
+        "Värde",
+        "Antal ordrar",
+        "Leveranssätt",
+        "Ordrar",
+      ],
     ];
     for (const g of groups)
       for (const r of g.rows)
@@ -332,13 +345,21 @@ export function TotalOrderedView({
           r.name,
           r.unit,
           qtyText(r.total, r.unit),
+          qtyText(r.packed, r.unit),
+          qtyText(Math.max(r.total - r.packed, 0), r.unit),
+          PACK_LABEL[packState(r.total, r.packed)],
           moneyText(r.value),
           String(r.orders.length),
           byType(r)
             .map(([t, v]) => `${t} ${qtyText(v.qty, r.unit)} ${r.unit} (${v.orders})`)
             .join(" | "),
           r.orders
-            .map((o) => `${o.orderNumber} ${o.customer} (${qtyText(o.quantity, r.unit)} ${r.unit})`)
+            .map(
+              (o) =>
+                `${o.orderNumber} ${o.customer} (${qtyText(o.quantity, r.unit)} ${r.unit}, ${
+                  PACK_LABEL[packState(o.quantity, o.packed)]
+                })`,
+            )
             .join(" | "),
         ]);
     const csv = rows
