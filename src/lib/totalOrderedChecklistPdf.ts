@@ -93,12 +93,13 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
     autoTable(doc, {
       startY: y,
       margin: { left: margin, right: margin },
-      head: [["Sorterat", "Packat", "Produkt", "Mängd", "Ordrar", "Leveranssätt"]],
+      head: [["Sorterat", "Packat", "Produkt", "Mängd", "Kvar", "Ordrar", "Leveranssätt"]],
       body: g.rows.map((r) => [
         "",
         "",
         r.name,
         `${qty(r.total, r.unit)} ${r.unit}`,
+        `${qty(Math.max(r.total - Number(r.packed || 0), 0), r.unit)} ${r.unit}`,
         String(r.orderCount),
         r.types,
       ]),
