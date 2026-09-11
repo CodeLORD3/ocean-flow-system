@@ -886,6 +886,24 @@ export function TotalOrderedView({
                                   {r.orders.length} st
                                 </span>
                               </div>
+                              <div className="flex items-baseline gap-2 py-0.5 text-[11px] md:text-xs">
+                                <span className="min-w-0 flex-1 text-muted-foreground">Packat</span>
+                                <span className="w-20 text-right font-mono tabular-nums text-success">
+                                  {qtyText(r.packed, r.unit)} {r.unit}
+                                </span>
+                                <span className="w-14" />
+                              </div>
+                              <div className="flex items-baseline gap-2 py-0.5 text-[11px] md:text-xs">
+                                <span className="min-w-0 flex-1 text-muted-foreground">Kvar</span>
+                                <span
+                                  className={`w-20 text-right font-mono tabular-nums ${
+                                    state === "packad" ? "text-success" : state === "delvis" ? "text-warning" : ""
+                                  }`}
+                                >
+                                  {qtyText(remaining, r.unit)} {r.unit}
+                                </span>
+                                <span className="w-14" />
+                              </div>
                             </div>
                           </div>
                         )}
