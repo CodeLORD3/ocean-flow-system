@@ -735,12 +735,18 @@ export function TotalOrderedView({
                       <div
                         className={`relative transition-colors ${
                           isOpen
-                            ? "my-1 rounded-xl bg-primary/[0.04] ring-1 ring-inset ring-primary/15"
-                            : "border-b border-border/40 last:border-b-0"
+                            ? `my-1 rounded-xl ${rowTone || "bg-primary/[0.04] ring-1 ring-inset ring-primary/15"}`
+                            : rowTone
+                              ? `my-0.5 rounded-xl ${rowTone}`
+                              : "border-b border-border/40 last:border-b-0"
                         }`}
                       >
-                        {isOpen && (
-                          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-primary/70" />
+                        {(isOpen || barTone) && (
+                          <span
+                            className={`absolute left-0 top-2 bottom-2 w-[3px] rounded-full ${
+                              barTone || "bg-primary/70"
+                            }`}
+                          />
                         )}
 
                         <button
