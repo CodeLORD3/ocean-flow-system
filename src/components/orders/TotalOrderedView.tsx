@@ -693,6 +693,7 @@ export function TotalOrderedView({
                     >
                       Mängd {sort === "qty" ? "↓" : "↕"}
                     </button>
+                    <span className="w-20 text-right">Diff</span>
                     <span className="w-16 text-right">Ordrar</span>
                   </div>
 
