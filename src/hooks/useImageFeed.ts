@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { EntityImage } from "@/hooks/useEntityImages";
+import { dayKey } from "@/lib/imageMeta";
 import {
   ADMIN_IMAGE_ENTITY_ID,
   PORTAL_IMAGE_ENTITY_TYPE,
