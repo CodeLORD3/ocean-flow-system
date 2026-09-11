@@ -706,6 +706,17 @@ export function TotalOrderedView({
                     const visible = expanded ? r.orders : r.orders.slice(0, 5);
                     const newCategory = i === 0 || g.rows[i - 1].category !== r.category;
                     const catRows = g.rows.filter((x) => x.category === r.category);
+                    const state = packState(r.total, r.packed);
+                    const remaining = Math.max(r.total - r.packed, 0);
+                    // Grönt när allt är packat, gult när bara en del av raden är packad.
+                    const rowTone =
+                      state === "packad"
+                        ? "bg-success/10 ring-1 ring-inset ring-success/25"
+                        : state === "delvis"
+                          ? "bg-warning/10 ring-1 ring-inset ring-warning/25"
+                          : "";
+                    const barTone =
+                      state === "packad" ? "bg-success" : state === "delvis" ? "bg-warning" : "";
                     return (
                       <Fragment key={key}>
                         {newCategory && (
