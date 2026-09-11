@@ -227,6 +227,13 @@ export function TotalOrderedView({
         const unit = l.unit || l.products?.unit || "st";
         const qty = Number(l.quantity_ordered || 0);
         if (!qty) continue;
+        // Strukna rader är avbeställda och räknas inte alls i totallistan.
+        if (l.pack_status === "struken") continue;
+        // Packad mängd; är raden markerad packad utan mängd räknas hela beställningen.
+        const packedQty =
+          l.pack_status === "packad"
+            ? Number(l.quantity_packed ?? qty) || qty
+            : Number(l.quantity_packed ?? 0) || 0;
         const cat = (l.products?.category || "").trim() || OTHER_CATEGORY;
         cats.add(cat);
         if (category !== "all" && normalizeCategoryKey(cat) !== normalizeCategoryKey(category)) continue;
