@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { EntityImage } from "@/hooks/useEntityImages";
+import { dayKey } from "@/lib/imageMeta";
 import {
   ADMIN_IMAGE_ENTITY_ID,
   PORTAL_IMAGE_ENTITY_TYPE,
@@ -40,11 +41,12 @@ export function useImageFeed(limit = 1500) {
   return useQuery({
     queryKey: ["image-feed", limit],
     queryFn: async () => {
+      // Alla bilder från butiker och portaler hamnar automatiskt i flödet.
+      // Stjärnmärkta (is_featured) sorteras först inom varje dag.
       const { data: imgs, error } = await supabase
         .from("entity_images")
         .select("*")
         .in("entity_type", ["store", PORTAL_IMAGE_ENTITY_TYPE])
-        .eq("is_featured", true)
         .order("created_at", { ascending: false })
         .limit(limit);
       if (error) throw error;
@@ -112,6 +114,17 @@ export function useImageFeed(limit = 1500) {
           commentCount: counts.get(img.id) ?? 0,
           favoriteCount: hearts.get(img.id) ?? 0,
         };
+      });
+
+      // Nyaste dagen först, och inom dagen ligger stjärnmärkta bilder överst.
+      rows.sort((a, b) => {
+        const dayA = dayKey(a.created_at);
+        const dayB = dayKey(b.created_at);
+        if (dayA !== dayB) return dayB.localeCompare(dayA);
+        const fa = a.is_featured ? 1 : 0;
+        const fb = b.is_featured ? 1 : 0;
+        if (fa !== fb) return fb - fa;
+        return b.created_at.localeCompare(a.created_at);
       });
 
       // Aktivitet per enhet: hur många bilder som lagts upp och hur mycket
