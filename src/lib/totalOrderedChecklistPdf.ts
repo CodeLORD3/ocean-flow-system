@@ -5,6 +5,8 @@ export interface TotalChecklistRow {
   name: string;
   unit: string;
   total: number;
+  /** Redan packad mängd, för kolumnen Kvar. */
+  packed?: number;
   orderCount: number;
   types: string;
 }
@@ -91,12 +93,13 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
     autoTable(doc, {
       startY: y,
       margin: { left: margin, right: margin },
-      head: [["Sorterat", "Packat", "Produkt", "Mängd", "Ordrar", "Leveranssätt"]],
+      head: [["Sorterat", "Packat", "Produkt", "Mängd", "Kvar", "Ordrar", "Leveranssätt"]],
       body: g.rows.map((r) => [
         "",
         "",
         r.name,
         `${qty(r.total, r.unit)} ${r.unit}`,
+        `${qty(Math.max(r.total - Number(r.packed || 0), 0), r.unit)} ${r.unit}`,
         String(r.orderCount),
         r.types,
       ]),
@@ -111,9 +114,10 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
         0: { cellWidth: 18, halign: "center" },
         1: { cellWidth: 18, halign: "center" },
         2: { cellWidth: "auto", fontStyle: "bold" },
-        3: { cellWidth: 26, halign: "right", fontStyle: "bold" },
-        4: { cellWidth: 16, halign: "right" },
-        5: { cellWidth: 30, fontSize: 7, textColor: [110, 110, 110] },
+        3: { cellWidth: 24, halign: "right", fontStyle: "bold" },
+        4: { cellWidth: 22, halign: "right", textColor: [110, 110, 110] },
+        5: { cellWidth: 15, halign: "right" },
+        6: { cellWidth: 26, fontSize: 7, textColor: [110, 110, 110] },
       },
 
       // Rita kryssrutor i de två första kolumnerna

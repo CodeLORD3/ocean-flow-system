@@ -73,12 +73,28 @@ const customerName = (o: CustomerOrder) =>
 const typeLabel = (t?: string | null) =>
   (t && (ORDER_TYPE_LABELS as Record<string, string>)[t]) || "Övrigt";
 
+/** Härledd packstatus: allt packat, delvis packat eller inget packat. */
+type PackState = "packad" | "delvis" | "opackad";
+
+const packState = (total: number, packed: number): PackState => {
+  if (total > 0 && packed >= total - 0.005) return "packad";
+  return packed > 0.005 ? "delvis" : "opackad";
+};
+
+const PACK_LABEL: Record<PackState, string> = {
+  packad: "Packad",
+  delvis: "Delvis packad",
+  opackad: "Ej packad",
+};
+
 type OrderLink = {
   orderId: string;
   orderNumber: string;
   customer: string;
   storeName: string;
   quantity: number;
+  /** Packad mängd i just den beställningen. */
+  packed: number;
   orderType: string;
   wantedDate: string;
 };
@@ -88,6 +104,8 @@ type ProductRow = {
   name: string;
   unit: string;
   total: number;
+  /** Packad mängd summerad över alla beställningar på raden. */
+  packed: number;
   /** Summerat radvärde (kr) när priser finns på raderna. */
   value: number;
   category: string;
@@ -209,6 +227,13 @@ export function TotalOrderedView({
         const unit = l.unit || l.products?.unit || "st";
         const qty = Number(l.quantity_ordered || 0);
         if (!qty) continue;
+        // Strukna rader är avbeställda och räknas inte alls i totallistan.
+        if (l.pack_status === "struken") continue;
+        // Packad mängd; är raden markerad packad utan mängd räknas hela beställningen.
+        const packedQty =
+          l.pack_status === "packad"
+            ? Number(l.quantity_packed ?? qty) || qty
+            : Number(l.quantity_packed ?? 0) || 0;
         const cat = (l.products?.category || "").trim() || OTHER_CATEGORY;
         cats.add(cat);
         if (category !== "all" && normalizeCategoryKey(cat) !== normalizeCategoryKey(category)) continue;
@@ -227,6 +252,7 @@ export function TotalOrderedView({
             name,
             unit,
             total: 0,
+            packed: 0,
             value: 0,
             category: cat,
             productId: null,
@@ -236,17 +262,21 @@ export function TotalOrderedView({
         row.productId = row.productId ?? l.products?.id ?? null;
         row.imageUrl = row.imageUrl ?? l.products?.image_url ?? null;
         row.total += qty;
+        row.packed += packedQty;
         row.value += lineValue;
 
         const existing = row.orders.find((x) => x.orderNumber === o.order_number);
-        if (existing) existing.quantity += qty;
-        else
+        if (existing) {
+          existing.quantity += qty;
+          existing.packed += packedQty;
+        } else
           row.orders.push({
             orderId: o.id,
             orderNumber: o.order_number,
             customer: customerName(o),
             storeName: o.stores?.name ?? "",
             quantity: qty,
+            packed: packedQty,
             orderType: o.order_type ?? "",
             wantedDate: o.wanted_date,
           });
@@ -292,7 +322,20 @@ export function TotalOrderedView({
 
   const exportCsv = () => {
     const rows: string[][] = [
-      ["Period", "Kategori", "Produkt", "Enhet", "Mängd", "Värde", "Antal ordrar", "Leveranssätt", "Ordrar"],
+      [
+        "Period",
+        "Kategori",
+        "Produkt",
+        "Enhet",
+        "Mängd",
+        "Packat",
+        "Diff",
+        "Packstatus",
+        "Värde",
+        "Antal ordrar",
+        "Leveranssätt",
+        "Ordrar",
+      ],
     ];
     for (const g of groups)
       for (const r of g.rows)
@@ -302,13 +345,21 @@ export function TotalOrderedView({
           r.name,
           r.unit,
           qtyText(r.total, r.unit),
+          qtyText(r.packed, r.unit),
+          qtyText(Math.max(r.total - r.packed, 0), r.unit),
+          PACK_LABEL[packState(r.total, r.packed)],
           moneyText(r.value),
           String(r.orders.length),
           byType(r)
             .map(([t, v]) => `${t} ${qtyText(v.qty, r.unit)} ${r.unit} (${v.orders})`)
             .join(" | "),
           r.orders
-            .map((o) => `${o.orderNumber} ${o.customer} (${qtyText(o.quantity, r.unit)} ${r.unit})`)
+            .map(
+              (o) =>
+                `${o.orderNumber} ${o.customer} (${qtyText(o.quantity, r.unit)} ${r.unit}, ${
+                  PACK_LABEL[packState(o.quantity, o.packed)]
+                })`,
+            )
             .join(" | "),
         ]);
     const csv = rows
@@ -333,6 +384,7 @@ export function TotalOrderedView({
           name: r.name,
           unit: r.unit,
           total: r.total,
+          packed: r.packed,
           orderCount: r.orders.length,
           types: byType(r)
             .map(([t, v]) => `${t} ${qtyText(v.qty, r.unit)} (${v.orders})`)
@@ -641,6 +693,7 @@ export function TotalOrderedView({
                     >
                       Mängd {sort === "qty" ? "↓" : "↕"}
                     </button>
+                    <span className="w-20 text-right">Diff</span>
                     <span className="w-16 text-right">Ordrar</span>
                   </div>
 
@@ -653,6 +706,17 @@ export function TotalOrderedView({
                     const visible = expanded ? r.orders : r.orders.slice(0, 5);
                     const newCategory = i === 0 || g.rows[i - 1].category !== r.category;
                     const catRows = g.rows.filter((x) => x.category === r.category);
+                    const state = packState(r.total, r.packed);
+                    const remaining = Math.max(r.total - r.packed, 0);
+                    // Grönt när allt är packat, gult när bara en del av raden är packad.
+                    const rowTone =
+                      state === "packad"
+                        ? "bg-success/10 ring-1 ring-inset ring-success/25"
+                        : state === "delvis"
+                          ? "bg-warning/10 ring-1 ring-inset ring-warning/25"
+                          : "";
+                    const barTone =
+                      state === "packad" ? "bg-success" : state === "delvis" ? "bg-warning" : "";
                     return (
                       <Fragment key={key}>
                         {newCategory && (
@@ -671,12 +735,18 @@ export function TotalOrderedView({
                       <div
                         className={`relative transition-colors ${
                           isOpen
-                            ? "my-1 rounded-xl bg-primary/[0.04] ring-1 ring-inset ring-primary/15"
-                            : "border-b border-border/40 last:border-b-0"
+                            ? `my-1 rounded-xl ${rowTone || "bg-primary/[0.04] ring-1 ring-inset ring-primary/15"}`
+                            : rowTone
+                              ? `my-0.5 rounded-xl ${rowTone}`
+                              : "border-b border-border/40 last:border-b-0"
                         }`}
                       >
-                        {isOpen && (
-                          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-primary/70" />
+                        {(isOpen || barTone) && (
+                          <span
+                            className={`absolute left-0 top-2 bottom-2 w-[3px] rounded-full ${
+                              barTone || "bg-primary/70"
+                            }`}
+                          />
                         )}
 
                         <button
@@ -708,6 +778,19 @@ export function TotalOrderedView({
                           <span className="shrink-0 whitespace-nowrap text-right font-mono text-[11px] font-semibold tabular-nums text-primary md:w-24 md:text-xs">
                             {qtyText(r.total, r.unit)} {r.unit}
                           </span>
+                          {/* Diff = kvar att packa. På mobil visas den som liten etikett. */}
+                          <span
+                            className={`shrink-0 whitespace-nowrap text-right font-mono text-[10px] tabular-nums md:w-20 md:text-[11px] ${
+                              state === "packad"
+                                ? "text-success"
+                                : state === "delvis"
+                                  ? "text-warning"
+                                  : "text-muted-foreground/70"
+                            }`}
+                            title={`Packat ${qtyText(r.packed, r.unit)} ${r.unit} — ${PACK_LABEL[state]}`}
+                          >
+                            {state === "packad" ? "0" : qtyText(remaining, r.unit)} {r.unit}
+                          </span>
                           <span className="shrink-0 whitespace-nowrap text-right font-mono text-[10px] tabular-nums text-muted-foreground md:w-16 md:text-[11px]">
                             {r.orders.length} st
                           </span>
@@ -721,20 +804,39 @@ export function TotalOrderedView({
                                 Ordrar ({r.orders.length})
                               </div>
                               <div className="divide-y divide-border/40">
-                                {visible.map((o) => (
+                                {visible.map((o) => {
+                                  const os = packState(o.quantity, o.packed);
+                                  return (
                                   <button
                                     type="button"
                                     key={`${key}-${o.orderNumber}`}
                                     onClick={() => onOpenOrder?.(o.orderId, r.name)}
                                     disabled={!onOpenOrder}
                                     title={onOpenOrder ? `Öppna ${o.orderNumber}` : undefined}
-                                    className="grid w-full grid-cols-[auto,1fr] items-baseline gap-x-2 gap-y-0.5 px-2.5 py-2 text-left text-[11px] transition-colors hover:bg-muted/50 md:flex md:flex-wrap md:py-1.5 md:text-xs"
+                                    className={`grid w-full grid-cols-[auto,1fr] items-baseline gap-x-2 gap-y-0.5 px-2.5 py-2 text-left text-[11px] transition-colors hover:bg-muted/50 md:flex md:flex-wrap md:py-1.5 md:text-xs ${
+                                      os === "packad"
+                                        ? "bg-success/10"
+                                        : os === "delvis"
+                                          ? "bg-warning/10"
+                                          : ""
+                                    }`}
                                   >
                                     <span className="font-mono text-primary underline-offset-2 hover:underline">
                                       {o.orderNumber}
                                     </span>
                                     <span className="min-w-0 truncate md:flex-1">{o.customer}</span>
                                     <span className="col-span-2 flex flex-wrap items-baseline gap-2 md:contents">
+                                      <span
+                                        className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
+                                          os === "packad"
+                                            ? "bg-success/20 text-success"
+                                            : os === "delvis"
+                                              ? "bg-warning/20 text-warning"
+                                              : "bg-muted text-muted-foreground"
+                                        }`}
+                                      >
+                                        {PACK_LABEL[os]}
+                                      </span>
                                       <span className="w-20 text-right font-mono font-semibold tabular-nums">
                                         {qtyText(o.quantity, r.unit)} {r.unit}
                                       </span>
@@ -742,7 +844,8 @@ export function TotalOrderedView({
                                       <span className="w-20 text-right font-mono tabular-nums text-muted-foreground">{o.wantedDate}</span>
                                     </span>
                                   </button>
-                                ))}
+                                  );
+                                })}
                               </div>
 
                               {r.orders.length > 5 && (
@@ -782,6 +885,24 @@ export function TotalOrderedView({
                                 <span className="w-14 text-right font-mono font-normal tabular-nums text-muted-foreground/70">
                                   {r.orders.length} st
                                 </span>
+                              </div>
+                              <div className="flex items-baseline gap-2 py-0.5 text-[11px] md:text-xs">
+                                <span className="min-w-0 flex-1 text-muted-foreground">Packat</span>
+                                <span className="w-20 text-right font-mono tabular-nums text-success">
+                                  {qtyText(r.packed, r.unit)} {r.unit}
+                                </span>
+                                <span className="w-14" />
+                              </div>
+                              <div className="flex items-baseline gap-2 py-0.5 text-[11px] md:text-xs">
+                                <span className="min-w-0 flex-1 text-muted-foreground">Kvar</span>
+                                <span
+                                  className={`w-20 text-right font-mono tabular-nums ${
+                                    state === "packad" ? "text-success" : state === "delvis" ? "text-warning" : ""
+                                  }`}
+                                >
+                                  {qtyText(remaining, r.unit)} {r.unit}
+                                </span>
+                                <span className="w-14" />
                               </div>
                             </div>
                           </div>
