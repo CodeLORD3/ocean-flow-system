@@ -5,6 +5,8 @@ export interface TotalChecklistRow {
   name: string;
   unit: string;
   total: number;
+  /** Redan packad mängd, för kolumnen Kvar. */
+  packed?: number;
   orderCount: number;
   types: string;
 }
