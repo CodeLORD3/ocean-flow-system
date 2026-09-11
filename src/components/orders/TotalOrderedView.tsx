@@ -804,20 +804,39 @@ export function TotalOrderedView({
                                 Ordrar ({r.orders.length})
                               </div>
                               <div className="divide-y divide-border/40">
-                                {visible.map((o) => (
+                                {visible.map((o) => {
+                                  const os = packState(o.quantity, o.packed);
+                                  return (
                                   <button
                                     type="button"
                                     key={`${key}-${o.orderNumber}`}
                                     onClick={() => onOpenOrder?.(o.orderId, r.name)}
                                     disabled={!onOpenOrder}
                                     title={onOpenOrder ? `Öppna ${o.orderNumber}` : undefined}
-                                    className="grid w-full grid-cols-[auto,1fr] items-baseline gap-x-2 gap-y-0.5 px-2.5 py-2 text-left text-[11px] transition-colors hover:bg-muted/50 md:flex md:flex-wrap md:py-1.5 md:text-xs"
+                                    className={`grid w-full grid-cols-[auto,1fr] items-baseline gap-x-2 gap-y-0.5 px-2.5 py-2 text-left text-[11px] transition-colors hover:bg-muted/50 md:flex md:flex-wrap md:py-1.5 md:text-xs ${
+                                      os === "packad"
+                                        ? "bg-success/10"
+                                        : os === "delvis"
+                                          ? "bg-warning/10"
+                                          : ""
+                                    }`}
                                   >
                                     <span className="font-mono text-primary underline-offset-2 hover:underline">
                                       {o.orderNumber}
                                     </span>
                                     <span className="min-w-0 truncate md:flex-1">{o.customer}</span>
                                     <span className="col-span-2 flex flex-wrap items-baseline gap-2 md:contents">
+                                      <span
+                                        className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
+                                          os === "packad"
+                                            ? "bg-success/20 text-success"
+                                            : os === "delvis"
+                                              ? "bg-warning/20 text-warning"
+                                              : "bg-muted text-muted-foreground"
+                                        }`}
+                                      >
+                                        {PACK_LABEL[os]}
+                                      </span>
                                       <span className="w-20 text-right font-mono font-semibold tabular-nums">
                                         {qtyText(o.quantity, r.unit)} {r.unit}
                                       </span>
@@ -825,7 +844,8 @@ export function TotalOrderedView({
                                       <span className="w-20 text-right font-mono tabular-nums text-muted-foreground">{o.wantedDate}</span>
                                     </span>
                                   </button>
-                                ))}
+                                  );
+                                })}
                               </div>
 
                               {r.orders.length > 5 && (
