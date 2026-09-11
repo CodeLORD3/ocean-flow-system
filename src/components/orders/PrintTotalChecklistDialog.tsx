@@ -42,6 +42,7 @@ function mergeGroups(groups: TotalChecklistGroup[]): TotalChecklistGroup {
       const cur = rows.get(k);
       if (cur) {
         cur.total += r.total;
+        cur.packed = Number(cur.packed || 0) + Number(r.packed || 0);
         cur.orderCount += r.orderCount;
       } else {
         rows.set(k, { ...r });
