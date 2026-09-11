@@ -65,16 +65,19 @@ export function useImageFeed(limit = 1500) {
       );
 
 
+      // Kommentarer och hjärtan hämtas i mindre klumpar. Med många bilder blir
+      // en enda fråga för lång för servern, och tidigare försvann då hela
+      // flödet. Nu räknas de i bitar och ett fel på räknarna får aldrig dölja
+      // bilderna.
       const counts = new Map<string, number>();
       const hearts = new Map<string, number>();
-      if (images.length) {
-        const ids = images.map((i) => i.id);
-        const [{ data: comments, error: cErr }, { data: favs, error: fErr }] = await Promise.all([
+      const CHUNK = 150;
+      for (let i = 0; i < images.length; i += CHUNK) {
+        const ids = images.slice(i, i + CHUNK).map((img) => img.id);
+        const [{ data: comments }, { data: favs }] = await Promise.all([
           supabase.from("entity_image_comments").select("image_id").in("image_id", ids),
           supabase.from("entity_image_favorites").select("image_id").in("image_id", ids),
         ]);
-        if (cErr) throw cErr;
-        if (fErr) throw fErr;
         for (const c of comments || []) {
           const id = (c as { image_id: string }).image_id;
           counts.set(id, (counts.get(id) ?? 0) + 1);
