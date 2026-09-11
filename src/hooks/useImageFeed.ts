@@ -115,6 +115,17 @@ export function useImageFeed(limit = 1500) {
         };
       });
 
+      // Nyaste dagen först, och inom dagen ligger stjärnmärkta bilder överst.
+      rows.sort((a, b) => {
+        const dayA = dayKey(a.created_at);
+        const dayB = dayKey(b.created_at);
+        if (dayA !== dayB) return dayB.localeCompare(dayA);
+        const fa = a.is_featured ? 1 : 0;
+        const fb = b.is_featured ? 1 : 0;
+        if (fa !== fb) return fb - fa;
+        return b.created_at.localeCompare(a.created_at);
+      });
+
       // Aktivitet per enhet: hur många bilder som lagts upp och hur mycket
       // uppskattning de fått. Används för "Mest aktiva enheter".
       const weekAgo = Date.now() - 7 * 86400000;
