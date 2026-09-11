@@ -73,12 +73,28 @@ const customerName = (o: CustomerOrder) =>
 const typeLabel = (t?: string | null) =>
   (t && (ORDER_TYPE_LABELS as Record<string, string>)[t]) || "Övrigt";
 
+/** Härledd packstatus: allt packat, delvis packat eller inget packat. */
+type PackState = "packad" | "delvis" | "opackad";
+
+const packState = (total: number, packed: number): PackState => {
+  if (total > 0 && packed >= total - 0.005) return "packad";
+  return packed > 0.005 ? "delvis" : "opackad";
+};
+
+const PACK_LABEL: Record<PackState, string> = {
+  packad: "Packad",
+  delvis: "Delvis packad",
+  opackad: "Ej packad",
+};
+
 type OrderLink = {
   orderId: string;
   orderNumber: string;
   customer: string;
   storeName: string;
   quantity: number;
+  /** Packad mängd i just den beställningen. */
+  packed: number;
   orderType: string;
   wantedDate: string;
 };
@@ -88,6 +104,8 @@ type ProductRow = {
   name: string;
   unit: string;
   total: number;
+  /** Packad mängd summerad över alla beställningar på raden. */
+  packed: number;
   /** Summerat radvärde (kr) när priser finns på raderna. */
   value: number;
   category: string;
