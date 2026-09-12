@@ -3,11 +3,12 @@ import { displayOrderWeek } from "@/lib/orderWeek";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
-  Archive, CalendarIcon, Pencil, Send, FileText, Copy, Eye,
+  Archive, CalendarIcon, Pencil, Send, FileText, Copy, Eye, Users,
 } from "lucide-react";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 import { OrderPhotosButton, ORDER_PHOTO_ENTITY, ORDER_LINE_PHOTO_ENTITY } from "@/components/orders/OrderPhotos";
+import { OpenOrderEditor } from "@/components/orders/OpenOrderEditor";
 
 import DeliveryNote from "@/components/DeliveryNote";
 
@@ -54,6 +55,7 @@ type OrderLine = {
 
 
 const statusColor: Record<string, string> = {
+  Öppen: "bg-warning/15 text-warning border-warning/30",
   Ny: "",
   Pågående: "bg-warning/15 text-warning border-warning/20",
   Packad: "bg-success/15 text-success border-success/20",
@@ -64,6 +66,7 @@ const statusColor: Record<string, string> = {
 };
 
 const statusIcon: Record<string, React.ReactNode> = {
+  Öppen: <Users className="h-3 w-3" />,
   Ny: <Clock className="h-3 w-3" />,
   Pågående: <Clock className="h-3 w-3" />,
   Packad: <Package className="h-3 w-3" />,
@@ -116,7 +119,7 @@ function buildProgressGradient(lines: any[]): string {
   return `linear-gradient(to bottom, ${segments.join(", ")})`;
 }
 
-const LIVE_STATUSES = ["Ny", "Pågående", "Packad", "Skickad"];
+const LIVE_STATUSES = ["Öppen", "Ny", "Pågående", "Packad", "Skickad"];
 const DONE_STATUSES = ["Levererad", "Klar / Levererad", "Arkiverad", "Avbruten"];
 
 const FOLLJESEDEL_STATUSES = ["Skickad", "Levererad", "Klar / Levererad", "Arkiverad"];
@@ -208,6 +211,16 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                         <tr>
                           <td colSpan={9} className="p-0">
                             <div className="border-l-2 border-l-primary bg-card px-3 py-2 space-y-2">
+                              {o.status === "Öppen" ? (
+                                <OpenOrderEditor
+                                  order={o}
+                                  products={products}
+                                  toast={toast}
+                                  allowedWeekdays={allowedWeekdays}
+                                  isDateDisabled={isDateDisabled}
+                                  onClose={() => setExpandedId(null)}
+                                />
+                              ) : (
                               <OrderDetailWithEdit
                                 order={o}
                                 products={products}
@@ -217,6 +230,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                                 isDateDisabled={isDateDisabled}
                                 inline
                               />
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -343,6 +357,13 @@ export default function ShopOrders() {
           qc.invalidateQueries({ queryKey: ["shop-orders-shop", activeStoreId] });
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shop_orders", filter: `store_id=eq.${activeStoreId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["shop-orders-shop", activeStoreId] });
+        }
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [activeStoreId, qc]);
@@ -423,13 +444,15 @@ export default function ShopOrders() {
     setOrderLines(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const handleCreateOrder = async () => {
+  /** asOpen = spara som öppen beställning som stannar hos butiken. */
+  const handleCreateOrder = async (asOpen = false) => {
     const validLines = orderLines.filter(l => l.quantity && Number(l.quantity) > 0);
     if (validLines.length === 0) return;
-    if (!desiredDeliveryDate) {
+    if (!desiredDeliveryDate && !asOpen) {
       toast({ title: "Välj avgångsdatum", description: "Du måste välja ett avgångsdatum innan du kan skicka beställningen.", variant: "destructive" });
       return;
     }
+
 
     if (!activeStoreId) {
       toast({ title: "Ingen butik vald", variant: "destructive" });
@@ -444,7 +467,7 @@ export default function ShopOrders() {
         store_id: activeStoreId,
         order_week: weekNum,
         notes: orderNote || null,
-        status: "Ny",
+        status: asOpen ? "Öppen" : "Ny",
         created_by: loggedInName,
         desired_delivery_date: desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : null,
       } as any)
@@ -456,7 +479,7 @@ export default function ShopOrders() {
       return;
     }
 
-    const deliveryDateStr = format(desiredDeliveryDate, "yyyy-MM-dd");
+    const deliveryDateStr = desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : null;
     const lines = validLines.map(l => ({
       shop_order_id: order.id,
       product_id: l.product_id,
@@ -474,7 +497,7 @@ export default function ShopOrders() {
     const userName = loggedInName ?? undefined;
     await logActivity({
       action_type: "create",
-      description: `Ny butiksorder skapad av ${userName || "okänd"} (${weekNum}, ${validLines.length} rader)`,
+      description: `${asOpen ? "Öppen beställning startad" : "Ny butiksorder skapad"} av ${userName || "okänd"} (${weekNum}, ${validLines.length} rader)`,
       portal: "shop",
       store_id: activeStoreId,
       entity_type: "shop_order",
@@ -482,7 +505,11 @@ export default function ShopOrders() {
       performed_by: userName,
     });
 
-    toast({ title: "Beställning skickad!", description: `${validLines.length} produkter beställda` });
+    toast(
+      asOpen
+        ? { title: "Öppen beställning skapad", description: "Alla i butiken kan fylla på den tills du skickar den." }
+        : { title: "Beställning skickad!", description: `${validLines.length} produkter beställda` },
+    );
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
     setCreatingOrder(false);
     setOrderLines([]);
@@ -782,8 +809,18 @@ export default function ShopOrders() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-wrap justify-end gap-2 pt-2">
               <Button variant="outline" size="sm" onClick={() => setCreatingOrder(false)}>Avbryt</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-warning/40 text-warning hover:bg-warning/10"
+                title="Spara som öppen beställning — stannar hos butiken tills ni skickar den"
+                onClick={() => handleCreateOrder(true)}
+                disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0}
+              >
+                <Users className="h-3.5 w-3.5" /> Öppen order
+              </Button>
               <Button
                 size="sm"
                 className="gap-1.5"
