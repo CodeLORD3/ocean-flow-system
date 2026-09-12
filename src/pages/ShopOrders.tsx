@@ -3,7 +3,7 @@ import { displayOrderWeek } from "@/lib/orderWeek";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
-  Archive, CalendarIcon, Pencil, Send, FileText, Copy, Eye, Users,
+  Archive, CalendarIcon, Pencil, Send, FileText, Copy, Eye, Users, Lock,
 } from "lucide-react";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
