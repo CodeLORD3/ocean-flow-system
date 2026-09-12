@@ -33,6 +33,7 @@ import {
   Printer,
   ListFilter,
   ScrollText,
+  ListChecks,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1310,6 +1311,51 @@ export default function Inventory() {
       (s: any) => allowed.has(s.location_id) && !hiddenLocs[s.location_id] && matchesLevel(s),
     );
   }, [allStock, portalLocations, hiddenLocs, matchesLevel]);
+
+  /** FAS 1 — alla aktiva produkter som finns i butikens Lager (oavsett nivåfilter). */
+  const countListProducts = useMemo(() => {
+    const allowed = new Set(portalLocations.map((l: any) => l.id));
+    const ids = new Set<string>();
+    (allStock as any[]).forEach((s: any) => {
+      if (allowed.has(s.location_id) && s.product_id) ids.add(s.product_id);
+    });
+    const list: CountListProduct[] = [];
+    ids.forEach((id) => {
+      const p = productsById.get(id);
+      if (!p || p.is_active === false) return;
+      list.push({
+        id,
+        name: p.name || "—",
+        unit: p.unit,
+        category: p.category || "Övrigt",
+        sku: p.sku,
+        imageUrl: p.image_url || null,
+      });
+    });
+    return list;
+  }, [allStock, portalLocations, productsById]);
+
+  const [countListLoading, setCountListLoading] = useState(false);
+  const handlePrintCountList = useCallback(async () => {
+    if (!countListProducts.length) {
+      toast({
+        title: "Inga produkter i lagret",
+        description: "Registrera en inleverans först — då kan listan skrivas ut.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setCountListLoading(true);
+    try {
+      await generateInventoryCountListPdf(countListProducts, {
+        storeName: activeStoreName || undefined,
+      });
+    } catch (e: any) {
+      toast({ title: "Kunde inte skapa listan", description: e?.message, variant: "destructive" });
+    } finally {
+      setCountListLoading(false);
+    }
+  }, [countListProducts, activeStoreName, toast]);
 
 
   const handleOverviewAction = useCallback(
