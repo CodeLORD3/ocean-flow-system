@@ -467,7 +467,7 @@ export default function ShopOrders() {
         store_id: activeStoreId,
         order_week: weekNum,
         notes: orderNote || null,
-        status: "Ny",
+        status: asOpen ? "Öppen" : "Ny",
         created_by: loggedInName,
         desired_delivery_date: desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : null,
       } as any)
@@ -479,7 +479,7 @@ export default function ShopOrders() {
       return;
     }
 
-    const deliveryDateStr = format(desiredDeliveryDate, "yyyy-MM-dd");
+    const deliveryDateStr = desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : null;
     const lines = validLines.map(l => ({
       shop_order_id: order.id,
       product_id: l.product_id,
@@ -497,7 +497,7 @@ export default function ShopOrders() {
     const userName = loggedInName ?? undefined;
     await logActivity({
       action_type: "create",
-      description: `Ny butiksorder skapad av ${userName || "okänd"} (${weekNum}, ${validLines.length} rader)`,
+      description: `${asOpen ? "Öppen beställning startad" : "Ny butiksorder skapad"} av ${userName || "okänd"} (${weekNum}, ${validLines.length} rader)`,
       portal: "shop",
       store_id: activeStoreId,
       entity_type: "shop_order",
@@ -505,7 +505,11 @@ export default function ShopOrders() {
       performed_by: userName,
     });
 
-    toast({ title: "Beställning skickad!", description: `${validLines.length} produkter beställda` });
+    toast(
+      asOpen
+        ? { title: "Öppen beställning skapad", description: "Alla i butiken kan fylla på den tills du skickar den." }
+        : { title: "Beställning skickad!", description: `${validLines.length} produkter beställda` },
+    );
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
     setCreatingOrder(false);
     setOrderLines([]);
