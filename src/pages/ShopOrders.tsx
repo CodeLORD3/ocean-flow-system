@@ -201,10 +201,16 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                           )}
                         </td>
                         <td className="px-1.5 py-0.5 text-right">
-                          <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
-                            {statusIcon[o.status]}
-                            {o.status}
-                          </Badge>
+                          {o.status === "Öppen" && o.open_locked_at ? (
+                            <Badge variant="outline" className="border-success/30 bg-success/15 text-success text-[10px] gap-1">
+                              <Lock className="h-3 w-3" /> Låst
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
+                              {statusIcon[o.status]}
+                              {o.status}
+                            </Badge>
+                          )}
                         </td>
                       </tr>
                       {isExpanded && (
