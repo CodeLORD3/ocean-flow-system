@@ -1412,6 +1412,16 @@ export default function Inventory() {
               {expiryAlerts.length} utgångsvarning{expiryAlerts.length > 1 ? "ar" : ""}
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
+            onClick={handlePrintCountList}
+            disabled={countListLoading}
+          >
+            <ListChecks className="h-3 w-3" />
+            {countListLoading ? "Förbereder…" : "Skriv ut inventeringslista"}
+          </Button>
           {printSelectedIds.length > 0 && (
             <Button
               size="sm"
