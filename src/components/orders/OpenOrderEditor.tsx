@@ -494,19 +494,33 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
             value={note}
             onChange={(e) => setNote(e.target.value)}
             onBlur={saveNote}
+            readOnly={isLocked}
             placeholder="T.ex. brådskande leverans, specialförpackning..."
-            className="min-h-[50px] text-xs"
+            className={cn("min-h-[50px] text-xs", isLocked && "bg-muted/40")}
           />
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2 pt-1">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
         <span className="text-[10px] text-muted-foreground">
-          Ordern är öppen — grossisten ser den inte förrän du skickar den.
+          {isLocked
+            ? "Låst tillfälligt — grossisten ser den inte förrän du skickar den."
+            : "Ordern är öppen — grossisten ser den inte förrän du skickar den."}
         </span>
-        <Button size="sm" className="gap-1.5" onClick={sendOrder} disabled={sending || lines.length === 0}>
-          <Send className="h-3.5 w-3.5" /> {sending ? "Skickar..." : "Skicka till grossist"}
-        </Button>
+        <div className="flex items-center gap-2">
+          {isLocked ? (
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setLocked(false)} disabled={locking}>
+              <Pencil className="h-3.5 w-3.5" /> Redigera öppen order
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setLocked(true)} disabled={locking || lines.length === 0}>
+              <Lock className="h-3.5 w-3.5" /> {locking ? "Låser..." : "Lås tillfälligt"}
+            </Button>
+          )}
+          <Button size="sm" className="gap-1.5" onClick={sendOrder} disabled={sending || lines.length === 0}>
+            <Send className="h-3.5 w-3.5" /> {sending ? "Skickar..." : "Skicka till grossist"}
+          </Button>
+        </div>
       </div>
     </div>
   );
