@@ -299,7 +299,13 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
                 ▸ {cat} ({catLines.length})
               </div>
               {catLines.map((l: any) => (
-                <div key={l.id} className="flex items-center gap-2 border-b border-border/30 py-1.5">
+                <div
+                  key={l.id}
+                  className={cn(
+                    "flex items-center gap-2 rounded-sm border-b border-border/30 py-1.5",
+                    flashIds[l.id] && "animate-notice-flash",
+                  )}
+                >
                   <ProductThumb src={l.products?.image_url} alt={l.products?.name} static className="w-7 h-5" />
                   <span className="flex-1 truncate text-xs font-medium text-foreground">{l.products?.name || "–"}</span>
                   <Input
