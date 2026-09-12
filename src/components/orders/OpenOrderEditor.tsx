@@ -242,6 +242,34 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
     onClose();
   };
 
+  const isLocked = !!order.open_locked_at;
+  const [locking, setLocking] = useState(false);
+
+  const setLocked = async (locked: boolean) => {
+    if (locked && lines.length === 0) {
+      toast({ title: "Tom beställning", description: "Lägg till minst en produkt först.", variant: "destructive" });
+      return;
+    }
+    setLocking(true);
+    const { error } = await supabase
+      .from("shop_orders")
+      .update({ open_locked_at: locked ? new Date().toISOString() : null } as any)
+      .eq("id", order.id);
+    setLocking(false);
+    if (error) {
+      toast({ title: "Kunde inte ändra låset", description: error.message, variant: "destructive" });
+      return;
+    }
+    announce(locked ? `${myName} låste beställningen tillfälligt` : `${myName} öppnade beställningen för redigering igen`);
+    toast({
+      title: locked ? "Beställningen är låst" : "Beställningen är öppen igen",
+      description: locked
+        ? "Innehållet är låst tills någon trycker Redigera öppen order."
+        : "Alla i butiken kan fylla på igen.",
+    });
+    refresh();
+  };
+
   const grouped = useMemo(() => {
     const map = new Map<string, any[]>();
     for (const l of lines) {
