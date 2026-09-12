@@ -46,6 +46,29 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
 
+  /* --- Fade på raden när någon annan ändrar antal eller lägger till en produkt --- */
+  const prevQty = useRef<Record<string, number> | null>(null);
+  const [flashIds, setFlashIds] = useState<Record<string, number>>({});
+  useEffect(() => {
+    const map: Record<string, number> = {};
+    for (const l of lines) map[l.id] = Number(l.quantity_ordered ?? 0);
+    const prev = prevQty.current;
+    prevQty.current = map;
+    if (!prev) return;
+    const changed = Object.keys(map).filter((id) => prev[id] === undefined || prev[id] !== map[id]);
+    if (changed.length === 0) return;
+    const stamp = Date.now();
+    setFlashIds((f) => {
+      const next = { ...f };
+      for (const id of changed) next[id] = stamp;
+      return next;
+    });
+    const timer = window.setTimeout(() => {
+      setFlashIds((f) => Object.fromEntries(Object.entries(f).filter(([, v]) => v !== stamp)));
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [lines]);
+
   /* --- Live: presence + broadcast av ändringar --- */
   useEffect(() => {
     const ch = supabase.channel(`open-order-${order.id}`, {
@@ -276,7 +299,13 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
                 ▸ {cat} ({catLines.length})
               </div>
               {catLines.map((l: any) => (
-                <div key={l.id} className="flex items-center gap-2 border-b border-border/30 py-1.5">
+                <div
+                  key={l.id}
+                  className={cn(
+                    "flex items-center gap-2 rounded-sm border-b border-border/30 py-1.5",
+                    flashIds[l.id] && "animate-notice-flash",
+                  )}
+                >
                   <ProductThumb src={l.products?.image_url} alt={l.products?.name} static className="w-7 h-5" />
                   <span className="flex-1 truncate text-xs font-medium text-foreground">{l.products?.name || "–"}</span>
                   <Input
