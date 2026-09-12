@@ -319,9 +319,13 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
               {catLines.map((l: any) => (
                 <div
                   key={l.id}
+                  ref={(el) => {
+                    rowRefs.current[l.id] = el;
+                  }}
                   className={cn(
-                    "flex items-center gap-2 rounded-sm border-b border-border/30 py-1.5",
-                    flashIds[l.id] && "animate-notice-flash",
+                    "flex items-center gap-2 rounded-sm border-b border-border/30 py-1.5 transition-colors",
+                    flashIds[l.id] &&
+                      "animate-notice-flash bg-primary/15 ring-2 ring-primary/60 ring-offset-1 ring-offset-background",
                   )}
                 >
                   <ProductThumb src={l.products?.image_url} alt={l.products?.name} static className="w-7 h-5" />
