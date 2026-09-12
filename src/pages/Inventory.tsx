@@ -33,6 +33,7 @@ import {
   Printer,
   ListFilter,
   ScrollText,
+  ListChecks,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -56,6 +57,10 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
+import {
+  generateInventoryCountListPdf,
+  type CountListProduct,
+} from "@/lib/inventoryCountListPdf";
 import { useStores } from "@/hooks/useStores";
 import {
   useStorageLocations,
@@ -1311,6 +1316,51 @@ export default function Inventory() {
     );
   }, [allStock, portalLocations, hiddenLocs, matchesLevel]);
 
+  /** FAS 1 — alla aktiva produkter som finns i butikens Lager (oavsett nivåfilter). */
+  const countListProducts = useMemo(() => {
+    const allowed = new Set(portalLocations.map((l: any) => l.id));
+    const ids = new Set<string>();
+    (allStock as any[]).forEach((s: any) => {
+      if (allowed.has(s.location_id) && s.product_id) ids.add(s.product_id);
+    });
+    const list: CountListProduct[] = [];
+    ids.forEach((id) => {
+      const p = productsById.get(id);
+      if (!p || p.is_active === false) return;
+      list.push({
+        id,
+        name: p.name || "—",
+        unit: p.unit,
+        category: p.category || "Övrigt",
+        sku: p.sku,
+        imageUrl: p.image_url || null,
+      });
+    });
+    return list;
+  }, [allStock, portalLocations, productsById]);
+
+  const [countListLoading, setCountListLoading] = useState(false);
+  const handlePrintCountList = useCallback(async () => {
+    if (!countListProducts.length) {
+      toast({
+        title: "Inga produkter i lagret",
+        description: "Registrera en inleverans först — då kan listan skrivas ut.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setCountListLoading(true);
+    try {
+      await generateInventoryCountListPdf(countListProducts, {
+        storeName: activeStoreName || undefined,
+      });
+    } catch (e: any) {
+      toast({ title: "Kunde inte skapa listan", description: e?.message, variant: "destructive" });
+    } finally {
+      setCountListLoading(false);
+    }
+  }, [countListProducts, activeStoreName, toast]);
+
 
   const handleOverviewAction = useCallback(
     (action: "move" | "delete" | "split" | "count" | "waste", row: any) => {
@@ -1362,6 +1412,16 @@ export default function Inventory() {
               {expiryAlerts.length} utgångsvarning{expiryAlerts.length > 1 ? "ar" : ""}
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
+            onClick={handlePrintCountList}
+            disabled={countListLoading}
+          >
+            <ListChecks className="h-3 w-3" />
+            {countListLoading ? "Förbereder…" : "Skriv ut inventeringslista"}
+          </Button>
           {printSelectedIds.length > 0 && (
             <Button
               size="sm"
