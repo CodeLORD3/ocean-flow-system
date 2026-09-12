@@ -159,6 +159,7 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
       toast({ title: "Kunde inte lägga till", description: error.message, variant: "destructive" });
       return;
     }
+    setFocusProductId(p.id);
     announce(`${myName} lade till ${p.name} 1 ${p.unit || ""}`.trim());
     refresh();
   };
