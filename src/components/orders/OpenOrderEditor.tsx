@@ -388,33 +388,41 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
                 >
                   <ProductThumb src={l.products?.image_url} alt={l.products?.name} static className="w-7 h-5" />
                   <span className="flex-1 truncate text-xs font-medium text-foreground">{l.products?.name || "–"}</span>
-                  <Input
-                    ref={(el) => {
-                      qtyRefs.current[l.id] = el;
-                    }}
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    value={drafts[l.id] ?? String(l.quantity_ordered ?? "")}
-                    onChange={(e) => setDrafts((d) => ({ ...d, [l.id]: e.target.value }))}
-                    onFocus={(e) => e.currentTarget.select()}
-                    onBlur={(e) => {
-                      const v = e.target.value;
-                      setDrafts((d) => {
-                        const { [l.id]: _drop, ...rest } = d;
-                        return rest;
-                      });
-                      saveQty(l, v);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
-                    }}
-                    className="h-8 w-20 text-right text-xs"
-                  />
+                  {isLocked ? (
+                    <span className="w-20 text-right font-mono text-xs tabular-nums text-foreground">
+                      {l.quantity_ordered}
+                    </span>
+                  ) : (
+                    <Input
+                      ref={(el) => {
+                        qtyRefs.current[l.id] = el;
+                      }}
+                      type="number"
+                      inputMode="decimal"
+                      step="0.1"
+                      value={drafts[l.id] ?? String(l.quantity_ordered ?? "")}
+                      onChange={(e) => setDrafts((d) => ({ ...d, [l.id]: e.target.value }))}
+                      onFocus={(e) => e.currentTarget.select()}
+                      onBlur={(e) => {
+                        const v = e.target.value;
+                        setDrafts((d) => {
+                          const { [l.id]: _drop, ...rest } = d;
+                          return rest;
+                        });
+                        saveQty(l, v);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
+                      }}
+                      className="h-8 w-20 text-right text-xs"
+                    />
+                  )}
                   <span className="w-8 text-[10px] text-muted-foreground">{l.unit || l.products?.unit}</span>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeLine(l)} aria-label="Ta bort rad">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {!isLocked && (
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeLine(l)} aria-label="Ta bort rad">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
