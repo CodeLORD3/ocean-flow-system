@@ -51,11 +51,30 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
   const [flashIds, setFlashIds] = useState<Record<string, number>>({});
   const [changedLabels, setChangedLabels] = useState<{ id: string; label: string }[]>([]);
   const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const qtyRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [focusProductId, setFocusProductId] = useState<string | null>(null);
 
   const scrollToLine = (id: string) => {
     rowRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "center" });
     setFlashIds((f) => ({ ...f, [id]: Date.now() }));
   };
+
+  /* Nyss tillagd produkt: lys upp raden och hoppa direkt till mängdfältet */
+  useEffect(() => {
+    if (!focusProductId) return;
+    const line = lines.find((l: any) => l.product_id === focusProductId);
+    if (!line) return;
+    setFocusProductId(null);
+    const stamp = Date.now();
+    setFlashIds((f) => ({ ...f, [line.id]: stamp }));
+    const timer = window.setTimeout(() => {
+      rowRefs.current[line.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      const input = qtyRefs.current[line.id];
+      input?.focus();
+      input?.select();
+    }, 60);
+    return () => window.clearTimeout(timer);
+  }, [lines, focusProductId]);
 
   useEffect(() => {
     const map: Record<string, number> = {};
@@ -140,6 +159,7 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
       toast({ title: "Kunde inte lägga till", description: error.message, variant: "destructive" });
       return;
     }
+    setFocusProductId(p.id);
     announce(`${myName} lade till ${p.name} 1 ${p.unit || ""}`.trim());
     refresh();
   };
@@ -331,6 +351,9 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
                   <ProductThumb src={l.products?.image_url} alt={l.products?.name} static className="w-7 h-5" />
                   <span className="flex-1 truncate text-xs font-medium text-foreground">{l.products?.name || "–"}</span>
                   <Input
+                    ref={(el) => {
+                      qtyRefs.current[l.id] = el;
+                    }}
                     type="number"
                     inputMode="decimal"
                     step="0.1"
