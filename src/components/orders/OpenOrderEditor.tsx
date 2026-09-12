@@ -221,7 +221,7 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
       return;
     }
     setSending(true);
-    const { error } = await supabase.from("shop_orders").update({ status: "Ny" } as any).eq("id", order.id);
+    const { error } = await supabase.from("shop_orders").update({ status: "Ny", open_locked_at: null } as any).eq("id", order.id);
     setSending(false);
     if (error) {
       toast({ title: "Kunde inte skicka", description: error.message, variant: "destructive" });
