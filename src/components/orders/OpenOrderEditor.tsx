@@ -468,8 +468,8 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
         <div className="space-y-1.5">
           <Label className="text-xs">Önskat avgångsdatum</Label>
           <Popover open={dateOpen} onOpenChange={setDateOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("h-8 w-full justify-start text-left text-xs font-normal", !selectedDate && "text-muted-foreground")}>
+            <PopoverTrigger asChild disabled={isLocked}>
+              <Button variant="outline" disabled={isLocked} className={cn("h-8 w-full justify-start text-left text-xs font-normal", !selectedDate && "text-muted-foreground")}>
                 <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                 {selectedDate ? format(selectedDate, "yyyy-MM-dd") : "Välj datum..."}
               </Button>
