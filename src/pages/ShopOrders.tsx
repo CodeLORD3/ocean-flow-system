@@ -809,8 +809,18 @@ export default function ShopOrders() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-wrap justify-end gap-2 pt-2">
               <Button variant="outline" size="sm" onClick={() => setCreatingOrder(false)}>Avbryt</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-warning/40 text-warning hover:bg-warning/10"
+                title="Spara som öppen beställning — stannar hos butiken tills ni skickar den"
+                onClick={() => handleCreateOrder(true)}
+                disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0}
+              >
+                <Users className="h-3.5 w-3.5" /> Öppen order
+              </Button>
               <Button
                 size="sm"
                 className="gap-1.5"
