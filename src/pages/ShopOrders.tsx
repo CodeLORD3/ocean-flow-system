@@ -8,6 +8,7 @@ import {
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 import { OrderPhotosButton, ORDER_PHOTO_ENTITY, ORDER_LINE_PHOTO_ENTITY } from "@/components/orders/OrderPhotos";
+import { OpenOrderEditor } from "@/components/orders/OpenOrderEditor";
 
 import DeliveryNote from "@/components/DeliveryNote";
 
@@ -54,6 +55,7 @@ type OrderLine = {
 
 
 const statusColor: Record<string, string> = {
+  Öppen: "bg-warning/15 text-warning border-warning/30",
   Ny: "",
   Pågående: "bg-warning/15 text-warning border-warning/20",
   Packad: "bg-success/15 text-success border-success/20",
@@ -64,6 +66,7 @@ const statusColor: Record<string, string> = {
 };
 
 const statusIcon: Record<string, React.ReactNode> = {
+  Öppen: <Users className="h-3 w-3" />,
   Ny: <Clock className="h-3 w-3" />,
   Pågående: <Clock className="h-3 w-3" />,
   Packad: <Package className="h-3 w-3" />,
@@ -116,7 +119,7 @@ function buildProgressGradient(lines: any[]): string {
   return `linear-gradient(to bottom, ${segments.join(", ")})`;
 }
 
-const LIVE_STATUSES = ["Ny", "Pågående", "Packad", "Skickad"];
+const LIVE_STATUSES = ["Öppen", "Ny", "Pågående", "Packad", "Skickad"];
 const DONE_STATUSES = ["Levererad", "Klar / Levererad", "Arkiverad", "Avbruten"];
 
 const FOLLJESEDEL_STATUSES = ["Skickad", "Levererad", "Klar / Levererad", "Arkiverad"];
@@ -208,6 +211,16 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                         <tr>
                           <td colSpan={9} className="p-0">
                             <div className="border-l-2 border-l-primary bg-card px-3 py-2 space-y-2">
+                              {o.status === "Öppen" ? (
+                                <OpenOrderEditor
+                                  order={o}
+                                  products={products}
+                                  toast={toast}
+                                  allowedWeekdays={allowedWeekdays}
+                                  isDateDisabled={isDateDisabled}
+                                  onClose={() => setExpandedId(null)}
+                                />
+                              ) : (
                               <OrderDetailWithEdit
                                 order={o}
                                 products={products}
@@ -217,6 +230,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                                 isDateDisabled={isDateDisabled}
                                 inline
                               />
+                              )}
                             </div>
                           </td>
                         </tr>
