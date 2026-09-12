@@ -49,6 +49,14 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
   /* --- Fade på raden när någon annan ändrar antal eller lägger till en produkt --- */
   const prevQty = useRef<Record<string, number> | null>(null);
   const [flashIds, setFlashIds] = useState<Record<string, number>>({});
+  const [changedLabels, setChangedLabels] = useState<{ id: string; label: string }[]>([]);
+  const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const scrollToLine = (id: string) => {
+    rowRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFlashIds((f) => ({ ...f, [id]: Date.now() }));
+  };
+
   useEffect(() => {
     const map: Record<string, number> = {};
     for (const l of lines) map[l.id] = Number(l.quantity_ordered ?? 0);
@@ -63,9 +71,19 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
       for (const id of changed) next[id] = stamp;
       return next;
     });
+    setChangedLabels(
+      changed.map((id) => {
+        const line = lines.find((l: any) => l.id === id);
+        return {
+          id,
+          label: `${line?.products?.name || "Produkt"} · ${map[id]} ${line?.unit || line?.products?.unit || ""}`.trim(),
+        };
+      }),
+    );
     const timer = window.setTimeout(() => {
       setFlashIds((f) => Object.fromEntries(Object.entries(f).filter(([, v]) => v !== stamp)));
-    }, 3000);
+      setChangedLabels((c) => (c.some((x) => changed.includes(x.id)) ? [] : c));
+    }, 8000);
     return () => window.clearTimeout(timer);
   }, [lines]);
 
