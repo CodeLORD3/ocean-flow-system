@@ -49,6 +49,14 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
   /* --- Fade på raden när någon annan ändrar antal eller lägger till en produkt --- */
   const prevQty = useRef<Record<string, number> | null>(null);
   const [flashIds, setFlashIds] = useState<Record<string, number>>({});
+  const [changedLabels, setChangedLabels] = useState<{ id: string; label: string }[]>([]);
+  const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const scrollToLine = (id: string) => {
+    rowRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFlashIds((f) => ({ ...f, [id]: Date.now() }));
+  };
+
   useEffect(() => {
     const map: Record<string, number> = {};
     for (const l of lines) map[l.id] = Number(l.quantity_ordered ?? 0);
@@ -63,9 +71,19 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
       for (const id of changed) next[id] = stamp;
       return next;
     });
+    setChangedLabels(
+      changed.map((id) => {
+        const line = lines.find((l: any) => l.id === id);
+        return {
+          id,
+          label: `${line?.products?.name || "Produkt"} · ${map[id]} ${line?.unit || line?.products?.unit || ""}`.trim(),
+        };
+      }),
+    );
     const timer = window.setTimeout(() => {
       setFlashIds((f) => Object.fromEntries(Object.entries(f).filter(([, v]) => v !== stamp)));
-    }, 3000);
+      setChangedLabels((c) => (c.some((x) => changed.includes(x.id)) ? [] : c));
+    }, 8000);
     return () => window.clearTimeout(timer);
   }, [lines]);
 
@@ -301,9 +319,13 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
               {catLines.map((l: any) => (
                 <div
                   key={l.id}
+                  ref={(el) => {
+                    rowRefs.current[l.id] = el;
+                  }}
                   className={cn(
-                    "flex items-center gap-2 rounded-sm border-b border-border/30 py-1.5",
-                    flashIds[l.id] && "animate-notice-flash",
+                    "flex items-center gap-2 rounded-sm border-b border-border/30 py-1.5 transition-colors",
+                    flashIds[l.id] &&
+                      "animate-notice-flash bg-primary/15 ring-2 ring-primary/60 ring-offset-1 ring-offset-background",
                   )}
                 >
                   <ProductThumb src={l.products?.image_url} alt={l.products?.name} static className="w-7 h-5" />
@@ -336,6 +358,39 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
               ))}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Hoppa till raden som just ändrades — syns även om man scrollat förbi den */}
+      {changedLabels.length > 0 && (
+        <div className="sticky bottom-2 z-20 flex flex-wrap items-center gap-2 rounded-sm border border-primary/50 bg-card/95 px-2 py-1.5 shadow-lg backdrop-blur animate-fade-in">
+          <Radio className="h-3.5 w-3.5 shrink-0 text-primary" />
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Nyss ändrat
+          </span>
+          {changedLabels.slice(0, 3).map((c) => (
+            <Button
+              key={c.id}
+              variant="outline"
+              size="sm"
+              className="h-6 max-w-[220px] truncate px-2 text-[11px]"
+              onClick={() => scrollToLine(c.id)}
+            >
+              {c.label}
+            </Button>
+          ))}
+          {changedLabels.length > 3 && (
+            <span className="text-[11px] text-muted-foreground">+{changedLabels.length - 3} fler</span>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto h-6 w-6"
+            onClick={() => setChangedLabels([])}
+            aria-label="Stäng"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
         </div>
       )}
 
