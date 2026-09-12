@@ -57,6 +57,10 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
+import {
+  generateInventoryCountListPdf,
+  type CountListProduct,
+} from "@/lib/inventoryCountListPdf";
 import { useStores } from "@/hooks/useStores";
 import {
   useStorageLocations,
