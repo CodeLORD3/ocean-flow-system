@@ -314,8 +314,18 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
         </div>
       )}
 
+      {isLocked && (
+        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-success/40 bg-success/10 px-2 py-1.5 text-[11px] text-success">
+          <Lock className="h-3.5 w-3.5" />
+          <span className="font-semibold">Låst tillfälligt</span>
+          <span className="text-muted-foreground">
+            Innehållet är låst — tryck Redigera öppen order för att fylla på igen.
+          </span>
+        </div>
+      )}
+
       {/* Produktsök */}
-      <div className="relative">
+      <div className={cn("relative", isLocked && "hidden")}>
         <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
