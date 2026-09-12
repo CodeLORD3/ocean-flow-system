@@ -361,6 +361,39 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
         </div>
       )}
 
+      {/* Hoppa till raden som just ändrades — syns även om man scrollat förbi den */}
+      {changedLabels.length > 0 && (
+        <div className="sticky bottom-2 z-20 flex flex-wrap items-center gap-2 rounded-sm border border-primary/50 bg-card/95 px-2 py-1.5 shadow-lg backdrop-blur animate-fade-in">
+          <Radio className="h-3.5 w-3.5 shrink-0 text-primary" />
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Nyss ändrat
+          </span>
+          {changedLabels.slice(0, 3).map((c) => (
+            <Button
+              key={c.id}
+              variant="outline"
+              size="sm"
+              className="h-6 max-w-[220px] truncate px-2 text-[11px]"
+              onClick={() => scrollToLine(c.id)}
+            >
+              {c.label}
+            </Button>
+          ))}
+          {changedLabels.length > 3 && (
+            <span className="text-[11px] text-muted-foreground">+{changedLabels.length - 3} fler</span>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto h-6 w-6"
+            onClick={() => setChangedLabels([])}
+            aria-label="Stäng"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+
       {/* Datum + anteckning */}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
