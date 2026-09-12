@@ -357,6 +357,13 @@ export default function ShopOrders() {
           qc.invalidateQueries({ queryKey: ["shop-orders-shop", activeStoreId] });
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shop_orders", filter: `store_id=eq.${activeStoreId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["shop-orders-shop", activeStoreId] });
+        }
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [activeStoreId, qc]);
@@ -437,13 +444,15 @@ export default function ShopOrders() {
     setOrderLines(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const handleCreateOrder = async () => {
+  /** asOpen = spara som öppen beställning som stannar hos butiken. */
+  const handleCreateOrder = async (asOpen = false) => {
     const validLines = orderLines.filter(l => l.quantity && Number(l.quantity) > 0);
     if (validLines.length === 0) return;
-    if (!desiredDeliveryDate) {
+    if (!desiredDeliveryDate && !asOpen) {
       toast({ title: "Välj avgångsdatum", description: "Du måste välja ett avgångsdatum innan du kan skicka beställningen.", variant: "destructive" });
       return;
     }
+
 
     if (!activeStoreId) {
       toast({ title: "Ingen butik vald", variant: "destructive" });
