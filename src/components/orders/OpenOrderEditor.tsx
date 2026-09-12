@@ -351,6 +351,9 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
                   <ProductThumb src={l.products?.image_url} alt={l.products?.name} static className="w-7 h-5" />
                   <span className="flex-1 truncate text-xs font-medium text-foreground">{l.products?.name || "–"}</span>
                   <Input
+                    ref={(el) => {
+                      qtyRefs.current[l.id] = el;
+                    }}
                     type="number"
                     inputMode="decimal"
                     step="0.1"
