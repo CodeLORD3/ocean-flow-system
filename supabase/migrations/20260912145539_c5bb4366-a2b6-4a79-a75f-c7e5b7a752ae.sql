@@ -1,0 +1,1 @@
+ALTER TABLE public.shop_orders ADD COLUMN IF NOT EXISTS open_locked_at timestamptz;

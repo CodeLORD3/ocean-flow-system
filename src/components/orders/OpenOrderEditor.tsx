@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, X, Send, Trash2, CalendarIcon, Radio, Users } from "lucide-react";
+import { Search, X, Send, Trash2, CalendarIcon, Radio, Users, Lock, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -221,7 +221,7 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
       return;
     }
     setSending(true);
-    const { error } = await supabase.from("shop_orders").update({ status: "Ny" } as any).eq("id", order.id);
+    const { error } = await supabase.from("shop_orders").update({ status: "Ny", open_locked_at: null } as any).eq("id", order.id);
     setSending(false);
     if (error) {
       toast({ title: "Kunde inte skicka", description: error.message, variant: "destructive" });
@@ -240,6 +240,34 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
     toast({ title: "Beställning skickad", description: `${lines.length} produkter skickade till grossisten.` });
     refresh();
     onClose();
+  };
+
+  const isLocked = !!order.open_locked_at;
+  const [locking, setLocking] = useState(false);
+
+  const setLocked = async (locked: boolean) => {
+    if (locked && lines.length === 0) {
+      toast({ title: "Tom beställning", description: "Lägg till minst en produkt först.", variant: "destructive" });
+      return;
+    }
+    setLocking(true);
+    const { error } = await supabase
+      .from("shop_orders")
+      .update({ open_locked_at: locked ? new Date().toISOString() : null } as any)
+      .eq("id", order.id);
+    setLocking(false);
+    if (error) {
+      toast({ title: "Kunde inte ändra låset", description: error.message, variant: "destructive" });
+      return;
+    }
+    announce(locked ? `${myName} låste beställningen tillfälligt` : `${myName} öppnade beställningen för redigering igen`);
+    toast({
+      title: locked ? "Beställningen är låst" : "Beställningen är öppen igen",
+      description: locked
+        ? "Innehållet är låst tills någon trycker Redigera öppen order."
+        : "Alla i butiken kan fylla på igen.",
+    });
+    refresh();
   };
 
   const grouped = useMemo(() => {
@@ -286,8 +314,18 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
         </div>
       )}
 
+      {isLocked && (
+        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-success/40 bg-success/10 px-2 py-1.5 text-[11px] text-success">
+          <Lock className="h-3.5 w-3.5" />
+          <span className="font-semibold">Låst tillfälligt</span>
+          <span className="text-muted-foreground">
+            Innehållet är låst — tryck Redigera öppen order för att fylla på igen.
+          </span>
+        </div>
+      )}
+
       {/* Produktsök */}
-      <div className="relative">
+      <div className={cn("relative", isLocked && "hidden")}>
         <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -350,33 +388,41 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
                 >
                   <ProductThumb src={l.products?.image_url} alt={l.products?.name} static className="w-7 h-5" />
                   <span className="flex-1 truncate text-xs font-medium text-foreground">{l.products?.name || "–"}</span>
-                  <Input
-                    ref={(el) => {
-                      qtyRefs.current[l.id] = el;
-                    }}
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    value={drafts[l.id] ?? String(l.quantity_ordered ?? "")}
-                    onChange={(e) => setDrafts((d) => ({ ...d, [l.id]: e.target.value }))}
-                    onFocus={(e) => e.currentTarget.select()}
-                    onBlur={(e) => {
-                      const v = e.target.value;
-                      setDrafts((d) => {
-                        const { [l.id]: _drop, ...rest } = d;
-                        return rest;
-                      });
-                      saveQty(l, v);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
-                    }}
-                    className="h-8 w-20 text-right text-xs"
-                  />
+                  {isLocked ? (
+                    <span className="w-20 text-right font-mono text-xs tabular-nums text-foreground">
+                      {l.quantity_ordered}
+                    </span>
+                  ) : (
+                    <Input
+                      ref={(el) => {
+                        qtyRefs.current[l.id] = el;
+                      }}
+                      type="number"
+                      inputMode="decimal"
+                      step="0.1"
+                      value={drafts[l.id] ?? String(l.quantity_ordered ?? "")}
+                      onChange={(e) => setDrafts((d) => ({ ...d, [l.id]: e.target.value }))}
+                      onFocus={(e) => e.currentTarget.select()}
+                      onBlur={(e) => {
+                        const v = e.target.value;
+                        setDrafts((d) => {
+                          const { [l.id]: _drop, ...rest } = d;
+                          return rest;
+                        });
+                        saveQty(l, v);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
+                      }}
+                      className="h-8 w-20 text-right text-xs"
+                    />
+                  )}
                   <span className="w-8 text-[10px] text-muted-foreground">{l.unit || l.products?.unit}</span>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeLine(l)} aria-label="Ta bort rad">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {!isLocked && (
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeLine(l)} aria-label="Ta bort rad">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -422,8 +468,8 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
         <div className="space-y-1.5">
           <Label className="text-xs">Önskat avgångsdatum</Label>
           <Popover open={dateOpen} onOpenChange={setDateOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("h-8 w-full justify-start text-left text-xs font-normal", !selectedDate && "text-muted-foreground")}>
+            <PopoverTrigger asChild disabled={isLocked}>
+              <Button variant="outline" disabled={isLocked} className={cn("h-8 w-full justify-start text-left text-xs font-normal", !selectedDate && "text-muted-foreground")}>
                 <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                 {selectedDate ? format(selectedDate, "yyyy-MM-dd") : "Välj datum..."}
               </Button>
@@ -448,19 +494,33 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
             value={note}
             onChange={(e) => setNote(e.target.value)}
             onBlur={saveNote}
+            readOnly={isLocked}
             placeholder="T.ex. brådskande leverans, specialförpackning..."
-            className="min-h-[50px] text-xs"
+            className={cn("min-h-[50px] text-xs", isLocked && "bg-muted/40")}
           />
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2 pt-1">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
         <span className="text-[10px] text-muted-foreground">
-          Ordern är öppen — grossisten ser den inte förrän du skickar den.
+          {isLocked
+            ? "Låst tillfälligt — grossisten ser den inte förrän du skickar den."
+            : "Ordern är öppen — grossisten ser den inte förrän du skickar den."}
         </span>
-        <Button size="sm" className="gap-1.5" onClick={sendOrder} disabled={sending || lines.length === 0}>
-          <Send className="h-3.5 w-3.5" /> {sending ? "Skickar..." : "Skicka till grossist"}
-        </Button>
+        <div className="flex items-center gap-2">
+          {isLocked ? (
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setLocked(false)} disabled={locking}>
+              <Pencil className="h-3.5 w-3.5" /> Redigera öppen order
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setLocked(true)} disabled={locking || lines.length === 0}>
+              <Lock className="h-3.5 w-3.5" /> {locking ? "Låser..." : "Lås tillfälligt"}
+            </Button>
+          )}
+          <Button size="sm" className="gap-1.5" onClick={sendOrder} disabled={sending || lines.length === 0}>
+            <Send className="h-3.5 w-3.5" /> {sending ? "Skickar..." : "Skicka till grossist"}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -11448,6 +11448,7 @@ export type Database = {
           invoice_status: string | null
           legal_entity_id: string | null
           notes: string | null
+          open_locked_at: string | null
           order_week: string
           packer_name: string | null
           priority: number | null
@@ -11465,6 +11466,7 @@ export type Database = {
           invoice_status?: string | null
           legal_entity_id?: string | null
           notes?: string | null
+          open_locked_at?: string | null
           order_week: string
           packer_name?: string | null
           priority?: number | null
@@ -11482,6 +11484,7 @@ export type Database = {
           invoice_status?: string | null
           legal_entity_id?: string | null
           notes?: string | null
+          open_locked_at?: string | null
           order_week?: string
           packer_name?: string | null
           priority?: number | null
