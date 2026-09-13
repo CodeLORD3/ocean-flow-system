@@ -516,7 +516,7 @@ export default function StockCount() {
           </h2>
 
           <p className="text-xs text-muted-foreground">
-            Ett tillfälle per butik och datum. Räkna per lagerplats, lås när allt är klart.
+            Flera inventeringar per dag går bra. Räkna per lagerplats, lås när allt är klart.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -525,11 +525,11 @@ export default function StockCount() {
               <Plus className="h-3.5 w-3.5" /> Påbörja inventering
             </Button>
           )}
-          {locked && effectiveStoreId && (
+          {session && effectiveStoreId && (
             <Button
               size="sm"
               className="gap-1.5 text-xs h-9 sm:h-8 font-semibold"
-              onClick={() => createSessionFor(todayStockholm())}
+              onClick={() => createSessionFor(date)}
             >
               <Plus className="h-3.5 w-3.5" /> Ny inventering
             </Button>
