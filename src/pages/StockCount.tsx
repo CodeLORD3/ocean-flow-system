@@ -170,20 +170,60 @@ export default function StockCount() {
     return m;
   }, [linesQuery.data]);
 
-  const createSession = useCallback(async () => {
-    if (!effectiveStoreId) return;
-    const { error } = await supabase.from("stock_count_sessions").insert({
-      store_id: effectiveStoreId,
-      count_date: date,
-      started_at: new Date().toISOString(),
-    } as any);
-    if (error) {
-      toast({ title: "Kunde inte skapa inventeringen", description: error.message, variant: "destructive" });
-      return;
-    }
-    await sessionQuery.refetch();
-    toast({ title: "Inventering påbörjad", description: `${storeName} — ${date}` });
-  }, [effectiveStoreId, date, sessionQuery, storeName, toast]);
+  // ── Historik: alla låsta inventeringar för butiken ─────────────────────────
+  const historyQuery = useQuery({
+    queryKey: ["stock_count_history", effectiveStoreId],
+    enabled: !!effectiveStoreId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stock_count_sessions")
+        .select("id,count_date,status,locked_at,finished_at,stock_count_lines(count)")
+        .eq("store_id", effectiveStoreId)
+        .eq("status", "locked")
+        .order("count_date", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const createSessionFor = useCallback(
+    async (targetDate: string) => {
+      if (!effectiveStoreId) return;
+      const { data: existing } = await supabase
+        .from("stock_count_sessions")
+        .select("id,status")
+        .eq("store_id", effectiveStoreId)
+        .eq("count_date", targetDate)
+        .maybeSingle();
+      setDate(targetDate);
+      if (existing) {
+        await sessionQuery.refetch();
+        toast({
+          title:
+            (existing as any).status === "locked"
+              ? "Dagens inventering är redan låst"
+              : "Inventeringen för datumet är redan påbörjad",
+          description: `${storeName} — ${targetDate}`,
+        });
+        return;
+      }
+      const { error } = await supabase.from("stock_count_sessions").insert({
+        store_id: effectiveStoreId,
+        count_date: targetDate,
+        started_at: new Date().toISOString(),
+      } as any);
+      if (error) {
+        toast({ title: "Kunde inte skapa inventeringen", description: error.message, variant: "destructive" });
+        return;
+      }
+      await sessionQuery.refetch();
+      toast({ title: "Ny inventering påbörjad", description: `${storeName} — ${targetDate}` });
+    },
+    [effectiveStoreId, sessionQuery, storeName, toast],
+  );
+
+  const createSession = useCallback(() => createSessionFor(date), [createSessionFor, date]);
 
   // ── Rader ──────────────────────────────────────────────────────────────────
   const productsById = useMemo(() => {
