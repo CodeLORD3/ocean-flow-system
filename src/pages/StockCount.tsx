@@ -638,24 +638,8 @@ export default function StockCount() {
                                       </option>
                                     );
                                   })}
-                                </select>
-                                <Input
-                                  type="date"
-                                  disabled={locked || !session}
-                                  value={until ?? ""}
-                                  min={date}
-                                  title="Har varan tryckt datum? Välj det här."
-                                  onChange={(e) => {
-                                    const picked = e.target.value;
-                                    if (!picked) return saveLine(r, { quality: null });
-                                    const n = daysBetween(date, picked);
-                                    const q: Quality =
-                                      n >= 8 ? "7+" : (String(Math.max(1, n)) as Quality);
-                                    saveLine(r, { quality: q });
-                                  }}
-                                  className="h-7 w-[112px] shrink-0 px-1.5 text-[11px] font-mono tabular-nums"
-                                />
-                              </div>
+                                 </select>
+                               </div>
                               <Input
                                 disabled={locked || !session}
                                 defaultValue={line?.comment ?? ""}
