@@ -299,6 +299,28 @@ export default function StockCount() {
     [session?.id, locked, qc, toast],
   );
 
+  const categoryDone: Record<string, string> = (session?.category_done as any) ?? {};
+
+  const toggleCategoryDone = useCallback(
+    async (cat: string, done: boolean) => {
+      if (!session?.id || locked) return;
+      const current: Record<string, string> = { ...(((session as any).category_done as any) ?? {}) };
+      if (done) current[cat] = new Date().toISOString();
+      else delete current[cat];
+      const { error } = await supabase
+        .from("stock_count_sessions")
+        .update({ category_done: current } as any)
+        .eq("id", session.id);
+      if (error) {
+        toast({ title: "Kunde inte spara", description: error.message, variant: "destructive" });
+        return;
+      }
+      await sessionQuery.refetch();
+      if (done) setCollapsed((prev) => new Set(prev).add(cat));
+    },
+    [session, locked, sessionQuery, toast],
+  );
+
   const lockSession = useCallback(async () => {
     if (!session?.id) return;
     const { error } = await supabase
@@ -536,27 +558,64 @@ export default function StockCount() {
         </Card>
       ) : (
         <div className="space-y-1.5">
-          {groups.map((g) => (
-            <Card key={g.category} className="overflow-hidden">
-              <button
-                type="button"
-                onClick={() => toggleCategory(g.category)}
-                className="w-full px-2 py-1 bg-muted/50 border-b flex items-center justify-between hover:bg-muted/80 transition-colors"
+          {groups.map((g) => {
+            const doneAt = categoryDone[g.category];
+            return (
+            <Card
+              key={g.category}
+              className={`overflow-hidden ${doneAt ? "border-emerald-500/60" : ""}`}
+            >
+              <div
+                className={`w-full px-2 py-1 border-b flex items-center justify-between gap-2 ${
+                  doneAt ? "bg-emerald-500/20" : "bg-muted/50"
+                }`}
               >
-                <span className="flex items-center gap-1 min-w-0">
+                <button
+                  type="button"
+                  onClick={() => toggleCategory(g.category)}
+                  className="flex items-center gap-1 min-w-0 flex-1 text-left"
+                >
                   {collapsed.has(g.category) ? (
                     <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
                   ) : (
                     <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
                   )}
-                  <span className="text-[10px] font-semibold uppercase tracking-wide truncate">
+                  <span
+                    className={`text-[10px] font-semibold uppercase tracking-wide truncate ${
+                      doneAt ? "text-emerald-700 dark:text-emerald-300" : ""
+                    }`}
+                  >
                     {g.category}
                   </span>
+                  <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
+                    · {g.products.length} produkter
+                  </span>
+                </button>
+                <span className="flex items-center gap-1.5 shrink-0">
+                  {doneAt && (
+                    <span className="text-[10px] text-emerald-700 dark:text-emerald-300 whitespace-nowrap">
+                      Klar {new Date(doneAt).toLocaleString("sv-SE", {
+                        timeZone: "Europe/Stockholm",
+                        weekday: "short",
+                        day: "numeric",
+                        month: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={doneAt ? "outline" : "default"}
+                    disabled={locked || !session}
+                    onClick={() => toggleCategoryDone(g.category, !doneAt)}
+                    className="h-5 px-2 text-[10px]"
+                  >
+                    {doneAt ? "Ångra" : "Färdig"}
+                  </Button>
                 </span>
-                <span className="text-[10px] text-muted-foreground shrink-0">
-                  {g.products.length} produkter
-                </span>
-              </button>
+              </div>
               {!collapsed.has(g.category) && (
               <CardContent className="p-0 divide-y divide-border/60">
                 {g.products.map((prodRows) => {
@@ -684,7 +743,8 @@ export default function StockCount() {
               </CardContent>
               )}
             </Card>
-          ))}
+            );
+          })}
 
         </div>
       )}

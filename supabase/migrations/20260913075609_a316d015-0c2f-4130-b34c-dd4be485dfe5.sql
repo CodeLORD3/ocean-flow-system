@@ -1,0 +1,1 @@
+ALTER TABLE public.stock_count_sessions ADD COLUMN IF NOT EXISTS category_done jsonb NOT NULL DEFAULT '{}'::jsonb;

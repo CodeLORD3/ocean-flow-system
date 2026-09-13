@@ -12651,6 +12651,7 @@ export type Database = {
       }
       stock_count_sessions: {
         Row: {
+          category_done: Json
           count_date: string
           created_at: string
           created_by: string | null
@@ -12667,6 +12668,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category_done?: Json
           count_date?: string
           created_at?: string
           created_by?: string | null
@@ -12683,6 +12685,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category_done?: Json
           count_date?: string
           created_at?: string
           created_by?: string | null
