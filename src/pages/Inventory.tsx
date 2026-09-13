@@ -2576,6 +2576,7 @@ export default function Inventory() {
                                 <td className="py-1.5 text-right">
                                   <Input
                                     type="number"
+                                    inputMode="decimal"
                                     step={line.unit.toLowerCase() === "kg" ? "0.1" : "1"}
                                     value={line.quantity}
                                     onChange={(e) => updateInvLine(globalIdx, "quantity", e.target.value)}
@@ -2861,6 +2862,7 @@ export default function Inventory() {
                   <Label className="text-xs">Antal att splitta *</Label>
                   <Input
                     type="number"
+                    inputMode="decimal"
                     step="0.1"
                     value={splitQty}
                     onChange={(e) => setSplitQty(e.target.value)}
@@ -2988,6 +2990,7 @@ export default function Inventory() {
                   <Label className="text-xs">Ny vikt ({item.products?.unit || "kg"}) *</Label>
                   <Input
                     type="number"
+                    inputMode="decimal"
                     step="0.1"
                     value={transformNewWeight}
                     onChange={(e) => setTransformNewWeight(e.target.value)}

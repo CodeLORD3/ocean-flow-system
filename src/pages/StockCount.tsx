@@ -817,8 +817,8 @@ export default function StockCount() {
               className={`overflow-hidden ${doneAt ? "border-emerald-500/60" : ""}`}
             >
               <div
-                className={`w-full px-2 py-1 border-b flex items-center justify-between gap-2 ${
-                  doneAt ? "bg-emerald-500/20" : "bg-muted/50"
+                className={`w-full px-2 py-1.5 sm:py-1 border-b flex items-center justify-between gap-2 sticky top-0 z-10 backdrop-blur-sm ${
+                  doneAt ? "bg-emerald-500/20" : "bg-muted/80 sm:bg-muted/50"
                 }`}
               >
                 <button
@@ -832,7 +832,7 @@ export default function StockCount() {
                     <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
                   )}
                   <span
-                    className={`text-[10px] font-semibold uppercase tracking-wide truncate ${
+                    className={`text-[11px] sm:text-[10px] font-semibold uppercase tracking-wide truncate ${
                       doneAt ? "text-emerald-700 dark:text-emerald-300" : ""
                     }`}
                   >
@@ -861,7 +861,7 @@ export default function StockCount() {
                     variant={doneAt ? "outline" : "default"}
                     disabled={locked || !session}
                     onClick={() => toggleCategoryDone(g.category, !doneAt)}
-                    className="h-5 px-2 text-[10px]"
+                    className="h-7 sm:h-5 px-2.5 sm:px-2 text-[11px] sm:text-[10px]"
                   >
                     {doneAt ? "Ångra" : "Färdig"}
                   </Button>
@@ -877,21 +877,21 @@ export default function StockCount() {
                   }, 0);
                   const anyCounted = prodRows.some((r) => linesByKey.get(r.key)?.counted_qty != null);
                   return (
-                    <div key={first.productId} className="px-2 py-1">
+                    <div key={first.productId} className="px-2 py-1.5 sm:py-1">
                       <div className="flex items-center gap-1.5">
                         {first.imageUrl ? (
                           <img
                             src={first.imageUrl}
                             alt={first.productName}
-                            className="h-5 w-5 rounded object-cover border shrink-0"
+                            className="h-7 w-7 sm:h-5 sm:w-5 rounded object-cover border shrink-0"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-5 w-5 rounded border bg-muted flex items-center justify-center shrink-0">
-                            <Package className="h-2.5 w-2.5 text-muted-foreground" />
+                          <div className="h-7 w-7 sm:h-5 sm:w-5 rounded border bg-muted flex items-center justify-center shrink-0">
+                            <Package className="h-3.5 w-3.5 sm:h-2.5 sm:w-2.5 text-muted-foreground" />
                           </div>
                         )}
-                        <span className="text-[11px] font-medium truncate">{first.productName}</span>
+                        <span className="text-[13px] sm:text-[11px] font-medium truncate">{first.productName}</span>
                         <span className="text-[10px] text-muted-foreground shrink-0">
                           {first.sku ? `${first.sku} · ` : ""}
                           {first.unit}
@@ -906,29 +906,35 @@ export default function StockCount() {
                         )}
                       </div>
 
-                      <div className="space-y-0.5">
+                      <div className="space-y-1.5 sm:space-y-0.5">
                         {prodRows.map((r) => {
                           const line = linesByKey.get(r.key);
                           const quality = (line?.quality ?? "") as string;
                           return (
                             <div
                               key={r.key}
-                              className="grid grid-cols-2 sm:grid-cols-[minmax(0,1fr)_80px_136px_minmax(0,1fr)] gap-1 items-center"
+                              className="grid grid-cols-[minmax(0,1fr)_104px] sm:grid-cols-[minmax(0,1fr)_80px_136px_minmax(0,1fr)] gap-1 items-center"
                             >
-                              <div className="text-[10px] text-muted-foreground truncate pl-6">
+                              <div className="text-[10px] text-muted-foreground truncate pl-0 sm:pl-6">
                                 {r.locationName}
                                 <span className="ml-1 font-mono tabular-nums">
                                   ({fmtQty(r.systemQty, r.unit)})
                                 </span>
                               </div>
                               <Input
-                                type="number"
+                                type="text"
                                 inputMode="decimal"
-                                step="any"
+                                pattern="[0-9]*[.,]?[0-9]*"
+                                autoComplete="off"
+                                enterKeyHint="done"
                                 disabled={locked || !session}
                                 defaultValue={line?.counted_qty ?? ""}
-                                placeholder="Antal"
-                                className="h-6 px-1.5 text-[11px] font-mono tabular-nums"
+                                placeholder={r.unit}
+                                className="h-10 sm:h-6 px-1.5 text-right text-base sm:text-[11px] font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                onFocus={(e) => e.currentTarget.select()}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") e.currentTarget.blur();
+                                }}
                                 onBlur={(e) => {
                                   const raw = e.target.value.replace(",", ".").trim();
                                   const val = raw === "" ? null : Number(raw);
@@ -937,7 +943,7 @@ export default function StockCount() {
                                   saveLine(r, { counted_qty: val });
                                 }}
                               />
-                              <div className="flex items-center gap-1 min-w-0">
+                              <div className="col-span-2 sm:col-span-1 flex items-center gap-1 min-w-0">
                                 <select
                                   disabled={locked || !session}
                                   value={quality}
@@ -946,7 +952,7 @@ export default function StockCount() {
                                       quality: (e.target.value || null) as Quality | null,
                                     })
                                   }
-                                  className={`h-6 min-w-0 flex-1 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
+                                  className={`h-9 sm:h-6 min-w-0 flex-1 rounded-md border px-1.5 text-[13px] sm:text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
                                   title="Hållbarhet: antal dagar från inventeringsdatumet, med veckodag och datum"
                                 >
                                   <option value="">Hållbarhet</option>
@@ -977,7 +983,7 @@ export default function StockCount() {
                                 disabled={locked || !session}
                                 defaultValue={line?.comment ?? ""}
                                 placeholder="Kommentar"
-                                className="h-6 px-1.5 text-[11px]"
+                                className="col-span-2 sm:col-span-1 h-9 sm:h-6 px-1.5 text-[13px] sm:text-[11px]"
                                 onBlur={(e) => {
                                   const val = e.target.value.trim() || null;
                                   if ((line?.comment ?? null) === val) return;
@@ -999,6 +1005,49 @@ export default function StockCount() {
 
         </div>
       )}
+
+      {/* Mobil: fast åtgärdsrad längst ned */}
+      {effectiveStoreId && (
+        <>
+          <div className="h-16 sm:hidden" aria-hidden />
+          <div
+            className="sm:hidden fixed bottom-0 left-0 right-0 z-30 border-t bg-background/95 backdrop-blur px-3 py-2 flex items-center justify-between gap-2"
+            style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
+          >
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold truncate">
+                {countedCount} av {rows.length} räknade
+              </p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                {weekdayLong(date)} {date} · {locked ? "Låst" : session ? "Öppen" : "Ingen inventering"}
+              </p>
+            </div>
+            {!session ? (
+              <Button size="sm" className="h-10 gap-1.5 text-xs font-semibold" onClick={createSession}>
+                <Plus className="h-4 w-4" /> Påbörja
+              </Button>
+            ) : locked ? (
+              <Button
+                size="sm"
+                className="h-10 gap-1.5 text-xs font-semibold"
+                onClick={() => createSessionFor(date)}
+              >
+                <Plus className="h-4 w-4" /> Ny inventering
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                className="h-10 gap-1.5 text-xs font-semibold"
+                onClick={() => setLockOpen(true)}
+              >
+                <Lock className="h-4 w-4" /> Lås
+              </Button>
+            )}
+          </div>
+        </>
+      )}
+
+
 
       <Dialog open={lockOpen} onOpenChange={setLockOpen}>
         <DialogContent>
