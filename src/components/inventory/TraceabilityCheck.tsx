@@ -13,7 +13,7 @@ import {
   Search,
   XCircle,
 } from "lucide-react";
-import { movementLabel } from "@/lib/stockMovementLabels";
+import { movementLabel } from "@/hooks/useStockMovements";
 
 const nf = (n: number, d = 1) =>
   Number(n || 0).toLocaleString("sv-SE", { maximumFractionDigits: d });
