@@ -743,7 +743,8 @@ export default function StockCount() {
               </CardContent>
               )}
             </Card>
-          ))}
+            );
+          })}
 
         </div>
       )}
