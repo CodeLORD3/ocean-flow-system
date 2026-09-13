@@ -785,8 +785,8 @@ export default function StockCount() {
           <DialogHeader>
             <DialogTitle>Lås inventeringen?</DialogTitle>
             <DialogDescription>
-              {storeName} — {date}. {countedCount} av {rows.length} rader är räknade. Efter låsning kan
-              raderna inte ändras.
+              {storeName} — {date}. {countedCount} av {rows.length} rader är räknade. Vid låsning
+              skrivs de räknade saldona in i lagret och raderna kan inte längre ändras.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
