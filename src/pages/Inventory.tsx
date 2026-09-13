@@ -1401,6 +1401,15 @@ export default function Inventory() {
           <p className="text-xs text-muted-foreground">Samlad lagerbild — alla lagerplatser</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            size="sm"
+            className="gap-1.5 text-xs h-9 sm:h-8 w-full sm:w-auto order-first font-semibold shadow-sm"
+            onClick={handlePrintCountList}
+            disabled={countListLoading}
+          >
+            <ListChecks className="h-3.5 w-3.5" />
+            {countListLoading ? "Förbereder…" : "Skriv ut inventeringslista"}
+          </Button>
           {expiryAlerts.length > 0 && !isShopPortal && (
             <Button
               size="sm"
@@ -1412,16 +1421,6 @@ export default function Inventory() {
               {expiryAlerts.length} utgångsvarning{expiryAlerts.length > 1 ? "ar" : ""}
             </Button>
           )}
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
-            onClick={handlePrintCountList}
-            disabled={countListLoading}
-          >
-            <ListChecks className="h-3 w-3" />
-            {countListLoading ? "Förbereder…" : "Skriv ut inventeringslista"}
-          </Button>
           {printSelectedIds.length > 0 && (
             <Button
               size="sm"
