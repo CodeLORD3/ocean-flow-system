@@ -580,7 +580,7 @@ export default function StockOverview({
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                             )}
                             {!dense && (
-                              <ProductThumb src={g.image_url} alt={g.name} productId={g.product_id} className="w-11 h-8" />
+                              <ProductThumb src={g.image_url} alt={g.name} productId={g.product_id} className="w-8 h-6" />
                             )}
                             <div className="min-w-0">
                               <div className="font-semibold text-foreground truncate">{g.name}</div>
@@ -592,9 +592,9 @@ export default function StockOverview({
                         </td>
                         <td className="px-2 text-xs text-muted-foreground whitespace-nowrap">{g.category}</td>
                         <td className="px-2">
-                          <div className="min-w-[180px]">
+                          <div className="min-w-[140px]">
                             <div
-                              className="flex items-stretch gap-0.5 h-5 rounded-sm overflow-hidden"
+                              className="flex items-stretch gap-0.5 h-4 rounded-sm overflow-hidden"
                               style={{ width: `${Math.max(12, (g.totalKg / maxKg) * 100)}%` }}
                             >
                               {g.lines.map((l) => {
