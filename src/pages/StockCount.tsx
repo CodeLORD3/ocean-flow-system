@@ -290,7 +290,7 @@ export default function StockCount() {
 
   // ── Export / print ─────────────────────────────────────────────────────────
   const exportCsv = useCallback(() => {
-    const header = ["Kategori", "Produkt", "SKU", "Lagerplats", "Enhet", "Systemsaldo", "Inventerat", "Kval.", "Kommentar"];
+    const header = ["Kategori", "Produkt", "SKU", "Lagerplats", "Enhet", "Systemsaldo", "Inventerat", "Hållbarhet", "Kommentar"];
     const lines = rows.map((r) => {
       const l = linesByKey.get(r.key);
       return [
@@ -365,8 +365,8 @@ export default function StockCount() {
               <Plus className="h-3.5 w-3.5" /> Påbörja inventering
             </Button>
           )}
-          <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={printList} disabled={pdfLoading}>
-            <Printer className="h-3 w-3" /> {pdfLoading ? "Förbereder…" : "Skriv ut"}
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={openPrintDialog}>
+            <Printer className="h-3 w-3" /> Skriv ut
           </Button>
           <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={exportCsv}>
             <Download className="h-3 w-3" /> Exportera
