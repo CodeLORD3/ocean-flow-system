@@ -1013,6 +1013,31 @@ export default function Inventory() {
   }, [invLines]);
 
   // ── Render helpers ───────────────────────────────────────────────────────
+  /** Kollapsade kategorier per lagerplats, nyckel "locId::kategori". */
+  const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
+  const toggleCat = (locId: string, cat: string) =>
+    setCollapsedCats((prev) => {
+      const next = new Set(prev);
+      const key = `${locId}::${cat}`;
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+
+  /** Produkter grupperade per kategori (kategori → namn A–Ö). */
+  const groupItemsByCategory = (items: any[]) => {
+    const groups: Record<string, any[]> = {};
+    items.forEach((s) => {
+      const cat = s.products?.category || "Övrigt";
+      (groups[cat] ||= []).push(s);
+    });
+    return Object.entries(groups)
+      .sort(([a], [b]) => a.localeCompare(b, "sv"))
+      .map(([cat, list]) => [
+        cat,
+        [...list].sort((a, b) => String(a.products?.name ?? "").localeCompare(String(b.products?.name ?? ""), "sv")),
+      ] as [string, any[]]);
+  };
+
   const renderSelectionActions = (locId: string) => (
     <div className="flex items-center gap-1 flex-wrap sm:mr-2">
       <Badge variant="outline" className="text-[10px] h-5">
