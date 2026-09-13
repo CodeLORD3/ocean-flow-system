@@ -527,11 +527,11 @@ export default function StockCount() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {groups.map((g) => (
             <Card key={g.category} className="overflow-hidden">
-              <div className="px-2 py-1 bg-muted/50 border-b flex items-center justify-between">
-                <span className="text-[11px] font-semibold uppercase tracking-wide">{g.category}</span>
+              <div className="px-2 py-0.5 bg-muted/50 border-b flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wide">{g.category}</span>
                 <span className="text-[10px] text-muted-foreground">{g.products.length} produkter</span>
               </div>
               <CardContent className="p-0 divide-y divide-border/60">
@@ -543,21 +543,21 @@ export default function StockCount() {
                   }, 0);
                   const anyCounted = prodRows.some((r) => linesByKey.get(r.key)?.counted_qty != null);
                   return (
-                    <div key={first.productId} className="px-2 py-1.5">
+                    <div key={first.productId} className="px-2 py-1">
                       <div className="flex items-center gap-1.5">
                         {first.imageUrl ? (
                           <img
                             src={first.imageUrl}
                             alt={first.productName}
-                            className="h-6 w-6 rounded object-cover border shrink-0"
+                            className="h-5 w-5 rounded object-cover border shrink-0"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-6 w-6 rounded border bg-muted flex items-center justify-center shrink-0">
-                            <Package className="h-3 w-3 text-muted-foreground" />
+                          <div className="h-5 w-5 rounded border bg-muted flex items-center justify-center shrink-0">
+                            <Package className="h-2.5 w-2.5 text-muted-foreground" />
                           </div>
                         )}
-                        <span className="text-xs font-medium truncate">{first.productName}</span>
+                        <span className="text-[11px] font-medium truncate">{first.productName}</span>
                         <span className="text-[10px] text-muted-foreground shrink-0">
                           {first.sku ? `${first.sku} · ` : ""}
                           {first.unit}
@@ -565,23 +565,23 @@ export default function StockCount() {
                         {prodRows.length > 1 && anyCounted && (
                           <Badge
                             variant="outline"
-                            className="ml-auto text-[10px] py-0 h-5 font-mono tabular-nums"
+                            className="ml-auto text-[10px] py-0 h-4 font-mono tabular-nums"
                           >
                             Totalt {fmtQty(countedTotal, first.unit)}
                           </Badge>
                         )}
                       </div>
 
-                      <div className="mt-0.5 space-y-0.5">
+                      <div className="space-y-0.5">
                         {prodRows.map((r) => {
                           const line = linesByKey.get(r.key);
                           const quality = (line?.quality ?? "") as string;
                           return (
                             <div
                               key={r.key}
-                              className="grid grid-cols-2 sm:grid-cols-[minmax(0,1fr)_96px_150px_minmax(0,1fr)] gap-1.5 items-center"
+                              className="grid grid-cols-2 sm:grid-cols-[minmax(0,1fr)_80px_136px_minmax(0,1fr)] gap-1 items-center"
                             >
-                              <div className="text-[11px] text-muted-foreground truncate pl-7">
+                              <div className="text-[10px] text-muted-foreground truncate pl-6">
                                 {r.locationName}
                                 <span className="ml-1 font-mono tabular-nums">
                                   ({fmtQty(r.systemQty, r.unit)})
@@ -594,7 +594,7 @@ export default function StockCount() {
                                 disabled={locked || !session}
                                 defaultValue={line?.counted_qty ?? ""}
                                 placeholder="Antal"
-                                className="h-7 px-2 text-xs font-mono tabular-nums"
+                                className="h-6 px-1.5 text-[11px] font-mono tabular-nums"
                                 onBlur={(e) => {
                                   const raw = e.target.value.replace(",", ".").trim();
                                   const val = raw === "" ? null : Number(raw);
@@ -612,7 +612,7 @@ export default function StockCount() {
                                       quality: (e.target.value || null) as Quality | null,
                                     })
                                   }
-                                  className={`h-7 min-w-0 flex-1 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
+                                  className={`h-6 min-w-0 flex-1 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
                                   title="Hållbarhet: antal dagar från inventeringsdatumet, med veckodag och datum"
                                 >
                                   <option value="">Hållbarhet</option>
@@ -643,7 +643,7 @@ export default function StockCount() {
                                 disabled={locked || !session}
                                 defaultValue={line?.comment ?? ""}
                                 placeholder="Kommentar"
-                                className="h-7 px-2 text-xs"
+                                className="h-6 px-1.5 text-[11px]"
                                 onBlur={(e) => {
                                   const val = e.target.value.trim() || null;
                                   if ((line?.comment ?? null) === val) return;
