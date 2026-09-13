@@ -61,16 +61,14 @@ export default function TraceabilityPage() {
       )}
 
 
-      <div style={{ display: view === "partier" ? "block" : "none" }}>
+      <div style={{ display: !SHOW_TRACEABILITY_CHECK || view === "partier" ? "block" : "none" }}>
         <LotTraceabilityView
           currency={currency}
           showCosts={canSeeCosts(site)}
           onEmptyAction={canSeeCosts(site) ? () => navigate("/purchase-reporting") : undefined}
         />
       </div>
-      <div style={{ display: view === "kontroll" ? "block" : "none" }}>
-        <TraceabilityCheck />
-      </div>
+      {SHOW_TRACEABILITY_CHECK && view === "kontroll" && <TraceabilityCheck />}
     </div>
   );
 }
