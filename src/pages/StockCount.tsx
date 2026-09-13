@@ -538,10 +538,26 @@ export default function StockCount() {
         <div className="space-y-1.5">
           {groups.map((g) => (
             <Card key={g.category} className="overflow-hidden">
-              <div className="px-2 py-0.5 bg-muted/50 border-b flex items-center justify-between">
-                <span className="text-[10px] font-semibold uppercase tracking-wide">{g.category}</span>
-                <span className="text-[10px] text-muted-foreground">{g.products.length} produkter</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => toggleCategory(g.category)}
+                className="w-full px-2 py-1 bg-muted/50 border-b flex items-center justify-between hover:bg-muted/80 transition-colors"
+              >
+                <span className="flex items-center gap-1 min-w-0">
+                  {collapsed.has(g.category) ? (
+                    <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                  )}
+                  <span className="text-[10px] font-semibold uppercase tracking-wide truncate">
+                    {g.category}
+                  </span>
+                </span>
+                <span className="text-[10px] text-muted-foreground shrink-0">
+                  {g.products.length} produkter
+                </span>
+              </button>
+              {!collapsed.has(g.category) && (
               <CardContent className="p-0 divide-y divide-border/60">
                 {g.products.map((prodRows) => {
                   const first = prodRows[0];
