@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Inventory from "@/pages/Inventory";
+import StockCount from "@/pages/StockCount";
 import Products from "@/pages/Products";
 import Pricing from "@/pages/Pricing";
 import Barcodes from "@/pages/Barcodes";
@@ -12,6 +13,7 @@ import { canAccessRoute } from "@/lib/pageAccess";
 
 type SubTab =
   | "lager"
+  | "inventering"
   | "overforingar"
   | "produkter"
   | "streckkoder"
@@ -33,6 +35,7 @@ export default function InventoryRouter() {
 
   const tabs: { value: SubTab; label: string; shortLabel?: string }[] = [
     { value: "lager", label: "Lager" },
+    { value: "inventering", label: "Inventering", shortLabel: "Invent." },
     ...(isShopPortal
       ? []
       : ([{ value: "overforingar", label: "Överföringar", shortLabel: "Överför" }] as const)),
@@ -75,6 +78,9 @@ export default function InventoryRouter() {
       <div className="pt-4">
         <div style={{ display: tab === "lager" ? "block" : "none" }}>
           <Inventory />
+        </div>
+        <div style={{ display: tab === "inventering" ? "block" : "none" }}>
+          <StockCount />
         </div>
         {!isShopPortal && (
           <div style={{ display: tab === "overforingar" ? "block" : "none" }}>

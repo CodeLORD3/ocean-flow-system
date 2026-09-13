@@ -12572,6 +12572,149 @@ export type Database = {
           },
         ]
       }
+      stock_count_lines: {
+        Row: {
+          comment: string | null
+          counted_at: string | null
+          counted_by: string | null
+          counted_qty: number | null
+          created_at: string
+          id: string
+          location_id: string | null
+          product_id: string
+          quality: string | null
+          session_id: string
+          system_qty: number | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          counted_at?: string | null
+          counted_by?: string | null
+          counted_qty?: number | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          product_id: string
+          quality?: string | null
+          session_id: string
+          system_qty?: number | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          counted_at?: string | null
+          counted_by?: string | null
+          counted_qty?: number | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          product_id?: string
+          quality?: string | null
+          session_id?: string
+          system_qty?: number | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_count_lines_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "stock_count_lines_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_lines_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "stock_count_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_count_sessions: {
+        Row: {
+          count_date: string
+          created_at: string
+          created_by: string | null
+          filled_by: string | null
+          finished_at: string | null
+          handed_to: string | null
+          id: string
+          locked_at: string | null
+          locked_by: string | null
+          note: string | null
+          started_at: string | null
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          count_date?: string
+          created_at?: string
+          created_by?: string | null
+          filled_by?: string | null
+          finished_at?: string | null
+          handed_to?: string | null
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          note?: string | null
+          started_at?: string | null
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          count_date?: string
+          created_at?: string
+          created_by?: string | null
+          filled_by?: string | null
+          finished_at?: string | null
+          handed_to?: string | null
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          note?: string | null
+          started_at?: string | null
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_count_sessions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "stock_count_sessions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_flow_rules: {
         Row: {
           allowed: boolean
