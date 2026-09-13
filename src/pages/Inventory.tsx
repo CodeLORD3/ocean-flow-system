@@ -1683,7 +1683,7 @@ export default function Inventory() {
       {/* Vyväxling — butikslagret visar alltid den samlade lagerbilden (ingen flikmeny) */}
       <div className="flex flex-wrap items-center gap-2">
         {!isShopPortal && (
-        <div className="-mx-1 flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-border bg-card p-1 sm:mx-0 sm:w-fit [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-full max-w-full flex-wrap items-center gap-1 rounded-lg border border-border bg-card p-1 sm:w-fit sm:flex-nowrap">
           {[
             { v: "overview" as const, l: "Samlad lagerbild", s: "Samlad" },
             { v: "locations" as const, l: "Per lagerplats", s: "Lagerplats" },
@@ -1880,7 +1880,7 @@ export default function Inventory() {
               ) : (
                 <>
                   {/* Tab bar */}
-                  <div className="flex items-center gap-1.5 mb-3 overflow-x-auto scrollbar-thin pb-1">
+                  <div className="flex flex-wrap items-center gap-1.5 mb-3 pb-1">
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button

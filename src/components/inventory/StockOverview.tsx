@@ -387,7 +387,7 @@ export default function StockOverview({
 
       {/* Kategoriflikar + sök */}
       <div className="flex flex-col lg:flex-row gap-2 lg:items-center justify-between">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        <div className="flex flex-wrap items-center gap-1.5 pb-1">
           <button
             onClick={() => {
               setCategory("__all__");
@@ -506,18 +506,18 @@ export default function StockOverview({
       {/* Tabell */}
       <Card className="shadow-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-xs">
+          <table className="w-full text-xs sm:min-w-[900px]">
             <thead>
               <tr className="border-b bg-muted/40 text-[9px] uppercase tracking-wider text-muted-foreground">
-                <th className="w-6 px-1.5 py-1 text-left font-medium">#</th>
+                <th className="hidden w-6 px-1.5 py-1 text-left font-medium sm:table-cell">#</th>
                 <th className="px-1.5 py-1 text-left font-medium">Produkt</th>
-                <th className="px-1.5 py-1 text-left font-medium">Kategori</th>
-                <th className="px-1.5 py-1 text-left font-medium">Lager</th>
+                <th className="hidden px-1.5 py-1 text-left font-medium sm:table-cell">Kategori</th>
+                <th className="hidden px-1.5 py-1 text-left font-medium sm:table-cell">Lager</th>
                 <th className="px-1.5 py-1 text-right font-medium">Totalt</th>
-                {showCosts && <th className="px-1.5 py-1 text-right font-medium">Lagervärde</th>}
-                <th className="px-1.5 py-1 text-center font-medium">Bäst före</th>
-                <th className="px-1.5 py-1 text-center font-medium">Dagar kvar</th>
-                <th className="px-1.5 py-1 text-center font-medium">Status</th>
+                {showCosts && <th className="hidden px-1.5 py-1 text-right font-medium sm:table-cell">Lagervärde</th>}
+                <th className="hidden px-1.5 py-1 text-center font-medium sm:table-cell">Bäst före</th>
+                <th className="hidden px-1.5 py-1 text-center font-medium sm:table-cell">Dagar kvar</th>
+                <th className="hidden px-1.5 py-1 text-center font-medium sm:table-cell">Status</th>
                 <th className="w-6 px-1.5 py-1"></th>
               </tr>
             </thead>
@@ -571,7 +571,7 @@ export default function StockOverview({
                         )}
                         onClick={() => toggleExpand(g.product_id)}
                       >
-                        <td className="px-2 text-[11px] text-muted-foreground tabular-nums">{idx}</td>
+                        <td className="hidden px-2 text-[11px] text-muted-foreground tabular-nums sm:table-cell">{idx}</td>
                         <td className="px-2">
                           <div className="flex items-center gap-2.5">
                             {isOpen ? (
@@ -580,18 +580,37 @@ export default function StockOverview({
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                             )}
                             {!dense && (
-                              <ProductThumb src={g.image_url} alt={g.name} productId={g.product_id} className="w-8 h-6" />
+                              <ProductThumb src={g.image_url} alt={g.name} productId={g.product_id} className="hidden w-8 h-6 sm:block" />
                             )}
                             <div className="min-w-0">
                               <div className="font-semibold text-foreground truncate">{g.name}</div>
                               <div className="text-[10px] text-muted-foreground font-mono truncate">
                                 SKU: {g.sku}
                               </div>
+                              {/* Mobil: kategori, status och dagar kvar visas här när kolumnerna är dolda */}
+                              <div className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground sm:hidden">
+                                <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", st.dot)} />
+                                <span className="truncate">{g.category}</span>
+                                {g.daysLeft !== null && (
+                                  <span
+                                    className={cn(
+                                      "shrink-0 font-medium",
+                                      g.daysLeft < 0 || g.daysLeft <= 2
+                                        ? "text-destructive"
+                                        : g.daysLeft <= 5
+                                          ? "text-amber-600"
+                                          : "text-emerald-600",
+                                    )}
+                                  >
+                                    {g.daysLeft < 0 ? `${Math.abs(g.daysLeft)} d sen` : `${g.daysLeft} d kvar`}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-2 text-xs text-muted-foreground whitespace-nowrap">{g.category}</td>
-                        <td className="px-2">
+                        <td className="hidden px-2 text-xs text-muted-foreground whitespace-nowrap sm:table-cell">{g.category}</td>
+                        <td className="hidden px-2 sm:table-cell">
                           <div className="min-w-[140px]">
                             <div
                               className="flex items-stretch gap-0.5 h-4 rounded-sm overflow-hidden"
@@ -628,16 +647,16 @@ export default function StockOverview({
                           {g.totalQty.toLocaleString("sv-SE", { maximumFractionDigits: g.unit === "st" ? 0 : 1 })} {g.unit}
                         </td>
                         {showCosts && (
-                          <td className="px-2 text-right tabular-nums whitespace-nowrap">{fmt(g.value)}</td>
+                          <td className="hidden px-2 text-right tabular-nums whitespace-nowrap sm:table-cell">{fmt(g.value)}</td>
                         )}
-                        <td className="px-2 text-center text-xs text-muted-foreground whitespace-nowrap">
+                        <td className="hidden px-2 text-center text-xs text-muted-foreground whitespace-nowrap sm:table-cell">
                           {g.earliestExpiry
                             ? format(parseISO(g.earliestExpiry), "d MMM", { locale: sv })
                             : "–"}
                         </td>
                         <td
                           className={cn(
-                            "px-2 text-center text-xs font-medium whitespace-nowrap",
+                            "hidden px-2 text-center text-xs font-medium whitespace-nowrap sm:table-cell",
                             g.daysLeft === null
                               ? "text-muted-foreground"
                               : g.daysLeft < 0
@@ -655,7 +674,7 @@ export default function StockOverview({
                               ? `${Math.abs(g.daysLeft)} d sen`
                               : `${g.daysLeft} dag${g.daysLeft === 1 ? "" : "ar"}`}
                         </td>
-                        <td className="px-2 text-center">
+                        <td className="hidden px-2 text-center sm:table-cell">
                           <span
                             className={cn(
                               "inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap",
