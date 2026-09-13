@@ -317,7 +317,7 @@ export default function StockCount() {
     URL.revokeObjectURL(a.href);
   }, [rows, linesByKey, storeName, date]);
 
-  const printList = useCallback(async () => {
+  const printProducts = useMemo<CountListProduct[]>(() => {
     const seen = new Set<string>();
     const list: CountListProduct[] = [];
     rows.forEach((r) => {
@@ -332,19 +332,16 @@ export default function StockCount() {
         imageUrl: r.imageUrl,
       });
     });
-    if (!list.length) {
+    return list;
+  }, [rows]);
+
+  const openPrintDialog = useCallback(() => {
+    if (!printProducts.length) {
       toast({ title: "Inga produkter att skriva ut", variant: "destructive" });
       return;
     }
-    setPdfLoading(true);
-    try {
-      await generateInventoryCountListPdf(list, { storeName: storeName || undefined, date });
-    } catch (e: any) {
-      toast({ title: "Kunde inte skapa listan", description: e?.message, variant: "destructive" });
-    } finally {
-      setPdfLoading(false);
-    }
-  }, [rows, storeName, date, toast]);
+    setPrintOpen(true);
+  }, [printProducts, toast]);
 
   const loading = stockLoading || sessionQuery.isLoading;
 
