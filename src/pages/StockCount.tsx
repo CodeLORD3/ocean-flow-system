@@ -148,9 +148,11 @@ export default function StockCount() {
   const storeName =
     (stores as any[]).find((s: any) => s.id === effectiveStoreId)?.name || activeStoreName || "";
 
-  // ── Tillfället ─────────────────────────────────────────────────────────────
+  // ── Tillfällen för dagen (flera inventeringar per dag är tillåtet) ─────────
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+
   const sessionQuery = useQuery({
-    queryKey: ["stock_count_session", effectiveStoreId, date],
+    queryKey: ["stock_count_sessions", effectiveStoreId, date],
     enabled: !!effectiveStoreId && !!date,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -158,13 +160,19 @@ export default function StockCount() {
         .select("*")
         .eq("store_id", effectiveStoreId)
         .eq("count_date", date)
-        .maybeSingle();
+        .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as any | null;
+      return (data ?? []) as any[];
     },
   });
-  const session = sessionQuery.data;
+  const daySessions = sessionQuery.data ?? [];
+  const session =
+    daySessions.find((s: any) => s.id === selectedSessionId) ??
+    daySessions.find((s: any) => s.status === "open") ??
+    daySessions[daySessions.length - 1] ??
+    null;
   const locked = session?.status === "locked";
+
 
   const linesQuery = useQuery({
     queryKey: ["stock_count_lines", session?.id],
