@@ -425,7 +425,14 @@ export default function StockCount() {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Datum</Label>
+            <Label className="text-xs flex items-center gap-1.5">
+              Datum
+              {date && (
+                <span className="font-normal text-[10px] text-muted-foreground">
+                  {weekdayLong(date)}
+                </span>
+              )}
+            </Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-8 text-xs" />
           </div>
           <div className="space-y-1">
