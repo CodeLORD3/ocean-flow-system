@@ -41,8 +41,15 @@ export const MOVEMENT_LABELS: Record<string, string> = {
   overforing_ut: "Överföring ut",
   forsaljning: "Försäljning",
   kundorder: "Kundbeställning",
+  kundorder_reversering: "Kundbeställning återförd",
+  retur: "Retur",
   svinn: "Svinn",
   justering: "Justering",
   inventering: "Inventering",
 };
+
+/** Rörelsetypens namn, aldrig en rå kod för personalen. */
+export const movementLabel = (type?: string | null) =>
+  MOVEMENT_LABELS[type ?? ""] ??
+  (type ? type.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()) : "Okänd");
 
