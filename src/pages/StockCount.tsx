@@ -644,6 +644,24 @@ export default function StockCount() {
             Ingen inventering för datumet
           </Badge>
         )}
+        {daySessions.length > 1 && (
+          <span className="flex items-center gap-1 flex-wrap">
+            {daySessions.map((s: any, i: number) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setSelectedSessionId(s.id)}
+                className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                  s.id === session?.id
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {s.label || `#${i + 1}`} {s.status === "locked" ? "· låst" : "· öppen"}
+              </button>
+            ))}
+          </span>
+        )}
         <span className="text-muted-foreground">
           {countedCount} av {rows.length} rader räknade
         </span>
