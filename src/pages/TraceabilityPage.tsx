@@ -45,11 +45,27 @@ export default function TraceabilityPage() {
         </div>
       </div>
 
-      <LotTraceabilityView
-        currency={currency}
-        showCosts={canSeeCosts(site)}
-        onEmptyAction={canSeeCosts(site) ? () => navigate("/purchase-reporting") : undefined}
-      />
+      <Tabs value={view} onValueChange={(v) => setView(v as typeof view)} className="print:hidden">
+        <TabsList className="h-9">
+          <TabsTrigger value="partier" className="text-xs">
+            Partier
+          </TabsTrigger>
+          <TabsTrigger value="kontroll" className="text-xs">
+            Spårbarhetskontroll
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <div style={{ display: view === "partier" ? "block" : "none" }}>
+        <LotTraceabilityView
+          currency={currency}
+          showCosts={canSeeCosts(site)}
+          onEmptyAction={canSeeCosts(site) ? () => navigate("/purchase-reporting") : undefined}
+        />
+      </div>
+      <div style={{ display: view === "kontroll" ? "block" : "none" }}>
+        <TraceabilityCheck />
+      </div>
     </div>
   );
 }
