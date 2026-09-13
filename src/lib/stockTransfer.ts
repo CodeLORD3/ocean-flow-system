@@ -156,13 +156,30 @@ export async function moveStockToTransport(orderId: string) {
         ]);
         remaining = 0;
       } else {
-        console.warn(
-          `moveStockToTransport: otillräckligt saldo för produkt ${line.product_id}, ${remaining} kg kunde inte flyttas`,
-        );
+        shortages.push({ productId: line.product_id as string, missing: remaining });
       }
     }
   }
+
+  if (shortages.length) {
+    const { data: prods } = await supabase
+      .from("products")
+      .select("id, name, unit")
+      .in("id", shortages.map((s) => s.productId));
+    const nameOf = new Map((prods || []).map((p: any) => [p.id, p]));
+    const list = shortages
+      .map((s) => {
+        const p: any = nameOf.get(s.productId);
+        const qty = Math.round(s.missing * 10) / 10;
+        return `${p?.name ?? "Okänd produkt"}: ${qty} ${p?.unit ?? "kg"} saknas`;
+      })
+      .join(", ");
+    throw new Error(
+      `Grossistlagret räcker inte till hela ordern. ${list}. Bokför inleverans eller minska mängden innan ordern skickas.`,
+    );
+  }
 }
+
 
 /**
  * När butiken godkänner inleveransen: flytta orderns kvantiteter från
