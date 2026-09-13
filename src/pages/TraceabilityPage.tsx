@@ -1,4 +1,7 @@
+import { useState } from "react";
 import LotTraceabilityView from "@/components/inventory/LotTraceabilityView";
+import TraceabilityCheck from "@/components/inventory/TraceabilityCheck";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
