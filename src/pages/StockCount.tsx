@@ -299,6 +299,28 @@ export default function StockCount() {
     [session?.id, locked, qc, toast],
   );
 
+  const categoryDone: Record<string, string> = (session?.category_done as any) ?? {};
+
+  const toggleCategoryDone = useCallback(
+    async (cat: string, done: boolean) => {
+      if (!session?.id || locked) return;
+      const current: Record<string, string> = { ...(((session as any).category_done as any) ?? {}) };
+      if (done) current[cat] = new Date().toISOString();
+      else delete current[cat];
+      const { error } = await supabase
+        .from("stock_count_sessions")
+        .update({ category_done: current } as any)
+        .eq("id", session.id);
+      if (error) {
+        toast({ title: "Kunde inte spara", description: error.message, variant: "destructive" });
+        return;
+      }
+      await sessionQuery.refetch();
+      if (done) setCollapsed((prev) => new Set(prev).add(cat));
+    },
+    [session, locked, sessionQuery, toast],
+  );
+
   const lockSession = useCallback(async () => {
     if (!session?.id) return;
     const { error } = await supabase
