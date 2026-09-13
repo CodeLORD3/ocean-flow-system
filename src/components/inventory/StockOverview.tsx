@@ -587,6 +587,25 @@ export default function StockOverview({
                               <div className="text-[10px] text-muted-foreground font-mono truncate">
                                 SKU: {g.sku}
                               </div>
+                              {/* Mobil: kategori, status och dagar kvar visas här när kolumnerna är dolda */}
+                              <div className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground sm:hidden">
+                                <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", st.dot)} />
+                                <span className="truncate">{g.category}</span>
+                                {g.daysLeft !== null && (
+                                  <span
+                                    className={cn(
+                                      "shrink-0 font-medium",
+                                      g.daysLeft < 0 || g.daysLeft <= 2
+                                        ? "text-destructive"
+                                        : g.daysLeft <= 5
+                                          ? "text-amber-600"
+                                          : "text-emerald-600",
+                                    )}
+                                  >
+                                    {g.daysLeft < 0 ? `${Math.abs(g.daysLeft)} d sen` : `${g.daysLeft} d kvar`}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -637,7 +656,7 @@ export default function StockOverview({
                         </td>
                         <td
                           className={cn(
-                            "px-2 text-center text-xs font-medium whitespace-nowrap",
+                            "hidden px-2 text-center text-xs font-medium whitespace-nowrap sm:table-cell",
                             g.daysLeft === null
                               ? "text-muted-foreground"
                               : g.daysLeft < 0
@@ -655,7 +674,7 @@ export default function StockOverview({
                               ? `${Math.abs(g.daysLeft)} d sen`
                               : `${g.daysLeft} dag${g.daysLeft === 1 ? "" : "ar"}`}
                         </td>
-                        <td className="px-2 text-center">
+                        <td className="hidden px-2 text-center sm:table-cell">
                           <span
                             className={cn(
                               "inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap",
