@@ -54,6 +54,30 @@ const holdsUntil = (countDate: string, days: string | null) => {
   return laggTillSvenskaDagar(countDate, n);
 };
 
+/** "ons 17/9" — veckodag + dag/månad, svensk tid. */
+const dayLabel = (iso: string) => {
+  if (!iso) return "";
+  const d = new Date(`${iso}T12:00:00Z`);
+  const wd = new Intl.DateTimeFormat("sv-SE", { weekday: "short", timeZone: "Europe/Stockholm" })
+    .format(d)
+    .replace(".", "");
+  return `${wd} ${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
+};
+
+/** Veckodag med versal, t.ex. "Fredag". */
+const weekdayLong = (iso: string) => {
+  if (!iso) return "";
+  const wd = new Intl.DateTimeFormat("sv-SE", { weekday: "long", timeZone: "Europe/Stockholm" })
+    .format(new Date(`${iso}T12:00:00Z`));
+  return wd.charAt(0).toUpperCase() + wd.slice(1);
+};
+
+/** Antal hela dagar mellan två datum. */
+const daysBetween = (from: string, to: string) =>
+  Math.round(
+    (new Date(`${to}T12:00:00Z`).getTime() - new Date(`${from}T12:00:00Z`).getTime()) / 86_400_000,
+  );
+
 const qualityClass = (q?: string | null) => {
   if (q === "7+") return "bg-emerald-500/15 text-emerald-700 border-emerald-500/30";
   const n = Number(q);
