@@ -459,6 +459,8 @@ export default function StockCount() {
           targetQuantityKg: Number(l.counted_qty),
           movementType: "inventering",
           note: `Inventering ${date} (${storeName})`,
+          referenceType: "stock_count_session",
+          referenceId: session.id,
         });
         written += 1;
       } catch {

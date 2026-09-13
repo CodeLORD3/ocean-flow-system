@@ -1,4 +1,7 @@
+import { useState } from "react";
 import LotTraceabilityView from "@/components/inventory/LotTraceabilityView";
+import TraceabilityCheck from "@/components/inventory/TraceabilityCheck";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
@@ -17,6 +20,7 @@ export default function TraceabilityPage() {
   const { data: stores = [] } = useStores();
   const activeStore = (stores as any[]).find((s: any) => s.id === activeStoreId);
   const currency = getStoreCurrency(activeStore as any);
+  const [view, setView] = useState<"partier" | "kontroll">("partier");
 
   return (
     <div className="space-y-4 p-4 sm:p-6 print:p-0">
@@ -41,11 +45,27 @@ export default function TraceabilityPage() {
         </div>
       </div>
 
-      <LotTraceabilityView
-        currency={currency}
-        showCosts={canSeeCosts(site)}
-        onEmptyAction={canSeeCosts(site) ? () => navigate("/purchase-reporting") : undefined}
-      />
+      <Tabs value={view} onValueChange={(v) => setView(v as typeof view)} className="print:hidden">
+        <TabsList className="h-9">
+          <TabsTrigger value="partier" className="text-xs">
+            Partier
+          </TabsTrigger>
+          <TabsTrigger value="kontroll" className="text-xs">
+            Spårbarhetskontroll
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <div style={{ display: view === "partier" ? "block" : "none" }}>
+        <LotTraceabilityView
+          currency={currency}
+          showCosts={canSeeCosts(site)}
+          onEmptyAction={canSeeCosts(site) ? () => navigate("/purchase-reporting") : undefined}
+        />
+      </div>
+      <div style={{ display: view === "kontroll" ? "block" : "none" }}>
+        <TraceabilityCheck />
+      </div>
     </div>
   );
 }

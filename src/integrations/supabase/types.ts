@@ -16887,6 +16887,10 @@ export type Database = {
         Args: { _date: string; _store_id: string }
         Returns: boolean
       }
+      pick_lot_fefo: {
+        Args: { _location_id: string; _product_id: string; _quantity: number }
+        Returns: string
+      }
       pk_can_read: { Args: never; Returns: boolean }
       pk_can_read_salary: { Args: never; Returns: boolean }
       pk_daily_labor_cost: {
@@ -17118,6 +17122,8 @@ export type Database = {
           vessel_name: string
         }[]
       }
+      traceability_lookup: { Args: { _query: string }; Returns: Json }
+      traceability_report: { Args: never; Returns: Json }
       undo_sick_period: {
         Args: { _employee_id: string; _first_day: string }
         Returns: Json

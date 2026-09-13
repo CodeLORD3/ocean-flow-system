@@ -301,6 +301,9 @@ export async function setBalance(params: {
   unitCost?: number | null;
   lotId?: string | null;
   note?: string | null;
+  /** Underlaget som förklarar justeringen, t.ex. inventeringstillfället. */
+  referenceType?: string | null;
+  referenceId?: string | null;
 }) {
   const current = await currentBalance(params.productId, params.locationId);
   const delta = round3(params.targetQuantityKg - current.quantity);
@@ -313,6 +316,8 @@ export async function setBalance(params: {
     lotId: params.lotId ?? null,
     unitCost: params.unitCost ?? null,
     note: params.note ?? null,
+    referenceType: params.referenceType ?? null,
+    referenceId: params.referenceId ?? null,
   });
 }
 
