@@ -1426,6 +1426,17 @@ export default function Inventory() {
             Lager {activeStoreName ? `— ${activeStoreName}` : ""}
           </h2>
           <p className="text-xs text-muted-foreground">Samlad lagerbild — alla lagerplatser</p>
+          {activeStoreId && (
+            <Badge
+              variant="outline"
+              className="mt-1 h-5 text-[10px] font-medium border-amber-500/40 text-amber-700"
+              style={{ backgroundColor: "rgba(251, 191, 36, 0.25)" }}
+            >
+              {lastCountLabel
+                ? `Senast inventerad: ${lastCountLabel}`
+                : "Ingen inventering är låst ännu"}
+            </Badge>
+          )}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button
