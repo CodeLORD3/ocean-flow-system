@@ -347,14 +347,15 @@ export default function StockCount() {
   const loading = stockLoading || sessionQuery.isLoading;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-2 sm:space-y-2.5">
       {/* Rubrik + åtgärder */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg sm:text-2xl font-heading font-bold text-foreground flex items-center gap-2">
-            <ClipboardCheck className="h-5 w-5 text-primary" />
+          <h2 className="text-base sm:text-lg font-heading font-bold text-foreground flex items-center gap-2">
+            <ClipboardCheck className="h-4 w-4 text-primary" />
             Inventering {storeName ? `— ${storeName}` : ""}
           </h2>
+
           <p className="text-xs text-muted-foreground">
             Ett tillfälle per butik och datum. Räkna per lagerplats, lås när allt är klart.
           </p>
@@ -386,7 +387,7 @@ export default function StockCount() {
 
       {/* Filter */}
       <Card>
-        <CardContent className="p-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5 items-end">
+        <CardContent className="p-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-5 items-end">
           <div className="space-y-1">
             <Label className="text-xs">Butik</Label>
             <Select value={effectiveStoreId} onValueChange={setStoreId}>
