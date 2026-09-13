@@ -832,7 +832,7 @@ export default function StockCount() {
                     <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
                   )}
                   <span
-                    className={`text-[10px] font-semibold uppercase tracking-wide truncate ${
+                    className={`text-[11px] sm:text-[10px] font-semibold uppercase tracking-wide truncate ${
                       doneAt ? "text-emerald-700 dark:text-emerald-300" : ""
                     }`}
                   >
@@ -861,7 +861,7 @@ export default function StockCount() {
                     variant={doneAt ? "outline" : "default"}
                     disabled={locked || !session}
                     onClick={() => toggleCategoryDone(g.category, !doneAt)}
-                    className="h-5 px-2 text-[10px]"
+                    className="h-7 sm:h-5 px-2.5 sm:px-2 text-[11px] sm:text-[10px]"
                   >
                     {doneAt ? "Ångra" : "Färdig"}
                   </Button>
@@ -877,21 +877,21 @@ export default function StockCount() {
                   }, 0);
                   const anyCounted = prodRows.some((r) => linesByKey.get(r.key)?.counted_qty != null);
                   return (
-                    <div key={first.productId} className="px-2 py-1">
+                    <div key={first.productId} className="px-2 py-1.5 sm:py-1">
                       <div className="flex items-center gap-1.5">
                         {first.imageUrl ? (
                           <img
                             src={first.imageUrl}
                             alt={first.productName}
-                            className="h-5 w-5 rounded object-cover border shrink-0"
+                            className="h-7 w-7 sm:h-5 sm:w-5 rounded object-cover border shrink-0"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-5 w-5 rounded border bg-muted flex items-center justify-center shrink-0">
-                            <Package className="h-2.5 w-2.5 text-muted-foreground" />
+                          <div className="h-7 w-7 sm:h-5 sm:w-5 rounded border bg-muted flex items-center justify-center shrink-0">
+                            <Package className="h-3.5 w-3.5 sm:h-2.5 sm:w-2.5 text-muted-foreground" />
                           </div>
                         )}
-                        <span className="text-[11px] font-medium truncate">{first.productName}</span>
+                        <span className="text-[13px] sm:text-[11px] font-medium truncate">{first.productName}</span>
                         <span className="text-[10px] text-muted-foreground shrink-0">
                           {first.sku ? `${first.sku} · ` : ""}
                           {first.unit}
