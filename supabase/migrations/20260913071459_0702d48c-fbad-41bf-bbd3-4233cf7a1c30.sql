@@ -1,0 +1,2 @@
+ALTER TABLE public.stock_count_lines DROP CONSTRAINT IF EXISTS stock_count_lines_quality_check;
+ALTER TABLE public.stock_count_lines ADD CONSTRAINT stock_count_lines_quality_check CHECK (quality IS NULL OR quality = ANY (ARRAY['1','2','3','4','5','6','7','1-7','7+']));
