@@ -620,7 +620,11 @@ export default function StockCount() {
                                   <option
                                     value=""
                                     disabled
-                                    className="bg-amber-400/35 text-amber-900 font-medium"
+                                    className="font-semibold"
+                                    style={{
+                                      backgroundColor: "rgba(251, 191, 36, 0.45)",
+                                      color: "#78350f",
+                                    }}
                                   >
                                     — Idag {dayLabel(date)} —
                                   </option>
