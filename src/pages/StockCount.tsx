@@ -27,7 +27,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { laggTillSvenskaDagar } from "@/lib/swedishTime";
 import { type CountListProduct } from "@/lib/inventoryCountListPdf";
 import CountListPrintDialog from "@/components/inventory/CountListPrintDialog";
-import { setBalance } from "@/lib/stockLedger";
+import { setBalance, setExpiryDate } from "@/lib/stockLedger";
 
 
 type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "7+";
@@ -114,6 +114,7 @@ type Row = {
   imageUrl: string | null;
   locationName: string;
   systemQty: number;
+  costPrice: number;
 };
 
 /** FAS 2 — Digital inventering. Ett tillfälle per butik + datum, status öppen/låst. */
@@ -297,6 +298,7 @@ export default function StockCount() {
         imageUrl: p.image_url ?? null,
         locationName: locIds.get(s.location_id) || "Lager",
         systemQty: Number(s.quantity) || 0,
+        costPrice: Number(p.cost_price) || 0,
       });
     });
     rows.sort(
@@ -351,6 +353,26 @@ export default function StockCount() {
     [rows, linesByKey],
   );
 
+  /** Underlag inför låsning: räknat, ej räknat med saldo, och skillnad i kg och kronor. */
+  const lockSummary = useMemo(() => {
+    let diffKg = 0;
+    let diffValue = 0;
+    const skipped: Row[] = [];
+    for (const r of rows) {
+      const l = linesByKey.get(r.key);
+      const counted = l?.counted_qty;
+      if (counted === null || counted === undefined) {
+        if (Math.abs(r.systemQty) > 0.005) skipped.push(r);
+        continue;
+      }
+      const d = Number(counted) - r.systemQty;
+      diffKg += d;
+      diffValue += d * r.costPrice;
+    }
+    return { diffKg, diffValue, skipped };
+  }, [rows, linesByKey]);
+
+
   // ── Spara rad ──────────────────────────────────────────────────────────────
   const saveLine = useCallback(
     async (row: Row, patch: { counted_qty?: number | null; quality?: Quality | null; comment?: string | null }) => {
@@ -376,17 +398,27 @@ export default function StockCount() {
       // Hållbarhet slår igenom direkt som bäst före på lagerplatsen.
       if (patch.quality !== undefined) {
         const until = patch.quality ? holdsUntil(date, String(patch.quality)) : null;
-        await supabase
-          .from("product_stock_locations")
-          .update({ expiry_date: until } as any)
-          .eq("product_id", row.productId)
-          .eq("location_id", row.locationId);
+        await setExpiryDate({ productId: row.productId, locationId: row.locationId, expiryDate: until });
         qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
         qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
       }
     },
     [session?.id, locked, qc, toast, date],
   );
+
+  /** Ej räknade rader med saldo nollas i ett svep — inget lämnas tyst. */
+  const zeroSkippedRows = useCallback(async () => {
+    if (!session?.id || locked || !lockSummary.skipped.length) return;
+    for (const r of lockSummary.skipped) {
+      await saveLine(r, { counted_qty: 0, comment: "Nollad vid låsning — varan var slut" });
+    }
+    toast({
+      title: "Ej räknade rader nollade",
+      description: `${lockSummary.skipped.length} rader satta till 0.`,
+    });
+  }, [session?.id, locked, lockSummary.skipped, saveLine, toast]);
+
+
 
   const categoryDone: Record<string, string> = (session?.category_done as any) ?? {};
 
@@ -441,11 +473,7 @@ export default function StockCount() {
       if (!l.location_id || !l.quality) continue;
       const until = holdsUntil(date, String(l.quality));
       if (!until) continue;
-      await supabase
-        .from("product_stock_locations")
-        .update({ expiry_date: until } as any)
-        .eq("product_id", l.product_id)
-        .eq("location_id", l.location_id);
+      await setExpiryDate({ productId: l.product_id, locationId: l.location_id, expiryDate: until });
     }
 
     const { error } = await supabase
@@ -975,10 +1003,64 @@ export default function StockCount() {
           <DialogHeader>
             <DialogTitle>Lås inventeringen?</DialogTitle>
             <DialogDescription>
-              {storeName} — {date}. {countedCount} av {rows.length} rader är räknade. Vid låsning
-              skrivs de räknade saldona in i lagret och raderna kan inte längre ändras.
+              {storeName} — {date}. Vid låsning skrivs de räknade saldona in i lagret och raderna
+              kan inte längre ändras.
             </DialogDescription>
           </DialogHeader>
+
+          <div className="rounded-md border border-border bg-muted/40 p-2.5 text-xs space-y-1.5">
+            <div className="flex justify-between">
+              <span>Räknade rader</span>
+              <span className="font-mono tabular-nums">
+                {countedCount} av {rows.length}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Skillnad mot lagret</span>
+              <span className="font-mono tabular-nums">
+                {lockSummary.diffKg >= 0 ? "+" : "−"}
+                {Math.abs(lockSummary.diffKg).toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                {" · "}
+                {lockSummary.diffValue >= 0 ? "+" : "−"}
+                {Math.abs(Math.round(lockSummary.diffValue)).toLocaleString("sv-SE")} kr
+              </span>
+            </div>
+            {lockSummary.skipped.length > 0 && (
+              <div className="pt-1 border-t border-border/60 space-y-1">
+                <div className="flex items-center justify-between gap-2 text-amber-700">
+                  <span className="font-medium">
+                    {lockSummary.skipped.length} rader med saldo är inte räknade
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 text-[11px]"
+                    onClick={zeroSkippedRows}
+                  >
+                    Nolla dem
+                  </Button>
+                </div>
+                <p className="text-muted-foreground">
+                  Låser du nu står deras saldo kvar oförändrat. Nolla dem om varan är slut, annars
+                  räkna dem först.
+                </p>
+                <div className="max-h-24 overflow-y-auto space-y-0.5">
+                  {lockSummary.skipped.slice(0, 12).map((r) => (
+                    <div key={r.key} className="flex justify-between gap-2 text-[11px]">
+                      <span className="truncate">
+                        {r.productName}
+                        <span className="text-muted-foreground"> · {r.locationName}</span>
+                      </span>
+                      <span className="font-mono tabular-nums">
+                        {r.systemQty.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {r.unit}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setLockOpen(false)}>
               Avbryt

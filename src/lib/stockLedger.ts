@@ -338,3 +338,20 @@ export async function setMinStock(params: {
     );
   if (error) throw error;
 }
+
+/**
+ * Bäst före på en lagerplats. Inställning som min_stock — rör inte saldot,
+ * och därför den enda tillåtna vägen att skriva expiry_date.
+ */
+export async function setExpiryDate(params: {
+  productId: string;
+  locationId: string;
+  expiryDate: string | null;
+}) {
+  const { error } = await supabase
+    .from("product_stock_locations")
+    .update({ expiry_date: params.expiryDate, updated_at: new Date().toISOString() } as any)
+    .eq("product_id", params.productId)
+    .eq("location_id", params.locationId);
+  if (error) throw error;
+}

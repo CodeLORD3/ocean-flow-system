@@ -566,16 +566,17 @@ export async function reverseLine(params: {
     return;
   }
 
+  // Varan går åter i lager: inflöde, aldrig "kundorder" (som är ett uttag).
   await recordMovement({
     productId: line.product_id,
     locationId,
     quantityKg: qty,
-    movementType: "kundorder",
+    movementType: "justering",
     lotId: line.reserved_lot_id,
     quantityPieces: null,
     referenceType: "customer_order_line",
     referenceId: line.id,
-    note: `${params.reason} — ${order.order_number}`,
+    note: `Åter i lager: ${params.reason} — ${order.order_number}`,
   });
 }
 

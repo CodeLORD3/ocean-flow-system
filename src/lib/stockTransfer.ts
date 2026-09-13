@@ -70,11 +70,43 @@ export async function moveStockToTransport(orderId: string) {
 
   const transportId = await getTransportlagerId(order.store_id);
   if (!transportId) {
-    console.error("Leveranslager not found for store", order.store_id);
-    return;
+    throw new Error(
+      "Butiken saknar transportlager — leveransen kan inte bokföras. Lägg upp lagerplatsen först.",
+    );
   }
 
   const gfLocId = GROSSIST_FLYTANDE_ID;
+  // Produkter där grossistlagret inte räcker. Leveransen stoppas efteråt
+  // med ett samlat meddelande istället för att uppfinna vara.
+  const shortages: { productId: string; missing: number }[] = [];
+
+  // Täckningskontroll före första rörelsen: antingen går hela ordern ut,
+  // eller ingenting — aldrig en halv bokförd leverans.
+  if (gfLocId && !(await isInfiniteStock())) {
+    const needed = new Map<string, number>();
+    for (const line of order.shop_order_lines) {
+      const qty = Number(line.quantity_delivered || line.quantity_ordered) || 0;
+      if (qty <= 0 || !line.product_id) continue;
+      needed.set(line.product_id, (needed.get(line.product_id) || 0) + qty);
+    }
+    if (needed.size) {
+      const { data: available } = await supabase
+        .from("product_stock_locations")
+        .select("product_id, quantity")
+        .eq("location_id", gfLocId)
+        .in("product_id", [...needed.keys()]);
+      const have = new Map(
+        (available || []).map((r: any) => [r.product_id as string, Number(r.quantity) || 0]),
+      );
+      for (const [productId, qty] of needed) {
+        const missing = qty - (have.get(productId) || 0);
+        if (missing > 0.001) shortages.push({ productId, missing });
+      }
+      if (shortages.length) await throwShortage(shortages);
+    }
+  }
+
+
 
 
   for (const line of order.shop_order_lines) {
@@ -84,6 +116,7 @@ export async function moveStockToTransport(orderId: string) {
     // Källa: grossistlagret.
     const sourceIds = gfLocId ? [gfLocId] : [];
     if (!sourceIds.length) continue;
+
 
     const { data: stocks } = await supabase
       .from("product_stock_locations")
@@ -151,13 +184,34 @@ export async function moveStockToTransport(orderId: string) {
         ]);
         remaining = 0;
       } else {
-        console.warn(
-          `moveStockToTransport: otillräckligt saldo för produkt ${line.product_id}, ${remaining} kg kunde inte flyttas`,
-        );
+        shortages.push({ productId: line.product_id as string, missing: remaining });
       }
     }
   }
+
+  if (shortages.length) await throwShortage(shortages);
 }
+
+/** Begripligt stoppmeddelande när grossistlagret inte täcker ordern. */
+async function throwShortage(shortages: { productId: string; missing: number }[]) {
+  const { data: prods } = await supabase
+    .from("products")
+    .select("id, name, unit")
+    .in("id", shortages.map((s) => s.productId));
+  const nameOf = new Map((prods || []).map((p: any) => [p.id, p]));
+  const list = shortages
+    .map((s) => {
+      const p: any = nameOf.get(s.productId);
+      const qty = Math.round(s.missing * 10) / 10;
+      return `${p?.name ?? "Okänd produkt"}: ${qty} ${p?.unit ?? "kg"} saknas`;
+    })
+    .join(", ");
+  throw new Error(
+    `Grossistlagret räcker inte till hela ordern. ${list}. Bokför inleverans eller minska mängden innan ordern skickas.`,
+  );
+}
+
+
 
 /**
  * När butiken godkänner inleveransen: flytta orderns kvantiteter från
@@ -180,14 +234,16 @@ export async function moveStockToRawLager(
 ) {
   const transportId = await getTransportlagerId(storeId);
   if (!transportId) {
-    console.error("Leveranslager not found for store", storeId);
-    return;
+    throw new Error(
+      "Butiken saknar transportlager — inleveransen kan inte bokföras. Lägg upp lagerplatsen först.",
+    );
   }
 
   const rawLagerId = await getRawLagerId(storeId);
   if (!rawLagerId) {
-    console.error("Butikslager not found for store", storeId);
-    return;
+    throw new Error(
+      "Butiken saknar eget lager — inleveransen kan inte bokföras. Lägg upp lagerplatsen först.",
+    );
   }
 
   // Partivis kvarvarande kvantitet på transportlagret för just den här ordern.

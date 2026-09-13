@@ -72,7 +72,8 @@ export async function salesLocation(db: SupabaseClient, storeId: string): Promis
     .from("storage_locations")
     .select("id, name, parent_location_id")
     .eq("store_id", storeId)
-    .ilike("name", "%örsäljningslager%")
+    .eq("location_type", "butik")
+    .eq("active", true)
     .is("parent_location_id", null)
     .limit(1)
     .maybeSingle();
@@ -366,6 +367,10 @@ export async function processEvent(
     if (txErr) throw txErr;
 
     const locationId = await salesLocation(db, storeId);
+    if (!locationId && !testMode) {
+      // Utan butikslager kan kvittot inte dra lager — synliggör det i loggen.
+      console.error(`nimpos: butik ${storeId} saknar aktivt butikslager, kvitto ${externalId} drar inte lager`);
+    }
     const items = Array.isArray(r.items) ? r.items : [];
     let unmatched = 0;
     let unitMismatch = 0;

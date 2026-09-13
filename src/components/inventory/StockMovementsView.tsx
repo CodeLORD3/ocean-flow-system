@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useStockMovements, MOVEMENT_LABELS } from "@/hooks/useStockMovements";
+import { useStockMovements, MOVEMENT_LABELS, movementLabel } from "@/hooks/useStockMovements";
 import { ArrowDownRight, ArrowUpRight, Search } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -121,7 +121,7 @@ export default function StockMovementsView({
                   className="h-7 text-[11px] px-2"
                   onClick={() => setType(t)}
                 >
-                  {t === "all" ? "Alla" : MOVEMENT_LABELS[t]}
+                  {t === "all" ? "Alla" : movementLabel(t)}
                 </Button>
               ))}
             </div>
@@ -196,7 +196,7 @@ export default function StockMovementsView({
                       </td>
                       <td className="px-2 py-1">
                         <Badge variant={outflow ? "destructive" : "secondary"} className="text-[10px]">
-                          {MOVEMENT_LABELS[m.movement_type] || m.movement_type}
+                          {movementLabel(m.movement_type)}
                         </Badge>
                       </td>
                       <td

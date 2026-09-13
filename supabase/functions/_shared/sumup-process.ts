@@ -55,7 +55,8 @@ export async function salesLocation(db: SupabaseClient, storeId: string): Promis
     .from("storage_locations")
     .select("id")
     .eq("store_id", storeId)
-    .ilike("name", "%örsäljningslager%")
+    .eq("location_type", "butik")
+    .eq("active", true)
     .is("parent_location_id", null)
     .limit(1)
     .maybeSingle();
@@ -491,6 +492,10 @@ export async function processSumupEvent(
     createdTxId = tx.id as string;
 
     const locationId = await salesLocation(db, m.store_id);
+    if (!locationId && !ev.test_mode) {
+      // Utan butikslager kan kvittot inte dra lager — synliggör det i loggen.
+      console.error(`sumup: butik ${m.store_id} saknar aktivt butikslager, kvitto ${ev.external_id} drar inte lager`);
+    }
     // Transaktionslistan saknar ibland artikelnamn — kvittot har dem.
     const txProducts: any[] = Array.isArray(payload?.products) ? payload.products : [];
     const receiptProducts: any[] = Array.isArray(ev.receipt_payload?.transaction_data?.products)
