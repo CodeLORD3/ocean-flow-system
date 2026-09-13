@@ -433,17 +433,19 @@ export default function StockCount() {
         failed += 1;
       }
 
-      // Bäst före från vald hållbarhet skrivs till lagerplatsen (endast metadata, ej saldo).
-      if (l.quality) {
-        const until = holdsUntil(date, String(l.quality));
-        if (until) {
-          await supabase
-            .from("product_stock_locations")
-            .update({ expiry_date: until } as any)
-            .eq("product_id", l.product_id)
-            .eq("location_id", l.location_id);
-        }
-      }
+    }
+
+    // Bäst före från vald hållbarhet skrivs till lagerplatsen (metadata, ej saldo)
+    // för alla rader med hållbarhet – även de som inte räknats.
+    for (const l of (linesQuery.data ?? []) as any[]) {
+      if (!l.location_id || !l.quality) continue;
+      const until = holdsUntil(date, String(l.quality));
+      if (!until) continue;
+      await supabase
+        .from("product_stock_locations")
+        .update({ expiry_date: until } as any)
+        .eq("product_id", l.product_id)
+        .eq("location_id", l.location_id);
     }
 
     const { error } = await supabase
