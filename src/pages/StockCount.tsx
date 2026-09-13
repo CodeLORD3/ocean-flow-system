@@ -543,21 +543,21 @@ export default function StockCount() {
                   }, 0);
                   const anyCounted = prodRows.some((r) => linesByKey.get(r.key)?.counted_qty != null);
                   return (
-                    <div key={first.productId} className="px-2 py-1.5">
+                    <div key={first.productId} className="px-2 py-1">
                       <div className="flex items-center gap-1.5">
                         {first.imageUrl ? (
                           <img
                             src={first.imageUrl}
                             alt={first.productName}
-                            className="h-6 w-6 rounded object-cover border shrink-0"
+                            className="h-5 w-5 rounded object-cover border shrink-0"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-6 w-6 rounded border bg-muted flex items-center justify-center shrink-0">
-                            <Package className="h-3 w-3 text-muted-foreground" />
+                          <div className="h-5 w-5 rounded border bg-muted flex items-center justify-center shrink-0">
+                            <Package className="h-2.5 w-2.5 text-muted-foreground" />
                           </div>
                         )}
-                        <span className="text-xs font-medium truncate">{first.productName}</span>
+                        <span className="text-[11px] font-medium truncate">{first.productName}</span>
                         <span className="text-[10px] text-muted-foreground shrink-0">
                           {first.sku ? `${first.sku} · ` : ""}
                           {first.unit}
@@ -565,14 +565,14 @@ export default function StockCount() {
                         {prodRows.length > 1 && anyCounted && (
                           <Badge
                             variant="outline"
-                            className="ml-auto text-[10px] py-0 h-5 font-mono tabular-nums"
+                            className="ml-auto text-[10px] py-0 h-4 font-mono tabular-nums"
                           >
                             Totalt {fmtQty(countedTotal, first.unit)}
                           </Badge>
                         )}
                       </div>
 
-                      <div className="mt-0.5 space-y-0.5">
+                      <div className="space-y-0.5">
                         {prodRows.map((r) => {
                           const line = linesByKey.get(r.key);
                           const quality = (line?.quality ?? "") as string;
