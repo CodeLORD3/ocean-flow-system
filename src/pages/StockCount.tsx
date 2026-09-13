@@ -906,29 +906,35 @@ export default function StockCount() {
                         )}
                       </div>
 
-                      <div className="space-y-0.5">
+                      <div className="space-y-1.5 sm:space-y-0.5">
                         {prodRows.map((r) => {
                           const line = linesByKey.get(r.key);
                           const quality = (line?.quality ?? "") as string;
                           return (
                             <div
                               key={r.key}
-                              className="grid grid-cols-2 sm:grid-cols-[minmax(0,1fr)_80px_136px_minmax(0,1fr)] gap-1 items-center"
+                              className="grid grid-cols-[minmax(0,1fr)_104px] sm:grid-cols-[minmax(0,1fr)_80px_136px_minmax(0,1fr)] gap-1 items-center"
                             >
-                              <div className="text-[10px] text-muted-foreground truncate pl-6">
+                              <div className="text-[10px] text-muted-foreground truncate pl-0 sm:pl-6">
                                 {r.locationName}
                                 <span className="ml-1 font-mono tabular-nums">
                                   ({fmtQty(r.systemQty, r.unit)})
                                 </span>
                               </div>
                               <Input
-                                type="number"
+                                type="text"
                                 inputMode="decimal"
-                                step="any"
+                                pattern="[0-9]*[.,]?[0-9]*"
+                                autoComplete="off"
+                                enterKeyHint="done"
                                 disabled={locked || !session}
                                 defaultValue={line?.counted_qty ?? ""}
-                                placeholder="Antal"
-                                className="h-6 px-1.5 text-[11px] font-mono tabular-nums"
+                                placeholder={r.unit}
+                                className="h-10 sm:h-6 px-1.5 text-right text-base sm:text-[11px] font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                onFocus={(e) => e.currentTarget.select()}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") e.currentTarget.blur();
+                                }}
                                 onBlur={(e) => {
                                   const raw = e.target.value.replace(",", ".").trim();
                                   const val = raw === "" ? null : Number(raw);
@@ -937,7 +943,7 @@ export default function StockCount() {
                                   saveLine(r, { counted_qty: val });
                                 }}
                               />
-                              <div className="flex items-center gap-1 min-w-0">
+                              <div className="col-span-2 sm:col-span-1 flex items-center gap-1 min-w-0">
                                 <select
                                   disabled={locked || !session}
                                   value={quality}
@@ -946,7 +952,7 @@ export default function StockCount() {
                                       quality: (e.target.value || null) as Quality | null,
                                     })
                                   }
-                                  className={`h-6 min-w-0 flex-1 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
+                                  className={`h-9 sm:h-6 min-w-0 flex-1 rounded-md border px-1.5 text-[13px] sm:text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
                                   title="Hållbarhet: antal dagar från inventeringsdatumet, med veckodag och datum"
                                 >
                                   <option value="">Hållbarhet</option>
@@ -977,7 +983,7 @@ export default function StockCount() {
                                 disabled={locked || !session}
                                 defaultValue={line?.comment ?? ""}
                                 placeholder="Kommentar"
-                                className="h-6 px-1.5 text-[11px]"
+                                className="col-span-2 sm:col-span-1 h-9 sm:h-6 px-1.5 text-[13px] sm:text-[11px]"
                                 onBlur={(e) => {
                                   const val = e.target.value.trim() || null;
                                   if ((line?.comment ?? null) === val) return;
