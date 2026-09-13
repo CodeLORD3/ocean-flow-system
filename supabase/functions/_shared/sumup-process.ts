@@ -55,7 +55,8 @@ export async function salesLocation(db: SupabaseClient, storeId: string): Promis
     .from("storage_locations")
     .select("id")
     .eq("store_id", storeId)
-    .ilike("name", "%örsäljningslager%")
+    .eq("location_type", "butik")
+    .eq("active", true)
     .is("parent_location_id", null)
     .limit(1)
     .maybeSingle();
