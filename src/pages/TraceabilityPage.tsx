@@ -21,6 +21,8 @@ export default function TraceabilityPage() {
   const activeStore = (stores as any[]).find((s: any) => s.id === activeStoreId);
   const currency = getStoreCurrency(activeStore as any);
   const [view, setView] = useState<"partier" | "kontroll">("partier");
+  // Spårbarhetskontrollen är tillfälligt dold — sätt till true för att visa fliken igen.
+  const SHOW_TRACEABILITY_CHECK = false;
 
   return (
     <div className="space-y-4 p-4 sm:p-6 print:p-0">
@@ -45,27 +47,28 @@ export default function TraceabilityPage() {
         </div>
       </div>
 
-      <Tabs value={view} onValueChange={(v) => setView(v as typeof view)} className="print:hidden">
-        <TabsList className="h-9">
-          <TabsTrigger value="partier" className="text-xs">
-            Partier
-          </TabsTrigger>
-          <TabsTrigger value="kontroll" className="text-xs">
-            Spårbarhetskontroll
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {SHOW_TRACEABILITY_CHECK && (
+        <Tabs value={view} onValueChange={(v) => setView(v as typeof view)} className="print:hidden">
+          <TabsList className="h-9">
+            <TabsTrigger value="partier" className="text-xs">
+              Partier
+            </TabsTrigger>
+            <TabsTrigger value="kontroll" className="text-xs">
+              Spårbarhetskontroll
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
-      <div style={{ display: view === "partier" ? "block" : "none" }}>
+
+      <div style={{ display: !SHOW_TRACEABILITY_CHECK || view === "partier" ? "block" : "none" }}>
         <LotTraceabilityView
           currency={currency}
           showCosts={canSeeCosts(site)}
           onEmptyAction={canSeeCosts(site) ? () => navigate("/purchase-reporting") : undefined}
         />
       </div>
-      <div style={{ display: view === "kontroll" ? "block" : "none" }}>
-        <TraceabilityCheck />
-      </div>
+      {SHOW_TRACEABILITY_CHECK && view === "kontroll" && <TraceabilityCheck />}
     </div>
   );
 }
