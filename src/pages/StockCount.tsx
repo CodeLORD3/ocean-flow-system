@@ -31,9 +31,9 @@ import {
 } from "@/lib/inventoryCountListPdf";
 
 
-type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7";
+type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "7+";
 
-const QUALITY_DAYS: Quality[] = ["1", "2", "3", "4", "5", "6", "7"];
+const QUALITY_DAYS: Quality[] = ["1", "2", "3", "4", "5", "6", "7", "7+"];
 
 const todayStockholm = () =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
@@ -50,12 +50,14 @@ const fmtQty = (n: number, unit: string) =>
 
 /** Håller tills: inventeringsdatum + valt antal dagar. */
 const holdsUntil = (countDate: string, days: string | null) => {
+  if (days === "7+") return null;
   const n = Number(days);
   if (!countDate || !Number.isFinite(n) || n <= 0) return null;
   return laggTillSvenskaDagar(countDate, n);
 };
 
 const qualityClass = (q?: string | null) => {
+  if (q === "7+") return "bg-emerald-500/15 text-emerald-700 border-emerald-500/30";
   const n = Number(q);
   if (!Number.isFinite(n) || n <= 0) return "bg-muted text-muted-foreground border-border";
   if (n <= 2) return "bg-destructive/15 text-destructive border-destructive/30";
