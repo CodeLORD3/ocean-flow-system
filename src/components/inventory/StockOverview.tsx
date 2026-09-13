@@ -515,7 +515,7 @@ export default function StockOverview({
                 <th className="hidden px-1.5 py-1 text-left font-medium sm:table-cell">Lager</th>
                 <th className="px-1.5 py-1 text-right font-medium">Totalt</th>
                 {showCosts && <th className="hidden px-1.5 py-1 text-right font-medium sm:table-cell">Lagervärde</th>}
-                <th className="px-1.5 py-1 text-center font-medium">Bäst före</th>
+                <th className="hidden px-1.5 py-1 text-center font-medium sm:table-cell">Bäst före</th>
                 <th className="hidden px-1.5 py-1 text-center font-medium sm:table-cell">Dagar kvar</th>
                 <th className="hidden px-1.5 py-1 text-center font-medium sm:table-cell">Status</th>
                 <th className="w-6 px-1.5 py-1"></th>
@@ -580,7 +580,7 @@ export default function StockOverview({
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                             )}
                             {!dense && (
-                              <ProductThumb src={g.image_url} alt={g.name} productId={g.product_id} className="w-8 h-6" />
+                              <ProductThumb src={g.image_url} alt={g.name} productId={g.product_id} className="hidden w-8 h-6 sm:block" />
                             )}
                             <div className="min-w-0">
                               <div className="font-semibold text-foreground truncate">{g.name}</div>
@@ -649,7 +649,7 @@ export default function StockOverview({
                         {showCosts && (
                           <td className="hidden px-2 text-right tabular-nums whitespace-nowrap sm:table-cell">{fmt(g.value)}</td>
                         )}
-                        <td className="px-2 text-center text-xs text-muted-foreground whitespace-nowrap">
+                        <td className="hidden px-2 text-center text-xs text-muted-foreground whitespace-nowrap sm:table-cell">
                           {g.earliestExpiry
                             ? format(parseISO(g.earliestExpiry), "d MMM", { locale: sv })
                             : "–"}
