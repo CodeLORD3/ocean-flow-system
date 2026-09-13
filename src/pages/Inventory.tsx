@@ -57,10 +57,8 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
-import {
-  generateInventoryCountListPdf,
-  type CountListProduct,
-} from "@/lib/inventoryCountListPdf";
+import { type CountListProduct } from "@/lib/inventoryCountListPdf";
+import CountListPrintDialog from "@/components/inventory/CountListPrintDialog";
 import { useStores } from "@/hooks/useStores";
 import {
   useStorageLocations,
