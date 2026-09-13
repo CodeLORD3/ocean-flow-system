@@ -121,6 +121,14 @@ export default function StockCount() {
   const [onlyUncounted, setOnlyUncounted] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const toggleCategory = useCallback((cat: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      next.has(cat) ? next.delete(cat) : next.add(cat);
+      return next;
+    });
+  }, []);
 
   const storeName =
     (stores as any[]).find((s: any) => s.id === effectiveStoreId)?.name || activeStoreName || "";
