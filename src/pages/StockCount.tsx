@@ -579,9 +579,9 @@ export default function StockCount() {
                           return (
                             <div
                               key={r.key}
-                              className="grid grid-cols-2 sm:grid-cols-[minmax(0,1fr)_96px_150px_minmax(0,1fr)] gap-1.5 items-center"
+                              className="grid grid-cols-2 sm:grid-cols-[minmax(0,1fr)_80px_136px_minmax(0,1fr)] gap-1 items-center"
                             >
-                              <div className="text-[11px] text-muted-foreground truncate pl-7">
+                              <div className="text-[10px] text-muted-foreground truncate pl-6">
                                 {r.locationName}
                                 <span className="ml-1 font-mono tabular-nums">
                                   ({fmtQty(r.systemQty, r.unit)})
