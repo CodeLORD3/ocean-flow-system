@@ -65,6 +65,20 @@ const dayLabel = (iso: string) => {
   return `${wd} ${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
 };
 
+/** "13/9 kl 10:24" — svensk tid för låsningstidpunkt. */
+const stampLabel = (iso?: string | null) => {
+  if (!iso) return "";
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Stockholm",
+    day: "numeric",
+    month: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+    .format(new Date(iso))
+    .replace(",", " kl");
+};
+
 /** Veckodag med versal, t.ex. "Fredag". */
 const weekdayLong = (iso: string) => {
   if (!iso) return "";
@@ -402,6 +416,8 @@ export default function StockCount() {
     await sessionQuery.refetch();
     qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
     qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
+    qc.invalidateQueries({ queryKey: ["stock_count_history", effectiveStoreId] });
+    historyQuery.refetch();
     toast({
       title: "Inventeringen är låst",
       description: failed
@@ -409,7 +425,7 @@ export default function StockCount() {
         : `${written} rader bokfördes i lagret.`,
       variant: failed ? "destructive" : undefined,
     });
-  }, [session?.id, sessionQuery, toast, linesQuery.data, date, storeName, qc]);
+  }, [session?.id, sessionQuery, toast, linesQuery.data, date, storeName, qc, effectiveStoreId, historyQuery]);
 
   // ── Export / print ─────────────────────────────────────────────────────────
   const exportCsv = useCallback(() => {
@@ -486,6 +502,15 @@ export default function StockCount() {
           {!session && effectiveStoreId && (
             <Button size="sm" className="gap-1.5 text-xs h-9 sm:h-8 font-semibold" onClick={createSession}>
               <Plus className="h-3.5 w-3.5" /> Påbörja inventering
+            </Button>
+          )}
+          {locked && effectiveStoreId && (
+            <Button
+              size="sm"
+              className="gap-1.5 text-xs h-9 sm:h-8 font-semibold"
+              onClick={() => createSessionFor(todayStockholm())}
+            >
+              <Plus className="h-3.5 w-3.5" /> Ny inventering
             </Button>
           )}
           <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={openPrintDialog}>
