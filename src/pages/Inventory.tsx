@@ -797,6 +797,26 @@ export default function Inventory() {
     return f && f.isExpired;
   }).length;
 
+  // Negativa saldon syns inte i lagerlistan (den visar bara positiva rader),
+  // så de hämtas separat och lyfts som en varning.
+  const [showNegativeStock, setShowNegativeStock] = useState(false);
+  const { data: negativeStock = [] } = useQuery({
+    queryKey: ["negative_stock", activeStoreId ?? "all"],
+    queryFn: async () => {
+      let q = supabase
+        .from("product_stock_locations")
+        .select("id, quantity, location_id, products(name, unit), storage_locations!inner(name, store_id)")
+        .lt("quantity", 0)
+        .order("quantity", { ascending: true })
+        .limit(100);
+      if (activeStoreId) q = q.eq("storage_locations.store_id", activeStoreId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+
   const toggleCategory = (cat: string) =>
     setExpandedCategories((prev) => {
       const next = new Set(prev);
