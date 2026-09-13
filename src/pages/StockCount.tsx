@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ClipboardCheck, Lock, Printer, Download, Search, Plus, Package, RefreshCw } from "lucide-react";
+import { ClipboardCheck, Lock, Printer, Download, Search, Plus, Package, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,6 +121,14 @@ export default function StockCount() {
   const [onlyUncounted, setOnlyUncounted] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const toggleCategory = useCallback((cat: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      next.has(cat) ? next.delete(cat) : next.add(cat);
+      return next;
+    });
+  }, []);
 
   const storeName =
     (stores as any[]).find((s: any) => s.id === effectiveStoreId)?.name || activeStoreName || "";
@@ -530,10 +538,26 @@ export default function StockCount() {
         <div className="space-y-1.5">
           {groups.map((g) => (
             <Card key={g.category} className="overflow-hidden">
-              <div className="px-2 py-0.5 bg-muted/50 border-b flex items-center justify-between">
-                <span className="text-[10px] font-semibold uppercase tracking-wide">{g.category}</span>
-                <span className="text-[10px] text-muted-foreground">{g.products.length} produkter</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => toggleCategory(g.category)}
+                className="w-full px-2 py-1 bg-muted/50 border-b flex items-center justify-between hover:bg-muted/80 transition-colors"
+              >
+                <span className="flex items-center gap-1 min-w-0">
+                  {collapsed.has(g.category) ? (
+                    <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                  )}
+                  <span className="text-[10px] font-semibold uppercase tracking-wide truncate">
+                    {g.category}
+                  </span>
+                </span>
+                <span className="text-[10px] text-muted-foreground shrink-0">
+                  {g.products.length} produkter
+                </span>
+              </button>
+              {!collapsed.has(g.category) && (
               <CardContent className="p-0 divide-y divide-border/60">
                 {g.products.map((prodRows) => {
                   const first = prodRows[0];
@@ -658,6 +682,7 @@ export default function StockCount() {
                   );
                 })}
               </CardContent>
+              )}
             </Card>
           ))}
 
