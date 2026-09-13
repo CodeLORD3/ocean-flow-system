@@ -506,19 +506,19 @@ export default function StockOverview({
       {/* Tabell */}
       <Card className="shadow-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] text-sm">
+          <table className="w-full min-w-[900px] text-xs">
             <thead>
-              <tr className="border-b bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
-                <th className="w-8 px-2 py-2 text-left font-medium">#</th>
-                <th className="px-2 py-2 text-left font-medium">Produkt</th>
-                <th className="px-2 py-2 text-left font-medium">Kategori</th>
-                <th className="px-2 py-2 text-left font-medium">Lager</th>
-                <th className="px-2 py-2 text-right font-medium">Totalt</th>
-                {showCosts && <th className="px-2 py-2 text-right font-medium">Lagervärde</th>}
-                <th className="px-2 py-2 text-center font-medium">Bäst före</th>
-                <th className="px-2 py-2 text-center font-medium">Dagar kvar</th>
-                <th className="px-2 py-2 text-center font-medium">Status</th>
-                <th className="w-8 px-2 py-2"></th>
+              <tr className="border-b bg-muted/40 text-[9px] uppercase tracking-wider text-muted-foreground">
+                <th className="w-6 px-1.5 py-1 text-left font-medium">#</th>
+                <th className="px-1.5 py-1 text-left font-medium">Produkt</th>
+                <th className="px-1.5 py-1 text-left font-medium">Kategori</th>
+                <th className="px-1.5 py-1 text-left font-medium">Lager</th>
+                <th className="px-1.5 py-1 text-right font-medium">Totalt</th>
+                {showCosts && <th className="px-1.5 py-1 text-right font-medium">Lagervärde</th>}
+                <th className="px-1.5 py-1 text-center font-medium">Bäst före</th>
+                <th className="px-1.5 py-1 text-center font-medium">Dagar kvar</th>
+                <th className="px-1.5 py-1 text-center font-medium">Status</th>
+                <th className="w-6 px-1.5 py-1"></th>
               </tr>
             </thead>
             <tbody>
