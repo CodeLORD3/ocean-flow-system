@@ -476,7 +476,7 @@ export default function StockCount() {
       <div className="flex items-center gap-2 flex-wrap text-xs">
         <Badge
           variant="outline"
-          className="bg-amber-400/20 text-amber-800 border-amber-500/40 font-medium"
+          className="bg-amber-400/35 text-amber-900 border-amber-500/50 font-medium"
         >
           Idag: {weekdayLong(todayStockholm())} {todayStockholm()}
         </Badge>
