@@ -817,8 +817,8 @@ export default function StockCount() {
               className={`overflow-hidden ${doneAt ? "border-emerald-500/60" : ""}`}
             >
               <div
-                className={`w-full px-2 py-1 border-b flex items-center justify-between gap-2 ${
-                  doneAt ? "bg-emerald-500/20" : "bg-muted/50"
+                className={`w-full px-2 py-1.5 sm:py-1 border-b flex items-center justify-between gap-2 sticky top-0 z-10 backdrop-blur-sm ${
+                  doneAt ? "bg-emerald-500/20" : "bg-muted/80 sm:bg-muted/50"
                 }`}
               >
                 <button
