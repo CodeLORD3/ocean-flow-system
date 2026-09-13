@@ -62,4 +62,23 @@ describe("lagerbokföringens regler", () => {
     expect(src).toContain("rader med saldo är inte räknade");
     expect(src).toContain("Skillnad mot lagret");
   });
+  it("kundordersuttag får alltid parti — reservation eller först-ut", () => {
+    const src = read("src/lib/customerOrders.ts");
+    expect(src).toContain('supabase.rpc("pick_lot_fefo"');
+    expect(src).toContain("reserved_lot_id: lotId");
+  });
+
+  it("inventeringens rörelser pekar på inventeringstillfället", () => {
+    const src = read("src/pages/StockCount.tsx");
+    expect(src).toContain('referenceType: "stock_count_session"');
+    expect(src).toContain("referenceId: session.id");
+  });
+
+  it("spårbarhetskontrollen körs mot databasen, inte mot antaganden", () => {
+    const src = read("src/components/inventory/TraceabilityCheck.tsx");
+    expect(src).toContain('supabase.rpc("traceability_report"');
+    expect(src).toContain('supabase.rpc("traceability_lookup"');
+    const page = read("src/pages/TraceabilityPage.tsx");
+    expect(page).toContain("TraceabilityCheck");
+  });
 });
