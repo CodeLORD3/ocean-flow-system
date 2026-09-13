@@ -1337,8 +1337,8 @@ export default function Inventory() {
     return list;
   }, [allStock, portalLocations, productsById]);
 
-  const [countListLoading, setCountListLoading] = useState(false);
-  const handlePrintCountList = useCallback(async () => {
+  const [countListOpen, setCountListOpen] = useState(false);
+  const handlePrintCountList = useCallback(() => {
     if (!countListProducts.length) {
       toast({
         title: "Inga produkter i lagret",
@@ -1347,17 +1347,8 @@ export default function Inventory() {
       });
       return;
     }
-    setCountListLoading(true);
-    try {
-      await generateInventoryCountListPdf(countListProducts, {
-        storeName: activeStoreName || undefined,
-      });
-    } catch (e: any) {
-      toast({ title: "Kunde inte skapa listan", description: e?.message, variant: "destructive" });
-    } finally {
-      setCountListLoading(false);
-    }
-  }, [countListProducts, activeStoreName, toast]);
+    setCountListOpen(true);
+  }, [countListProducts, toast]);
 
 
   const handleOverviewAction = useCallback(
