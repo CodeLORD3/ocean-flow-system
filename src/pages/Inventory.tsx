@@ -1093,7 +1093,7 @@ export default function Inventory() {
               return (
                 <div
                   key={s.id}
-                  className={`flex items-start gap-2 px-2 py-2 ${isChecked ? "bg-primary/5" : freshness?.rowClass || ""}`}
+                  className={`flex items-start gap-2 px-2 py-1 ${isChecked ? "bg-primary/5" : freshness?.rowClass || ""}`}
                   onClick={() => toggleItemSelection(loc.id, s.id)}
                 >
                   <Checkbox
@@ -1183,12 +1183,12 @@ export default function Inventory() {
                   return (
                     <tr
                       key={s.id}
-                      className={`border-b border-border/30 last:border-0 hover:bg-primary/20 transition-colors h-7 ${isChecked ? "bg-primary/5" : freshness?.rowClass || zebra}`}
+                      className={`border-b border-border/30 last:border-0 hover:bg-primary/20 transition-colors h-6 ${isChecked ? "bg-primary/5" : freshness?.rowClass || zebra}`}
                     >
-                      <td className="px-2 py-0.5 text-center">
+                      <td className="px-2 py-0 text-center">
                         <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
                       </td>
-                      <td className="px-2 py-0.5 font-medium text-foreground">
+                      <td className="px-2 py-0 font-medium text-foreground">
                         <div className="flex items-center gap-1.5">
                           {s.products?.name}
                           {fifoIssue && (
@@ -1198,21 +1198,21 @@ export default function Inventory() {
                           )}
                         </div>
                       </td>
-                      <td className="px-2 py-0.5 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
-                      <td className="px-2 py-0.5 text-muted-foreground">{s.products?.category}</td>
-                      <td className="px-2 py-0.5 text-right font-medium text-foreground">
+                      <td className="px-2 py-0 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
+                      <td className="px-2 py-0 text-muted-foreground">{s.products?.category}</td>
+                      <td className="px-2 py-0 text-right font-medium text-foreground">
                         {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
                       </td>
                       {showCosts && (
-                        <td className="px-2 py-0.5 text-right text-muted-foreground">{fmt(value)}</td>
+                        <td className="px-2 py-0 text-right text-muted-foreground">{fmt(value)}</td>
                       )}
-                      <td className="px-2 py-0.5 text-center text-[10px] text-muted-foreground">
+                      <td className="px-2 py-0 text-center text-[10px] text-muted-foreground">
                         {s.arrival_date ? format(parseISO(s.arrival_date), "d MMM", { locale: sv }) : "–"}
                       </td>
-                      <td className="px-2 py-0.5 text-center text-[10px] text-muted-foreground">
+                      <td className="px-2 py-0 text-center text-[10px] text-muted-foreground">
                         {s.expiry_date ? format(parseISO(s.expiry_date), "d MMM", { locale: sv }) : "–"}
                       </td>
-                      <td className="px-2 py-0.5 text-center">
+                      <td className="px-2 py-0 text-center">
                         {freshness ? (
                           <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
                             {freshness.isExpired ? (
@@ -1842,7 +1842,7 @@ export default function Inventory() {
                     const aggItems = loc.items.length + subs.reduce((s: number, l: any) => s + l.items.length, 0);
 
                     const subList = (
-                      <div className="space-y-1.5">
+                      <div className="space-y-1">
                         {subs.map((sub: any) => {
                           const isSubOpen = !!openSubLocations[sub.id];
                           return (
@@ -1859,7 +1859,7 @@ export default function Inventory() {
                                 onClick={() =>
                                   setOpenSubLocations((prev) => ({ ...prev, [sub.id]: !prev[sub.id] }))
                                 }
-                                className="flex-1 flex items-center justify-between gap-2 px-2 py-1.5 hover:bg-muted/40 transition-colors"
+                                className="flex-1 flex items-center justify-between gap-2 px-2 py-1 hover:bg-muted/40 transition-colors"
                               >
                                 <span className="flex items-center gap-1.5 min-w-0">
                                   {isSubOpen ? (
@@ -1891,7 +1891,7 @@ export default function Inventory() {
                               </div>
                               </div>
                               {isSubOpen && (
-                                <div className="p-1.5">
+                                <div className="p-1">
                                   {getSelectedForLocation(sub.id).size > 0 && (
                                     <div className="mb-1.5">{renderSelectionActions(sub.id)}</div>
                                   )}
@@ -1933,7 +1933,7 @@ export default function Inventory() {
 
 
                       return (
-                        <div key={loc.id} className="mb-3 border border-border/50 rounded-md overflow-hidden">
+                        <div key={loc.id} className="mb-1.5 border border-border/50 rounded-md overflow-hidden">
                           <div className="flex items-center gap-1.5 bg-muted/30 pl-2">
                             <Checkbox
                               checked={!!printSel[loc.id]}
@@ -1949,7 +1949,7 @@ export default function Inventory() {
                                   [loc.id]: prev[loc.id] === false ? true : false,
                                 }))
                               }
-                              className="flex-1 flex flex-wrap items-center justify-between gap-2 px-2 py-2 hover:bg-muted/50 transition-colors"
+                              className="flex-1 flex flex-wrap items-center justify-between gap-2 px-2 py-1 hover:bg-muted/50 transition-colors"
                             >
                               <span className="flex items-center gap-2 min-w-0">
                                 {isOpen ? (
@@ -1985,7 +1985,7 @@ export default function Inventory() {
 
                           </div>
                           {isOpen && (
-                            <div className="p-1.5 space-y-1.5">
+                            <div className="p-1 space-y-1">
                               {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
                               {allCats.filter((cat) => (catMap.get(cat)?.length ?? 0) > 0).map((cat) => {
                                 const items = catMap.get(cat) || [];
@@ -2016,7 +2016,7 @@ export default function Inventory() {
                                             [catKey]: prev[catKey] === false ? true : false,
                                           }))
                                         }
-                                        className="flex-1 flex items-center justify-between gap-2 px-2 py-1.5 hover:bg-accent/15 transition-colors"
+                                        className="flex-1 flex items-center justify-between gap-2 px-2 py-1 hover:bg-accent/15 transition-colors"
                                       >
                                         <span className="flex items-center gap-1.5 min-w-0">
                                           {catOpen ? (
@@ -2047,7 +2047,7 @@ export default function Inventory() {
                                       </div>
                                     </div>
                                     {catOpen && (
-                                      <div className="p-1.5">{renderLocationTable({ ...loc, items })}</div>
+                                      <div className="p-1">{renderLocationTable({ ...loc, items })}</div>
                                     )}
                                   </div>
                                 );
@@ -2096,7 +2096,7 @@ export default function Inventory() {
 
                       const isParentOpen = openSubLocations[loc.id] !== false;
                       return (
-                        <div key={loc.id} className="mb-3 border border-border/50 rounded-md overflow-hidden">
+                        <div key={loc.id} className="mb-1.5 border border-border/50 rounded-md overflow-hidden">
                           <div className="flex items-center gap-1.5 bg-muted/30 pl-2">
                             <Checkbox
                               checked={!!printSel[loc.id]}
@@ -2112,7 +2112,7 @@ export default function Inventory() {
                                 [loc.id]: prev[loc.id] === false ? true : false,
                               }))
                             }
-                            className="flex-1 flex flex-wrap items-center justify-between gap-2 px-2 py-2 hover:bg-muted/50 transition-colors"
+                            className="flex-1 flex flex-wrap items-center justify-between gap-2 px-2 py-1 hover:bg-muted/50 transition-colors"
                           >
                             <span className="flex items-center gap-2 min-w-0">
                               {isParentOpen ? (
@@ -2148,7 +2148,7 @@ export default function Inventory() {
 
                           </div>
                           {isParentOpen && (
-                            <div className="p-1.5 space-y-1.5">
+                            <div className="p-1 space-y-1">
                               {subList}
                               {loc.items.length > 0 && (
                                 <div className="pt-1">
@@ -2522,12 +2522,12 @@ export default function Inventory() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label className="text-xs">Namn *</Label>
               <Input value={locName} onChange={(e) => setLocName(e.target.value)} className="h-8 text-xs" />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label className="text-xs">Lager/Butik *</Label>
                 <Select value={locStore} onValueChange={setLocStore}>
                   <SelectTrigger className="h-8 text-xs">
@@ -2542,7 +2542,7 @@ export default function Inventory() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label className="text-xs">Zon</Label>
                 <Select value={locZone} onValueChange={setLocZone}>
                   <SelectTrigger className="h-8 text-xs">
@@ -2569,7 +2569,7 @@ export default function Inventory() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label className="text-xs">Placera under (sublager)</Label>
                 <Select value={locParent} onValueChange={setLocParent}>
                   <SelectTrigger className="h-8 text-xs">
@@ -2589,7 +2589,7 @@ export default function Inventory() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label className="text-xs">Produktkategori (valfritt)</Label>
                 <Select value={locCategory || "none"} onValueChange={(v) => setLocCategory(v === "none" ? "" : v)}>
                   <SelectTrigger className="h-8 text-xs">
@@ -2614,7 +2614,7 @@ export default function Inventory() {
                 </Select>
               </div>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label className="text-xs">Beskrivning</Label>
               <Input value={locDesc} onChange={(e) => setLocDesc(e.target.value)} className="h-8 text-xs" />
             </div>
@@ -2683,7 +2683,7 @@ export default function Inventory() {
               {getSelectedForLocation(activeLocationId).size} produkt(er) tas bort. Ange anledning.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <Label className="text-xs">Anledning *</Label>
             <Textarea
               value={deleteReason}
@@ -2734,7 +2734,7 @@ export default function Inventory() {
                     Nuvarande: {Number(item.quantity).toLocaleString("sv-SE")} {item.products?.unit || "kg"}
                   </p>
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label className="text-xs">Antal att splitta *</Label>
                   <Input
                     type="number"
@@ -2744,7 +2744,7 @@ export default function Inventory() {
                     className="h-8 text-xs"
                   />
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label className="text-xs">Destination *</Label>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
                     {portalLocations.map((loc: any) => (
@@ -2816,7 +2816,7 @@ export default function Inventory() {
                     Nuvarande: {Number(item.quantity).toLocaleString("sv-SE")} {item.products?.unit || "kg"}
                   </p>
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label className="text-xs">Omvandla till produkt *</Label>
                   {selectedProduct ? (
                     <div className="flex items-center gap-2 p-2 rounded-md border border-primary/30 bg-primary/5">
@@ -2861,7 +2861,7 @@ export default function Inventory() {
                     </>
                   )}
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label className="text-xs">Ny vikt ({item.products?.unit || "kg"}) *</Label>
                   <Input
                     type="number"
