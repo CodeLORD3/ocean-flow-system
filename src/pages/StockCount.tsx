@@ -209,6 +209,14 @@ export default function StockCount() {
     },
   });
 
+  /** Klockslag som namn på tillfället, t.ex. "10:42". */
+  const clockNow = () =>
+    new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Europe/Stockholm",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date());
+
   const createSessionFor = useCallback(
     async (targetDate: string) => {
       if (!effectiveStoreId) return;
@@ -217,28 +225,33 @@ export default function StockCount() {
         .select("id,status")
         .eq("store_id", effectiveStoreId)
         .eq("count_date", targetDate)
+        .eq("status", "open")
         .maybeSingle();
       setDate(targetDate);
       if (existing) {
+        setSelectedSessionId((existing as any).id);
         await sessionQuery.refetch();
         toast({
-          title:
-            (existing as any).status === "locked"
-              ? "Dagens inventering är redan låst"
-              : "Inventeringen för datumet är redan påbörjad",
-          description: `${storeName} — ${targetDate}`,
+          title: "En inventering är redan öppen",
+          description: `Lås den först — ${storeName} ${targetDate}`,
         });
         return;
       }
-      const { error } = await supabase.from("stock_count_sessions").insert({
-        store_id: effectiveStoreId,
-        count_date: targetDate,
-        started_at: new Date().toISOString(),
-      } as any);
+      const { data: created, error } = await supabase
+        .from("stock_count_sessions")
+        .insert({
+          store_id: effectiveStoreId,
+          count_date: targetDate,
+          started_at: new Date().toISOString(),
+          label: clockNow(),
+        } as any)
+        .select("id")
+        .maybeSingle();
       if (error) {
         toast({ title: "Kunde inte skapa inventeringen", description: error.message, variant: "destructive" });
         return;
       }
+      if (created) setSelectedSessionId((created as any).id);
       await sessionQuery.refetch();
       toast({ title: "Ny inventering påbörjad", description: `${storeName} — ${targetDate}` });
     },
