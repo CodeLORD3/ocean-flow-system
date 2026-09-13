@@ -527,11 +527,11 @@ export default function StockCount() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {groups.map((g) => (
             <Card key={g.category} className="overflow-hidden">
-              <div className="px-2 py-1 bg-muted/50 border-b flex items-center justify-between">
-                <span className="text-[11px] font-semibold uppercase tracking-wide">{g.category}</span>
+              <div className="px-2 py-0.5 bg-muted/50 border-b flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wide">{g.category}</span>
                 <span className="text-[10px] text-muted-foreground">{g.products.length} produkter</span>
               </div>
               <CardContent className="p-0 divide-y divide-border/60">
