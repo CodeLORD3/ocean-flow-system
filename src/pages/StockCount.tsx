@@ -617,6 +617,9 @@ export default function StockCount() {
                                   title="Hållbarhet: antal dagar från inventeringsdatumet, med veckodag och datum"
                                 >
                                   <option value="">Hållbarhet</option>
+                                  <option value="" disabled>
+                                    — Idag {dayLabel(date)} —
+                                  </option>
                                   {QUALITY_DAYS.map((d) => {
                                     const to = holdsUntil(date, d);
                                     return (
