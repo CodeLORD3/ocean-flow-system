@@ -20,6 +20,7 @@ export default function TraceabilityPage() {
   const { data: stores = [] } = useStores();
   const activeStore = (stores as any[]).find((s: any) => s.id === activeStoreId);
   const currency = getStoreCurrency(activeStore as any);
+  const [view, setView] = useState<"partier" | "kontroll">("partier");
 
   return (
     <div className="space-y-4 p-4 sm:p-6 print:p-0">
