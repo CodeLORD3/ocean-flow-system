@@ -27,6 +27,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { laggTillSvenskaDagar } from "@/lib/swedishTime";
 import { type CountListProduct } from "@/lib/inventoryCountListPdf";
 import CountListPrintDialog from "@/components/inventory/CountListPrintDialog";
+import { setBalance } from "@/lib/stockLedger";
 
 
 type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "7+";
@@ -323,6 +324,28 @@ export default function StockCount() {
 
   const lockSession = useCallback(async () => {
     if (!session?.id) return;
+
+    // Räknade rader bokförs som lagerrörelser (inventering) innan låsningen.
+    const counted = (linesQuery.data ?? []).filter(
+      (l: any) => l.location_id && l.counted_qty !== null && l.counted_qty !== undefined,
+    );
+    let written = 0;
+    let failed = 0;
+    for (const l of counted as any[]) {
+      try {
+        await setBalance({
+          productId: l.product_id,
+          locationId: l.location_id,
+          targetQuantityKg: Number(l.counted_qty),
+          movementType: "inventering",
+          note: `Inventering ${date} (${storeName})`,
+        });
+        written += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+
     const { error } = await supabase
       .from("stock_count_sessions")
       .update({
@@ -337,8 +360,16 @@ export default function StockCount() {
       return;
     }
     await sessionQuery.refetch();
-    toast({ title: "Inventeringen är låst", description: "Raderna kan inte längre ändras." });
-  }, [session?.id, sessionQuery, toast]);
+    qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
+    qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
+    toast({
+      title: "Inventeringen är låst",
+      description: failed
+        ? `${written} rader bokfördes i lagret, ${failed} misslyckades.`
+        : `${written} rader bokfördes i lagret.`,
+      variant: failed ? "destructive" : undefined,
+    });
+  }, [session?.id, sessionQuery, toast, linesQuery.data, date, storeName, qc]);
 
   // ── Export / print ─────────────────────────────────────────────────────────
   const exportCsv = useCallback(() => {
@@ -754,8 +785,8 @@ export default function StockCount() {
           <DialogHeader>
             <DialogTitle>Lås inventeringen?</DialogTitle>
             <DialogDescription>
-              {storeName} — {date}. {countedCount} av {rows.length} rader är räknade. Efter låsning kan
-              raderna inte ändras.
+              {storeName} — {date}. {countedCount} av {rows.length} rader är räknade. Vid låsning
+              skrivs de räknade saldona in i lagret och raderna kan inte längre ändras.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
