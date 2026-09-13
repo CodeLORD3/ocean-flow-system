@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/hooks/useActivityLog";
 import { markOrderLinesPackad, revertOrderLinesIfStockGone } from "@/lib/orderStatusSync";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   Warehouse,
@@ -1351,6 +1351,44 @@ export default function Inventory() {
   }, [countListProducts, toast]);
 
 
+  // Senast låsta inventering för butiken — visas i rubriken så man ser hur
+  // aktuella saldona är.
+  const lastCount = useQuery({
+    queryKey: ["last_stock_count", activeStoreId],
+    enabled: !!activeStoreId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stock_count_sessions")
+        .select("count_date, locked_at")
+        .eq("store_id", activeStoreId!)
+        .eq("status", "locked")
+        .order("count_date", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      return (data?.[0] as any) ?? null;
+    },
+  });
+
+  const lastCountLabel = useMemo(() => {
+    const row = lastCount.data;
+    if (!row) return null;
+    const stamp = row.locked_at ? new Date(row.locked_at) : null;
+    const day = new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Europe/Stockholm",
+      weekday: "short",
+      day: "numeric",
+      month: "numeric",
+    }).format(stamp ?? new Date(`${row.count_date}T12:00:00`));
+    const time = stamp
+      ? new Intl.DateTimeFormat("sv-SE", {
+          timeZone: "Europe/Stockholm",
+          hour: "2-digit",
+          minute: "2-digit",
+        }).format(stamp)
+      : null;
+    return time ? `${day} kl ${time}` : day;
+  }, [lastCount.data]);
+
   const handleOverviewAction = useCallback(
     (action: "move" | "delete" | "split" | "count" | "waste", row: any) => {
       const locId = row?.location_id;
@@ -1388,6 +1426,17 @@ export default function Inventory() {
             Lager {activeStoreName ? `— ${activeStoreName}` : ""}
           </h2>
           <p className="text-xs text-muted-foreground">Samlad lagerbild — alla lagerplatser</p>
+          {activeStoreId && (
+            <Badge
+              variant="outline"
+              className="mt-1 h-5 text-[10px] font-medium border-amber-500/40 text-amber-700"
+              style={{ backgroundColor: "rgba(251, 191, 36, 0.25)" }}
+            >
+              {lastCountLabel
+                ? `Senast inventerad: ${lastCountLabel}`
+                : "Ingen inventering är låst ännu"}
+            </Badge>
+          )}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button
