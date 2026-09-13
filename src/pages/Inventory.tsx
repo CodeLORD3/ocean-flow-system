@@ -1394,11 +1394,16 @@ export default function Inventory() {
             size="sm"
             className="gap-1.5 text-xs h-9 sm:h-8 w-full sm:w-auto order-first font-semibold shadow-sm"
             onClick={handlePrintCountList}
-            disabled={countListLoading}
           >
             <ListChecks className="h-3.5 w-3.5" />
-            {countListLoading ? "Förbereder…" : "Skriv ut inventeringslista"}
+            Skriv ut inventeringslista
           </Button>
+          <CountListPrintDialog
+            open={countListOpen}
+            onOpenChange={setCountListOpen}
+            products={countListProducts}
+            storeName={activeStoreName || undefined}
+          />
           {expiryAlerts.length > 0 && !isShopPortal && (
             <Button
               size="sm"
