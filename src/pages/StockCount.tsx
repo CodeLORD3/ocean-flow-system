@@ -617,7 +617,11 @@ export default function StockCount() {
                                   title="Hållbarhet: antal dagar från inventeringsdatumet, med veckodag och datum"
                                 >
                                   <option value="">Hållbarhet</option>
-                                  <option value="" disabled>
+                                  <option
+                                    value=""
+                                    disabled
+                                    className="bg-amber-400/35 text-amber-900 font-medium"
+                                  >
                                     — Idag {dayLabel(date)} —
                                   </option>
                                   {QUALITY_DAYS.map((d) => {
