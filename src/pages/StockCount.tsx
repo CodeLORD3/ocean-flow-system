@@ -372,8 +372,20 @@ export default function StockCount() {
         return;
       }
       qc.invalidateQueries({ queryKey: ["stock_count_lines", session.id] });
+
+      // Hållbarhet slår igenom direkt som bäst före på lagerplatsen.
+      if (patch.quality !== undefined) {
+        const until = patch.quality ? holdsUntil(date, String(patch.quality)) : null;
+        await supabase
+          .from("product_stock_locations")
+          .update({ expiry_date: until } as any)
+          .eq("product_id", row.productId)
+          .eq("location_id", row.locationId);
+        qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
+        qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      }
     },
-    [session?.id, locked, qc, toast],
+    [session?.id, locked, qc, toast, date],
   );
 
   const categoryDone: Record<string, string> = (session?.category_done as any) ?? {};
@@ -421,17 +433,19 @@ export default function StockCount() {
         failed += 1;
       }
 
-      // Bäst före från vald hållbarhet skrivs till lagerplatsen (endast metadata, ej saldo).
-      if (l.quality) {
-        const until = holdsUntil(date, String(l.quality));
-        if (until) {
-          await supabase
-            .from("product_stock_locations")
-            .update({ expiry_date: until } as any)
-            .eq("product_id", l.product_id)
-            .eq("location_id", l.location_id);
-        }
-      }
+    }
+
+    // Bäst före från vald hållbarhet skrivs till lagerplatsen (metadata, ej saldo)
+    // för alla rader med hållbarhet – även de som inte räknats.
+    for (const l of (linesQuery.data ?? []) as any[]) {
+      if (!l.location_id || !l.quality) continue;
+      const until = holdsUntil(date, String(l.quality));
+      if (!until) continue;
+      await supabase
+        .from("product_stock_locations")
+        .update({ expiry_date: until } as any)
+        .eq("product_id", l.product_id)
+        .eq("location_id", l.location_id);
     }
 
     const { error } = await supabase
