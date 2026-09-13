@@ -487,14 +487,14 @@ export default function StockCount() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-2">
           {groups.map((g) => (
             <Card key={g.category} className="overflow-hidden">
-              <div className="px-3 py-2 bg-muted/50 border-b flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wide">{g.category}</span>
-                <span className="text-[11px] text-muted-foreground">{g.products.length} produkter</span>
+              <div className="px-2 py-1 bg-muted/50 border-b flex items-center justify-between">
+                <span className="text-[11px] font-semibold uppercase tracking-wide">{g.category}</span>
+                <span className="text-[10px] text-muted-foreground">{g.products.length} produkter</span>
               </div>
-              <CardContent className="p-0 divide-y">
+              <CardContent className="p-0 divide-y divide-border/60">
                 {g.products.map((prodRows) => {
                   const first = prodRows[0];
                   const countedTotal = prodRows.reduce((sum, r) => {
@@ -503,44 +503,46 @@ export default function StockCount() {
                   }, 0);
                   const anyCounted = prodRows.some((r) => linesByKey.get(r.key)?.counted_qty != null);
                   return (
-                    <div key={first.productId} className="p-2 sm:p-3">
-                      <div className="flex items-center gap-2 mb-1.5">
+                    <div key={first.productId} className="px-2 py-1.5">
+                      <div className="flex items-center gap-1.5">
                         {first.imageUrl ? (
                           <img
                             src={first.imageUrl}
                             alt={first.productName}
-                            className="h-8 w-8 rounded object-cover border"
+                            className="h-6 w-6 rounded object-cover border shrink-0"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-8 w-8 rounded border bg-muted flex items-center justify-center">
-                            <Package className="h-4 w-4 text-muted-foreground" />
+                          <div className="h-6 w-6 rounded border bg-muted flex items-center justify-center shrink-0">
+                            <Package className="h-3 w-3 text-muted-foreground" />
                           </div>
                         )}
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium truncate">{first.productName}</div>
-                          <div className="text-[11px] text-muted-foreground">
-                            {first.sku ? `${first.sku} · ` : ""}
-                            {first.unit}
-                          </div>
-                        </div>
+                        <span className="text-xs font-medium truncate">{first.productName}</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          {first.sku ? `${first.sku} · ` : ""}
+                          {first.unit}
+                        </span>
                         {prodRows.length > 1 && anyCounted && (
-                          <Badge variant="outline" className="text-[11px] font-mono tabular-nums">
+                          <Badge
+                            variant="outline"
+                            className="ml-auto text-[10px] py-0 h-5 font-mono tabular-nums"
+                          >
                             Totalt {fmtQty(countedTotal, first.unit)}
                           </Badge>
                         )}
                       </div>
 
-                      <div className="space-y-1.5">
+                      <div className="mt-0.5 space-y-0.5">
                         {prodRows.map((r) => {
                           const line = linesByKey.get(r.key);
-                          const quality = (line?.quality ?? null) as Quality | null;
+                          const quality = (line?.quality ?? "") as string;
+                          const until = holdsUntil(date, quality || null);
                           return (
                             <div
                               key={r.key}
-                              className="grid grid-cols-2 sm:grid-cols-[1fr_130px_120px_1fr] gap-2 items-center"
+                              className="grid grid-cols-2 sm:grid-cols-[minmax(0,1fr)_96px_170px_minmax(0,1fr)] gap-1.5 items-center"
                             >
-                              <div className="text-xs text-muted-foreground truncate">
+                              <div className="text-[11px] text-muted-foreground truncate pl-7">
                                 {r.locationName}
                                 <span className="ml-1 font-mono tabular-nums">
                                   ({fmtQty(r.systemQty, r.unit)})
@@ -552,8 +554,8 @@ export default function StockCount() {
                                 step="any"
                                 disabled={locked || !session}
                                 defaultValue={line?.counted_qty ?? ""}
-                                placeholder="Inventerat"
-                                className="h-9 text-xs font-mono tabular-nums"
+                                placeholder="Antal"
+                                className="h-7 px-2 text-xs font-mono tabular-nums"
                                 onBlur={(e) => {
                                   const raw = e.target.value.replace(",", ".").trim();
                                   const val = raw === "" ? null : Number(raw);
@@ -562,26 +564,36 @@ export default function StockCount() {
                                   saveLine(r, { counted_qty: val });
                                 }}
                               />
-                              <div className="flex gap-1">
-                                {(["1-7", "7+"] as Quality[]).map((q) => (
-                                  <button
-                                    key={q}
-                                    type="button"
-                                    disabled={locked || !session}
-                                    onClick={() => saveLine(r, { quality: quality === q ? null : q })}
-                                    className={`px-2 h-7 rounded-full border text-[11px] font-medium transition-colors disabled:opacity-50 ${
-                                      quality === q ? qualityClass(q) : "bg-background text-muted-foreground border-border"
-                                    }`}
-                                  >
-                                    {q}
-                                  </button>
-                                ))}
+                              <div className="flex items-center gap-1 min-w-0">
+                                <select
+                                  disabled={locked || !session}
+                                  value={quality}
+                                  onChange={(e) =>
+                                    saveLine(r, {
+                                      quality: (e.target.value || null) as Quality | null,
+                                    })
+                                  }
+                                  className={`h-7 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
+                                  title="Hållbarhet i dagar från inventeringsdatumet"
+                                >
+                                  <option value="">Kval.</option>
+                                  {QUALITY_DAYS.map((d) => (
+                                    <option key={d} value={d}>
+                                      {d} {d === "1" ? "dag" : "dagar"}
+                                    </option>
+                                  ))}
+                                </select>
+                                {until && (
+                                  <span className="text-[10px] text-muted-foreground font-mono tabular-nums truncate">
+                                    t.o.m. {until.slice(5)}
+                                  </span>
+                                )}
                               </div>
                               <Input
                                 disabled={locked || !session}
                                 defaultValue={line?.comment ?? ""}
                                 placeholder="Kommentar"
-                                className="h-9 text-xs"
+                                className="h-7 px-2 text-xs"
                                 onBlur={(e) => {
                                   const val = e.target.value.trim() || null;
                                   if ((line?.comment ?? null) === val) return;
@@ -598,6 +610,7 @@ export default function StockCount() {
               </CardContent>
             </Card>
           ))}
+
         </div>
       )}
 
