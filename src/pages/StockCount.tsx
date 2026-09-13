@@ -474,6 +474,17 @@ export default function StockCount() {
 
       {/* Status */}
       <div className="flex items-center gap-2 flex-wrap text-xs">
+        <Badge
+          variant="outline"
+          className="bg-amber-400/20 text-amber-800 border-amber-500/40 font-medium"
+        >
+          Idag: {weekdayLong(todayStockholm())} {todayStockholm()}
+        </Badge>
+        {date !== todayStockholm() && (
+          <Badge variant="outline" className="bg-muted text-muted-foreground">
+            Inventering: {weekdayLong(date)} {date}
+          </Badge>
+        )}
         {session ? (
           <Badge
             variant="outline"
