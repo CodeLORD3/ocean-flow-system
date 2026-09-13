@@ -904,15 +904,18 @@ export function ProductionOrderForm() {
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Kvantitet (kg)</Label>
-              <Input type="number" step="0.1" value={rawQty} onChange={(e) => setRawQty(e.target.value)} className="h-10 text-xs text-right font-mono tabular-nums" />
+              <Input type="number"
+ inputMode="decimal" step="0.1" value={rawQty} onChange={(e) => setRawQty(e.target.value)} className="h-10 text-xs text-right font-mono tabular-nums" />
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Styckvikt (kg/fisk)</Label>
-              <Input type="number" step="0.1" value={pieceWeight} onChange={(e) => setPieceWeight(e.target.value)} className="h-10 text-xs text-right font-mono tabular-nums" />
+              <Input type="number"
+ inputMode="decimal" step="0.1" value={pieceWeight} onChange={(e) => setPieceWeight(e.target.value)} className="h-10 text-xs text-right font-mono tabular-nums" />
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Råvarukostnad (kr/kg, från lagret)</Label>
-              <Input type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} className="h-10 text-xs text-right font-mono tabular-nums" />
+              <Input type="number"
+ inputMode="decimal" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} className="h-10 text-xs text-right font-mono tabular-nums" />
               {avgCostInfo && <p className="text-[10px] text-muted-foreground">{avgCostInfo}</p>}
             </div>
             <div className="space-y-1">
@@ -1047,6 +1050,7 @@ export function ProductionOrderForm() {
                         <TableCell className="py-0.5">
                           <Input
                             type="number"
+                            inputMode="decimal"
                             step="0.1"
                             value={d.pct}
                             onChange={(e) => setDetail(d.key, { pct: parseFloat(e.target.value) || 0 })}
@@ -1071,6 +1075,7 @@ export function ProductionOrderForm() {
                               <div className="flex items-center justify-end gap-1.5">
                                 <Input
                                   type="number"
+                                  inputMode="decimal"
                                   step="0.01"
                                   placeholder={pl.inclVat ? "kr ink moms" : "kr ex moms"}
                                   value={value}

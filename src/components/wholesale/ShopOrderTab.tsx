@@ -224,7 +224,8 @@ export default function ShopOrderTab() {
                     </div>
                     <div className="col-span-2 space-y-1">
                       <Label className="text-[10px]">Antal *</Label>
-                      <Input value={line.qty} onChange={e => updateLine(i, "qty", e.target.value)} type="number" className="h-7 text-[11px]" />
+                      <Input value={line.qty} onChange={e => updateLine(i, "qty", e.target.value)} type="number"
+ inputMode="decimal" className="h-7 text-[11px]" />
                     </div>
                     <div className="col-span-1 flex items-end">
                       <span className="text-[10px] text-muted-foreground pb-1.5">{prod?.unit || "–"}</span>

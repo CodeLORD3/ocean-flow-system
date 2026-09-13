@@ -422,6 +422,7 @@ export default function ClockStations() {
                 <Label>Auto efter (h)</Label>
                 <Input
                   type="number"
+                  inputMode="decimal"
                   step="0.5"
                   value={profile.break?.auto_after_hours ?? 6}
                   onChange={(e) =>
@@ -436,6 +437,7 @@ export default function ClockStations() {
                 <Label>Rastlängd (min)</Label>
                 <Input
                   type="number"
+                  inputMode="decimal"
                   value={profile.break?.auto_minutes ?? 30}
                   onChange={(e) =>
                     setProfile((p) => ({
@@ -452,6 +454,7 @@ export default function ClockStations() {
                 <Label>Tolerans mot schema (min)</Label>
                 <Input
                   type="number"
+                  inputMode="decimal"
                   value={profile.tolerance_minutes ?? 7}
                   onChange={(e) =>
                     setProfile((p) => ({ ...p, tolerance_minutes: Number(e.target.value) }))

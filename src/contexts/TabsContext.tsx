@@ -12,6 +12,8 @@ const PAGE_TITLES: Record<string, string> = {
 
   "/inventory": "Lagerhantering",
   "/orders": "Ordrar",
+  "/customer-orders": "Kundbeställningar",
+  "/personal": "Personal & Schema",
   "/suppliers": "Leverantörer",
   "/customers": "Kunder",
   "/stores": "Butiker",

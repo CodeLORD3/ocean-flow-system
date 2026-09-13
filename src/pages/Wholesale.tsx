@@ -628,7 +628,8 @@ export default function Wholesale() {
                       </div>
                       <div className="col-span-2 space-y-1">
                         <Label className="text-[10px]">Kvantitet (kg) *</Label>
-                        <Input value={line.qty} onChange={(e) => updateFsLine(i, "qty", e.target.value)} placeholder="kg" className="h-7 text-[11px]" type="number" />
+                        <Input value={line.qty} onChange={(e) => updateFsLine(i, "qty", e.target.value)} placeholder="kg" className="h-7 text-[11px]" type="number"
+ inputMode="decimal" />
                       </div>
                       <div className="col-span-2 space-y-1">
                         <Label className="text-[10px]">Grossistpris/kg</Label>
@@ -737,11 +738,13 @@ export default function Wholesale() {
                   </div>
                   <div className="col-span-2 space-y-1">
                     <Label className="text-[10px]">Kvantitet (kg) *</Label>
-                    <Input value={line.qty} onChange={e => updateIlLine(i, "qty", e.target.value)} className="h-7 text-[11px]" type="number" />
+                    <Input value={line.qty} onChange={e => updateIlLine(i, "qty", e.target.value)} className="h-7 text-[11px]" type="number"
+ inputMode="decimal" />
                   </div>
                   <div className="col-span-2 space-y-1">
                     <Label className="text-[10px]">Inköpspris/kg *</Label>
-                    <Input value={line.unit_cost} onChange={e => updateIlLine(i, "unit_cost", e.target.value)} className="h-7 text-[11px]" type="number" />
+                    <Input value={line.unit_cost} onChange={e => updateIlLine(i, "unit_cost", e.target.value)} className="h-7 text-[11px]" type="number"
+ inputMode="decimal" />
                   </div>
                   <div className="col-span-2 space-y-1">
                     <Label className="text-[10px]">Batchnr</Label>
@@ -816,7 +819,8 @@ export default function Wholesale() {
               <Input value={batchDesc} onChange={e => setBatchDesc(e.target.value)} className="h-8 text-xs" />
             </div>
             <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1.5"><Label className="text-xs">Kvantitet (kg) *</Label><Input value={batchQty} onChange={e => setBatchQty(e.target.value)} type="number" className="h-8 text-xs" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Kvantitet (kg) *</Label><Input value={batchQty} onChange={e => setBatchQty(e.target.value)} type="number"
+ inputMode="decimal" className="h-8 text-xs" /></div>
               <div className="space-y-1.5"><Label className="text-xs">Start</Label><Input value={batchStart} onChange={e => setBatchStart(e.target.value)} placeholder="06:00" className="h-8 text-xs" /></div>
               <div className="space-y-1.5"><Label className="text-xs">Slut</Label><Input value={batchEnd} onChange={e => setBatchEnd(e.target.value)} placeholder="10:00" className="h-8 text-xs" /></div>
             </div>
@@ -842,9 +846,12 @@ export default function Wholesale() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1.5"><Label className="text-xs">Inköpspris/kg</Label><Input value={editCost} onChange={e => setEditCost(e.target.value)} type="number" className="h-8 text-xs" /></div>
-              <div className="space-y-1.5"><Label className="text-xs text-primary font-medium">Grossistpris/kg</Label><Input value={editWholesale} onChange={e => setEditWholesale(e.target.value)} type="number" className="h-8 text-xs border-primary/30" /></div>
-              <div className="space-y-1.5"><Label className="text-xs">Rek. butik/kg</Label><Input value={editRetail} onChange={e => setEditRetail(e.target.value)} type="number" className="h-8 text-xs" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Inköpspris/kg</Label><Input value={editCost} onChange={e => setEditCost(e.target.value)} type="number"
+ inputMode="decimal" className="h-8 text-xs" /></div>
+              <div className="space-y-1.5"><Label className="text-xs text-primary font-medium">Grossistpris/kg</Label><Input value={editWholesale} onChange={e => setEditWholesale(e.target.value)} type="number"
+ inputMode="decimal" className="h-8 text-xs border-primary/30" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Rek. butik/kg</Label><Input value={editRetail} onChange={e => setEditRetail(e.target.value)} type="number"
+ inputMode="decimal" className="h-8 text-xs" /></div>
             </div>
             {editCost && editWholesale && (
               <div className="p-2 rounded bg-muted/40 text-xs">

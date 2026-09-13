@@ -400,7 +400,6 @@ export function InlineOrderEdit({
                   <Input
                     type="number"
                     step="0.001"
-                    inputMode="decimal"
                     className="h-8 font-mono text-xs tabular-nums"
                     value={l.quantity}
                     onChange={(e) => patchLine(l.id, { quantity: e.target.value })}
@@ -416,7 +415,6 @@ export function InlineOrderEdit({
                   <Input
                     type="number"
                     step="0.01"
-                    inputMode="decimal"
                     className="h-8 font-mono text-xs tabular-nums"
                     placeholder={`${currency}/enhet`}
                     value={l.price}

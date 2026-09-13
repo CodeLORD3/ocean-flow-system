@@ -521,7 +521,8 @@ export default function Staff() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Ålder</Label>
-                <Input type="number" value={form.age} onChange={e => setField("age", e.target.value)} className="h-8 text-xs" placeholder="t.ex. 28" />
+                <Input type="number"
+ inputMode="decimal" value={form.age} onChange={e => setField("age", e.target.value)} className="h-8 text-xs" placeholder="t.ex. 28" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Telefonnummer</Label>
@@ -557,6 +558,7 @@ export default function Staff() {
                   <Label className="text-xs">Månadslön (kr/mån)</Label>
                   <Input
                     type="number"
+                    inputMode="decimal"
                     min="0"
                     step="100"
                     value={form.monthly_salary}
@@ -573,6 +575,7 @@ export default function Staff() {
                   <Label className="text-xs">Timlön (kr/h)</Label>
                   <Input
                     type="number"
+                    inputMode="decimal"
                     min="0"
                     step="1"
                     value={form.hourly_rate}

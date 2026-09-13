@@ -1011,7 +1011,7 @@ export default function StockCount() {
         <>
           <div className="h-16 sm:hidden" aria-hidden />
           <div
-            className="sm:hidden fixed bottom-0 left-0 right-0 z-30 border-t bg-background/95 backdrop-blur px-3 py-2 flex items-center justify-between gap-2"
+            className="sm:hidden fixed bottom-14 left-0 right-0 z-30 border-t bg-background/95 backdrop-blur px-3 py-2 flex items-center justify-between gap-2"
             style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
           >
             <div className="min-w-0">

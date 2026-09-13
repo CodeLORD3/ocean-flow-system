@@ -816,7 +816,8 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               </div>
               <div className="p-4 space-y-2">
                 <input
-                  type="number" value={calcAmount} onChange={e => setCalcAmount(e.target.value)}
+                  type="number"
+                  inputMode="decimal" value={calcAmount} onChange={e => setCalcAmount(e.target.value)}
                   min={1} placeholder="Enter amount"
                   className="w-full h-9 bg-muted/50 border border-border px-3 text-xs text-foreground font-mono focus:border-primary focus:outline-none"
                 />

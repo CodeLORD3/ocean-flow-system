@@ -5,6 +5,7 @@ import { ShopSidebar } from "@/components/ShopSidebar";
 import { ProductionSidebar } from "@/components/ProductionSidebar";
 import { StoreHero } from "@/components/StoreHero";
 import { BugReportButton } from "@/components/BugReportButton";
+import { MobileTabBar } from "@/components/MobileTabBar";
 
 
 
@@ -311,7 +312,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             })}
           </div>
 
-          <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 lg:p-6">
+          <main
+            className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 lg:p-6 pb-20 sm:pb-4"
+            style={{ scrollPaddingBottom: "5rem" }}
+          >
             <StoreHero />
             {children}
           </main>
@@ -327,6 +331,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
+      <MobileTabBar />
       <BugReportButton />
     </SidebarProvider>
 

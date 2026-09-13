@@ -132,6 +132,25 @@
     }
   }
 
+  /* Mobil: tillräckligt stora tryckytor för personal som jobbar med händerna.
+     Lägg klassen .tap-compact på element som medvetet ska vara små. */
+  @media (max-width: 767px) {
+    button:not(.tap-compact),
+    [role="button"]:not(.tap-compact),
+    [role="combobox"]:not(.tap-compact),
+    input:not([type="checkbox"]):not([type="radio"]):not(.tap-compact),
+    select:not(.tap-compact),
+    textarea:not(.tap-compact) {
+      min-height: 2.5rem;
+    }
+
+    /* Ikonknappar behöver även bredd */
+    button:not(.tap-compact) > svg:only-child {
+      min-width: 1.15rem;
+      min-height: 1.15rem;
+    }
+  }
+
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);

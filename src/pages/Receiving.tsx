@@ -572,6 +572,7 @@ export default function Receiving() {
                     </Label>
                     <Input
                       type="number"
+                      inputMode="decimal"
                       step="0.0001"
                       value={fxOverride}
                       placeholder={liveFx ? String(liveFx.rate) : "0.0000"}
@@ -682,6 +683,7 @@ export default function Receiving() {
                           </Label>
                           <Input
                             type="number"
+                            inputMode="decimal"
                             step="0.1"
                             value={report.quantity_received || ""}
                             onChange={(e) => updateLineReport(line.id, "quantity_received", e.target.value)}
@@ -727,6 +729,7 @@ export default function Receiving() {
                             <div className="flex items-center gap-2">
                               <Input
                                 type="number"
+                                inputMode="decimal"
                                 step="0.01"
                                 value={report.unit_cost_local || ""}
                                 onChange={(e) => updateLineReport(line.id, "unit_cost_local", e.target.value)}

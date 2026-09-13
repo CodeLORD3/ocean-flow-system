@@ -1302,6 +1302,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                       <Input
                         ref={el => { editQtyRefs.current[line.line_id] = el; }}
                         type="number"
+                        inputMode="decimal"
                         step="0.1"
                         value={line.new_qty}
                         onChange={e => setEditLines(prev => prev.map((l, i) => i === idx ? { ...l, new_qty: e.target.value } : l))}
@@ -1370,6 +1371,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                       <td className="py-2 text-right">
                         <Input
                           type="number"
+                          inputMode="decimal"
                           step="0.1"
                           value={np.quantity}
                           onChange={e => setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, quantity: e.target.value } : p))}

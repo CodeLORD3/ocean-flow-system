@@ -174,6 +174,7 @@ export function ProductionHistory() {
                                   <TableCell className="py-0.5">
                                     <Input
                                       type="number"
+                                      inputMode="decimal"
                                       step="0.1"
                                       defaultValue={l.actual_qty != null ? Number(l.actual_qty) : ""}
                                       placeholder={fmt(Number(l.planned_qty), 1)}

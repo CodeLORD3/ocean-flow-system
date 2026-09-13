@@ -63,6 +63,7 @@ export default function MapSettings() {
               <Label className="text-xs">Longitude</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.1"
                 value={longitude}
                 onChange={(e) => setLongitude(e.target.value)}
@@ -74,6 +75,7 @@ export default function MapSettings() {
               <Label className="text-xs">Latitude</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.1"
                 value={latitude}
                 onChange={(e) => setLatitude(e.target.value)}
@@ -86,6 +88,7 @@ export default function MapSettings() {
             <Label className="text-xs">Scale (zoom)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               step="10"
               value={scale}
               onChange={(e) => setScale(e.target.value)}
