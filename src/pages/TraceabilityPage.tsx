@@ -47,16 +47,19 @@ export default function TraceabilityPage() {
         </div>
       </div>
 
-      <Tabs value={view} onValueChange={(v) => setView(v as typeof view)} className="print:hidden">
-        <TabsList className="h-9">
-          <TabsTrigger value="partier" className="text-xs">
-            Partier
-          </TabsTrigger>
-          <TabsTrigger value="kontroll" className="text-xs">
-            Spårbarhetskontroll
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {SHOW_TRACEABILITY_CHECK && (
+        <Tabs value={view} onValueChange={(v) => setView(v as typeof view)} className="print:hidden">
+          <TabsList className="h-9">
+            <TabsTrigger value="partier" className="text-xs">
+              Partier
+            </TabsTrigger>
+            <TabsTrigger value="kontroll" className="text-xs">
+              Spårbarhetskontroll
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
+
 
       <div style={{ display: view === "partier" ? "block" : "none" }}>
         <LotTraceabilityView
