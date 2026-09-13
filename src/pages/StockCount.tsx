@@ -391,7 +391,7 @@ export default function StockCount() {
           <div className="space-y-1">
             <Label className="text-xs">Butik</Label>
             <Select value={effectiveStoreId} onValueChange={setStoreId}>
-              <SelectTrigger className="h-9 text-xs">
+              <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="Välj butik" />
               </SelectTrigger>
               <SelectContent>
@@ -405,12 +405,12 @@ export default function StockCount() {
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Datum</Label>
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-9 text-xs" />
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-8 text-xs" />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Kategori</Label>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="h-9 text-xs">
+              <SelectTrigger className="h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -428,12 +428,12 @@ export default function StockCount() {
           <div className="space-y-1">
             <Label className="text-xs">Sök</Label>
             <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+              <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Namn eller SKU"
-                className="h-9 pl-7 text-xs"
+                className="h-8 pl-7 text-xs"
               />
             </div>
           </div>
