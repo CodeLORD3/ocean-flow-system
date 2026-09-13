@@ -367,6 +367,10 @@ export async function processEvent(
     if (txErr) throw txErr;
 
     const locationId = await salesLocation(db, storeId);
+    if (!locationId && !testMode) {
+      // Utan butikslager kan kvittot inte dra lager — synliggör det i loggen.
+      console.error(`nimpos: butik ${storeId} saknar aktivt butikslager, kvitto ${externalId} drar inte lager`);
+    }
     const items = Array.isArray(r.items) ? r.items : [];
     let unmatched = 0;
     let unitMismatch = 0;

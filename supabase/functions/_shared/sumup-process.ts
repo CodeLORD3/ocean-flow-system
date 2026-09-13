@@ -492,6 +492,10 @@ export async function processSumupEvent(
     createdTxId = tx.id as string;
 
     const locationId = await salesLocation(db, m.store_id);
+    if (!locationId && !ev.test_mode) {
+      // Utan butikslager kan kvittot inte dra lager — synliggör det i loggen.
+      console.error(`sumup: butik ${m.store_id} saknar aktivt butikslager, kvitto ${ev.external_id} drar inte lager`);
+    }
     // Transaktionslistan saknar ibland artikelnamn — kvittot har dem.
     const txProducts: any[] = Array.isArray(payload?.products) ? payload.products : [];
     const receiptProducts: any[] = Array.isArray(ev.receipt_payload?.transaction_data?.products)
