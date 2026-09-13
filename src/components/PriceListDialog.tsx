@@ -305,6 +305,7 @@ export default function PriceListDialog({ open, onOpenChange, allProducts }: Pro
   const renderPriceInput = (p: AnyProduct) => (
     <Input
       type="number"
+      inputMode="decimal"
       step="0.01"
       value={prices[p.id] ?? ""}
       onChange={(e) => setPrice(p.id, Number(e.target.value))}

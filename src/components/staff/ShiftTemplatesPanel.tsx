@@ -52,8 +52,10 @@ export function ShiftTemplatesPanel() {
       <div><SectionLabel>Veckodag</SectionLabel><Select value={draft.weekday} onValueChange={(value) => update("weekday", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{weekdays.map((day, index) => <SelectItem key={day} value={String(index + 1)}>{day}</SelectItem>)}</SelectContent></Select></div>
       <div><SectionLabel>Från</SectionLabel><IndustryInput className="w-full" type="time" value={draft.start_time} onChange={(event) => update("start_time", event.target.value)} /></div>
       <div><SectionLabel>Till</SectionLabel><IndustryInput className="w-full" type="time" value={draft.end_time} onChange={(event) => update("end_time", event.target.value)} /></div>
-      <div><SectionLabel>Rast min</SectionLabel><IndustryInput className="w-full" type="number" min="0" step="5" value={draft.break_minutes} onChange={(event) => update("break_minutes", event.target.value)} /></div>
-      <div><SectionLabel>Antal</SectionLabel><IndustryInput className="w-full" type="number" min="1" step="1" value={draft.count} onChange={(event) => update("count", event.target.value)} /></div>
+      <div><SectionLabel>Rast min</SectionLabel><IndustryInput className="w-full" type="number"
+ inputMode="decimal" min="0" step="5" value={draft.break_minutes} onChange={(event) => update("break_minutes", event.target.value)} /></div>
+      <div><SectionLabel>Antal</SectionLabel><IndustryInput className="w-full" type="number"
+ inputMode="decimal" min="1" step="1" value={draft.count} onChange={(event) => update("count", event.target.value)} /></div>
       <div className="flex gap-2"><IndustryButton variant="primary" corners disabled={!activeStoreId || !draft.name.trim() || save.isPending} onClick={() => void submit()}><Plus className="h-4 w-4" />{editingId ? "Spara" : "Lägg till"}</IndustryButton>{editingId && <IndustryButton variant="ghost" onClick={reset}>Avbryt</IndustryButton>}</div>
     </div>
     <div className="space-y-1">

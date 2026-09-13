@@ -572,6 +572,7 @@ function WeeklyReportForm({
                   </Label>
                   <Input
                     type="number"
+                    inputMode="decimal"
                     className="h-8 text-sm font-mono"
                     value={openingInventory || ""}
                     onChange={(e) => setOpeningInventory(Number(e.target.value) || 0)}
@@ -620,6 +621,7 @@ function WeeklyReportForm({
                       <TableCell className="py-1">
                         <Input
                           type="number"
+                          inputMode="decimal"
                           className="h-7 text-xs text-right font-mono w-20"
                           value={line.quantity || ""}
                           onChange={(e) => updateInvLine(idx, "quantity", Number(e.target.value) || 0)}
@@ -629,6 +631,7 @@ function WeeklyReportForm({
                       <TableCell className="py-1">
                         <Input
                           type="number"
+                          inputMode="decimal"
                           className="h-7 text-xs text-right font-mono w-24"
                           value={line.unit_price || ""}
                           onChange={(e) => updateInvLine(idx, "unit_price", Number(e.target.value) || 0)}
@@ -681,6 +684,7 @@ function WeeklyReportForm({
                   />
                   <Input
                     type="number"
+                    inputMode="decimal"
                     className="h-8 text-xs text-right font-mono flex-1"
                     value={line.amount || ""}
                     onChange={(e) => updateCostLine(idx, "amount", Number(e.target.value) || 0)}
@@ -733,6 +737,7 @@ function WeeklyReportForm({
                         <TableCell className="py-1">
                           <Input
                             type="number"
+                            inputMode="decimal"
                             className="h-7 text-xs text-right font-mono w-20 ml-auto"
                             value={line.quantity || ""}
                             onChange={(e) => {
@@ -745,6 +750,7 @@ function WeeklyReportForm({
                         <TableCell className="py-1">
                           <Input
                             type="number"
+                            inputMode="decimal"
                             className="h-7 text-xs text-right font-mono w-28 ml-auto"
                             value={line.amount || ""}
                             onChange={(e) => {
@@ -757,6 +763,7 @@ function WeeklyReportForm({
                         <TableCell className="py-1">
                           <Input
                             type="number"
+                            inputMode="decimal"
                             className="h-7 text-xs text-right font-mono w-28 ml-auto"
                             value={line.last_year_amount || ""}
                             onChange={(e) => {
@@ -830,6 +837,7 @@ function WeeklyReportForm({
                         <TableCell className="py-1">
                           <Input
                             type="number"
+                            inputMode="decimal"
                             className="h-7 text-xs text-right font-mono w-24 ml-auto"
                             value={line.opening_followers || ""}
                             onChange={(e) => {
@@ -842,6 +850,7 @@ function WeeklyReportForm({
                         <TableCell className="py-1">
                           <Input
                             type="number"
+                            inputMode="decimal"
                             className="h-7 text-xs text-right font-mono w-24 ml-auto"
                             value={line.closing_followers || ""}
                             onChange={(e) => {
@@ -857,6 +866,7 @@ function WeeklyReportForm({
                         <TableCell className="py-1">
                           <Input
                             type="number"
+                            inputMode="decimal"
                             className="h-7 text-xs text-right font-mono w-20 ml-auto"
                             value={line.posts_count || ""}
                             onChange={(e) => {

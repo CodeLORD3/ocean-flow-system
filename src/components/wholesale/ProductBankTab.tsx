@@ -233,7 +233,8 @@ export default function ProductBankTab() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Vikt/styck (KG) <span className="text-muted-foreground">— bara för ST</span></Label>
-                <Input value={formWeight} onChange={e => setFormWeight(e.target.value)} type="number" step="0.001" className="h-8 text-xs" />
+                <Input value={formWeight} onChange={e => setFormWeight(e.target.value)} type="number"
+ inputMode="decimal" step="0.001" className="h-8 text-xs" />
               </div>
             </div>
             {!editId && (

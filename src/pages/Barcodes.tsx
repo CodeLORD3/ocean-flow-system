@@ -394,7 +394,8 @@ export default function BarcodePage() {
               <Label className="text-xs">
                 {scanMode === "inventory" ? "Räknad kvantitet *" : scanMode === "receive" ? "Mottagen kvantitet *" : "Levererad kvantitet *"}
               </Label>
-              <Input value={actionQty} onChange={e => setActionQty(e.target.value)} type="number" className="h-8 text-xs" placeholder={scannedProduct?.unit} />
+              <Input value={actionQty} onChange={e => setActionQty(e.target.value)} type="number"
+ inputMode="decimal" className="h-8 text-xs" placeholder={scannedProduct?.unit} />
             </div>
           </div>
           <DialogFooter>

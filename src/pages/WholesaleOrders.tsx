@@ -788,7 +788,8 @@ export default function WholesaleOrders() {
                             <tr key={line.product_id} className="border-b border-border/30">
                               <td className="py-2 font-medium text-foreground">{line.product_name}</td>
                               <td className="py-2 text-muted-foreground">{line.unit}</td>
-                              <td className="py-2 text-right"><Input type="number" step="0.1" value={line.quantity} onChange={e => updateNewLine(idx, e.target.value)} className="h-7 text-xs w-24 ml-auto text-right" placeholder="0" autoFocus={idx === 0} /></td>
+                              <td className="py-2 text-right"><Input type="number"
+ inputMode="decimal" step="0.1" value={line.quantity} onChange={e => updateNewLine(idx, e.target.value)} className="h-7 text-xs w-24 ml-auto text-right" placeholder="0" autoFocus={idx === 0} /></td>
                               <td className="py-2"><Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeNewLine(idx)}><X className="h-3 w-3" /></Button></td>
                             </tr>
                           ))}
@@ -1455,6 +1456,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                       ) : (
                         <input
                           type="number"
+                          inputMode="decimal"
                           min={0}
                           max={infiniteStock ? undefined : availableStock}
                           defaultValue={qtyDelivered || ""}

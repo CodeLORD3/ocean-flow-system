@@ -432,6 +432,7 @@ function PackedInput({ lineId, orderId, defaultValue, currentDelivered, onStatus
   return (
     <Input
       type="number"
+      inputMode="decimal"
       step="any"
       value={val}
       onChange={(e) => setVal(e.target.value)}
@@ -1055,6 +1056,7 @@ function WholesaleOrderDetail({ order, products, transportSchedules, stores, onC
                     <td className="py-2 text-right">
                       <Input
                         type="number"
+                        inputMode="decimal"
                         step="0.1"
                         value={line.new_qty}
                         onChange={e => setEditLines(prev => prev.map((l, i) => i === idx ? { ...l, new_qty: e.target.value } : l))}
@@ -1115,6 +1117,7 @@ function WholesaleOrderDetail({ order, products, transportSchedules, stores, onC
                       <td className="py-2 text-right">
                         <Input
                           type="number"
+                          inputMode="decimal"
                           step="0.1"
                           value={np.quantity}
                           onChange={e => setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, quantity: e.target.value } : p))}

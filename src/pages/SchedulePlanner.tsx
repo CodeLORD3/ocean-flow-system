@@ -660,6 +660,7 @@ export default function SchedulePlanner() {
                   <Label className="ind-label">Rast (min)</Label>
                   <IndustryInput
                     type="number"
+                    inputMode="decimal"
                     value={editing.break_minutes ?? 0}
                     onChange={(e) => setEditing({ ...editing, break_minutes: Number(e.target.value) })}
                   />

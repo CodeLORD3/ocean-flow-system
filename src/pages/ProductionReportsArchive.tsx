@@ -246,7 +246,8 @@ export default function ProductionReportsArchive() {
         <Input className="h-7 text-xs" value={draft.product_name} onChange={(e) => setDraft({ ...draft, product_name: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1">
-        <Input type="number" className="h-7 text-xs text-right" value={draft.quantity} onChange={(e) => setDraft({ ...draft, quantity: e.target.value })} />
+        <Input type="number"
+ inputMode="decimal" className="h-7 text-xs text-right" value={draft.quantity} onChange={(e) => setDraft({ ...draft, quantity: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1">
         <Input className="h-7 text-xs" value={draft.unit} onChange={(e) => setDraft({ ...draft, unit: e.target.value })} />
@@ -276,7 +277,8 @@ export default function ProductionReportsArchive() {
         <Input className="h-7 text-xs" placeholder="Produkt" value={draft.product_name} onChange={(e) => setDraft({ ...draft, product_name: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1">
-        <Input type="number" className="h-7 text-xs text-right" value={draft.quantity} onChange={(e) => setDraft({ ...draft, quantity: e.target.value })} />
+        <Input type="number"
+ inputMode="decimal" className="h-7 text-xs text-right" value={draft.quantity} onChange={(e) => setDraft({ ...draft, quantity: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1">
         <Input className="h-7 text-xs" value={draft.unit} onChange={(e) => setDraft({ ...draft, unit: e.target.value })} />

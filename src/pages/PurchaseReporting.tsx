@@ -397,6 +397,7 @@ function EditableRow({
         <Input
           ref={qtyInputRef}
           type="number"
+          inputMode="decimal"
           defaultValue={line.quantity}
           onFocus={(e) => e.target.select()}
           onChange={(e) => commitField("quantity", parseFloat(e.target.value) || 0)}
@@ -417,6 +418,7 @@ function EditableRow({
       <TableCell className="py-0.5 px-1 w-[58px]">
         <Input
           type="number"
+          inputMode="decimal"
           defaultValue={line.unit_price ?? 0}
           onFocus={(e) => e.target.select()}
           onChange={(e) => commitField("unit_price", parseFloat(e.target.value) || 0)}
@@ -822,6 +824,7 @@ function ReportSection({
                     <Input
                       id={`fx-${report.id}`}
                       type="number"
+                      inputMode="decimal"
                       step="0.0001"
                       className="h-6 w-[86px] text-[11px] px-1.5 tabular-nums"
                       placeholder={effectiveFx ? effectiveFx.toFixed(4) : ""}
@@ -1775,11 +1778,13 @@ export default function PurchaseReporting() {
                       </div>
                       <div>
                         <Label>Inköpspris</Label>
-                        <Input type="number" value={newProduct.cost_price} onChange={(e) => setNewProduct((p) => ({ ...p, cost_price: e.target.value }))} />
+                        <Input type="number"
+ inputMode="decimal" value={newProduct.cost_price} onChange={(e) => setNewProduct((p) => ({ ...p, cost_price: e.target.value }))} />
                       </div>
                       <div>
                         <Label>Grossistpris</Label>
-                        <Input type="number" value={newProduct.wholesale_price} onChange={(e) => setNewProduct((p) => ({ ...p, wholesale_price: e.target.value }))} />
+                        <Input type="number"
+ inputMode="decimal" value={newProduct.wholesale_price} onChange={(e) => setNewProduct((p) => ({ ...p, wholesale_price: e.target.value }))} />
                       </div>
                     </div>
                   </div>

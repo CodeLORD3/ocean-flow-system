@@ -263,7 +263,8 @@ export default function Stores() {
               </div>
               <div>
                 <Label className="text-xs">Yta (m²)</Label>
-                <Input className="h-8 text-xs" type="number" value={form.sqm} onChange={e => setForm(f => ({ ...f, sqm: Number(e.target.value) }))} />
+                <Input className="h-8 text-xs" type="number"
+ inputMode="decimal" value={form.sqm} onChange={e => setForm(f => ({ ...f, sqm: Number(e.target.value) }))} />
               </div>
             </div>
             <div>

@@ -262,13 +262,15 @@ export default function PurchaseReportsArchive() {
         <Input className="h-7 text-xs" value={draft.product_name} onChange={(e) => setDraft({ ...draft, product_name: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1">
-        <Input type="number" className="h-7 text-xs text-right" value={draft.quantity} onChange={(e) => setDraft({ ...draft, quantity: e.target.value })} />
+        <Input type="number"
+ inputMode="decimal" className="h-7 text-xs text-right" value={draft.quantity} onChange={(e) => setDraft({ ...draft, quantity: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1">
         <Input className="h-7 text-xs" value={draft.unit} onChange={(e) => setDraft({ ...draft, unit: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1">
-        <Input type="number" className="h-7 text-xs text-right" value={draft.unit_price} onChange={(e) => setDraft({ ...draft, unit_price: e.target.value })} />
+        <Input type="number"
+ inputMode="decimal" className="h-7 text-xs text-right" value={draft.unit_price} onChange={(e) => setDraft({ ...draft, unit_price: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1 text-right tabular-nums text-muted-foreground">
         {((Number(draft.quantity) || 0) * (Number(draft.unit_price) || 0)).toLocaleString("sv-SE", { minimumFractionDigits: 2 })}
@@ -298,13 +300,15 @@ export default function PurchaseReportsArchive() {
         <Input className="h-7 text-xs" placeholder="Produkt" value={draft.product_name} onChange={(e) => setDraft({ ...draft, product_name: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1">
-        <Input type="number" className="h-7 text-xs text-right" value={draft.quantity} onChange={(e) => setDraft({ ...draft, quantity: e.target.value })} />
+        <Input type="number"
+ inputMode="decimal" className="h-7 text-xs text-right" value={draft.quantity} onChange={(e) => setDraft({ ...draft, quantity: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1">
         <Input className="h-7 text-xs" value={draft.unit} onChange={(e) => setDraft({ ...draft, unit: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1">
-        <Input type="number" className="h-7 text-xs text-right" value={draft.unit_price} onChange={(e) => setDraft({ ...draft, unit_price: e.target.value })} />
+        <Input type="number"
+ inputMode="decimal" className="h-7 text-xs text-right" value={draft.unit_price} onChange={(e) => setDraft({ ...draft, unit_price: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1 text-right tabular-nums text-muted-foreground">
         {((Number(draft.quantity) || 0) * (Number(draft.unit_price) || 0)).toLocaleString("sv-SE", { minimumFractionDigits: 2 })}

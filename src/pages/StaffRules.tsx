@@ -100,7 +100,8 @@ export default function StaffRules() {
             {rules.map((rule) => (
               <IndustryRow key={rule.id} edge={rule.is_unverified ? "accent-2" : "neutral"} className="flex-wrap">
                 <div className="min-w-[260px] flex-1"><p className="font-medium">{rule.name}</p><p className="ind-muted text-xs">{rule.rule_key} · v{rule.version} · {rule.legal_source ?? rule.agreement_source ?? "Intern regel"}</p></div>
-                <div className="flex items-center gap-2"><IndustryInput className="w-28" type="number" step="0.01" defaultValue={rule.value_numeric ?? ""} onBlur={(e) => updateRule.mutate({ id: rule.id, value: e.target.value === "" ? null : Number(e.target.value) })} /><span className="ind-muted text-sm">{rule.unit ?? ""}</span></div>
+                <div className="flex items-center gap-2"><IndustryInput className="w-28" type="number"
+ inputMode="decimal" step="0.01" defaultValue={rule.value_numeric ?? ""} onBlur={(e) => updateRule.mutate({ id: rule.id, value: e.target.value === "" ? null : Number(e.target.value) })} /><span className="ind-muted text-sm">{rule.unit ?? ""}</span></div>
                 {rule.is_unverified && <StatusLabel tone="progress">Overifierad</StatusLabel>}
               </IndustryRow>
             ))}

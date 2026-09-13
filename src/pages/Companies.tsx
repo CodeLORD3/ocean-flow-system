@@ -308,7 +308,8 @@ export default function Companies() {
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] text-muted-foreground">Founded Year</label>
-                <Input type="number" value={form.founded_year} onChange={e => setForm({ ...form, founded_year: e.target.value })} className="h-8 text-xs" placeholder="e.g. 2018" />
+                <Input type="number"
+ inputMode="decimal" value={form.founded_year} onChange={e => setForm({ ...form, founded_year: e.target.value })} className="h-8 text-xs" placeholder="e.g. 2018" />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] text-muted-foreground">Employee Count</label>

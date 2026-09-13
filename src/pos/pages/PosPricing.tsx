@@ -194,6 +194,7 @@ export default function PosPricing() {
                             <TrendIcon className="h-3 w-3" />
                             <Input
                               type="number"
+                              inputMode="decimal"
                               value={Math.round(editVal)}
                               onChange={(e) => setEdits((p) => ({ ...p, [k]: Number(e.target.value) }))}
                               className="h-7 w-20 text-center px-1 tabular"

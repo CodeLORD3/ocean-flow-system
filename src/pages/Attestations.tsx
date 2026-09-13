@@ -304,6 +304,7 @@ export default function Attestations() {
                     <Label className="ind-label">Timmar</Label>
                     <IndustryInput
                       type="number"
+                      inputMode="decimal"
                       step="0.25"
                       value={adjusted}
                       onChange={(e) => setAdjusted(Number(e.target.value))}

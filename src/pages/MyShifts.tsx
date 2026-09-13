@@ -679,7 +679,8 @@ export default function MyShifts() {
                )}
                <div>
                  <Label className="ind-label">Omfattning (%)</Label>
-                 <IndustryInput type="number" min="1" max="100" step="1" value={absenceDraft.extentPct} onChange={(e) => setAbsenceDraft({ ...absenceDraft, extentPct: e.target.value })} />
+                 <IndustryInput type="number"
+ inputMode="decimal" min="1" max="100" step="1" value={absenceDraft.extentPct} onChange={(e) => setAbsenceDraft({ ...absenceDraft, extentPct: e.target.value })} />
                </div>
                <div>
                  <Label className="ind-label">Beräkningsgrund</Label>

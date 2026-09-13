@@ -1614,6 +1614,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
               <Label className="text-xs">Antal</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 min="0"
                 step="0.1"
                 value={manualQuantity}

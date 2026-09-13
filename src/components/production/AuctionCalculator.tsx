@@ -198,11 +198,13 @@ export function AuctionCalculator() {
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Råvara (kg)</Label>
-              <Input type="number" step="1" value={rawQty} onChange={(e) => setRawQty(e.target.value)} className="h-9 text-xs text-right font-mono tabular-nums" />
+              <Input type="number"
+ inputMode="decimal" step="1" value={rawQty} onChange={(e) => setRawQty(e.target.value)} className="h-9 text-xs text-right font-mono tabular-nums" />
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Utbyte (%)</Label>
-              <Input type="number" step="0.1" value={yieldPct} onChange={(e) => setYieldPct(e.target.value)} className="h-9 text-xs text-right font-mono tabular-nums" />
+              <Input type="number"
+ inputMode="decimal" step="0.1" value={yieldPct} onChange={(e) => setYieldPct(e.target.value)} className="h-9 text-xs text-right font-mono tabular-nums" />
             </div>
             <div className="flex items-end">
               <Button size="sm" variant="outline" className="h-9 w-full text-xs" onClick={build} disabled={!species || yieldNum <= 0}>
@@ -221,6 +223,7 @@ export function AuctionCalculator() {
                   </div>
                   <Input
                     type="number"
+                    inputMode="decimal"
                     step="1"
                     placeholder="kr ink moms"
                     value={r.priceInclVat}
@@ -281,6 +284,7 @@ export function AuctionCalculator() {
               <Label className="text-[11px]">Budpris (kr/kg)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.5"
                 value={bid}
                 onChange={(e) => setBid(e.target.value)}
@@ -337,6 +341,7 @@ export function AuctionCalculator() {
                 <div className="ml-auto flex items-center gap-1">
                   <Input
                     type="number"
+                    inputMode="decimal"
                     step="0.5"
                     placeholder="klubbslag"
                     defaultValue={c.actual_price != null ? String(Number(c.actual_price)) : ""}

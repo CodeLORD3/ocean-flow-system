@@ -178,6 +178,7 @@ function EditableRow({
         <Input
           ref={qtyInputRef}
           type="number"
+          inputMode="decimal"
           defaultValue={line.quantity}
           onFocus={(e) => e.target.select()}
           onChange={(e) => commitField("quantity", parseFloat(e.target.value) || 0)}
@@ -707,8 +708,10 @@ export default function ProductionReporting() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Inköpspris</Label><Input type="number" value={newProduct.cost_price} onChange={(e) => setNewProduct((p) => ({ ...p, cost_price: e.target.value }))} /></div>
-                <div><Label>Grossistpris</Label><Input type="number" value={newProduct.wholesale_price} onChange={(e) => setNewProduct((p) => ({ ...p, wholesale_price: e.target.value }))} /></div>
+                <div><Label>Inköpspris</Label><Input type="number"
+ inputMode="decimal" value={newProduct.cost_price} onChange={(e) => setNewProduct((p) => ({ ...p, cost_price: e.target.value }))} /></div>
+                <div><Label>Grossistpris</Label><Input type="number"
+ inputMode="decimal" value={newProduct.wholesale_price} onChange={(e) => setNewProduct((p) => ({ ...p, wholesale_price: e.target.value }))} /></div>
               </div>
             </div>
             <DialogFooter>

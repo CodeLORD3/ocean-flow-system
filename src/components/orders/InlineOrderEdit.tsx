@@ -399,6 +399,7 @@ export function InlineOrderEdit({
                 <div className="mt-1 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
                   <Input
                     type="number"
+                    inputMode="decimal"
                     step="0.001"
                     inputMode="decimal"
                     className="h-8 font-mono text-xs tabular-nums"
@@ -415,6 +416,7 @@ export function InlineOrderEdit({
                   />
                   <Input
                     type="number"
+                    inputMode="decimal"
                     step="0.01"
                     inputMode="decimal"
                     className="h-8 font-mono text-xs tabular-nums"

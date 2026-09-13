@@ -245,7 +245,8 @@ export default function Pricing() {
               <span className="font-medium text-foreground">{agg!.cost_price.toFixed(2)}</span>
             ) : (
               <Input
-                type="number" value={costVal}
+                type="number"
+                inputMode="decimal" value={costVal}
                 onFocus={(e) => { if (!inlineEdits[p.id]) startInlineEdit(p); e.target.select(); }}
                 onChange={(e) => updateInlineCost(p.id, Number(e.target.value))}
                 onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(p); }}
@@ -261,7 +262,8 @@ export default function Pricing() {
             <span className="font-medium text-foreground">{agg!.wholesale_price.toFixed(2)}</span>
           ) : !isShop ? (
             <Input
-              type="number" value={wholesaleVal}
+              type="number"
+              inputMode="decimal" value={wholesaleVal}
               onFocus={(e) => { if (!inlineEdits[p.id]) startInlineEdit(p); e.target.select(); }}
               onChange={(e) => updateInlineWholesale(p.id, Number(e.target.value))}
               onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(p); }}
@@ -278,7 +280,8 @@ export default function Pricing() {
             <span className="text-muted-foreground">{agg!.retail_suggested.toFixed(2)}</span>
           ) : isShop ? (
             <Input
-              type="number" value={shopRetailVal}
+              type="number"
+              inputMode="decimal" value={shopRetailVal}
               onFocus={(e) => { if (!shopInlineEdits[p.id]) startShopInlineEdit(p); e.target.select(); }}
               onChange={(e) => updateShopRetailPrice(p.id, Number(e.target.value), Number(p.wholesale_price))}
               onKeyDown={(e) => { if (e.key === "Enter") saveShopInlineEdit(p); }}
@@ -298,7 +301,8 @@ export default function Pricing() {
               </span>
             ) : isShop ? (
               <Input
-                type="number" value={shopMarginVal}
+                type="number"
+                inputMode="decimal" value={shopMarginVal}
                 onFocus={(e) => { if (!shopInlineEdits[p.id]) startShopInlineEdit(p); e.target.select(); }}
                 onChange={(e) => updateShopMargin(p.id, Number(e.target.value), Number(p.wholesale_price))}
                 onKeyDown={(e) => { if (e.key === "Enter") saveShopInlineEdit(p); }}
@@ -306,7 +310,8 @@ export default function Pricing() {
               />
             ) : (
               <Input
-                type="number" value={marginVal}
+                type="number"
+                inputMode="decimal" value={marginVal}
                 onFocus={(e) => { if (!inlineEdits[p.id]) startInlineEdit(p); e.target.select(); }}
                 onChange={(e) => updateInlineMargin(p.id, Number(e.target.value))}
                 onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(p); }}
@@ -456,29 +461,34 @@ export default function Pricing() {
               <>
                 <div>
                   <Label className="text-muted-foreground">Grossistpris (kr) — fast</Label>
-                  <Input type="number" value={editProduct?.wholesale_price || 0} readOnly disabled className="bg-muted/50 cursor-not-allowed" />
+                  <Input type="number"
+ inputMode="decimal" value={editProduct?.wholesale_price || 0} readOnly disabled className="bg-muted/50 cursor-not-allowed" />
                 </div>
                 <div>
                   <Label>Försäljningspris (kr)</Label>
-                  <Input type="number" value={editPrices.retail_suggested} onChange={(e) => setEditPrices((p) => ({ ...p, retail_suggested: Number(e.target.value) }))} />
+                  <Input type="number"
+ inputMode="decimal" value={editPrices.retail_suggested} onChange={(e) => setEditPrices((p) => ({ ...p, retail_suggested: Number(e.target.value) }))} />
                 </div>
               </>
             ) : (
               <>
                 <div>
                   <Label>Reservpris (kr)</Label>
-                  <Input type="number" value={editPrices.cost_price} onChange={(e) => {
+                  <Input type="number"
+ inputMode="decimal" value={editPrices.cost_price} onChange={(e) => {
                     const cost = Number(e.target.value);
                     setEditPrices((p) => ({ ...p, cost_price: cost, wholesale_price: Number((cost * 1.35).toFixed(2)) }));
                   }} />
                 </div>
                 <div>
                   <Label>Grossistpris (kr) <span className="text-muted-foreground text-xs">+35% auto</span></Label>
-                  <Input type="number" value={editPrices.wholesale_price} onChange={(e) => setEditPrices((p) => ({ ...p, wholesale_price: Number(e.target.value) }))} />
+                  <Input type="number"
+ inputMode="decimal" value={editPrices.wholesale_price} onChange={(e) => setEditPrices((p) => ({ ...p, wholesale_price: Number(e.target.value) }))} />
                 </div>
                 <div>
                   <Label>Rek. butikspris (kr)</Label>
-                  <Input type="number" value={editPrices.retail_suggested} onChange={(e) => setEditPrices((p) => ({ ...p, retail_suggested: Number(e.target.value) }))} />
+                  <Input type="number"
+ inputMode="decimal" value={editPrices.retail_suggested} onChange={(e) => setEditPrices((p) => ({ ...p, retail_suggested: Number(e.target.value) }))} />
                 </div>
               </>
             )}

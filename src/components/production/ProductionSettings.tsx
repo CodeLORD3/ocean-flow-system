@@ -41,6 +41,7 @@ export function ProductionSettings() {
                   <TableCell className="py-0.5">
                     <Input
                       type="number"
+                      inputMode="decimal"
                       defaultValue={Number(s.surcharge_per_kg)}
                       className="h-7 text-[11px] text-right font-mono tabular-nums"
                       onBlur={(e) => {
@@ -85,6 +86,7 @@ export function ProductionSettings() {
                   <TableCell className="py-0.5">
                     <Input
                       type="number"
+                      inputMode="decimal"
                       step="0.5"
                       defaultValue={Number(m.target_pct)}
                       className="h-7 text-[11px] text-right font-mono tabular-nums"
@@ -123,6 +125,7 @@ export function ProductionSettings() {
                   <TableCell className="py-0.5">
                     <Input
                       type="number"
+                      inputMode="decimal"
                       step="0.5"
                       defaultValue={Number(v.rate)}
                       className="h-7 text-[11px] text-right font-mono tabular-nums"

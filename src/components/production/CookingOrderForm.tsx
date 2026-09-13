@@ -287,6 +287,7 @@ export function CookingOrderForm() {
               <Label className="text-[11px]">Kvantitet råvara (kg)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.1"
                 value={rawQty}
                 onChange={(e) => setRawQty(e.target.value)}
@@ -297,6 +298,7 @@ export function CookingOrderForm() {
               <Label className="text-[11px]">Utvikt kokt (kg)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.1"
                 placeholder={expectedOut ? String(expectedOut) : ""}
                 value={actualOut}

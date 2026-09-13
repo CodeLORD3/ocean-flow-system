@@ -787,6 +787,7 @@ export default function Products() {
               <span className="inline-flex items-center" title="Sluten förpackning (dagar)">
                 <input
                   type="number"
+                  inputMode="decimal"
                   min="1"
                   max="9999"
                   defaultValue={shelfLifeDays || ""}
@@ -812,6 +813,7 @@ export default function Products() {
               <span className="inline-flex items-center" title="Efter öppnad förpackning (dagar)">
                 <input
                   type="number"
+                  inputMode="decimal"
                   min="1"
                   max="9999"
                   defaultValue={shelfLifeOpenDays || ""}
@@ -1397,6 +1399,7 @@ export default function Products() {
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
+                  inputMode="decimal"
                   min="1"
                   max="9999"
                   value={form.shelf_life_days}
@@ -1411,6 +1414,7 @@ export default function Products() {
               <div className="flex items-center gap-2 pt-1">
                 <Input
                   type="number"
+                  inputMode="decimal"
                   min="1"
                   max="9999"
                   value={form.shelf_life_open_days}
@@ -1538,6 +1542,7 @@ export default function Products() {
                       readOnly
                       disabled
                       type="number"
+                      inputMode="decimal"
                       className="h-8 text-xs bg-muted/50 cursor-not-allowed"
                     />
                   </div>
@@ -1548,6 +1553,7 @@ export default function Products() {
                       readOnly
                       disabled
                       type="number"
+                      inputMode="decimal"
                       className="h-8 text-xs bg-muted/50 cursor-not-allowed"
                     />
                   </div>
@@ -1558,6 +1564,7 @@ export default function Products() {
                       readOnly
                       disabled
                       type="number"
+                      inputMode="decimal"
                       className="h-8 text-xs bg-muted/50 cursor-not-allowed"
                     />
                   </div>
@@ -1573,6 +1580,7 @@ export default function Products() {
                       value={form.cost_price}
                       onChange={(e) => setField("cost_price", e.target.value)}
                       type="number"
+                      inputMode="decimal"
                       step="0.01"
                       className="h-8 text-xs"
                     />
@@ -1585,6 +1593,7 @@ export default function Products() {
                       value={form.wholesale_price}
                       onChange={(e) => setField("wholesale_price", e.target.value)}
                       type="number"
+                      inputMode="decimal"
                       step="0.01"
                       className="h-8 text-xs bg-muted/50"
                     />
@@ -1595,6 +1604,7 @@ export default function Products() {
                       value={form.retail_suggested}
                       onChange={(e) => setField("retail_suggested", e.target.value)}
                       type="number"
+                      inputMode="decimal"
                       step="0.01"
                       className="h-8 text-xs"
                     />
@@ -1623,6 +1633,7 @@ export default function Products() {
                   value={form.weight_per_piece}
                   onChange={(e) => setField("weight_per_piece", e.target.value)}
                   type="number"
+                  inputMode="decimal"
                   step="0.001"
                   className="h-8 text-xs"
                 />
@@ -1713,6 +1724,7 @@ export default function Products() {
                   value={subForm.cost_price}
                   onChange={(e) => setSubForm((f) => ({ ...f, cost_price: e.target.value }))}
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   className="h-8 text-xs"
                 />
@@ -1723,6 +1735,7 @@ export default function Products() {
                   value={subForm.wholesale_price}
                   onChange={(e) => setSubForm((f) => ({ ...f, wholesale_price: e.target.value }))}
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   className="h-8 text-xs"
                 />
@@ -1733,6 +1746,7 @@ export default function Products() {
                   value={subForm.retail_suggested}
                   onChange={(e) => setSubForm((f) => ({ ...f, retail_suggested: e.target.value }))}
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   className="h-8 text-xs"
                 />
@@ -1743,6 +1757,7 @@ export default function Products() {
                   value={subForm.weight_per_piece}
                   onChange={(e) => setSubForm((f) => ({ ...f, weight_per_piece: e.target.value }))}
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   className="h-8 text-xs"
                 />

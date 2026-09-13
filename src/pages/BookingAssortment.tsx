@@ -245,6 +245,7 @@ export default function BookingAssortment() {
                 <Input
                   className="h-9 font-mono tabular-nums"
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   value={form.booking_circa_price}
                   onChange={(e) => setForm((f) => ({ ...f, booking_circa_price: e.target.value }))}
@@ -255,6 +256,7 @@ export default function BookingAssortment() {
                 <Input
                   className="h-9 font-mono tabular-nums"
                   type="number"
+                  inputMode="decimal"
                   step="0.1"
                   placeholder={edit ? String(defaultStep(edit)) : ""}
                   value={form.booking_step}
@@ -266,6 +268,7 @@ export default function BookingAssortment() {
                 <Input
                   className="h-9 font-mono tabular-nums"
                   type="number"
+                  inputMode="decimal"
                   step="1"
                   placeholder="1"
                   value={form.booking_lead_days}
@@ -278,6 +281,7 @@ export default function BookingAssortment() {
               <Input
                 className="h-9 font-mono tabular-nums"
                 type="number"
+                inputMode="decimal"
                 step="0.5"
                 placeholder="tomt = av"
                 value={form.booking_volume_alarm}

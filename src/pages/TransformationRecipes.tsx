@@ -102,6 +102,7 @@ export default function TransformationRecipes() {
             <Label className="text-[11px]">Utbyte (%)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               step="0.1"
               value={yieldPct}
               onChange={(e) => setYieldPct(e.target.value)}
@@ -112,6 +113,7 @@ export default function TransformationRecipes() {
             <Label className="text-[11px]">Påslag (kr/kg)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               step="1"
               value={surcharge}
               onChange={(e) => setSurcharge(e.target.value)}

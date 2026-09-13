@@ -107,6 +107,7 @@ export function YieldRegistry() {
                       <TableCell className="py-0.5">
                         <Input
                           type="number"
+                          inputMode="decimal"
                           step="0.1"
                           defaultValue={Number(y.yield_pct)}
                           className="h-7 text-[11px] text-right font-mono tabular-nums"
@@ -191,6 +192,7 @@ export function YieldRegistry() {
             </Select>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="utbyte %"
               value={newRow.yield_pct}
               onChange={(e) => setNewRow({ ...newRow, yield_pct: e.target.value })}
@@ -248,6 +250,7 @@ export function YieldRegistry() {
                   <TableCell className="py-0.5">
                     <Input
                       type="number"
+                      inputMode="decimal"
                       step="0.1"
                       defaultValue={Number(s.pct_of_fillet)}
                       className="h-7 text-[11px] text-right font-mono tabular-nums"
@@ -261,6 +264,7 @@ export function YieldRegistry() {
                   <TableCell className="py-0.5">
                     <Input
                       type="number"
+                      inputMode="decimal"
                       step="0.05"
                       defaultValue={Number(s.margin_weight)}
                       className="h-7 text-[11px] text-right font-mono tabular-nums"
@@ -294,6 +298,7 @@ export function YieldRegistry() {
             </Select>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="% av filén"
               value={newSplit.pct_of_fillet}
               onChange={(e) => setNewSplit({ ...newSplit, pct_of_fillet: e.target.value })}
@@ -301,6 +306,7 @@ export function YieldRegistry() {
             />
             <Input
               type="number"
+              inputMode="decimal"
               step="0.05"
               placeholder="marginalvikt"
               value={newSplit.margin_weight}
