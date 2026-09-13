@@ -71,7 +71,7 @@ export function BugReportButton() {
         <Button
           variant="outline"
           size="sm"
-          className="fixed bottom-4 right-4 z-50 h-9 gap-1.5 px-3 text-[11px] shadow-lg bg-card"
+          className="fixed bottom-[4.5rem] right-3 sm:bottom-4 sm:right-4 z-50 h-9 gap-1.5 px-3 text-[11px] shadow-lg bg-card tap-compact"
         >
           <Bug className="h-3.5 w-3.5" />
           Rapportera fel
