@@ -24,12 +24,16 @@ import { useStores } from "@/hooks/useStores";
 import { useProducts } from "@/hooks/useProducts";
 import { useStorageLocations, useAllStockByLocation } from "@/hooks/useStorageLocations";
 import { useSite } from "@/contexts/SiteContext";
+import { laggTillSvenskaDagar } from "@/lib/swedishTime";
 import {
   generateInventoryCountListPdf,
   type CountListProduct,
 } from "@/lib/inventoryCountListPdf";
 
-type Quality = "1-7" | "7+";
+
+type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7";
+
+const QUALITY_DAYS: Quality[] = ["1", "2", "3", "4", "5", "6", "7"];
 
 const todayStockholm = () =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
@@ -44,12 +48,21 @@ const unitOf = (unit?: string | null) => {
 const fmtQty = (n: number, unit: string) =>
   `${n.toLocaleString("sv-SE", { maximumFractionDigits: unit === "st" ? 0 : 1 })} ${unit}`;
 
-const qualityClass = (q?: Quality | null) =>
-  q === "7+"
-    ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/30"
-    : q === "1-7"
-      ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
-      : "bg-muted text-muted-foreground border-border";
+/** Håller tills: inventeringsdatum + valt antal dagar. */
+const holdsUntil = (countDate: string, days: string | null) => {
+  const n = Number(days);
+  if (!countDate || !Number.isFinite(n) || n <= 0) return null;
+  return laggTillSvenskaDagar(countDate, n);
+};
+
+const qualityClass = (q?: string | null) => {
+  const n = Number(q);
+  if (!Number.isFinite(n) || n <= 0) return "bg-muted text-muted-foreground border-border";
+  if (n <= 2) return "bg-destructive/15 text-destructive border-destructive/30";
+  if (n <= 4) return "bg-amber-500/15 text-amber-700 border-amber-500/30";
+  return "bg-emerald-500/15 text-emerald-700 border-emerald-500/30";
+};
+
 
 type Row = {
   key: string;
