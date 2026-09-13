@@ -80,6 +80,34 @@ export async function moveStockToTransport(orderId: string) {
   // med ett samlat meddelande istället för att uppfinna vara.
   const shortages: { productId: string; missing: number }[] = [];
 
+  // Täckningskontroll före första rörelsen: antingen går hela ordern ut,
+  // eller ingenting — aldrig en halv bokförd leverans.
+  if (gfLocId && !(await isInfiniteStock())) {
+    const needed = new Map<string, number>();
+    for (const line of order.shop_order_lines) {
+      const qty = Number(line.quantity_delivered || line.quantity_ordered) || 0;
+      if (qty <= 0 || !line.product_id) continue;
+      needed.set(line.product_id, (needed.get(line.product_id) || 0) + qty);
+    }
+    if (needed.size) {
+      const { data: available } = await supabase
+        .from("product_stock_locations")
+        .select("product_id, quantity")
+        .eq("location_id", gfLocId)
+        .in("product_id", [...needed.keys()]);
+      const have = new Map(
+        (available || []).map((r: any) => [r.product_id as string, Number(r.quantity) || 0]),
+      );
+      for (const [productId, qty] of needed) {
+        const missing = qty - (have.get(productId) || 0);
+        if (missing > 0.001) shortages.push({ productId, missing });
+      }
+      if (shortages.length) await throwShortage(shortages);
+    }
+  }
+
+
+
 
   for (const line of order.shop_order_lines) {
     let remaining = Number(line.quantity_delivered || line.quantity_ordered) || 0;
