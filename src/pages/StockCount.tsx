@@ -65,6 +65,20 @@ const dayLabel = (iso: string) => {
   return `${wd} ${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
 };
 
+/** "13/9 kl 10:24" — svensk tid för låsningstidpunkt. */
+const stampLabel = (iso?: string | null) => {
+  if (!iso) return "";
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Stockholm",
+    day: "numeric",
+    month: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+    .format(new Date(iso))
+    .replace(",", " kl");
+};
+
 /** Veckodag med versal, t.ex. "Fredag". */
 const weekdayLong = (iso: string) => {
   if (!iso) return "";
@@ -170,20 +184,60 @@ export default function StockCount() {
     return m;
   }, [linesQuery.data]);
 
-  const createSession = useCallback(async () => {
-    if (!effectiveStoreId) return;
-    const { error } = await supabase.from("stock_count_sessions").insert({
-      store_id: effectiveStoreId,
-      count_date: date,
-      started_at: new Date().toISOString(),
-    } as any);
-    if (error) {
-      toast({ title: "Kunde inte skapa inventeringen", description: error.message, variant: "destructive" });
-      return;
-    }
-    await sessionQuery.refetch();
-    toast({ title: "Inventering påbörjad", description: `${storeName} — ${date}` });
-  }, [effectiveStoreId, date, sessionQuery, storeName, toast]);
+  // ── Historik: alla låsta inventeringar för butiken ─────────────────────────
+  const historyQuery = useQuery({
+    queryKey: ["stock_count_history", effectiveStoreId],
+    enabled: !!effectiveStoreId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stock_count_sessions")
+        .select("id,count_date,status,locked_at,finished_at,stock_count_lines(count)")
+        .eq("store_id", effectiveStoreId)
+        .eq("status", "locked")
+        .order("count_date", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const createSessionFor = useCallback(
+    async (targetDate: string) => {
+      if (!effectiveStoreId) return;
+      const { data: existing } = await supabase
+        .from("stock_count_sessions")
+        .select("id,status")
+        .eq("store_id", effectiveStoreId)
+        .eq("count_date", targetDate)
+        .maybeSingle();
+      setDate(targetDate);
+      if (existing) {
+        await sessionQuery.refetch();
+        toast({
+          title:
+            (existing as any).status === "locked"
+              ? "Dagens inventering är redan låst"
+              : "Inventeringen för datumet är redan påbörjad",
+          description: `${storeName} — ${targetDate}`,
+        });
+        return;
+      }
+      const { error } = await supabase.from("stock_count_sessions").insert({
+        store_id: effectiveStoreId,
+        count_date: targetDate,
+        started_at: new Date().toISOString(),
+      } as any);
+      if (error) {
+        toast({ title: "Kunde inte skapa inventeringen", description: error.message, variant: "destructive" });
+        return;
+      }
+      await sessionQuery.refetch();
+      toast({ title: "Ny inventering påbörjad", description: `${storeName} — ${targetDate}` });
+    },
+    [effectiveStoreId, sessionQuery, storeName, toast],
+  );
+
+  const createSession = useCallback(() => createSessionFor(date), [createSessionFor, date]);
 
   // ── Rader ──────────────────────────────────────────────────────────────────
   const productsById = useMemo(() => {
@@ -362,6 +416,8 @@ export default function StockCount() {
     await sessionQuery.refetch();
     qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
     qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
+    qc.invalidateQueries({ queryKey: ["stock_count_history", effectiveStoreId] });
+    historyQuery.refetch();
     toast({
       title: "Inventeringen är låst",
       description: failed
@@ -369,7 +425,7 @@ export default function StockCount() {
         : `${written} rader bokfördes i lagret.`,
       variant: failed ? "destructive" : undefined,
     });
-  }, [session?.id, sessionQuery, toast, linesQuery.data, date, storeName, qc]);
+  }, [session?.id, sessionQuery, toast, linesQuery.data, date, storeName, qc, effectiveStoreId, historyQuery]);
 
   // ── Export / print ─────────────────────────────────────────────────────────
   const exportCsv = useCallback(() => {
@@ -446,6 +502,15 @@ export default function StockCount() {
           {!session && effectiveStoreId && (
             <Button size="sm" className="gap-1.5 text-xs h-9 sm:h-8 font-semibold" onClick={createSession}>
               <Plus className="h-3.5 w-3.5" /> Påbörja inventering
+            </Button>
+          )}
+          {locked && effectiveStoreId && (
+            <Button
+              size="sm"
+              className="gap-1.5 text-xs h-9 sm:h-8 font-semibold"
+              onClick={() => createSessionFor(todayStockholm())}
+            >
+              <Plus className="h-3.5 w-3.5" /> Ny inventering
             </Button>
           )}
           <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={openPrintDialog}>
@@ -573,6 +638,61 @@ export default function StockCount() {
           <RefreshCw className="h-3 w-3" /> Uppdatera
         </Button>
       </div>
+
+      {/* Inventeringshistorik — låsta tillfällen */}
+      <Card>
+        <div className="flex items-center justify-between gap-2 border-b bg-muted/50 px-2 py-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Inventeringshistorik
+          </span>
+          <span className="text-[10px] text-muted-foreground">
+            {(historyQuery.data ?? []).length} låsta inventeringar
+          </span>
+        </div>
+        <CardContent className="p-1">
+          {!(historyQuery.data ?? []).length ? (
+            <p className="px-1 py-2 text-[11px] text-muted-foreground">
+              Ingen inventering är låst ännu för {storeName || "butiken"}.
+            </p>
+          ) : (
+            <div className="divide-y">
+              {(historyQuery.data ?? []).map((h: any) => {
+                const lineCount = h.stock_count_lines?.[0]?.count ?? 0;
+                const isCurrent = h.count_date === date;
+                return (
+                  <button
+                    key={h.id}
+                    type="button"
+                    onClick={() => setDate(h.count_date)}
+                    className={`flex w-full items-center justify-between gap-2 px-1.5 py-1 text-left hover:bg-muted/50 ${
+                      isCurrent ? "bg-primary/5" : ""
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      <span className="truncate text-[11px] font-medium">
+                        {dayLabel(h.count_date)} {h.count_date}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className="h-4 bg-muted text-[9px] text-muted-foreground"
+                      >
+                        Låst
+                      </Badge>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
+                      <span>{lineCount} rader</span>
+                      {h.locked_at && <span>låst {stampLabel(h.locked_at)}</span>}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
 
       {/* Lista */}
       {loading ? (
