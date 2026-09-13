@@ -27,7 +27,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { laggTillSvenskaDagar } from "@/lib/swedishTime";
 import { type CountListProduct } from "@/lib/inventoryCountListPdf";
 import CountListPrintDialog from "@/components/inventory/CountListPrintDialog";
-import { setBalance } from "@/lib/stockLedger";
+import { setBalance, setExpiryDate } from "@/lib/stockLedger";
 
 
 type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "7+";
