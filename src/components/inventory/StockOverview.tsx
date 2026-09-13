@@ -280,7 +280,7 @@ export default function StockOverview({
   }, [pageRows]);
 
   const maxKg = Math.max(1, ...pageRows.map((g) => g.totalKg));
-  const rowH = dense ? "h-9" : "h-[52px]";
+  const rowH = dense ? "h-7" : "h-9";
 
   const toggleExpand = (id: string) =>
     setExpanded((prev) => {
