@@ -410,6 +410,20 @@ export default function StockCount() {
     [session?.id, locked, qc, toast, date],
   );
 
+  /** Ej räknade rader med saldo nollas i ett svep — inget lämnas tyst. */
+  const zeroSkippedRows = useCallback(async () => {
+    if (!session?.id || locked || !lockSummary.skipped.length) return;
+    for (const r of lockSummary.skipped) {
+      await saveLine(r, { counted_qty: 0, comment: "Nollad vid låsning — varan var slut" });
+    }
+    toast({
+      title: "Ej räknade rader nollade",
+      description: `${lockSummary.skipped.length} rader satta till 0.`,
+    });
+  }, [session?.id, locked, lockSummary.skipped, saveLine, toast]);
+
+
+
   const categoryDone: Record<string, string> = (session?.category_done as any) ?? {};
 
   const toggleCategoryDone = useCallback(
