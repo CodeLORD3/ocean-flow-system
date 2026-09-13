@@ -159,6 +159,14 @@ export default function StockOverview({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dense, setDense] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  /** Hopfällda kategorier i tabellen */
+  const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
+  const toggleCat = (cat: string) =>
+    setCollapsedCats((prev) => {
+      const next = new Set(prev);
+      next.has(cat) ? next.delete(cat) : next.add(cat);
+      return next;
+    });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(30);
 
