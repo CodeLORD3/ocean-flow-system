@@ -1013,6 +1013,31 @@ export default function Inventory() {
   }, [invLines]);
 
   // ── Render helpers ───────────────────────────────────────────────────────
+  /** Kollapsade kategorier per lagerplats, nyckel "locId::kategori". */
+  const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
+  const toggleCat = (locId: string, cat: string) =>
+    setCollapsedCats((prev) => {
+      const next = new Set(prev);
+      const key = `${locId}::${cat}`;
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+
+  /** Produkter grupperade per kategori (kategori → namn A–Ö). */
+  const groupItemsByCategory = (items: any[]) => {
+    const groups: Record<string, any[]> = {};
+    items.forEach((s) => {
+      const cat = s.products?.category || "Övrigt";
+      (groups[cat] ||= []).push(s);
+    });
+    return Object.entries(groups)
+      .sort(([a], [b]) => a.localeCompare(b, "sv"))
+      .map(([cat, list]) => [
+        cat,
+        [...list].sort((a, b) => String(a.products?.name ?? "").localeCompare(String(b.products?.name ?? ""), "sv")),
+      ] as [string, any[]]);
+  };
+
   const renderSelectionActions = (locId: string) => (
     <div className="flex items-center gap-1 flex-wrap sm:mr-2">
       <Badge variant="outline" className="text-[10px] h-5">
@@ -1071,171 +1096,211 @@ export default function Inventory() {
     </div>
   );
 
-  // ── Main location table — now with expiry date + FIFO ───────────────────
-  const renderLocationTable = (loc: any) => (
-    <div className="border-t border-border/50">
-      {loc.items.length === 0 ? (
-        <div className="px-2 py-2 text-center text-xs text-muted-foreground">Tomt lager</div>
-      ) : (
-        <>
-          {/* Mobile: card list */}
-          <div className="sm:hidden divide-y divide-border/30">
-            {loc.items.map((s: any) => {
-              const isRawLager = loc.location_type === "butik";
-              const unitPrice = isRawLager
-                ? Number(s.products?.wholesale_price) || 0
-                : Number(s.unit_cost) || 0;
-              const value = Number(s.quantity) * unitPrice;
-              const isChecked = getSelectedForLocation(loc.id).has(s.id);
-              const freshness = getFreshnessInfo(s.expiry_date);
-              const fifoIssue = hasFifoIssue(s, loc.items);
+  /** En produktrad (mobil) i lagerlistan. */
+  const renderMobileStockRow = (loc: any, s: any) => {
+    const isRawLager = loc.location_type === "butik";
+    const unitPrice = isRawLager ? Number(s.products?.wholesale_price) || 0 : Number(s.unit_cost) || 0;
+    const value = Number(s.quantity) * unitPrice;
+    const isChecked = getSelectedForLocation(loc.id).has(s.id);
+    const freshness = getFreshnessInfo(s.expiry_date);
+    const fifoIssue = hasFifoIssue(s, loc.items);
 
-              return (
-                <div
-                  key={s.id}
-                  className={`flex items-start gap-2 px-2 py-1 ${isChecked ? "bg-primary/5" : freshness?.rowClass || ""}`}
-                  onClick={() => toggleItemSelection(loc.id, s.id)}
-                >
-                  <Checkbox
-                    checked={isChecked}
-                    onCheckedChange={() => toggleItemSelection(loc.id, s.id)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="mt-0.5"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                          <span className="truncate">{s.products?.name}</span>
-                          {fifoIssue && (
-                            <span title="FIFO-varning: äldre batch finns på annat lagerställe">
-                              <AlertCircle className="h-3 w-3 text-amber-500 shrink-0" />
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground font-mono truncate">
-                          {s.products?.sku} · {s.products?.category}
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-sm font-semibold text-foreground whitespace-nowrap">
-                          {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
-                        </div>
-                        {showCosts && (
-                          <div className="text-[10px] text-muted-foreground whitespace-nowrap">{fmt(value)}</div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="mt-1 flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground">
-                      {s.arrival_date && (
-                        <span>Ank: {format(parseISO(s.arrival_date), "d MMM", { locale: sv })}</span>
-                      )}
-                      {s.expiry_date && (
-                        <span>B.före: {format(parseISO(s.expiry_date), "d MMM", { locale: sv })}</span>
-                      )}
-                      {freshness && (
-                        <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
-                          {freshness.isExpired ? (
-                            <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
-                          ) : (
-                            <Clock className="h-2.5 w-2.5 mr-0.5" />
-                          )}
-                          {freshness.label}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+    return (
+      <div
+        key={s.id}
+        className={`flex items-start gap-2 px-2 py-1 ${isChecked ? "bg-primary/5" : freshness?.rowClass || ""}`}
+        onClick={() => toggleItemSelection(loc.id, s.id)}
+      >
+        <Checkbox
+          checked={isChecked}
+          onCheckedChange={() => toggleItemSelection(loc.id, s.id)}
+          onClick={(e) => e.stopPropagation()}
+          className="mt-0.5"
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                <span className="truncate">{s.products?.name}</span>
+                {fifoIssue && (
+                  <span title="FIFO-varning: äldre batch finns på annat lagerställe">
+                    <AlertCircle className="h-3 w-3 text-amber-500 shrink-0" />
+                  </span>
+                )}
+              </div>
+              <div className="text-[10px] text-muted-foreground font-mono truncate">{s.products?.sku}</div>
+            </div>
+            <div className="text-right shrink-0">
+              <div className="text-xs font-semibold text-foreground whitespace-nowrap">
+                {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
+              </div>
+              {showCosts && <div className="text-[10px] text-muted-foreground whitespace-nowrap">{fmt(value)}</div>}
+            </div>
           </div>
+          <div className="mt-0.5 flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground">
+            {s.arrival_date && <span>Ank: {format(parseISO(s.arrival_date), "d MMM", { locale: sv })}</span>}
+            {s.expiry_date && <span>B.före: {format(parseISO(s.expiry_date), "d MMM", { locale: sv })}</span>}
+            {freshness && (
+              <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
+                {freshness.isExpired ? (
+                  <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                ) : (
+                  <Clock className="h-2.5 w-2.5 mr-0.5" />
+                )}
+                {freshness.label}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
-          {/* Desktop: full table */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-[10px] min-w-[640px]">
-              <thead>
-                <tr className="bg-muted/20 h-6">
-                  <th className="px-2 py-0 w-6"></th>
-                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
-                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
-                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Kat.</th>
-                  <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Antal</th>
-                  {showCosts && (
-                    <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Värde</th>
-                  )}
-                  <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ank.</th>
-                  <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">B.före</th>
-                  <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Färskh.</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loc.items.map((s: any, idx: number) => {
-                  const isRawLager = loc.location_type === "butik";
-                  const unitPrice = isRawLager
-                    ? Number(s.products?.wholesale_price) || 0
-                    : Number(s.unit_cost) || 0;
-                  const value = Number(s.quantity) * unitPrice;
-                  const isChecked = getSelectedForLocation(loc.id).has(s.id);
-                  const freshness = getFreshnessInfo(s.expiry_date);
-                  const fifoIssue = hasFifoIssue(s, loc.items);
-                  const zebra = idx % 2 === 1 ? "bg-muted/30" : "";
+  /** En produktrad (desktop) i lagerlistan. */
+  const renderDesktopStockRow = (loc: any, s: any, idx: number) => {
+    const isRawLager = loc.location_type === "butik";
+    const unitPrice = isRawLager ? Number(s.products?.wholesale_price) || 0 : Number(s.unit_cost) || 0;
+    const value = Number(s.quantity) * unitPrice;
+    const isChecked = getSelectedForLocation(loc.id).has(s.id);
+    const freshness = getFreshnessInfo(s.expiry_date);
+    const fifoIssue = hasFifoIssue(s, loc.items);
+    const zebra = idx % 2 === 1 ? "bg-muted/30" : "";
 
-                  return (
-                    <tr
-                      key={s.id}
-                      className={`border-b border-border/30 last:border-0 hover:bg-primary/20 transition-colors h-6 ${isChecked ? "bg-primary/5" : freshness?.rowClass || zebra}`}
+    return (
+      <tr
+        key={s.id}
+        className={`border-b border-border/30 last:border-0 hover:bg-primary/20 transition-colors h-5 ${isChecked ? "bg-primary/5" : freshness?.rowClass || zebra}`}
+      >
+        <td className="px-1.5 py-0 text-center">
+          <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
+        </td>
+        <td className="px-1.5 py-0 font-medium text-foreground">
+          <div className="flex items-center gap-1.5">
+            {s.products?.name}
+            {fifoIssue && (
+              <span title="FIFO-varning: äldre batch finns på annat lagerställe">
+                <AlertCircle className="h-3 w-3 text-amber-500" />
+              </span>
+            )}
+          </div>
+        </td>
+        <td className="px-1.5 py-0 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
+        <td className="px-1.5 py-0 text-right font-medium text-foreground">
+          {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
+        </td>
+        {showCosts && <td className="px-1.5 py-0 text-right text-muted-foreground">{fmt(value)}</td>}
+        <td className="px-1.5 py-0 text-center text-[10px] text-muted-foreground">
+          {s.arrival_date ? format(parseISO(s.arrival_date), "d MMM", { locale: sv }) : "–"}
+        </td>
+        <td className="px-1.5 py-0 text-center text-[10px] text-muted-foreground">
+          {s.expiry_date ? format(parseISO(s.expiry_date), "d MMM", { locale: sv }) : "–"}
+        </td>
+        <td className="px-1.5 py-0 text-center">
+          {freshness ? (
+            <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
+              {freshness.isExpired ? (
+                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+              ) : (
+                <Clock className="h-2.5 w-2.5 mr-0.5" />
+              )}
+              {freshness.label}
+            </Badge>
+          ) : (
+            <span className="text-[10px] text-muted-foreground/40">–</span>
+          )}
+        </td>
+      </tr>
+    );
+  };
+
+  // ── Main location table — kategorigrupperad, kollapsbar, expiry + FIFO ──
+  const renderLocationTable = (loc: any) => {
+    const cats = groupItemsByCategory(loc.items ?? []);
+    const colCount = showCosts ? 8 : 7;
+
+    return (
+      <div className="border-t border-border/50">
+        {loc.items.length === 0 ? (
+          <div className="px-2 py-1.5 text-center text-[11px] text-muted-foreground">Tomt lager</div>
+        ) : (
+          <>
+            {/* Mobile: kategorier med kortlista */}
+            <div className="sm:hidden">
+              {cats.map(([cat, list]) => {
+                const isCollapsed = collapsedCats.has(`${loc.id}::${cat}`);
+                return (
+                  <div key={cat} className="border-b border-border/30 last:border-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleCat(loc.id, cat)}
+                      className="w-full flex items-center gap-1.5 px-2 py-1 bg-muted/30 text-left"
                     >
-                      <td className="px-2 py-0 text-center">
-                        <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
-                      </td>
-                      <td className="px-2 py-0 font-medium text-foreground">
-                        <div className="flex items-center gap-1.5">
-                          {s.products?.name}
-                          {fifoIssue && (
-                            <span title="FIFO-varning: äldre batch finns på annat lagerställe">
-                              <AlertCircle className="h-3 w-3 text-amber-500" />
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-2 py-0 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
-                      <td className="px-2 py-0 text-muted-foreground">{s.products?.category}</td>
-                      <td className="px-2 py-0 text-right font-medium text-foreground">
-                        {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
-                      </td>
-                      {showCosts && (
-                        <td className="px-2 py-0 text-right text-muted-foreground">{fmt(value)}</td>
+                      {isCollapsed ? (
+                        <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                      ) : (
+                        <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
                       )}
-                      <td className="px-2 py-0 text-center text-[10px] text-muted-foreground">
-                        {s.arrival_date ? format(parseISO(s.arrival_date), "d MMM", { locale: sv }) : "–"}
-                      </td>
-                      <td className="px-2 py-0 text-center text-[10px] text-muted-foreground">
-                        {s.expiry_date ? format(parseISO(s.expiry_date), "d MMM", { locale: sv }) : "–"}
-                      </td>
-                      <td className="px-2 py-0 text-center">
-                        {freshness ? (
-                          <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
-                            {freshness.isExpired ? (
-                              <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                      <span className="text-[11px] font-semibold text-foreground truncate">{cat}</span>
+                      <span className="text-[10px] text-muted-foreground ml-auto">{list.length}</span>
+                    </button>
+                    {!isCollapsed && (
+                      <div className="divide-y divide-border/30">
+                        {list.map((s) => renderMobileStockRow(loc, s))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop: tabell med kategorirubriker */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-[10px] min-w-[560px]">
+                <thead>
+                  <tr className="bg-muted/20 h-5">
+                    <th className="px-1.5 py-0 w-6"></th>
+                    <th className="px-1.5 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
+                    <th className="px-1.5 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
+                    <th className="px-1.5 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Antal</th>
+                    {showCosts && (
+                      <th className="px-1.5 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Värde</th>
+                    )}
+                    <th className="px-1.5 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ank.</th>
+                    <th className="px-1.5 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">B.före</th>
+                    <th className="px-1.5 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Färskh.</th>
+                  </tr>
+                </thead>
+                {cats.map(([cat, list]) => {
+                  const isCollapsed = collapsedCats.has(`${loc.id}::${cat}`);
+                  return (
+                    <tbody key={cat}>
+                      <tr
+                        className="bg-muted/40 cursor-pointer hover:bg-muted/60 h-5"
+                        onClick={() => toggleCat(loc.id, cat)}
+                      >
+                        <td colSpan={colCount} className="px-1.5 py-0">
+                          <div className="flex items-center gap-1.5">
+                            {isCollapsed ? (
+                              <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
                             ) : (
-                              <Clock className="h-2.5 w-2.5 mr-0.5" />
+                              <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
                             )}
-                            {freshness.label}
-                          </Badge>
-                        ) : (
-                          <span className="text-[10px] text-muted-foreground/40">–</span>
-                        )}
-                      </td>
-                    </tr>
+                            <span className="text-[10px] font-semibold text-foreground">{cat}</span>
+                            <span className="text-[10px] text-muted-foreground">({list.length})</span>
+                          </div>
+                        </td>
+                      </tr>
+                      {!isCollapsed && list.map((s, idx) => renderDesktopStockRow(loc, s, idx))}
+                    </tbody>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-    </div>
-  );
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
 
   /** Knapp längst till höger i varje lager-bar: öppnar excel-liknande inrapportering */
   const renderReportBtn = (scope: StockCountScope) => (
