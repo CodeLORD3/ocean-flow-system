@@ -98,7 +98,7 @@ export default function StockCount() {
   const [category, setCategory] = useState<string>("all");
   const [onlyUncounted, setOnlyUncounted] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
+  const [printOpen, setPrintOpen] = useState(false);
 
   const storeName =
     (stores as any[]).find((s: any) => s.id === effectiveStoreId)?.name || activeStoreName || "";
