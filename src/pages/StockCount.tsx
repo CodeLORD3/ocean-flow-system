@@ -576,11 +576,10 @@ export default function StockCount() {
                         {prodRows.map((r) => {
                           const line = linesByKey.get(r.key);
                           const quality = (line?.quality ?? "") as string;
-                          const until = holdsUntil(date, quality || null);
                           return (
                             <div
                               key={r.key}
-                              className="grid grid-cols-2 sm:grid-cols-[minmax(0,1fr)_96px_170px_minmax(0,1fr)] gap-1.5 items-center"
+                              className="grid grid-cols-2 sm:grid-cols-[minmax(0,1fr)_96px_150px_minmax(0,1fr)] gap-1.5 items-center"
                             >
                               <div className="text-[11px] text-muted-foreground truncate pl-7">
                                 {r.locationName}
