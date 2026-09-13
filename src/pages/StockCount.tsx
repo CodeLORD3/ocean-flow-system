@@ -420,6 +420,18 @@ export default function StockCount() {
       } catch {
         failed += 1;
       }
+
+      // Bäst före från vald hållbarhet skrivs till lagerplatsen (endast metadata, ej saldo).
+      if (l.quality) {
+        const until = holdsUntil(date, String(l.quality));
+        if (until) {
+          await supabase
+            .from("product_stock_locations")
+            .update({ expiry_date: until } as any)
+            .eq("product_id", l.product_id)
+            .eq("location_id", l.location_id);
+        }
+      }
     }
 
     const { error } = await supabase
