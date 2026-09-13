@@ -114,6 +114,7 @@ type Row = {
   imageUrl: string | null;
   locationName: string;
   systemQty: number;
+  costPrice: number;
 };
 
 /** FAS 2 — Digital inventering. Ett tillfälle per butik + datum, status öppen/låst. */
@@ -297,6 +298,7 @@ export default function StockCount() {
         imageUrl: p.image_url ?? null,
         locationName: locIds.get(s.location_id) || "Lager",
         systemQty: Number(s.quantity) || 0,
+        costPrice: Number(p.cost_price) || 0,
       });
     });
     rows.sort(
