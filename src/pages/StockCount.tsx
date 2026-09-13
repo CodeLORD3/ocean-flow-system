@@ -372,8 +372,20 @@ export default function StockCount() {
         return;
       }
       qc.invalidateQueries({ queryKey: ["stock_count_lines", session.id] });
+
+      // Hållbarhet slår igenom direkt som bäst före på lagerplatsen.
+      if (patch.quality !== undefined) {
+        const until = patch.quality ? holdsUntil(date, String(patch.quality)) : null;
+        await supabase
+          .from("product_stock_locations")
+          .update({ expiry_date: until } as any)
+          .eq("product_id", row.productId)
+          .eq("location_id", row.locationId);
+        qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
+        qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      }
     },
-    [session?.id, locked, qc, toast],
+    [session?.id, locked, qc, toast, date],
   );
 
   const categoryDone: Record<string, string> = (session?.category_done as any) ?? {};
