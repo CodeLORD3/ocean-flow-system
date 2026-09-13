@@ -70,11 +70,15 @@ export async function moveStockToTransport(orderId: string) {
 
   const transportId = await getTransportlagerId(order.store_id);
   if (!transportId) {
-    console.error("Leveranslager not found for store", order.store_id);
-    return;
+    throw new Error(
+      "Butiken saknar transportlager — leveransen kan inte bokföras. Lägg upp lagerplatsen först.",
+    );
   }
 
   const gfLocId = GROSSIST_FLYTANDE_ID;
+  // Produkter där grossistlagret inte räcker. Leveransen stoppas efteråt
+  // med ett samlat meddelande istället för att uppfinna vara.
+  const shortages: { productId: string; missing: number }[] = [];
 
 
   for (const line of order.shop_order_lines) {
@@ -84,6 +88,7 @@ export async function moveStockToTransport(orderId: string) {
     // Källa: grossistlagret.
     const sourceIds = gfLocId ? [gfLocId] : [];
     if (!sourceIds.length) continue;
+
 
     const { data: stocks } = await supabase
       .from("product_stock_locations")
