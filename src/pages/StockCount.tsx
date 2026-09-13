@@ -25,10 +25,8 @@ import { useProducts } from "@/hooks/useProducts";
 import { useStorageLocations, useAllStockByLocation } from "@/hooks/useStorageLocations";
 import { useSite } from "@/contexts/SiteContext";
 import { laggTillSvenskaDagar } from "@/lib/swedishTime";
-import {
-  generateInventoryCountListPdf,
-  type CountListProduct,
-} from "@/lib/inventoryCountListPdf";
+import { type CountListProduct } from "@/lib/inventoryCountListPdf";
+import CountListPrintDialog from "@/components/inventory/CountListPrintDialog";
 
 
 type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "7+";
@@ -633,6 +631,14 @@ export default function StockCount() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CountListPrintDialog
+        open={printOpen}
+        onOpenChange={setPrintOpen}
+        products={printProducts}
+        storeName={storeName || undefined}
+        date={date}
+      />
     </motion.div>
   );
 }
