@@ -576,12 +576,12 @@ export default function StockCount() {
                                   className={`h-7 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
                                   title="Hållbarhet i dagar från inventeringsdatumet"
                                 >
-                                  <option value="">Kval.</option>
-                                  {QUALITY_DAYS.map((d) => (
-                                    <option key={d} value={d}>
-                                      {d} {d === "1" ? "dag" : "dagar"}
-                                    </option>
-                                  ))}
+                                   <option value="">Hållbarhet</option>
+                                   {QUALITY_DAYS.map((d) => (
+                                     <option key={d} value={d}>
+                                       {d} {d === "1" ? "dag" : "dagar"}
+                                     </option>
+                                   ))}
                                 </select>
                                 {until && (
                                   <span className="text-[10px] text-muted-foreground font-mono tabular-nums truncate">
