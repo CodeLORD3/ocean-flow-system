@@ -234,14 +234,16 @@ export async function moveStockToRawLager(
 ) {
   const transportId = await getTransportlagerId(storeId);
   if (!transportId) {
-    console.error("Leveranslager not found for store", storeId);
-    return;
+    throw new Error(
+      "Butiken saknar transportlager — inleveransen kan inte bokföras. Lägg upp lagerplatsen först.",
+    );
   }
 
   const rawLagerId = await getRawLagerId(storeId);
   if (!rawLagerId) {
-    console.error("Butikslager not found for store", storeId);
-    return;
+    throw new Error(
+      "Butiken saknar eget lager — inleveransen kan inte bokföras. Lägg upp lagerplatsen först.",
+    );
   }
 
   // Partivis kvarvarande kvantitet på transportlagret för just den här ordern.
