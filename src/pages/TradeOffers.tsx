@@ -431,11 +431,11 @@ export default function TradeOffers() {
             <div>
               <h3 className="text-xs font-bold text-muted-foreground tracking-wider mb-2">INVESTMENT TERMS</h3>
               <div className="grid grid-cols-2 gap-3">
-                <FormField label="Total Investment (kr)" value={form.target_amount} onChange={v => setForm({...form, target_amount: v})} type="number"/>
-                <FormField label="Minimum Ticket (kr)" value={form.min_pledge} onChange={v => setForm({...form, min_pledge: v})} type="number"placeholder="0" />
-                <FormField label="Maximum Ticket (kr, valfri)" value={form.max_pledge} onChange={v => setForm({...form, max_pledge: v})} type="number"placeholder="Ingen gräns" />
-                <FormField label="Expected Return (%)" value={form.interest_rate} onChange={v => setForm({...form, interest_rate: v})} type="number"step="0.1" />
-                <FormField label="Kvantitet" value={form.quantity} onChange={v => setForm({...form, quantity: v})} type="number"/>
+                <FormField label="Total Investment (kr)" value={form.target_amount} onChange={v => setForm({...form, target_amount: v})} type="number" />
+                <FormField label="Minimum Ticket (kr)" value={form.min_pledge} onChange={v => setForm({...form, min_pledge: v})} type="number" placeholder="0" />
+                <FormField label="Maximum Ticket (kr, valfri)" value={form.max_pledge} onChange={v => setForm({...form, max_pledge: v})} type="number" placeholder="Ingen gräns" />
+                <FormField label="Expected Return (%)" value={form.interest_rate} onChange={v => setForm({...form, interest_rate: v})} type="number" step="0.1" />
+                <FormField label="Kvantitet" value={form.quantity} onChange={v => setForm({...form, quantity: v})} type="number" />
                 <div className="space-y-1">
                   <label className="text-[10px] text-muted-foreground">Återbetalningstyp</label>
                   <Select value={form.repayment_type} onValueChange={v => setForm({...form, repayment_type: v})}>
@@ -470,14 +470,14 @@ export default function TradeOffers() {
                   const pp = Number(v); const sv = Number(form.sales_value);
                   if (pp > 0 && sv > 0) newForm.gross_margin = (((sv - pp) / sv) * 100).toFixed(1);
                   setForm(newForm);
-                }} type="number"/>
+                }} type="number" />
                 <FormField label="Sales Value (kr)" value={form.sales_value} onChange={v => {
                   const newForm = {...form, sales_value: v};
                   const pp = Number(form.purchase_price); const sv = Number(v);
                   if (pp > 0 && sv > 0) newForm.gross_margin = (((sv - pp) / sv) * 100).toFixed(1);
                   setForm(newForm);
-                }} type="number"/>
-                <FormField label="Gross Margin (%) — auto" value={form.gross_margin} onChange={v => setForm({...form, gross_margin: v})} type="number"step="0.1" />
+                }} type="number" />
+                <FormField label="Gross Margin (%) — auto" value={form.gross_margin} onChange={v => setForm({...form, gross_margin: v})} type="number" step="0.1" />
               </div>
             </div>
 
@@ -486,7 +486,7 @@ export default function TradeOffers() {
               <h3 className="text-xs font-bold text-muted-foreground tracking-wider mb-2">RISK & SECURITY</h3>
               <div className="grid grid-cols-2 gap-3">
                 <FormField label="Collateral" value={form.collateral} onChange={v => setForm({...form, collateral: v})} placeholder="Inventory" />
-                <FormField label="LTV (%)" value={form.ltv} onChange={v => setForm({...form, ltv: v})} type="number"step="0.1" />
+                <FormField label="LTV (%)" value={form.ltv} onChange={v => setForm({...form, ltv: v})} type="number" step="0.1" />
                 <FormField label="Primary Exit" value={form.primary_exit} onChange={v => setForm({...form, primary_exit: v})} placeholder="t.ex. Direct sales to retailers" />
                 <FormField label="Secondary Exit" value={form.secondary_exit} onChange={v => setForm({...form, secondary_exit: v})} placeholder="t.ex. Wholesale liquidation" />
                 <div className="space-y-1 col-span-2">
