@@ -639,6 +639,61 @@ export default function StockCount() {
         </Button>
       </div>
 
+      {/* Inventeringshistorik — låsta tillfällen */}
+      <Card>
+        <div className="flex items-center justify-between gap-2 border-b bg-muted/50 px-2 py-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Inventeringshistorik
+          </span>
+          <span className="text-[10px] text-muted-foreground">
+            {(historyQuery.data ?? []).length} låsta inventeringar
+          </span>
+        </div>
+        <CardContent className="p-1">
+          {!(historyQuery.data ?? []).length ? (
+            <p className="px-1 py-2 text-[11px] text-muted-foreground">
+              Ingen inventering är låst ännu för {storeName || "butiken"}.
+            </p>
+          ) : (
+            <div className="divide-y">
+              {(historyQuery.data ?? []).map((h: any) => {
+                const lineCount = h.stock_count_lines?.[0]?.count ?? 0;
+                const isCurrent = h.count_date === date;
+                return (
+                  <button
+                    key={h.id}
+                    type="button"
+                    onClick={() => setDate(h.count_date)}
+                    className={`flex w-full items-center justify-between gap-2 px-1.5 py-1 text-left hover:bg-muted/50 ${
+                      isCurrent ? "bg-primary/5" : ""
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      <span className="truncate text-[11px] font-medium">
+                        {dayLabel(h.count_date)} {h.count_date}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className="h-4 bg-muted text-[9px] text-muted-foreground"
+                      >
+                        Låst
+                      </Badge>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
+                      <span>{lineCount} rader</span>
+                      {h.locked_at && <span>låst {stampLabel(h.locked_at)}</span>}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
+
       {/* Lista */}
       {loading ? (
         <div className="space-y-2">
