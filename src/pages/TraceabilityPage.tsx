@@ -21,6 +21,8 @@ export default function TraceabilityPage() {
   const activeStore = (stores as any[]).find((s: any) => s.id === activeStoreId);
   const currency = getStoreCurrency(activeStore as any);
   const [view, setView] = useState<"partier" | "kontroll">("partier");
+  // Spårbarhetskontrollen är tillfälligt dold — sätt till true för att visa fliken igen.
+  const SHOW_TRACEABILITY_CHECK = false;
 
   return (
     <div className="space-y-4 p-4 sm:p-6 print:p-0">
