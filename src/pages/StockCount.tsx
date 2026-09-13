@@ -594,7 +594,7 @@ export default function StockCount() {
                                 disabled={locked || !session}
                                 defaultValue={line?.counted_qty ?? ""}
                                 placeholder="Antal"
-                                className="h-7 px-2 text-xs font-mono tabular-nums"
+                                className="h-6 px-1.5 text-[11px] font-mono tabular-nums"
                                 onBlur={(e) => {
                                   const raw = e.target.value.replace(",", ".").trim();
                                   const val = raw === "" ? null : Number(raw);
@@ -612,7 +612,7 @@ export default function StockCount() {
                                       quality: (e.target.value || null) as Quality | null,
                                     })
                                   }
-                                  className={`h-7 min-w-0 flex-1 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
+                                  className={`h-6 min-w-0 flex-1 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
                                   title="Hållbarhet: antal dagar från inventeringsdatumet, med veckodag och datum"
                                 >
                                   <option value="">Hållbarhet</option>
@@ -643,7 +643,7 @@ export default function StockCount() {
                                 disabled={locked || !session}
                                 defaultValue={line?.comment ?? ""}
                                 placeholder="Kommentar"
-                                className="h-7 px-2 text-xs"
+                                className="h-6 px-1.5 text-[11px]"
                                 onBlur={(e) => {
                                   const val = e.target.value.trim() || null;
                                   if ((line?.comment ?? null) === val) return;
