@@ -398,11 +398,7 @@ export default function StockCount() {
       // Hållbarhet slår igenom direkt som bäst före på lagerplatsen.
       if (patch.quality !== undefined) {
         const until = patch.quality ? holdsUntil(date, String(patch.quality)) : null;
-        await supabase
-          .from("product_stock_locations")
-          .update({ expiry_date: until } as any)
-          .eq("product_id", row.productId)
-          .eq("location_id", row.locationId);
+        await setExpiryDate({ productId: row.productId, locationId: row.locationId, expiryDate: until });
         qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
         qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
       }
@@ -477,11 +473,7 @@ export default function StockCount() {
       if (!l.location_id || !l.quality) continue;
       const until = holdsUntil(date, String(l.quality));
       if (!until) continue;
-      await supabase
-        .from("product_stock_locations")
-        .update({ expiry_date: until } as any)
-        .eq("product_id", l.product_id)
-        .eq("location_id", l.location_id);
+      await setExpiryDate({ productId: l.product_id, locationId: l.location_id, expiryDate: until });
     }
 
     const { error } = await supabase
