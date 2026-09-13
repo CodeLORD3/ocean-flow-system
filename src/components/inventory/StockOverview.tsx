@@ -159,6 +159,14 @@ export default function StockOverview({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dense, setDense] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  /** Hopfällda kategorier i tabellen */
+  const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
+  const toggleCat = (cat: string) =>
+    setCollapsedCats((prev) => {
+      const next = new Set(prev);
+      next.has(cat) ? next.delete(cat) : next.add(cat);
+      return next;
+    });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(30);
 
@@ -272,7 +280,7 @@ export default function StockOverview({
   }, [pageRows]);
 
   const maxKg = Math.max(1, ...pageRows.map((g) => g.totalKg));
-  const rowH = dense ? "h-9" : "h-[52px]";
+  const rowH = dense ? "h-7" : "h-9";
 
   const toggleExpand = (id: string) =>
     setExpanded((prev) => {
@@ -498,19 +506,19 @@ export default function StockOverview({
       {/* Tabell */}
       <Card className="shadow-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] text-sm">
+          <table className="w-full min-w-[900px] text-xs">
             <thead>
-              <tr className="border-b bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
-                <th className="w-8 px-2 py-2 text-left font-medium">#</th>
-                <th className="px-2 py-2 text-left font-medium">Produkt</th>
-                <th className="px-2 py-2 text-left font-medium">Kategori</th>
-                <th className="px-2 py-2 text-left font-medium">Lager</th>
-                <th className="px-2 py-2 text-right font-medium">Totalt</th>
-                {showCosts && <th className="px-2 py-2 text-right font-medium">Lagervärde</th>}
-                <th className="px-2 py-2 text-center font-medium">Bäst före</th>
-                <th className="px-2 py-2 text-center font-medium">Dagar kvar</th>
-                <th className="px-2 py-2 text-center font-medium">Status</th>
-                <th className="w-8 px-2 py-2"></th>
+              <tr className="border-b bg-muted/40 text-[9px] uppercase tracking-wider text-muted-foreground">
+                <th className="w-6 px-1.5 py-1 text-left font-medium">#</th>
+                <th className="px-1.5 py-1 text-left font-medium">Produkt</th>
+                <th className="px-1.5 py-1 text-left font-medium">Kategori</th>
+                <th className="px-1.5 py-1 text-left font-medium">Lager</th>
+                <th className="px-1.5 py-1 text-right font-medium">Totalt</th>
+                {showCosts && <th className="px-1.5 py-1 text-right font-medium">Lagervärde</th>}
+                <th className="px-1.5 py-1 text-center font-medium">Bäst före</th>
+                <th className="px-1.5 py-1 text-center font-medium">Dagar kvar</th>
+                <th className="px-1.5 py-1 text-center font-medium">Status</th>
+                <th className="w-6 px-1.5 py-1"></th>
               </tr>
             </thead>
             <tbody>
@@ -530,17 +538,27 @@ export default function StockOverview({
               )}
               {pageByCategory.map(([cat, list]) => {
                 const Icon = CATEGORY_ICONS[cat] || Package2;
+                const catCollapsed = collapsedCats.has(cat);
                 return [
-                  <tr key={`cat-${cat}`} className="bg-muted/30 border-b">
-                    <td colSpan={showCosts ? 10 : 9} className="px-2 py-1.5">
-                      <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                        <Icon className="h-3.5 w-3.5 text-primary" />
+                  <tr
+                    key={`cat-${cat}`}
+                    className="bg-muted/30 border-b cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => toggleCat(cat)}
+                  >
+                    <td colSpan={showCosts ? 10 : 9} className="px-1.5 py-1">
+                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {catCollapsed ? (
+                          <ChevronRight className="h-3 w-3 shrink-0" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3 shrink-0" />
+                        )}
+                        <Icon className="h-3 w-3 text-primary" />
                         {cat}
                         <span className="text-muted-foreground/60">{list.length}</span>
                       </span>
                     </td>
                   </tr>,
-                  ...list.flatMap((g) => {
+                  ...(catCollapsed ? [] : list).flatMap((g) => {
                     const idx = filtered.indexOf(g) + 1;
                     const st = STATUS_META[g.status];
                     const isOpen = expanded.has(g.product_id);
@@ -562,7 +580,7 @@ export default function StockOverview({
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                             )}
                             {!dense && (
-                              <ProductThumb src={g.image_url} alt={g.name} productId={g.product_id} className="w-11 h-8" />
+                              <ProductThumb src={g.image_url} alt={g.name} productId={g.product_id} className="w-8 h-6" />
                             )}
                             <div className="min-w-0">
                               <div className="font-semibold text-foreground truncate">{g.name}</div>
@@ -574,9 +592,9 @@ export default function StockOverview({
                         </td>
                         <td className="px-2 text-xs text-muted-foreground whitespace-nowrap">{g.category}</td>
                         <td className="px-2">
-                          <div className="min-w-[180px]">
+                          <div className="min-w-[140px]">
                             <div
-                              className="flex items-stretch gap-0.5 h-5 rounded-sm overflow-hidden"
+                              className="flex items-stretch gap-0.5 h-4 rounded-sm overflow-hidden"
                               style={{ width: `${Math.max(12, (g.totalKg / maxKg) * 100)}%` }}
                             >
                               {g.lines.map((l) => {
