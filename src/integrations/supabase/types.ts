@@ -12659,6 +12659,7 @@ export type Database = {
           finished_at: string | null
           handed_to: string | null
           id: string
+          label: string | null
           locked_at: string | null
           locked_by: string | null
           note: string | null
@@ -12676,6 +12677,7 @@ export type Database = {
           finished_at?: string | null
           handed_to?: string | null
           id?: string
+          label?: string | null
           locked_at?: string | null
           locked_by?: string | null
           note?: string | null
@@ -12693,6 +12695,7 @@ export type Database = {
           finished_at?: string | null
           handed_to?: string | null
           id?: string
+          label?: string | null
           locked_at?: string | null
           locked_by?: string | null
           note?: string | null

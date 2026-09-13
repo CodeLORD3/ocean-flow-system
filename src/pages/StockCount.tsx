@@ -148,9 +148,11 @@ export default function StockCount() {
   const storeName =
     (stores as any[]).find((s: any) => s.id === effectiveStoreId)?.name || activeStoreName || "";
 
-  // ── Tillfället ─────────────────────────────────────────────────────────────
+  // ── Tillfällen för dagen (flera inventeringar per dag är tillåtet) ─────────
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+
   const sessionQuery = useQuery({
-    queryKey: ["stock_count_session", effectiveStoreId, date],
+    queryKey: ["stock_count_sessions", effectiveStoreId, date],
     enabled: !!effectiveStoreId && !!date,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -158,13 +160,19 @@ export default function StockCount() {
         .select("*")
         .eq("store_id", effectiveStoreId)
         .eq("count_date", date)
-        .maybeSingle();
+        .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as any | null;
+      return (data ?? []) as any[];
     },
   });
-  const session = sessionQuery.data;
+  const daySessions = sessionQuery.data ?? [];
+  const session =
+    daySessions.find((s: any) => s.id === selectedSessionId) ??
+    daySessions.find((s: any) => s.status === "open") ??
+    daySessions[daySessions.length - 1] ??
+    null;
   const locked = session?.status === "locked";
+
 
   const linesQuery = useQuery({
     queryKey: ["stock_count_lines", session?.id],
@@ -191,15 +199,24 @@ export default function StockCount() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stock_count_sessions")
-        .select("id,count_date,status,locked_at,finished_at,stock_count_lines(count)")
+        .select("id,count_date,status,label,locked_at,finished_at,stock_count_lines(count)")
         .eq("store_id", effectiveStoreId)
         .eq("status", "locked")
         .order("count_date", { ascending: false })
-        .limit(20);
+        .order("locked_at", { ascending: false })
+        .limit(30);
       if (error) throw error;
       return (data ?? []) as any[];
     },
   });
+
+  /** Klockslag som namn på tillfället, t.ex. "10:42". */
+  const clockNow = () =>
+    new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Europe/Stockholm",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date());
 
   const createSessionFor = useCallback(
     async (targetDate: string) => {
@@ -209,28 +226,33 @@ export default function StockCount() {
         .select("id,status")
         .eq("store_id", effectiveStoreId)
         .eq("count_date", targetDate)
+        .eq("status", "open")
         .maybeSingle();
       setDate(targetDate);
       if (existing) {
+        setSelectedSessionId((existing as any).id);
         await sessionQuery.refetch();
         toast({
-          title:
-            (existing as any).status === "locked"
-              ? "Dagens inventering är redan låst"
-              : "Inventeringen för datumet är redan påbörjad",
-          description: `${storeName} — ${targetDate}`,
+          title: "En inventering är redan öppen",
+          description: `Lås den först — ${storeName} ${targetDate}`,
         });
         return;
       }
-      const { error } = await supabase.from("stock_count_sessions").insert({
-        store_id: effectiveStoreId,
-        count_date: targetDate,
-        started_at: new Date().toISOString(),
-      } as any);
+      const { data: created, error } = await supabase
+        .from("stock_count_sessions")
+        .insert({
+          store_id: effectiveStoreId,
+          count_date: targetDate,
+          started_at: new Date().toISOString(),
+          label: clockNow(),
+        } as any)
+        .select("id")
+        .maybeSingle();
       if (error) {
         toast({ title: "Kunde inte skapa inventeringen", description: error.message, variant: "destructive" });
         return;
       }
+      if (created) setSelectedSessionId((created as any).id);
       await sessionQuery.refetch();
       toast({ title: "Ny inventering påbörjad", description: `${storeName} — ${targetDate}` });
     },
@@ -495,7 +517,7 @@ export default function StockCount() {
           </h2>
 
           <p className="text-xs text-muted-foreground">
-            Ett tillfälle per butik och datum. Räkna per lagerplats, lås när allt är klart.
+            Flera inventeringar per dag går bra. Räkna per lagerplats, lås när allt är klart.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -504,11 +526,11 @@ export default function StockCount() {
               <Plus className="h-3.5 w-3.5" /> Påbörja inventering
             </Button>
           )}
-          {locked && effectiveStoreId && (
+          {session && effectiveStoreId && (
             <Button
               size="sm"
               className="gap-1.5 text-xs h-9 sm:h-8 font-semibold"
-              onClick={() => createSessionFor(todayStockholm())}
+              onClick={() => createSessionFor(date)}
             >
               <Plus className="h-3.5 w-3.5" /> Ny inventering
             </Button>
@@ -623,6 +645,24 @@ export default function StockCount() {
             Ingen inventering för datumet
           </Badge>
         )}
+        {daySessions.length > 1 && (
+          <span className="flex items-center gap-1 flex-wrap">
+            {daySessions.map((s: any, i: number) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setSelectedSessionId(s.id)}
+                className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                  s.id === session?.id
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {s.label || `#${i + 1}`} {s.status === "locked" ? "· låst" : "· öppen"}
+              </button>
+            ))}
+          </span>
+        )}
         <span className="text-muted-foreground">
           {countedCount} av {rows.length} rader räknade
         </span>
@@ -658,12 +698,15 @@ export default function StockCount() {
             <div className="divide-y">
               {(historyQuery.data ?? []).map((h: any) => {
                 const lineCount = h.stock_count_lines?.[0]?.count ?? 0;
-                const isCurrent = h.count_date === date;
+                const isCurrent = h.id === session?.id;
                 return (
                   <button
                     key={h.id}
                     type="button"
-                    onClick={() => setDate(h.count_date)}
+                    onClick={() => {
+                      setDate(h.count_date);
+                      setSelectedSessionId(h.id);
+                    }}
                     className={`flex w-full items-center justify-between gap-2 px-1.5 py-1 text-left hover:bg-muted/50 ${
                       isCurrent ? "bg-primary/5" : ""
                     }`}
@@ -672,6 +715,7 @@ export default function StockCount() {
                       <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
                       <span className="truncate text-[11px] font-medium">
                         {dayLabel(h.count_date)} {h.count_date}
+                        {h.label ? ` · ${h.label}` : ""}
                       </span>
                       <Badge
                         variant="outline"
