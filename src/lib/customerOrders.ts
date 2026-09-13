@@ -479,6 +479,7 @@ export async function packLine(params: {
       line_total: lineTotal,
       pack_status: "packad",
       reserved_quantity: 0,
+      reserved_lot_id: lotId,
       note: params.note ?? line.note,
       movement_id: movementId,
       packed_at: new Date().toISOString(),
