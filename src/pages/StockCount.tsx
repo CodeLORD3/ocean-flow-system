@@ -353,6 +353,26 @@ export default function StockCount() {
     [rows, linesByKey],
   );
 
+  /** Underlag inför låsning: räknat, ej räknat med saldo, och skillnad i kg och kronor. */
+  const lockSummary = useMemo(() => {
+    let diffKg = 0;
+    let diffValue = 0;
+    const skipped: Row[] = [];
+    for (const r of rows) {
+      const l = linesByKey.get(r.key);
+      const counted = l?.counted_qty;
+      if (counted === null || counted === undefined) {
+        if (Math.abs(r.systemQty) > 0.005) skipped.push(r);
+        continue;
+      }
+      const d = Number(counted) - r.systemQty;
+      diffKg += d;
+      diffValue += d * r.costPrice;
+    }
+    return { diffKg, diffValue, skipped };
+  }, [rows, linesByKey]);
+
+
   // ── Spara rad ──────────────────────────────────────────────────────────────
   const saveLine = useCallback(
     async (row: Row, patch: { counted_qty?: number | null; quality?: Quality | null; comment?: string | null }) => {
