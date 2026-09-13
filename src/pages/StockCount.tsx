@@ -199,11 +199,12 @@ export default function StockCount() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stock_count_sessions")
-        .select("id,count_date,status,locked_at,finished_at,stock_count_lines(count)")
+        .select("id,count_date,status,label,locked_at,finished_at,stock_count_lines(count)")
         .eq("store_id", effectiveStoreId)
         .eq("status", "locked")
         .order("count_date", { ascending: false })
-        .limit(20);
+        .order("locked_at", { ascending: false })
+        .limit(30);
       if (error) throw error;
       return (data ?? []) as any[];
     },
@@ -697,12 +698,15 @@ export default function StockCount() {
             <div className="divide-y">
               {(historyQuery.data ?? []).map((h: any) => {
                 const lineCount = h.stock_count_lines?.[0]?.count ?? 0;
-                const isCurrent = h.count_date === date;
+                const isCurrent = h.id === session?.id;
                 return (
                   <button
                     key={h.id}
                     type="button"
-                    onClick={() => setDate(h.count_date)}
+                    onClick={() => {
+                      setDate(h.count_date);
+                      setSelectedSessionId(h.id);
+                    }}
                     className={`flex w-full items-center justify-between gap-2 px-1.5 py-1 text-left hover:bg-muted/50 ${
                       isCurrent ? "bg-primary/5" : ""
                     }`}
@@ -711,6 +715,7 @@ export default function StockCount() {
                       <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
                       <span className="truncate text-[11px] font-medium">
                         {dayLabel(h.count_date)} {h.count_date}
+                        {h.label ? ` · ${h.label}` : ""}
                       </span>
                       <Badge
                         variant="outline"
