@@ -54,6 +54,30 @@ const holdsUntil = (countDate: string, days: string | null) => {
   return laggTillSvenskaDagar(countDate, n);
 };
 
+/** "ons 17/9" — veckodag + dag/månad, svensk tid. */
+const dayLabel = (iso: string) => {
+  if (!iso) return "";
+  const d = new Date(`${iso}T12:00:00Z`);
+  const wd = new Intl.DateTimeFormat("sv-SE", { weekday: "short", timeZone: "Europe/Stockholm" })
+    .format(d)
+    .replace(".", "");
+  return `${wd} ${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
+};
+
+/** Veckodag med versal, t.ex. "Fredag". */
+const weekdayLong = (iso: string) => {
+  if (!iso) return "";
+  const wd = new Intl.DateTimeFormat("sv-SE", { weekday: "long", timeZone: "Europe/Stockholm" })
+    .format(new Date(`${iso}T12:00:00Z`));
+  return wd.charAt(0).toUpperCase() + wd.slice(1);
+};
+
+/** Antal hela dagar mellan två datum. */
+const daysBetween = (from: string, to: string) =>
+  Math.round(
+    (new Date(`${to}T12:00:00Z`).getTime() - new Date(`${from}T12:00:00Z`).getTime()) / 86_400_000,
+  );
+
 const qualityClass = (q?: string | null) => {
   if (q === "7+") return "bg-emerald-500/15 text-emerald-700 border-emerald-500/30";
   const n = Number(q);
@@ -401,7 +425,14 @@ export default function StockCount() {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Datum</Label>
+            <Label className="text-xs flex items-center gap-1.5">
+              Datum
+              {date && (
+                <span className="font-normal text-[10px] text-muted-foreground">
+                  {weekdayLong(date)}
+                </span>
+              )}
+            </Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-8 text-xs" />
           </div>
           <div className="space-y-1">
@@ -571,21 +602,37 @@ export default function StockCount() {
                                       quality: (e.target.value || null) as Quality | null,
                                     })
                                   }
-                                  className={`h-7 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
-                                  title="Hållbarhet i dagar från inventeringsdatumet"
+                                  className={`h-7 min-w-0 flex-1 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
+                                  title="Hållbarhet: antal dagar från inventeringsdatumet, med veckodag och datum"
                                 >
-                                   <option value="">Hållbarhet</option>
-                                   {QUALITY_DAYS.map((d) => (
-                                     <option key={d} value={d}>
-                                       {d} {d === "1" ? "dag" : "dagar"}
-                                     </option>
-                                   ))}
+                                  <option value="">Hållbarhet</option>
+                                  {QUALITY_DAYS.map((d) => {
+                                    const to = holdsUntil(date, d);
+                                    return (
+                                      <option key={d} value={d}>
+                                        {d === "7+"
+                                          ? "7+ dagar"
+                                          : `${d} ${d === "1" ? "dag" : "dagar"}${to ? ` · ${dayLabel(to)}` : ""}`}
+                                      </option>
+                                    );
+                                  })}
                                 </select>
-                                {until && (
-                                  <span className="text-[10px] text-muted-foreground font-mono tabular-nums truncate">
-                                    t.o.m. {until.slice(5)}
-                                  </span>
-                                )}
+                                <Input
+                                  type="date"
+                                  disabled={locked || !session}
+                                  value={until ?? ""}
+                                  min={date}
+                                  title="Har varan tryckt datum? Välj det här."
+                                  onChange={(e) => {
+                                    const picked = e.target.value;
+                                    if (!picked) return saveLine(r, { quality: null });
+                                    const n = daysBetween(date, picked);
+                                    const q: Quality =
+                                      n >= 8 ? "7+" : (String(Math.max(1, n)) as Quality);
+                                    saveLine(r, { quality: q });
+                                  }}
+                                  className="h-7 w-[112px] shrink-0 px-1.5 text-[11px] font-mono tabular-nums"
+                                />
                               </div>
                               <Input
                                 disabled={locked || !session}
