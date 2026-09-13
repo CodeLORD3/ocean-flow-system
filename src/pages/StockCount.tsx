@@ -997,10 +997,64 @@ export default function StockCount() {
           <DialogHeader>
             <DialogTitle>Lås inventeringen?</DialogTitle>
             <DialogDescription>
-              {storeName} — {date}. {countedCount} av {rows.length} rader är räknade. Vid låsning
-              skrivs de räknade saldona in i lagret och raderna kan inte längre ändras.
+              {storeName} — {date}. Vid låsning skrivs de räknade saldona in i lagret och raderna
+              kan inte längre ändras.
             </DialogDescription>
           </DialogHeader>
+
+          <div className="rounded-md border border-border bg-muted/40 p-2.5 text-xs space-y-1.5">
+            <div className="flex justify-between">
+              <span>Räknade rader</span>
+              <span className="font-mono tabular-nums">
+                {countedCount} av {rows.length}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Skillnad mot lagret</span>
+              <span className="font-mono tabular-nums">
+                {lockSummary.diffKg >= 0 ? "+" : "−"}
+                {Math.abs(lockSummary.diffKg).toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                {" · "}
+                {lockSummary.diffValue >= 0 ? "+" : "−"}
+                {Math.abs(Math.round(lockSummary.diffValue)).toLocaleString("sv-SE")} kr
+              </span>
+            </div>
+            {lockSummary.skipped.length > 0 && (
+              <div className="pt-1 border-t border-border/60 space-y-1">
+                <div className="flex items-center justify-between gap-2 text-amber-700">
+                  <span className="font-medium">
+                    {lockSummary.skipped.length} rader med saldo är inte räknade
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 text-[11px]"
+                    onClick={zeroSkippedRows}
+                  >
+                    Nolla dem
+                  </Button>
+                </div>
+                <p className="text-muted-foreground">
+                  Låser du nu står deras saldo kvar oförändrat. Nolla dem om varan är slut, annars
+                  räkna dem först.
+                </p>
+                <div className="max-h-24 overflow-y-auto space-y-0.5">
+                  {lockSummary.skipped.slice(0, 12).map((r) => (
+                    <div key={r.key} className="flex justify-between gap-2 text-[11px]">
+                      <span className="truncate">
+                        {r.productName}
+                        <span className="text-muted-foreground"> · {r.locationName}</span>
+                      </span>
+                      <span className="font-mono tabular-nums">
+                        {r.systemQty.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {r.unit}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setLockOpen(false)}>
               Avbryt
