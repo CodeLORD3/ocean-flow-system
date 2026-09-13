@@ -25,15 +25,13 @@ import { useProducts } from "@/hooks/useProducts";
 import { useStorageLocations, useAllStockByLocation } from "@/hooks/useStorageLocations";
 import { useSite } from "@/contexts/SiteContext";
 import { laggTillSvenskaDagar } from "@/lib/swedishTime";
-import {
-  generateInventoryCountListPdf,
-  type CountListProduct,
-} from "@/lib/inventoryCountListPdf";
+import { type CountListProduct } from "@/lib/inventoryCountListPdf";
+import CountListPrintDialog from "@/components/inventory/CountListPrintDialog";
 
 
-type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7";
+type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "7+";
 
-const QUALITY_DAYS: Quality[] = ["1", "2", "3", "4", "5", "6", "7"];
+const QUALITY_DAYS: Quality[] = ["1", "2", "3", "4", "5", "6", "7", "7+"];
 
 const todayStockholm = () =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
@@ -50,12 +48,14 @@ const fmtQty = (n: number, unit: string) =>
 
 /** Håller tills: inventeringsdatum + valt antal dagar. */
 const holdsUntil = (countDate: string, days: string | null) => {
+  if (days === "7+") return null;
   const n = Number(days);
   if (!countDate || !Number.isFinite(n) || n <= 0) return null;
   return laggTillSvenskaDagar(countDate, n);
 };
 
 const qualityClass = (q?: string | null) => {
+  if (q === "7+") return "bg-emerald-500/15 text-emerald-700 border-emerald-500/30";
   const n = Number(q);
   if (!Number.isFinite(n) || n <= 0) return "bg-muted text-muted-foreground border-border";
   if (n <= 2) return "bg-destructive/15 text-destructive border-destructive/30";
@@ -96,7 +96,7 @@ export default function StockCount() {
   const [category, setCategory] = useState<string>("all");
   const [onlyUncounted, setOnlyUncounted] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
+  const [printOpen, setPrintOpen] = useState(false);
 
   const storeName =
     (stores as any[]).find((s: any) => s.id === effectiveStoreId)?.name || activeStoreName || "";
@@ -288,7 +288,7 @@ export default function StockCount() {
 
   // ── Export / print ─────────────────────────────────────────────────────────
   const exportCsv = useCallback(() => {
-    const header = ["Kategori", "Produkt", "SKU", "Lagerplats", "Enhet", "Systemsaldo", "Inventerat", "Kval.", "Kommentar"];
+    const header = ["Kategori", "Produkt", "SKU", "Lagerplats", "Enhet", "Systemsaldo", "Inventerat", "Hållbarhet", "Kommentar"];
     const lines = rows.map((r) => {
       const l = linesByKey.get(r.key);
       return [
@@ -315,7 +315,7 @@ export default function StockCount() {
     URL.revokeObjectURL(a.href);
   }, [rows, linesByKey, storeName, date]);
 
-  const printList = useCallback(async () => {
+  const printProducts = useMemo<CountListProduct[]>(() => {
     const seen = new Set<string>();
     const list: CountListProduct[] = [];
     rows.forEach((r) => {
@@ -330,19 +330,16 @@ export default function StockCount() {
         imageUrl: r.imageUrl,
       });
     });
-    if (!list.length) {
+    return list;
+  }, [rows]);
+
+  const openPrintDialog = useCallback(() => {
+    if (!printProducts.length) {
       toast({ title: "Inga produkter att skriva ut", variant: "destructive" });
       return;
     }
-    setPdfLoading(true);
-    try {
-      await generateInventoryCountListPdf(list, { storeName: storeName || undefined, date });
-    } catch (e: any) {
-      toast({ title: "Kunde inte skapa listan", description: e?.message, variant: "destructive" });
-    } finally {
-      setPdfLoading(false);
-    }
-  }, [rows, storeName, date, toast]);
+    setPrintOpen(true);
+  }, [printProducts, toast]);
 
   const loading = stockLoading || sessionQuery.isLoading;
 
@@ -366,8 +363,8 @@ export default function StockCount() {
               <Plus className="h-3.5 w-3.5" /> Påbörja inventering
             </Button>
           )}
-          <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={printList} disabled={pdfLoading}>
-            <Printer className="h-3 w-3" /> {pdfLoading ? "Förbereder…" : "Skriv ut"}
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={openPrintDialog}>
+            <Printer className="h-3 w-3" /> Skriv ut
           </Button>
           <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={exportCsv}>
             <Download className="h-3 w-3" /> Exportera
@@ -577,12 +574,12 @@ export default function StockCount() {
                                   className={`h-7 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
                                   title="Hållbarhet i dagar från inventeringsdatumet"
                                 >
-                                  <option value="">Kval.</option>
-                                  {QUALITY_DAYS.map((d) => (
-                                    <option key={d} value={d}>
-                                      {d} {d === "1" ? "dag" : "dagar"}
-                                    </option>
-                                  ))}
+                                   <option value="">Hållbarhet</option>
+                                   {QUALITY_DAYS.map((d) => (
+                                     <option key={d} value={d}>
+                                       {d} {d === "1" ? "dag" : "dagar"}
+                                     </option>
+                                   ))}
                                 </select>
                                 {until && (
                                   <span className="text-[10px] text-muted-foreground font-mono tabular-nums truncate">
@@ -634,6 +631,14 @@ export default function StockCount() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CountListPrintDialog
+        open={printOpen}
+        onOpenChange={setPrintOpen}
+        products={printProducts}
+        storeName={storeName || undefined}
+        date={date}
+      />
     </motion.div>
   );
 }

@@ -6,7 +6,7 @@ import jsPDF from "jspdf";
  * Ren rapport från Lagrets produkter för butiken. Grupperad per kategori
  * (dynamiskt från Lager), sorterad kategori → namn (A–Ö). Varje rad har
  * produktbild (eller kategori-initial), kryssruta, namn + enhet och fyra
- * tomma fält: Kyldisk | Kylen | Totalt | Kval. (dagar kvar 1–7 / 7+).
+ * tomma fält: Kyldisk | Kylen | Totalt | Hållbarhet (dagar kvar 1–7 / 7+).
  */
 
 export interface CountListProduct {
@@ -189,7 +189,7 @@ export async function buildInventoryCountListDoc(
     doc.setFontSize(7.2);
     doc.setTextColor(120);
     doc.text(
-      "Kval. = antal dagar kvar på färskvaran: skriv 1–7 eller 7+. Fyll i mängd i produktens enhet (kg/st).",
+      "Hållbarhet = antal dagar kvar på färskvaran: skriv 1–7 eller 7+. Fyll i mängd i produktens enhet (kg/st).",
       margin,
       fy + 5.4,
     );
@@ -202,7 +202,7 @@ export async function buildInventoryCountListDoc(
     doc.setFontSize(7.4);
     doc.setTextColor(255);
     doc.text("PRODUKT", nameX, cy + 4.1);
-    ["Kyldisk", "Kylen", "Totalt", "Kval."].forEach((label, i) => {
+    ["Kyldisk", "Kylen", "Totalt", "Hållbarhet"].forEach((label, i) => {
       const bx = boxesX + i * (boxW + 1.5);
       doc.text(label.toUpperCase(), bx + boxW / 2, cy + 4.1, { align: "center" });
     });

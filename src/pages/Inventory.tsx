@@ -57,10 +57,8 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
-import {
-  generateInventoryCountListPdf,
-  type CountListProduct,
-} from "@/lib/inventoryCountListPdf";
+import { type CountListProduct } from "@/lib/inventoryCountListPdf";
+import CountListPrintDialog from "@/components/inventory/CountListPrintDialog";
 import { useStores } from "@/hooks/useStores";
 import {
   useStorageLocations,
@@ -1339,8 +1337,8 @@ export default function Inventory() {
     return list;
   }, [allStock, portalLocations, productsById]);
 
-  const [countListLoading, setCountListLoading] = useState(false);
-  const handlePrintCountList = useCallback(async () => {
+  const [countListOpen, setCountListOpen] = useState(false);
+  const handlePrintCountList = useCallback(() => {
     if (!countListProducts.length) {
       toast({
         title: "Inga produkter i lagret",
@@ -1349,17 +1347,8 @@ export default function Inventory() {
       });
       return;
     }
-    setCountListLoading(true);
-    try {
-      await generateInventoryCountListPdf(countListProducts, {
-        storeName: activeStoreName || undefined,
-      });
-    } catch (e: any) {
-      toast({ title: "Kunde inte skapa listan", description: e?.message, variant: "destructive" });
-    } finally {
-      setCountListLoading(false);
-    }
-  }, [countListProducts, activeStoreName, toast]);
+    setCountListOpen(true);
+  }, [countListProducts, toast]);
 
 
   const handleOverviewAction = useCallback(
@@ -1405,11 +1394,16 @@ export default function Inventory() {
             size="sm"
             className="gap-1.5 text-xs h-9 sm:h-8 w-full sm:w-auto order-first font-semibold shadow-sm"
             onClick={handlePrintCountList}
-            disabled={countListLoading}
           >
             <ListChecks className="h-3.5 w-3.5" />
-            {countListLoading ? "Förbereder…" : "Skriv ut inventeringslista"}
+            Skriv ut inventeringslista
           </Button>
+          <CountListPrintDialog
+            open={countListOpen}
+            onOpenChange={setCountListOpen}
+            products={countListProducts}
+            storeName={activeStoreName || undefined}
+          />
           {expiryAlerts.length > 0 && !isShopPortal && (
             <Button
               size="sm"
