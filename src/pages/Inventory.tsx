@@ -1579,6 +1579,44 @@ export default function Inventory() {
 
       </div>
 
+      {/* Kontrollrad: saldon som inte kan stämma, för lite kvar, eller passerat bäst före. */}
+      {(negativeStock.length > 0 || lowStockItems > 0 || expiredCount > 0) && (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 text-[11px]">
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-700 shrink-0" />
+          {negativeStock.length > 0 && (
+            <button
+              type="button"
+              className="font-semibold text-destructive underline-offset-2 hover:underline"
+              onClick={() => setShowNegativeStock((v) => !v)}
+            >
+              {negativeStock.length} negativa saldon
+            </button>
+          )}
+          {lowStockItems > 0 && <span className="text-amber-800">{lowStockItems} under miniminivå</span>}
+          {expiredCount > 0 && <span className="text-amber-800">{expiredCount} passerat bäst före</span>}
+          <span className="text-muted-foreground">
+            Negativt saldo betyder uttag utan bokförd inleverans — rätta med inventering.
+          </span>
+        </div>
+      )}
+      {showNegativeStock && negativeStock.length > 0 && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-[11px] space-y-1">
+          {negativeStock.map((n: any) => (
+            <div key={n.id} className="flex justify-between gap-2">
+              <span className="truncate">
+                {n.products?.name ?? "Okänd produkt"}
+                <span className="text-muted-foreground"> · {n.storage_locations?.name ?? "Lager"}</span>
+              </span>
+              <span className="font-mono tabular-nums text-destructive">
+                {Number(n.quantity).toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {n.products?.unit ?? "kg"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+
+
       {/* Grossist/Admin: interaktivt lagerträd. Butik: nivåväljare. */}
       <div className="space-y-2">
         {isGrossist ? (
