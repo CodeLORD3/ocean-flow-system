@@ -441,17 +441,29 @@ export async function packLine(params: {
 
   let movementId: string | null = null;
 
+  let lotId: string | null = line.reserved_lot_id ?? null;
+
   if (!line.is_free_text && line.product_id && qty > 0) {
     const locationId = await primaryStoreLocationId(order.store_id);
     if (!locationId) {
       throw new Error("Butiken saknar lagerplats — uttaget kan inte bokföras.");
+    }
+    // Utan reservation väljs partiet som går ut först, annars tappar uttaget
+    // kopplingen bakåt till fångst och leverantör.
+    if (!lotId) {
+      const { data: picked } = await supabase.rpc("pick_lot_fefo" as any, {
+        _product_id: line.product_id,
+        _location_id: locationId,
+        _quantity: qty,
+      });
+      lotId = (picked as any) ?? null;
     }
     const movement = await recordMovement({
       productId: line.product_id,
       locationId,
       quantityKg: qty,
       movementType: "kundorder",
-      lotId: line.reserved_lot_id,
+      lotId,
       referenceType: "customer_order_line",
       referenceId: line.id,
       note: `Kundbeställning ${order.order_number}`,
