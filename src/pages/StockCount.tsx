@@ -476,7 +476,7 @@ export default function StockCount() {
       <div className="flex items-center gap-2 flex-wrap text-xs">
         <Badge
           variant="outline"
-          className="bg-amber-400/20 text-amber-800 border-amber-500/40 font-medium"
+          className="bg-amber-400/35 text-amber-900 border-amber-500/50 font-medium"
         >
           Idag: {weekdayLong(todayStockholm())} {todayStockholm()}
         </Badge>
@@ -617,7 +617,11 @@ export default function StockCount() {
                                   title="Hållbarhet: antal dagar från inventeringsdatumet, med veckodag och datum"
                                 >
                                   <option value="">Hållbarhet</option>
-                                  <option value="" disabled>
+                                  <option
+                                    value=""
+                                    disabled
+                                    className="bg-amber-400/35 text-amber-900 font-medium"
+                                  >
                                     — Idag {dayLabel(date)} —
                                   </option>
                                   {QUALITY_DAYS.map((d) => {
