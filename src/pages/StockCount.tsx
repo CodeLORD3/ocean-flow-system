@@ -124,6 +124,7 @@ export default function StockCount() {
   const { activeStoreId, activeStoreName } = useSite();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const isMobile = useIsMobile();
 
   const { data: stores = [] } = useStores();
   const { data: products = [] } = useProducts();
