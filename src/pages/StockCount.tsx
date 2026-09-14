@@ -1158,23 +1158,10 @@ export default function StockCount() {
             className="sm:hidden fixed bottom-14 left-0 right-0 z-30 border-t bg-background/95 backdrop-blur px-3 py-2 flex items-center justify-between gap-2"
             style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
           >
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold truncate">
-                {countedCount} av {rows.length} räknade
-              </p>
-              <p className="text-[10px] text-muted-foreground truncate">
-                {weekdayLong(date)} {date} · {locked ? "Låst" : session ? "Öppen" : "Ingen inventering"}
-              </p>
-            </div>
-            {!session ? (
-              <Button size="sm" className="h-10 gap-1.5 text-xs font-semibold" onClick={createSession}>
-                <Plus className="h-4 w-4" /> Påbörja
-              </Button>
-            ) : locked ? (
+            {!session || locked ? (
               <Button
-                size="sm"
-                className="h-10 gap-1.5 text-xs font-semibold"
-                onClick={() => createSessionFor(date)}
+                className="h-11 w-full gap-1.5 text-sm font-semibold"
+                onClick={() => (session ? createSessionFor(date) : createSession())}
               >
                 <Plus className="h-4 w-4" /> Skapa inventeringsrapport
               </Button>
