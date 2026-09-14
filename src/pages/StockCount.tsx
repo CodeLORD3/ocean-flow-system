@@ -677,6 +677,43 @@ export default function StockCount() {
 
       {session && (
       <>
+      {/* Liten statusrad: dag, läge, ev. flera rapporter */}
+      <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+        <span className="font-medium text-foreground">
+          {weekdayLong(date)} {date}
+        </span>
+        <span className={locked ? "text-muted-foreground" : "font-medium text-emerald-600"}>
+          · {locked ? "Låst" : "Öppen"}
+        </span>
+        {storeName && <span className="hidden sm:inline">· {storeName}</span>}
+        {daySessions.length > 1 &&
+          daySessions.map((s: any, i: number) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setSelectedSessionId(s.id)}
+              className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                s.id === session?.id
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border hover:bg-muted"
+              }`}
+            >
+              {s.label || `#${i + 1}`}
+            </button>
+          ))}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 gap-1 px-1.5 text-[11px]"
+          onClick={() => {
+            sessionQuery.refetch();
+            linesQuery.refetch();
+          }}
+        >
+          <RefreshCw className="h-3 w-3" /> Uppdatera
+        </Button>
+      </div>
+
       {/* Kompakt rad: sök främst, sedan kategori och filter */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[180px] flex-1">
@@ -718,195 +755,8 @@ export default function StockCount() {
           {countedCount}/{rows.length}
         </span>
       </div>
-
-      {/* Liten statusrad: dag, läge, ev. flera rapporter */}
-      <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
-        <span className="font-medium text-foreground">
-          {weekdayLong(date)} {date}
-        </span>
-        <span className={locked ? "text-muted-foreground" : "font-medium text-emerald-600"}>
-          · {locked ? "Låst" : "Öppen"}
-        </span>
-        {storeName && <span className="hidden sm:inline">· {storeName}</span>}
-        {daySessions.length > 1 &&
-          daySessions.map((s: any, i: number) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setSelectedSessionId(s.id)}
-              className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
-                s.id === session?.id
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border hover:bg-muted"
-              }`}
-            >
-              {s.label || `#${i + 1}`}
-            </button>
-          ))}
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 gap-1 px-1.5 text-[11px]"
-          onClick={() => {
-            sessionQuery.refetch();
-            linesQuery.refetch();
-          }}
-        >
-          <RefreshCw className="h-3 w-3" /> Uppdatera
-        </Button>
-      </div>
       </>
       )}
-
-      {/* Tidigare inventeringar — låsta tillfällen + inskickade rapporter, gömda bakom en utfällning */}
-      <Card>
-        <button
-          type="button"
-          onClick={() => setArchiveOpen((v) => !v)}
-          className="flex w-full items-center justify-between gap-2 border-b bg-muted/50 px-2 py-1.5 text-left hover:bg-muted"
-        >
-          <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            {archiveOpen ? (
-              <ChevronDown className="h-3 w-3" />
-            ) : (
-              <ChevronRight className="h-3 w-3" />
-            )}
-            Tidigare inventeringar
-          </span>
-          <span className="text-[10px] text-muted-foreground">
-            {(historyQuery.data ?? []).length} låsta ·{" "}
-            {(reportsQuery.data ?? []).length} rapporter
-          </span>
-        </button>
-        {archiveOpen && (
-        <CardContent className="space-y-2 p-1">
-          <p className="px-1 pt-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Låsta inventeringar
-          </p>
-          {!(historyQuery.data ?? []).length ? (
-            <p className="px-1 py-2 text-[11px] text-muted-foreground">
-              Ingen inventering är låst ännu för {storeName || "butiken"}.
-            </p>
-          ) : (
-            <div className="divide-y">
-              {(historyQuery.data ?? []).map((h: any) => {
-                const lineCount = h.stock_count_lines?.[0]?.count ?? 0;
-                const isCurrent = h.id === session?.id;
-                return (
-                  <button
-                    key={h.id}
-                    type="button"
-                    onClick={() => {
-                      setDate(h.count_date);
-                      setSelectedSessionId(h.id);
-                    }}
-                    className={`flex w-full items-center justify-between gap-2 px-1.5 py-1 text-left hover:bg-muted/50 ${
-                      isCurrent ? "bg-primary/5" : ""
-                    }`}
-                  >
-                    <span className="flex min-w-0 items-center gap-1.5">
-                      <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
-                      <span className="truncate text-[11px] font-medium">
-                        {dayLabel(h.count_date)} {h.count_date}
-                        {h.label ? ` · ${h.label}` : ""}
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className="h-4 bg-muted text-[9px] text-muted-foreground"
-                      >
-                        Låst
-                      </Badge>
-                    </span>
-                    <span className="flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
-                      <span>{lineCount} rader</span>
-                      {h.locked_at && <span>låst {stampLabel(h.locked_at)}</span>}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          <p className="px-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Inskickade rapporter från butiken
-          </p>
-          {!(reportsQuery.data ?? []).length ? (
-            <p className="px-1 py-2 text-[11px] text-muted-foreground">
-              Inga inventeringsrapporter har skickats in för {storeName || "butiken"}.
-            </p>
-          ) : (
-            <div className="divide-y">
-              {(reportsQuery.data ?? []).map((r: any) => {
-                const isOpen = openReportId === r.id;
-                return (
-                  <div key={r.id}>
-                    <button
-                      type="button"
-                      onClick={() => setOpenReportId(isOpen ? null : r.id)}
-                      className="flex w-full items-center justify-between gap-2 px-1.5 py-1 text-left hover:bg-muted/50"
-                    >
-                      <span className="flex min-w-0 items-center gap-1.5">
-                        {isOpen ? (
-                          <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
-                        ) : (
-                          <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
-                        )}
-                        <span className="truncate text-[11px] font-medium">
-                          {dayLabel(r.sheet_date)} {r.sheet_date}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className={`h-4 text-[9px] ${
-                            r.status === "godkand"
-                              ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-700"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {r.status === "godkand" ? "Inskickad" : "Utkast"}
-                        </Badge>
-                      </span>
-                      <span className="flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
-                        <span>{Number(r.line_count) || 0} rader</span>
-                        <span className="font-mono tabular-nums">
-                          {(Number(r.counted_total_kg) || 0).toLocaleString("sv-SE", {
-                            maximumFractionDigits: 1,
-                          })}{" "}
-                          kg
-                        </span>
-                        {r.closed_at && <span>{stampLabel(r.closed_at)}</span>}
-                      </span>
-                    </button>
-                    {isOpen && (
-                      <div className="bg-muted/30 px-3 py-1.5">
-                        {reportLinesQuery.isLoading ? (
-                          <p className="text-[11px] text-muted-foreground">Laddar rader…</p>
-                        ) : !(reportLinesQuery.data ?? []).length ? (
-                          <p className="text-[11px] text-muted-foreground">Inga rader.</p>
-                        ) : (
-                          <div className="divide-y divide-border/50">
-                            {(reportLinesQuery.data ?? []).map((l: any) => (
-                              <div key={l.id} className="flex justify-between gap-2 py-0.5 text-[11px]">
-                                <span className="truncate">{l.product_name}</span>
-                                <span className="shrink-0 font-mono tabular-nums">
-                                  {fmtQty(Number(l.counted_qty_kg) || 0, unitOf(l.unit))}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-        )}
-      </Card>
-
-
-
-
 
       {/* Lista — delad vy: alla varor till vänster, inventerade till höger */}
       {!session ? null : loading ? (
@@ -1142,6 +992,156 @@ export default function StockCount() {
           </div>
         </div>
       )}
+
+      {/* Tidigare inventeringar — låsta tillfällen + inskickade rapporter, gömda bakom en utfällning */}
+      <Card>
+        <button
+          type="button"
+          onClick={() => setArchiveOpen((v) => !v)}
+          className="flex w-full items-center justify-between gap-2 border-b bg-muted/50 px-2 py-1.5 text-left hover:bg-muted"
+        >
+          <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {archiveOpen ? (
+              <ChevronDown className="h-3 w-3" />
+            ) : (
+              <ChevronRight className="h-3 w-3" />
+            )}
+            Tidigare inventeringar
+          </span>
+          <span className="text-[10px] text-muted-foreground">
+            {(historyQuery.data ?? []).length} låsta ·{" "}
+            {(reportsQuery.data ?? []).length} rapporter
+          </span>
+        </button>
+        {archiveOpen && (
+        <CardContent className="space-y-2 p-1">
+          <p className="px-1 pt-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Låsta inventeringar
+          </p>
+          {!(historyQuery.data ?? []).length ? (
+            <p className="px-1 py-2 text-[11px] text-muted-foreground">
+              Ingen inventering är låst ännu för {storeName || "butiken"}.
+            </p>
+          ) : (
+            <div className="divide-y">
+              {(historyQuery.data ?? []).map((h: any) => {
+                const lineCount = h.stock_count_lines?.[0]?.count ?? 0;
+                const isCurrent = h.id === session?.id;
+                return (
+                  <button
+                    key={h.id}
+                    type="button"
+                    onClick={() => {
+                      setDate(h.count_date);
+                      setSelectedSessionId(h.id);
+                    }}
+                    className={`flex w-full items-center justify-between gap-2 px-1.5 py-1 text-left hover:bg-muted/50 ${
+                      isCurrent ? "bg-primary/5" : ""
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      <span className="truncate text-[11px] font-medium">
+                        {dayLabel(h.count_date)} {h.count_date}
+                        {h.label ? ` · ${h.label}` : ""}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className="h-4 bg-muted text-[9px] text-muted-foreground"
+                      >
+                        Låst
+                      </Badge>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
+                      <span>{lineCount} rader</span>
+                      {h.locked_at && <span>låst {stampLabel(h.locked_at)}</span>}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <p className="px-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Inskickade rapporter från butiken
+          </p>
+          {!(reportsQuery.data ?? []).length ? (
+            <p className="px-1 py-2 text-[11px] text-muted-foreground">
+              Inga inventeringsrapporter har skickats in för {storeName || "butiken"}.
+            </p>
+          ) : (
+            <div className="divide-y">
+              {(reportsQuery.data ?? []).map((r: any) => {
+                const isOpen = openReportId === r.id;
+                return (
+                  <div key={r.id}>
+                    <button
+                      type="button"
+                      onClick={() => setOpenReportId(isOpen ? null : r.id)}
+                      className="flex w-full items-center justify-between gap-2 px-1.5 py-1 text-left hover:bg-muted/50"
+                    >
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        {isOpen ? (
+                          <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                        )}
+                        <span className="truncate text-[11px] font-medium">
+                          {dayLabel(r.sheet_date)} {r.sheet_date}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={`h-4 text-[9px] ${
+                            r.status === "godkand"
+                              ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-700"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {r.status === "godkand" ? "Inskickad" : "Utkast"}
+                        </Badge>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
+                        <span>{Number(r.line_count) || 0} rader</span>
+                        <span className="font-mono tabular-nums">
+                          {(Number(r.counted_total_kg) || 0).toLocaleString("sv-SE", {
+                            maximumFractionDigits: 1,
+                          })}{" "}
+                          kg
+                        </span>
+                        {r.closed_at && <span>{stampLabel(r.closed_at)}</span>}
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div className="bg-muted/30 px-3 py-1.5">
+                        {reportLinesQuery.isLoading ? (
+                          <p className="text-[11px] text-muted-foreground">Laddar rader…</p>
+                        ) : !(reportLinesQuery.data ?? []).length ? (
+                          <p className="text-[11px] text-muted-foreground">Inga rader.</p>
+                        ) : (
+                          <div className="divide-y divide-border/50">
+                            {(reportLinesQuery.data ?? []).map((l: any) => (
+                              <div key={l.id} className="flex justify-between gap-2 py-0.5 text-[11px]">
+                                <span className="truncate">{l.product_name}</span>
+                                <span className="shrink-0 font-mono tabular-nums">
+                                  {fmtQty(Number(l.counted_qty_kg) || 0, unitOf(l.unit))}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+        )}
+      </Card>
+
+
+
+
 
       {/* Mobil: fast åtgärdsrad längst ned */}
       {effectiveStoreId && (
