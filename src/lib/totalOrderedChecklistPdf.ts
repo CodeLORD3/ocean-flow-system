@@ -7,6 +7,12 @@ export interface TotalChecklistRow {
   total: number;
   /** Redan packad mängd, för kolumnen Kvar. */
   packed?: number;
+  /** Butikens lagersaldo, om kolumnen är påslagen. */
+  stock?: number | null;
+  /** Utestående grossistorder, om kolumnen är påslagen. */
+  onOrder?: number | null;
+  /** Lager minus kvar att packa. */
+  sellable?: number | null;
   orderCount: number;
   types: string;
 }
@@ -16,6 +22,7 @@ export interface TotalChecklistGroup {
   orderCount: number;
   rows: TotalChecklistRow[];
 }
+
 
 export interface TotalChecklistPayload {
   title?: string;
