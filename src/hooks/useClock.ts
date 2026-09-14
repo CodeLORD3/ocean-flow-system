@@ -149,6 +149,25 @@ export function useRevokeStation() {
   });
 }
 
+/**
+ * Flyttar en station till rätt enhet när den råkat aktiveras på fel butik.
+ * Historiken följer med; enheten måste aktiveras om med ny kod efteråt.
+ */
+export function useMoveStation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ stationId, storeId }: { stationId: string; storeId: string }) => {
+      const { data, error } = await supabase.rpc("clock_station_move", {
+        _station_id: stationId,
+        _store_id: storeId,
+      });
+      if (error) throw error;
+      return data as unknown as { store_name: string | null };
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["clock_stations"] }),
+  });
+}
+
 export function useUpdateStationProfile() {
   const qc = useQueryClient();
   return useMutation({

@@ -34,12 +34,13 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Loader2, Plus, RefreshCw, Ban } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Ban, ArrowLeftRight } from "lucide-react";
 import {
   useClockStations,
   useCreateClockStation,
   useRotateStationCode,
   useRevokeStation,
+  useMoveStation,
   useUpdateStationProfile,
   usePendingRegistrations,
   useHandlePendingRegistration,
@@ -61,6 +62,7 @@ export default function ClockStations() {
   const createStation = useCreateClockStation();
   const rotate = useRotateStationCode();
   const revoke = useRevokeStation();
+  const moveStation = useMoveStation();
   const updateProfile = useUpdateStationProfile();
   const handlePending = useHandlePendingRegistration();
 
@@ -70,6 +72,8 @@ export default function ClockStations() {
   const [codeReveal, setCodeReveal] = useState<{ code: string; qr: string; station: string } | null>(null);
   const [editing, setEditing] = useState<ClockStation | null>(null);
   const [profile, setProfile] = useState<ClockStationProfile>({});
+  const [moving, setMoving] = useState<ClockStation | null>(null);
+  const [moveStore, setMoveStore] = useState<string>("");
   const [approveFor, setApproveFor] = useState<string | null>(null);
   const [approveEmployee, setApproveEmployee] = useState<string>("");
 
@@ -181,12 +185,15 @@ export default function ClockStations() {
                   <IndustryButton variant="ghost" onClick={() => doRotate(s)}>
                     <RefreshCw className="h-3.5 w-3.5" /> Rotera kod
                   </IndustryButton>
+                  <IndustryButton variant="ghost" onClick={() => { setMoving(s); setMoveStore(s.store_id ?? ""); }}>
+                    <ArrowLeftRight className="h-3.5 w-3.5" /> Flytta
+                  </IndustryButton>
                   <IndustryButton
                     variant="ghost"
                     disabled={s.status !== "active"}
                     onClick={() => revoke.mutate(s.id)}
                   >
-                    <Ban className="h-3.5 w-3.5" /> Återkalla
+                    <Ban className="h-3.5 w-3.5" /> Avaktivera
                   </IndustryButton>
                 </div>
               </IndustryRow>
@@ -273,6 +280,51 @@ export default function ClockStations() {
         </DialogContent>
       </Dialog>
 
+
+      {/* Flytta station till rätt enhet */}
+      <Dialog open={Boolean(moving)} onOpenChange={(o) => !o && setMoving(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Flytta station — {moving?.name}</DialogTitle>
+            <DialogDescription>
+              Använd detta om klockan aktiverats på fel butik. Historiken följer med.
+              Efter flytten måste enheten aktiveras om med en ny kod.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1">
+            <Label>Enhet</Label>
+            <Select value={moveStore} onValueChange={setMoveStore}>
+              <SelectTrigger>
+                <SelectValue placeholder="Välj butik" />
+              </SelectTrigger>
+              <SelectContent>
+                {stores.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              disabled={!moveStore || moveStation.isPending}
+              onClick={async () => {
+                if (!moving || !moveStore) return;
+                try {
+                  await moveStation.mutateAsync({ stationId: moving.id, storeId: moveStore });
+                  toast.success("Stationen är flyttad. Rotera koden och aktivera klockan igen.");
+                  setMoving(null);
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Kunde inte flytta stationen");
+                }
+              }}
+            >
+              {moveStation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Flytta"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Skapa station */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -413,7 +465,8 @@ export default function ClockStations() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="manual">Manuell</SelectItem>
+                    <SelectItem value="off">Av — chefen justerar i attesten</SelectItem>
+                    <SelectItem value="manual">Manuell (rastknapp i klockan)</SelectItem>
                     <SelectItem value="auto">Auto efter X h</SelectItem>
                   </SelectContent>
                 </Select>

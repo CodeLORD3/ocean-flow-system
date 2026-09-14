@@ -85,9 +85,14 @@ export function randomToken(bytes = 32): string {
     .join("");
 }
 
-/** Sessionen förnyas i 12-timmarssteg men kan aldrig leva längre än ett dygn. */
-export const SESSION_TTL_MINUTES = 720;
-export const SESSION_ABSOLUTE_MINUTES = 1440;
+/**
+ * En station står uppmonterad i butiken och ska inte kräva ny aktiveringskod
+ * efter omstart eller en ledig helg. Sessionen förnyas i 30-dagarssteg och
+ * lever som mest ett år. Stationen stoppas i stället genom att kontoret
+ * återkallar den eller roterar koden.
+ */
+export const SESSION_TTL_MINUTES = 43_200;
+export const SESSION_ABSOLUTE_MINUTES = 525_600;
 
 export interface Station {
   id: string;

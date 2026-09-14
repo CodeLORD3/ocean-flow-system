@@ -50,6 +50,7 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   "/coverage": { title: "Datakvalitet & täckning", breadcrumb: ["Hem", "Rapporter", "Datakvalitet"] },
   "/system-status": { title: "Systemstatus", breadcrumb: ["Hem", "Administration", "Systemstatus"] },
   "/lager-blueprint": { title: "Lagerblueprint", breadcrumb: ["Hem", "Administration", "Systemstatus", "Lagerblueprint"] },
+  "/clock-guides": { title: "Stämpelklockan — guider", breadcrumb: ["Hem", "Administration", "Stämpelklockan — guider"] },
   "/stock-disappearance": { title: "Försvunnet ur lagret", breadcrumb: ["Hem", "Rapporter", "Försvunnet ur lagret"] },
   "/pos-live": { title: "Kassa live", breadcrumb: ["Hem", "Rapporter", "Kassa live"] },
   "/organisation": { title: "Översikt", breadcrumb: ["Hem", "Översikt"] },
