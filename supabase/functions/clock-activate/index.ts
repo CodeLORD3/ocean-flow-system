@@ -35,6 +35,22 @@ Deno.serve(async (req) => {
   if (!station) return json(req, { error: "Aktiveringskoden gäller inte." }, 401);
   if (station.status !== "active") return json(req, { error: "Stationen är återkallad. Kontakta administratör." }, 403);
 
+  // Koden binds till en enhet: så länge stationen har en levande session kan
+  // samma kod inte aktivera en andra enhet. Byte av enhet kräver rotation.
+  const { data: live } = await db
+    .from("clock_station_sessions")
+    .select("id")
+    .eq("station_id", station.id)
+    .gt("expires_at", new Date().toISOString())
+    .limit(1)
+    .maybeSingle();
+  if (live) {
+    return json(req, {
+      error: "Stationen är redan aktiverad på en annan enhet. Rotera aktiveringskoden för att flytta klockan.",
+    }, 409);
+  }
+
+
   const token = randomToken();
   const expiresAt = new Date(Date.now() + SESSION_TTL_MINUTES * 60_000).toISOString();
   // Absolut tak: sessionen kan förnyas men aldrig leva längre än ett dygn.
