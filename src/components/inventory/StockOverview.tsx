@@ -847,14 +847,6 @@ export default function StockOverview({
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="h-6 px-2 text-[10px] gap-1"
-                                        onClick={() => onLineAction?.("transform", l)}
-                                      >
-                                        <RefreshCw className="h-3 w-3" /> Omvandla
-                                      </Button>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
                                         className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
                                         onClick={() => onLineAction?.("waste", l)}
                                       >
