@@ -117,7 +117,14 @@ type ProductRow = {
   productId: string | null;
   imageUrl: string | null;
   orders: OrderLink[];
+  /** Butikens lagersaldo. null = ingen koppling hittad. */
+  stock?: number | null;
+  /** Utestående grossistorder i perioden. null = ingen koppling hittad. */
+  onOrder?: number | null;
+  /** Lager minus kvar att packa — fritt att sälja i butiken. */
+  sellable?: number | null;
 };
+
 
 
 type Group = { key: string; label: string; orderCount: number; rows: ProductRow[] };
