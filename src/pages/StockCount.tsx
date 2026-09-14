@@ -228,6 +228,7 @@ export default function StockCount() {
     },
   });
   const [openReportId, setOpenReportId] = useState<string | null>(null);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const reportLinesQuery = useQuery({
     queryKey: ["stock_report_lines", openReportId],
     enabled: !!openReportId,
