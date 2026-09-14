@@ -224,7 +224,9 @@ export default function Inventory() {
   const { activeStoreId, activeStoreName, site } = useSite();
   const showCosts = canSeeCosts(site);
   const [search, setSearch] = useState("");
-  const [viewMode, setViewMode] = useState<"overview" | "locations" | "movements" | "lots">("overview");
+  const [viewMode, setViewMode] = useState<
+    "overview" | "locations" | "movements" | "lots" | "shelflife"
+  >("overview");
   const [wasteOpen, setWasteOpen] = useState(false);
   const [wasteRowId, setWasteRowId] = useState<string | null>(null);
 
