@@ -41,6 +41,7 @@ import { ProductThumb } from "@/components/products/ProductThumb";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
 import ProductTraceabilityInline from "@/components/inventory/ProductTraceabilityInline";
+import ProductStockFlow from "@/components/inventory/ProductStockFlow";
 import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 import FamilyStockView from "@/components/inventory/FamilyStockView";
 import { useProductFamilies, useOrderedByProduct } from "@/hooks/useProductFamilies";
@@ -878,6 +879,13 @@ export default function StockOverview({
                               <div className="rounded-md border border-border/60 bg-card p-2.5">
                                 <ProductPhotosGallery productId={g.product_id} productName={g.name} />
                               </div>
+
+                              {/* In- och utflöde över tid för produkten */}
+                              <ProductStockFlow
+                                productId={g.product_id}
+                                productName={g.name}
+                                unit={g.unit}
+                              />
 
                               {/* Spårbarhet som rullgardin inne i produkten */}
                               <ProductTraceabilityInline
