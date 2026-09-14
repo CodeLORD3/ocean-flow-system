@@ -8241,7 +8241,10 @@ export type Database = {
           locked_at: string | null
           locked_by: string | null
           period: string
+          period_end: string | null
+          period_start: string | null
           reviewed_at: string | null
+          source: string
           status: string
           updated_at: string
         }
@@ -8261,7 +8264,10 @@ export type Database = {
           locked_at?: string | null
           locked_by?: string | null
           period: string
+          period_end?: string | null
+          period_start?: string | null
           reviewed_at?: string | null
+          source?: string
           status?: string
           updated_at?: string
         }
@@ -8281,7 +8287,10 @@ export type Database = {
           locked_at?: string | null
           locked_by?: string | null
           period?: string
+          period_end?: string | null
+          period_start?: string | null
           reviewed_at?: string | null
+          source?: string
           status?: string
           updated_at?: string
         }
@@ -13719,6 +13728,7 @@ export type Database = {
           booking_note: string | null
           booking_open: boolean
           city: string
+          clock_active_from: string | null
           country: string
           created_at: string | null
           currency: string
@@ -13753,6 +13763,7 @@ export type Database = {
           booking_note?: string | null
           booking_open?: boolean
           city: string
+          clock_active_from?: string | null
           country: string
           created_at?: string | null
           currency: string
@@ -13787,6 +13798,7 @@ export type Database = {
           booking_note?: string | null
           booking_open?: boolean
           city?: string
+          clock_active_from?: string | null
           country?: string
           created_at?: string | null
           currency?: string
@@ -16404,6 +16416,70 @@ export type Database = {
           },
         ]
       }
+      wrong_system_punches: {
+        Row: {
+          created_at: string
+          employee_id: string | null
+          id: string
+          legal_entity_id: string | null
+          minutes: number
+          note: string | null
+          pk_staff_name: string | null
+          punch_count: number
+          store_id: string | null
+          updated_at: string
+          work_date: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          legal_entity_id?: string | null
+          minutes?: number
+          note?: string | null
+          pk_staff_name?: string | null
+          punch_count?: number
+          store_id?: string | null
+          updated_at?: string
+          work_date: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          legal_entity_id?: string | null
+          minutes?: number
+          note?: string | null
+          pk_staff_name?: string | null
+          punch_count?: number
+          store_id?: string | null
+          updated_at?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wrong_system_punches_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wrong_system_punches_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "wrong_system_punches_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       yield_actuals: {
         Row: {
           actual_pct: number
@@ -16892,6 +16968,20 @@ export type Database = {
         }
         Returns: string
       }
+      clock_ops_day: {
+        Args: { _day?: string }
+        Returns: {
+          clock_active_from: string
+          employees_punched: number
+          legal_entity_id: string
+          punches: number
+          scheduled_shifts: number
+          store_id: string
+          store_name: string
+          tone: string
+          warnings: number
+        }[]
+      }
       clock_pending_approve: {
         Args: { _employee_id: string; _id: string }
         Returns: Json
@@ -17008,6 +17098,10 @@ export type Database = {
           _lot_id: string
         }
         Returns: Json
+      }
+      flag_wrong_system_punches: {
+        Args: { _from?: string; _to?: string }
+        Returns: number
       }
       fortnox_auto_match_customers: {
         Args: { p_entity: string }
@@ -17205,6 +17299,32 @@ export type Database = {
           product_id: string
         }[]
       }
+      payroll_basis_period: {
+        Args: { _legal_entity_id: string; _period: string }
+        Returns: {
+          absence_days: number
+          absence_hours: number
+          employee_id: string
+          employment_id: string
+          employment_number: string
+          form: string
+          full_name: string
+          mertid_hours: number
+          ob100_hours: number
+          ob50_hours: number
+          ob70_hours: number
+          overtime_hours: number
+          pay_type: string
+          period_end: string
+          period_start: string
+          store_name: string
+          unattested_days: number
+          worked_hours: number
+        }[]
+      }
+      payroll_period_end: { Args: { _period: string }; Returns: string }
+      payroll_period_source: { Args: { _period: string }; Returns: string }
+      payroll_period_start: { Args: { _period: string }; Returns: string }
       period_is_locked: {
         Args: { _date: string; _store_id: string }
         Returns: boolean

@@ -51,6 +51,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/dagsrapport": "Dagsrapport",
   "/staff-rules": "Regler & OB",
   "/payroll-exports": "Löneunderlag",
+  "/payroll-basis": "Löneunderlag per period",
   "/vehicles": "Bilar & Maskiner",
   "/establishments": "Anläggningar",
   "/legal-entities": "Bolag",

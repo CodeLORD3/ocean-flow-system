@@ -46,6 +46,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   // Butikschefen attesterar sin egen butik i butiksportalen.
   "/attestations": all(BUTIK, ADMIN),
   "/payroll-review": ADMIN,
+  "/payroll-basis": ADMIN,
   "/reports": all(BUTIK, GROSSIST, ADMIN),
   "/dagsrapport": all(BUTIK, GROSSIST, ADMIN),
   "/audit": all(BUTIK, GROSSIST, ADMIN),

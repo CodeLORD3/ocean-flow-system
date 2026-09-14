@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { periodForDate, periodSource } from "@/lib/payrollPeriod";
 
 /**
  * Löneunderlag (etapp 5).
@@ -19,6 +20,9 @@ export interface PayrollPeriod {
   exported_at: string | null;
   fortnox_batch_ref: string | null;
   correction_reason: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  source: "makrilltrade" | "personalkollen";
 }
 
 export interface PayrollLine {
@@ -63,9 +67,10 @@ export const PERIOD_STATUS_LABEL: Record<PayrollPeriod["status"], string> = {
   reexported: "Omexporterad",
 };
 
+/** Perioden som pågår just nu (löneperiod 16:e–15:e). */
 export function currentPeriod() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const iso = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
+  return periodForDate(iso);
 }
 
 export function usePayrollPeriods(legalEntityId: string | null) {
@@ -108,6 +113,11 @@ export function useComputePayroll() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ legalEntityId, period, force }: { legalEntityId: string; period: string; force?: boolean }) => {
+      if (periodSource(period) === "personalkollen") {
+        throw new Error(
+          "Perioden har Personalkollen som källa (till och med 2026-09-15) och beräknas aldrig här.",
+        );
+      }
       const { data, error } = await supabase.functions.invoke("payroll-compute", {
         body: { legal_entity_id: legalEntityId, period, force: force ?? false },
       });
