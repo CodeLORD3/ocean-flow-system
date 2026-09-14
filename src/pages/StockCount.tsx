@@ -109,7 +109,7 @@ const fmtQty = (n: number, unit: string) =>
 
 /** Håller tills: inventeringsdatum + valt antal dagar. */
 const holdsUntil = (countDate: string, days: string | null) => {
-  if (days === "7+") return null;
+  if (days === "7+") days = "7";
   const n = Number(days);
   if (!countDate || !Number.isFinite(n) || n <= 0) return null;
   return laggTillSvenskaDagar(countDate, n);
