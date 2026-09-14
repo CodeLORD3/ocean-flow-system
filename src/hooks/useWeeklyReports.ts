@@ -191,10 +191,7 @@ export function useCreateWeeklyReportFull() {
 
       await Promise.all(promises);
 
-      // If finalized, update stock
-      if (params.status === "finalized" && inventoryLines.length > 0) {
-        await syncInventoryToStock(reportId, inventoryLines, params.store_id);
-      }
+      // Veckorapporten rör inte lagret. Lagerrapporten är enda källan till saldo.
 
       await logActivity({
         action_type: "create",
