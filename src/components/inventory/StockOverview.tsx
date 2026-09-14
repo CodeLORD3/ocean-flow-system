@@ -610,19 +610,23 @@ export default function StockOverview({
                             {!dense && (
                               <ProductThumb src={g.image_url} alt={g.name} productId={g.product_id} className="hidden w-8 h-6 sm:block" />
                             )}
-                            <div className="min-w-0">
-                              <div className="font-semibold text-foreground truncate">{g.name}</div>
-                              <div className="text-[10px] text-muted-foreground font-mono truncate">
-                                SKU: {g.sku}
+                            <div className="min-w-0 flex-1">
+                              {/* Desktop: namn + SKU staplat */}
+                              <div className="hidden sm:block">
+                                <div className="font-semibold text-foreground truncate">{g.name}</div>
+                                <div className="text-[10px] text-muted-foreground font-mono truncate">
+                                  SKU: {g.sku}
+                                </div>
                               </div>
-                              {/* Mobil: kategori, status och dagar kvar visas här när kolumnerna är dolda */}
-                              <div className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground sm:hidden">
+                              {/* Mobil: allt på en horisontell rad */}
+                              <div className="flex sm:hidden items-center gap-1.5 min-w-0 whitespace-nowrap">
                                 <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", st.dot)} />
-                                <span className="truncate">{g.category}</span>
+                                <span className="font-semibold text-foreground truncate">{g.name}</span>
+                                <span className="text-[10px] text-muted-foreground truncate">{g.category}</span>
                                 {g.daysLeft !== null && (
                                   <span
                                     className={cn(
-                                      "shrink-0 font-medium",
+                                      "shrink-0 text-[10px] font-medium",
                                       g.daysLeft < 0 || g.daysLeft <= 2
                                         ? "text-destructive"
                                         : g.daysLeft <= 5
@@ -630,11 +634,12 @@ export default function StockOverview({
                                           : "text-emerald-600",
                                     )}
                                   >
-                                    {g.daysLeft < 0 ? `${Math.abs(g.daysLeft)} d sen` : `${g.daysLeft} d kvar`}
+                                    {g.daysLeft < 0 ? `${Math.abs(g.daysLeft)} d sen` : `${g.daysLeft} d`}
                                   </span>
                                 )}
                               </div>
                             </div>
+
                           </div>
                         </td>
                         <td className="hidden px-2 text-xs text-muted-foreground whitespace-nowrap sm:table-cell">{g.category}</td>
