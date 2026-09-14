@@ -607,9 +607,13 @@ export default function StockOverview({
                             ) : (
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                             )}
-                            {!dense && (
-                              <ProductThumb src={g.image_url} alt={g.name} productId={g.product_id} className="hidden w-8 h-6 sm:block" />
-                            )}
+                            <ProductThumb
+                              src={g.image_url}
+                              alt={g.name}
+                              productId={g.product_id}
+                              className={cn("shrink-0 rounded-sm", dense ? "h-5 w-6" : "h-6 w-7 sm:h-6 sm:w-8")}
+                            />
+
                             <div className="min-w-0 flex-1">
                               {/* Desktop: namn + SKU staplat */}
                               <div className="hidden sm:block">
