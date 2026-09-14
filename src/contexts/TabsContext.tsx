@@ -61,6 +61,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/traceability": "Spårbarhet",
   "/coverage": "Datakvalitet",
   "/system-status": "Systemstatus",
+  "/lager-blueprint": "Lagerblueprint",
   "/pos-live": "Kassa live",
 };
 

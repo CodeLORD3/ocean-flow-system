@@ -108,6 +108,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   "/legal-entities": ADMIN,
   "/coverage": ADMIN,
   "/system-status": ADMIN,
+  "/lager-blueprint": ADMIN,
   "/pos-live": ADMIN,
   "/shopify": ADMIN,
   "/settings": ADMIN,
