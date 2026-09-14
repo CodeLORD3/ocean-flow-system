@@ -112,32 +112,34 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
           const open = openId === lot.id;
           return (
             <Card key={lot.id} className="shadow-card">
-              <CardContent className="p-3">
+              <CardContent className="p-2 sm:p-3">
                 <button
                   onClick={() => setOpenId(open ? null : lot.id)}
-                  className="flex w-full flex-wrap items-center justify-between gap-2 text-left"
+                  className="flex w-full flex-nowrap sm:flex-wrap items-center justify-between gap-2 overflow-hidden text-left"
                 >
-                  <div className="min-w-0 w-full sm:w-auto">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <Fish className="h-3.5 w-3.5 text-primary" />
-                      <span className="font-mono text-xs text-muted-foreground">{lot.lot_number}</span>
-                      <span className="w-full text-sm font-semibold text-foreground sm:w-auto">
+                  <div className="min-w-0 flex-1 sm:w-auto sm:flex-none">
+                    <div className="flex flex-nowrap sm:flex-wrap items-center gap-x-2 gap-y-1 overflow-hidden">
+                      <Fish className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      <span className="shrink-0 font-mono text-[10px] text-muted-foreground sm:text-xs">{lot.lot_number}</span>
+                      <span className="truncate text-xs font-semibold text-foreground sm:w-auto sm:text-sm">
                         {lot.products?.name || lot.commercial_name || "—"}
                       </span>
-                      {lot.is_thawed && <Badge variant="outline" className="text-[10px]">Upptinad</Badge>}
-                      <Badge variant="secondary" className="text-[10px]">{lot.status}</Badge>
-                      {lot.products?.export_documentation_required && (
-                        <Badge variant="outline" className="text-[10px]">Exportdokumentation</Badge>
-                      )}
-                      {lot.parasite_treatment_required &&
-                        !(lot.freeze_start && lot.freeze_end) &&
-                        !(lot.exemption_reason && lot.exemption_source) && (
-                          <Badge variant="destructive" className="text-[10px]">
-                            Frysbehandling saknas
-                          </Badge>
+                      <span className="hidden sm:flex flex-wrap items-center gap-1.5">
+                        {lot.is_thawed && <Badge variant="outline" className="text-[10px]">Upptinad</Badge>}
+                        <Badge variant="secondary" className="text-[10px]">{lot.status}</Badge>
+                        {lot.products?.export_documentation_required && (
+                          <Badge variant="outline" className="text-[10px]">Exportdokumentation</Badge>
                         )}
+                        {lot.parasite_treatment_required &&
+                          !(lot.freeze_start && lot.freeze_end) &&
+                          !(lot.exemption_reason && lot.exemption_source) && (
+                            <Badge variant="destructive" className="text-[10px]">
+                              Frysbehandling saknas
+                            </Badge>
+                          )}
+                      </span>
                     </div>
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+                    <div className={`mt-1 ${open ? "flex" : "hidden"} sm:flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground`}>
                       {lot.suppliers?.name && <span>{lot.suppliers.name}</span>}
                       {lot.supplier_lot_id && <span>Lev. parti: {lot.supplier_lot_id}</span>}
                       {lot.catch_area && (
