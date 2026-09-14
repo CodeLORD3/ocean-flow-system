@@ -32,6 +32,8 @@ export interface Employee {
   emergency_contact_relation: string | null;
   notes: string | null;
   is_active: boolean;
+  /** Testperson från körbevis — filtreras ur vyer, lön och jämförelser. */
+  is_test?: boolean;
   created_at: string;
 }
 
@@ -62,6 +64,11 @@ export interface Employment {
   pension_lf: boolean;
   agreement_area: string;
   is_active: boolean;
+  /** Rätt till OB sitter per anställning, aldrig på bolagets policy. */
+  ob_50: boolean;
+  ob_70: boolean;
+  ob_100: boolean;
+  ob_source: string | null;
   notes: string | null;
 }
 
@@ -103,18 +110,24 @@ export const DOC_TYPES = [
   { value: "ovrigt", label: "Övrigt" },
 ];
 
-export function useEmployees(includeInactive = true) {
+/**
+ * Personalregistret. Testpersoner (is_test) filtreras bort som standard — deras
+ * stämplingar ligger kvar som körbevis, men de ska inte synas i personalvyer,
+ * löneunderlag eller jämförelsen mot Personalkollen.
+ */
+export function useEmployees(includeInactive = true, includeTest = false) {
   return useQuery({
-    queryKey: ["employees", includeInactive],
+    queryKey: ["employees", includeInactive, includeTest],
     queryFn: async () => {
       // Aldrig pnr_encrypted/pnr_hash till klienten – bara maskerade fält.
       let q = supabase
         .from("employees")
         .select(
-          "id, staff_id, pk_staff_id, first_name, last_name, email, phone, profile_image_url, birth_date, address_street, postal_code, city, country, pnr_masked, pnr_last4, alt_clock_identifier, emergency_contact_name, emergency_contact_phone, emergency_contact_relation, notes, is_active, created_at, updated_at",
+          "id, staff_id, pk_staff_id, first_name, last_name, email, phone, profile_image_url, birth_date, address_street, postal_code, city, country, pnr_masked, pnr_last4, alt_clock_identifier, emergency_contact_name, emergency_contact_phone, emergency_contact_relation, notes, is_active, is_test, created_at, updated_at",
         )
         .order("first_name");
       if (!includeInactive) q = q.eq("is_active", true);
+      if (!includeTest) q = q.eq("is_test", false);
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Employee[];

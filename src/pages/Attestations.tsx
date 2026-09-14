@@ -27,6 +27,7 @@ import { useEmployees } from "@/hooks/useEmployees";
 import {
   DEVIATION_LABEL,
   useAttestations,
+  useAttestationJournal,
   useComputeAttest,
   useDecideAttestations,
   useLockPeriod,
@@ -46,6 +47,10 @@ export default function Attestations() {
   const [adjusted, setAdjusted] = useState<number>(0);
   const [showAuto, setShowAuto] = useState(false);
   const [unlockReason, setUnlockReason] = useState("");
+  // En rad i taget: justerad tid kräver alltid en anteckning i journalen.
+  const [adjustFor, setAdjustFor] = useState<string | null>(null);
+  const [adjustHours, setAdjustHours] = useState<number>(0);
+  const [adjustNote, setAdjustNote] = useState("");
 
   const week = useMemo(() => weekDates(anchor), [anchor]);
   const period = anchor.slice(0, 7);
@@ -74,6 +79,20 @@ export default function Attestations() {
     [attestations],
   );
   const auto = attestations.filter((a) => a.status === "auto_approved");
+  const storeName = useMemo(() => new Map(stores.map((s) => [s.id, s.name])), [stores]);
+  /** Översikt när ingen enhet är vald: veckans oattesterade pass per butik. */
+  const perStore = useMemo(() => {
+    const limit = dateKey(new Date(Date.now() - 7 * 86400000));
+    const map = new Map<string, { store_id: string; count: number; old: number }>();
+    for (const a of attestations) {
+      if (a.status !== "flagged" || !a.store_id) continue;
+      const acc = map.get(a.store_id) ?? { store_id: a.store_id, count: 0, old: 0 };
+      acc.count += 1;
+      if (a.date < limit) acc.old += 1;
+      map.set(a.store_id, acc);
+    }
+    return [...map.values()].sort((a, b) => b.old - a.old || b.count - a.count);
+  }, [attestations]);
   const decided = attestations.filter((a) => a.status === "approved" || a.status === "rejected");
 
   const activeLock = locks.find((l) => l.period === period && !l.unlocked_at);
@@ -85,6 +104,37 @@ export default function Attestations() {
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+
+  const { data: journal = [] } = useAttestationJournal(attestations.map((a) => a.id));
+  const journalByAttestation = useMemo(() => {
+    const map = new Map<string, typeof journal>();
+    for (const j of journal) {
+      const list = map.get(j.attestation_id) ?? [];
+      list.push(j);
+      map.set(j.attestation_id, list);
+    }
+    return map;
+  }, [journal]);
+
+  /** En-tycks-attest per rad. Justerad tid kräver anteckning som hamnar i journalen. */
+  const decideOne = async (a: Attestation, rowBasis: Basis, minutes: number, note?: string) => {
+    try {
+      await decide.mutateAsync({
+        ids: [a.id],
+        approve: true,
+        basis: rowBasis,
+        minutes,
+        note: note ?? null,
+        minutesBefore: a.computed?.clocked_minutes ?? null,
+      });
+      setAdjustFor(null);
+      setAdjustNote("");
+      toast.success(`${nameOf(a.employee_id)} ${a.date} attesterad`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Beslutet kunde inte sparas");
+    }
+  };
+
 
   const row = (a: Attestation, tone: "alert" | "neutral" | "accent") => (
     <IndustryRow key={a.id} edge={tone}>
@@ -135,6 +185,83 @@ export default function Attestations() {
           )}
         </div>
       </div>
+
+      {a.status === "flagged" && !activeLock && (
+        <div className="mt-2 flex flex-wrap items-end gap-2">
+          <IndustryButton
+            variant="primary"
+            corners
+            disabled={decide.isPending}
+            onClick={() => decideOne(a, "stamplad", a.computed?.clocked_minutes ?? 0)}
+          >
+            Attestera stämplad tid
+          </IndustryButton>
+          <IndustryButton
+            variant="ghost"
+            disabled={decide.isPending}
+            onClick={() => decideOne(a, "schema", a.computed?.scheduled_minutes ?? 0)}
+          >
+            Attestera schematid
+          </IndustryButton>
+          <IndustryButton
+            variant="ghost"
+            onClick={() => {
+              setAdjustFor(adjustFor === a.id ? null : a.id);
+              setAdjustHours(Number(((a.computed?.clocked_minutes ?? 0) / 60).toFixed(2)));
+              setAdjustNote("");
+            }}
+          >
+            Justera tid
+          </IndustryButton>
+        </div>
+      )}
+
+      {adjustFor === a.id && (
+        <div className="mt-2 flex flex-wrap items-end gap-2">
+          <div>
+            <Label className="ind-label">Timmar</Label>
+            <IndustryInput
+              type="number"
+              inputMode="decimal"
+              step="0.25"
+              value={adjustHours}
+              onChange={(e) => setAdjustHours(Number(e.target.value))}
+              className="w-28"
+            />
+          </div>
+          <div className="min-w-[220px] flex-1">
+            <Label className="ind-label">Anteckning till journalen</Label>
+            <IndustryInput
+              value={adjustNote}
+              onChange={(e) => setAdjustNote(e.target.value)}
+              placeholder="Skäl till justeringen"
+            />
+          </div>
+          <IndustryButton
+            variant="primary"
+            corners
+            disabled={!adjustNote.trim() || decide.isPending}
+            onClick={() => decideOne(a, "justerad", Math.round(adjustHours * 60), adjustNote)}
+          >
+            Spara justering
+          </IndustryButton>
+          <IndustryButton variant="ghost" onClick={() => setAdjustFor(null)}>
+            Avbryt
+          </IndustryButton>
+        </div>
+      )}
+
+      {journalByAttestation.get(a.id)?.length ? (
+        <div className="mt-2 space-y-1">
+          {journalByAttestation.get(a.id)!.map((j) => (
+            <p key={j.id} className="ind-muted ind-mono text-xs">
+              {new Date(j.created_at).toLocaleString("sv-SE")} · {j.action}
+              {j.minutes_after !== null ? ` · ${formatMinutes(j.minutes_after)}` : ""}
+              {j.note ? ` · ${j.note}` : ""}
+            </p>
+          ))}
+        </div>
+      ) : null}
     </IndustryRow>
   );
 
@@ -214,9 +341,29 @@ export default function Attestations() {
       </div>
 
       {!storeId ? (
-        <IndustryRow edge="neutral">
-          <p className="ind-muted text-sm">Välj en enhet för att attestera tid.</p>
-        </IndustryRow>
+        <section className="space-y-2">
+          <SectionLabel>Veckans oattesterade pass per butik</SectionLabel>
+          {perStore.length === 0 ? (
+            <IndustryRow edge="accent">
+              <p className="ind-muted text-sm">
+                {isLoading ? "Läser attestunderlaget…" : "Inga oattesterade pass i veckan."}
+              </p>
+            </IndustryRow>
+          ) : (
+            perStore.map((s) => (
+              <IndustryRow key={s.store_id} edge={s.old > 0 ? "strong" : "alert"}>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="min-w-[200px]">{storeName.get(s.store_id) ?? "Okänd enhet"}</span>
+                  <StatusLabel tone="alert">{s.count} oattesterade</StatusLabel>
+                  {s.old > 0 && <StatusLabel tone="progress">{s.old} äldre än 7 dagar</StatusLabel>}
+                  <IndustryButton className="ml-auto" variant="ghost" onClick={() => setStoreId(s.store_id)}>
+                    Attestera
+                  </IndustryButton>
+                </div>
+              </IndustryRow>
+            ))
+          )}
+        </section>
       ) : (
         <>
           <DecisionBar>

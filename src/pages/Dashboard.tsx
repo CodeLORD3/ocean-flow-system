@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
 import { OurStoresSection } from "@/components/dashboard/OurStoresSection";
+import { ParallelRunCards } from "@/components/staff/ParallelRunCards";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import { PosTodayLive } from "@/components/dashboard/PosTodayLive";
 
@@ -275,6 +276,15 @@ export default function Dashboard() {
 
       {/* Our stores */}
       <OurStoresSection storeFilterId={isShop ? activeStoreId : null} />
+
+      {/* Parallellkörning klocka mot Personalkollen — per butik och dag */}
+      {!isShop && (
+        <motion.div variants={fadeUp}>
+          <ParallelRunCards />
+        </motion.div>
+      )}
+
+
 
 
 

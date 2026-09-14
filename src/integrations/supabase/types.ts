@@ -534,6 +534,50 @@ export type Database = {
         }
         Relationships: []
       }
+      attestation_journal: {
+        Row: {
+          action: string
+          actor_id: string | null
+          attestation_id: string
+          basis: string | null
+          created_at: string
+          id: string
+          minutes_after: number | null
+          minutes_before: number | null
+          note: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          attestation_id: string
+          basis?: string | null
+          created_at?: string
+          id?: string
+          minutes_after?: number | null
+          minutes_before?: number | null
+          note?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          attestation_id?: string
+          basis?: string | null
+          created_at?: string
+          id?: string
+          minutes_after?: number | null
+          minutes_before?: number | null
+          note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attestation_journal_attestation_id_fkey"
+            columns: ["attestation_id"]
+            isOneToOne: false
+            referencedRelation: "attestations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attestations: {
         Row: {
           approved_minutes: number | null
@@ -4332,6 +4376,7 @@ export type Database = {
           first_name: string
           id: string
           is_active: boolean
+          is_test: boolean
           last_name: string
           notes: string | null
           phone: string | null
@@ -4361,6 +4406,7 @@ export type Database = {
           first_name: string
           id?: string
           is_active?: boolean
+          is_test?: boolean
           last_name: string
           notes?: string | null
           phone?: string | null
@@ -4390,6 +4436,7 @@ export type Database = {
           first_name?: string
           id?: string
           is_active?: boolean
+          is_test?: boolean
           last_name?: string
           notes?: string | null
           phone?: string | null
@@ -4495,6 +4542,10 @@ export type Database = {
           legal_entity_id: string | null
           monthly_salary: number | null
           notes: string | null
+          ob_100: boolean
+          ob_50: boolean
+          ob_70: boolean
+          ob_source: string | null
           pay_type: string
           pension_lf: boolean
           probation_end_date: string | null
@@ -4529,6 +4580,10 @@ export type Database = {
           legal_entity_id?: string | null
           monthly_salary?: number | null
           notes?: string | null
+          ob_100?: boolean
+          ob_50?: boolean
+          ob_70?: boolean
+          ob_source?: string | null
           pay_type?: string
           pension_lf?: boolean
           probation_end_date?: string | null
@@ -4563,6 +4618,10 @@ export type Database = {
           legal_entity_id?: string | null
           monthly_salary?: number | null
           notes?: string | null
+          ob_100?: boolean
+          ob_50?: boolean
+          ob_70?: boolean
+          ob_source?: string | null
           pay_type?: string
           pension_lf?: boolean
           probation_end_date?: string | null
@@ -16765,6 +16824,7 @@ export type Database = {
         Args: { _customer_id: string; _reason?: string }
         Returns: Json
       }
+      attest_weekly_reminder: { Args: never; Returns: number }
       auto_close_open_time_entries: { Args: never; Returns: number }
       auto_trace_purchase_report: {
         Args: { _report_id: string }

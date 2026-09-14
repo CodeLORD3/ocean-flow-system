@@ -80,6 +80,13 @@ interface Employment {
   end_date: string | null;
   fortnox_employee_id: string | null;
   is_active: boolean | null;
+  /**
+   * OB avgörs alltid per anställning, aldrig av bolagets policy. Policyn säger
+   * NÄR ett OB-fönster ligger; dessa flaggor säger OM personen har rätt till det.
+   */
+  ob_50: boolean | null;
+  ob_70: boolean | null;
+  ob_100: boolean | null;
 }
 
 interface Holiday {
@@ -166,13 +173,19 @@ Deno.serve(async (req) => {
   // Anställningar i bolaget
   const { data: employments = [] } = await db
     .from("employments")
-    .select("id, employee_id, legal_entity_id, store_id, pay_type, monthly_salary, hourly_rate, employment_rate, agreement_area, cost_center, start_date, end_date, fortnox_employee_id, is_active")
+    .select("id, employee_id, legal_entity_id, store_id, pay_type, monthly_salary, hourly_rate, employment_rate, agreement_area, cost_center, start_date, end_date, fortnox_employee_id, is_active, ob_50, ob_70, ob_100")
     .eq("legal_entity_id", legalEntityId);
   const employmentByEmployee = new Map<string, Employment>();
   (employments as Employment[]).forEach((e) => {
     if (e.is_active === false) return;
     if (!employmentByEmployee.has(e.employee_id)) employmentByEmployee.set(e.employee_id, e);
   });
+  // Testpersoner ska aldrig ge lönerader, men deras stämplingar får ligga kvar.
+  const { data: testRows = [] } = await db
+    .from("employees")
+    .select("id")
+    .eq("is_test", true);
+  (testRows as { id: string }[]).forEach((row) => employmentByEmployee.delete(row.id));
   if (employmentByEmployee.size === 0) {
     return json({ error: "Inga aktiva anställningar i bolaget för perioden" }, 400);
   }
@@ -380,12 +393,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    for (const [pct, obMin, fallback] of [
-      [50, Number(day?.ob50_minutes ?? 0), "OB50"],
-      [70, Number(day?.ob70_minutes ?? 0), "OB70"],
-      [100, Number(day?.ob100_minutes ?? 0), "OB100"],
-    ] as [number, number, string][]) {
+    for (const [pct, obMin, fallback, entitled] of [
+      [50, Number(day?.ob50_minutes ?? 0), "OB50", emp.ob_50 === true],
+      [70, Number(day?.ob70_minutes ?? 0), "OB70", emp.ob_70 === true],
+      [100, Number(day?.ob100_minutes ?? 0), "OB100", emp.ob_100 === true],
+    ] as [number, number, string, boolean][]) {
       if (obMin <= 0) continue;
+      // Rätten till OB sitter på anställningen. Ingen flagga = ingen OB-rad.
+      if (!entitled) continue;
       const code = obCodeFor(policy, pct, fallback);
       if (mapped.size && !mapped.has(code)) issues.push({ kind: "missing_wage_code", detail: code, employee_id: att.employee_id });
       push({

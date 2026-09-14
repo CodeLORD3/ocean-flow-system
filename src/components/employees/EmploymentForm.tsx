@@ -49,6 +49,11 @@ export function EmploymentForm({ employeeId, employment, onDone }: Props) {
     pension_lf: employment?.pension_lf ?? true,
     agreement_area: employment?.agreement_area ?? "butik",
     is_active: employment?.is_active ?? true,
+    // OB avgörs per anställning. Nya rader ärver löneformens normalfall.
+    ob_50: employment ? employment.ob_50 === true : (employment?.pay_type ?? "monthly") === "hourly",
+    ob_70: employment ? employment.ob_70 === true : (employment?.pay_type ?? "monthly") === "hourly",
+    ob_100: employment ? employment.ob_100 === true : (employment?.pay_type ?? "monthly") === "hourly",
+    ob_source: employment?.ob_source ?? "",
     notes: employment?.notes ?? "",
   });
   const set = (k: string, v: string | boolean) => setF((p) => ({ ...p, [k]: v }));
@@ -90,6 +95,10 @@ export function EmploymentForm({ employeeId, employment, onDone }: Props) {
         pension_lf: f.pension_lf,
         agreement_area: f.agreement_area,
         is_active: f.is_active,
+        ob_50: f.ob_50,
+        ob_70: f.ob_70,
+        ob_100: f.ob_100,
+        ob_source: f.ob_source || "satt manuellt i Makrilltrade",
         notes: f.notes || null,
       } as Partial<Employment>);
       toast({ title: employment ? "Anställningen uppdaterad" : "Anställningen skapad" });
@@ -233,6 +242,28 @@ export function EmploymentForm({ employeeId, employment, onDone }: Props) {
           <Label>Semestertillägg (%)</Label>
           <Input value={f.vacation_supplement_pct} onChange={(e) => set("vacation_supplement_pct", e.target.value)} inputMode="decimal" className="font-mono tabular-nums" />
           <p className="mt-1 text-xs text-muted-foreground">0,43 % är lagstadgat. 0,8 % är Handels-nivå och ett aktivt policyval.</p>
+        </div>
+      </div>
+
+      <div className="rounded-md border border-border p-3">
+        <Label>Obekväm arbetstid (OB)</Label>
+        <p className="mb-2 mt-1 text-xs text-muted-foreground">
+          Styr om personen får OB-ersättning. Avtalet säger när OB-tiderna ligger, den här inställningen säger om just den här
+          personen har rätt till dem. {f.ob_source ? `Källa: ${f.ob_source}` : ""}
+        </p>
+        <div className="flex flex-wrap gap-6">
+          <label className="flex items-center gap-2 text-sm">
+            <Switch checked={f.ob_50} onCheckedChange={(v) => set("ob_50", v)} />
+            OB 50 %
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <Switch checked={f.ob_70} onCheckedChange={(v) => set("ob_70", v)} />
+            OB 70 %
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <Switch checked={f.ob_100} onCheckedChange={(v) => set("ob_100", v)} />
+            OB 100 %
+          </label>
         </div>
       </div>
 

@@ -107,6 +107,36 @@ export function useComputeAttest() {
   });
 }
 
+export interface AttestationJournalRow {
+  id: string;
+  attestation_id: string;
+  action: string;
+  basis: string | null;
+  minutes_before: number | null;
+  minutes_after: number | null;
+  note: string | null;
+  actor_id: string | null;
+  created_at: string;
+}
+
+/** Journal per attestrad — varje beslut och tidsjustering får en egen rad. */
+export function useAttestationJournal(attestationIds: string[]) {
+  const key = [...attestationIds].sort().join(",");
+  return useQuery({
+    queryKey: ["attestation_journal", key],
+    enabled: attestationIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("attestation_journal")
+        .select("*")
+        .in("attestation_id", attestationIds)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as AttestationJournalRow[];
+    },
+  });
+}
+
 export function useDecideAttestations() {
   const qc = useQueryClient();
   return useMutation({
@@ -115,27 +145,49 @@ export function useDecideAttestations() {
       approve,
       basis,
       minutes,
+      note,
+      minutesBefore,
     }: {
       ids: string[];
       approve: boolean;
       basis: Attestation["basis"];
       minutes?: number | null;
+      note?: string | null;
+      minutesBefore?: number | null;
     }) => {
       const { data: auth } = await supabase.auth.getUser();
+      const actor = auth.user?.id ?? null;
       const { error } = await supabase
         .from("attestations")
         .update({
           status: approve ? "approved" : "rejected",
           basis,
           approved_minutes: minutes ?? null,
-          decided_by: auth.user?.id ?? null,
+          decided_by: actor,
           decided_at: new Date().toISOString(),
         })
         .in("id", ids);
       if (error) throw error;
+
+      // Journalen är beviset: vad som beslutades, med vilket underlag och varför.
+      const { error: journalError } = await supabase.from("attestation_journal").insert(
+        ids.map((id) => ({
+          attestation_id: id,
+          action: approve ? (basis === "justerad" ? "justerad_attest" : "attest") : "avslag",
+          basis,
+          minutes_before: minutesBefore ?? null,
+          minutes_after: minutes ?? null,
+          note: note?.trim() || null,
+          actor_id: actor,
+        })),
+      );
+      if (journalError) throw journalError;
       return ids.length;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["attestations"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["attestations"] });
+      qc.invalidateQueries({ queryKey: ["attestation_journal"] });
+    },
   });
 }
 
