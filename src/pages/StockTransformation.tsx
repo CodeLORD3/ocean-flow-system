@@ -243,10 +243,19 @@ export default function StockTransformation() {
 
       <TransformFlow
         open={!!target}
-        onOpenChange={(o) => !o && setTarget(null)}
+        onOpenChange={(o) => {
+          if (!o) {
+            setTarget(null);
+            setInitialTarget(null);
+          }
+        }}
         product={target}
+        initialTargetProductId={initialTarget}
         storeId={activeStoreId || null}
-        onDone={() => setTarget(null)}
+        onDone={() => {
+          setTarget(null);
+          setInitialTarget(null);
+        }}
       />
     </motion.div>
   );
