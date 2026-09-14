@@ -657,144 +657,76 @@ export default function StockCount() {
 
       {session && (
       <>
-      {/* Stegvis ledtråd om var man är i flödet */}
-      <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-2.5 py-1.5 text-[11px]">
-        <span className="flex items-center gap-1.5 font-semibold text-primary">
-          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/15 text-[9px] font-bold">
-            {locked ? "✓" : "2"}
-          </span>
-          {locked ? "Rapporten är låst" : "Räkna varorna"}
-        </span>
-        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-          <span
-            className="block h-full rounded-full bg-primary transition-all"
-            style={{ width: `${rows.length ? Math.round((countedCount / rows.length) * 100) : 0}%` }}
+      {/* Kompakt rad: sök främst, sedan kategori och filter */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[180px] flex-1">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Sök produkt — namn eller SKU"
+            className="h-9 pl-8 text-sm"
           />
-        </span>
-        <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+        </div>
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger className="h-9 w-[150px] text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" className="text-xs">
+              Alla kategorier
+            </SelectItem>
+            {categories.map((c) => (
+              <SelectItem key={c} value={c} className="text-xs">
+                {c}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <button
+          type="button"
+          onClick={() => setOnlyUncounted(!onlyUncounted)}
+          className={`h-9 shrink-0 rounded-md border px-2.5 text-xs font-medium transition-colors ${
+            onlyUncounted
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border text-muted-foreground hover:bg-muted"
+          }`}
+        >
+          Ej räknade
+        </button>
+        <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
           {countedCount}/{rows.length}
-        </span>
-        <span className="hidden shrink-0 text-muted-foreground sm:inline">
-          {locked ? "" : "Steg 3: lås rapporten när allt är räknat"}
         </span>
       </div>
 
-      {/* Filter */}
-      <Card>
-        <CardContent className="p-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-5 items-end">
-          <div className="space-y-1">
-            <Label className="text-xs">Butik</Label>
-            <Select value={effectiveStoreId} onValueChange={setStoreId}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Välj butik" />
-              </SelectTrigger>
-              <SelectContent>
-                {(stores as any[]).map((s: any) => (
-                  <SelectItem key={s.id} value={s.id} className="text-xs">
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs flex items-center gap-1.5">
-              Datum
-              {date && (
-                <span className="font-normal text-[10px] text-muted-foreground">
-                  {weekdayLong(date)}
-                </span>
-              )}
-            </Label>
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-8 text-xs" />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Kategori</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-xs">
-                  Alla kategorier
-                </SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c} value={c} className="text-xs">
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Sök</Label>
-            <div className="relative">
-              <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Namn eller SKU"
-                className="h-8 pl-7 text-xs"
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-between gap-2 pb-1">
-            <Label className="text-xs">Endast ej räknade</Label>
-            <Switch checked={onlyUncounted} onCheckedChange={setOnlyUncounted} />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Status */}
-      <div className="flex items-center gap-2 flex-wrap text-xs">
-        <Badge
-          variant="outline"
-          className="bg-amber-400/35 text-amber-900 border-amber-500/50 font-medium"
-        >
-          Idag: {weekdayLong(todayStockholm())} {todayStockholm()}
-        </Badge>
-        {date !== todayStockholm() && (
-          <Badge variant="outline" className="bg-muted text-muted-foreground">
-            Inventering: {weekdayLong(date)} {date}
-          </Badge>
-        )}
-        {session ? (
-          <Badge
-            variant="outline"
-            className={locked ? "bg-muted text-muted-foreground" : "bg-emerald-500/15 text-emerald-700 border-emerald-500/30"}
-          >
-            {locked ? "Låst" : "Öppen"}
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="bg-muted text-muted-foreground">
-            Ingen inventering för datumet
-          </Badge>
-        )}
-        {daySessions.length > 1 && (
-          <span className="flex items-center gap-1 flex-wrap">
-            {daySessions.map((s: any, i: number) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setSelectedSessionId(s.id)}
-                className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
-                  s.id === session?.id
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                {s.label || `#${i + 1}`} {s.status === "locked" ? "· låst" : "· öppen"}
-              </button>
-            ))}
-          </span>
-        )}
-        <span className="text-muted-foreground">
-          {countedCount} av {rows.length} rader räknade
+      {/* Liten statusrad: dag, läge, ev. flera rapporter */}
+      <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+        <span className="font-medium text-foreground">
+          {weekdayLong(date)} {date}
         </span>
+        <span className={locked ? "text-muted-foreground" : "font-medium text-emerald-600"}>
+          · {locked ? "Låst" : "Öppen"}
+        </span>
+        {storeName && <span className="hidden sm:inline">· {storeName}</span>}
+        {daySessions.length > 1 &&
+          daySessions.map((s: any, i: number) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setSelectedSessionId(s.id)}
+              className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                s.id === session?.id
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border hover:bg-muted"
+              }`}
+            >
+              {s.label || `#${i + 1}`}
+            </button>
+          ))}
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 text-xs gap-1"
+          className="h-6 gap-1 px-1.5 text-[11px]"
           onClick={() => {
             sessionQuery.refetch();
             linesQuery.refetch();
