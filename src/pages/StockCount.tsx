@@ -637,6 +637,45 @@ export default function StockCount() {
         )}
       </div>
 
+      {/* Start — guidat läge när ingen rapport är igång för datumet */}
+      {!session && (
+        <CountStartPanel
+          stores={stores as any[]}
+          storeId={effectiveStoreId}
+          onStoreChange={setStoreId}
+          date={date}
+          onDateChange={setDate}
+          dayName={weekdayLong(date)}
+          productCount={allRows.length}
+          onStart={createSession}
+          onPrint={openPrintDialog}
+        />
+      )}
+
+      {session && (
+      <>
+      {/* Stegvis ledtråd om var man är i flödet */}
+      <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-2.5 py-1.5 text-[11px]">
+        <span className="flex items-center gap-1.5 font-semibold text-primary">
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/15 text-[9px] font-bold">
+            {locked ? "✓" : "2"}
+          </span>
+          {locked ? "Rapporten är låst" : "Räkna varorna"}
+        </span>
+        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+          <span
+            className="block h-full rounded-full bg-primary transition-all"
+            style={{ width: `${rows.length ? Math.round((countedCount / rows.length) * 100) : 0}%` }}
+          />
+        </span>
+        <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+          {countedCount}/{rows.length}
+        </span>
+        <span className="hidden shrink-0 text-muted-foreground sm:inline">
+          {locked ? "" : "Steg 3: lås rapporten när allt är räknat"}
+        </span>
+      </div>
+
       {/* Filter */}
       <Card>
         <CardContent className="p-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-5 items-end">
