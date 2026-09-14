@@ -426,6 +426,7 @@ export function TotalOrderedView({
         "Packstatus",
         "Lager",
         "Order",
+        "Lager+Order",
         "Kan säljas",
         "Värde",
         "Antal ordrar",
