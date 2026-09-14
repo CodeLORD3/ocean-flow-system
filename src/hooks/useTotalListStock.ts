@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useShopOrderLines } from "@/hooks/usePurchaseReconciliation";
 import { OPEN_SHOP_ORDER_STATUSES, matchKey } from "@/lib/purchaseReconciliation";
 
 const db = supabase as any;
@@ -50,6 +49,49 @@ export function useStoreStockByProduct(storeId: string | null | undefined) {
   });
 }
 
+export interface ShopOrderOutstanding {
+  productId: string | null;
+  name: string;
+  unit: string;
+  category: string | null;
+  imageUrl: string | null;
+  quantity: number;
+  /** Effektivt leveransdatum, för placering i rätt dag/vecka. */
+  date: string | null;
+  storeId: string;
+  orderStatus: string;
+}
+
+/**
+ * Utestående grossistorderrader med produktnamn, kategori och bild — så de kan
+ * visas i totallistan även när ingen kund har beställt varan.
+ */
+export function useOutstandingShopOrderLines() {
+  return useQuery({
+    queryKey: ["total_list_shop_order_lines"],
+    staleTime: 60 * 1000,
+    queryFn: async (): Promise<ShopOrderOutstanding[]> => {
+      const { data, error } = await db
+        .from("shop_order_lines")
+        .select(
+          "product_id, quantity_ordered, quantity_delivered, unit, delivery_date, products(name, unit, category, image_url), shop_orders!inner(status, store_id, desired_delivery_date)",
+        );
+      if (error) throw error;
+      return ((data ?? []) as any[]).map((r) => ({
+        productId: r.product_id ?? null,
+        name: r.products?.name ?? "",
+        unit: r.unit ?? r.products?.unit ?? "st",
+        category: r.products?.category ?? null,
+        imageUrl: r.products?.image_url ?? null,
+        quantity: Number(r.quantity_ordered || 0) - Number(r.quantity_delivered || 0),
+        date: r.delivery_date ?? r.shop_orders?.desired_delivery_date ?? null,
+        storeId: r.shop_orders?.store_id ?? "",
+        orderStatus: r.shop_orders?.status ?? "Ny",
+      }));
+    },
+  });
+}
+
 export interface TotalListExtras {
   /** Lagersaldo per product_id. */
   stockById: Map<string, number>;
@@ -59,6 +101,8 @@ export interface TotalListExtras {
   orderedById: Map<string, number>;
   /** Utestående grossistorder per normaliserat varunamn. */
   orderedByName: Map<string, number>;
+  /** Beställda varor i perioden, för rader som saknar kundbeställning. */
+  orderedRows: ShopOrderOutstanding[];
   isLoading: boolean;
 }
 
@@ -81,7 +125,7 @@ export function useTotalListExtras({
   const { data: stock = [], isLoading: stockLoading } = useStoreStockByProduct(
     enabled ? storeId : null,
   );
-  const { data: shopLines = [], isLoading: linesLoading } = useShopOrderLines();
+  const { data: shopLines = [], isLoading: linesLoading } = useOutstandingShopOrderLines();
 
   return useMemo(() => {
     const stockById = new Map<string, number>();
@@ -94,6 +138,7 @@ export function useTotalListExtras({
 
     const orderedById = new Map<string, number>();
     const orderedByName = new Map<string, number>();
+    const orderedRows: ShopOrderOutstanding[] = [];
     if (enabled) {
       // Butikens egen öppna beställning räknas också med — den är lagd men
       // ännu inte skickad till grossisten.
@@ -102,25 +147,26 @@ export function useTotalListExtras({
         "Öppen",
       ]);
       for (const l of shopLines) {
-        if (!open.has(l.order_status)) continue;
-        if (storeId && l.store_id !== storeId) continue;
-        const d = l.effective_date;
+        if (!open.has(l.orderStatus)) continue;
+        if (storeId && l.storeId !== storeId) continue;
         // Rader utan leveransdatum räknas alltid med; annars måste datumet
         // ligga inom totallistans intervall.
-        if (d && (d < fromDate || d > toDate)) continue;
-        const remaining = l.quantity_ordered - l.quantity_delivered;
-        if (remaining <= 0.005) continue;
-        if (l.product_id)
-          orderedById.set(l.product_id, (orderedById.get(l.product_id) ?? 0) + remaining);
+        if (l.date && (l.date < fromDate || l.date > toDate)) continue;
+        if (l.quantity <= 0.005) continue;
+        if (l.productId)
+          orderedById.set(l.productId, (orderedById.get(l.productId) ?? 0) + l.quantity);
+        const k = matchKey(l.name);
+        if (k) orderedByName.set(k, (orderedByName.get(k) ?? 0) + l.quantity);
+        orderedRows.push(l);
       }
     }
-
 
     return {
       stockById,
       stockByName,
       orderedById,
       orderedByName,
+      orderedRows,
       isLoading: enabled ? stockLoading || linesLoading : false,
     };
   }, [stock, shopLines, storeId, fromDate, toDate, enabled, stockLoading, linesLoading]);
