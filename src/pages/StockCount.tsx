@@ -667,7 +667,7 @@ export default function StockCount() {
                 className="gap-1 text-[11px] sm:text-xs h-8 px-2 font-semibold flex-1 sm:flex-none"
                 onClick={() => setLockOpen(true)}
               >
-                <Lock className="h-3 w-3" /> Lås
+                <Check className="h-3 w-3" /> Klar
               </Button>
             )}
           </div>
