@@ -926,28 +926,26 @@ export default function StockCount() {
                     const diff = counted - r.systemQty;
                     const quality = (line?.quality ?? "") as string;
                     return (
-                      <div key={r.key}>
+                      <div key={r.key} className="border-x border-b border-grid-line bg-card">
                         <button
                           type="button"
                           onClick={() => setEditKey(editKey === r.key ? null : r.key)}
-                          className="flex w-full items-center gap-2 px-2 py-1 text-left hover:bg-muted/50"
+                          className="flex w-full items-center px-2 py-1 text-left hover:bg-muted/50"
                         >
-                          <span className="min-w-0 flex-1 truncate text-[12px] font-medium">
+                          <span className="min-w-0 flex-1 truncate border-r border-grid-line/70 pr-2 text-[12px] font-medium">
                             {r.productName}
                           </span>
-                          {quality && (
-                            <span className="hidden shrink-0 text-[10px] text-muted-foreground sm:inline">
-                              {quality === "7+" ? "7+ d" : `${quality} d`}
-                            </span>
-                          )}
-                          <span className="shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
+                          <span className="hidden w-16 shrink-0 border-r border-grid-line/70 px-2 text-center text-[10px] text-muted-foreground sm:block">
+                            {quality ? (quality === "7+" ? "7+ d" : `${quality} d`) : "—"}
+                          </span>
+                          <span className="w-14 shrink-0 border-r border-grid-line/70 px-2 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
                             {diff === 0
                               ? "±0"
                               : `${diff > 0 ? "+" : ""}${diff.toLocaleString("sv-SE", {
                                   maximumFractionDigits: 1,
                                 })}`}
                           </span>
-                          <span className="shrink-0 font-mono text-[12px] font-semibold tabular-nums">
+                          <span className="w-20 shrink-0 px-2 text-right font-mono text-[12px] font-semibold tabular-nums">
                             {fmtQty(counted, r.unit)}
                           </span>
                         </button>
