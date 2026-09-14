@@ -168,6 +168,10 @@ export default function StockOverview({
   const { activeStoreId } = useSite();
   const { data: families = [] } = useProductFamilies();
   const { data: orderedByProduct } = useOrderedByProduct(activeStoreId || null);
+  /** Antal bilder per produkt — visas som kameraikon med siffra i raden. */
+  const { data: photoCounts } = useProductPhotoCounts(
+    useMemo(() => rows.map((r) => r.product_id), [rows]),
+  );
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("__all__");
   const [statusFilter, setStatusFilter] = useState<string>("all");
