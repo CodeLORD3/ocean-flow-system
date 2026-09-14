@@ -9792,6 +9792,33 @@ export type Database = {
         }
         Relationships: []
       }
+      product_families: {
+        Row: {
+          base_unit: string
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_unit?: string
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_unit?: string
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_stock_locations: {
         Row: {
           arrival_date: string | null
@@ -10229,6 +10256,7 @@ export type Database = {
           day_price_updated_at: string | null
           exempt_species_data: boolean
           export_documentation_required: boolean | null
+          family_id: string | null
           fao_code: string | null
           hs_code: string | null
           id: string
@@ -10280,6 +10308,7 @@ export type Database = {
           day_price_updated_at?: string | null
           exempt_species_data?: boolean
           export_documentation_required?: boolean | null
+          family_id?: string | null
           fao_code?: string | null
           hs_code?: string | null
           id?: string
@@ -10331,6 +10360,7 @@ export type Database = {
           day_price_updated_at?: string | null
           exempt_species_data?: boolean
           export_documentation_required?: boolean | null
+          family_id?: string | null
           fao_code?: string | null
           hs_code?: string | null
           id?: string
@@ -10361,6 +10391,13 @@ export type Database = {
           wholesale_price?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "products_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "product_families"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_parent_product_id_fkey"
             columns: ["parent_product_id"]

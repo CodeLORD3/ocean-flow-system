@@ -58,6 +58,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useProductsWithChildren, useAddSubproduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useCategories, useAddCategory } from "@/hooks/useCategories";
+import { useProductFamilies, useCreateProductFamily } from "@/hooks/useProductFamilies";
 import { usePriceHistory, useLatestPriceChanges } from "@/hooks/usePriceHistory";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -246,6 +247,9 @@ export default function Products() {
     retail_suggested: "",
     weight_per_piece: "",
   });
+  const { data: productFamilies = [] } = useProductFamilies();
+  const createFamily = useCreateProductFamily();
+  const [newFamilyName, setNewFamilyName] = useState("");
   const [historyProduct, setHistoryProduct] = useState<string | null>(null);
   const [priceListOpen, setPriceListOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -364,6 +368,7 @@ export default function Products() {
     sku: "",
     hs_code: "",
     weight_per_piece: "",
+    family_id: "",
     cost_price: "",
     wholesale_price: "",
     retail_suggested: "",
@@ -443,6 +448,7 @@ export default function Products() {
       sku: "",
       hs_code: "",
       weight_per_piece: "",
+      family_id: "",
       cost_price: "",
       wholesale_price: "",
       retail_suggested: "",
@@ -470,6 +476,7 @@ export default function Products() {
       sku: p.sku,
       hs_code: p.hs_code || "",
       weight_per_piece: String(p.weight_per_piece || ""),
+      family_id: (p as any).family_id || "",
       cost_price: String(p.cost_price || ""),
       wholesale_price: String(p.wholesale_price || ""),
       retail_suggested: String(p.retail_suggested || ""),
@@ -531,6 +538,7 @@ export default function Products() {
       sku,
       hs_code: form.hs_code || null,
       weight_per_piece: form.weight_per_piece ? Number(form.weight_per_piece) : 0,
+      family_id: form.family_id || null,
       origin: form.origin || null,
       producer: form.producer || null,
       shelf_life_days: form.shelf_life_days ? Number(form.shelf_life_days) : null, // NEW
@@ -733,6 +741,15 @@ export default function Products() {
             {hasChildren && (
               <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1 rounded-none shrink-0">
                 {p.subproducts.length} del
+              </Badge>
+            )}
+            {(p as any).family_id && (
+              <Badge
+                variant="outline"
+                className="shrink-0 px-1 py-0 text-[9px] text-primary"
+                title="Del av produktfamilj — förpackningar summeras ihop i Lager"
+              >
+                {productFamilies.find((f) => f.id === (p as any).family_id)?.name || "familj"}
               </Badge>
             )}
             <AllergenBadge product={p as any} />
@@ -1628,7 +1645,7 @@ export default function Products() {
                 </p>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Vikt/st (KG)</Label>
+                <Label className="text-xs">Nettovikt per styck (KG)</Label>
                 <Input
                   value={form.weight_per_piece}
                   onChange={(e) => setField("weight_per_piece", e.target.value)}
@@ -1637,6 +1654,67 @@ export default function Products() {
                   step="0.001"
                   className="h-8 text-xs"
                 />
+                <p className="text-[10px] text-muted-foreground">
+                  Fylls i på allt som räknas i styck (burk, påse, hink, hel fisk). Utan den kan lagret inte
+                  summeras i kilo eller jämföras mellan förpackningar. Ex. 4 kg hink = 4, 200 g burk = 0,2.
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Del av produktfamilj</Label>
+                <Select
+                  value={form.family_id || "__none__"}
+                  onValueChange={(v) => setField("family_id", v === "__none__" ? "" : v)}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Ingen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__" className="text-xs">
+                      Ingen
+                    </SelectItem>
+                    {productFamilies.map((f) => (
+                      <SelectItem key={f.id} value={f.id} className="text-xs">
+                        {f.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">
+                  Samma vara i olika förpackningar, t.ex. Aioli löpvikt, 4 kg hink och 200 g burk.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Ny familj</Label>
+                <div className="flex gap-1.5">
+                  <Input
+                    value={newFamilyName}
+                    onChange={(e) => setNewFamilyName(e.target.value)}
+                    placeholder="T.ex. Aioli"
+                    className="h-8 text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    disabled={!newFamilyName.trim() || createFamily.isPending}
+                    onClick={() =>
+                      createFamily.mutate(newFamilyName, {
+                        onSuccess: (fam) => {
+                          setField("family_id", fam.id);
+                          setNewFamilyName("");
+                          toast({ title: "Familj skapad", description: fam.name });
+                        },
+                        onError: (err: any) =>
+                          toast({ title: "Fel", description: err.message, variant: "destructive" }),
+                      })
+                    }
+                  >
+                    Skapa
+                  </Button>
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
