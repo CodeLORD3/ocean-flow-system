@@ -71,11 +71,12 @@ export default function ProductStockFlow({
     },
   });
 
-  const { points, totals } = useMemo(() => {
+  const { points, totals, ledger } = useMemo(() => {
     // Löpande saldo från noll — varje förändring av lagret är en rörelse.
     const perDay = new Map<string, { in: number; out: number }>();
     let running = 0;
     const balanceAtDay = new Map<string, number>();
+    const entries: any[] = [];
     for (const m of movements) {
       const key = dayKey(m.created_at);
       const qty = Number(m.quantity_kg) || 0;
@@ -85,6 +86,22 @@ export default function ProductStockFlow({
       perDay.set(key, d);
       running += qty;
       balanceAtDay.set(key, running);
+      const staff = m.staff;
+      entries.push({
+        id: m.id,
+        day: key,
+        created_at: m.created_at,
+        type: m.movement_type,
+        qty,
+        saldo: running,
+        note: m.note as string | null,
+        lot: m.lots?.lot_number as string | null,
+        location: [m.storage_locations?.stores?.name, m.storage_locations?.name]
+          .filter(Boolean)
+          .join(" · "),
+        who: staff ? `${staff.first_name ?? ""} ${staff.last_name ?? ""}`.trim() : "",
+        reference: m.reference_type as string | null,
+      });
     }
 
     const keys = [...perDay.keys()].sort();
