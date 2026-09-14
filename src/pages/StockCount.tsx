@@ -90,9 +90,9 @@ function RowPhotoButton({
 }
 
 
-type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "7+";
+type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7";
 
-const QUALITY_DAYS: Quality[] = ["1", "2", "3", "4", "5", "6", "7", "7+"];
+const QUALITY_DAYS: Quality[] = ["1", "2", "3", "4", "5", "6", "7"];
 
 const todayStockholm = () =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
