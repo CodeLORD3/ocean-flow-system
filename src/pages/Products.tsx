@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 import ProductImportDialog from "@/components/products/ProductImportDialog";
+import ProductStockFlow from "@/components/inventory/ProductStockFlow";
 import PriceListDialog from "@/components/PriceListDialog";
 import SavedPriceLists from "@/components/SavedPriceLists";
 import { useSite } from "@/contexts/SiteContext";
