@@ -401,6 +401,9 @@ export function TotalOrderedView({
           ...r,
           stock,
           onOrder,
+          // Lager och order ihop: räknas när minst en av dem är känd.
+          combined:
+            stock == null && onOrder == null ? null : (stock ?? 0) + (onOrder ?? 0),
           sellable: stock == null ? null : stock - remaining,
         };
       }),
