@@ -606,7 +606,9 @@ export default function StockCount() {
           </h2>
 
           <p className="text-xs text-muted-foreground">
-            Flera inventeringar per dag går bra. Räkna per lagerplats, lås när allt är klart.
+            {session
+              ? "Räkna kategori för kategori och lås rapporten när allt är klart."
+              : "Starta en rapport, räkna av lagret och lås. Du kan göra flera per dag."}
           </p>
         </div>
         {session && effectiveStoreId && (
