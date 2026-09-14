@@ -186,6 +186,7 @@ export function PrintTotalChecklistDialog({
       periodLabel: combine
         ? `Samlad lista: ${finalGroups.map((g) => g.label).join(", ")}`
         : finalGroups.map((g) => g.label).join("  ·  "),
+      extraColumns,
       storeName,
       groups: combine ? [mergeGroups(finalGroups)] : finalGroups,
       selectionNote:
