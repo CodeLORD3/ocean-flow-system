@@ -232,6 +232,8 @@ export default function StockCount() {
   });
   const [openReportId, setOpenReportId] = useState<string | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  // Raden i inventeringslistan är kompakt; redigering öppnas först vid klick.
+  const [editKey, setEditKey] = useState<string | null>(null);
   const reportLinesQuery = useQuery({
     queryKey: ["stock_report_lines", openReportId],
     enabled: !!openReportId,
@@ -919,70 +921,78 @@ export default function StockCount() {
                     const diff = counted - r.systemQty;
                     const quality = (line?.quality ?? "") as string;
                     return (
-                      <div key={r.key} className="space-y-1 px-2 py-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[13px] font-medium">
-                              {r.productName}
-                            </span>
-                            <span className="block truncate text-[10px] text-muted-foreground">
-                              {r.category}
-                              {" · "}
-                              <span className="font-mono tabular-nums">
-                                {diff === 0
-                                  ? "ingen skillnad"
-                                  : `${diff > 0 ? "+" : ""}${diff.toLocaleString("sv-SE", {
-                                      maximumFractionDigits: 1,
-                                    })} ${r.unit}`}
-                              </span>
-                            </span>
+                      <div key={r.key}>
+                        <button
+                          type="button"
+                          onClick={() => setEditKey(editKey === r.key ? null : r.key)}
+                          className="flex w-full items-center gap-2 px-2 py-1 text-left hover:bg-muted/50"
+                        >
+                          <span className="min-w-0 flex-1 truncate text-[12px] font-medium">
+                            {r.productName}
                           </span>
-                          <span className="shrink-0 font-mono text-sm font-semibold tabular-nums">
+                          {quality && (
+                            <span className="hidden shrink-0 text-[10px] text-muted-foreground sm:inline">
+                              {quality === "7+" ? "7+ d" : `${quality} d`}
+                            </span>
+                          )}
+                          <span className="shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
+                            {diff === 0
+                              ? "±0"
+                              : `${diff > 0 ? "+" : ""}${diff.toLocaleString("sv-SE", {
+                                  maximumFractionDigits: 1,
+                                })}`}
+                          </span>
+                          <span className="shrink-0 font-mono text-[12px] font-semibold tabular-nums">
                             {fmtQty(counted, r.unit)}
                           </span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            disabled={locked || !session}
-                            className="h-7 px-1.5 text-[10px] text-muted-foreground"
-                            onClick={() => saveLine(r, { counted_qty: null })}
-                          >
-                            Ta bort
-                          </Button>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <select
-                            disabled={locked || !session}
-                            value={quality}
-                            onChange={(e) =>
-                              saveLine(r, { quality: (e.target.value || null) as Quality | null })
-                            }
-                            className={`h-7 min-w-0 flex-1 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
-                          >
-                            <option value="">Hållbarhet</option>
-                            {QUALITY_DAYS.map((d) => {
-                              const to = holdsUntil(date, d);
-                              return (
-                                <option key={d} value={d}>
-                                  {d === "7+"
-                                    ? "7+ dagar"
-                                    : `${d} ${d === "1" ? "dag" : "dagar"}${to ? ` · ${dayLabel(to)}` : ""}`}
-                                </option>
-                              );
-                            })}
-                          </select>
-                          <Input
-                            disabled={locked || !session}
-                            defaultValue={line?.comment ?? ""}
-                            placeholder="Kommentar"
-                            className="h-7 flex-1 px-1.5 text-[11px]"
-                            onBlur={(e) => {
-                              const val = e.target.value.trim() || null;
-                              if ((line?.comment ?? null) === val) return;
-                              saveLine(r, { comment: val });
-                            }}
-                          />
-                        </div>
+                        </button>
+                        {editKey === r.key && (
+                          <div className="flex items-center gap-1 bg-muted/30 px-2 py-1.5">
+                            <select
+                              disabled={locked || !session}
+                              value={quality}
+                              onChange={(e) =>
+                                saveLine(r, { quality: (e.target.value || null) as Quality | null })
+                              }
+                              className={`h-7 min-w-0 flex-1 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
+                            >
+                              <option value="">Hållbarhet</option>
+                              {QUALITY_DAYS.map((d) => {
+                                const to = holdsUntil(date, d);
+                                return (
+                                  <option key={d} value={d}>
+                                    {d === "7+"
+                                      ? "7+ dagar"
+                                      : `${d} ${d === "1" ? "dag" : "dagar"}${to ? ` · ${dayLabel(to)}` : ""}`}
+                                  </option>
+                                );
+                              })}
+                            </select>
+                            <Input
+                              disabled={locked || !session}
+                              defaultValue={line?.comment ?? ""}
+                              placeholder="Kommentar"
+                              className="h-7 flex-1 px-1.5 text-[11px]"
+                              onBlur={(e) => {
+                                const val = e.target.value.trim() || null;
+                                if ((line?.comment ?? null) === val) return;
+                                saveLine(r, { comment: val });
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={locked || !session}
+                              className="h-7 shrink-0 px-1.5 text-[10px] text-destructive"
+                              onClick={() => {
+                                saveLine(r, { counted_qty: null });
+                                setEditKey(null);
+                              }}
+                            >
+                              Ta bort
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
