@@ -676,13 +676,13 @@ export default function StockOverview({
                             )}
                           </div>
                         </td>
-                        <td className="px-2 text-right font-semibold tabular-nums whitespace-nowrap">
+                        <td className="border-r border-grid-line/70 px-2 text-right font-semibold tabular-nums whitespace-nowrap">
                           {g.totalQty.toLocaleString("sv-SE", { maximumFractionDigits: g.unit === "st" ? 0 : 1 })} {g.unit}
                         </td>
                         {showCosts && (
-                          <td className="hidden px-2 text-right tabular-nums whitespace-nowrap sm:table-cell">{fmt(g.value)}</td>
+                          <td className="hidden border-r border-grid-line/70 px-2 text-right tabular-nums whitespace-nowrap sm:table-cell">{fmt(g.value)}</td>
                         )}
-                        <td className="hidden px-2 text-center text-xs text-muted-foreground whitespace-nowrap sm:table-cell">
+                        <td className="hidden border-r border-grid-line/70 px-2 text-center text-xs text-muted-foreground whitespace-nowrap sm:table-cell">
                           {g.earliestExpiry
                             ? format(parseISO(g.earliestExpiry), "d MMM", { locale: sv })
                             : "–"}
