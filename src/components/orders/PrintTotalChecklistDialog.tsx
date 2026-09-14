@@ -51,6 +51,10 @@ function mergeGroups(groups: TotalChecklistGroup[]): TotalChecklistGroup {
         cur.onOrder =
           cur.onOrder == null && r.onOrder == null ? null : Number(cur.onOrder || 0) + Number(r.onOrder || 0);
         cur.sellable = cur.sellable ?? r.sellable;
+        cur.combined =
+          cur.stock == null && cur.onOrder == null
+            ? null
+            : Number(cur.stock || 0) + Number(cur.onOrder || 0);
         cur.orderCount += r.orderCount;
       } else {
         rows.set(k, { ...r });

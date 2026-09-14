@@ -11,6 +11,8 @@ export interface TotalChecklistRow {
   stock?: number | null;
   /** Utestående grossistorder, om kolumnen är påslagen. */
   onOrder?: number | null;
+  /** Lager plus utestående grossistorder. */
+  combined?: number | null;
   /** Lager minus kvar att packa. */
   sellable?: number | null;
   orderCount: number;
@@ -31,7 +33,7 @@ export interface TotalChecklistPayload {
   /** Extra rad i sidhuvudet, t.ex. när bara vissa varor är valda. */
   selectionNote?: string;
   /** Vilka valfria kolumner som ska skrivas ut. */
-  extraColumns?: { stock?: boolean; onOrder?: boolean; sellable?: boolean };
+  extraColumns?: { stock?: boolean; onOrder?: boolean; combined?: boolean; sellable?: boolean };
   groups: TotalChecklistGroup[];
 }
 
@@ -102,7 +104,8 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
 
     const ex = payload.extraColumns ?? {};
     const extraHead: string[] = [];
-    const extraKeys: ("stock" | "onOrder" | "sellable")[] = [];
+    type ExtraKey = "stock" | "onOrder" | "combined" | "sellable";
+    const extraKeys: ExtraKey[] = [];
     if (ex.stock) {
       extraHead.push("Lager");
       extraKeys.push("stock");
@@ -111,11 +114,15 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
       extraHead.push("Order");
       extraKeys.push("onOrder");
     }
+    if (ex.combined) {
+      extraHead.push("Lager+Order");
+      extraKeys.push("combined");
+    }
     if (ex.sellable) {
       extraHead.push("Kan säljas");
       extraKeys.push("sellable");
     }
-    const extraCell = (r: TotalChecklistRow, k: "stock" | "onOrder" | "sellable") => {
+    const extraCell = (r: TotalChecklistRow, k: ExtraKey) => {
       const v = r[k];
       return v == null ? "–" : `${qty(v, r.unit)} ${r.unit}`;
     };

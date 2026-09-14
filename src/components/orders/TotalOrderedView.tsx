@@ -123,11 +123,13 @@ type ProductRow = {
   onOrder?: number | null;
   /** Lager minus kvar att packa — fritt att sälja i butiken. */
   sellable?: number | null;
+  /** Lager plus utestående grossistorder. */
+  combined?: number | null;
 };
 
 
 /** Valfria kolumner: lager, beställt hos grossisten och vad som kan säljas. */
-type ExtraCols = { stock: boolean; onOrder: boolean; sellable: boolean };
+type ExtraCols = { stock: boolean; onOrder: boolean; combined: boolean; sellable: boolean };
 
 const COLS_KEY = "totalList.columns";
 
@@ -139,13 +141,14 @@ const loadCols = (): ExtraCols => {
       return {
         stock: !!p.stock,
         onOrder: !!p.onOrder,
+        combined: !!p.combined,
         sellable: !!p.sellable,
       };
     }
   } catch {
     /* tom: lagring kan vara blockerad */
   }
-  return { stock: false, onOrder: false, sellable: false };
+  return { stock: false, onOrder: false, combined: false, sellable: false };
 };
 
 /** Mängd eller "–" när ingen koppling till lager/grossistorder finns. */
@@ -222,7 +225,7 @@ export function TotalOrderedView({
     }
   }, [cols]);
 
-  const anyExtra = cols.stock || cols.onOrder || cols.sellable;
+  const anyExtra = cols.stock || cols.onOrder || cols.combined || cols.sellable;
 
 
 
@@ -398,6 +401,9 @@ export function TotalOrderedView({
           ...r,
           stock,
           onOrder,
+          // Lager och order ihop: räknas när minst en av dem är känd.
+          combined:
+            stock == null && onOrder == null ? null : (stock ?? 0) + (onOrder ?? 0),
           sellable: stock == null ? null : stock - remaining,
         };
       }),
@@ -420,6 +426,7 @@ export function TotalOrderedView({
         "Packstatus",
         "Lager",
         "Order",
+        "Lager+Order",
         "Kan säljas",
         "Värde",
         "Antal ordrar",
@@ -440,6 +447,7 @@ export function TotalOrderedView({
           PACK_LABEL[packState(r.total, r.packed)],
           extraText(r.stock, r.unit),
           extraText(r.onOrder, r.unit),
+          extraText(r.combined, r.unit),
           extraText(r.sellable, r.unit),
           moneyText(r.value),
           String(r.orders.length),
@@ -480,6 +488,7 @@ export function TotalOrderedView({
           packed: r.packed,
           stock: r.stock ?? null,
           onOrder: r.onOrder ?? null,
+          combined: r.combined ?? null,
           sellable: r.sellable ?? null,
           orderCount: r.orders.length,
           types: byType(r)
@@ -735,7 +744,7 @@ export function TotalOrderedView({
                   <span className="truncate">Kolumner</span>
                   {anyExtra && (
                     <Badge variant="secondary" className="rounded-full px-1.5 text-[10px]">
-                      {[cols.stock, cols.onOrder, cols.sellable].filter(Boolean).length}
+                      {[cols.stock, cols.onOrder, cols.combined, cols.sellable].filter(Boolean).length}
                     </Badge>
                   )}
                 </Button>
@@ -748,6 +757,7 @@ export function TotalOrderedView({
                   [
                     ["stock", "Lager", "Vad butiken har i lager just nu"],
                     ["onOrder", "Order", "Beställt hos grossisten, inte levererat"],
+                    ["combined", "Lager+Order", "Lager och order räknat ihop"],
                     ["sellable", "Kan säljas", "Lager minus kvar att packa"],
                   ] as const
                 ).map(([k, label, hint]) => (
@@ -841,6 +851,7 @@ export function TotalOrderedView({
                     <span className="w-20 text-right">Diff</span>
                     {cols.stock && <span className="w-20 text-right">Lager</span>}
                     {cols.onOrder && <span className="w-20 text-right">Order</span>}
+                    {cols.combined && <span className="w-24 text-right">Lager+Order</span>}
                     {cols.sellable && <span className="w-24 text-right">Kan säljas</span>}
                     <span className="w-16 text-right">Ordrar</span>
 
@@ -951,6 +962,11 @@ export function TotalOrderedView({
                               {extraText(r.onOrder, r.unit)}
                             </span>
                           )}
+                          {cols.combined && (
+                            <span className="hidden w-24 shrink-0 whitespace-nowrap text-right font-mono text-[11px] font-semibold tabular-nums text-foreground md:inline">
+                              {extraText(r.combined, r.unit)}
+                            </span>
+                          )}
                           {cols.sellable && (
                             <span
                               className={`hidden w-24 shrink-0 whitespace-nowrap text-right font-mono text-[11px] font-semibold tabular-nums md:inline ${
@@ -980,6 +996,11 @@ export function TotalOrderedView({
                             {cols.onOrder && (
                               <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[9px] tabular-nums text-muted-foreground">
                                 Order {extraText(r.onOrder, r.unit)}
+                              </span>
+                            )}
+                            {cols.combined && (
+                              <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[9px] font-semibold tabular-nums text-foreground">
+                                Lager+Order {extraText(r.combined, r.unit)}
                               </span>
                             )}
                             {cols.sellable && (
@@ -1125,7 +1146,16 @@ export function TotalOrderedView({
                                       </span>
                                       <span className="w-14" />
                                     </div>
-                                  )}
+                                   )}
+                                   {cols.combined && (
+                                     <div className="flex items-baseline gap-2 text-[11px] font-semibold md:text-xs">
+                                       <span className="min-w-0 flex-1">Lager + order</span>
+                                       <span className="w-20 text-right font-mono tabular-nums">
+                                         {extraText(r.combined, r.unit)}
+                                       </span>
+                                       <span className="w-14" />
+                                     </div>
+                                   )}
                                   {cols.sellable && (
                                     <div className="flex items-baseline gap-2 text-[11px] font-semibold md:text-xs">
                                       <span className="min-w-0 flex-1">Kan säljas i butiken</span>
