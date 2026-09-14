@@ -620,7 +620,7 @@ export default function StockCount() {
               className="gap-1.5 text-xs h-9 sm:h-8 font-semibold"
               onClick={() => createSessionFor(date)}
             >
-              <Plus className="h-3.5 w-3.5" /> Ny inventering
+              <Plus className="h-3.5 w-3.5" /> Skapa inventeringsrapport
             </Button>
           )}
           <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={openPrintDialog}>
@@ -1155,7 +1155,7 @@ export default function StockCount() {
                 className="h-10 gap-1.5 text-xs font-semibold"
                 onClick={() => createSessionFor(date)}
               >
-                <Plus className="h-4 w-4" /> Ny inventering
+                <Plus className="h-4 w-4" /> Skapa inventeringsrapport
               </Button>
             ) : (
               <Button
