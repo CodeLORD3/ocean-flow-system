@@ -51,20 +51,21 @@ export default function InventoryRouter() {
 
   return (
     <div className="w-full flex flex-col">
-      <div className="sticky top-0 z-30 -mx-2 -mt-2 sm:-mx-4 sm:-mt-4 lg:-mx-6 lg:-mt-6 border-b bg-background px-4 pt-3 pb-1">
+      <div className="sticky top-0 z-30 -mx-2 -mt-2 sm:-mx-4 sm:-mt-4 lg:-mx-6 lg:-mt-6 border-b bg-background px-2 pt-2 pb-1 sm:px-4 sm:pt-3">
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as SubTab)} className="w-full">
           <TabsList
-            className="w-full h-auto flex flex-wrap gap-1 p-1 sm:h-12 sm:grid sm:flex-nowrap"
+            className="grid w-full h-auto flex-nowrap gap-0.5 p-0.5 sm:h-12 sm:gap-1 sm:p-1"
             style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
           >
             {tabs.map((t) => (
               <TabsTrigger
                 key={t.value}
                 value={t.value}
-                className="min-h-9 flex-1 basis-[calc(50%-0.5rem)] text-[13px] font-semibold sm:h-full sm:basis-auto sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+                className="min-h-8 min-w-0 px-0.5 text-[10px] font-semibold leading-tight sm:h-full sm:px-2 sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
               >
-                {t.label}
+                <span className="truncate sm:hidden">{t.shortLabel ?? t.label}</span>
+                <span className="hidden sm:inline">{t.label}</span>
               </TabsTrigger>
             ))}
           </TabsList>
