@@ -32,6 +32,7 @@ import { ProductThumb } from "@/components/products/ProductThumb";
 import { useCustomerOrders } from "@/hooks/useCustomerOrders";
 import { useTotalListExtras } from "@/hooks/useTotalListStock";
 import {
+  orderWeekLabel,
   useSaveTotalListOrder,
   useSaveTotalListStock,
   useStoreEntryLocation,
