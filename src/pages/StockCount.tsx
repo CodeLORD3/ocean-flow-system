@@ -909,6 +909,37 @@ export default function StockCount() {
                                       saveLine(r, { counted_qty: val });
                                     }}
                                   />
+                                  <select
+                                    disabled={locked || !session}
+                                    value={(line?.quality ?? "") as string}
+                                    onChange={(e) =>
+                                      saveLine(r, {
+                                        quality: (e.target.value || null) as Quality | null,
+                                      })
+                                    }
+                                    className={`h-10 w-[74px] shrink-0 rounded-md border px-1 text-[11px] font-medium disabled:opacity-50 sm:h-8 ${qualityClass(
+                                      (line?.quality ?? "") as string,
+                                    )}`}
+                                    title="Hållbarhet"
+                                  >
+                                    <option value="">Hållb.</option>
+                                    {QUALITY_DAYS.map((d) => (
+                                      <option key={d} value={d}>
+                                        {d === "7+" ? "7+ d" : `${d} d`}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <Input
+                                    disabled={locked || !session}
+                                    defaultValue={line?.comment ?? ""}
+                                    placeholder="Kommentar"
+                                    className="h-10 w-[110px] shrink-0 px-1.5 text-[11px] sm:h-8"
+                                    onBlur={(e) => {
+                                      const val = e.target.value.trim() || null;
+                                      if ((line?.comment ?? null) === val) return;
+                                      saveLine(r, { comment: val });
+                                    }}
+                                  />
                                 </div>
                               );
                             }),
