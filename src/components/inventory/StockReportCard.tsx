@@ -133,18 +133,29 @@ export function StockReportCard({
   const submitted = report?.status === "godkand";
   const addedIds = useMemo(() => new Set(lines.map((l) => l.product_id)), [lines]);
 
-  const matches = useMemo(() => {
+  const allowed = useAllowedReportProducts(storeId);
+  const restricted = allowed.data?.restricted ?? false;
+  const allowedIds = allowed.data?.ids;
+
+  const hits = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (q.length < 1) return [];
-    return products
-      .filter(
-        (p: any) =>
-          p.name?.toLowerCase().includes(q) ||
-          p.sku?.toLowerCase().includes(q) ||
-          p.category?.toLowerCase().includes(q),
-      )
-      .slice(0, 8);
+    return products.filter(
+      (p: any) =>
+        p.name?.toLowerCase().includes(q) ||
+        p.sku?.toLowerCase().includes(q) ||
+        p.category?.toLowerCase().includes(q),
+    );
   }, [products, search]);
+
+  // Efter den första rapporten kan bara varor som redan fanns i lagret eller
+  // kommit in via en godkänd inleverans lagerföras.
+  const matches = useMemo(
+    () =>
+      (restricted && allowedIds ? hits.filter((p: any) => allowedIds.has(p.id)) : hits).slice(0, 8),
+    [hits, restricted, allowedIds],
+  );
+  const blockedCount = restricted && allowedIds ? hits.length - matches.length : 0;
 
   const staffName = staff ? `${staff.first_name} ${staff.last_name}`.trim() : "Butiksansvarig";
 
