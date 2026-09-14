@@ -1104,7 +1104,47 @@ export function TotalOrderedView({
                                 </span>
                                 <span className="w-14" />
                               </div>
+                              {anyExtra && (
+                                <div className="mt-1.5 space-y-0.5 border-t border-border/50 pt-1.5">
+                                  {cols.stock && (
+                                    <div className="flex items-baseline gap-2 text-[11px] md:text-xs">
+                                      <span className="min-w-0 flex-1 text-muted-foreground">Lager</span>
+                                      <span className="w-20 text-right font-mono tabular-nums">
+                                        {extraText(r.stock, r.unit)}
+                                      </span>
+                                      <span className="w-14" />
+                                    </div>
+                                  )}
+                                  {cols.onOrder && (
+                                    <div className="flex items-baseline gap-2 text-[11px] md:text-xs">
+                                      <span className="min-w-0 flex-1 text-muted-foreground">
+                                        Order hos grossist
+                                      </span>
+                                      <span className="w-20 text-right font-mono tabular-nums">
+                                        {extraText(r.onOrder, r.unit)}
+                                      </span>
+                                      <span className="w-14" />
+                                    </div>
+                                  )}
+                                  {cols.sellable && (
+                                    <div className="flex items-baseline gap-2 text-[11px] font-semibold md:text-xs">
+                                      <span className="min-w-0 flex-1">Kan säljas i butiken</span>
+                                      <span
+                                        className={`w-20 text-right font-mono tabular-nums ${
+                                          r.sellable != null && r.sellable < 0
+                                            ? "text-destructive"
+                                            : "text-success"
+                                        }`}
+                                      >
+                                        {extraText(r.sellable, r.unit)}
+                                      </span>
+                                      <span className="w-14" />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
+
                           </div>
                         )}
                       </div>
