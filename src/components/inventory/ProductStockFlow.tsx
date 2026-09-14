@@ -51,6 +51,7 @@ export default function ProductStockFlow({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [days, setDays] = useState(90);
+  const [mode, setMode] = useState<"days" | "ledger">("days");
 
   const { data: movements = [], isLoading } = useQuery({
     queryKey: ["product_stock_flow", productId, locationIds],
