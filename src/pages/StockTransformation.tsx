@@ -137,7 +137,17 @@ export default function StockTransformation() {
             ))}
           </div>
 
-          {cards.length === 0 ? (
+          {familyView ? (
+            <FamilyStockView
+              products={products as any}
+              families={families as any}
+              stockByProduct={stockByProduct}
+              orderedByProduct={orderedByProduct}
+              search={search}
+              category={category === "alla" ? "__all__" : category}
+              onTransform={openFromFamily}
+            />
+          ) : cards.length === 0 ? (
             <p className="text-xs text-muted-foreground">Inga produkter med lagersaldo att omvandla.</p>
           ) : (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
