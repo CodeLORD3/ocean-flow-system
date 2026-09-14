@@ -32,6 +32,7 @@ import {
 import { TRANSFORM_KINDS, suggestTransformKind, type TransformKind } from "@/lib/stockTransform";
 import { lotBalancesAtLocation } from "@/lib/stockLedger";
 import { contentPerUnitKg } from "@/lib/productFamilies";
+import { isPieceUnit } from "@/lib/units";
 
 /** Talfält som tål både komma och punkt. */
 const num = (v: string) => Number(String(v).replace(",", ".")) || 0;
@@ -202,6 +203,18 @@ export default function TransformFlow({
   const svinnQty =
     restMode === "svinn" ? Math.max(rest, 0) : restMode === "manuell" ? Math.max(num(manualSvinn), 0) : 0;
   const unaccounted = round3(rest - kvarQty - svinnQty);
+
+  /**
+   * Andra produkter i samma produktgrupp (familj) — hit kan varan omvandlas
+   * oavsett förpackning eller enhet, t.ex. färsk räka till fryst räka.
+   */
+  const familySiblings = useMemo(() => {
+    const famId = (sourceMeta as any)?.family_id;
+    if (!famId) return [] as any[];
+    return (products as any[])
+      .filter((p) => p.family_id === famId && p.id !== product?.id)
+      .sort((a, b) => a.name.localeCompare(b.name, "sv"));
+  }, [products, sourceMeta, product?.id]);
 
   const targetOptions = useMemo(() => {
     const q = pickSearch.trim().toLowerCase();
@@ -484,6 +497,35 @@ export default function TransformFlow({
                   <span className="text-xs text-muted-foreground">Du använder</span>
                   <span className="font-mono text-base font-semibold tabular-nums">{kg(amount)}</span>
                 </Card>
+
+                {!outputs.length && familySiblings.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Samma produktgrupp</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {familySiblings.map((p) => {
+                        const content = contentPerUnitKg(p);
+                        const isPiece = isPieceUnit(p.unit);
+                        return (
+                          <Button
+                            key={p.id}
+                            variant="outline"
+                            className="h-16 flex-col items-start justify-center gap-0.5 px-3 text-left"
+                            onClick={() => addOutput(p.id, p.name, isPiece ? content ?? 0 : 0)}
+                          >
+                            <span className="w-full truncate text-sm font-semibold">{p.name}</span>
+                            <span className="w-full truncate text-[11px] font-normal opacity-70">
+                              {isPiece
+                                ? content
+                                  ? `${gram(content * 1000)} per styck`
+                                  : "nettovikt saknas"
+                                : "löpande vikt"}
+                            </span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {!outputs.length && (
                   <div className="space-y-2">

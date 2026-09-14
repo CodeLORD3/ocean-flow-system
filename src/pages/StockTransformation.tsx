@@ -6,13 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { RefreshCw, Search } from "lucide-react";
+import { Layers, RefreshCw, Search } from "lucide-react";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import TransformFlow from "@/components/inventory/TransformFlow";
+import FamilyStockView from "@/components/inventory/FamilyStockView";
 import { useProducts } from "@/hooks/useProducts";
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
 import { useSite } from "@/contexts/SiteContext";
 import { useStockTransformations } from "@/hooks/useStockTransformations";
+import { useProductFamilies, useOrderedByProduct } from "@/hooks/useProductFamilies";
 import { transformKindLabel } from "@/lib/stockTransform";
 
 /**
@@ -24,13 +26,26 @@ export default function StockTransformation() {
   const { data: products = [] } = useProducts();
   const { data: allStock = [] } = useAllStockByLocation();
   const { data: history = [], isLoading: historyLoading } = useStockTransformations(activeStoreId || null);
+  const { data: families = [] } = useProductFamilies();
+  const { data: orderedByProduct } = useOrderedByProduct(activeStoreId || null);
 
   const [tab, setTab] = useState<"omvandla" | "historik">("omvandla");
+  const [familyView, setFamilyView] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("alla");
   const [target, setTarget] = useState<{ id: string; name: string; sku?: string | null; unit?: string | null } | null>(
     null,
   );
+  /** Förvald målprodukt när omvandlingen startas från en familjeprognos. */
+  const [initialTarget, setInitialTarget] = useState<string | null>(null);
+
+  /** Öppnar omvandlingsflödet från familjevyn, med målprodukt förvald. */
+  const openFromFamily = (productId: string, targetProductId?: string) => {
+    const p = products.find((x) => x.id === productId);
+    if (!p) return;
+    setInitialTarget(targetProductId ?? null);
+    setTarget({ id: p.id, name: p.name, sku: p.sku, unit: p.unit });
+  };
 
   /** Saldo per produkt på enhetens lagerplatser. */
   const stockByProduct = useMemo(() => {
@@ -94,6 +109,15 @@ export default function StockTransformation() {
           <div className="flex flex-wrap gap-1.5">
             <Button
               size="sm"
+              variant={familyView ? "default" : "outline"}
+              className="h-7 gap-1 px-2 text-[11px]"
+              onClick={() => setFamilyView((v) => !v)}
+              title="Visa produktgrupper med omvandlingsförslag"
+            >
+              <Layers className="h-3 w-3" /> Produktgrupper
+            </Button>
+            <Button
+              size="sm"
               variant={category === "alla" ? "default" : "outline"}
               className="h-7 px-2 text-[11px]"
               onClick={() => setCategory("alla")}
@@ -113,7 +137,17 @@ export default function StockTransformation() {
             ))}
           </div>
 
-          {cards.length === 0 ? (
+          {familyView ? (
+            <FamilyStockView
+              products={products as any}
+              families={families as any}
+              stockByProduct={stockByProduct}
+              orderedByProduct={orderedByProduct}
+              search={search}
+              category={category === "alla" ? "__all__" : category}
+              onTransform={openFromFamily}
+            />
+          ) : cards.length === 0 ? (
             <p className="text-xs text-muted-foreground">Inga produkter med lagersaldo att omvandla.</p>
           ) : (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
@@ -209,10 +243,19 @@ export default function StockTransformation() {
 
       <TransformFlow
         open={!!target}
-        onOpenChange={(o) => !o && setTarget(null)}
+        onOpenChange={(o) => {
+          if (!o) {
+            setTarget(null);
+            setInitialTarget(null);
+          }
+        }}
         product={target}
+        initialTargetProductId={initialTarget}
         storeId={activeStoreId || null}
-        onDone={() => setTarget(null)}
+        onDone={() => {
+          setTarget(null);
+          setInitialTarget(null);
+        }}
       />
     </motion.div>
   );
