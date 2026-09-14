@@ -990,8 +990,12 @@ export default function StockCount() {
                           <span className="min-w-0 flex-1 truncate border-r border-grid-line/70 pr-2 text-[12px] font-medium">
                             {r.productName}
                           </span>
-                          <span className="hidden w-16 shrink-0 border-r border-grid-line/70 px-2 text-center text-[10px] text-muted-foreground sm:block">
-                            {quality ? (quality === "7+" ? "7+ d" : `${quality} d`) : "—"}
+                          <span className="hidden w-24 shrink-0 border-r border-grid-line/70 px-2 text-center text-[10px] text-muted-foreground sm:block">
+                            {quality
+                              ? quality === "7+"
+                                ? "7+ dagar"
+                                : `${quality} ${quality === "1" ? "dag" : "dagar"}`
+                              : "—"}
                           </span>
                           <span className="w-14 shrink-0 border-r border-grid-line/70 px-2 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
                             {diff === 0
