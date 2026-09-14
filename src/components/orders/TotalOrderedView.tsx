@@ -839,7 +839,11 @@ export function TotalOrderedView({
                       Mängd {sort === "qty" ? "↓" : "↕"}
                     </button>
                     <span className="w-20 text-right">Diff</span>
+                    {cols.stock && <span className="w-20 text-right">Lager</span>}
+                    {cols.onOrder && <span className="w-20 text-right">Order</span>}
+                    {cols.sellable && <span className="w-24 text-right">Kan säljas</span>}
                     <span className="w-16 text-right">Ordrar</span>
+
                   </div>
 
 
