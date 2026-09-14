@@ -29,6 +29,7 @@ import { type CountListProduct } from "@/lib/inventoryCountListPdf";
 import CountListPrintDialog from "@/components/inventory/CountListPrintDialog";
 import { setBalance, setExpiryDate } from "@/lib/stockLedger";
 import CountStartPanel from "@/components/inventory/CountStartPanel";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "7+";
