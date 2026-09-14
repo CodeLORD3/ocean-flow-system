@@ -635,14 +635,6 @@ export default function StockCount() {
         </div>
         {session && !locked && effectiveStoreId && (
           <div className="flex items-center gap-1.5 flex-nowrap w-full sm:w-auto">
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1 text-[11px] sm:text-xs h-8 px-2 flex-1 sm:flex-none"
-              onClick={() => createSessionFor(date)}
-            >
-              <Plus className="h-3 w-3" /> Ny
-            </Button>
             <Button size="sm" variant="outline" className="gap-1 text-[11px] sm:text-xs h-8 px-2 flex-1 sm:flex-none" onClick={openPrintDialog}>
               <Printer className="h-3 w-3" /> Skriv ut
             </Button>
