@@ -90,9 +90,9 @@ function RowPhotoButton({
 }
 
 
-type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "7+";
+type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7";
 
-const QUALITY_DAYS: Quality[] = ["1", "2", "3", "4", "5", "6", "7", "7+"];
+const QUALITY_DAYS: Quality[] = ["1", "2", "3", "4", "5", "6", "7"];
 
 const todayStockholm = () =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
@@ -109,7 +109,7 @@ const fmtQty = (n: number, unit: string) =>
 
 /** Håller tills: inventeringsdatum + valt antal dagar. */
 const holdsUntil = (countDate: string, days: string | null) => {
-  if (days === "7+") return null;
+  if (days === "7+") days = "7";
   const n = Number(days);
   if (!countDate || !Number.isFinite(n) || n <= 0) return null;
   return laggTillSvenskaDagar(countDate, n);
@@ -161,9 +161,9 @@ const relDayLabel = (from: string, to: string) => {
 
 /** Etikett i hållbarhetsvalet: "3 dagar · tors 18/9". */
 const qualityLabel = (countDate: string, d: string) => {
-  if (d === "7+") return "7+ dagar";
-  const to = holdsUntil(countDate, d);
-  const days = `${d} ${d === "1" ? "dag" : "dagar"}`;
+  const day = d === "7+" ? "7" : d;
+  const to = holdsUntil(countDate, day);
+  const days = `${day} ${day === "1" ? "dag" : "dagar"}`;
   return to ? `${days} · ${relDayLabel(countDate, to)}` : days;
 };
 
@@ -174,8 +174,7 @@ const daysBetween = (from: string, to: string) =>
   );
 
 const qualityClass = (q?: string | null) => {
-  if (q === "7+") return "bg-emerald-500/15 text-emerald-700 border-emerald-500/30";
-  const n = Number(q);
+  const n = Number(q === "7+" ? "7" : q);
   if (!Number.isFinite(n) || n <= 0) return "bg-muted text-muted-foreground border-border";
   if (n <= 2) return "bg-destructive/15 text-destructive border-destructive/30";
   if (n <= 4) return "bg-amber-500/15 text-amber-700 border-amber-500/30";
@@ -1081,9 +1080,7 @@ export default function StockCount() {
                           </span>
                           <span className="hidden w-24 shrink-0 border-r border-grid-line/70 px-2 text-center text-[10px] text-muted-foreground sm:block">
                             {quality
-                              ? quality === "7+"
-                                ? "7+ dagar"
-                                : `${quality} ${quality === "1" ? "dag" : "dagar"}`
+                              ? `${quality === "7+" ? "7" : quality} ${quality === "1" ? "dag" : "dagar"}`
                               : "—"}
                           </span>
                           <span className="w-14 shrink-0 border-r border-grid-line/70 px-2 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
