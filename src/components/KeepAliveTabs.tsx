@@ -84,6 +84,7 @@ import Production from "@/pages/Production";
 import DataCoverage from "@/pages/DataCoverage";
 import SystemStatus from "@/pages/SystemStatus";
 import LagerBlueprint from "@/pages/LagerBlueprint";
+import StockDisappearance from "@/pages/StockDisappearance";
 import PosLive from "@/pages/PosLive";
 import ShopifyWebOrders from "@/pages/ShopifyWebOrders";
 import StockMovementsPage from "@/pages/StockMovementsPage";
@@ -191,6 +192,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/pos-live": { component: <PosLive /> },
   "/shopify": { component: <ShopifyWebOrders /> },
   "/stock-movements": { component: <StockMovementsPage /> },
+  "/stock-disappearance": { component: <StockDisappearance /> },
   "/stock-transfers": { component: <StockTransfers /> },
   "/waste": { component: <WasteReports /> },
   "/arrivals": { component: <Arrivals /> },

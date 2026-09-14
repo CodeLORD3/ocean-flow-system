@@ -126,6 +126,7 @@ const staffNav = [
 const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
   { title: "Dagsrapport", url: "/dagsrapport", icon: FileText },
+  { title: "Försvunnet ur lagret", url: "/stock-disappearance", icon: Package },
   { title: "Kassa live", url: "/pos-live", icon: Radio },
   { title: "Checklistor", url: "/checklist", icon: ClipboardCheck },
 
