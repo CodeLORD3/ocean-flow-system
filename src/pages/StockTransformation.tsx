@@ -26,13 +26,26 @@ export default function StockTransformation() {
   const { data: products = [] } = useProducts();
   const { data: allStock = [] } = useAllStockByLocation();
   const { data: history = [], isLoading: historyLoading } = useStockTransformations(activeStoreId || null);
+  const { data: families = [] } = useProductFamilies();
+  const { data: orderedByProduct } = useOrderedByProduct(activeStoreId || null);
 
   const [tab, setTab] = useState<"omvandla" | "historik">("omvandla");
+  const [familyView, setFamilyView] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("alla");
   const [target, setTarget] = useState<{ id: string; name: string; sku?: string | null; unit?: string | null } | null>(
     null,
   );
+  /** Förvald målprodukt när omvandlingen startas från en familjeprognos. */
+  const [initialTarget, setInitialTarget] = useState<string | null>(null);
+
+  /** Öppnar omvandlingsflödet från familjevyn, med målprodukt förvald. */
+  const openFromFamily = (productId: string, targetProductId?: string) => {
+    const p = products.find((x) => x.id === productId);
+    if (!p) return;
+    setInitialTarget(targetProductId ?? null);
+    setTarget({ id: p.id, name: p.name, sku: p.sku, unit: p.unit });
+  };
 
   /** Saldo per produkt på enhetens lagerplatser. */
   const stockByProduct = useMemo(() => {
