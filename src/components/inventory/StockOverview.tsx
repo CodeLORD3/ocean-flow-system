@@ -739,9 +739,6 @@ export default function StockOverview({
                               <DropdownMenuItem onClick={() => onLineAction?.("split", g.lines[0])}>
                                 <Scissors className="h-3.5 w-3.5 mr-2" /> Splitta
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => onLineAction?.("transform", g.lines[0])}>
-                                <RefreshCw className="h-3.5 w-3.5 mr-2" /> Omvandla
-                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() => onLineAction?.("delete", g.lines[0])}
