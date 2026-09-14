@@ -1053,7 +1053,6 @@ export default function StockCount() {
                       <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
                       <span className="truncate text-[11px] font-medium">
                         {dayLabel(h.count_date)} {h.count_date}
-                        {h.label ? ` · ${h.label}` : ""}
                       </span>
                       <Badge
                         variant="outline"
@@ -1064,7 +1063,7 @@ export default function StockCount() {
                     </span>
                     <span className="flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
                       <span>{lineCount} rader</span>
-                      {h.locked_at && <span className="hidden sm:inline">låst {stampLabel(h.locked_at)}</span>}
+                      
                     </span>
                   </button>
                 );
@@ -1117,7 +1116,7 @@ export default function StockCount() {
                           })}{" "}
                           kg
                         </span>
-                        {r.closed_at && <span className="hidden sm:inline">{stampLabel(r.closed_at)}</span>}
+                        
                       </span>
                     </button>
                     {isOpen && (
