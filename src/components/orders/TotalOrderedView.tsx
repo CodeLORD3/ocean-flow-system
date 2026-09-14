@@ -123,11 +123,13 @@ type ProductRow = {
   onOrder?: number | null;
   /** Lager minus kvar att packa — fritt att sälja i butiken. */
   sellable?: number | null;
+  /** Lager plus utestående grossistorder. */
+  combined?: number | null;
 };
 
 
 /** Valfria kolumner: lager, beställt hos grossisten och vad som kan säljas. */
-type ExtraCols = { stock: boolean; onOrder: boolean; sellable: boolean };
+type ExtraCols = { stock: boolean; onOrder: boolean; combined: boolean; sellable: boolean };
 
 const COLS_KEY = "totalList.columns";
 
@@ -139,13 +141,14 @@ const loadCols = (): ExtraCols => {
       return {
         stock: !!p.stock,
         onOrder: !!p.onOrder,
+        combined: !!p.combined,
         sellable: !!p.sellable,
       };
     }
   } catch {
     /* tom: lagring kan vara blockerad */
   }
-  return { stock: false, onOrder: false, sellable: false };
+  return { stock: false, onOrder: false, combined: false, sellable: false };
 };
 
 /** Mängd eller "–" när ingen koppling till lager/grossistorder finns. */
