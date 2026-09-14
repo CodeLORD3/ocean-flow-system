@@ -58,7 +58,9 @@ export default function ProductStockFlow({
     queryFn: async () => {
       let q = supabase
         .from("stock_movements")
-        .select("created_at, quantity_kg, movement_type, note, location_id")
+        .select(
+          "id, created_at, quantity_kg, movement_type, note, location_id, reference_type, reference_id, unit_cost, storage_locations(name, stores!storage_locations_store_id_fkey(name)), lots(lot_number), staff(first_name, last_name)",
+        )
         .eq("product_id", productId)
         .order("created_at", { ascending: true })
         .limit(3000);
