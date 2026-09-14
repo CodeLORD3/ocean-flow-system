@@ -174,8 +174,10 @@ export function StockReportCard({
   const handleSubmit = async () => {
     if (!report) return;
     try {
-      await submit.mutateAsync({ sheetId: report.id, closedBy: staffName });
-      toast.success("Lagerrapporten är inskickad för i dag");
+      const res = await submit.mutateAsync({ sheetId: report.id, closedBy: staffName });
+      toast.success(
+        `Lagerrapporten är inskickad — butikens lager är uppdaterat med ${res?.reportedCount ?? 0} produkter`,
+      );
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte skicka in rapporten");
     }
