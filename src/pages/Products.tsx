@@ -726,34 +726,42 @@ export default function Products() {
             )}
             {isSubproduct && <span className="ml-5 text-muted-foreground shrink-0">└</span>}
             {!isSubproduct && !hasChildren && <span className="w-5 shrink-0" />}
-            <ProductThumb src={(p as any).image_url} alt={p.name} productId={p.id} />
+            <ProductThumb
+              src={(p as any).image_url}
+              alt={p.name}
+              productId={p.id}
+              className="h-7 w-9 sm:h-14 sm:w-20"
+            />
             <span
-              className={`whitespace-normal break-words leading-tight text-[11px] ${isSubproduct ? "text-muted-foreground" : ""}`}
+              className={`truncate whitespace-nowrap sm:whitespace-normal sm:break-words leading-tight text-[11px] ${isSubproduct ? "text-muted-foreground" : ""}`}
               title={p.name}
             >
               {p.name}
             </span>
-            {/* Arter med sorteringsregister köps bara in på storleksvariant. */}
-            {(p as any).purchasable === false && (
-              <Badge variant="outline" className="shrink-0 px-1 py-0 text-[9px] text-muted-foreground">
-                ej inköpsbar
-              </Badge>
-            )}
-            {hasChildren && (
-              <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1 rounded-none shrink-0">
-                {p.subproducts.length} del
-              </Badge>
-            )}
-            {(p as any).family_id && (
-              <Badge
-                variant="outline"
-                className="shrink-0 px-1 py-0 text-[9px] text-primary"
-                title="Del av produktfamilj — förpackningar summeras ihop i Lager"
-              >
-                {productFamilies.find((f) => f.id === (p as any).family_id)?.name || "familj"}
-              </Badge>
-            )}
-            <AllergenBadge product={p as any} />
+            {/* Detaljmärken tar för mycket höjd på mobil – visas i produktdialogen istället */}
+            <span className="hidden sm:flex items-center gap-1.5 flex-wrap">
+              {/* Arter med sorteringsregister köps bara in på storleksvariant. */}
+              {(p as any).purchasable === false && (
+                <Badge variant="outline" className="shrink-0 px-1 py-0 text-[9px] text-muted-foreground">
+                  ej inköpsbar
+                </Badge>
+              )}
+              {hasChildren && (
+                <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1 rounded-none shrink-0">
+                  {p.subproducts.length} del
+                </Badge>
+              )}
+              {(p as any).family_id && (
+                <Badge
+                  variant="outline"
+                  className="shrink-0 px-1 py-0 text-[9px] text-primary"
+                  title="Del av produktfamilj — förpackningar summeras ihop i Lager"
+                >
+                  {productFamilies.find((f) => f.id === (p as any).family_id)?.name || "familj"}
+                </Badge>
+              )}
+              <AllergenBadge product={p as any} />
+            </span>
 
           </div>
         </td>
