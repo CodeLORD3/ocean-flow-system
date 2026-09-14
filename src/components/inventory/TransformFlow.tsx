@@ -203,6 +203,18 @@ export default function TransformFlow({
     restMode === "svinn" ? Math.max(rest, 0) : restMode === "manuell" ? Math.max(num(manualSvinn), 0) : 0;
   const unaccounted = round3(rest - kvarQty - svinnQty);
 
+  /**
+   * Andra produkter i samma produktgrupp (familj) — hit kan varan omvandlas
+   * oavsett förpackning eller enhet, t.ex. färsk räka till fryst räka.
+   */
+  const familySiblings = useMemo(() => {
+    const famId = (sourceMeta as any)?.family_id;
+    if (!famId) return [] as any[];
+    return (products as any[])
+      .filter((p) => p.family_id === famId && p.id !== product?.id)
+      .sort((a, b) => a.name.localeCompare(b.name, "sv"));
+  }, [products, sourceMeta, product?.id]);
+
   const targetOptions = useMemo(() => {
     const q = pickSearch.trim().toLowerCase();
     return products
