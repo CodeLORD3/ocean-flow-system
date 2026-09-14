@@ -599,8 +599,8 @@ export default function StockOverview({
                         )}
                         onClick={() => toggleExpand(g.product_id)}
                       >
-                        <td className="hidden px-2 text-[11px] text-muted-foreground tabular-nums sm:table-cell">{idx}</td>
-                        <td className="px-2">
+                        <td className="hidden border-r border-grid-line/70 px-2 text-[11px] text-muted-foreground tabular-nums sm:table-cell">{idx}</td>
+                        <td className="border-r border-grid-line/70 px-2">
                           <div className="flex items-center gap-2.5">
                             {isOpen ? (
                               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
