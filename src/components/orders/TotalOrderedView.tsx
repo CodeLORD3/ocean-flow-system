@@ -500,7 +500,9 @@ export function TotalOrderedView({
         onOpenChange={setPrintOpen}
         groups={printableGroups}
         mode={mode}
+        extraColumns={cols}
       />
+
       {/* Framhävd rubrik: totallistan är första steget i packflödet */}
       <Card className="overflow-hidden border-primary/30 bg-primary/5 shadow-sm">
         <CardContent className="flex items-start gap-3 py-4">
