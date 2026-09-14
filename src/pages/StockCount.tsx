@@ -866,8 +866,16 @@ export default function StockCount() {
                           {doneAt ? "Ångra" : "Färdig"}
                         </Button>
                       </div>
-                      {!isCollapsed && (
-                        <CardContent className="divide-y divide-border/60 p-0">
+                       {!isCollapsed && (
+                         <CardContent className="divide-y divide-border/60 p-0">
+                           <div className="flex items-center gap-1.5 bg-muted/30 px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                             <span className="w-6 shrink-0" />
+                             <span className="min-w-0 flex-1">Produkt</span>
+                             <span className="w-[62px] shrink-0 text-right">Antal</span>
+                             <span className="w-[136px] shrink-0 text-center">Hållbarhet</span>
+                             <span className="w-[96px] shrink-0">Kommentar</span>
+                             <span className="w-7 shrink-0 text-center">Bild</span>
+                           </div>
                           {g.products.flatMap((prodRows) =>
                             prodRows.map((r) => {
                               const line = linesByKey.get(r.key);
