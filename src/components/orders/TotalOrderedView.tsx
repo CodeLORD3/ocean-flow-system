@@ -1146,7 +1146,16 @@ export function TotalOrderedView({
                                       </span>
                                       <span className="w-14" />
                                     </div>
-                                  )}
+                                   )}
+                                   {cols.combined && (
+                                     <div className="flex items-baseline gap-2 text-[11px] font-semibold md:text-xs">
+                                       <span className="min-w-0 flex-1">Lager + order</span>
+                                       <span className="w-20 text-right font-mono tabular-nums">
+                                         {extraText(r.combined, r.unit)}
+                                       </span>
+                                       <span className="w-14" />
+                                     </div>
+                                   )}
                                   {cols.sellable && (
                                     <div className="flex items-baseline gap-2 text-[11px] font-semibold md:text-xs">
                                       <span className="min-w-0 flex-1">Kan säljas i butiken</span>
