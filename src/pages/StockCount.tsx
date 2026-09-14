@@ -716,19 +716,10 @@ export default function StockCount() {
         </Button>
       </div>
 
-      {/* Kompakt rad: sök främst, sedan kategori och filter */}
+      {/* Rad 1: kategoriknapp och filter. Rad 2: sökfältet direkt över listorna. */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[180px] flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Sök produkt — namn eller SKU"
-            className="h-9 pl-8 text-sm"
-          />
-        </div>
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="h-9 w-[150px] text-xs">
+          <SelectTrigger className="h-8 w-auto min-w-[130px] gap-1 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -745,7 +736,7 @@ export default function StockCount() {
         <button
           type="button"
           onClick={() => setOnlyUncounted(!onlyUncounted)}
-          className={`h-9 shrink-0 rounded-md border px-2.5 text-xs font-medium transition-colors ${
+          className={`h-8 shrink-0 rounded-md border px-2.5 text-xs font-medium transition-colors ${
             onlyUncounted
               ? "border-primary bg-primary/10 text-primary"
               : "border-border text-muted-foreground hover:bg-muted"
@@ -756,6 +747,16 @@ export default function StockCount() {
         <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
           {countedCount}/{rows.length}
         </span>
+      </div>
+
+      <div className="relative w-full">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Sök produkt — namn eller SKU"
+          className="h-9 w-full pl-8 text-sm"
+        />
       </div>
       </>
       )}
