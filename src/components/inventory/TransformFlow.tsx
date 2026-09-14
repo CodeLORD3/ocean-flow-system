@@ -32,6 +32,7 @@ import {
 import { TRANSFORM_KINDS, suggestTransformKind, type TransformKind } from "@/lib/stockTransform";
 import { lotBalancesAtLocation } from "@/lib/stockLedger";
 import { contentPerUnitKg } from "@/lib/productFamilies";
+import { isPieceUnit } from "@/lib/units";
 
 /** Talfält som tål både komma och punkt. */
 const num = (v: string) => Number(String(v).replace(",", ".")) || 0;
