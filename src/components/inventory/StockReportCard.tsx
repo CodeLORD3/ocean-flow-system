@@ -29,6 +29,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import {
   useAddStockReportLine,
+  useAllowedReportProducts,
   useRemoveStockReportLine,
   useReopenStockReport,
   useStockReportArchive,
