@@ -6,6 +6,7 @@ import {
   ChevronUp,
   Download,
   Package,
+  Pencil,
   Printer,
   Search,
   SlidersHorizontal,
