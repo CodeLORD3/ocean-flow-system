@@ -835,20 +835,9 @@ export default function StockCount() {
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Inventeringsrapporter — butikens inskickade rapporter */}
-      <Card>
-        <div className="flex items-center justify-between gap-2 border-b bg-muted/50 px-2 py-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Inventeringsrapporter
-          </span>
-          <span className="text-[10px] text-muted-foreground">
-            {(reportsQuery.data ?? []).length} rapporter
-          </span>
-        </div>
-        <CardContent className="p-1">
+          <p className="px-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Inskickade rapporter från butiken
+          </p>
           {!(reportsQuery.data ?? []).length ? (
             <p className="px-1 py-2 text-[11px] text-muted-foreground">
               Inga inventeringsrapporter har skickats in för {storeName || "butiken"}.
