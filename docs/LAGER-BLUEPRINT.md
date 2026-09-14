@@ -83,7 +83,7 @@ flowchart TD
 
 ## 2. Nodtabell — lagerplatser i databasen
 
-`storage_locations` har 93 rader, varav 22 aktiva (`active = true`). Bolag härleds
+`storage_locations` har 93 rader, varav 21 aktiva (`active = true`). Bolag härleds
 via `storage_locations.store_id → stores.legal_entity_id` och
 `company_of_location()`. `location_type` är enum `location_type` med värdena
 `inkopslager, grossistlager, tillverkningslager, leveranslager, butik`.
@@ -117,7 +117,7 @@ kontrolleras av triggern `trg_enforce_transfer_flow` → `enforce_transfer_flow(
 
 ### Inaktiva noder som finns kvar i registret
 
-71 rader har `active = false`, bland annat per butik: `Inköpslager <butik>`,
+72 rader har `active = false`, bland annat per butik: `Inköpslager <butik>`,
 `Tillverkningslager <butik>`, `Kyllager`, `Fryslager`, `Frysrum`, `Kylrum 1`,
 `Raw Lager`, `Grossist Flytande`, `Pre-Stockholm`, `Pre-Torget`, `Pre-Zollikon`,
 samt två bolagslösa rader `Pre-Produktion` och `Transportlager` (`store_id`
@@ -125,8 +125,8 @@ samt två bolagslösa rader `Pre-Produktion` och `Transportlager` (`store_id`
 platser, och `enforce_transfer_flow()` blockerar dem i flyttorder.
 
 Underlager stöds tekniskt via `storage_locations.parent_location_id` med triggern
-`trg_enforce_location_hierarchy` → `enforce_location_hierarchy()`. Endast 2 rader
-använder det idag (`Frysrum` och `Kylrum 1` på Morges Market), båda inaktiva.
+`trg_enforce_location_hierarchy` → `enforce_location_hierarchy()`. Endast 4 rader
+använder det idag, samtliga inaktiva.
 
 ---
 
@@ -147,7 +147,7 @@ kundorder, kundorder_reversering, svinn, justering, inventering`.
 | Ursprungspartiets ID vid delning | `lots.origin_lot_id` (text) + `lot_transformations.from_lot_id/to_lot_id` | finns | 4/332 i `origin_lot_id`, 0 rader i `lot_transformations` |
 | Produkt och SKU | `lots.product_id → products.sku, products.name` | finns | 332/332 |
 | Kvantitet | `lots.quantity_kg`, rörelsen `stock_movements.quantity_kg` (kg) | finns | 332/332 |
-| Antal styck | `stock_movements.quantity_pieces`, `products.weight_per_piece`, `products.nominal_weight_kg`, `products.catch_weight` | finns | 0 rörelser med `quantity_pieces` ifyllt |
+| Antal styck | `stock_movements.quantity_pieces`, `products.weight_per_piece`, `products.nominal_weight_kg`, `products.catch_weight` | finns | 1 rörelse av 2 124 |
 | Bäst före | `lots.best_before` | finns | 168/332 |
 | Temperatur vid inleverans | `lots.receiving_temp_c`, `lots.receiving_temp_deviation_reason` | kolumn finns, **MÅL (saknas)** i praktiken | 0/332 |
 | Kostpris | `lots.unit_cost`, `stock_movements.unit_cost`, `product_stock_locations.avg_cost` | finns | 307/332 |
@@ -219,7 +219,7 @@ Brister, ärligt listade:
   Fortnox-rader är skyddade. Kassa-, order-, flytt- och inleveransrader kan
   bokföras dubbelt om samma anrop körs två gånger.
 - **MÅL (saknas): databasskydd mot radering med service role.**
-  `supabase/functions/_shared/sumup-process.ts` rad 387 kör
+  `supabase/functions/_shared/sumup-process.ts` kör i sin `fail()`-rollback
   `from("stock_movements").delete()` som rollback. Ingen trigger hindrar det,
   vilket bryter mot regeln att rättelse bara sker med motrörelse.
 - **MÅL (saknas): kvittering av negativa saldon.** Alla 186 flaggor är
@@ -228,8 +228,8 @@ Brister, ärligt listade:
 - **MÅL (saknas): partisaldo som eget begrepp.** Partiets kvarvarande mängd
   finns bara som vyn `lot_remaining` och summering i `pick_lot_fefo()`;
   `lots.quantity_kg` uppdateras inte av rörelser och kan avvika.
-- **MÅL (saknas): spärr mot rörelse utan parti.** `lot_id` är nullbar och
-  107 rörelser saknar `reference_type` helt.
+- **MÅL (saknas): parti på varje rörelse.** `lot_id` är nullbar och saknas i
+  1 445 av 2 124 rörelser; 107 rörelser saknar dessutom `reference_type` helt.
 - **MÅL (saknas): periodlåsning av lager.** `period_locks` finns för lön, men
   ingen låsning hindrar bokföring bakåt i tiden i `stock_movements`.
 
@@ -451,7 +451,7 @@ Kolumnlistor lästes ur `information_schema.columns`, constraints ur
 | Tabell | Kolumner | Rader vid inspektion |
 |---|---|---|
 | stock_movements | 18 | 2 124 |
-| storage_locations | 11 | 93 varav 22 aktiva |
+| storage_locations | 11 | 93 varav 21 aktiva |
 | stores | – | 11 |
 | lots | 65 | 332 |
 | product_stock_locations | 12 | – |
@@ -512,8 +512,8 @@ Inspekterade edge functions: `mail-intake`, `parse-foljesedel`, `nimpos-sales`,
 `fortnox-send-invoice`, `fortnox-cancel-invoice`, `fortnox-sync-invoice-status`,
 `scomber-batch-allocate`, `scomber-traceability`, `scomber-pos-checkout`.
 
-Schemalagda jobb som rör lagret: `stock-reconciliation-nightly` (03:15),
-`nimpos-nattavstamning` (01:15), `archive-daily-purchase-reports` (00:01).
+Schemalagda jobb som rör lagret: `stock-reconciliation-nightly` (senaste körning
+2026-09-14 03:15 enligt `stock_reconciliation_runs`) och `nimpos-nattavstamning`.
 
 ---
 
@@ -528,14 +528,14 @@ Schemalagda jobb som rör lagret: `stock-reconciliation-nightly` (03:15),
 7. **Spärr vid passerat bäst före** — ingen trigger eller funktion på `lots.best_before`.
 8. **Partisaldo per lagerplats** — inget saldo per parti och plats valideras före uttag; verkligt exempel visar uttag i två andra bolag efter att partiet var noll.
 9. **Generell idempotensnyckel på `stock_movements`** — bara Fortnox-rader skyddas.
-10. **Radering av rörelser med service role** — `sumup-process.ts` rad 387 raderar rader; ingen trigger hindrar det.
+10. **Radering av rörelser med service role** — `sumup-process.ts` raderar rader i sin rollback; ingen trigger hindrar det.
 11. **Kvittering av negativa saldon** — 186 okvitterade flaggor.
 12. **Rättelse med motrörelse i stället för justering** — 948 `justering`-rader utan krav på orsak.
 13. **Spårbarhet till kvittorad** — 2 av 137 kvittorader har `movement_id`, 0 har `lot_id`.
-14. **Rörelse utan referens** — 107 rörelser saknar `reference_type`.
+14. **Rörelse utan parti eller referens** — 1 445 av 2 124 rörelser saknar `lot_id` och 107 saknar `reference_type`.
 15. **Periodlåsning av lagerbokföring** — finns för lön (`period_locks`), inte för lager.
 16. **Slutprissättning av partier** — alla 332 partier har `price_status = preliminar`; `finalize_lot_price()` har aldrig använts.
-17. **Kolli som bokfört mått** — `stock_movements.quantity_pieces` används i 0 rader.
-18. **Underlager i praktiken** — `parent_location_id` används av 2 platser, båda inaktiva.
+17. **Kolli som bokfört mått** — `stock_movements.quantity_pieces` används i 1 rad av 2 124.
+18. **Underlager i praktiken** — `parent_location_id` används av 4 platser, samtliga inaktiva.
 19. **Inleveranstabellen `incoming_deliveries`** — 0 rader; inleverans bokförs i praktiken via `purchase_reports`.
 20. **Toleranser vid inventering** — ingen toleransregel finns i databasen.
