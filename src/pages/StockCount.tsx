@@ -30,6 +30,64 @@ import CountListPrintDialog from "@/components/inventory/CountListPrintDialog";
 import { setBalance, setExpiryDate } from "@/lib/stockLedger";
 import CountStartPanel from "@/components/inventory/CountStartPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { PRODUCT_PHOTO_ENTITY, useUploadEntityImage } from "@/hooks/useEntityImages";
+
+/** Liten kameraknapp per rad — laddar upp bild direkt på produkten. */
+function RowPhotoButton({
+  productId,
+  productName,
+  disabled,
+}: {
+  productId: string;
+  productName: string;
+  disabled?: boolean;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const upload = useUploadEntityImage();
+  const { toast } = useToast();
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    try {
+      for (const file of Array.from(files)) {
+        await upload.mutateAsync({ entityType: PRODUCT_PHOTO_ENTITY, entityId: productId, file });
+      }
+      toast({ title: "Bild sparad", description: productName });
+    } catch (e: any) {
+      toast({ title: "Kunde inte ladda upp", description: e?.message, variant: "destructive" });
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  return (
+    <>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => handleFiles(e.target.files)}
+      />
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        title="Ta bild"
+        disabled={disabled || upload.isPending}
+        className="h-7 w-7 shrink-0 text-muted-foreground"
+        onClick={() => fileRef.current?.click()}
+      >
+        {upload.isPending ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Camera className="h-3.5 w-3.5" />
+        )}
+      </Button>
+    </>
+  );
+}
 
 
 type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "7+";
