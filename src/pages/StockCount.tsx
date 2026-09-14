@@ -786,16 +786,18 @@ export default function StockCount() {
         </div>
       ) : (
         <div className="grid gap-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-          {/* Vänster (dator) / sökträffar (mobil): alla varor per kategori */}
-          {(!isMobile || !!search.trim()) && (
+          {/* Vänster (dator) och mobil: alla varor i lager per kategori */}
+          {true && (
             <div className="space-y-1.5">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                {isMobile ? "Sökträffar" : "Alla varor"} · {rows.length} rader
+                {search.trim() ? "Sökträffar" : "Alla varor"} · {rows.length} rader
               </p>
               {!rows.length ? (
                 <Card>
                   <CardContent className="p-6 text-center text-xs text-muted-foreground">
-                    Ingen vara matchar sökningen.
+                    {search.trim()
+                      ? "Ingen vara matchar sökningen."
+                      : "Inga varor med saldo i lagret för den här enheten."}
                   </CardContent>
                 </Card>
               ) : (
