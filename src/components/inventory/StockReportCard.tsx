@@ -188,7 +188,7 @@ export function StockReportCard({
     try {
       const res = await submit.mutateAsync({ sheetId: report.id, closedBy: staffName });
       toast.success(
-        `Lagerrapporten är inskickad — butikens lager är uppdaterat med ${res?.reportedCount ?? 0} produkter`,
+        `Inventeringsrapporten är inskickad — butikens lager är uppdaterat med ${res?.reportedCount ?? 0} produkter`,
       );
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte skicka in rapporten");
@@ -282,13 +282,13 @@ export function StockReportCard({
           )}
           {blockedCount > 0 && (
             <p className="text-[11px] text-muted-foreground">
-              {blockedCount} vara(or) döljs: de fanns inte i förra lagerrapporten och har inte
+              {blockedCount} vara(or) döljs: de fanns inte i förra inventeringsrapporten och har inte
               kommit in via en godkänd inleverans.
             </p>
           )}
           {restricted && search.trim().length > 0 && matches.length === 0 && (
             <p className="rounded-md border border-dashed border-border p-3 text-[11px] text-muted-foreground">
-              Ingen träff bland de varor som finns i butiken. Bara varor från förra lagerrapporten
+              Ingen träff bland de varor som finns i butiken. Bara varor från förra inventeringsrapporten
               eller från en godkänd inleverans kan lagerföras.
             </p>
           )}
@@ -296,7 +296,7 @@ export function StockReportCard({
       )}
       {restricted && (
         <p className="text-[11px] text-muted-foreground">
-          Sökningen visar bara varor som fanns i förra lagerrapporten eller kommit in via en
+          Sökningen visar bara varor som fanns i förra inventeringsrapporten eller kommit in via en
           godkänd inleverans.
         </p>
       )}
@@ -389,7 +389,7 @@ export function StockReportCard({
     <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
       <DialogContent className="max-h-[85vh] overflow-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Tidigare lagerrapporter</DialogTitle>
+          <DialogTitle>Tidigare inventeringsrapporter</DialogTitle>
         </DialogHeader>
         {archive.length === 0 ? (
           <p className="text-sm text-muted-foreground">Inga tidigare rapporter än.</p>
@@ -446,7 +446,7 @@ export function StockReportCard({
           ) : (
             <Boxes className="h-4 w-4 text-primary" />
           )}
-          Lagerrapport
+          Inventeringsrapport
           <span className="text-[11px] font-normal text-muted-foreground">{todayStockholm()}</span>
         </CardTitle>
         <div className="flex items-center gap-1.5">
@@ -497,14 +497,14 @@ export function StockReportCard({
           )}
           <Button className="h-12 w-full" onClick={() => setEditorOpen(true)}>
             <Boxes className="mr-1.5 h-4 w-4" />
-            {submitted ? "Visa dagens lagerrapport" : lines.length > 0 ? "Fortsätt fylla i" : "Fyll i lagerrapport"}
+            {submitted ? "Visa dagens inventeringsrapport" : lines.length > 0 ? "Fortsätt fylla i" : "Fyll i inventeringsrapport"}
           </Button>
         </CardContent>
 
         <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
           <DialogContent className="flex h-[100dvh] max-h-[100dvh] w-screen max-w-none flex-col gap-3 rounded-none p-4 sm:max-w-none">
             <DialogHeader className="shrink-0 text-left">
-              <DialogTitle className="text-base">Lagerrapport {todayStockholm()}</DialogTitle>
+              <DialogTitle className="text-base">Inventeringsrapport {todayStockholm()}</DialogTitle>
             </DialogHeader>
             <div className="shrink-0">{searchBlock}</div>
             <div className="min-h-0 flex-1 overflow-y-auto">{listBlock}</div>
