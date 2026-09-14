@@ -15095,6 +15095,77 @@ export type Database = {
           },
         ]
       }
+      transformation_presets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          pack_size: number | null
+          source_product_id: string
+          store_id: string | null
+          target_product_id: string | null
+          transform_kind: string
+          updated_at: string
+          use_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label: string
+          pack_size?: number | null
+          source_product_id: string
+          store_id?: string | null
+          target_product_id?: string | null
+          transform_kind?: string
+          updated_at?: string
+          use_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          pack_size?: number | null
+          source_product_id?: string
+          store_id?: string | null
+          target_product_id?: string | null
+          transform_kind?: string
+          updated_at?: string
+          use_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transformation_presets_source_product_id_fkey"
+            columns: ["source_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transformation_presets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "transformation_presets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transformation_presets_target_product_id_fkey"
+            columns: ["target_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transformation_recipes: {
         Row: {
           active: boolean
