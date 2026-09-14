@@ -23,7 +23,10 @@ interface Props {
   groups: PrintableGroup[];
   mode: "day" | "week";
   storeName?: string;
+  /** Valfria kolumner (lager, order, kan säljas) som är påslagna i vyn. */
+  extraColumns?: { stock?: boolean; onOrder?: boolean; sellable?: boolean };
 }
+
 
 const qtyText = (v: number, unit: string) =>
   Number(v || 0).toLocaleString("sv-SE", {
