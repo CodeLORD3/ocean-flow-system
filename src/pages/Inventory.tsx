@@ -1490,14 +1490,6 @@ export default function Inventory() {
           )}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            size="sm"
-            className="gap-1.5 text-xs h-9 sm:h-8 w-full sm:w-auto order-first font-semibold shadow-sm"
-            onClick={handlePrintCountList}
-          >
-            <ListChecks className="h-3.5 w-3.5" />
-            Skriv ut inventeringslista
-          </Button>
           <CountListPrintDialog
             open={countListOpen}
             onOpenChange={setCountListOpen}
