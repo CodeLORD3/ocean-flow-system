@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { performTransformation, type TransformInput } from "@/lib/stockTransform";
+import {
+  performTransformation,
+  performTransformationBatch,
+  type TransformBatchInput,
+  type TransformInput,
+} from "@/lib/stockTransform";
 
 export interface TransformationRow {
   id: string;
@@ -55,5 +60,102 @@ export function usePerformTransformation() {
       qc.invalidateQueries({ queryKey: ["stock_transformations"] });
       qc.invalidateQueries({ queryKey: ["lots"] });
     },
+  });
+}
+
+/** Utför en omvandling med ett eller flera utfall (t.ex. burkar + lösvara). */
+export function usePerformTransformationBatch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: TransformBatchInput) => performTransformationBatch(input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["stock_movements"] });
+      qc.invalidateQueries({ queryKey: ["stock_transformations"] });
+      qc.invalidateQueries({ queryKey: ["lots"] });
+    },
+  });
+}
+
+export interface TransformPreset {
+  id: string;
+  source_product_id: string;
+  target_product_id: string | null;
+  label: string;
+  pack_size: number | null;
+  transform_kind: string;
+  use_count: number;
+  target: { id: string; name: string; sku: string; unit: string } | null;
+}
+
+/** Snabbval (vanliga omvandlingar) för en produkt, mest använda först. */
+export function useTransformPresets(sourceProductId?: string | null) {
+  return useQuery({
+    queryKey: ["transformation_presets", sourceProductId ?? "none"],
+    enabled: !!sourceProductId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transformation_presets")
+        .select("*, target:products!transformation_presets_target_product_id_fkey(id, name, sku, unit)")
+        .eq("source_product_id", sourceProductId!)
+        .order("use_count", { ascending: false })
+        .order("created_at");
+      if (error) throw error;
+      return (data || []) as unknown as TransformPreset[];
+    },
+  });
+}
+
+/** Sparar en omvandling som snabbval, eller räknar upp ett befintligt. */
+export function useSaveTransformPreset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      sourceProductId: string;
+      targetProductId: string;
+      label: string;
+      packSize?: number | null;
+      transformKind: string;
+      storeId?: string | null;
+    }) => {
+      const { data: existing } = await supabase
+        .from("transformation_presets")
+        .select("id, use_count")
+        .eq("source_product_id", input.sourceProductId)
+        .eq("target_product_id", input.targetProductId)
+        .maybeSingle();
+      if (existing) {
+        const { error } = await supabase
+          .from("transformation_presets")
+          .update({ use_count: (Number((existing as any).use_count) || 0) + 1, label: input.label })
+          .eq("id", (existing as any).id);
+        if (error) throw error;
+        return;
+      }
+      const { error } = await supabase.from("transformation_presets").insert({
+        source_product_id: input.sourceProductId,
+        target_product_id: input.targetProductId,
+        label: input.label,
+        pack_size: input.packSize ?? null,
+        transform_kind: input.transformKind,
+        store_id: input.storeId ?? null,
+        use_count: 1,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["transformation_presets"] }),
+  });
+}
+
+/** Tar bort ett snabbval. */
+export function useDeleteTransformPreset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("transformation_presets").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["transformation_presets"] }),
   });
 }
