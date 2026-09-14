@@ -688,21 +688,6 @@ export default function StockCount() {
           · {locked ? "Låst" : "Öppen"}
         </span>
         {storeName && <span className="hidden sm:inline">· {storeName}</span>}
-        {daySessions.length > 1 &&
-          daySessions.map((s: any, i: number) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setSelectedSessionId(s.id)}
-              className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
-                s.id === session?.id
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border hover:bg-muted"
-              }`}
-            >
-              {s.label || `#${i + 1}`}
-            </button>
-          ))}
         <Button
           size="sm"
           variant="ghost"
