@@ -1080,9 +1080,7 @@ export default function StockCount() {
                           </span>
                           <span className="hidden w-24 shrink-0 border-r border-grid-line/70 px-2 text-center text-[10px] text-muted-foreground sm:block">
                             {quality
-                              ? quality === "7+"
-                                ? "7+ dagar"
-                                : `${quality} ${quality === "1" ? "dag" : "dagar"}`
+                              ? `${quality === "7+" ? "7" : quality} ${quality === "1" ? "dag" : "dagar"}`
                               : "—"}
                           </span>
                           <span className="w-14 shrink-0 border-r border-grid-line/70 px-2 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
