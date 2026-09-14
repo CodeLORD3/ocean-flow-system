@@ -1671,7 +1671,33 @@ export default function Inventory() {
         </div>
         )}
 
+        {/* Butiksportalen har ingen flikmeny — men hållbarheten behövs även där */}
+        {isShopPortal && (
+          <div className="flex w-full max-w-full items-center gap-1 rounded-lg border border-border bg-card p-1 sm:w-fit">
+            {[
+              { v: "overview" as const, l: "Samlad lagerbild" },
+              { v: "shelflife" as const, l: "Hållbarhet" },
+            ].map((o) => (
+              <button
+                key={o.v}
+                onClick={() => setViewMode(o.v)}
+                className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors sm:px-3 sm:text-sm ${
+                  viewMode === o.v
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {o.l}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+
+      {viewMode === "shelflife" && (
+        <ShelfLifeTimeline rows={overviewRows as any} productsById={productsById} />
+      )}
+
 
       {viewMode === "overview" && (
         <StockOverview
