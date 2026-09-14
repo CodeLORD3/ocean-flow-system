@@ -6,13 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { RefreshCw, Search } from "lucide-react";
+import { Layers, RefreshCw, Search } from "lucide-react";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import TransformFlow from "@/components/inventory/TransformFlow";
+import FamilyStockView from "@/components/inventory/FamilyStockView";
 import { useProducts } from "@/hooks/useProducts";
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
 import { useSite } from "@/contexts/SiteContext";
 import { useStockTransformations } from "@/hooks/useStockTransformations";
+import { useProductFamilies, useOrderedByProduct } from "@/hooks/useProductFamilies";
 import { transformKindLabel } from "@/lib/stockTransform";
 
 /**
