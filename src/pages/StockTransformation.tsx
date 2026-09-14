@@ -150,7 +150,31 @@ export default function StockTransformation() {
           ) : cards.length === 0 ? (
             <p className="text-xs text-muted-foreground">Inga produkter med lagersaldo att omvandla.</p>
           ) : (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            <>
+            {/* Mobil: låga rader med all information horisontellt */}
+            <div className="divide-y rounded-md border sm:hidden">
+              {cards.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setTarget({ id: p.id, name: p.name, sku: p.sku, unit: p.unit })}
+                  className="flex w-full items-center gap-2 overflow-hidden px-2 py-1.5 text-left"
+                >
+                  <ProductThumb
+                    src={(p as any).image_url}
+                    alt={p.name}
+                    static
+                    className="h-7 w-9 shrink-0"
+                  />
+                  <span className="truncate text-xs font-medium">{p.name}</span>
+                  <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
+                    {(stockByProduct.get(p.id) || 0).toLocaleString("sv-SE")} {p.unit?.toLowerCase() || "kg"}
+                  </span>
+                  <RefreshCw className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </button>
+              ))}
+            </div>
+            <div className="hidden gap-2 sm:grid sm:grid-cols-3 lg:grid-cols-4">
               {cards.map((p) => (
                 <button
                   key={p.id}
