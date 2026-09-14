@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RefreshCw, Search } from "lucide-react";
 import { ProductThumb } from "@/components/products/ProductThumb";
-import TransformDialog from "@/components/inventory/TransformDialog";
+import TransformFlow from "@/components/inventory/TransformFlow";
 import { useProducts } from "@/hooks/useProducts";
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
 import { useSite } from "@/contexts/SiteContext";
@@ -207,7 +207,7 @@ export default function StockTransformation() {
         </div>
       )}
 
-      <TransformDialog
+      <TransformFlow
         open={!!target}
         onOpenChange={(o) => !o && setTarget(null)}
         product={target}
