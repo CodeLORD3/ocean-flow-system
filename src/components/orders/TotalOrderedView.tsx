@@ -940,11 +940,62 @@ export function TotalOrderedView({
                           >
                             {state === "packad" ? "0" : qtyText(remaining, r.unit)} {r.unit}
                           </span>
+                          {/* Lager / Order / Kan säljas — bara när kolumnen är påslagen */}
+                          {cols.stock && (
+                            <span className="hidden w-20 shrink-0 whitespace-nowrap text-right font-mono text-[11px] tabular-nums text-muted-foreground md:inline">
+                              {extraText(r.stock, r.unit)}
+                            </span>
+                          )}
+                          {cols.onOrder && (
+                            <span className="hidden w-20 shrink-0 whitespace-nowrap text-right font-mono text-[11px] tabular-nums text-muted-foreground md:inline">
+                              {extraText(r.onOrder, r.unit)}
+                            </span>
+                          )}
+                          {cols.sellable && (
+                            <span
+                              className={`hidden w-24 shrink-0 whitespace-nowrap text-right font-mono text-[11px] font-semibold tabular-nums md:inline ${
+                                r.sellable == null
+                                  ? "text-muted-foreground"
+                                  : r.sellable < 0
+                                    ? "text-destructive"
+                                    : "text-success"
+                              }`}
+                            >
+                              {extraText(r.sellable, r.unit)}
+                            </span>
+                          )}
                           <span className="shrink-0 whitespace-nowrap text-right font-mono text-[10px] tabular-nums text-muted-foreground md:w-16 md:text-[11px]">
                             {r.orders.length} st
                           </span>
 
                         </button>
+
+                        {anyExtra && (
+                          <div className="flex flex-wrap gap-1.5 px-2 pb-1 md:hidden">
+                            {cols.stock && (
+                              <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[9px] tabular-nums text-muted-foreground">
+                                Lager {extraText(r.stock, r.unit)}
+                              </span>
+                            )}
+                            {cols.onOrder && (
+                              <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[9px] tabular-nums text-muted-foreground">
+                                Order {extraText(r.onOrder, r.unit)}
+                              </span>
+                            )}
+                            {cols.sellable && (
+                              <span
+                                className={`rounded-full px-1.5 py-0.5 font-mono text-[9px] font-semibold tabular-nums ${
+                                  r.sellable != null && r.sellable < 0
+                                    ? "bg-destructive/10 text-destructive"
+                                    : "bg-success/10 text-success"
+                                }`}
+                              >
+                                Kan säljas {extraText(r.sellable, r.unit)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
 
                         {isOpen && (
                           <div className="grid gap-2 px-2 pb-2 md:pl-8 lg:grid-cols-[1fr,260px]">
