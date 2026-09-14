@@ -232,6 +232,8 @@ export default function StockCount() {
   });
   const [openReportId, setOpenReportId] = useState<string | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  // Raden i inventeringslistan är kompakt; redigering öppnas först vid klick.
+  const [editKey, setEditKey] = useState<string | null>(null);
   const reportLinesQuery = useQuery({
     queryKey: ["stock_report_lines", openReportId],
     enabled: !!openReportId,
