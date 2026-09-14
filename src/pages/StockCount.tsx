@@ -1107,7 +1107,7 @@ export default function StockCount() {
                           })}{" "}
                           kg
                         </span>
-                        {r.closed_at && <span>{stampLabel(r.closed_at)}</span>}
+                        {r.closed_at && <span className="hidden sm:inline">{stampLabel(r.closed_at)}</span>}
                       </span>
                     </button>
                     {isOpen && (
