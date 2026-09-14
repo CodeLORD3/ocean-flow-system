@@ -232,6 +232,18 @@ export function TotalOrderedView({
 
   const anyExtra = cols.stock || cols.onOrder || cols.sellable;
 
+  /** Inmatningsläge: skriv in order till grossisten och lagersaldo direkt i listan. */
+  const [editMode, setEditMode] = useState(false);
+  /** Osparade värden per produkt, nyckel "order:<id>" / "stock:<id>". */
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<string[]>([]);
+  const { toast } = useToast();
+  const { data: entryLocation } = useStoreEntryLocation(editMode ? storeId : null);
+  const saveOrder = useSaveTotalListOrder();
+  const saveStock = useSaveTotalListStock();
+
+
+
 
 
 
