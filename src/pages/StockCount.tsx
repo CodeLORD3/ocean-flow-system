@@ -341,30 +341,6 @@ export default function StockCount() {
         costPrice: Number(p.cost_price) || 0,
       });
     });
-    // Varor som funnits i lagret tidigare läggs till med 0 som utgångsvärde.
-    const defaultLoc = (locations as any[])[0];
-    if (defaultLoc) {
-      const haveProduct = new Set(rows.map((r) => r.productId));
-      (pastProductsQuery.data ?? []).forEach((pid) => {
-        if (haveProduct.has(pid)) return;
-        const p = productsById.get(pid);
-        if (!p || p.is_active === false) return;
-        haveProduct.add(pid);
-        rows.push({
-          key: `${pid}|${defaultLoc.id}`,
-          productId: pid,
-          locationId: defaultLoc.id,
-          productName: p.name || "—",
-          sku: p.sku ?? null,
-          unit: unitOf(p.unit),
-          category: p.category || "Övrigt",
-          imageUrl: p.image_url ?? null,
-          locationName: defaultLoc.name || "Lager",
-          systemQty: 0,
-          costPrice: Number(p.cost_price) || 0,
-        });
-      });
-    }
     rows.sort(
       (a, b) =>
         collator.compare(a.category, b.category) ||
@@ -372,7 +348,7 @@ export default function StockCount() {
         collator.compare(a.locationName, b.locationName),
     );
     return rows;
-  }, [allStock, locations, productsById, effectiveStoreId, pastProductsQuery.data]);
+  }, [allStock, locations, productsById, effectiveStoreId]);
 
   const categories = useMemo(
     () => [...new Set(allRows.map((r) => r.category))].sort(collator.compare),
