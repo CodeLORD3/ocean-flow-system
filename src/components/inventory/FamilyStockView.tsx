@@ -60,6 +60,10 @@ export default function FamilyStockView({
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return groups.filter((g) => {
+      // Visa bara familjer med faktiskt saldo eller utestående order — nollrader döljs.
+      const hasStock =
+        g.totalKg > 0 || g.variants.some((v) => v.qty > 0 || (v.ordered || 0) > 0);
+      if (!hasStock) return false;
       if (category !== "__all__" && g.category !== category) return false;
       if (!q) return true;
       return (
