@@ -161,9 +161,9 @@ const relDayLabel = (from: string, to: string) => {
 
 /** Etikett i hållbarhetsvalet: "3 dagar · tors 18/9". */
 const qualityLabel = (countDate: string, d: string) => {
-  if (d === "7+") return "7+ dagar";
-  const to = holdsUntil(countDate, d);
-  const days = `${d} ${d === "1" ? "dag" : "dagar"}`;
+  const day = d === "7+" ? "7" : d;
+  const to = holdsUntil(countDate, day);
+  const days = `${day} ${day === "1" ? "dag" : "dagar"}`;
   return to ? `${days} · ${relDayLabel(countDate, to)}` : days;
 };
 
