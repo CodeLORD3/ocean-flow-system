@@ -447,6 +447,7 @@ export function TotalOrderedView({
           PACK_LABEL[packState(r.total, r.packed)],
           extraText(r.stock, r.unit),
           extraText(r.onOrder, r.unit),
+          extraText(r.combined, r.unit),
           extraText(r.sellable, r.unit),
           moneyText(r.value),
           String(r.orders.length),
