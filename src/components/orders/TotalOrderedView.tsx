@@ -962,6 +962,11 @@ export function TotalOrderedView({
                               {extraText(r.onOrder, r.unit)}
                             </span>
                           )}
+                          {cols.combined && (
+                            <span className="hidden w-24 shrink-0 whitespace-nowrap text-right font-mono text-[11px] font-semibold tabular-nums text-foreground md:inline">
+                              {extraText(r.combined, r.unit)}
+                            </span>
+                          )}
                           {cols.sellable && (
                             <span
                               className={`hidden w-24 shrink-0 whitespace-nowrap text-right font-mono text-[11px] font-semibold tabular-nums md:inline ${
