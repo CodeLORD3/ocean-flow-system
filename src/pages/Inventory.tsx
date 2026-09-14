@@ -984,6 +984,8 @@ export default function Inventory() {
   // ── Render helpers ───────────────────────────────────────────────────────
   /** Kollapsade kategorier per lagerplats, nyckel "locId::kategori". */
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
+  /** Vald kategori per lagerplats — ersätter en knapp per kategori */
+  const [locationCatFilter, setLocationCatFilter] = useState<Record<string, string>>({});
   const toggleCat = (locId: string, cat: string) =>
     setCollapsedCats((prev) => {
       const next = new Set(prev);
