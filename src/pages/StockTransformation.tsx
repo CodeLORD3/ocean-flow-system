@@ -109,6 +109,15 @@ export default function StockTransformation() {
           <div className="flex flex-wrap gap-1.5">
             <Button
               size="sm"
+              variant={familyView ? "default" : "outline"}
+              className="h-7 gap-1 px-2 text-[11px]"
+              onClick={() => setFamilyView((v) => !v)}
+              title="Visa produktgrupper med omvandlingsförslag"
+            >
+              <Layers className="h-3 w-3" /> Produktgrupper
+            </Button>
+            <Button
+              size="sm"
               variant={category === "alla" ? "default" : "outline"}
               className="h-7 px-2 text-[11px]"
               onClick={() => setCategory("alla")}
