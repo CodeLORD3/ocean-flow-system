@@ -40,7 +40,7 @@ export default function ClockGuides() {
         </CardHeader>
         <CardContent className="space-y-4">
           <ol className="space-y-3">
-            <Step n={1} title="Kontoret skapar stationen och ger dig en aktiveringskod på fyra tecken.">
+            <Step n={1} title="Kontoret skapar stationen och ger dig en aktiveringskod på åtta siffror.">
               Koden gäller för en enda enhet.
             </Step>
             <Step n={2} title="Öppna klockans adress i webbläsaren på surfplattan eller kassadatorn.">
