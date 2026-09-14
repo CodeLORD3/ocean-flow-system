@@ -552,7 +552,7 @@ export default function StockCount() {
     qc.invalidateQueries({ queryKey: ["stock_count_history", effectiveStoreId] });
     historyQuery.refetch();
     toast({
-      title: "Inventeringen är låst",
+      title: "Inventeringsrapporten är klar",
       description: failed
         ? `${written} rader bokfördes i lagret, ${failed} misslyckades.`
         : `${written} rader bokfördes i lagret.`,
