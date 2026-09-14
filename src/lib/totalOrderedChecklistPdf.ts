@@ -104,7 +104,8 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
 
     const ex = payload.extraColumns ?? {};
     const extraHead: string[] = [];
-    const extraKeys: ("stock" | "onOrder" | "sellable")[] = [];
+    type ExtraKey = "stock" | "onOrder" | "combined" | "sellable";
+    const extraKeys: ExtraKey[] = [];
     if (ex.stock) {
       extraHead.push("Lager");
       extraKeys.push("stock");
@@ -113,11 +114,15 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
       extraHead.push("Order");
       extraKeys.push("onOrder");
     }
+    if (ex.combined) {
+      extraHead.push("Lager+Order");
+      extraKeys.push("combined");
+    }
     if (ex.sellable) {
       extraHead.push("Kan säljas");
       extraKeys.push("sellable");
     }
-    const extraCell = (r: TotalChecklistRow, k: "stock" | "onOrder" | "sellable") => {
+    const extraCell = (r: TotalChecklistRow, k: ExtraKey) => {
       const v = r[k];
       return v == null ? "–" : `${qty(v, r.unit)} ${r.unit}`;
     };
