@@ -11,6 +11,8 @@ export interface TotalChecklistRow {
   stock?: number | null;
   /** Utestående grossistorder, om kolumnen är påslagen. */
   onOrder?: number | null;
+  /** Lager plus utestående grossistorder. */
+  combined?: number | null;
   /** Lager minus kvar att packa. */
   sellable?: number | null;
   orderCount: number;
