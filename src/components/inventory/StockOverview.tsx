@@ -528,7 +528,7 @@ export default function StockOverview({
           orderedByProduct={orderedByProduct}
           search={search}
           category={category}
-          onTransform={openTransform}
+          
         />
       ) : (
       /* Tabell */
