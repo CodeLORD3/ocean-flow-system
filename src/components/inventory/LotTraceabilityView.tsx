@@ -161,8 +161,8 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                     </div>
 
                   </div>
-                  <div className="text-right font-mono tabular-nums">
-                    <p className="text-sm font-semibold text-foreground">{nf(Number(lot.quantity_kg || 0), 3)} kg</p>
+                  <div className="shrink-0 whitespace-nowrap text-right font-mono tabular-nums">
+                    <p className="text-xs font-semibold text-foreground sm:text-sm">{nf(Number(lot.quantity_kg || 0), 1)} kg</p>
                     {showCosts && lot.unit_cost != null && (
                       <p className="text-[11px] text-muted-foreground">
                         {nf(Number(lot.unit_cost), 2)} {currency}/kg
