@@ -535,3 +535,34 @@ export function useProductPhotos(productId?: string | null) {
     enabled: !!productId,
   });
 }
+
+/**
+ * Antal egentagna bilder per produkt (bara bilder kopplade direkt till produkten).
+ * Används i lagerlistan för att visa en kameraikon med antal.
+ */
+export function useProductPhotoCounts(productIds: string[]) {
+  const ids = Array.from(new Set(productIds.filter(Boolean))).sort();
+  return useQuery({
+    queryKey: ["product-photo-counts", ids.length, ids.join(",").slice(0, 2000)],
+    queryFn: async () => {
+      const map = new Map<string, number>();
+      if (!ids.length) return map;
+      const CHUNK = 200;
+      for (let i = 0; i < ids.length; i += CHUNK) {
+        const { data, error } = await supabase
+          .from("entity_images")
+          .select("entity_id")
+          .eq("entity_type", PRODUCT_PHOTO_ENTITY)
+          .in("entity_id", ids.slice(i, i + CHUNK));
+        if (error) throw error;
+        for (const row of data || []) {
+          const id = (row as any).entity_id as string;
+          map.set(id, (map.get(id) || 0) + 1);
+        }
+      }
+      return map;
+    },
+    enabled: ids.length > 0,
+    staleTime: 60_000,
+  });
+}
