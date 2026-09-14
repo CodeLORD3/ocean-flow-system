@@ -58,6 +58,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/food-safety": "Egenkontroll",
   "/production": "Produktion",
   "/stock-movements": "Lagerrörelser",
+  "/stock-disappearance": "Försvunnet ur lagret",
   "/traceability": "Spårbarhet",
   "/coverage": "Datakvalitet",
   "/system-status": "Systemstatus",

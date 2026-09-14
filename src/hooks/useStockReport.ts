@@ -114,6 +114,40 @@ export function useStockReportArchive(storeId: string | null | undefined, limit 
   });
 }
 
+/**
+ * Vilka produkter butiken får lagerföra i nästa rapport.
+ *
+ * Första rapporten är startvärdet och får innehålla vad som helst. Därefter
+ * gäller bara produkter som stod i förra rapporten eller kommit in via en
+ * godkänd inleverans — varor kan inte dyka upp ur tomma luften.
+ */
+export function useAllowedReportProducts(storeId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["stock-report-allowed", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data: prev, error: prevErr } = await supabase
+        .from("daily_stock_sheets")
+        .select("id")
+        .eq("store_id", storeId!)
+        .is("location_id", null)
+        .eq("status", "godkand")
+        .limit(1);
+      if (prevErr) throw prevErr;
+      if (!prev?.length) return { restricted: false, ids: new Set<string>() };
+
+      const { data, error } = await supabase.rpc("store_report_allowed_products", {
+        _store_id: storeId!,
+      });
+      if (error) throw error;
+      return {
+        restricted: true,
+        ids: new Set<string>(((data as any[]) || []).map((r) => r.product_id as string)),
+      };
+    },
+  });
+}
+
 export function useStockReportLines(sheetId: string | null) {
   return useQuery({
     queryKey: ["stock-report-lines", sheetId],
