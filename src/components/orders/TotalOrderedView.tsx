@@ -225,7 +225,7 @@ export function TotalOrderedView({
     }
   }, [cols]);
 
-  const anyExtra = cols.stock || cols.onOrder || cols.sellable;
+  const anyExtra = cols.stock || cols.onOrder || cols.combined || cols.sellable;
 
 
 
