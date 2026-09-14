@@ -724,7 +724,54 @@ export function TotalOrderedView({
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="col-span-2 h-11 gap-1.5 rounded-xl text-xs sm:col-span-1 sm:h-10"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  <span className="truncate">Kolumner</span>
+                  {anyExtra && (
+                    <Badge variant="secondary" className="rounded-full px-1.5 text-[10px]">
+                      {[cols.stock, cols.onOrder, cols.sellable].filter(Boolean).length}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-72 space-y-3 p-3">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  Visa extra kolumner
+                </div>
+                {(
+                  [
+                    ["stock", "Lager", "Vad butiken har i lager just nu"],
+                    ["onOrder", "Order", "Beställt hos grossisten, inte levererat"],
+                    ["sellable", "Kan säljas", "Lager minus kvar att packa"],
+                  ] as const
+                ).map(([k, label, hint]) => (
+                  <label
+                    key={k}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl px-1 py-1.5"
+                  >
+                    <Switch
+                      checked={cols[k]}
+                      onCheckedChange={(v) => setCols((prev) => ({ ...prev, [k]: v }))}
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium">{label}</span>
+                      <span className="block text-[11px] text-muted-foreground">{hint}</span>
+                    </span>
+                  </label>
+                ))}
+                {extras.isLoading && (
+                  <p className="text-[11px] text-muted-foreground">Hämtar lager och order…</p>
+                )}
+              </PopoverContent>
+            </Popover>
             <Button
+
               variant="outline"
               size="sm"
               className="h-11 gap-1.5 rounded-xl text-xs sm:h-10"
