@@ -131,6 +131,7 @@ const financeNav = [
 
   { title: "Datakvalitet", url: "/coverage", icon: Shield },
   { title: "Systemstatus", url: "/system-status", icon: Activity },
+  { title: "Lagerblueprint", url: "/lager-blueprint", icon: FileText },
   { title: "Webbordrar", url: "/shopify", icon: Globe },
   { title: "Storlekssortering", url: "/size-grades", icon: Ruler },
   { title: "Omvandlingsrecept", url: "/transformation-recipes", icon: CookingPot },
