@@ -13001,6 +13001,160 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_transformations: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string | null
+          note: string | null
+          performed_at: string
+          performed_by: string | null
+          performed_by_name: string | null
+          source_lot_id: string | null
+          source_product_id: string | null
+          source_quantity: number
+          store_id: string | null
+          target_lot_id: string | null
+          target_packages: number | null
+          target_product_id: string | null
+          target_quantity: number
+          transform_kind: string
+          updated_at: string
+          waste_quantity: number
+          waste_reason: string | null
+          yield_pct: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          note?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_name?: string | null
+          source_lot_id?: string | null
+          source_product_id?: string | null
+          source_quantity?: number
+          store_id?: string | null
+          target_lot_id?: string | null
+          target_packages?: number | null
+          target_product_id?: string | null
+          target_quantity?: number
+          transform_kind?: string
+          updated_at?: string
+          waste_quantity?: number
+          waste_reason?: string | null
+          yield_pct?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          note?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_name?: string | null
+          source_lot_id?: string | null
+          source_product_id?: string | null
+          source_quantity?: number
+          store_id?: string | null
+          target_lot_id?: string | null
+          target_packages?: number | null
+          target_product_id?: string | null
+          target_quantity?: number
+          transform_kind?: string
+          updated_at?: string
+          waste_quantity?: number
+          waste_reason?: string | null
+          yield_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transformations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "stock_transformations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transformations_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transformations_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transformations_source_lot_id_fkey"
+            columns: ["source_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "stock_transformations_source_lot_id_fkey"
+            columns: ["source_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transformations_source_product_id_fkey"
+            columns: ["source_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transformations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "stock_transformations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transformations_target_lot_id_fkey"
+            columns: ["target_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "stock_transformations_target_lot_id_fkey"
+            columns: ["target_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transformations_target_product_id_fkey"
+            columns: ["target_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storage_locations: {
         Row: {
           active: boolean

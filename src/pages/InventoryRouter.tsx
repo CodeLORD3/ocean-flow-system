@@ -8,12 +8,14 @@ import Barcodes from "@/pages/Barcodes";
 import StockTransfers from "@/pages/StockTransfers";
 import WasteReports from "@/pages/WasteReports";
 import TraceabilityPage from "@/pages/TraceabilityPage";
+import StockTransformation from "@/pages/StockTransformation";
 import { useSite } from "@/contexts/SiteContext";
 import { canAccessRoute } from "@/lib/pageAccess";
 
 type SubTab =
   | "lager"
   | "inventering"
+  | "omvandling"
   | "overforingar"
   | "produkter"
   | "streckkoder"
@@ -36,6 +38,7 @@ export default function InventoryRouter() {
   const tabs: { value: SubTab; label: string; shortLabel?: string }[] = [
     { value: "lager", label: "Lager" },
     { value: "inventering", label: "Inventering", shortLabel: "Invent." },
+    { value: "omvandling", label: "Omvandling", shortLabel: "Omv." },
     ...(isShopPortal
       ? []
       : ([{ value: "overforingar", label: "Överföringar", shortLabel: "Överför" }] as const)),
@@ -74,6 +77,9 @@ export default function InventoryRouter() {
         </div>
         <div style={{ display: tab === "inventering" ? "block" : "none" }}>
           <StockCount />
+        </div>
+        <div style={{ display: tab === "omvandling" ? "block" : "none" }}>
+          <StockTransformation />
         </div>
         {!isShopPortal && (
           <div style={{ display: tab === "overforingar" ? "block" : "none" }}>

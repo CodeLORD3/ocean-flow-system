@@ -93,6 +93,7 @@ import StockMovementsView from "@/components/inventory/StockMovementsView";
 import LotTraceabilityView from "@/components/inventory/LotTraceabilityView";
 
 import WasteDialog from "@/components/inventory/WasteDialog";
+import TransformDialog from "@/components/inventory/TransformDialog";
 import {
   lotBalancesAtLocation,
   recordMovement,
@@ -299,9 +300,11 @@ export default function Inventory() {
   const [splitQty, setSplitQty] = useState("");
   const [splitTargetLocation, setSplitTargetLocation] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
-  const [transformTargetProduct, setTransformTargetProduct] = useState("");
-  const [transformNewWeight, setTransformNewWeight] = useState("");
-  const [transformProductSearch, setTransformProductSearch] = useState("");
+  /** Produkten och lagerplatsen som omvandlas i Omvandla-flödet. */
+  const [transformSource, setTransformSource] = useState<
+    { id: string; name: string; sku?: string | null; unit?: string | null } | null
+  >(null);
+  const [transformLocationId, setTransformLocationId] = useState<string | null>(null);
 
   // Utskriftsval av lagerplatser (för PDF-listor)
   const [printSel, setPrintSel] = useState<Record<string, boolean>>({});
@@ -588,63 +591,6 @@ export default function Inventory() {
     setActionLoading(false);
   };
 
-  const handleTransform = async () => {
-    if (!transformTargetProduct || !transformNewWeight) return;
-    setActionLoading(true);
-    try {
-      const items = getSelectedStockItems(activeLocationId);
-      const item = items[0];
-      const newWeight = Number(transformNewWeight);
-      const oldWeight = Number(item.quantity);
-      if (newWeight <= 0 || newWeight >= oldWeight) {
-        toast({ title: "Ogiltig vikt", variant: "destructive" });
-        setActionLoading(false);
-        return;
-      }
-      const weightLoss = oldWeight - newWeight;
-      const itemCost = Number(item.unit_cost) || 0;
-      const totalCostTransfer = oldWeight * itemCost;
-      const newUnitCost = newWeight > 0 ? totalCostTransfer / newWeight : 0;
-      // Omvandling = tillverkning: hela råvaran ut, styckdetaljen in, viktförlusten
-      // som svinn. Allt via loggen så både kostpris och spårbarhet följer med.
-      await recordMovement({
-        productId: item.product_id,
-        locationId: item.location_id,
-        quantityKg: oldWeight,
-        movementType: "tillverkning_ut",
-        unitCost: itemCost || null,
-        note: `Omvandling till ${products.find((p) => p.id === transformTargetProduct)?.name || "okänd"}`,
-      });
-      await recordMovement({
-        productId: transformTargetProduct,
-        locationId: item.location_id,
-        quantityKg: newWeight,
-        movementType: "tillverkning_in",
-        unitCost: newUnitCost || null,
-        note: `Omvandlad från ${item.products?.name || "okänd"}`,
-      });
-      await supabase.from("deleted_stock_log").insert({
-        product_id: item.product_id,
-        location_id: item.location_id,
-        quantity: weightLoss,
-        reason: `Omvandling: ${item.products?.name} → ${products.find((p) => p.id === transformTargetProduct)?.name || "okänd"} (svinn ${weightLoss.toFixed(2)} ${item.products?.unit || "kg"})`,
-      });
-
-      clearSelection(activeLocationId);
-      invalidateStock();
-      toast({
-        title: "Omvandlad",
-        description: `${item.products?.name} → ${products.find((p) => p.id === transformTargetProduct)?.name}, ${newWeight} ${item.products?.unit || "kg"} (svinn: ${weightLoss.toFixed(2)})`,
-      });
-      setTransformDialogOpen(false);
-      setTransformTargetProduct("");
-      setTransformNewWeight("");
-      setTransformProductSearch("");
-    } catch (err: any) {
-      toast({ title: "Fel", description: err.message, variant: "destructive" });
-    }
-    setActionLoading(false);
-  };
 
   // ── Stock aggregations ───────────────────────────────────────────────────
   const storeStock = useMemo(() => {
@@ -1098,19 +1044,26 @@ export default function Inventory() {
           >
             <Scissors className="h-3 w-3" /> Splitta
           </Button>
-          {(site === "production" || site === "wholesale") && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 sm:h-6 px-2 text-[10px] gap-1"
-              onClick={() => {
-                setActiveLocationId(locId);
-                setTransformDialogOpen(true);
-              }}
-            >
-              <RefreshCw className="h-3 w-3" /> Omvandla
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 sm:h-6 px-2 text-[10px] gap-1"
+            onClick={() => {
+              setActiveLocationId(locId);
+              const item = getSelectedStockItems(locId)[0];
+              if (!item) return;
+              setTransformSource({
+                id: item.product_id,
+                name: item.products?.name || "Produkt",
+                sku: item.products?.sku ?? null,
+                unit: item.products?.unit ?? null,
+              });
+              setTransformLocationId(locId);
+              setTransformDialogOpen(true);
+            }}
+          >
+            <RefreshCw className="h-3 w-3" /> Omvandla
+          </Button>
         </>
       )}
     </div>
@@ -1475,7 +1428,7 @@ export default function Inventory() {
   }, [lastCount.data]);
 
   const handleOverviewAction = useCallback(
-    (action: "move" | "delete" | "split" | "count" | "waste", row: any) => {
+    (action: "move" | "delete" | "split" | "count" | "waste" | "transform", row: any) => {
       const locId = row?.location_id;
       if (!locId) return;
       if (action === "waste") {
@@ -1499,6 +1452,16 @@ export default function Inventory() {
       if (action === "move") setMoveDialogOpen(true);
       if (action === "delete") setDeleteDialogOpen(true);
       if (action === "split") setSplitDialogOpen(true);
+      if (action === "transform") {
+        setTransformSource({
+          id: row.product_id,
+          name: row.products?.name || "Produkt",
+          sku: row.products?.sku ?? null,
+          unit: row.products?.unit ?? null,
+        });
+        setTransformLocationId(locId);
+        setTransformDialogOpen(true);
+      }
     },
     [locations, allStock],
   );
@@ -2903,126 +2866,21 @@ export default function Inventory() {
         </DialogContent>
       </Dialog>
 
-      {/* Transform dialog */}
-      <Dialog
+      {/* Omvandling — dela upp, packa om eller bearbeta till en annan produkt */}
+      <TransformDialog
         open={transformDialogOpen}
         onOpenChange={(o) => {
           setTransformDialogOpen(o);
-          if (!o) {
-            setTransformTargetProduct("");
-            setTransformNewWeight("");
-            setTransformProductSearch("");
-          }
+          if (!o) setTransformSource(null);
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="font-heading">Omvandla produkt</DialogTitle>
-            <DialogDescription className="text-xs">Viktskillnaden loggas som svinn.</DialogDescription>
-          </DialogHeader>
-          {(() => {
-            const item = getSelectedStockItems(activeLocationId)[0];
-            if (!item) return null;
-            const filteredTP = products
-              .filter(
-                (p) =>
-                  p.id !== item.product_id &&
-                  transformProductSearch &&
-                  (p.name.toLowerCase().includes(transformProductSearch.toLowerCase()) ||
-                    p.sku.toLowerCase().includes(transformProductSearch.toLowerCase())),
-              )
-              .slice(0, 8);
-            const selectedProduct = products.find((p) => p.id === transformTargetProduct);
-            return (
-              <div className="space-y-3">
-                <div className="p-2.5 rounded-md bg-muted/30 border border-border/50">
-                  <p className="text-xs font-medium">{item.products?.name}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    Nuvarande: {Number(item.quantity).toLocaleString("sv-SE")} {item.products?.unit || "kg"}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Omvandla till produkt *</Label>
-                  {selectedProduct ? (
-                    <div className="flex items-center gap-2 p-2 rounded-md border border-primary/30 bg-primary/5">
-                      <span className="text-xs font-medium flex-1">{selectedProduct.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5"
-                        onClick={() => {
-                          setTransformTargetProduct("");
-                          setTransformProductSearch("");
-                        }}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <Input
-                        value={transformProductSearch}
-                        onChange={(e) => setTransformProductSearch(e.target.value)}
-                        placeholder="Sök produkt..."
-                        className="h-8 text-xs"
-                      />
-                      {filteredTP.length > 0 && (
-                        <div className="border border-border/50 rounded-md max-h-32 overflow-y-auto">
-                          {filteredTP.map((p) => (
-                            <button
-                              key={p.id}
-                              className="w-full text-left px-3 py-1.5 hover:bg-muted/40 text-xs flex items-center justify-between"
-                              onClick={() => {
-                                setTransformTargetProduct(p.id);
-                                setTransformProductSearch("");
-                              }}
-                            >
-                              <span className="font-medium">{p.name}</span>
-                              <span className="text-muted-foreground font-mono text-[10px]">{p.sku}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Ny vikt ({item.products?.unit || "kg"}) *</Label>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    value={transformNewWeight}
-                    onChange={(e) => setTransformNewWeight(e.target.value)}
-                    className="h-8 text-xs"
-                  />
-                  {transformNewWeight &&
-                    Number(transformNewWeight) > 0 &&
-                    Number(transformNewWeight) < Number(item.quantity) && (
-                      <p className="text-[10px] text-muted-foreground">
-                        Svinn: {(Number(item.quantity) - Number(transformNewWeight)).toFixed(2)}{" "}
-                        {item.products?.unit || "kg"} (
-                        {((1 - Number(transformNewWeight) / Number(item.quantity)) * 100).toFixed(1)}%)
-                      </p>
-                    )}
-                </div>
-              </div>
-            );
-          })()}
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setTransformDialogOpen(false)}>
-              Avbryt
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleTransform}
-              disabled={!transformTargetProduct || !transformNewWeight || actionLoading}
-            >
-              {actionLoading ? "Omvandlar..." : "Bekräfta omvandling"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        product={transformSource}
+        locationId={transformLocationId}
+        storeId={activeStoreId || null}
+        onDone={() => {
+          clearSelection(activeLocationId);
+          invalidateStock();
+        }}
+      />
     </motion.div>
   );
 }

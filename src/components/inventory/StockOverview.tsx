@@ -15,6 +15,7 @@ import {
   Move,
   Trash2,
   Scissors,
+  RefreshCw,
   ClipboardList,
   Snowflake,
   Fish,
@@ -56,7 +57,7 @@ export interface StockRow {
   storage_locations?: any;
 }
 
-export type StockLineAction = "move" | "delete" | "split" | "count" | "waste";
+export type StockLineAction = "move" | "delete" | "split" | "count" | "waste" | "transform";
 
 interface Props {
   rows: StockRow[];
@@ -706,6 +707,9 @@ export default function StockOverview({
                               <DropdownMenuItem onClick={() => onLineAction?.("split", g.lines[0])}>
                                 <Scissors className="h-3.5 w-3.5 mr-2" /> Splitta
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onLineAction?.("transform", g.lines[0])}>
+                                <RefreshCw className="h-3.5 w-3.5 mr-2" /> Omvandla
+                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() => onLineAction?.("delete", g.lines[0])}
@@ -781,6 +785,14 @@ export default function StockOverview({
                                         onClick={() => onLineAction?.("split", l)}
                                       >
                                         <Scissors className="h-3 w-3" /> Splitta
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 px-2 text-[10px] gap-1"
+                                        onClick={() => onLineAction?.("transform", l)}
+                                      >
+                                        <RefreshCw className="h-3 w-3" /> Omvandla
                                       </Button>
                                       <Button
                                         variant="outline"
