@@ -65,9 +65,9 @@ export function periodLabel(period: string): string {
   return `${fromText} – ${td} ${månad[tm - 1]} ${ty}`;
 }
 
-/** Senaste avslutade perioder, nyast först. */
+/** Perioder att välja bland: nästa period först, sedan pågående och bakåt. */
 export function recentPeriods(count = 12, today = new Date()): string[] {
   const iso = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-  const current = periodForDate(iso);
-  return Array.from({ length: count }, (_, i) => shiftPeriod(current, -i));
+  const next = shiftPeriod(periodForDate(iso), 1);
+  return Array.from({ length: count }, (_, i) => shiftPeriod(next, -i));
 }
