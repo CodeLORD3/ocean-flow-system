@@ -438,6 +438,9 @@ export function TotalOrderedView({
           qtyText(r.packed, r.unit),
           qtyText(Math.max(r.total - r.packed, 0), r.unit),
           PACK_LABEL[packState(r.total, r.packed)],
+          extraText(r.stock, r.unit),
+          extraText(r.onOrder, r.unit),
+          extraText(r.sellable, r.unit),
           moneyText(r.value),
           String(r.orders.length),
           byType(r)
