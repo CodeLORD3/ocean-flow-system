@@ -95,18 +95,26 @@ export function useTotalListExtras({
     const orderedById = new Map<string, number>();
     const orderedByName = new Map<string, number>();
     if (enabled) {
-      const open = new Set<string>(OPEN_SHOP_ORDER_STATUSES as readonly string[]);
+      // Butikens egen öppna beställning räknas också med — den är lagd men
+      // ännu inte skickad till grossisten.
+      const open = new Set<string>([
+        ...(OPEN_SHOP_ORDER_STATUSES as readonly string[]),
+        "Öppen",
+      ]);
       for (const l of shopLines) {
         if (!open.has(l.order_status)) continue;
         if (storeId && l.store_id !== storeId) continue;
         const d = l.effective_date;
-        if (!d || d < fromDate || d > toDate) continue;
+        // Rader utan leveransdatum räknas alltid med; annars måste datumet
+        // ligga inom totallistans intervall.
+        if (d && (d < fromDate || d > toDate)) continue;
         const remaining = l.quantity_ordered - l.quantity_delivered;
         if (remaining <= 0.005) continue;
         if (l.product_id)
           orderedById.set(l.product_id, (orderedById.get(l.product_id) ?? 0) + remaining);
       }
     }
+
 
     return {
       stockById,
