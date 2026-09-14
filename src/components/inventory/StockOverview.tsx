@@ -594,7 +594,7 @@ export default function StockOverview({
                       <tr
                         key={g.product_id}
                         className={cn(
-                          "border-b border-border/50 hover:bg-primary/5 transition-colors cursor-pointer",
+                          "border-x border-b border-grid-line bg-card hover:bg-primary/5 transition-colors cursor-pointer",
                           rowH,
                         )}
                         onClick={() => toggleExpand(g.product_id)}
