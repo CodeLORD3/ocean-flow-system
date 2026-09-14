@@ -710,11 +710,11 @@ export default function Products() {
     return (
       <tr
         key={p.id}
-        className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-16 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
+        className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-9 sm:h-16 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
       >
         {/* Name */}
-        <td className="px-2 py-1 align-middle font-medium text-foreground sticky left-0 z-10 bg-card border-r border-border/60 min-w-[320px] max-w-[420px]">
-          <div className="flex flex-wrap items-center gap-1.5">
+        <td className="px-2 py-0 sm:py-1 align-middle font-medium text-foreground sticky left-0 z-10 bg-card border-r border-border/60 min-w-[180px] max-w-[220px] sm:min-w-[320px] sm:max-w-[420px]">
+          <div className="flex flex-nowrap sm:flex-wrap items-center gap-1.5 overflow-hidden">
             {!isSubproduct && hasChildren && (
               <button onClick={() => toggleExpand(p.id)} className="p-0.5 rounded hover:bg-muted shrink-0">
                 {isExpanded ? (
