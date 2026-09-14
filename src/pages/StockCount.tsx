@@ -89,6 +89,26 @@ const weekdayLong = (iso: string) => {
   return wd.charAt(0).toUpperCase() + wd.slice(1);
 };
 
+/** "idag", "imorgon" eller veckodag + datum, t.ex. "imorgon tis 15/9". */
+const relDayLabel = (from: string, to: string) => {
+  if (!from || !to) return "";
+  const diff = Math.round(
+    (new Date(`${to}T12:00:00Z`).getTime() - new Date(`${from}T12:00:00Z`).getTime()) / 86_400_000,
+  );
+  const base = dayLabel(to);
+  if (diff === 0) return `idag ${base}`;
+  if (diff === 1) return `imorgon ${base}`;
+  return base;
+};
+
+/** Etikett i hållbarhetsvalet: "3 dagar · tors 18/9". */
+const qualityLabel = (countDate: string, d: string) => {
+  if (d === "7+") return "7+ dagar";
+  const to = holdsUntil(countDate, d);
+  const days = `${d} ${d === "1" ? "dag" : "dagar"}`;
+  return to ? `${days} · ${relDayLabel(countDate, to)}` : days;
+};
+
 /** Antal hela dagar mellan två datum. */
 const daysBetween = (from: string, to: string) =>
   Math.round(
