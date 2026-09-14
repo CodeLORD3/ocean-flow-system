@@ -371,6 +371,41 @@ export function TotalOrderedView({
     };
   }, [orders, picked, mode, productSearch, sort, category]);
 
+  /** Lager och utestående grossistorder hämtas bara när någon kolumn är påslagen. */
+  const extras = useTotalListExtras({
+    storeId,
+    fromDate: bounds.fromDate,
+    toDate: bounds.toDate,
+    enabled: !!anyExtra,
+  });
+
+  /** Kopplar lager/order till raderna: produkt först, annars normaliserat namn. */
+  const groups: Group[] = useMemo(() => {
+    if (!anyExtra) return baseGroups;
+    const lookup = (row: ProductRow, byId: Map<string, number>, byName: Map<string, number>) => {
+      if (row.productId && byId.has(row.productId)) return byId.get(row.productId) ?? 0;
+      const k = matchKey(row.name);
+      if (k && byName.has(k)) return byName.get(k) ?? 0;
+      return null;
+    };
+    return baseGroups.map((g) => ({
+      ...g,
+      rows: g.rows.map((r) => {
+        const stock = lookup(r, extras.stockById, extras.stockByName);
+        const onOrder = lookup(r, extras.orderedById, extras.orderedByName);
+        const remaining = Math.max(r.total - r.packed, 0);
+        return {
+          ...r,
+          stock,
+          onOrder,
+          sellable: stock == null ? null : stock - remaining,
+        };
+      }),
+    }));
+  }, [baseGroups, anyExtra, extras]);
+
+
+
 
   const exportCsv = () => {
     const rows: string[][] = [
