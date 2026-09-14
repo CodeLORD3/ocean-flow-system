@@ -1066,6 +1066,51 @@ export function TotalOrderedView({
 
                         </button>
 
+                        {/* Inmatning: order till grossisten och lagersaldo direkt på varan */}
+                        {editMode && r.productId && (
+                          <div className="flex flex-wrap items-center gap-2 px-2 pb-1.5 pt-0.5">
+                            <label className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                                Order
+                              </span>
+                              <NumberField
+                                className="w-20"
+                                value={drafts[`order:${r.productId}`] ?? ""}
+                                placeholder={r.onOrder == null ? "0" : qtyText(r.onOrder, r.unit)}
+                                disabled={saving.includes(`order:${r.productId}`)}
+                                onValueChange={(raw) =>
+                                  setDrafts((d) => ({ ...d, [`order:${r.productId}`]: raw }))
+                                }
+                                onBlur={() => commitOrder(r)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") e.currentTarget.blur();
+                                }}
+                              />
+                              <span className="text-[10px] text-muted-foreground">{r.unit}</span>
+                            </label>
+                            <label className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                                Lager
+                              </span>
+                              <NumberField
+                                className="w-20"
+                                value={drafts[`stock:${r.productId}`] ?? ""}
+                                placeholder={r.stock == null ? "0" : qtyText(r.stock, r.unit)}
+                                disabled={!entryLocation || saving.includes(`stock:${r.productId}`)}
+                                onValueChange={(raw) =>
+                                  setDrafts((d) => ({ ...d, [`stock:${r.productId}`]: raw }))
+                                }
+                                onBlur={() => commitStock(r)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") e.currentTarget.blur();
+                                }}
+                              />
+                              <span className="text-[10px] text-muted-foreground">{r.unit}</span>
+                            </label>
+                          </div>
+                        )}
+
+
                         {anyExtra && (
                           <div className="flex flex-wrap gap-1.5 px-2 pb-1 md:hidden">
                             {cols.stock && (
