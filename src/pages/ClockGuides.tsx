@@ -117,6 +117,44 @@ export default function ClockGuides() {
           </ul>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg">4. Go-lista 16 september</CardTitle>
+          <Badge variant="outline">Kontroll 14 sep 2026</Badge>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <div>
+            <p className="font-medium text-emerald-600">Grönt — testat skarpt</p>
+            <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+              <li>Aktivering: kod på åtta siffror, engångs, andra enheten avvisas, fel kod ger tydligt fel.</li>
+              <li>Station kvar efter omladdning och omstart: sessionen håller 30 dagar, längst ett år.</li>
+              <li>Butiksetikett i klockans sidfot, samt Flytta och Avaktivera i Klockstationer.</li>
+              <li>In- och utstämpling, dubbeltrycksskydd, servertid, offlinekö utan dubblett.</li>
+              <li>Spärrar: testperson, avslutad anställning och fel bolag avvisas med begripligt svar.</li>
+              <li>Rastknappen är avstängd — chefen lägger rastavdrag i attesten.</li>
+              <li>Varning "fel system" flaggas per person och dag efter växlingsdatumet.</li>
+              <li>Kvällspass ger OB 50 och OB 70, lördag efter 12:00 ger OB 100.</li>
+              <li>Åtta stationer aktiva: Ålsten, Amhult, Eriksberg, Kungsholmen, Marstrand, Särö, Torslanda, Grossist Göteborg.</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-medium text-amber-600">Gult — fungerar, men med handpåläggning</p>
+            <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+              <li>Administration DE No.1 har ingen station. Kontorets tid läggs in manuellt eller så sätts en station upp.</li>
+              <li>Nattpass över midnatt räknas rätt i minuter men delas på två dagar i rapporten — kontrollera vid granskning.</li>
+              <li>OB-fönstren är preliminära tills kollektivavtalet är bekräftat.</li>
+              <li>Okänt personnummer skapar en tillfällig rad som kontoret kopplar till rätt person.</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-medium text-destructive">Rött — blockerar lön, inte stämplingen</p>
+            <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+              <li>DE No.1 saknar koppling till Fortnox. Lönefilen för det bolaget kan inte skickas förrän den är återansluten.</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
