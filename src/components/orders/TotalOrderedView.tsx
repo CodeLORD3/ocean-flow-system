@@ -398,6 +398,7 @@ export function TotalOrderedView({
     const selected = picked.length > 0 ? new Set(picked) : null;
     const working = baseGroups.map((g) => ({ ...g, rows: [...g.rows] }));
     const byKey = new Map(working.map((g) => [g.key, g]));
+    const touched = new Set<string>();
     if (cols.onOrder || cols.combined) {
       for (const l of extras.orderedRows) {
         const name = l.name?.trim() || "Okänd vara";
@@ -427,6 +428,7 @@ export function TotalOrderedView({
             (matchKey(r.name) && matchKey(r.name) === matchKey(name)),
         );
         if (already) continue;
+        touched.add(group.key);
         group.rows.push({
           key: `order__${l.productId ?? matchKey(name)}__${l.unit}`,
           name,
@@ -461,9 +463,10 @@ export function TotalOrderedView({
               sellable: stock == null ? null : stock - remaining,
             };
           })
-          .sort(
-            (a, b) =>
-              compareCategory(a.category, b.category) || a.name.localeCompare(b.name, "sv"),
+          .sort((a, b) =>
+            touched.has(g.key)
+              ? compareCategory(a.category, b.category) || a.name.localeCompare(b.name, "sv")
+              : 0,
           ),
       }));
   }, [
