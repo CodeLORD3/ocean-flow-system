@@ -1320,6 +1320,9 @@ export default function Products() {
             <DialogDescription className="text-xs">Fyll i produktuppgifterna nedan.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
+            {editId && (
+              <ProductStockFlow productId={editId} productName={form.name} unit={form.unit} />
+            )}
             <div className="space-y-1.5">
               <Label className="text-xs">Produktnamn *</Label>
               <Input value={form.name} onChange={(e) => setField("name", e.target.value)} className="h-8 text-xs" />
