@@ -185,6 +185,20 @@ export function TotalOrderedView({
   const [closedGroups, setClosedGroups] = useState<string[]>([]);
   const [showAll, setShowAll] = useState<string[]>([]);
   const [printOpen, setPrintOpen] = useState(false);
+  /** Valfria kolumner. Alla av från början så vyn ser ut som tidigare. */
+  const [cols, setCols] = useState<ExtraCols>(() => loadCols());
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLS_KEY, JSON.stringify(cols));
+    } catch {
+      /* tom: lagring kan vara blockerad */
+    }
+  }, [cols]);
+
+  const anyExtra = cols.stock || cols.onOrder || cols.sellable;
+
+
 
 
   const bounds = useMemo(() => {
