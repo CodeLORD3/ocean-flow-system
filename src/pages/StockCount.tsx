@@ -1107,17 +1107,12 @@ export default function StockCount() {
                               }
                               className={`h-7 min-w-0 flex-1 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
                             >
-                              <option value="">Hållbarhet</option>
-                              {QUALITY_DAYS.map((d) => {
-                                const to = holdsUntil(date, d);
-                                return (
-                                  <option key={d} value={d}>
-                                    {d === "7+"
-                                      ? "7+ dagar"
-                                      : `${d} ${d === "1" ? "dag" : "dagar"}${to ? ` · ${dayLabel(to)}` : ""}`}
-                                  </option>
-                                );
-                              })}
+                              <option value="">Välj hållbarhet</option>
+                              {QUALITY_DAYS.map((d) => (
+                                <option key={d} value={d}>
+                                  {qualityLabel(date, d)}
+                                </option>
+                              ))}
                             </select>
                             <Input
                               disabled={locked || !session}
