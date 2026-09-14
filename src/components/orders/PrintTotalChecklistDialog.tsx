@@ -110,7 +110,14 @@ function BigOption({
  * Enkel utskrift i tre tydliga steg: vilka dagar, vilka varor, skriv ut.
  * Allt är förvalt så att man kan trycka direkt på "Skriv ut".
  */
-export function PrintTotalChecklistDialog({ open, onOpenChange, groups, mode, storeName }: Props) {
+export function PrintTotalChecklistDialog({
+  open,
+  onOpenChange,
+  groups,
+  mode,
+  storeName,
+  extraColumns,
+}: Props) {
   const periodWord = mode === "week" ? "veckor" : "dagar";
 
   const [days, setDays] = useState<string[]>([]);
