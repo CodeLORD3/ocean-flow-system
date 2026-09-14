@@ -304,6 +304,26 @@ export default function StockCount() {
     return m;
   }, [products]);
 
+  const locationIds = useMemo(
+    () => (locations as any[]).map((l: any) => l.id as string),
+    [locations],
+  );
+
+  /** Varor som tidigare funnits på butikens lagerplatser — de ska också gå att räkna. */
+  const pastProductsQuery = useQuery({
+    queryKey: ["stock_count_past_products", effectiveStoreId, locationIds.join(",")],
+    enabled: !!effectiveStoreId && locationIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stock_movements")
+        .select("product_id")
+        .in("location_id", locationIds)
+        .limit(20000);
+      if (error) throw error;
+      return [...new Set((data ?? []).map((m: any) => m.product_id).filter(Boolean))] as string[];
+    },
+  });
+
   const allRows = useMemo<Row[]>(() => {
     if (!effectiveStoreId) return [];
     const locIds = new Map<string, string>();
