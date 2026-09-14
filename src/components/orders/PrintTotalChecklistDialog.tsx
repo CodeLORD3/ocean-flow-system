@@ -23,7 +23,10 @@ interface Props {
   groups: PrintableGroup[];
   mode: "day" | "week";
   storeName?: string;
+  /** Valfria kolumner (lager, order, kan säljas) som är påslagna i vyn. */
+  extraColumns?: { stock?: boolean; onOrder?: boolean; sellable?: boolean };
 }
+
 
 const qtyText = (v: number, unit: string) =>
   Number(v || 0).toLocaleString("sv-SE", {
@@ -43,10 +46,16 @@ function mergeGroups(groups: TotalChecklistGroup[]): TotalChecklistGroup {
       if (cur) {
         cur.total += r.total;
         cur.packed = Number(cur.packed || 0) + Number(r.packed || 0);
+        // Lager summeras inte per period — samma saldo gäller hela listan.
+        cur.stock = cur.stock ?? r.stock;
+        cur.onOrder =
+          cur.onOrder == null && r.onOrder == null ? null : Number(cur.onOrder || 0) + Number(r.onOrder || 0);
+        cur.sellable = cur.sellable ?? r.sellable;
         cur.orderCount += r.orderCount;
       } else {
         rows.set(k, { ...r });
       }
+
     }
   }
   return {
@@ -101,7 +110,14 @@ function BigOption({
  * Enkel utskrift i tre tydliga steg: vilka dagar, vilka varor, skriv ut.
  * Allt är förvalt så att man kan trycka direkt på "Skriv ut".
  */
-export function PrintTotalChecklistDialog({ open, onOpenChange, groups, mode, storeName }: Props) {
+export function PrintTotalChecklistDialog({
+  open,
+  onOpenChange,
+  groups,
+  mode,
+  storeName,
+  extraColumns,
+}: Props) {
   const periodWord = mode === "week" ? "veckor" : "dagar";
 
   const [days, setDays] = useState<string[]>([]);
@@ -170,6 +186,7 @@ export function PrintTotalChecklistDialog({ open, onOpenChange, groups, mode, st
       periodLabel: combine
         ? `Samlad lista: ${finalGroups.map((g) => g.label).join(", ")}`
         : finalGroups.map((g) => g.label).join("  ·  "),
+      extraColumns,
       storeName,
       groups: combine ? [mergeGroups(finalGroups)] : finalGroups,
       selectionNote:

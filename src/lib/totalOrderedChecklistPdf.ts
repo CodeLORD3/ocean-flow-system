@@ -7,6 +7,12 @@ export interface TotalChecklistRow {
   total: number;
   /** Redan packad mängd, för kolumnen Kvar. */
   packed?: number;
+  /** Butikens lagersaldo, om kolumnen är påslagen. */
+  stock?: number | null;
+  /** Utestående grossistorder, om kolumnen är påslagen. */
+  onOrder?: number | null;
+  /** Lager minus kvar att packa. */
+  sellable?: number | null;
   orderCount: number;
   types: string;
 }
@@ -17,14 +23,18 @@ export interface TotalChecklistGroup {
   rows: TotalChecklistRow[];
 }
 
+
 export interface TotalChecklistPayload {
   title?: string;
   periodLabel: string;
   storeName?: string;
   /** Extra rad i sidhuvudet, t.ex. när bara vissa varor är valda. */
   selectionNote?: string;
+  /** Vilka valfria kolumner som ska skrivas ut. */
+  extraColumns?: { stock?: boolean; onOrder?: boolean; sellable?: boolean };
   groups: TotalChecklistGroup[];
 }
+
 
 
 const qty = (v: number, unit: string) =>
@@ -90,16 +100,50 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
     doc.setTextColor(0, 0, 0);
     y += 3;
 
+    const ex = payload.extraColumns ?? {};
+    const extraHead: string[] = [];
+    const extraKeys: ("stock" | "onOrder" | "sellable")[] = [];
+    if (ex.stock) {
+      extraHead.push("Lager");
+      extraKeys.push("stock");
+    }
+    if (ex.onOrder) {
+      extraHead.push("Order");
+      extraKeys.push("onOrder");
+    }
+    if (ex.sellable) {
+      extraHead.push("Kan säljas");
+      extraKeys.push("sellable");
+    }
+    const extraCell = (r: TotalChecklistRow, k: "stock" | "onOrder" | "sellable") => {
+      const v = r[k];
+      return v == null ? "–" : `${qty(v, r.unit)} ${r.unit}`;
+    };
+
+    const columnStyles: Record<number, any> = {
+      0: { cellWidth: 18, halign: "center" },
+      1: { cellWidth: 18, halign: "center" },
+      2: { cellWidth: "auto", fontStyle: "bold" },
+      3: { cellWidth: 24, halign: "right", fontStyle: "bold" },
+      4: { cellWidth: 22, halign: "right", textColor: [110, 110, 110] },
+    };
+    extraKeys.forEach((_, i) => {
+      columnStyles[5 + i] = { cellWidth: 20, halign: "right", textColor: [110, 110, 110] };
+    });
+    columnStyles[5 + extraKeys.length] = { cellWidth: 15, halign: "right" };
+    columnStyles[6 + extraKeys.length] = { cellWidth: 26, fontSize: 7, textColor: [110, 110, 110] };
+
     autoTable(doc, {
       startY: y,
       margin: { left: margin, right: margin },
-      head: [["Sorterat", "Packat", "Produkt", "Mängd", "Kvar", "Ordrar", "Leveranssätt"]],
+      head: [["Sorterat", "Packat", "Produkt", "Mängd", "Kvar", ...extraHead, "Ordrar", "Leveranssätt"]],
       body: g.rows.map((r) => [
         "",
         "",
         r.name,
         `${qty(r.total, r.unit)} ${r.unit}`,
         `${qty(Math.max(r.total - Number(r.packed || 0), 0), r.unit)} ${r.unit}`,
+        ...extraKeys.map((k) => extraCell(r, k)),
         String(r.orderCount),
         r.types,
       ]),
@@ -110,15 +154,8 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
         fontSize: 9,
         halign: "left",
       },
-      columnStyles: {
-        0: { cellWidth: 18, halign: "center" },
-        1: { cellWidth: 18, halign: "center" },
-        2: { cellWidth: "auto", fontStyle: "bold" },
-        3: { cellWidth: 24, halign: "right", fontStyle: "bold" },
-        4: { cellWidth: 22, halign: "right", textColor: [110, 110, 110] },
-        5: { cellWidth: 15, halign: "right" },
-        6: { cellWidth: 26, fontSize: 7, textColor: [110, 110, 110] },
-      },
+      columnStyles,
+
 
       // Rita kryssrutor i de två första kolumnerna
       didDrawCell: (data) => {

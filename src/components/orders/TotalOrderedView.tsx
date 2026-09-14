@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   ChevronDown,
@@ -8,11 +8,13 @@ import {
   Package,
   Printer,
   Search,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -27,9 +29,12 @@ import { EmptyState } from "@/components/EmptyState";
 import { ProductThumb } from "@/components/products/ProductThumb";
 
 import { useCustomerOrders } from "@/hooks/useCustomerOrders";
+import { useTotalListExtras } from "@/hooks/useTotalListStock";
 import { CustomerOrder, ORDER_TYPE_LABELS, isoWeekOf } from "@/lib/customerOrders";
+import { matchKey } from "@/lib/purchaseReconciliation";
 import { PRODUCT_CATEGORIES, normalizeCategoryKey } from "@/lib/productCategories";
 import { PrintTotalChecklistDialog, type PrintableGroup } from "@/components/orders/PrintTotalChecklistDialog";
+
 
 /* ------------------------------------------------------------------ hjälpare */
 
@@ -112,7 +117,40 @@ type ProductRow = {
   productId: string | null;
   imageUrl: string | null;
   orders: OrderLink[];
+  /** Butikens lagersaldo. null = ingen koppling hittad. */
+  stock?: number | null;
+  /** Utestående grossistorder i perioden. null = ingen koppling hittad. */
+  onOrder?: number | null;
+  /** Lager minus kvar att packa — fritt att sälja i butiken. */
+  sellable?: number | null;
 };
+
+
+/** Valfria kolumner: lager, beställt hos grossisten och vad som kan säljas. */
+type ExtraCols = { stock: boolean; onOrder: boolean; sellable: boolean };
+
+const COLS_KEY = "totalList.columns";
+
+const loadCols = (): ExtraCols => {
+  try {
+    const raw = localStorage.getItem(COLS_KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      return {
+        stock: !!p.stock,
+        onOrder: !!p.onOrder,
+        sellable: !!p.sellable,
+      };
+    }
+  } catch {
+    /* tom: lagring kan vara blockerad */
+  }
+  return { stock: false, onOrder: false, sellable: false };
+};
+
+/** Mängd eller "–" när ingen koppling till lager/grossistorder finns. */
+const extraText = (v: number | null | undefined, unit: string) =>
+  v == null ? "–" : `${qtyText(v, unit)} ${unit}`;
 
 
 type Group = { key: string; label: string; orderCount: number; rows: ProductRow[] };
@@ -173,6 +211,20 @@ export function TotalOrderedView({
   const [closedGroups, setClosedGroups] = useState<string[]>([]);
   const [showAll, setShowAll] = useState<string[]>([]);
   const [printOpen, setPrintOpen] = useState(false);
+  /** Valfria kolumner. Alla av från början så vyn ser ut som tidigare. */
+  const [cols, setCols] = useState<ExtraCols>(() => loadCols());
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLS_KEY, JSON.stringify(cols));
+    } catch {
+      /* tom: lagring kan vara blockerad */
+    }
+  }, [cols]);
+
+  const anyExtra = cols.stock || cols.onOrder || cols.sellable;
+
+
 
 
   const bounds = useMemo(() => {
@@ -204,7 +256,7 @@ export function TotalOrderedView({
     setTo(iso(addDays(start, 6)));
   };
 
-  const { groups, orderCount, productCount, categoryOptions } = useMemo(() => {
+  const { groups: baseGroups, orderCount, productCount, categoryOptions } = useMemo(() => {
     const term = productSearch.trim().toLowerCase();
     const selected = picked.length > 0 ? new Set(picked) : null;
     const map = new Map<
@@ -319,6 +371,41 @@ export function TotalOrderedView({
     };
   }, [orders, picked, mode, productSearch, sort, category]);
 
+  /** Lager och utestående grossistorder hämtas bara när någon kolumn är påslagen. */
+  const extras = useTotalListExtras({
+    storeId,
+    fromDate: bounds.fromDate,
+    toDate: bounds.toDate,
+    enabled: !!anyExtra,
+  });
+
+  /** Kopplar lager/order till raderna: produkt först, annars normaliserat namn. */
+  const groups: Group[] = useMemo(() => {
+    if (!anyExtra) return baseGroups;
+    const lookup = (row: ProductRow, byId: Map<string, number>, byName: Map<string, number>) => {
+      if (row.productId && byId.has(row.productId)) return byId.get(row.productId) ?? 0;
+      const k = matchKey(row.name);
+      if (k && byName.has(k)) return byName.get(k) ?? 0;
+      return null;
+    };
+    return baseGroups.map((g) => ({
+      ...g,
+      rows: g.rows.map((r) => {
+        const stock = lookup(r, extras.stockById, extras.stockByName);
+        const onOrder = lookup(r, extras.orderedById, extras.orderedByName);
+        const remaining = Math.max(r.total - r.packed, 0);
+        return {
+          ...r,
+          stock,
+          onOrder,
+          sellable: stock == null ? null : stock - remaining,
+        };
+      }),
+    }));
+  }, [baseGroups, anyExtra, extras]);
+
+
+
 
   const exportCsv = () => {
     const rows: string[][] = [
@@ -331,6 +418,9 @@ export function TotalOrderedView({
         "Packat",
         "Diff",
         "Packstatus",
+        "Lager",
+        "Order",
+        "Kan säljas",
         "Värde",
         "Antal ordrar",
         "Leveranssätt",
@@ -348,6 +438,9 @@ export function TotalOrderedView({
           qtyText(r.packed, r.unit),
           qtyText(Math.max(r.total - r.packed, 0), r.unit),
           PACK_LABEL[packState(r.total, r.packed)],
+          extraText(r.stock, r.unit),
+          extraText(r.onOrder, r.unit),
+          extraText(r.sellable, r.unit),
           moneyText(r.value),
           String(r.orders.length),
           byType(r)
@@ -385,6 +478,9 @@ export function TotalOrderedView({
           unit: r.unit,
           total: r.total,
           packed: r.packed,
+          stock: r.stock ?? null,
+          onOrder: r.onOrder ?? null,
+          sellable: r.sellable ?? null,
           orderCount: r.orders.length,
           types: byType(r)
             .map(([t, v]) => `${t} ${qtyText(v.qty, r.unit)} (${v.orders})`)
@@ -404,7 +500,9 @@ export function TotalOrderedView({
         onOpenChange={setPrintOpen}
         groups={printableGroups}
         mode={mode}
+        extraColumns={cols}
       />
+
       {/* Framhävd rubrik: totallistan är första steget i packflödet */}
       <Card className="overflow-hidden border-primary/30 bg-primary/5 shadow-sm">
         <CardContent className="flex items-start gap-3 py-4">
@@ -626,7 +724,54 @@ export function TotalOrderedView({
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="col-span-2 h-11 gap-1.5 rounded-xl text-xs sm:col-span-1 sm:h-10"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  <span className="truncate">Kolumner</span>
+                  {anyExtra && (
+                    <Badge variant="secondary" className="rounded-full px-1.5 text-[10px]">
+                      {[cols.stock, cols.onOrder, cols.sellable].filter(Boolean).length}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-72 space-y-3 p-3">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  Visa extra kolumner
+                </div>
+                {(
+                  [
+                    ["stock", "Lager", "Vad butiken har i lager just nu"],
+                    ["onOrder", "Order", "Beställt hos grossisten, inte levererat"],
+                    ["sellable", "Kan säljas", "Lager minus kvar att packa"],
+                  ] as const
+                ).map(([k, label, hint]) => (
+                  <label
+                    key={k}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl px-1 py-1.5"
+                  >
+                    <Switch
+                      checked={cols[k]}
+                      onCheckedChange={(v) => setCols((prev) => ({ ...prev, [k]: v }))}
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium">{label}</span>
+                      <span className="block text-[11px] text-muted-foreground">{hint}</span>
+                    </span>
+                  </label>
+                ))}
+                {extras.isLoading && (
+                  <p className="text-[11px] text-muted-foreground">Hämtar lager och order…</p>
+                )}
+              </PopoverContent>
+            </Popover>
             <Button
+
               variant="outline"
               size="sm"
               className="h-11 gap-1.5 rounded-xl text-xs sm:h-10"
@@ -694,7 +839,11 @@ export function TotalOrderedView({
                       Mängd {sort === "qty" ? "↓" : "↕"}
                     </button>
                     <span className="w-20 text-right">Diff</span>
+                    {cols.stock && <span className="w-20 text-right">Lager</span>}
+                    {cols.onOrder && <span className="w-20 text-right">Order</span>}
+                    {cols.sellable && <span className="w-24 text-right">Kan säljas</span>}
                     <span className="w-16 text-right">Ordrar</span>
+
                   </div>
 
 
@@ -791,11 +940,62 @@ export function TotalOrderedView({
                           >
                             {state === "packad" ? "0" : qtyText(remaining, r.unit)} {r.unit}
                           </span>
+                          {/* Lager / Order / Kan säljas — bara när kolumnen är påslagen */}
+                          {cols.stock && (
+                            <span className="hidden w-20 shrink-0 whitespace-nowrap text-right font-mono text-[11px] tabular-nums text-muted-foreground md:inline">
+                              {extraText(r.stock, r.unit)}
+                            </span>
+                          )}
+                          {cols.onOrder && (
+                            <span className="hidden w-20 shrink-0 whitespace-nowrap text-right font-mono text-[11px] tabular-nums text-muted-foreground md:inline">
+                              {extraText(r.onOrder, r.unit)}
+                            </span>
+                          )}
+                          {cols.sellable && (
+                            <span
+                              className={`hidden w-24 shrink-0 whitespace-nowrap text-right font-mono text-[11px] font-semibold tabular-nums md:inline ${
+                                r.sellable == null
+                                  ? "text-muted-foreground"
+                                  : r.sellable < 0
+                                    ? "text-destructive"
+                                    : "text-success"
+                              }`}
+                            >
+                              {extraText(r.sellable, r.unit)}
+                            </span>
+                          )}
                           <span className="shrink-0 whitespace-nowrap text-right font-mono text-[10px] tabular-nums text-muted-foreground md:w-16 md:text-[11px]">
                             {r.orders.length} st
                           </span>
 
                         </button>
+
+                        {anyExtra && (
+                          <div className="flex flex-wrap gap-1.5 px-2 pb-1 md:hidden">
+                            {cols.stock && (
+                              <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[9px] tabular-nums text-muted-foreground">
+                                Lager {extraText(r.stock, r.unit)}
+                              </span>
+                            )}
+                            {cols.onOrder && (
+                              <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[9px] tabular-nums text-muted-foreground">
+                                Order {extraText(r.onOrder, r.unit)}
+                              </span>
+                            )}
+                            {cols.sellable && (
+                              <span
+                                className={`rounded-full px-1.5 py-0.5 font-mono text-[9px] font-semibold tabular-nums ${
+                                  r.sellable != null && r.sellable < 0
+                                    ? "bg-destructive/10 text-destructive"
+                                    : "bg-success/10 text-success"
+                                }`}
+                              >
+                                Kan säljas {extraText(r.sellable, r.unit)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
 
                         {isOpen && (
                           <div className="grid gap-2 px-2 pb-2 md:pl-8 lg:grid-cols-[1fr,260px]">
@@ -904,7 +1104,47 @@ export function TotalOrderedView({
                                 </span>
                                 <span className="w-14" />
                               </div>
+                              {anyExtra && (
+                                <div className="mt-1.5 space-y-0.5 border-t border-border/50 pt-1.5">
+                                  {cols.stock && (
+                                    <div className="flex items-baseline gap-2 text-[11px] md:text-xs">
+                                      <span className="min-w-0 flex-1 text-muted-foreground">Lager</span>
+                                      <span className="w-20 text-right font-mono tabular-nums">
+                                        {extraText(r.stock, r.unit)}
+                                      </span>
+                                      <span className="w-14" />
+                                    </div>
+                                  )}
+                                  {cols.onOrder && (
+                                    <div className="flex items-baseline gap-2 text-[11px] md:text-xs">
+                                      <span className="min-w-0 flex-1 text-muted-foreground">
+                                        Order hos grossist
+                                      </span>
+                                      <span className="w-20 text-right font-mono tabular-nums">
+                                        {extraText(r.onOrder, r.unit)}
+                                      </span>
+                                      <span className="w-14" />
+                                    </div>
+                                  )}
+                                  {cols.sellable && (
+                                    <div className="flex items-baseline gap-2 text-[11px] font-semibold md:text-xs">
+                                      <span className="min-w-0 flex-1">Kan säljas i butiken</span>
+                                      <span
+                                        className={`w-20 text-right font-mono tabular-nums ${
+                                          r.sellable != null && r.sellable < 0
+                                            ? "text-destructive"
+                                            : "text-success"
+                                        }`}
+                                      >
+                                        {extraText(r.sellable, r.unit)}
+                                      </span>
+                                      <span className="w-14" />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
+
                           </div>
                         )}
                       </div>
