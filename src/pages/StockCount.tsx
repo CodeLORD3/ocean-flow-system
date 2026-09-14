@@ -969,8 +969,8 @@ export default function StockCount() {
                 <div>
                   <div className="flex items-center border-x border-b border-grid-line bg-muted px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     <span className="min-w-0 flex-1 border-r border-grid-line/70 pr-2">Produkt</span>
-                    <span className="hidden w-16 shrink-0 border-r border-grid-line/70 px-2 text-center sm:block">
-                      Hållb.
+                    <span className="hidden w-24 shrink-0 border-r border-grid-line/70 px-2 text-center sm:block">
+                      Hållbarhet
                     </span>
                     <span className="w-14 shrink-0 border-r border-grid-line/70 px-2 text-right">Diff</span>
                     <span className="w-20 shrink-0 px-2 text-right">Antal</span>
