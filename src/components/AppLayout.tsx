@@ -156,9 +156,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const currentPortalLabel =
     site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Grossist" : "Admin";
 
-  /* Portalväljarens innehåll – återanvänds i statusraden (desktop) och headern (mobil) */
-  const portalMenuContent = (
-    <DropdownMenuContent align="end" className="w-52">
+  /* Portalvalen – återanvänds i statusraden (desktop) och i profillistan (mobil) */
+  const portalItems = (
+    <>
       <DropdownMenuLabel className="text-[10px]">Välj portal</DropdownMenuLabel>
       <DropdownMenuSeparator />
       {access.includes("wholesale") && (
