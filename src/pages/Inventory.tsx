@@ -2084,71 +2084,52 @@ export default function Inventory() {
                           {isOpen && (
                             <div className="p-1 space-y-1">
                               {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
-                              {allCats.filter((cat) => (catMap.get(cat)?.length ?? 0) > 0).map((cat) => {
-                                const items = catMap.get(cat) || [];
-                                const catKey = `${loc.id}::${cat}`;
-                                const catOpen = openSubLocations[catKey] !== false;
-                                const catQty = items.reduce((s: number, i: any) => s + Number(i.quantity), 0);
-                                const catValue = items.reduce(
-                                  (s: number, i: any) =>
-                                    s +
-                                    Number(i.quantity) *
-                                      (Number(i.unit_cost) || 0),
-                                  0,
-                                );
+                              {(() => {
+                                const filledCats = allCats.filter((c) => (catMap.get(c)?.length ?? 0) > 0);
+                                const selected = locationCatFilter[loc.id] || "__all";
+                                const items =
+                                  selected === "__all"
+                                    ? loc.items
+                                    : catMap.get(selected) || [];
                                 return (
-                                  <div key={catKey} className="rounded-md overflow-hidden border border-border/50 bg-card">
-                                    <div className="flex items-center gap-2 bg-accent/10 border-l-2 border-accent pl-2">
-                                      <Checkbox
-                                        checked={!!printSel[catKey]}
-                                        onCheckedChange={() => togglePrintSel(catKey)}
-                                        aria-label={`Välj ${cat} för utskrift`}
-                                        className="h-3.5 w-3.5"
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          setOpenSubLocations((prev) => ({
-                                            ...prev,
-                                            [catKey]: prev[catKey] === false ? true : false,
-                                          }))
+                                  <div className="rounded-md overflow-hidden border border-border/50 bg-card">
+                                    <div className="flex items-center gap-1.5 bg-accent/10 border-l-2 border-accent px-2 py-1">
+                                      <Select
+                                        value={selected}
+                                        onValueChange={(v) =>
+                                          setLocationCatFilter((prev) => ({ ...prev, [loc.id]: v }))
                                         }
-                                        className="flex-1 flex items-center justify-between gap-2 px-2 py-1 hover:bg-accent/15 transition-colors"
                                       >
-                                        <span className="flex items-center gap-1.5 min-w-0">
-                                          {catOpen ? (
-                                            <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
-                                          ) : (
-                                            <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                                          )}
-                                          <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground truncate">
-                                            {cat}
-                                          </span>
-                                          <Badge variant="secondary" className="text-[9px] h-4">{items.length}</Badge>
-                                        </span>
-                                        <span className="flex items-center gap-2 shrink-0 font-mono tabular-nums">
-                                          <span className="text-[10px] text-muted-foreground">
-                                            {catQty.toLocaleString("sv-SE")} kg
-                                          </span>
-                                          <span className="text-[10px] font-semibold text-foreground">{fmt(catValue)}</span>
-                                        </span>
-                                      </button>
-                                      <div className="pr-2">
-                                        {renderReportBtn({
-                                          locationId: loc.id,
-                                          locationName: loc.name,
-                                          storeId: loc.store_id,
-                                          category: cat,
-                                          items,
-                                        })}
-                                      </div>
+                                        <SelectTrigger className="h-7 w-auto min-w-[150px] text-[11px]">
+                                          <SelectValue placeholder="Alla kategorier" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="__all">Alla kategorier ({loc.items.length})</SelectItem>
+                                          {filledCats.map((c) => (
+                                            <SelectItem key={c} value={c}>
+                                              {c} ({catMap.get(c)?.length ?? 0})
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <span className="ml-auto text-[10px] text-muted-foreground font-mono tabular-nums">
+                                        {items
+                                          .reduce((s: number, i: any) => s + Number(i.quantity), 0)
+                                          .toLocaleString("sv-SE")}{" "}
+                                        kg
+                                      </span>
+                                      {renderReportBtn({
+                                        locationId: loc.id,
+                                        locationName: loc.name,
+                                        storeId: loc.store_id,
+                                        category: selected === "__all" ? undefined : selected,
+                                        items,
+                                      })}
                                     </div>
-                                    {catOpen && (
-                                      <div className="p-1">{renderLocationTable({ ...loc, items })}</div>
-                                    )}
+                                    <div className="p-1">{renderLocationTable({ ...loc, items })}</div>
                                   </div>
                                 );
-                              })}
+                              })()}
                               {(() => {
                                 const empties = allCats.filter((cat) => (catMap.get(cat)?.length ?? 0) === 0);
                                 if (empties.length === 0) return null;
