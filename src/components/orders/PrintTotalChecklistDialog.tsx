@@ -46,10 +46,16 @@ function mergeGroups(groups: TotalChecklistGroup[]): TotalChecklistGroup {
       if (cur) {
         cur.total += r.total;
         cur.packed = Number(cur.packed || 0) + Number(r.packed || 0);
+        // Lager summeras inte per period — samma saldo gäller hela listan.
+        cur.stock = cur.stock ?? r.stock;
+        cur.onOrder =
+          cur.onOrder == null && r.onOrder == null ? null : Number(cur.onOrder || 0) + Number(r.onOrder || 0);
+        cur.sellable = cur.sellable ?? r.sellable;
         cur.orderCount += r.orderCount;
       } else {
         rows.set(k, { ...r });
       }
+
     }
   }
   return {
