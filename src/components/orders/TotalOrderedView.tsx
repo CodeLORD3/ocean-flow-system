@@ -757,6 +757,7 @@ export function TotalOrderedView({
                   [
                     ["stock", "Lager", "Vad butiken har i lager just nu"],
                     ["onOrder", "Order", "Beställt hos grossisten, inte levererat"],
+                    ["combined", "Lager+Order", "Lager och order räknat ihop"],
                     ["sellable", "Kan säljas", "Lager minus kvar att packa"],
                   ] as const
                 ).map(([k, label, hint]) => (
