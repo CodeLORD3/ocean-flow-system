@@ -998,6 +998,11 @@ export function TotalOrderedView({
                                 Order {extraText(r.onOrder, r.unit)}
                               </span>
                             )}
+                            {cols.combined && (
+                              <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[9px] font-semibold tabular-nums text-foreground">
+                                Lager+Order {extraText(r.combined, r.unit)}
+                              </span>
+                            )}
                             {cols.sellable && (
                               <span
                                 className={`rounded-full px-1.5 py-0.5 font-mono text-[9px] font-semibold tabular-nums ${
