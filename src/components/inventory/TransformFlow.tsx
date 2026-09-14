@@ -497,6 +497,35 @@ export default function TransformFlow({
                   <span className="font-mono text-base font-semibold tabular-nums">{kg(amount)}</span>
                 </Card>
 
+                {!outputs.length && familySiblings.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Samma produktgrupp</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {familySiblings.map((p) => {
+                        const content = contentPerUnitKg(p);
+                        const isPiece = isPieceUnit(p.unit);
+                        return (
+                          <Button
+                            key={p.id}
+                            variant="outline"
+                            className="h-16 flex-col items-start justify-center gap-0.5 px-3 text-left"
+                            onClick={() => addOutput(p.id, p.name, isPiece ? content ?? 0 : 0)}
+                          >
+                            <span className="w-full truncate text-sm font-semibold">{p.name}</span>
+                            <span className="w-full truncate text-[11px] font-normal opacity-70">
+                              {isPiece
+                                ? content
+                                  ? `${gram(content * 1000)} per styck`
+                                  : "nettovikt saknas"
+                                : "löpande vikt"}
+                            </span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {!outputs.length && (
                   <div className="space-y-2">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Snabbval</p>
