@@ -23,10 +23,20 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useTimeEntries, usePkLoggedTimes } from "@/hooks/useClock";
-import { useEmployees } from "@/hooks/useEmployees";
+import { useEmployees, useAllEmployments } from "@/hooks/useEmployees";
 import { useStores } from "@/hooks/useStores";
 import { laggTillSvenskaDagar, svenskDatum } from "@/lib/swedishTime";
 import { summarizeDays, hhmm, durationLabel } from "@/lib/timeEntries";
+import {
+  buildStoreDays,
+  buildStoreStatus,
+  STREAK_TARGET_DAYS,
+  TONE_LABEL,
+  type DayTone,
+} from "@/lib/parallelRun";
+
+const statusTone = (t: DayTone): "ok" | "progress" | "alert" | "neutral" =>
+  t === "green" ? "ok" : t === "yellow" ? "progress" : t === "red" ? "alert" : "neutral";
 
 const today = () => svenskDatum();
 const daysAgo = (n: number) => laggTillSvenskaDagar(today(), -n);
@@ -110,8 +120,26 @@ export default function ClockVsPk() {
           ? Math.round((r.clockSeconds - r.pkSeconds) / 60)
           : null,
     }));
-    return list.sort((a, b) => b.day.localeCompare(a.day) || a.employee_id.localeCompare(b.employee_id));
-  }, [entries, pkRows]);
+    // Testpersoner ligger utanför parallellkörningen; deras stämplingar är körbevis.
+    return list
+      .filter((r) => employeeName.has(r.employee_id))
+      .sort((a, b) => b.day.localeCompare(a.day) || a.employee_id.localeCompare(b.employee_id));
+  }, [entries, pkRows, employeeName]);
+
+  const { data: employments = [] } = useAllEmployments();
+  const storeName = useMemo(() => new Map(stores.map((s) => [s.id, s.name])), [stores]);
+  const storeByEmployee = useMemo(() => {
+    const map = new Map<string, string | null>();
+    for (const em of employments) {
+      if (em.is_active === false) continue;
+      if (!map.get(em.employee_id)) map.set(em.employee_id, em.store_id);
+    }
+    return map;
+  }, [employments]);
+  const storeStatus = useMemo(
+    () => buildStoreStatus(buildStoreDays(rows, storeByEmployee)).sort((a, b) => b.streak - a.streak),
+    [rows, storeByEmployee],
+  );
 
   const TOLERANCE = 5;
   const compared = rows.filter((r) => r.diffMinutes != null);
@@ -168,6 +196,33 @@ export default function ClockVsPk() {
           </Select>
         </div>
       </div>
+
+      <section className="mt-6">
+        <SectionLabel className="mb-2">Läge per butik och dag</SectionLabel>
+        {storeStatus.length === 0 ? (
+          <p className="ind-muted text-sm">Ingen butik har jämförbar tid i perioden.</p>
+        ) : (
+          storeStatus.map((s) => (
+            <IndustryRow
+              key={s.store_id}
+              edge={s.latest?.tone === "red" ? "strong" : "none"}
+              className="flex-wrap gap-3"
+            >
+              <span className="min-w-[200px]">{storeName.get(s.store_id) ?? "Okänd enhet"}</span>
+              <StatusLabel tone={statusTone(s.latest?.tone ?? "none")}>
+                {TONE_LABEL[s.latest?.tone ?? "none"]}
+                {s.latest ? ` · ${s.latest.worstDiff} min` : ""}
+              </StatusLabel>
+              <span className="ind-mono text-sm">
+                {s.streak} / {STREAK_TARGET_DAYS} sammanhängande stämmande dagar
+              </span>
+              <span className="ml-auto ind-mono text-sm ind-muted">
+                {s.greenDays} gröna · {s.yellowDays} gula · {s.redDays} röda
+              </span>
+            </IndustryRow>
+          ))
+        )}
+      </section>
 
       <section className="mt-6">
         <SectionLabel className="mb-2">Jämförelse — störst differens överst</SectionLabel>

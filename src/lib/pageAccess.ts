@@ -43,7 +43,8 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   "/staff-schedule": all(BUTIK, GROSSIST, ADMIN),
   "/my-shifts": all(BUTIK, GROSSIST, ADMIN),
   "/schedule-planner": ADMIN,
-  "/attestations": ADMIN,
+  // Butikschefen attesterar sin egen butik i butiksportalen.
+  "/attestations": all(BUTIK, ADMIN),
   "/payroll-review": ADMIN,
   "/reports": all(BUTIK, GROSSIST, ADMIN),
   "/dagsrapport": all(BUTIK, GROSSIST, ADMIN),
