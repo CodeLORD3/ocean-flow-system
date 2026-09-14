@@ -22,6 +22,14 @@ const nf = (n: number, d = 1) =>
     .replace(/\u00a0/g, " ");
 
 const dayKey = (iso: string) => new Date(iso).toISOString().slice(0, 10);
+const stampFull = (iso: string) =>
+  new Date(iso).toLocaleString("sv-SE", {
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 const dayLabel = (key: string) =>
   new Date(key + "T00:00:00Z").toLocaleDateString("sv-SE", { day: "2-digit", month: "short" });
 
