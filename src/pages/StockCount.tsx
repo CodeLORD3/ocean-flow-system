@@ -937,31 +937,34 @@ export default function StockCount() {
                                         quality: (e.target.value || null) as Quality | null,
                                       })
                                     }
-                                    className={`h-7 w-[104px] shrink-0 rounded-md border px-1 text-[11px] font-medium disabled:opacity-50 ${qualityClass(
-                                      (line?.quality ?? "") as string,
-                                    )}`}
-                                    title="Hållbarhet"
-                                  >
-                                    <option value="">Hållbarhet</option>
-                                    {QUALITY_DAYS.map((d) => (
-                                      <option key={d} value={d}>
-                                        {d === "7+"
-                                          ? "7+ dagar"
-                                          : `${d} ${d === "1" ? "dag" : "dagar"}`}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <Input
-                                    disabled={locked || !session}
-                                    defaultValue={line?.comment ?? ""}
-                                    placeholder="Kommentar"
-                                    className="h-7 w-[96px] shrink-0 px-1.5 text-[11px]"
-                                    onBlur={(e) => {
-                                      const val = e.target.value.trim() || null;
-                                      if ((line?.comment ?? null) === val) return;
-                                      saveLine(r, { comment: val });
-                                    }}
-                                  />
+                                     className={`h-7 w-[136px] shrink-0 rounded-md border px-1 text-[11px] font-medium disabled:opacity-50 ${qualityClass(
+                                       (line?.quality ?? "") as string,
+                                     )}`}
+                                     title="Hållbarhet"
+                                   >
+                                     <option value="">Välj hållbarhet</option>
+                                     {QUALITY_DAYS.map((d) => (
+                                       <option key={d} value={d}>
+                                         {qualityLabel(date, d)}
+                                       </option>
+                                     ))}
+                                   </select>
+                                   <Input
+                                     disabled={locked || !session}
+                                     defaultValue={line?.comment ?? ""}
+                                     placeholder="Kommentar"
+                                     className="h-7 w-[96px] shrink-0 px-1.5 text-[11px]"
+                                     onBlur={(e) => {
+                                       const val = e.target.value.trim() || null;
+                                       if ((line?.comment ?? null) === val) return;
+                                       saveLine(r, { comment: val });
+                                     }}
+                                   />
+                                   <RowPhotoButton
+                                     productId={r.productId}
+                                     productName={r.productName}
+                                     disabled={locked || !session}
+                                   />
                                 </div>
                               );
                             }),
