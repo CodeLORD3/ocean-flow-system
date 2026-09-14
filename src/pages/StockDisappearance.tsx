@@ -37,7 +37,7 @@ function addDays(date: string, days: number) {
 
 export default function StockDisappearance() {
   const { data: stores = [] } = useStores();
-  const { activeStoreId } = useSiteContext();
+  const { activeStoreId } = useSite();
   const [storeId, setStoreId] = useState<string>(activeStoreId ?? "");
   const [mode, setMode] = useState<"dag" | "vecka">("dag");
   const [date, setDate] = useState(todayStockholm());
