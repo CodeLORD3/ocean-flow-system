@@ -388,6 +388,19 @@ export default function StockCount() {
     [rows, linesByKey],
   );
 
+  /** Inventeringslistan: varor som fått ett värde, senast inmatad först. */
+  const countedRows = useMemo(
+    () =>
+      allRows
+        .filter((r) => linesByKey.get(r.key)?.counted_qty != null)
+        .sort((a, b) => {
+          const ta = linesByKey.get(a.key)?.counted_at ?? "";
+          const tb = linesByKey.get(b.key)?.counted_at ?? "";
+          return tb.localeCompare(ta);
+        }),
+    [allRows, linesByKey],
+  );
+
   /** Underlag inför låsning: räknat, ej räknat med saldo, och skillnad i kg och kronor. */
   const lockSummary = useMemo(() => {
     let diffKg = 0;
