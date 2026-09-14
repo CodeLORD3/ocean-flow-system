@@ -33,7 +33,7 @@ export interface TotalChecklistPayload {
   /** Extra rad i sidhuvudet, t.ex. när bara vissa varor är valda. */
   selectionNote?: string;
   /** Vilka valfria kolumner som ska skrivas ut. */
-  extraColumns?: { stock?: boolean; onOrder?: boolean; sellable?: boolean };
+  extraColumns?: { stock?: boolean; onOrder?: boolean; combined?: boolean; sellable?: boolean };
   groups: TotalChecklistGroup[];
 }
 
