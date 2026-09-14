@@ -93,7 +93,7 @@ import StockMovementsView from "@/components/inventory/StockMovementsView";
 import LotTraceabilityView from "@/components/inventory/LotTraceabilityView";
 
 import WasteDialog from "@/components/inventory/WasteDialog";
-import TransformDialog from "@/components/inventory/TransformDialog";
+import TransformFlow from "@/components/inventory/TransformFlow";
 import {
   lotBalancesAtLocation,
   recordMovement,
@@ -2867,7 +2867,7 @@ export default function Inventory() {
       </Dialog>
 
       {/* Omvandling — dela upp, packa om eller bearbeta till en annan produkt */}
-      <TransformDialog
+      <TransformFlow
         open={transformDialogOpen}
         onOpenChange={(o) => {
           setTransformDialogOpen(o);
