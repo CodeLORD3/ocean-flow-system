@@ -12,13 +12,29 @@ import { createOutputLot, recordLotTransformation } from "@/lib/lotTransformatio
  * lot_transformations, så spårbarheten från källpartiet följer med.
  */
 
-export type TransformKind = "dela_upp" | "packa_om" | "bearbeta";
+export type TransformKind = "dela_upp" | "packa_om" | "bearbeta" | "filetera" | "producera" | "annan";
 
 export const TRANSFORM_KINDS: { value: TransformKind; label: string; hint: string }[] = [
-  { value: "dela_upp", label: "Dela upp i bitar", hint: "Hel sida → vakuumpackade bitar" },
-  { value: "packa_om", label: "Packa om", hint: "10 kg-hink → 2 hg-burkar" },
-  { value: "bearbeta", label: "Bearbeta", hint: "Rå vara → kokt/tillagad vara" },
+  { value: "packa_om", label: "Packa om", hint: "10 kg-hink → 200 g-burkar" },
+  { value: "dela_upp", label: "Dela / portionera", hint: "Hel sida → bitar" },
+  { value: "filetera", label: "Filetera", hint: "Hel fisk → filéer" },
+  { value: "producera", label: "Producera", hint: "Råvara → tillagad produkt" },
+  { value: "bearbeta", label: "Bearbeta", hint: "Rå vara → kokt vara" },
+  { value: "annan", label: "Annan omvandling", hint: "Fritt utfall" },
 ];
+
+/**
+ * Vanligaste omvandlingen för en produkt, så personalen slipper välja.
+ * Gissningen bygger på produktnamn och kategori — den går alltid att ändra.
+ */
+export function suggestTransformKind(name?: string | null, category?: string | null): TransformKind {
+  const t = `${name ?? ""} ${category ?? ""}`.toLowerCase();
+  if (/(hink|kartong|låda|lada|spann|10 ?kg|5 ?kg|bulk|lösvikt|losvikt)/.test(t)) return "packa_om";
+  if (/(sida|rökt|rokt|gravad|filé|file|block)/.test(t)) return "dela_upp";
+  if (/(hel |helfisk|rensad|orensad|hel$)/.test(t)) return "filetera";
+  if (/(rå|ra |levande|färsk fisk|fardig)/.test(t)) return "producera";
+  return "packa_om";
+}
 
 export const transformKindLabel = (v?: string | null) =>
   TRANSFORM_KINDS.find((k) => k.value === v)?.label ?? "Omvandling";
