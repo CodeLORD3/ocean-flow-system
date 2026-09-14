@@ -28,6 +28,7 @@ import { laggTillSvenskaDagar } from "@/lib/swedishTime";
 import { type CountListProduct } from "@/lib/inventoryCountListPdf";
 import CountListPrintDialog from "@/components/inventory/CountListPrintDialog";
 import { setBalance, setExpiryDate } from "@/lib/stockLedger";
+import CountStartPanel from "@/components/inventory/CountStartPanel";
 
 
 type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "7+";
@@ -605,41 +606,77 @@ export default function StockCount() {
           </h2>
 
           <p className="text-xs text-muted-foreground">
-            Flera inventeringar per dag går bra. Räkna per lagerplats, lås när allt är klart.
+            {session
+              ? "Räkna kategori för kategori och lås rapporten när allt är klart."
+              : "Starta en rapport, räkna av lagret och lås. Du kan göra flera per dag."}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {!session && effectiveStoreId && (
-            <Button size="sm" className="gap-1.5 text-xs h-9 sm:h-8 font-semibold" onClick={createSession}>
-              <Plus className="h-3.5 w-3.5" /> Påbörja inventering
-            </Button>
-          )}
-          {session && effectiveStoreId && (
-            <Button
-              size="sm"
-              className="gap-1.5 text-xs h-9 sm:h-8 font-semibold"
-              onClick={() => createSessionFor(date)}
-            >
-              <Plus className="h-3.5 w-3.5" /> Skapa inventeringsrapport
-            </Button>
-          )}
-          <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={openPrintDialog}>
-            <Printer className="h-3 w-3" /> Skriv ut
-          </Button>
-          <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={exportCsv}>
-            <Download className="h-3 w-3" /> Exportera
-          </Button>
-          {session && !locked && (
+        {session && effectiveStoreId && (
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5 text-xs h-9 sm:h-8 border-amber-500/40 text-amber-700 hover:bg-amber-500/10"
-              onClick={() => setLockOpen(true)}
+              className="gap-1.5 text-xs h-9 sm:h-8"
+              onClick={() => createSessionFor(date)}
             >
-              <Lock className="h-3 w-3" /> Lås inventeringen
+              <Plus className="h-3.5 w-3.5" /> Ny rapport
             </Button>
-          )}
-        </div>
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={openPrintDialog}>
+              <Printer className="h-3 w-3" /> Skriv ut
+            </Button>
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={exportCsv}>
+              <Download className="h-3 w-3" /> Exportera
+            </Button>
+            {!locked && (
+              <Button
+                size="sm"
+                className="gap-1.5 text-xs h-9 sm:h-8 font-semibold"
+                onClick={() => setLockOpen(true)}
+              >
+                <Lock className="h-3 w-3" /> Lås rapporten
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Start — guidat läge när ingen rapport är igång för datumet */}
+      {!session && (
+        <CountStartPanel
+          stores={stores as any[]}
+          storeId={effectiveStoreId}
+          onStoreChange={setStoreId}
+          date={date}
+          onDateChange={setDate}
+          dayName={weekdayLong(date)}
+          productCount={allRows.length}
+          onStart={createSession}
+          onPrint={openPrintDialog}
+        />
+      )}
+
+      {session && (
+      <>
+      {/* Stegvis ledtråd om var man är i flödet */}
+      <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-2.5 py-1.5 text-[11px]">
+        <span className="flex items-center gap-1.5 font-semibold text-primary">
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/15 text-[9px] font-bold">
+            {locked ? "✓" : "2"}
+          </span>
+          {locked ? "Rapporten är låst" : "Räkna varorna"}
+        </span>
+        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+          <span
+            className="block h-full rounded-full bg-primary transition-all"
+            style={{ width: `${rows.length ? Math.round((countedCount / rows.length) * 100) : 0}%` }}
+          />
+        </span>
+        <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+          {countedCount}/{rows.length}
+        </span>
+        <span className="hidden shrink-0 text-muted-foreground sm:inline">
+          {locked ? "" : "Steg 3: lås rapporten när allt är räknat"}
+        </span>
       </div>
 
       {/* Filter */}
@@ -766,6 +803,8 @@ export default function StockCount() {
           <RefreshCw className="h-3 w-3" /> Uppdatera
         </Button>
       </div>
+      </>
+      )}
 
       {/* Tidigare inventeringar — låsta tillfällen + inskickade rapporter, gömda bakom en utfällning */}
       <Card>
@@ -918,7 +957,7 @@ export default function StockCount() {
 
 
       {/* Lista */}
-      {loading ? (
+      {!session ? null : loading ? (
         <div className="space-y-2">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-12 w-full" />
