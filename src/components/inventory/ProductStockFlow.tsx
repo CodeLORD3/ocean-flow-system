@@ -138,9 +138,11 @@ export default function ProductStockFlow({
 
     const totIn = rows.reduce((s, r) => s + r.in, 0);
     const totOut = rows.reduce((s, r) => s + Math.abs(r.ut), 0);
+    const visible = cutoff ? entries.filter((e) => e.day >= cutoff) : entries;
     return {
       points: rows,
       totals: { in: totIn, out: totOut, now: running, net: totIn - totOut },
+      ledger: [...visible].reverse(),
     };
   }, [movements, days]);
 
