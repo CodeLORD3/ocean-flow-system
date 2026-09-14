@@ -767,17 +767,31 @@ export default function StockCount() {
         </Button>
       </div>
 
-      {/* Inventeringshistorik — låsta tillfällen */}
+      {/* Tidigare inventeringar — låsta tillfällen + inskickade rapporter, gömda bakom en utfällning */}
       <Card>
-        <div className="flex items-center justify-between gap-2 border-b bg-muted/50 px-2 py-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Inventeringshistorik
+        <button
+          type="button"
+          onClick={() => setArchiveOpen((v) => !v)}
+          className="flex w-full items-center justify-between gap-2 border-b bg-muted/50 px-2 py-1.5 text-left hover:bg-muted"
+        >
+          <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {archiveOpen ? (
+              <ChevronDown className="h-3 w-3" />
+            ) : (
+              <ChevronRight className="h-3 w-3" />
+            )}
+            Tidigare inventeringar
           </span>
           <span className="text-[10px] text-muted-foreground">
-            {(historyQuery.data ?? []).length} låsta inventeringar
+            {(historyQuery.data ?? []).length} låsta ·{" "}
+            {(reportsQuery.data ?? []).length} rapporter
           </span>
-        </div>
-        <CardContent className="p-1">
+        </button>
+        {archiveOpen && (
+        <CardContent className="space-y-2 p-1">
+          <p className="px-1 pt-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Låsta inventeringar
+          </p>
           {!(historyQuery.data ?? []).length ? (
             <p className="px-1 py-2 text-[11px] text-muted-foreground">
               Ingen inventering är låst ännu för {storeName || "butiken"}.
