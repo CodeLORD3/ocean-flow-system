@@ -67,7 +67,7 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
 };
 
 
-function AccountMenu() {
+function AccountMenu({ portalItems }: { portalItems?: React.ReactNode }) {
   const { staff, signOut } = useStaffAuth();
   const navigate = useNavigate();
   const initials = staff ? `${staff.first_name[0]}${staff.last_name[0]}` : "?";
