@@ -570,7 +570,7 @@ export default function StockOverview({
                 return [
                   <tr
                     key={`cat-${cat}`}
-                    className="bg-muted/30 border-b cursor-pointer hover:bg-muted/50 transition-colors"
+                    className="bg-muted border-x border-b border-grid-line cursor-pointer hover:bg-muted/70 transition-colors"
                     onClick={() => toggleCat(cat)}
                   >
                     <td colSpan={showCosts ? 10 : 9} className="px-1.5 py-1">
@@ -594,13 +594,13 @@ export default function StockOverview({
                       <tr
                         key={g.product_id}
                         className={cn(
-                          "border-b border-border/50 hover:bg-primary/5 transition-colors cursor-pointer",
+                          "border-x border-b border-grid-line bg-card hover:bg-primary/5 transition-colors cursor-pointer",
                           rowH,
                         )}
                         onClick={() => toggleExpand(g.product_id)}
                       >
-                        <td className="hidden px-2 text-[11px] text-muted-foreground tabular-nums sm:table-cell">{idx}</td>
-                        <td className="px-2">
+                        <td className="hidden border-r border-grid-line/70 px-2 text-[11px] text-muted-foreground tabular-nums sm:table-cell">{idx}</td>
+                        <td className="border-r border-grid-line/70 px-2">
                           <div className="flex items-center gap-2.5">
                             {isOpen ? (
                               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -642,8 +642,8 @@ export default function StockOverview({
 
                           </div>
                         </td>
-                        <td className="hidden px-2 text-xs text-muted-foreground whitespace-nowrap sm:table-cell">{g.category}</td>
-                        <td className="hidden px-2 sm:table-cell">
+                        <td className="hidden border-r border-grid-line/70 px-2 text-xs text-muted-foreground whitespace-nowrap sm:table-cell">{g.category}</td>
+                        <td className="hidden border-r border-grid-line/70 px-2 sm:table-cell">
                           <div className="min-w-[140px]">
                             <div
                               className="flex items-stretch gap-0.5 h-4 rounded-sm overflow-hidden"
@@ -676,13 +676,13 @@ export default function StockOverview({
                             )}
                           </div>
                         </td>
-                        <td className="px-2 text-right font-semibold tabular-nums whitespace-nowrap">
+                        <td className="border-r border-grid-line/70 px-2 text-right font-semibold tabular-nums whitespace-nowrap">
                           {g.totalQty.toLocaleString("sv-SE", { maximumFractionDigits: g.unit === "st" ? 0 : 1 })} {g.unit}
                         </td>
                         {showCosts && (
-                          <td className="hidden px-2 text-right tabular-nums whitespace-nowrap sm:table-cell">{fmt(g.value)}</td>
+                          <td className="hidden border-r border-grid-line/70 px-2 text-right tabular-nums whitespace-nowrap sm:table-cell">{fmt(g.value)}</td>
                         )}
-                        <td className="hidden px-2 text-center text-xs text-muted-foreground whitespace-nowrap sm:table-cell">
+                        <td className="hidden border-r border-grid-line/70 px-2 text-center text-xs text-muted-foreground whitespace-nowrap sm:table-cell">
                           {g.earliestExpiry
                             ? format(parseISO(g.earliestExpiry), "d MMM", { locale: sv })
                             : "–"}
