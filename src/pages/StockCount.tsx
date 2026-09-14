@@ -855,31 +855,31 @@ export default function StockCount() {
                               return (
                                 <div
                                   key={r.key}
-                                  className={`flex items-center gap-2 px-2 py-1.5 transition-colors ${
-                                    isCounted ? "bg-emerald-500/15" : ""
+                                  className={`flex items-center gap-1.5 px-2 py-1 transition-colors ${
+                                    isCounted ? "bg-emerald-500/10" : ""
                                   }`}
                                 >
                                   {r.imageUrl ? (
                                     <img
                                       src={r.imageUrl}
                                       alt={r.productName}
-                                      className="h-7 w-7 shrink-0 rounded border object-cover"
+                                      className="h-6 w-6 shrink-0 rounded-sm border object-cover"
                                       loading="lazy"
                                     />
                                   ) : (
-                                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded border bg-muted">
-                                      <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm border bg-muted">
+                                      <Package className="h-3 w-3 text-muted-foreground" />
                                     </div>
                                   )}
                                   <span className="min-w-0 flex-1">
                                     <span
-                                      className={`block truncate text-[13px] font-medium ${
+                                      className={`block truncate text-[12px] font-medium leading-tight ${
                                         isCounted ? "text-emerald-800 dark:text-emerald-200" : ""
                                       }`}
                                     >
                                       {r.productName}
                                     </span>
-                                    <span className="block truncate text-[10px] text-muted-foreground">
+                                    <span className="block truncate text-[9px] leading-tight text-muted-foreground">
                                       {prodRows.length > 1 ? `${r.locationName} · ` : ""}
                                       Lager{" "}
                                       <span className="font-mono tabular-nums">
@@ -896,7 +896,7 @@ export default function StockCount() {
                                     disabled={locked || !session}
                                     defaultValue={line?.counted_qty ?? ""}
                                     placeholder={r.unit}
-                                    className="h-10 w-[92px] shrink-0 px-1.5 text-right font-mono text-base tabular-nums sm:h-8 sm:text-sm"
+                                    className="h-7 w-[62px] shrink-0 px-1.5 text-right font-mono text-[12px] tabular-nums"
                                     onFocus={(e) => e.currentTarget.select()}
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter") e.currentTarget.blur();
@@ -917,15 +917,17 @@ export default function StockCount() {
                                         quality: (e.target.value || null) as Quality | null,
                                       })
                                     }
-                                    className={`h-10 w-[74px] shrink-0 rounded-md border px-1 text-[11px] font-medium disabled:opacity-50 sm:h-8 ${qualityClass(
+                                    className={`h-7 w-[104px] shrink-0 rounded-md border px-1 text-[11px] font-medium disabled:opacity-50 ${qualityClass(
                                       (line?.quality ?? "") as string,
                                     )}`}
                                     title="Hållbarhet"
                                   >
-                                    <option value="">Hållb.</option>
+                                    <option value="">Hållbarhet</option>
                                     {QUALITY_DAYS.map((d) => (
                                       <option key={d} value={d}>
-                                        {d === "7+" ? "7+ d" : `${d} d`}
+                                        {d === "7+"
+                                          ? "7+ dagar"
+                                          : `${d} ${d === "1" ? "dag" : "dagar"}`}
                                       </option>
                                     ))}
                                   </select>
@@ -933,7 +935,7 @@ export default function StockCount() {
                                     disabled={locked || !session}
                                     defaultValue={line?.comment ?? ""}
                                     placeholder="Kommentar"
-                                    className="h-10 w-[110px] shrink-0 px-1.5 text-[11px] sm:h-8"
+                                    className="h-7 w-[96px] shrink-0 px-1.5 text-[11px]"
                                     onBlur={(e) => {
                                       const val = e.target.value.trim() || null;
                                       if ((line?.comment ?? null) === val) return;
