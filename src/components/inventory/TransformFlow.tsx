@@ -31,6 +31,7 @@ import {
 } from "@/hooks/useStockTransformations";
 import { TRANSFORM_KINDS, suggestTransformKind, type TransformKind } from "@/lib/stockTransform";
 import { lotBalancesAtLocation } from "@/lib/stockLedger";
+import { contentPerUnitKg } from "@/lib/productFamilies";
 
 /** Talfält som tål både komma och punkt. */
 const num = (v: string) => Number(String(v).replace(",", ".")) || 0;
@@ -64,6 +65,8 @@ interface Props {
   product: { id: string; name: string; sku?: string | null; unit?: string | null } | null;
   locationId?: string | null;
   storeId?: string | null;
+  /** Förvald målprodukt, t.ex. från omvandlingsprognosen i familjevyn. */
+  initialTargetProductId?: string | null;
   onDone?: () => void;
 }
 
@@ -72,7 +75,15 @@ interface Props {
  * vad använder jag, vad gör jag med den och vad blev det. Lagerrörelserna
  * (uttag, nya partier, svinn och spårbarhet) sköter systemet själv.
  */
-export default function TransformFlow({ open, onOpenChange, product, locationId, storeId, onDone }: Props) {
+export default function TransformFlow({
+  open,
+  onOpenChange,
+  product,
+  locationId,
+  storeId,
+  initialTargetProductId,
+  onDone,
+}: Props) {
   const { toast } = useToast();
   const { data: products = [] } = useProducts();
   const { data: staff } = useCurrentStaff();
@@ -100,6 +111,8 @@ export default function TransformFlow({ open, onOpenChange, product, locationId,
   const [manualSvinn, setManualSvinn] = useState("");
   const [wasteReason, setWasteReason] = useState("");
   const [asPreset, setAsPreset] = useState(true);
+  /** Målprodukt som ska läggas in automatiskt när utfallet fylls i. */
+  const [pendingTarget, setPendingTarget] = useState<string | null>(null);
 
   const sourceMeta = products.find((p) => p.id === product?.id) as any;
   const perColli = Number(sourceMeta?.weight_per_piece) || 0;
@@ -136,6 +149,7 @@ export default function TransformFlow({ open, onOpenChange, product, locationId,
         ? locationId
         : stockRows[0]?.location_id || "";
     setLocId(preferred || "");
+    setPendingTarget(initialTargetProductId ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, product?.id]);
 
@@ -220,6 +234,16 @@ export default function TransformFlow({ open, onOpenChange, product, locationId,
     setOutputs((rows) => rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
 
   const active = outputs[outputs.length - 1];
+
+  /** Kom flödet från en prognos läggs målförpackningen in direkt vid utfallet. */
+  useEffect(() => {
+    if (!open || step !== 3 || !pendingTarget || outputs.length > 0) return;
+    const t = products.find((p) => p.id === pendingTarget) as any;
+    setPendingTarget(null);
+    if (!t) return;
+    addOutput(t.id, t.name, contentPerUnitKg(t) ?? 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, step, pendingTarget, outputs.length, products]);
 
   const bestBeforeFor = (productId: string) => {
     const days = Number((products.find((p) => p.id === productId) as any)?.shelf_life_days) || 0;

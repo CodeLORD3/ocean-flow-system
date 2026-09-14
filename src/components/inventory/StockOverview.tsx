@@ -42,6 +42,10 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
 import ProductTraceabilityInline from "@/components/inventory/ProductTraceabilityInline";
 import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
+import FamilyStockView from "@/components/inventory/FamilyStockView";
+import { useProductFamilies, useOrderedByProduct } from "@/hooks/useProductFamilies";
+import { useSite } from "@/contexts/SiteContext";
+import { Layers } from "lucide-react";
 
 /** En lagerrad från product_stock_locations (joinad med products + storage_locations). */
 export interface StockRow {
@@ -76,6 +80,8 @@ interface Props {
   /** Åtgärd i tomt tillstånd, t.ex. gå till inleveranser. */
   onEmptyAction?: () => void;
   emptyActionLabel?: string;
+  /** Öppnar omvandlingsflödet direkt på en produkt (från familjevyn). */
+  onTransformProduct?: (productId: string, targetProductId?: string) => void;
 }
 
 const CATEGORY_ICONS: Record<string, any> = {
@@ -154,11 +160,24 @@ export default function StockOverview({
   compactKpis = false,
   onEmptyAction,
   emptyActionLabel = "Registrera inleverans",
+  onTransformProduct,
 }: Props) {
+  const { activeStoreId } = useSite();
+  const { data: families = [] } = useProductFamilies();
+  const { data: orderedByProduct } = useOrderedByProduct(activeStoreId || null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("__all__");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dense, setDense] = useState(false);
+  /** Familjevyn: samma vara i olika förpackningar summerad till kilo. */
+  const [familyView, setFamilyView] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem("stock.familyView") === "1",
+  );
+  const toggleFamilyView = () =>
+    setFamilyView((v) => {
+      localStorage.setItem("stock.familyView", v ? "0" : "1");
+      return !v;
+    });
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   /** Hopfällda kategorier i tabellen */
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
@@ -230,6 +249,25 @@ export default function StockOverview({
     }
     return list.sort((a, b) => a.name.localeCompare(b.name, "sv"));
   }, [rows, productsById]);
+
+  /** Saldo per produkt i produktens egen enhet — underlag för familjevyn. */
+  const stockByProduct = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of rows) {
+      const qty = Number(r.quantity) || 0;
+      if (qty <= 0) continue;
+      map.set(r.product_id, (map.get(r.product_id) || 0) + qty);
+    }
+    return map;
+  }, [rows]);
+
+  const allProductList = useMemo(() => Array.from(productsById.values()), [productsById]);
+
+  const openTransform = (productId: string, targetProductId?: string) => {
+    if (onTransformProduct) return onTransformProduct(productId, targetProductId);
+    const row = rows.find((r) => r.product_id === productId);
+    if (row) onLineAction?.("transform", row);
+  };
 
   const categories = useMemo(() => {
     const counts = new Map<string, number>();
@@ -500,11 +538,31 @@ export default function StockOverview({
               <Rows4 className="h-3.5 w-3.5" />
             </button>
           </div>
+          <Button
+            variant={familyView ? "default" : "outline"}
+            size="sm"
+            className="h-9 gap-1.5 text-xs"
+            onClick={toggleFamilyView}
+            title="Summera samma vara i olika förpackningar"
+          >
+            <Layers className="h-3.5 w-3.5" /> Visa som familjer
+          </Button>
           {headerRight}
         </div>
       </div>
 
-      {/* Tabell */}
+      {familyView ? (
+        <FamilyStockView
+          products={allProductList as any}
+          families={families}
+          stockByProduct={stockByProduct}
+          orderedByProduct={orderedByProduct}
+          search={search}
+          category={category}
+          onTransform={openTransform}
+        />
+      ) : (
+      /* Tabell */
       <Card className="shadow-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs sm:min-w-[900px]">
@@ -897,6 +955,7 @@ export default function StockOverview({
           </div>
         </div>
       </Card>
+      )}
     </div>
   );
 }
