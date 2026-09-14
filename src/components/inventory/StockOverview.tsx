@@ -21,6 +21,7 @@ import {
   Fish,
   Sparkles,
   Package2,
+  Camera,
 } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { sv } from "date-fns/locale";
@@ -45,6 +46,7 @@ import ProductStockFlow from "@/components/inventory/ProductStockFlow";
 import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 import FamilyStockView from "@/components/inventory/FamilyStockView";
 import { useProductFamilies, useOrderedByProduct } from "@/hooks/useProductFamilies";
+import { useProductPhotoCounts } from "@/hooks/useEntityImages";
 import { useSite } from "@/contexts/SiteContext";
 import { Layers } from "lucide-react";
 
@@ -166,6 +168,10 @@ export default function StockOverview({
   const { activeStoreId } = useSite();
   const { data: families = [] } = useProductFamilies();
   const { data: orderedByProduct } = useOrderedByProduct(activeStoreId || null);
+  /** Antal bilder per produkt — visas som kameraikon med siffra i raden. */
+  const { data: photoCounts } = useProductPhotoCounts(
+    useMemo(() => rows.map((r) => r.product_id), [rows]),
+  );
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("__all__");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -617,7 +623,18 @@ export default function StockOverview({
                             <div className="min-w-0 flex-1">
                               {/* Desktop: namn + SKU staplat */}
                               <div className="hidden sm:block">
-                                <div className="font-semibold text-foreground truncate">{g.name}</div>
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className="font-semibold text-foreground truncate">{g.name}</span>
+                                  {!!photoCounts?.get(g.product_id) && (
+                                    <span
+                                      className="flex shrink-0 items-center gap-0.5 text-[10px] font-medium text-primary"
+                                      title={`${photoCounts.get(g.product_id)} bild(er)`}
+                                    >
+                                      <Camera className="h-3 w-3" />
+                                      <span className="font-mono tabular-nums">{photoCounts.get(g.product_id)}</span>
+                                    </span>
+                                  )}
+                                </div>
                                 <div className="text-[10px] text-muted-foreground font-mono truncate">
                                   SKU: {g.sku}
                                 </div>
@@ -625,8 +642,14 @@ export default function StockOverview({
                               {/* Mobil: allt på en horisontell rad */}
                               <div className="flex sm:hidden items-center gap-1.5 min-w-0 whitespace-nowrap">
                                 <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", st.dot)} />
-                                <span className="font-semibold text-foreground truncate">{g.name}</span>
-                                <span className="text-[10px] text-muted-foreground truncate">{g.category}</span>
+                                 <span className="font-semibold text-foreground truncate">{g.name}</span>
+                                 {!!photoCounts?.get(g.product_id) && (
+                                   <span className="flex shrink-0 items-center gap-0.5 text-[10px] font-medium text-primary">
+                                     <Camera className="h-3 w-3" />
+                                     <span className="font-mono tabular-nums">{photoCounts.get(g.product_id)}</span>
+                                   </span>
+                                 )}
+                                 <span className="text-[10px] text-muted-foreground truncate">{g.category}</span>
                                 {g.daysLeft !== null && (
                                   <span
                                     className={cn(
