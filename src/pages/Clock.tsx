@@ -540,11 +540,17 @@ export default function Clock() {
           {onSite.length === 0 ? (
             <p className="ind-muted text-sm">Ingen är instämplad.</p>
           ) : (
-            <p className="ind-muted text-sm">
-              {onSite
-                .map((p) => `${p.first_name} ${p.initial}. ${timeOf(p.since)}${p.on_break ? " (rast)" : ""}`)
-                .join("   ·   ")}
-            </p>
+            <ul className="space-y-1">
+              {onSite.map((p) => (
+                <li key={`${p.first_name}-${p.since}`} className="text-sm">
+                  <span className="font-medium">{`${p.first_name} ${p.initial}.`}</span>{" "}
+                  <span className="ind-muted">
+                    {p.on_break ? "på rast sedan" : "instämplad sedan"}{" "}
+                    <span className="ind-mono">{timeOf(p.since)}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
         </footer>
       </div>
