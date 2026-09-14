@@ -623,7 +623,18 @@ export default function StockOverview({
                             <div className="min-w-0 flex-1">
                               {/* Desktop: namn + SKU staplat */}
                               <div className="hidden sm:block">
-                                <div className="font-semibold text-foreground truncate">{g.name}</div>
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className="font-semibold text-foreground truncate">{g.name}</span>
+                                  {!!photoCounts?.get(g.product_id) && (
+                                    <span
+                                      className="flex shrink-0 items-center gap-0.5 text-[10px] font-medium text-primary"
+                                      title={`${photoCounts.get(g.product_id)} bild(er)`}
+                                    >
+                                      <Camera className="h-3 w-3" />
+                                      <span className="font-mono tabular-nums">{photoCounts.get(g.product_id)}</span>
+                                    </span>
+                                  )}
+                                </div>
                                 <div className="text-[10px] text-muted-foreground font-mono truncate">
                                   SKU: {g.sku}
                                 </div>
