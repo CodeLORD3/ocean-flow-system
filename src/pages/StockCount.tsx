@@ -888,7 +888,7 @@ export default function StockCount() {
 
 
 
-      {/* Lista */}
+      {/* Lista — delad vy: alla varor till vänster, inventerade till höger */}
       {!session ? null : loading ? (
         <div className="space-y-2">
           {[...Array(6)].map((_, i) => (
