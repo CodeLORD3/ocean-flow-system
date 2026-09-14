@@ -642,8 +642,8 @@ export default function StockOverview({
 
                           </div>
                         </td>
-                        <td className="hidden px-2 text-xs text-muted-foreground whitespace-nowrap sm:table-cell">{g.category}</td>
-                        <td className="hidden px-2 sm:table-cell">
+                        <td className="hidden border-r border-grid-line/70 px-2 text-xs text-muted-foreground whitespace-nowrap sm:table-cell">{g.category}</td>
+                        <td className="hidden border-r border-grid-line/70 px-2 sm:table-cell">
                           <div className="min-w-[140px]">
                             <div
                               className="flex items-stretch gap-0.5 h-4 rounded-sm overflow-hidden"
