@@ -905,13 +905,21 @@ export default function StockCount() {
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               Inventeringslistan · {countedRows.length} varor
             </p>
-            <Card>
+            <div className="overflow-hidden rounded-md border-t border-grid-line">
               {!countedRows.length ? (
-                <CardContent className="p-6 text-center text-xs text-muted-foreground">
+                <div className="border-x border-b border-grid-line bg-card p-6 text-center text-xs text-muted-foreground">
                   Skriv in ett värde på en vara — den hamnar här och blir grön i listan.
-                </CardContent>
+                </div>
               ) : (
-                <CardContent className="divide-y divide-border/60 p-0">
+                <div>
+                  <div className="flex items-center border-x border-b border-grid-line bg-muted px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span className="min-w-0 flex-1 border-r border-grid-line/70 pr-2">Produkt</span>
+                    <span className="hidden w-16 shrink-0 border-r border-grid-line/70 px-2 text-center sm:block">
+                      Hållb.
+                    </span>
+                    <span className="w-14 shrink-0 border-r border-grid-line/70 px-2 text-right">Diff</span>
+                    <span className="w-20 shrink-0 px-2 text-right">Antal</span>
+                  </div>
                   {countedRows.map((r) => {
                     const line = linesByKey.get(r.key);
                     const counted = Number(line?.counted_qty ?? 0);
