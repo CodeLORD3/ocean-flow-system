@@ -391,8 +391,18 @@ export function useSubmitStockReport() {
         })
         .eq("id", sheetId);
       if (error) throw error;
-      // Rapportens värden blir lagret direkt vid inskickning.
-      return await applyStockReportToStock(sheetId);
+      // Rapportens värden blir lagret direkt vid inskickning. Om bokföringen
+      // misslyckas öppnas rapporten igen — annars ser den inskickad ut medan
+      // lagret står kvar på gamla värden.
+      try {
+        return await applyStockReportToStock(sheetId);
+      } catch (e) {
+        await supabase
+          .from("daily_stock_sheets")
+          .update({ status: "utkast", closed_by: null, closed_at: null })
+          .eq("id", sheetId);
+        throw e;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["stock-report"] });
