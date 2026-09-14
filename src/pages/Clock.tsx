@@ -84,6 +84,13 @@ export default function Clock() {
 
 
   const workSites = station?.work_sites ?? [];
+  /**
+   * Rastknappen är avstängd som standard: rasttryck glöms i praktiken bort och
+   * ger fel lön. Rastavdraget görs i attesten. En station kan sätta break.mode
+   * till "manual" om rasttryck ändå ska användas där.
+   */
+  const breakMode = (station?.profile as { break?: { mode?: string } } | undefined)?.break?.mode;
+  const breaksEnabled = breakMode === "manual";
   const activeSite = workSites.find((s) => s.id === siteId) ?? (workSites.length === 1 ? workSites[0] : null);
 
   /** Hämtar position när driftstället har geofence. Tyst fallback utan position. */
@@ -449,7 +456,7 @@ export default function Clock() {
               {VALID_ACTIONS[found.suggested].includes("ut") && (
                 <IndustryButton variant={found.suggested === "ut" ? "primary" : "secondary"} size="kiosk" corners={found.suggested === "ut"} onClick={() => handlePunch("ut")} disabled={busy}>UT</IndustryButton>
               )}
-              {VALID_ACTIONS[found.suggested].includes("rast_start") && (
+              {breaksEnabled && VALID_ACTIONS[found.suggested].includes("rast_start") && (
                 <IndustryButton variant={found.suggested === "rast_start" ? "primary" : "secondary"} size="kiosk" corners={found.suggested === "rast_start"} onClick={() => handlePunch("rast_start")} disabled={busy}>Rast börjar</IndustryButton>
               )}
               {VALID_ACTIONS[found.suggested].includes("rast_slut") && (
@@ -536,6 +543,17 @@ export default function Clock() {
         )}
 
         <footer className="mt-8 pt-4" style={{ borderTop: "1px solid var(--color-divider)" }}>
+          {/* Fel aktivering ska synas direkt: stationens enhet står alltid längst ned. */}
+          <div className="mb-4 flex flex-wrap items-baseline gap-2">
+            <SectionLabel>Den här stationen tillhör</SectionLabel>
+            <span className="ind-h3">{station?.store_name ?? "Ingen enhet vald"}</span>
+            <span className="ind-muted text-sm">
+              {station?.name ? `· ${station.name}` : ""}
+            </span>
+            <span className="ind-muted ml-auto text-sm">
+              Fel butik? Säg till kontoret — stationen flyttas där.
+            </span>
+          </div>
           <SectionLabel>På plats nu</SectionLabel>
           {onSite.length === 0 ? (
             <p className="ind-muted text-sm">Ingen är instämplad.</p>

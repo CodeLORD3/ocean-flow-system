@@ -16995,6 +16995,10 @@ export type Database = {
         }
         Returns: Json
       }
+      clock_station_move: {
+        Args: { _station_id: string; _store_id: string }
+        Returns: Json
+      }
       clock_station_revoke: {
         Args: { _station_id: string }
         Returns: undefined

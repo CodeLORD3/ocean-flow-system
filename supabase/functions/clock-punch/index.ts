@@ -164,6 +164,42 @@ Deno.serve(async (req) => {
     await resetFailedLookup(db, station.id);
   }
 
+  // Behörighet att stämpla: testpersoner, avslutade anställningar och personer
+  // utan anställning i stationens bolag ska avvisas med ett tydligt besked.
+  // Utstämpling släpps alltid igenom så att ingen kan fastna instämplad.
+  {
+    const { data: person } = await db
+      .from("employees")
+      .select("is_test, status")
+      .eq("id", hit.id)
+      .maybeSingle();
+    if (person?.is_test === true) {
+      return json(req, { error: "Det här är en testperson i systemet och kan inte stämpla. Kontakta kontoret." }, 403);
+    }
+    if (mode === "lookup" || action !== "ut") {
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: employments } = await db
+        .from("employments")
+        .select("legal_entity_id, is_active, start_date, end_date")
+        .eq("employee_id", hit.id);
+      const rows = employments ?? [];
+      const live = rows.filter(
+        (e) =>
+          e.is_active === true &&
+          (!e.end_date || String(e.end_date) >= today) &&
+          (!e.start_date || String(e.start_date) <= today),
+      );
+      if (rows.length > 0 && live.length === 0) {
+        return json(req, { error: "Din anställning är avslutad i systemet. Stämpling är stängd — prata med din chef." }, 403);
+      }
+      if (station.legal_entity_id && live.length > 0 && !live.some((e) => e.legal_entity_id === station.legal_entity_id)) {
+        return json(req, {
+          error: "Du har ingen anställning i det bolag den här klockan tillhör. Stämpla på din egen butiks klocka eller säg till chefen.",
+        }, 403);
+      }
+    }
+  }
+
   const { data: recent } = await db.from("time_entries").select("id, type, occurred_at").eq("employee_id", hit.id).order("occurred_at", { ascending: false }).limit(1);
   const last = recent?.[0]?.type as PunchType | undefined;
   const suggested: PunchType = last === "in" || last === "rast_slut" ? "ut" : last === "rast_start" ? "rast_slut" : "in";
