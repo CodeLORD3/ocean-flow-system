@@ -6,7 +6,6 @@ import {
   ChevronUp,
   Download,
   Package,
-  Pencil,
   Printer,
   Search,
   SlidersHorizontal,
@@ -31,14 +30,6 @@ import { ProductThumb } from "@/components/products/ProductThumb";
 
 import { useCustomerOrders } from "@/hooks/useCustomerOrders";
 import { useTotalListExtras } from "@/hooks/useTotalListStock";
-import {
-  orderWeekLabel,
-  useSaveTotalListOrder,
-  useSaveTotalListStock,
-  useStoreEntryLocation,
-} from "@/hooks/useTotalListEntry";
-import { NumberField, parseNumber } from "@/components/ui/number-field";
-import { useToast } from "@/hooks/use-toast";
 import { CustomerOrder, ORDER_TYPE_LABELS, isoWeekOf } from "@/lib/customerOrders";
 import { matchKey } from "@/lib/purchaseReconciliation";
 import { PRODUCT_CATEGORIES, normalizeCategoryKey } from "@/lib/productCategories";
@@ -233,18 +224,6 @@ export function TotalOrderedView({
 
   const anyExtra = cols.stock || cols.onOrder || cols.sellable;
 
-  /** Inmatningsläge: skriv in order till grossisten och lagersaldo direkt i listan. */
-  const [editMode, setEditMode] = useState(false);
-  /** Osparade värden per produkt, nyckel "order:<id>" / "stock:<id>". */
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState<string[]>([]);
-  const { toast } = useToast();
-  const { data: entryLocation } = useStoreEntryLocation(editMode ? storeId : null);
-  const saveOrder = useSaveTotalListOrder();
-  const saveStock = useSaveTotalListStock();
-
-
-
 
 
 
@@ -392,17 +371,17 @@ export function TotalOrderedView({
     };
   }, [orders, picked, mode, productSearch, sort, category]);
 
-  /** Lager och utestående grossistorder hämtas när kolumn eller inmatning är på. */
+  /** Lager och utestående grossistorder hämtas bara när någon kolumn är påslagen. */
   const extras = useTotalListExtras({
     storeId,
     fromDate: bounds.fromDate,
     toDate: bounds.toDate,
-    enabled: !!anyExtra || editMode,
+    enabled: !!anyExtra,
   });
 
   /** Kopplar lager/order till raderna: produkt först, annars normaliserat namn. */
   const groups: Group[] = useMemo(() => {
-    if (!anyExtra && !editMode) return baseGroups;
+    if (!anyExtra) return baseGroups;
     const lookup = (row: ProductRow, byId: Map<string, number>, byName: Map<string, number>) => {
       if (row.productId && byId.has(row.productId)) return byId.get(row.productId) ?? 0;
       const k = matchKey(row.name);
@@ -423,72 +402,7 @@ export function TotalOrderedView({
         };
       }),
     }));
-  }, [baseGroups, anyExtra, editMode, extras]);
-
-  /** Sparar inskriven order till grossisten för veckan i urvalet. */
-  const commitOrder = async (row: ProductRow) => {
-    const key = `order:${row.productId}`;
-    const raw = drafts[key];
-    if (!row.productId || raw === undefined) return;
-    const value = parseNumber(raw);
-    if (value === null || value < 0) return;
-    if (!storeId) {
-      toast({ title: "Välj butik först", variant: "destructive" });
-      return;
-    }
-    setSaving((s) => [...s, key]);
-    try {
-      await saveOrder.mutateAsync({
-        storeId,
-        productId: row.productId,
-        quantity: value,
-        unit: row.unit,
-        dateIso: bounds.fromDate,
-      });
-      setDrafts((d) => {
-        const next = { ...d };
-        delete next[key];
-        return next;
-      });
-      toast({ title: `${row.name}: order ${qtyText(value, row.unit)} ${row.unit}` });
-    } catch (e: any) {
-      toast({ title: "Kunde inte spara order", description: e?.message, variant: "destructive" });
-    } finally {
-      setSaving((s) => s.filter((k) => k !== key));
-    }
-  };
-
-  /** Sparar inskrivet lagersaldo som en spårbar lagerrörelse. */
-  const commitStock = async (row: ProductRow) => {
-    const key = `stock:${row.productId}`;
-    const raw = drafts[key];
-    if (!row.productId || raw === undefined) return;
-    const value = parseNumber(raw);
-    if (value === null || value < 0) return;
-    if (!entryLocation) {
-      toast({ title: "Ingen lagerplats för butiken", variant: "destructive" });
-      return;
-    }
-    setSaving((s) => [...s, key]);
-    try {
-      await saveStock.mutateAsync({
-        productId: row.productId,
-        locationId: entryLocation.id,
-        quantity: value,
-        note: `Totallista ${bounds.fromDate}`,
-      });
-      setDrafts((d) => {
-        const next = { ...d };
-        delete next[key];
-        return next;
-      });
-      toast({ title: `${row.name}: lager ${qtyText(value, row.unit)} ${row.unit}` });
-    } catch (e: any) {
-      toast({ title: "Kunde inte spara lager", description: e?.message, variant: "destructive" });
-    } finally {
-      setSaving((s) => s.filter((k) => k !== key));
-    }
-  };
+  }, [baseGroups, anyExtra, extras]);
 
 
 
@@ -857,17 +771,6 @@ export function TotalOrderedView({
               </PopoverContent>
             </Popover>
             <Button
-              variant={editMode ? "default" : "outline"}
-              size="sm"
-              className="h-11 gap-1.5 rounded-xl text-xs sm:h-10"
-              onClick={() => setEditMode((v) => !v)}
-              disabled={!storeId}
-              title={!storeId ? "Välj butik för att fylla i order och lager" : undefined}
-            >
-              <Pencil className="h-4 w-4" />
-              <span className="truncate">{editMode ? "Klar" : "Fyll i"}</span>
-            </Button>
-            <Button
 
               variant="outline"
               size="sm"
@@ -887,16 +790,6 @@ export function TotalOrderedView({
           </div>
         </CardContent>
       </Card>
-
-      {editMode && (
-        <div className="rounded-xl border border-primary/25 bg-primary/[0.04] px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-          Order läggs på butikens öppna beställning för {orderWeekLabel(bounds.fromDate)} och lager
-          bokförs {entryLocation ? `på ${entryLocation.name}` : "när butiken har en lagerplats"}.
-          Värdet sparas när du lämnar fältet eller trycker Enter.
-        </div>
-      )}
-
-
 
 
 
@@ -1076,51 +969,6 @@ export function TotalOrderedView({
                           </span>
 
                         </button>
-
-                        {/* Inmatning: order till grossisten och lagersaldo direkt på varan */}
-                        {editMode && r.productId && (
-                          <div className="flex flex-wrap items-center gap-2 px-2 pb-1.5 pt-0.5">
-                            <label className="flex items-center gap-1.5">
-                              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-                                Order
-                              </span>
-                              <NumberField
-                                className="w-20"
-                                value={drafts[`order:${r.productId}`] ?? ""}
-                                placeholder={r.onOrder == null ? "0" : qtyText(r.onOrder, r.unit)}
-                                disabled={saving.includes(`order:${r.productId}`)}
-                                onValueChange={(raw) =>
-                                  setDrafts((d) => ({ ...d, [`order:${r.productId}`]: raw }))
-                                }
-                                onBlur={() => commitOrder(r)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") e.currentTarget.blur();
-                                }}
-                              />
-                              <span className="text-[10px] text-muted-foreground">{r.unit}</span>
-                            </label>
-                            <label className="flex items-center gap-1.5">
-                              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-                                Lager
-                              </span>
-                              <NumberField
-                                className="w-20"
-                                value={drafts[`stock:${r.productId}`] ?? ""}
-                                placeholder={r.stock == null ? "0" : qtyText(r.stock, r.unit)}
-                                disabled={!entryLocation || saving.includes(`stock:${r.productId}`)}
-                                onValueChange={(raw) =>
-                                  setDrafts((d) => ({ ...d, [`stock:${r.productId}`]: raw }))
-                                }
-                                onBlur={() => commitStock(r)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") e.currentTarget.blur();
-                                }}
-                              />
-                              <span className="text-[10px] text-muted-foreground">{r.unit}</span>
-                            </label>
-                          </div>
-                        )}
-
 
                         {anyExtra && (
                           <div className="flex flex-wrap gap-1.5 px-2 pb-1 md:hidden">
