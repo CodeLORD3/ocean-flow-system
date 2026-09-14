@@ -30,8 +30,11 @@ export interface TotalChecklistPayload {
   storeName?: string;
   /** Extra rad i sidhuvudet, t.ex. när bara vissa varor är valda. */
   selectionNote?: string;
+  /** Vilka valfria kolumner som ska skrivas ut. */
+  extraColumns?: { stock?: boolean; onOrder?: boolean; sellable?: boolean };
   groups: TotalChecklistGroup[];
 }
+
 
 
 const qty = (v: number, unit: string) =>
