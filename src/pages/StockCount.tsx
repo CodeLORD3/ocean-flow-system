@@ -608,38 +608,33 @@ export default function StockCount() {
             Flera inventeringar per dag går bra. Räkna per lagerplats, lås när allt är klart.
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {!session && effectiveStoreId && (
-            <Button size="sm" className="gap-1.5 text-xs h-9 sm:h-8 font-semibold" onClick={createSession}>
-              <Plus className="h-3.5 w-3.5" /> Påbörja inventering
-            </Button>
-          )}
-          {session && effectiveStoreId && (
-            <Button
-              size="sm"
-              className="gap-1.5 text-xs h-9 sm:h-8 font-semibold"
-              onClick={() => createSessionFor(date)}
-            >
-              <Plus className="h-3.5 w-3.5" /> Skapa inventeringsrapport
-            </Button>
-          )}
-          <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={openPrintDialog}>
-            <Printer className="h-3 w-3" /> Skriv ut
-          </Button>
-          <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={exportCsv}>
-            <Download className="h-3 w-3" /> Exportera
-          </Button>
-          {session && !locked && (
+        {session && effectiveStoreId && (
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5 text-xs h-9 sm:h-8 border-amber-500/40 text-amber-700 hover:bg-amber-500/10"
-              onClick={() => setLockOpen(true)}
+              className="gap-1.5 text-xs h-9 sm:h-8"
+              onClick={() => createSessionFor(date)}
             >
-              <Lock className="h-3 w-3" /> Lås inventeringen
+              <Plus className="h-3.5 w-3.5" /> Ny rapport
             </Button>
-          )}
-        </div>
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={openPrintDialog}>
+              <Printer className="h-3 w-3" /> Skriv ut
+            </Button>
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={exportCsv}>
+              <Download className="h-3 w-3" /> Exportera
+            </Button>
+            {!locked && (
+              <Button
+                size="sm"
+                className="gap-1.5 text-xs h-9 sm:h-8 font-semibold"
+                onClick={() => setLockOpen(true)}
+              >
+                <Lock className="h-3 w-3" /> Lås rapporten
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Filter */}
