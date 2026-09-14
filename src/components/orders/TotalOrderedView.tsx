@@ -744,7 +744,7 @@ export function TotalOrderedView({
                   <span className="truncate">Kolumner</span>
                   {anyExtra && (
                     <Badge variant="secondary" className="rounded-full px-1.5 text-[10px]">
-                      {[cols.stock, cols.onOrder, cols.sellable].filter(Boolean).length}
+                      {[cols.stock, cols.onOrder, cols.combined, cols.sellable].filter(Boolean).length}
                     </Badge>
                   )}
                 </Button>
