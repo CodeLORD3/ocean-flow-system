@@ -202,6 +202,7 @@ export default function StockTransformation() {
                 </button>
               ))}
             </div>
+            </>
           )}
         </div>
       ) : historyLoading ? (
