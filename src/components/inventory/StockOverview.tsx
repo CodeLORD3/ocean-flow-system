@@ -758,9 +758,9 @@ export default function StockOverview({
                     if (isOpen) {
                       rowNodes.push(
                         <tr key={`${g.product_id}-sub`} className="bg-muted/20 border-b">
-                          <td></td>
-                          <td colSpan={9} className="px-2 py-2">
-                            <div className="space-y-1">
+                          <td colSpan={showCosts ? 10 : 9} className="px-2 py-2">
+                            <div className="space-y-1 w-full max-w-[calc(100vw-2rem)] sm:max-w-none overflow-hidden">
+
                               {g.lines.map((l) => {
                                 const kg = qtyToKg(Number(l.quantity) || 0, l.products);
                                 const store = l.storage_locations?.stores?.name;
