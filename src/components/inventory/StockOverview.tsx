@@ -425,62 +425,30 @@ export default function StockOverview({
       )}
 
 
-      {/* Kategoriflikar + sök */}
+      {/* Kategorisorterare + sök */}
       <div className="flex flex-col lg:flex-row gap-2 lg:items-center justify-between">
-        <div className="flex flex-wrap items-center gap-1.5 pb-1">
-          <button
-            onClick={() => {
-              setCategory("__all__");
+        <div className="flex items-center gap-2">
+          <Select
+            value={category}
+            onValueChange={(v) => {
+              setCategory(v);
               setPage(1);
             }}
-            className={cn(
-              "shrink-0 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors border",
-              category === "__all__"
-                ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                : "bg-card text-foreground border-border hover:bg-muted",
-            )}
           >
-            Alla produkter
-            <span
-              className={cn(
-                "text-xs tabular-nums",
-                category === "__all__" ? "text-primary-foreground/70" : "text-muted-foreground",
-              )}
-            >
-              {groups.length}
-            </span>
-          </button>
-          {categories.map(([cat, count]) => {
-            const Icon = CATEGORY_ICONS[cat] || Package2;
-            const active = category === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => {
-                  setCategory(cat);
-                  setPage(1);
-                }}
-                className={cn(
-                  "shrink-0 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors border",
-                  active
-                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                    : "bg-card text-foreground border-border hover:bg-muted",
-                )}
-              >
-                <Icon className="h-3.5 w-3.5 opacity-70" />
-                {cat}
-                <span
-                  className={cn(
-                    "text-xs tabular-nums",
-                    active ? "text-primary-foreground/70" : "text-muted-foreground",
-                  )}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+            <SelectTrigger className="h-9 w-full lg:w-56 text-xs">
+              <SelectValue placeholder="Alla kategorier" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Alla produkter ({groups.length})</SelectItem>
+              {categories.map(([cat, count]) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat} ({count})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+
 
         <div className="flex items-center gap-2">
           <div className="relative flex-1 lg:w-72">
