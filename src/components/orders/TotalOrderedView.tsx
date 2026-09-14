@@ -887,6 +887,16 @@ export function TotalOrderedView({
         </CardContent>
       </Card>
 
+      {editMode && (
+        <div className="rounded-xl border border-primary/25 bg-primary/[0.04] px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+          Order läggs på butikens öppna beställning för {orderWeekLabel(bounds.fromDate)} och lager
+          bokförs {entryLocation ? `på ${entryLocation.name}` : "när butiken har en lagerplats"}.
+          Värdet sparas när du lämnar fältet eller trycker Enter.
+        </div>
+      )}
+
+
+
 
 
       {!isLoading && groups.length === 0 ? (
