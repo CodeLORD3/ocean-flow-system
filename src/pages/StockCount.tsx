@@ -800,6 +800,8 @@ export default function StockCount() {
           <RefreshCw className="h-3 w-3" /> Uppdatera
         </Button>
       </div>
+      </>
+      )}
 
       {/* Tidigare inventeringar — låsta tillfällen + inskickade rapporter, gömda bakom en utfällning */}
       <Card>
