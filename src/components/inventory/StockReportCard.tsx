@@ -280,7 +280,25 @@ export function StockReportCard({
               ))}
             </div>
           )}
+          {blockedCount > 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              {blockedCount} vara(or) döljs: de fanns inte i förra lagerrapporten och har inte
+              kommit in via en godkänd inleverans.
+            </p>
+          )}
+          {restricted && search.trim().length > 0 && matches.length === 0 && (
+            <p className="rounded-md border border-dashed border-border p-3 text-[11px] text-muted-foreground">
+              Ingen träff bland de varor som finns i butiken. Bara varor från förra lagerrapporten
+              eller från en godkänd inleverans kan lagerföras.
+            </p>
+          )}
         </div>
+      )}
+      {restricted && (
+        <p className="text-[11px] text-muted-foreground">
+          Sökningen visar bara varor som fanns i förra lagerrapporten eller kommit in via en
+          godkänd inleverans.
+        </p>
       )}
     </div>
   ) : null;
