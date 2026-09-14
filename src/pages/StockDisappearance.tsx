@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useStores } from "@/hooks/useStores";
-import { useSiteContext } from "@/contexts/SiteContext";
+import { useSite } from "@/contexts/SiteContext";
 import { useStockDisappearance } from "@/hooks/useStockDisappearance";
 
 const fmt = (n: number) =>
