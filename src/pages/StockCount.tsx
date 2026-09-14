@@ -29,6 +29,7 @@ import { type CountListProduct } from "@/lib/inventoryCountListPdf";
 import CountListPrintDialog from "@/components/inventory/CountListPrintDialog";
 import { setBalance, setExpiryDate } from "@/lib/stockLedger";
 import CountStartPanel from "@/components/inventory/CountStartPanel";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "7+";
@@ -123,6 +124,7 @@ export default function StockCount() {
   const { activeStoreId, activeStoreName } = useSite();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const isMobile = useIsMobile();
 
   const { data: stores = [] } = useStores();
   const { data: products = [] } = useProducts();
@@ -302,6 +304,26 @@ export default function StockCount() {
     return m;
   }, [products]);
 
+  const locationIds = useMemo(
+    () => (locations as any[]).map((l: any) => l.id as string),
+    [locations],
+  );
+
+  /** Varor som tidigare funnits på butikens lagerplatser — de ska också gå att räkna. */
+  const pastProductsQuery = useQuery({
+    queryKey: ["stock_count_past_products", effectiveStoreId, locationIds.join(",")],
+    enabled: !!effectiveStoreId && locationIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stock_movements")
+        .select("product_id")
+        .in("location_id", locationIds)
+        .limit(20000);
+      if (error) throw error;
+      return [...new Set((data ?? []).map((m: any) => m.product_id).filter(Boolean))] as string[];
+    },
+  });
+
   const allRows = useMemo<Row[]>(() => {
     if (!effectiveStoreId) return [];
     const locIds = new Map<string, string>();
@@ -334,6 +356,30 @@ export default function StockCount() {
         costPrice: Number(p.cost_price) || 0,
       });
     });
+    // Varor som funnits i lagret tidigare läggs till med 0 som utgångsvärde.
+    const defaultLoc = (locations as any[])[0];
+    if (defaultLoc) {
+      const haveProduct = new Set(rows.map((r) => r.productId));
+      (pastProductsQuery.data ?? []).forEach((pid) => {
+        if (haveProduct.has(pid)) return;
+        const p = productsById.get(pid);
+        if (!p || p.is_active === false) return;
+        haveProduct.add(pid);
+        rows.push({
+          key: `${pid}|${defaultLoc.id}`,
+          productId: pid,
+          locationId: defaultLoc.id,
+          productName: p.name || "—",
+          sku: p.sku ?? null,
+          unit: unitOf(p.unit),
+          category: p.category || "Övrigt",
+          imageUrl: p.image_url ?? null,
+          locationName: defaultLoc.name || "Lager",
+          systemQty: 0,
+          costPrice: Number(p.cost_price) || 0,
+        });
+      });
+    }
     rows.sort(
       (a, b) =>
         collator.compare(a.category, b.category) ||
@@ -341,7 +387,7 @@ export default function StockCount() {
         collator.compare(a.locationName, b.locationName),
     );
     return rows;
-  }, [allStock, locations, productsById, effectiveStoreId]);
+  }, [allStock, locations, productsById, effectiveStoreId, pastProductsQuery.data]);
 
   const categories = useMemo(
     () => [...new Set(allRows.map((r) => r.category))].sort(collator.compare),
@@ -384,6 +430,19 @@ export default function StockCount() {
         return l && l.counted_qty !== null && l.counted_qty !== undefined;
       }).length,
     [rows, linesByKey],
+  );
+
+  /** Inventeringslistan: varor som fått ett värde, senast inmatad först. */
+  const countedRows = useMemo(
+    () =>
+      allRows
+        .filter((r) => linesByKey.get(r.key)?.counted_qty != null)
+        .sort((a, b) => {
+          const ta = linesByKey.get(a.key)?.counted_at ?? "";
+          const tb = linesByKey.get(b.key)?.counted_at ?? "";
+          return tb.localeCompare(ta);
+        }),
+    [allRows, linesByKey],
   );
 
   /** Underlag inför låsning: räknat, ej räknat med saldo, och skillnad i kg och kronor. */
@@ -888,215 +947,238 @@ export default function StockCount() {
 
 
 
-      {/* Lista */}
+      {/* Lista — delad vy: alla varor till vänster, inventerade till höger */}
       {!session ? null : loading ? (
         <div className="space-y-2">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-12 w-full" />
           ))}
         </div>
-      ) : !rows.length ? (
-        <Card>
-          <CardContent className="p-8 text-center text-sm text-muted-foreground">
-            Inga produkter i butikens lager matchar filtret.
-          </CardContent>
-        </Card>
       ) : (
-        <div className="space-y-1.5">
-          {groups.map((g) => {
-            const doneAt = categoryDone[g.category];
-            return (
-            <Card
-              key={g.category}
-              className={`overflow-hidden ${doneAt ? "border-emerald-500/60" : ""}`}
-            >
-              <div
-                className={`w-full px-2 py-1.5 sm:py-1 border-b flex items-center justify-between gap-2 sticky top-0 z-10 backdrop-blur-sm ${
-                  doneAt ? "bg-emerald-500/20" : "bg-muted/80 sm:bg-muted/50"
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => toggleCategory(g.category)}
-                  className="flex items-center gap-1 min-w-0 flex-1 text-left"
-                >
-                  {collapsed.has(g.category) ? (
-                    <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                  ) : (
-                    <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
-                  )}
-                  <span
-                    className={`text-[11px] sm:text-[10px] font-semibold uppercase tracking-wide truncate ${
-                      doneAt ? "text-emerald-700 dark:text-emerald-300" : ""
-                    }`}
-                  >
-                    {g.category}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
-                    · {g.products.length} produkter
-                  </span>
-                </button>
-                <span className="flex items-center gap-1.5 shrink-0">
-                  {doneAt && (
-                    <span className="text-[10px] text-emerald-700 dark:text-emerald-300 whitespace-nowrap">
-                      Klar {new Date(doneAt).toLocaleString("sv-SE", {
-                        timeZone: "Europe/Stockholm",
-                        weekday: "short",
-                        day: "numeric",
-                        month: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  )}
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={doneAt ? "outline" : "default"}
-                    disabled={locked || !session}
-                    onClick={() => toggleCategoryDone(g.category, !doneAt)}
-                    className="h-7 sm:h-5 px-2.5 sm:px-2 text-[11px] sm:text-[10px]"
-                  >
-                    {doneAt ? "Ångra" : "Färdig"}
-                  </Button>
-                </span>
-              </div>
-              {!collapsed.has(g.category) && (
-              <CardContent className="p-0 divide-y divide-border/60">
-                {g.products.map((prodRows) => {
-                  const first = prodRows[0];
-                  const countedTotal = prodRows.reduce((sum, r) => {
-                    const l = linesByKey.get(r.key);
-                    return sum + (l?.counted_qty != null ? Number(l.counted_qty) : 0);
-                  }, 0);
-                  const anyCounted = prodRows.some((r) => linesByKey.get(r.key)?.counted_qty != null);
+        <div className="grid gap-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+          {/* Vänster (dator) / sökträffar (mobil): alla varor per kategori */}
+          {(!isMobile || !!search.trim()) && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {isMobile ? "Sökträffar" : "Alla varor"} · {rows.length} rader
+              </p>
+              {!rows.length ? (
+                <Card>
+                  <CardContent className="p-6 text-center text-xs text-muted-foreground">
+                    Ingen vara matchar sökningen.
+                  </CardContent>
+                </Card>
+              ) : (
+                groups.map((g) => {
+                  const doneAt = categoryDone[g.category];
+                  const isCollapsed = collapsed.has(g.category);
                   return (
-                    <div key={first.productId} className="px-2 py-1.5 sm:py-1">
-                      <div className="flex items-center gap-1.5">
-                        {first.imageUrl ? (
-                          <img
-                            src={first.imageUrl}
-                            alt={first.productName}
-                            className="h-7 w-7 sm:h-5 sm:w-5 rounded object-cover border shrink-0"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="h-7 w-7 sm:h-5 sm:w-5 rounded border bg-muted flex items-center justify-center shrink-0">
-                            <Package className="h-3.5 w-3.5 sm:h-2.5 sm:w-2.5 text-muted-foreground" />
-                          </div>
-                        )}
-                        <span className="text-[13px] sm:text-[11px] font-medium truncate">{first.productName}</span>
-                        <span className="text-[10px] text-muted-foreground shrink-0">
-                          {first.sku ? `${first.sku} · ` : ""}
-                          {first.unit}
-                        </span>
-                        {prodRows.length > 1 && anyCounted && (
-                          <Badge
-                            variant="outline"
-                            className="ml-auto text-[10px] py-0 h-4 font-mono tabular-nums"
+                    <Card
+                      key={g.category}
+                      className={`overflow-hidden ${doneAt ? "border-emerald-500/60" : ""}`}
+                    >
+                      <div
+                        className={`flex w-full items-center justify-between gap-2 border-b px-2 py-1.5 ${
+                          doneAt ? "bg-emerald-500/20" : "bg-muted/50"
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => toggleCategory(g.category)}
+                          className="flex min-w-0 flex-1 items-center gap-1 text-left"
+                        >
+                          {isCollapsed ? (
+                            <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
+                          )}
+                          <span
+                            className={`truncate text-[11px] font-semibold uppercase tracking-wide ${
+                              doneAt ? "text-emerald-700 dark:text-emerald-300" : ""
+                            }`}
                           >
-                            Totalt {fmtQty(countedTotal, first.unit)}
-                          </Badge>
-                        )}
+                            {g.category}
+                          </span>
+                          <span className="ml-1 shrink-0 text-[10px] text-muted-foreground">
+                            · {g.products.length} varor
+                          </span>
+                        </button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={doneAt ? "outline" : "ghost"}
+                          disabled={locked || !session}
+                          onClick={() => toggleCategoryDone(g.category, !doneAt)}
+                          className="h-6 px-2 text-[10px]"
+                        >
+                          {doneAt ? "Ångra" : "Färdig"}
+                        </Button>
                       </div>
-
-                      <div className="space-y-1.5 sm:space-y-0.5">
-                        {prodRows.map((r) => {
-                          const line = linesByKey.get(r.key);
-                          const quality = (line?.quality ?? "") as string;
-                          return (
-                            <div
-                              key={r.key}
-                              className="grid grid-cols-[minmax(0,1fr)_104px] sm:grid-cols-[minmax(0,1fr)_80px_136px_minmax(0,1fr)] gap-1 items-center"
-                            >
-                              <div className="text-[10px] text-muted-foreground truncate pl-0 sm:pl-6">
-                                {r.locationName}
-                                <span className="ml-1 font-mono tabular-nums">
-                                  ({fmtQty(r.systemQty, r.unit)})
-                                </span>
-                              </div>
-                              <Input
-                                type="text"
-                                inputMode="decimal"
-                                pattern="[0-9]*[.,]?[0-9]*"
-                                autoComplete="off"
-                                enterKeyHint="done"
-                                disabled={locked || !session}
-                                defaultValue={line?.counted_qty ?? ""}
-                                placeholder={r.unit}
-                                className="h-10 sm:h-6 px-1.5 text-right text-base sm:text-[11px] font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                onFocus={(e) => e.currentTarget.select()}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") e.currentTarget.blur();
-                                }}
-                                onBlur={(e) => {
-                                  const raw = e.target.value.replace(",", ".").trim();
-                                  const val = raw === "" ? null : Number(raw);
-                                  if (val !== null && Number.isNaN(val)) return;
-                                  if ((line?.counted_qty ?? null) === val) return;
-                                  saveLine(r, { counted_qty: val });
-                                }}
-                              />
-                              <div className="col-span-2 sm:col-span-1 flex items-center gap-1 min-w-0">
-                                <select
-                                  disabled={locked || !session}
-                                  value={quality}
-                                  onChange={(e) =>
-                                    saveLine(r, {
-                                      quality: (e.target.value || null) as Quality | null,
-                                    })
-                                  }
-                                  className={`h-9 sm:h-6 min-w-0 flex-1 rounded-md border px-1.5 text-[13px] sm:text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
-                                  title="Hållbarhet: antal dagar från inventeringsdatumet, med veckodag och datum"
+                      {!isCollapsed && (
+                        <CardContent className="divide-y divide-border/60 p-0">
+                          {g.products.flatMap((prodRows) =>
+                            prodRows.map((r) => {
+                              const line = linesByKey.get(r.key);
+                              const isCounted = line?.counted_qty != null;
+                              return (
+                                <div
+                                  key={r.key}
+                                  className={`flex items-center gap-2 px-2 py-1.5 transition-colors ${
+                                    isCounted ? "bg-emerald-500/15" : ""
+                                  }`}
                                 >
-                                  <option value="">Hållbarhet</option>
-                                  <option
-                                    value=""
-                                    disabled
-                                    className="font-semibold"
-                                    style={{
-                                      backgroundColor: "rgba(251, 191, 36, 0.45)",
-                                      color: "#78350f",
+                                  {r.imageUrl ? (
+                                    <img
+                                      src={r.imageUrl}
+                                      alt={r.productName}
+                                      className="h-7 w-7 shrink-0 rounded border object-cover"
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded border bg-muted">
+                                      <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                                    </div>
+                                  )}
+                                  <span className="min-w-0 flex-1">
+                                    <span
+                                      className={`block truncate text-[13px] font-medium ${
+                                        isCounted ? "text-emerald-800 dark:text-emerald-200" : ""
+                                      }`}
+                                    >
+                                      {r.productName}
+                                    </span>
+                                    <span className="block truncate text-[10px] text-muted-foreground">
+                                      {prodRows.length > 1 ? `${r.locationName} · ` : ""}
+                                      Lager{" "}
+                                      <span className="font-mono tabular-nums">
+                                        {fmtQty(r.systemQty, r.unit)}
+                                      </span>
+                                    </span>
+                                  </span>
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    pattern="[0-9]*[.,]?[0-9]*"
+                                    autoComplete="off"
+                                    enterKeyHint="done"
+                                    disabled={locked || !session}
+                                    defaultValue={line?.counted_qty ?? ""}
+                                    placeholder={r.unit}
+                                    className="h-10 w-[92px] shrink-0 px-1.5 text-right font-mono text-base tabular-nums sm:h-8 sm:text-sm"
+                                    onFocus={(e) => e.currentTarget.select()}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") e.currentTarget.blur();
                                     }}
-                                  >
-                                    — Idag {dayLabel(date)} —
-                                  </option>
-                                  {QUALITY_DAYS.map((d) => {
-                                    const to = holdsUntil(date, d);
-                                    return (
-                                      <option key={d} value={d}>
-                                        {d === "7+"
-                                          ? "7+ dagar"
-                                          : `${d} ${d === "1" ? "dag" : "dagar"}${to ? ` · ${dayLabel(to)}` : ""}`}
-                                      </option>
-                                    );
-                                  })}
-                                 </select>
-                               </div>
-                              <Input
-                                disabled={locked || !session}
-                                defaultValue={line?.comment ?? ""}
-                                placeholder="Kommentar"
-                                className="col-span-2 sm:col-span-1 h-9 sm:h-6 px-1.5 text-[13px] sm:text-[11px]"
-                                onBlur={(e) => {
-                                  const val = e.target.value.trim() || null;
-                                  if ((line?.comment ?? null) === val) return;
-                                  saveLine(r, { comment: val });
-                                }}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                                    onBlur={(e) => {
+                                      const raw = e.target.value.replace(",", ".").trim();
+                                      const val = raw === "" ? null : Number(raw);
+                                      if (val !== null && Number.isNaN(val)) return;
+                                      if ((line?.counted_qty ?? null) === val) return;
+                                      saveLine(r, { counted_qty: val });
+                                    }}
+                                  />
+                                </div>
+                              );
+                            }),
+                          )}
+                        </CardContent>
+                      )}
+                    </Card>
                   );
-                })}
-              </CardContent>
+                })
+              )}
+            </div>
+          )}
+
+          {/* Höger (dator) / listan som byggs upp (mobil): inventerade varor */}
+          <div className="space-y-1.5 lg:sticky lg:top-2 lg:self-start">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Inventeringslistan · {countedRows.length} varor
+            </p>
+            <Card>
+              {!countedRows.length ? (
+                <CardContent className="p-6 text-center text-xs text-muted-foreground">
+                  Skriv in ett värde på en vara — den hamnar här och blir grön i listan.
+                </CardContent>
+              ) : (
+                <CardContent className="divide-y divide-border/60 p-0">
+                  {countedRows.map((r) => {
+                    const line = linesByKey.get(r.key);
+                    const counted = Number(line?.counted_qty ?? 0);
+                    const diff = counted - r.systemQty;
+                    const quality = (line?.quality ?? "") as string;
+                    return (
+                      <div key={r.key} className="space-y-1 px-2 py-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[13px] font-medium">
+                              {r.productName}
+                            </span>
+                            <span className="block truncate text-[10px] text-muted-foreground">
+                              {r.category}
+                              {" · "}
+                              <span className="font-mono tabular-nums">
+                                {diff === 0
+                                  ? "ingen skillnad"
+                                  : `${diff > 0 ? "+" : ""}${diff.toLocaleString("sv-SE", {
+                                      maximumFractionDigits: 1,
+                                    })} ${r.unit}`}
+                              </span>
+                            </span>
+                          </span>
+                          <span className="shrink-0 font-mono text-sm font-semibold tabular-nums">
+                            {fmtQty(counted, r.unit)}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={locked || !session}
+                            className="h-7 px-1.5 text-[10px] text-muted-foreground"
+                            onClick={() => saveLine(r, { counted_qty: null })}
+                          >
+                            Ta bort
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <select
+                            disabled={locked || !session}
+                            value={quality}
+                            onChange={(e) =>
+                              saveLine(r, { quality: (e.target.value || null) as Quality | null })
+                            }
+                            className={`h-7 min-w-0 flex-1 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
+                          >
+                            <option value="">Hållbarhet</option>
+                            {QUALITY_DAYS.map((d) => {
+                              const to = holdsUntil(date, d);
+                              return (
+                                <option key={d} value={d}>
+                                  {d === "7+"
+                                    ? "7+ dagar"
+                                    : `${d} ${d === "1" ? "dag" : "dagar"}${to ? ` · ${dayLabel(to)}` : ""}`}
+                                </option>
+                              );
+                            })}
+                          </select>
+                          <Input
+                            disabled={locked || !session}
+                            defaultValue={line?.comment ?? ""}
+                            placeholder="Kommentar"
+                            className="h-7 flex-1 px-1.5 text-[11px]"
+                            onBlur={(e) => {
+                              const val = e.target.value.trim() || null;
+                              if ((line?.comment ?? null) === val) return;
+                              saveLine(r, { comment: val });
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CardContent>
               )}
             </Card>
-            );
-          })}
-
+          </div>
         </div>
       )}
 
