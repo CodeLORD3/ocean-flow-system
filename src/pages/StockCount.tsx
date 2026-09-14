@@ -633,7 +633,7 @@ export default function StockCount() {
               : "Starta en rapport, räkna av lagret och lås. Du kan göra flera per dag."}
           </p>
         </div>
-        {session && effectiveStoreId && (
+        {session && !locked && effectiveStoreId && (
           <div className="flex items-center gap-1.5 flex-nowrap w-full sm:w-auto">
             <Button
               size="sm"
@@ -674,6 +674,16 @@ export default function StockCount() {
         )}
       </div>
 
+      {/* Klar rapport — tom sida med stor startknapp, rapporten ligger i listan nedan */}
+      {session && locked && effectiveStoreId && (
+        <Button
+          className="h-12 w-full gap-2 text-sm font-semibold"
+          onClick={() => createSessionFor(date)}
+        >
+          <Plus className="h-4 w-4" /> Skapa inventeringsrapport
+        </Button>
+      )}
+
       {/* Start — guidat läge när ingen rapport är igång för datumet */}
       {!session && (
         <CountStartPanel
@@ -689,7 +699,7 @@ export default function StockCount() {
         />
       )}
 
-      {session && (
+      {session && !locked && (
       <>
       {/* Liten statusrad: dag, läge, ev. flera rapporter */}
       <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -741,9 +751,6 @@ export default function StockCount() {
         >
           Ej räknade
         </button>
-        <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-          {countedCount}/{rows.length}
-        </span>
       </div>
 
       <div className="relative w-full">
@@ -759,7 +766,7 @@ export default function StockCount() {
       )}
 
       {/* Lista — delad vy: alla varor till vänster, inventerade till höger */}
-      {!session ? null : loading ? (
+      {!session || locked ? null : loading ? (
         <div className="space-y-2">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-12 w-full" />
@@ -1158,23 +1165,10 @@ export default function StockCount() {
             className="sm:hidden fixed bottom-14 left-0 right-0 z-30 border-t bg-background/95 backdrop-blur px-3 py-2 flex items-center justify-between gap-2"
             style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
           >
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold truncate">
-                {countedCount} av {rows.length} räknade
-              </p>
-              <p className="text-[10px] text-muted-foreground truncate">
-                {weekdayLong(date)} {date} · {locked ? "Låst" : session ? "Öppen" : "Ingen inventering"}
-              </p>
-            </div>
-            {!session ? (
-              <Button size="sm" className="h-10 gap-1.5 text-xs font-semibold" onClick={createSession}>
-                <Plus className="h-4 w-4" /> Påbörja
-              </Button>
-            ) : locked ? (
+            {!session || locked ? (
               <Button
-                size="sm"
-                className="h-10 gap-1.5 text-xs font-semibold"
-                onClick={() => createSessionFor(date)}
+                className="h-11 w-full gap-1.5 text-sm font-semibold"
+                onClick={() => (session ? createSessionFor(date) : createSession())}
               >
                 <Plus className="h-4 w-4" /> Skapa inventeringsrapport
               </Button>
