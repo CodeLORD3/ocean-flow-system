@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ClipboardCheck, Check, Lock, Printer, Download, Search, Plus, Package, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
+import { ClipboardCheck, Check, Lock, Printer, Download, Search, Plus, Package, RefreshCw, ChevronDown, ChevronRight, Camera, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,64 @@ import CountListPrintDialog from "@/components/inventory/CountListPrintDialog";
 import { setBalance, setExpiryDate } from "@/lib/stockLedger";
 import CountStartPanel from "@/components/inventory/CountStartPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { PRODUCT_PHOTO_ENTITY, useUploadEntityImage } from "@/hooks/useEntityImages";
+
+/** Liten kameraknapp per rad — laddar upp bild direkt på produkten. */
+function RowPhotoButton({
+  productId,
+  productName,
+  disabled,
+}: {
+  productId: string;
+  productName: string;
+  disabled?: boolean;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const upload = useUploadEntityImage();
+  const { toast } = useToast();
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    try {
+      for (const file of Array.from(files)) {
+        await upload.mutateAsync({ entityType: PRODUCT_PHOTO_ENTITY, entityId: productId, file });
+      }
+      toast({ title: "Bild sparad", description: productName });
+    } catch (e: any) {
+      toast({ title: "Kunde inte ladda upp", description: e?.message, variant: "destructive" });
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  return (
+    <>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => handleFiles(e.target.files)}
+      />
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        title="Ta bild"
+        disabled={disabled || upload.isPending}
+        className="h-7 w-7 shrink-0 text-muted-foreground"
+        onClick={() => fileRef.current?.click()}
+      >
+        {upload.isPending ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Camera className="h-3.5 w-3.5" />
+        )}
+      </Button>
+    </>
+  );
+}
 
 
 type Quality = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "7+";
@@ -87,6 +145,26 @@ const weekdayLong = (iso: string) => {
   const wd = new Intl.DateTimeFormat("sv-SE", { weekday: "long", timeZone: "Europe/Stockholm" })
     .format(new Date(`${iso}T12:00:00Z`));
   return wd.charAt(0).toUpperCase() + wd.slice(1);
+};
+
+/** "idag", "imorgon" eller veckodag + datum, t.ex. "imorgon tis 15/9". */
+const relDayLabel = (from: string, to: string) => {
+  if (!from || !to) return "";
+  const diff = Math.round(
+    (new Date(`${to}T12:00:00Z`).getTime() - new Date(`${from}T12:00:00Z`).getTime()) / 86_400_000,
+  );
+  const base = dayLabel(to);
+  if (diff === 0) return `idag ${base}`;
+  if (diff === 1) return `imorgon ${base}`;
+  return base;
+};
+
+/** Etikett i hållbarhetsvalet: "3 dagar · tors 18/9". */
+const qualityLabel = (countDate: string, d: string) => {
+  if (d === "7+") return "7+ dagar";
+  const to = holdsUntil(countDate, d);
+  const days = `${d} ${d === "1" ? "dag" : "dagar"}`;
+  return to ? `${days} · ${relDayLabel(countDate, to)}` : days;
 };
 
 /** Antal hela dagar mellan två datum. */
@@ -846,8 +924,16 @@ export default function StockCount() {
                           {doneAt ? "Ångra" : "Färdig"}
                         </Button>
                       </div>
-                      {!isCollapsed && (
-                        <CardContent className="divide-y divide-border/60 p-0">
+                       {!isCollapsed && (
+                         <CardContent className="divide-y divide-border/60 p-0">
+                           <div className="flex items-center gap-1.5 bg-muted/30 px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                             <span className="w-6 shrink-0" />
+                             <span className="min-w-0 flex-1">Produkt</span>
+                             <span className="w-[62px] shrink-0 text-right">Antal</span>
+                             <span className="w-[136px] shrink-0 text-center">Hållbarhet</span>
+                             <span className="w-[96px] shrink-0">Kommentar</span>
+                             <span className="w-7 shrink-0 text-center">Bild</span>
+                           </div>
                           {g.products.flatMap((prodRows) =>
                             prodRows.map((r) => {
                               const line = linesByKey.get(r.key);
@@ -917,31 +1003,34 @@ export default function StockCount() {
                                         quality: (e.target.value || null) as Quality | null,
                                       })
                                     }
-                                    className={`h-7 w-[104px] shrink-0 rounded-md border px-1 text-[11px] font-medium disabled:opacity-50 ${qualityClass(
-                                      (line?.quality ?? "") as string,
-                                    )}`}
-                                    title="Hållbarhet"
-                                  >
-                                    <option value="">Hållbarhet</option>
-                                    {QUALITY_DAYS.map((d) => (
-                                      <option key={d} value={d}>
-                                        {d === "7+"
-                                          ? "7+ dagar"
-                                          : `${d} ${d === "1" ? "dag" : "dagar"}`}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <Input
-                                    disabled={locked || !session}
-                                    defaultValue={line?.comment ?? ""}
-                                    placeholder="Kommentar"
-                                    className="h-7 w-[96px] shrink-0 px-1.5 text-[11px]"
-                                    onBlur={(e) => {
-                                      const val = e.target.value.trim() || null;
-                                      if ((line?.comment ?? null) === val) return;
-                                      saveLine(r, { comment: val });
-                                    }}
-                                  />
+                                     className={`h-7 w-[136px] shrink-0 rounded-md border px-1 text-[11px] font-medium disabled:opacity-50 ${qualityClass(
+                                       (line?.quality ?? "") as string,
+                                     )}`}
+                                     title="Hållbarhet"
+                                   >
+                                     <option value="">Välj hållbarhet</option>
+                                     {QUALITY_DAYS.map((d) => (
+                                       <option key={d} value={d}>
+                                         {qualityLabel(date, d)}
+                                       </option>
+                                     ))}
+                                   </select>
+                                   <Input
+                                     disabled={locked || !session}
+                                     defaultValue={line?.comment ?? ""}
+                                     placeholder="Kommentar"
+                                     className="h-7 w-[96px] shrink-0 px-1.5 text-[11px]"
+                                     onBlur={(e) => {
+                                       const val = e.target.value.trim() || null;
+                                       if ((line?.comment ?? null) === val) return;
+                                       saveLine(r, { comment: val });
+                                     }}
+                                   />
+                                   <RowPhotoButton
+                                     productId={r.productId}
+                                     productName={r.productName}
+                                     disabled={locked || !session}
+                                   />
                                 </div>
                               );
                             }),
@@ -1018,17 +1107,12 @@ export default function StockCount() {
                               }
                               className={`h-7 min-w-0 flex-1 rounded-md border px-1.5 text-[11px] font-medium disabled:opacity-50 ${qualityClass(quality)}`}
                             >
-                              <option value="">Hållbarhet</option>
-                              {QUALITY_DAYS.map((d) => {
-                                const to = holdsUntil(date, d);
-                                return (
-                                  <option key={d} value={d}>
-                                    {d === "7+"
-                                      ? "7+ dagar"
-                                      : `${d} ${d === "1" ? "dag" : "dagar"}${to ? ` · ${dayLabel(to)}` : ""}`}
-                                  </option>
-                                );
-                              })}
+                              <option value="">Välj hållbarhet</option>
+                              {QUALITY_DAYS.map((d) => (
+                                <option key={d} value={d}>
+                                  {qualityLabel(date, d)}
+                                </option>
+                              ))}
                             </select>
                             <Input
                               disabled={locked || !session}
