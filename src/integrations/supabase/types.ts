@@ -17541,6 +17541,28 @@ export type Database = {
       }
       stock_reconciliation_check: { Args: { _source?: string }; Returns: Json }
       stock_write_allowed: { Args: never; Returns: boolean }
+      store_report_allowed_products: {
+        Args: { _store_id: string }
+        Returns: {
+          product_id: string
+          source: string
+        }[]
+      }
+      store_stock_disappearance: {
+        Args: { _from: string; _store_id: string; _to: string }
+        Returns: {
+          disappeared_qty: number
+          end_qty: number
+          product_id: string
+          product_name: string
+          received_qty: number
+          sku: string
+          sold_qty: number
+          start_qty: number
+          unit: string
+          waste_qty: number
+        }[]
+      }
       sumup_name_key: { Args: { _name: string }; Returns: string }
       svensk_dag: { Args: { _grans?: string; _ts: string }; Returns: string }
       trace_lot_to_invoices: {
