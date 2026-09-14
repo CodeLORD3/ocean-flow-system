@@ -880,6 +880,13 @@ export default function StockOverview({
                                 <ProductPhotosGallery productId={g.product_id} productName={g.name} />
                               </div>
 
+                              {/* In- och utflöde över tid för produkten */}
+                              <ProductStockFlow
+                                productId={g.product_id}
+                                productName={g.name}
+                                unit={g.unit}
+                              />
+
                               {/* Spårbarhet som rullgardin inne i produkten */}
                               <ProductTraceabilityInline
                                 productId={g.product_id}
