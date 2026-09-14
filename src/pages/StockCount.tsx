@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ClipboardCheck, Lock, Printer, Download, Search, Plus, Package, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
+import { ClipboardCheck, Check, Lock, Printer, Download, Search, Plus, Package, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -552,7 +552,7 @@ export default function StockCount() {
     qc.invalidateQueries({ queryKey: ["stock_count_history", effectiveStoreId] });
     historyQuery.refetch();
     toast({
-      title: "Inventeringen är låst",
+      title: "Inventeringsrapporten är klar",
       description: failed
         ? `${written} rader bokfördes i lagret, ${failed} misslyckades.`
         : `${written} rader bokfördes i lagret.`,
@@ -667,7 +667,7 @@ export default function StockCount() {
                 className="gap-1 text-[11px] sm:text-xs h-8 px-2 font-semibold flex-1 sm:flex-none"
                 onClick={() => setLockOpen(true)}
               >
-                <Lock className="h-3 w-3" /> Lås
+                <Check className="h-3 w-3" /> Klar
               </Button>
             )}
           </div>
@@ -1184,7 +1184,7 @@ export default function StockCount() {
                 className="h-10 gap-1.5 text-xs font-semibold"
                 onClick={() => setLockOpen(true)}
               >
-                <Lock className="h-4 w-4" /> Lås
+                <Check className="h-4 w-4" /> Klar
               </Button>
             )}
           </div>
@@ -1196,10 +1196,10 @@ export default function StockCount() {
       <Dialog open={lockOpen} onOpenChange={setLockOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Lås inventeringen?</DialogTitle>
+            <DialogTitle>Klar med inventeringen?</DialogTitle>
             <DialogDescription>
-              {storeName} — {date}. Vid låsning skrivs de räknade saldona in i lagret och raderna
-              kan inte längre ändras.
+              {storeName} — {date}. Inventeringsrapporten skapas, de räknade saldona blir det nya
+              lagret och raderna kan inte längre ändras.
             </DialogDescription>
           </DialogHeader>
 
@@ -1261,7 +1261,7 @@ export default function StockCount() {
               Avbryt
             </Button>
             <Button onClick={lockSession} className="gap-1.5">
-              <Lock className="h-3.5 w-3.5" /> Lås
+              <Check className="h-3.5 w-3.5" /> Klar
             </Button>
           </DialogFooter>
         </DialogContent>
