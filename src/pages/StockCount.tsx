@@ -1063,7 +1063,7 @@ export default function StockCount() {
                     </span>
                     <span className="flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
                       <span>{lineCount} rader</span>
-                      {h.locked_at && <span className="hidden sm:inline">låst {stampLabel(h.locked_at)}</span>}
+                      
                     </span>
                   </button>
                 );
