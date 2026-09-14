@@ -1053,7 +1053,6 @@ export default function StockCount() {
                       <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
                       <span className="truncate text-[11px] font-medium">
                         {dayLabel(h.count_date)} {h.count_date}
-                        {h.label ? ` · ${h.label}` : ""}
                       </span>
                       <Badge
                         variant="outline"
