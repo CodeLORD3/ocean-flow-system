@@ -633,7 +633,7 @@ export default function StockCount() {
               : "Starta en rapport, räkna av lagret och lås. Du kan göra flera per dag."}
           </p>
         </div>
-        {session && effectiveStoreId && (
+        {session && !locked && effectiveStoreId && (
           <div className="flex items-center gap-1.5 flex-nowrap w-full sm:w-auto">
             <Button
               size="sm"
