@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { balancesAtLocation, setBalance } from "@/lib/stockLedger";
 
 /**
  * Enkel daglig lagerrapport per butik.
@@ -7,7 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
  * Butiksansvarig söker fram produkter, anger mängd i produktens enhet och
  * skickar in listan. Rapporten lagras som ett butiksvitt underlag
  * (daily_stock_sheets med location_id = null) och låses vid inskickning.
- * Ingen lagerbokföring sker — detta är ett underlag, inte en avstämning.
+ *
+ * Rapporten är sanningen om butikens lager: vid inskickning sätts saldot på
+ * butikens inventeringsplats till rapportens mängder, och produkter som inte
+ * står med nollställs. Allt bokförs som inventeringsrörelser i stock_movements.
  */
 
 export const todayStockholm = () =>
@@ -244,6 +248,101 @@ export function useRemoveStockReportLine() {
   });
 }
 
+/**
+ * Lagerrapporten är sanningen om butikens lager.
+ *
+ * När rapporten skickas in sätts saldot på butikens inventeringsplats till
+ * exakt de mängder butiken skrivit, och allt annat som ligger kvar på platsen
+ * nollställs — rapporten är hela lagret, inte ett tillägg. Skrivningen går
+ * genom stock_movements (setBalance), så varje ändring är spårbar.
+ */
+export async function applyStockReportToStock(sheetId: string) {
+  const { data: sheet, error: sheetErr } = await supabase
+    .from("daily_stock_sheets")
+    .select("id, store_id, sheet_date")
+    .eq("id", sheetId)
+    .maybeSingle();
+  if (sheetErr) throw sheetErr;
+  if (!sheet) throw new Error("Lagerrapporten kunde inte läsas.");
+
+  const { data: store, error: storeErr } = await supabase
+    .from("stores")
+    .select("name, inventory_location_id")
+    .eq("id", (sheet as any).store_id)
+    .maybeSingle();
+  if (storeErr) throw storeErr;
+  const locationId = (store as any)?.inventory_location_id as string | null | undefined;
+  if (!locationId) {
+    throw new Error(
+      `${(store as any)?.name || "Butiken"} har ingen utpekad inventeringsplats. ` +
+        "Ange den under Inställningar → Lagerplatser innan lagerrapporten skickas in.",
+    );
+  }
+  const { data: loc, error: locErr } = await supabase
+    .from("storage_locations")
+    .select("id, store_id")
+    .eq("id", locationId)
+    .maybeSingle();
+  if (locErr) throw locErr;
+  if (!loc || (loc as any).store_id !== (sheet as any).store_id) {
+    throw new Error(
+      "Butikens inventeringsplats finns inte längre, eller tillhör en annan butik. " +
+        "Rätta den under Inställningar → Lagerplatser.",
+    );
+  }
+
+  const { data: lineRows, error: lineErr } = await supabase
+    .from("daily_stock_sheet_lines")
+    .select("product_id, counted_qty_kg, cost_price")
+    .eq("sheet_id", sheetId);
+  if (lineErr) throw lineErr;
+
+  const reported = new Map<string, { qty: number; cost: number | null }>();
+  for (const r of lineRows || []) {
+    const pid = (r as any).product_id as string | null;
+    if (!pid) continue;
+    reported.set(pid, {
+      qty: Number((r as any).counted_qty_kg) || 0,
+      cost: Number((r as any).cost_price) || null,
+    });
+  }
+
+  const note = `Lagerrapport ${(sheet as any).sheet_date}`;
+  let changed = 0;
+
+  for (const [productId, line] of reported) {
+    const movement = await setBalance({
+      productId,
+      locationId,
+      targetQuantityKg: line.qty,
+      movementType: "inventering",
+      unitCost: line.cost,
+      note,
+      referenceType: "stock_report",
+      referenceId: sheetId,
+    });
+    if (movement) changed += 1;
+  }
+
+  // Allt som inte står i rapporten finns inte i butiken — nollställs.
+  const existing = await balancesAtLocation(locationId);
+  for (const row of existing) {
+    if (reported.has(row.productId)) continue;
+    const movement = await setBalance({
+      productId: row.productId,
+      locationId,
+      targetQuantityKg: 0,
+      movementType: "inventering",
+      note: `${note} — saknas i rapporten`,
+      referenceType: "stock_report",
+      referenceId: sheetId,
+    });
+    if (movement) changed += 1;
+  }
+
+  return { locationId, reportedCount: reported.size, changed };
+}
+
 export function useSubmitStockReport() {
   const qc = useQueryClient();
   return useMutation({
@@ -258,10 +357,16 @@ export function useSubmitStockReport() {
         })
         .eq("id", sheetId);
       if (error) throw error;
+      // Rapportens värden blir lagret direkt vid inskickning.
+      return await applyStockReportToStock(sheetId);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["stock-report"] });
       qc.invalidateQueries({ queryKey: ["stock-report-archive"] });
+      qc.invalidateQueries({ queryKey: ["stock"] });
+      qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["stock_movements"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
     },
   });
 }

@@ -174,8 +174,10 @@ export function StockReportCard({
   const handleSubmit = async () => {
     if (!report) return;
     try {
-      await submit.mutateAsync({ sheetId: report.id, closedBy: staffName });
-      toast.success("Lagerrapporten är inskickad för i dag");
+      const res = await submit.mutateAsync({ sheetId: report.id, closedBy: staffName });
+      toast.success(
+        `Lagerrapporten är inskickad — butikens lager är uppdaterat med ${res?.reportedCount ?? 0} produkter`,
+      );
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte skicka in rapporten");
     }
@@ -441,8 +443,8 @@ export function StockReportCard({
       </div>
       <p className="text-[11px] text-muted-foreground">
         {submitted
-          ? `Klar för i dag — inskickad av ${report?.closed_by || staffName}.`
-          : "Sök produkt, ange mängd i produktens enhet och bekräfta. Skicka in när allt är räknat. Dålig täckning i kylen? Skriv ut blanketten och fyll i för hand."}
+          ? `Klar för i dag — inskickad av ${report?.closed_by || staffName}. Butikens lager följer den här listan.`
+          : "Sök produkt, ange mängd i produktens enhet och bekräfta. Listan blir butikens lager när du skickar in — det som inte står med nollställs. Dålig täckning i kylen? Skriv ut blanketten och fyll i för hand."}
       </p>
     </CardHeader>
   );

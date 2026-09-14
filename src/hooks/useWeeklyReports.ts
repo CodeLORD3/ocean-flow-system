@@ -191,10 +191,7 @@ export function useCreateWeeklyReportFull() {
 
       await Promise.all(promises);
 
-      // If finalized, update stock
-      if (params.status === "finalized" && inventoryLines.length > 0) {
-        await syncInventoryToStock(reportId, inventoryLines, params.store_id);
-      }
+      // Veckorapporten rör inte lagret. Lagerrapporten är enda källan till saldo.
 
       await logActivity({
         action_type: "create",
@@ -264,9 +261,7 @@ export function useUpdateWeeklyReportFull() {
       }
       await Promise.all(promises);
 
-      if (params.status === "finalized" && inventoryLines.length > 0) {
-        await syncInventoryToStock(id, inventoryLines, store_id);
-      }
+      // Veckorapporten rör inte lagret. Lagerrapporten är enda källan till saldo.
 
       await logActivity({
         action_type: "update",
@@ -284,57 +279,3 @@ export function useUpdateWeeklyReportFull() {
   });
 }
 
-async function syncInventoryToStock(reportId: string, lines: InventoryLine[], storeId: string) {
-  // Inventeringen i veckorapporten är en räkning på butikens utpekade
-  // inventeringsplats (stores.inventory_location_id). Ingen namnmatchning —
-  // byter någon namn på ett lager, eller lägger till ett andra säljlager,
-  // ska räkningen inte kunna glida över till fel plats.
-  const { data: store, error: storeErr } = await supabase
-    .from("stores")
-    .select("name, inventory_location_id")
-    .eq("id", storeId)
-    .maybeSingle();
-  if (storeErr) throw storeErr;
-
-  const locationId = (store as any)?.inventory_location_id as string | null | undefined;
-  if (!locationId) {
-    throw new Error(
-      `${(store as any)?.name || "Butiken"} har ingen utpekad inventeringsplats. ` +
-        "Ange den under Inställningar → Lagerplatser innan veckorapporten inventeras.",
-    );
-  }
-
-  // Platsen måste fortfarande tillhöra butiken — annars bokförs räkningen i fel lager.
-  const { data: loc, error: locErr } = await supabase
-    .from("storage_locations")
-    .select("id, name, store_id")
-    .eq("id", locationId)
-    .maybeSingle();
-  if (locErr) throw locErr;
-  if (!loc || (loc as any).store_id !== storeId) {
-    throw new Error(
-      "Butikens utpekade inventeringsplats finns inte längre, eller tillhör en annan butik. " +
-        "Rätta den under Inställningar → Lagerplatser.",
-    );
-  }
-  const pick = loc as { id: string; name: string };
-
-
-  for (const line of lines) {
-    await setBalance({
-      productId: line.product_id,
-      locationId: pick.id,
-      targetQuantityKg: Number(line.quantity),
-      movementType: "inventering",
-      note: "Inventering via veckorapport",
-    });
-
-    await logActivity({
-      action_type: "update",
-      description: `Lagerkorrigering via veckorapport`,
-      entity_type: "product",
-      entity_id: line.product_id,
-      details: { quantity: line.quantity, report_id: reportId, location_id: pick.id },
-    });
-  }
-}
