@@ -999,9 +999,9 @@ export default function StockCount() {
                       </div>
                     );
                   })}
-                </CardContent>
+                </div>
               )}
-            </Card>
+            </div>
           </div>
         </div>
       )}
