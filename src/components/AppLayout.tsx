@@ -104,8 +104,16 @@ function AccountMenu({ portalItems }: { portalItems?: React.ReactNode }) {
         <DropdownMenuItem className="text-xs gap-2 cursor-pointer" onClick={() => navigate("/profile")}>
           <UserRound className="h-3.5 w-3.5" /> Min profil
         </DropdownMenuItem>
+        {/* Portalväljare direkt i profillistan på mobil */}
+        {portalItems && (
+          <div className="sm:hidden">
+            <DropdownMenuSeparator />
+            {portalItems}
+            <DropdownMenuSeparator />
+          </div>
+        )}
         {portalCount > 1 && (
-          <DropdownMenuItem className="text-xs gap-2 cursor-pointer" onClick={() => navigate("/choose-portal")}>
+          <DropdownMenuItem className="hidden sm:flex text-xs gap-2 cursor-pointer" onClick={() => navigate("/choose-portal")}>
             <ArrowLeftRight className="h-3.5 w-3.5" /> Byt portal
           </DropdownMenuItem>
         )}
