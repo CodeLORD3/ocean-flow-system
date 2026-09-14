@@ -256,7 +256,7 @@ export function TotalOrderedView({
     setTo(iso(addDays(start, 6)));
   };
 
-  const { groups, orderCount, productCount, categoryOptions } = useMemo(() => {
+  const { groups: baseGroups, orderCount, productCount, categoryOptions } = useMemo(() => {
     const term = productSearch.trim().toLowerCase();
     const selected = picked.length > 0 ? new Set(picked) : null;
     const map = new Map<
