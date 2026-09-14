@@ -488,6 +488,7 @@ export function TotalOrderedView({
           packed: r.packed,
           stock: r.stock ?? null,
           onOrder: r.onOrder ?? null,
+          combined: r.combined ?? null,
           sellable: r.sellable ?? null,
           orderCount: r.orders.length,
           types: byType(r)
