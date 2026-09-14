@@ -1002,7 +1002,7 @@ export default function StockCount() {
             ) : (
               <ChevronRight className="h-3 w-3" />
             )}
-            Tidigare inventeringar
+            Inventeringsrapporter
           </span>
           <span className="text-[10px] text-muted-foreground">
             {(historyQuery.data ?? []).length} låsta ·{" "}
