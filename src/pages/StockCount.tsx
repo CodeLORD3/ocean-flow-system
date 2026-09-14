@@ -1054,7 +1054,7 @@ export default function StockCount() {
                     </span>
                     <span className="flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
                       <span>{lineCount} rader</span>
-                      {h.locked_at && <span>låst {stampLabel(h.locked_at)}</span>}
+                      {h.locked_at && <span className="hidden sm:inline">låst {stampLabel(h.locked_at)}</span>}
                     </span>
                   </button>
                 );
@@ -1107,7 +1107,7 @@ export default function StockCount() {
                           })}{" "}
                           kg
                         </span>
-                        {r.closed_at && <span>{stampLabel(r.closed_at)}</span>}
+                        {r.closed_at && <span className="hidden sm:inline">{stampLabel(r.closed_at)}</span>}
                       </span>
                     </button>
                     {isOpen && (
