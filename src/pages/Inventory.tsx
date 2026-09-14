@@ -1653,6 +1653,7 @@ export default function Inventory() {
             { v: "overview" as const, l: "Samlad lagerbild", s: "Samlad" },
             { v: "locations" as const, l: "Per lagerplats", s: "Lagerplats" },
             { v: "movements" as const, l: "Lagerrörelser", s: "Rörelser" },
+            { v: "shelflife" as const, l: "Hållbarhet", s: "Hållbarhet" },
             { v: "lots" as const, l: "Spårbarhet", s: "Spårbarhet" },
           ].map((o) => (
 
