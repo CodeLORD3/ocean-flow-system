@@ -174,8 +174,7 @@ const daysBetween = (from: string, to: string) =>
   );
 
 const qualityClass = (q?: string | null) => {
-  if (q === "7+") return "bg-emerald-500/15 text-emerald-700 border-emerald-500/30";
-  const n = Number(q);
+  const n = Number(q === "7+" ? "7" : q);
   if (!Number.isFinite(n) || n <= 0) return "bg-muted text-muted-foreground border-border";
   if (n <= 2) return "bg-destructive/15 text-destructive border-destructive/30";
   if (n <= 4) return "bg-amber-500/15 text-amber-700 border-amber-500/30";
