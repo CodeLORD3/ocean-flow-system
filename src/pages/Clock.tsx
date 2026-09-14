@@ -54,6 +54,15 @@ const VALID_ACTIONS: Record<Action, Action[]> = {
 
 const timeOf = (iso: string) => svenskTid(iso).slice(0, 5);
 
+/** Personnummer visas maskerat på skärmen: en punkt per inslagen siffra. */
+const maskedDisplay = (value: string) => {
+  if (!value) return "";
+  const dots = "•".repeat(value.length);
+  return value.length > 6 ? `${dots.slice(0, 6)} ${dots.slice(6)}` : dots;
+};
+
+const DIGIT_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+const CODE_KEYS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split("");
 
 export default function Clock() {
   const [station, setStation] = useState<ClockStationInfo | null>(storedStation());
@@ -69,7 +78,10 @@ export default function Clock() {
   const [queued, setQueued] = useState(0);
   const [onSite, setOnSite] = useState<OnSitePerson[]>([]);
   const [siteId, setSiteId] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [now, setNow] = useState(() => new Date());
+  const punchLock = useRef(false);
+  const punchIdRef = useRef<string | null>(null);
+
 
   const workSites = station?.work_sites ?? [];
   const activeSite = workSites.find((s) => s.id === siteId) ?? (workSites.length === 1 ? workSites[0] : null);
@@ -107,17 +119,41 @@ export default function Clock() {
     window.addEventListener("offline", goOffline);
     void refreshQueue();
     void refreshOnSite();
+    // Kön ska tömmas även när klockan startas om medan nätet redan är tillbaka.
+    const drain = async () => {
+      if (!navigator.onLine || !storedSession()) return;
+      if ((await queuedCount().catch(() => 0)) > 0) await syncQueue().catch(() => 0);
+      await refreshQueue();
+    };
+    void drain();
     const t = setInterval(() => void refreshOnSite(), 60_000);
+    const q = setInterval(() => void drain(), 30_000);
     return () => {
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
       clearInterval(t);
+      clearInterval(q);
     };
   }, [refreshOnSite, refreshQueue]);
 
+  // Klockan står öppen dygnet runt: tid och datum måste ticka utan omladdning.
   useEffect(() => {
-    if (activated) inputRef.current?.focus();
-  }, [activated, found, receipt]);
+    const t = setInterval(() => setNow(new Date()), 10_000);
+    return () => clearInterval(t);
+  }, []);
+
+  // RFID-läsare skickar siffror som tangenttryck. Inget fält har fokus, så vi
+  // lyssnar på fönstret istället — knappsatsen är fortsatt huvudvägen in.
+  useEffect(() => {
+    if (!activated) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (/^[0-9]$/.test(e.key)) setIdentifier((v) => (v.length >= 12 ? v : v + e.key));
+      else if (e.key === "Backspace") setIdentifier((v) => v.slice(0, -1));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activated]);
+
 
   const handleActivate = async () => {
     setBusy(true);
@@ -140,7 +176,17 @@ export default function Clock() {
     setIdentifier("");
     setPending(null);
     setError(null);
+    punchIdRef.current = null;
   };
+
+  /** Knappsatsen är enda vägen in: inget fält har fokus, inget tangentbord öppnas. */
+  const pressDigit = (digit: string) => {
+    setError(null);
+    setPending(null);
+    setIdentifier((v) => (v.length >= 12 ? v : v + digit));
+  };
+  const pressBackspace = () => setIdentifier((v) => v.slice(0, -1));
+  const pressClear = () => setIdentifier("");
 
   const showReceipt = (name: string, action: Action, at: string, offline = false) => {
     setReceipt({ name, action, at, offline });
@@ -151,6 +197,10 @@ export default function Clock() {
   const handleLookup = async () => {
     const value = identifier.replace(/\s/g, "");
     if (!value) return;
+    if (value.length !== 10 && value.length !== 12) {
+      setError("Personnummer ska vara 10 siffror (ÅÅMMDDXXXX) eller 12 siffror.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -190,11 +240,16 @@ export default function Clock() {
       setError("Välj driftställe innan du stämplar in.");
       return;
     }
+    // Dubbeltryck på touchskärm: första trycket äger stämplingen, och samma
+    // client_punch_id återanvänds så att servern aldrig får två rader.
+    if (punchLock.current) return;
+    punchLock.current = true;
     setBusy(true);
     setError(null);
     const occurredAt = new Date().toISOString();
+    if (!punchIdRef.current) punchIdRef.current = crypto.randomUUID();
     const context = {
-      clientPunchId: crypto.randomUUID(),
+      clientPunchId: punchIdRef.current,
       workSiteId: activeSite?.id,
       costCenter: activeSite?.posting_cost_center,
       ...(await readPosition()),
@@ -231,6 +286,7 @@ export default function Clock() {
       }
     } finally {
       setBusy(false);
+      punchLock.current = false;
     }
   };
 
@@ -267,13 +323,30 @@ export default function Clock() {
           </div>
           <IndustryInput
             kiosk
-            autoFocus
+            readOnly
             value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            onKeyDown={(e) => e.key === "Enter" && handleActivate()}
             placeholder="AKTIVERINGSKOD"
             aria-label="Aktiveringskod"
           />
+          {/* Kassaskärmen har inget tangentbord: koden slås in på skärmen. */}
+          <div className="grid grid-cols-6 gap-2">
+            {CODE_KEYS.map((k) => (
+              <IndustryButton
+                key={k}
+                variant="secondary"
+                className="min-h-[60px] text-xl"
+                onClick={() => setCode((v) => (v.length >= 24 ? v : v + k))}
+              >
+                {k}
+              </IndustryButton>
+            ))}
+            <IndustryButton variant="ghost" className="col-span-3 min-h-[60px]" onClick={() => setCode((v) => v.slice(0, -1))}>
+              Radera
+            </IndustryButton>
+            <IndustryButton variant="ghost" className="col-span-3 min-h-[60px]" onClick={() => setCode("")}>
+              Rensa
+            </IndustryButton>
+          </div>
           {error && (
             <p className="ind-row ind-row--edge-alert">
               <StatusLabel tone="alert">Fel</StatusLabel>
@@ -304,18 +377,31 @@ export default function Clock() {
             <SectionLabel>{station?.name ?? "Stämpelklocka"}</SectionLabel>
             <p className="ind-h3">{station?.store_name ?? "Försäljningsställe"}</p>
           </div>
-          <p className="ind-clock" aria-label="Aktuell tid">
-            {new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}
-          </p>
+          <div className="text-center">
+            <p className="ind-clock" aria-label="Aktuell tid">
+              {now.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}
+            </p>
+            <p className="ind-muted text-sm">
+              {now.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })}
+            </p>
+          </div>
           <span />
         </header>
 
         {!online && (
-          <div className="ind-row ind-row--edge-neutral mb-4">
-            <SectionLabel>Offline — stämplingar köas</SectionLabel>
+          <div className="ind-row ind-row--edge-alert mb-4">
+            <StatusLabel tone="alert">Offline</StatusLabel>
+            <span className="text-sm">Stämplingarna sparas i enheten och skickas när nätet är tillbaka.</span>
             {queued > 0 && <span className="ind-muted text-sm ind-mono">{queued} i kö</span>}
           </div>
         )}
+        {online && queued > 0 && (
+          <div className="ind-row ind-row--edge-accent-2 mb-4">
+            <StatusLabel tone="progress">Synkar</StatusLabel>
+            <span className="text-sm ind-mono">{queued} köade stämplingar skickas</span>
+          </div>
+        )}
+
 
         {workSites.length > 1 && (
           <div className="mb-4 space-y-2">
@@ -386,17 +472,16 @@ export default function Clock() {
               <SectionLabel>Stämpla</SectionLabel>
               <h2 className="ind-h2">Personnummer eller kortnummer</h2>
             </div>
+            {/* Readonly: enhetens virtuella tangentbord ska aldrig kunna öppnas. */}
             <IndustryInput
               kiosk
-              ref={inputRef}
-              value={identifier}
-              inputMode="numeric"
-              autoComplete="off"
-              onChange={(e) => setIdentifier(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleLookup()}
-              placeholder="ÅÅMMDDXXXX"
-              aria-label="Personnummer eller kortnummer"
+              readOnly
+              tabIndex={-1}
+              value={maskedDisplay(identifier)}
+              placeholder="ÅÅMMDD XXXX"
+              aria-label="Personnummer (maskerat)"
             />
+            <p className="ind-muted text-center text-sm ind-mono">{identifier.length} av 10 siffror</p>
             {pending && (
               <div className="ind-row ind-row--edge-accent-2">
                 <StatusLabel tone="progress">Väntar</StatusLabel>
@@ -409,23 +494,44 @@ export default function Clock() {
                 <span className="text-sm">{error}</span>
               </div>
             )}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {/* Sifferknappsats: minst 60×60 px, ingen precision krävs. */}
+            <div className="mx-auto grid max-w-md grid-cols-3 gap-3">
+              {DIGIT_KEYS.map((d) => (
+                <IndustryButton
+                  key={d}
+                  variant="secondary"
+                  className="min-h-[76px] min-w-[76px] text-3xl ind-mono"
+                  onClick={() => pressDigit(d)}
+                  aria-label={`Siffra ${d}`}
+                >
+                  {d}
+                </IndustryButton>
+              ))}
+              <IndustryButton variant="ghost" className="min-h-[76px] min-w-[76px] text-base" onClick={pressBackspace} aria-label="Radera senaste siffra">
+                Radera
+              </IndustryButton>
               <IndustryButton
-                variant="primary"
-                size="kiosk"
-                corners
-                onClick={handleLookup}
-                disabled={busy || !identifier}
+                variant="secondary"
+                className="min-h-[76px] min-w-[76px] text-3xl ind-mono"
+                onClick={() => pressDigit("0")}
+                aria-label="Siffra 0"
               >
-                {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : "IN"}
+                0
               </IndustryButton>
-              <IndustryButton variant="secondary" size="kiosk" onClick={handleLookup} disabled={busy || !identifier}>
-                UT
-              </IndustryButton>
-              <IndustryButton variant="secondary" size="kiosk" onClick={handleLookup} disabled={busy || !identifier}>
-                RAST
+              <IndustryButton variant="ghost" className="min-h-[76px] min-w-[76px] text-base" onClick={pressClear} aria-label="Rensa allt">
+                Rensa
               </IndustryButton>
             </div>
+            <IndustryButton
+              variant="primary"
+              size="kiosk"
+              corners
+              className="w-full"
+              onClick={handleLookup}
+              disabled={busy || (identifier.length !== 10 && identifier.length !== 12)}
+            >
+              {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : "FORTSÄTT"}
+            </IndustryButton>
           </div>
         )}
 

@@ -3,6 +3,14 @@
  *
  * mode = "lookup": returnerar förnamn + maskerat personnummer för bekräftelse.
  * mode = "punch": skriver time_entry (append-only journal).
+ *
+ * Härdningar (revision 2026-09):
+ *  - Serverns tid gäller alltid. Enhetens tid godtas bara för offlineköade
+ *    stämplingar, och bara inom ett rimligt fönster (14 dygn bakåt, ingen framtid).
+ *  - Ogiltigt format avvisas direkt och skapar aldrig provisorisk personal.
+ *  - Provisorisk personal skapas bara vid faktisk stämpling, aldrig vid uppslag.
+ *  - Spärren för upprepade felförsök gäller okända identiteter, aldrig känd personal.
+ *  - Samma person + samma typ inom 90 sekunder ger en enda journalrad (dubbeltryck).
  */
 import {
   applyRounding,
@@ -23,6 +31,16 @@ import {
 interface EmployeeHit { id: string; first_name: string; last_name: string; pnr_masked: string | null; is_active: boolean; }
 interface WorkSite { id: string; name: string; posting_cost_center: string; store_id: string | null; legal_entity_id: string | null; geofence_lat: number | null; geofence_lng: number | null; geofence_radius_m: number; allow_mobile_punch: boolean; }
 
+const WORK_SITE_COLUMNS =
+  "id, name, posting_cost_center, store_id, legal_entity_id, geofence_lat, geofence_lng, geofence_radius_m, allow_mobile_punch";
+
+/** Dubbeltrycksfönster: samma person, samma typ, inom denna tid = samma stämpling. */
+const DUPLICATE_WINDOW_MS = 90_000;
+/** Hur långt bakåt en offlineköad stämpling får ligga. */
+const MAX_OFFLINE_AGE_MS = 14 * 24 * 3600_000;
+/** Tillåten klockdrift framåt på enheten. */
+const MAX_FUTURE_DRIFT_MS = 120_000;
+
 function numberOrNull(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   const parsed = Number(value);
@@ -33,6 +51,16 @@ function distanceMetres(lat1: number, lng1: number, lat2: number, lng2: number):
   const rad = Math.PI / 180;
   const a = Math.sin((lat2 - lat1) * rad / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin((lng2 - lng1) * rad / 2) ** 2;
   return Math.round(6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 100) / 100;
+}
+
+/** Ogiltiga identifierare ska aldrig bli personalposter. */
+function plausibleIdentifier(raw: string): boolean {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 10 || digits.length === 12) return true;
+  // Enbart siffror men fel längd = feltryckt personnummer, aldrig kortnummer.
+  if (/^\d+$/.test(raw.replace(/[\s-]/g, ""))) return false;
+  // Kortnummer/RFID: minst 6 tecken, måste innehålla minst en siffra.
+  return /^[A-Za-z0-9-]{6,32}$/.test(raw) && /\d/.test(raw);
 }
 
 Deno.serve(async (req) => {
@@ -49,11 +77,11 @@ Deno.serve(async (req) => {
   const mode = String(body.mode ?? "lookup");
   const rawIdentifier = String(body.identifier ?? "").trim();
   const action = String(body.action ?? "") as PunchType;
-  const occurredAtInput = body.occurred_at ? String(body.occurred_at) : null;
+  const offlineQueued = body.offline_queued === true;
   if (!rawIdentifier) return json(req, { error: "Ange personnummer eller kortnummer." }, 400);
-  if (!(await checkRateLimit(db, station.id))) return json(req, { error: "För många försök. Vänta en minut och försök igen." }, 429);
 
   const pnr = normalizePnr(rawIdentifier);
+
   let hit: EmployeeHit | null = null;
   let hash: string | null = null;
   if (pnr) {
@@ -66,10 +94,23 @@ Deno.serve(async (req) => {
     hit = (data as EmployeeHit | null) ?? null;
   }
 
+  // Ogiltigt format som inte heller är ett registrerat kortnummer avvisas här:
+  // det ska aldrig skapa avvikelsepost eller provisorisk personal.
+  if (!hit && !pnr && !plausibleIdentifier(rawIdentifier)) {
+    return json(req, { error: "Personnummer ska vara 10 eller 12 siffror. Kontrollera och försök igen." }, 400);
+  }
+
+
+  // Spärren för upprepade felförsök gäller bara okända identiteter. Känd
+  // personal i kön ska aldrig hindras av någon annans felslag.
+  if ((!hit || !hit.is_active) && !(await checkRateLimit(db, station.id))) {
+    return json(req, { error: "För många felaktiga försök på den här stationen. Vänta en minut." }, 429);
+  }
+
   if (!hit || !hit.is_active) {
-    // Okänd person: stämplingen får inte kastas bort. Vi lägger upp en
-    // provisorisk personal så att tiden kan bokföras, och en post i
-    // granskningskön så att en chef kopplar den till rätt anställd.
+    // Okänd person: stämplingen får inte kastas bort. Vi lägger en post i
+    // granskningskön, och vid en faktisk stämpling också en provisorisk
+    // personalpost så att tiden kan bokföras och kopplas av chef.
     const pendingRow = {
       pnr_hash: hash,
       pnr_masked: pnr ? maskPnr(pnr) : null,
@@ -78,7 +119,7 @@ Deno.serve(async (req) => {
       store_id: station.store_id,
       legal_entity_id: station.legal_entity_id,
       stated_name: body.stated_name ? String(body.stated_name).slice(0, 120) : null,
-      occurred_at: occurredAtInput ?? new Date().toISOString(),
+      occurred_at: new Date().toISOString(),
     };
     if (hash) {
       const { data: existing } = await db.from("clock_pending_registrations").select("id, attempts").eq("pnr_hash", hash).eq("status", "pending").maybeSingle();
@@ -87,7 +128,16 @@ Deno.serve(async (req) => {
     } else await db.from("clock_pending_registrations").insert(pendingRow);
 
     await registerFailedLookup(db, station.id);
-    if (!hit) {
+
+    // Vid uppslag stannar vi här: ingen provisorisk personal skapas av en felslagen siffra.
+    if (mode === "lookup" || !hit) {
+      if (mode === "lookup") {
+        return json(req, {
+          status: "pending_registration",
+          message: "Personnummret finns inte i personalregistret. Registreringen ligger nu i avvikelsekön för chefens granskning.",
+          expires_at: expiresAt,
+        });
+      }
       const statedName = body.stated_name ? String(body.stated_name).slice(0, 120).trim() : "";
       const [firstName, ...restName] = statedName.split(/\s+/).filter(Boolean);
       const { data: provisional } = await db
@@ -110,14 +160,10 @@ Deno.serve(async (req) => {
     if (!hit || !hit.is_active) {
       return json(req, { status: "pending_registration", message: "Registrering väntar på godkännande.", expires_at: expiresAt });
     }
-    // En uppslagning ska fortfarande kräva chefens godkännande. Vid en faktisk
-    // offline-/klockstämpling går vi vidare och skriver journalraden.
-    if (mode === "lookup") {
-      return json(req, { status: "pending_registration", message: "Registrering väntar på godkännande.", expires_at: expiresAt });
-    }
+  } else {
+    await resetFailedLookup(db, station.id);
   }
 
-  await resetFailedLookup(db, station.id);
   const { data: recent } = await db.from("time_entries").select("id, type, occurred_at").eq("employee_id", hit.id).order("occurred_at", { ascending: false }).limit(1);
   const last = recent?.[0]?.type as PunchType | undefined;
   const suggested: PunchType = last === "in" || last === "rast_slut" ? "ut" : last === "rast_start" ? "rast_slut" : "in";
@@ -127,15 +173,23 @@ Deno.serve(async (req) => {
   const workSiteId = body.work_site_id ? String(body.work_site_id) : null;
   let workSite: WorkSite | null = null;
   if (workSiteId) {
-    const { data } = await db.from("work_sites").select("id, name, posting_cost_center, store_id, legal_entity_id, geofence_lat, geofence_lng, geofence_radius_m, allow_mobile_punch").eq("id", workSiteId).eq("is_active", true).maybeSingle();
+    const { data } = await db.from("work_sites").select(WORK_SITE_COLUMNS).eq("id", workSiteId).eq("is_active", true).maybeSingle();
     workSite = (data as WorkSite | null) ?? null;
     if (!workSite) return json(req, { error: "Driftstället är inte aktivt." }, 400);
   } else if (station.store_id) {
-    const { data } = await db.from("work_sites").select("id, name, posting_cost_center, store_id, legal_entity_id, geofence_lat, geofence_lng, geofence_radius_m, allow_mobile_punch").eq("store_id", station.store_id).eq("is_active", true).order("sort_order").limit(2);
+    const { data } = await db.from("work_sites").select(WORK_SITE_COLUMNS).eq("store_id", station.store_id).eq("is_active", true).order("sort_order").limit(2);
     if ((data ?? []).length === 1) workSite = (data?.[0] as WorkSite) ?? null;
   }
-  if (workSite && station.store_id && workSite.store_id !== station.store_id) return json(req, { error: "Driftstället tillhör en annan butik." }, 403);
-  if (action === "in" && !workSite) return json(req, { error: "Välj driftställe innan du stämplar in." }, 400);
+  // Fallback: butiken kanske inte har egna driftställen. Då gäller bolagets
+  // enda driftställe. Saknas även det stämplar vi på stationens enhet — en
+  // stämpling får aldrig blockeras av att kostnadsställen inte är uppsatta.
+  if (!workSite && station.legal_entity_id) {
+    const { data } = await db.from("work_sites").select(WORK_SITE_COLUMNS).is("store_id", null).eq("legal_entity_id", station.legal_entity_id).eq("is_active", true).order("sort_order").limit(2);
+    if ((data ?? []).length === 1) workSite = (data?.[0] as WorkSite) ?? null;
+  }
+  if (workSite && station.store_id && workSite.store_id && workSite.store_id !== station.store_id) {
+    return json(req, { error: "Driftstället tillhör en annan butik." }, 403);
+  }
 
   const latitude = numberOrNull(body.punch_lat);
   const longitude = numberOrNull(body.punch_lng);
@@ -153,7 +207,19 @@ Deno.serve(async (req) => {
     }
   }
 
-  const occurredAt = occurredAtInput ?? new Date().toISOString();
+  // Serverns tid gäller. Enhetens tid godtas bara för offlineköade stämplingar
+  // och aldrig i framtiden eller äldre än fjorton dygn.
+  const serverNow = Date.now();
+  let occurredAt = new Date(serverNow).toISOString();
+  let timeNote: string | null = null;
+  if (offlineQueued && body.occurred_at) {
+    const claimed = new Date(String(body.occurred_at)).getTime();
+    if (Number.isFinite(claimed) && claimed <= serverNow + MAX_FUTURE_DRIFT_MS && claimed >= serverNow - MAX_OFFLINE_AGE_MS) {
+      occurredAt = new Date(claimed).toISOString();
+    } else {
+      timeNote = "Offlinepost med orimlig enhetstid — serverns synktid använd.";
+    }
+  }
   const roundedAt = action === "in" || action === "ut" ? applyRounding(occurredAt, station.profile) : occurredAt;
 
   // Idempotens: samma knapptryck (client_punch_id) får aldrig bli två journalrader,
@@ -161,6 +227,13 @@ Deno.serve(async (req) => {
   const clientPunchId = typeof body.client_punch_id === "string" && /^[0-9a-f-]{36}$/i.test(body.client_punch_id)
     ? body.client_punch_id
     : null;
+  const duplicateResponse = (entry: unknown) => json(req, {
+    status: "punched",
+    duplicate: true,
+    entry,
+    employee: { first_name: hit!.first_name, pnr_masked: hit!.pnr_masked },
+    expires_at: expiresAt,
+  });
   if (clientPunchId) {
     const { data: existing } = await db
       .from("time_entries")
@@ -168,15 +241,22 @@ Deno.serve(async (req) => {
       .eq("employee_id", hit.id)
       .eq("client_punch_id", clientPunchId)
       .maybeSingle();
-    if (existing) {
-      return json(req, {
-        status: "punched",
-        duplicate: true,
-        entry: existing,
-        employee: { first_name: hit.first_name, pnr_masked: hit.pnr_masked },
-        expires_at: expiresAt,
-      });
-    }
+    if (existing) return duplicateResponse(existing);
+  }
+
+  // Dubbeltryck utan gemensamt client_punch_id: samma typ inom 90 sekunder är
+  // ett och samma tryck och ska inte bli två rader i journalen.
+  if (!offlineQueued) {
+    const { data: near } = await db
+      .from("time_entries")
+      .select("id, type, occurred_at, registered_at, work_site_id, cost_center, geofence_ok")
+      .eq("employee_id", hit.id)
+      .eq("type", action)
+      .gte("occurred_at", new Date(serverNow - DUPLICATE_WINDOW_MS).toISOString())
+      .order("occurred_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (near) return duplicateResponse(near);
   }
 
   const entryPayload = {
@@ -192,14 +272,14 @@ Deno.serve(async (req) => {
     punch_accuracy_m: accuracy,
     distance_m: distance,
     geofence_ok: geofenceOk,
-    offline_queued: body.offline_queued === true,
+    offline_queued: offlineQueued,
     synced_at: new Date().toISOString(),
     type: action,
     occurred_at: occurredAt,
     rounded_at: roundedAt,
     registered_at: new Date().toISOString(),
     source: "clock",
-    note: body.note ? String(body.note).slice(0, 500) : null,
+    note: [body.note ? String(body.note).slice(0, 400) : null, timeNote].filter(Boolean).join(" ") || null,
   };
   const { data: inserted, error } = await db
     .from("time_entries")
@@ -209,7 +289,7 @@ Deno.serve(async (req) => {
   if (error) { console.error("clock-punch insert failed", error.message); return json(req, { error: "Kunde inte spara stämplingen." }, 500); }
   if (!inserted && clientPunchId) {
     const { data: existing } = await db.from("time_entries").select("id, type, occurred_at, registered_at, work_site_id, cost_center, geofence_ok").eq("employee_id", hit.id).eq("client_punch_id", clientPunchId).maybeSingle();
-    return json(req, { status: "punched", duplicate: true, entry: existing, employee: { first_name: hit.first_name, pnr_masked: hit.pnr_masked }, expires_at: expiresAt });
+    return duplicateResponse(existing);
   }
   return json(req, { status: "punched", entry: inserted, employee: { first_name: hit.first_name, pnr_masked: hit.pnr_masked }, expires_at: expiresAt });
 });
