@@ -570,7 +570,7 @@ export default function StockOverview({
                 return [
                   <tr
                     key={`cat-${cat}`}
-                    className="bg-muted/30 border-b cursor-pointer hover:bg-muted/50 transition-colors"
+                    className="bg-muted border-x border-b border-grid-line cursor-pointer hover:bg-muted/70 transition-colors"
                     onClick={() => toggleCat(cat)}
                   >
                     <td colSpan={showCosts ? 10 : 9} className="px-1.5 py-1">
