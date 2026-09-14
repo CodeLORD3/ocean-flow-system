@@ -675,7 +675,7 @@ export default function StockOverview({
                                           : "text-emerald-600",
                                     )}
                                   >
-                                    {g.daysLeft < 0 ? `${Math.abs(g.daysLeft)} d sen` : `${g.daysLeft} d`}
+                                    {daysLeftLabel(g.daysLeft, g.earliestExpiry, true)}
                                   </span>
                                 )}
                               </div>
@@ -742,11 +742,7 @@ export default function StockOverview({
                                     : "text-emerald-600",
                           )}
                         >
-                          {g.daysLeft === null
-                            ? "–"
-                            : g.daysLeft < 0
-                              ? `${Math.abs(g.daysLeft)} d sen`
-                              : `${g.daysLeft} dag${g.daysLeft === 1 ? "" : "ar"}`}
+                          {daysLeftLabel(g.daysLeft, g.earliestExpiry)}
                         </td>
                         <td className="hidden px-2 text-center sm:table-cell">
                           <span
