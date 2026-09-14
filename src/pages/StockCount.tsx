@@ -741,9 +741,6 @@ export default function StockCount() {
         >
           Ej räknade
         </button>
-        <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-          {countedCount}/{rows.length}
-        </span>
       </div>
 
       <div className="relative w-full">
