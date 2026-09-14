@@ -856,6 +856,17 @@ export function TotalOrderedView({
               </PopoverContent>
             </Popover>
             <Button
+              variant={editMode ? "default" : "outline"}
+              size="sm"
+              className="h-11 gap-1.5 rounded-xl text-xs sm:h-10"
+              onClick={() => setEditMode((v) => !v)}
+              disabled={!storeId}
+              title={!storeId ? "Välj butik för att fylla i order och lager" : undefined}
+            >
+              <Pencil className="h-4 w-4" />
+              <span className="truncate">{editMode ? "Klar" : "Fyll i"}</span>
+            </Button>
+            <Button
 
               variant="outline"
               size="sm"
