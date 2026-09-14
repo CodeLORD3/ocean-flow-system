@@ -198,6 +198,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           )}
         </>
       )}
+    </>
+  );
+
+  const portalMenuContent = (
+    <DropdownMenuContent align="end" className="w-52">
+      {portalItems}
     </DropdownMenuContent>
   );
 
