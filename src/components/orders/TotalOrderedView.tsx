@@ -478,6 +478,9 @@ export function TotalOrderedView({
           unit: r.unit,
           total: r.total,
           packed: r.packed,
+          stock: r.stock ?? null,
+          onOrder: r.onOrder ?? null,
+          sellable: r.sellable ?? null,
           orderCount: r.orders.length,
           types: byType(r)
             .map(([t, v]) => `${t} ${qtyText(v.qty, r.unit)} (${v.orders})`)
