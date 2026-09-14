@@ -391,17 +391,17 @@ export function TotalOrderedView({
     };
   }, [orders, picked, mode, productSearch, sort, category]);
 
-  /** Lager och utestående grossistorder hämtas bara när någon kolumn är påslagen. */
+  /** Lager och utestående grossistorder hämtas när kolumn eller inmatning är på. */
   const extras = useTotalListExtras({
     storeId,
     fromDate: bounds.fromDate,
     toDate: bounds.toDate,
-    enabled: !!anyExtra,
+    enabled: !!anyExtra || editMode,
   });
 
   /** Kopplar lager/order till raderna: produkt först, annars normaliserat namn. */
   const groups: Group[] = useMemo(() => {
-    if (!anyExtra) return baseGroups;
+    if (!anyExtra && !editMode) return baseGroups;
     const lookup = (row: ProductRow, byId: Map<string, number>, byName: Map<string, number>) => {
       if (row.productId && byId.has(row.productId)) return byId.get(row.productId) ?? 0;
       const k = matchKey(row.name);
@@ -422,7 +422,72 @@ export function TotalOrderedView({
         };
       }),
     }));
-  }, [baseGroups, anyExtra, extras]);
+  }, [baseGroups, anyExtra, editMode, extras]);
+
+  /** Sparar inskriven order till grossisten för veckan i urvalet. */
+  const commitOrder = async (row: ProductRow) => {
+    const key = `order:${row.productId}`;
+    const raw = drafts[key];
+    if (!row.productId || raw === undefined) return;
+    const value = parseNumber(raw);
+    if (value === null || value < 0) return;
+    if (!storeId) {
+      toast({ title: "Välj butik först", variant: "destructive" });
+      return;
+    }
+    setSaving((s) => [...s, key]);
+    try {
+      await saveOrder.mutateAsync({
+        storeId,
+        productId: row.productId,
+        quantity: value,
+        unit: row.unit,
+        dateIso: bounds.fromDate,
+      });
+      setDrafts((d) => {
+        const next = { ...d };
+        delete next[key];
+        return next;
+      });
+      toast({ title: `${row.name}: order ${qtyText(value, row.unit)} ${row.unit}` });
+    } catch (e: any) {
+      toast({ title: "Kunde inte spara order", description: e?.message, variant: "destructive" });
+    } finally {
+      setSaving((s) => s.filter((k) => k !== key));
+    }
+  };
+
+  /** Sparar inskrivet lagersaldo som en spårbar lagerrörelse. */
+  const commitStock = async (row: ProductRow) => {
+    const key = `stock:${row.productId}`;
+    const raw = drafts[key];
+    if (!row.productId || raw === undefined) return;
+    const value = parseNumber(raw);
+    if (value === null || value < 0) return;
+    if (!entryLocation) {
+      toast({ title: "Ingen lagerplats för butiken", variant: "destructive" });
+      return;
+    }
+    setSaving((s) => [...s, key]);
+    try {
+      await saveStock.mutateAsync({
+        productId: row.productId,
+        locationId: entryLocation.id,
+        quantity: value,
+        note: `Totallista ${bounds.fromDate}`,
+      });
+      setDrafts((d) => {
+        const next = { ...d };
+        delete next[key];
+        return next;
+      });
+      toast({ title: `${row.name}: lager ${qtyText(value, row.unit)} ${row.unit}` });
+    } catch (e: any) {
+      toast({ title: "Kunde inte spara lager", description: e?.message, variant: "destructive" });
+    } finally {
+      setSaving((s) => s.filter((k) => k !== key));
+    }
+  };
 
 
 
