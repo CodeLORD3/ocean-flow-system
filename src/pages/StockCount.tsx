@@ -699,7 +699,7 @@ export default function StockCount() {
         />
       )}
 
-      {session && (
+      {session && !locked && (
       <>
       {/* Liten statusrad: dag, läge, ev. flera rapporter */}
       <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
