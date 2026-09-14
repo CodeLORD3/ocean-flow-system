@@ -130,6 +130,23 @@ export async function currentBalance(productId: string, locationId: string) {
 }
 
 /**
+ * Alla produkter med saldo på en lagerplats. Läsning — används av
+ * lagerrapporten för att nollställa det som inte längre finns i butiken.
+ */
+export async function balancesAtLocation(
+  locationId: string,
+): Promise<{ productId: string; quantity: number }[]> {
+  const { data, error } = await supabase
+    .from("product_stock_locations")
+    .select("product_id, quantity")
+    .eq("location_id", locationId);
+  if (error) throw error;
+  return (data || [])
+    .map((r: any) => ({ productId: r.product_id as string, quantity: Number(r.quantity) || 0 }))
+    .filter((r) => Math.abs(r.quantity) > 0.0005);
+}
+
+/**
  * Partiets bokförda inköpspris per kg. Detta är enda källan till lagervärde
  * för ett parti — aldrig produktens prisfält och aldrig lagerplatsens
  * blandade snittpris.
