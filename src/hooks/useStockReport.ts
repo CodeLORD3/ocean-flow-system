@@ -8,7 +8,10 @@ import { balancesAtLocation, setBalance } from "@/lib/stockLedger";
  * Butiksansvarig söker fram produkter, anger mängd i produktens enhet och
  * skickar in listan. Rapporten lagras som ett butiksvitt underlag
  * (daily_stock_sheets med location_id = null) och låses vid inskickning.
- * Ingen lagerbokföring sker — detta är ett underlag, inte en avstämning.
+ *
+ * Rapporten är sanningen om butikens lager: vid inskickning sätts saldot på
+ * butikens inventeringsplats till rapportens mängder, och produkter som inte
+ * står med nollställs. Allt bokförs som inventeringsrörelser i stock_movements.
  */
 
 export const todayStockholm = () =>
