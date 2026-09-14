@@ -693,6 +693,26 @@ export default function StockCount() {
 
       {session && !locked && (
       <>
+      {/* Pågående inventering — tydlig status och färdigställ-knapp */}
+      <div className="flex flex-col gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-primary" />
+            Inventering pågår
+          </p>
+          <p className="text-[11px] leading-snug text-muted-foreground">
+            Skriv in mängden för varje vara. När du är klar färdigställer du rapporten — då blir de räknade
+            värdena det nya lagersaldot.
+          </p>
+        </div>
+        <Button
+          className="h-11 w-full shrink-0 gap-2 text-sm font-semibold sm:w-auto"
+          onClick={() => setLockOpen(true)}
+        >
+          <Check className="h-4 w-4" /> Färdigställ inventeringsrapport
+        </Button>
+      </div>
+
       {/* Liten statusrad: dag, läge, ev. flera rapporter */}
       <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
         <span className="font-medium text-foreground">
