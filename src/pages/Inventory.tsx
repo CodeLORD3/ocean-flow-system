@@ -984,6 +984,8 @@ export default function Inventory() {
   // ── Render helpers ───────────────────────────────────────────────────────
   /** Kollapsade kategorier per lagerplats, nyckel "locId::kategori". */
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
+  /** Vald kategori per lagerplats — ersätter en knapp per kategori */
+  const [locationCatFilter, setLocationCatFilter] = useState<Record<string, string>>({});
   const toggleCat = (locId: string, cat: string) =>
     setCollapsedCats((prev) => {
       const next = new Set(prev);
@@ -1084,50 +1086,37 @@ export default function Inventory() {
     return (
       <div
         key={s.id}
-        className={`flex items-start gap-2 px-2 py-1 ${isChecked ? "bg-primary/5" : freshness?.rowClass || ""}`}
+        className={`flex items-center gap-1.5 px-2 py-1 ${isChecked ? "bg-primary/5" : freshness?.rowClass || ""}`}
         onClick={() => toggleItemSelection(loc.id, s.id)}
       >
         <Checkbox
           checked={isChecked}
           onCheckedChange={() => toggleItemSelection(loc.id, s.id)}
           onClick={(e) => e.stopPropagation()}
-          className="mt-0.5"
+          className="h-3.5 w-3.5 shrink-0"
         />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
-                <span className="truncate">{s.products?.name}</span>
-                {fifoIssue && (
-                  <span title="FIFO-varning: äldre batch finns på annat lagerställe">
-                    <AlertCircle className="h-3 w-3 text-amber-500 shrink-0" />
-                  </span>
-                )}
-              </div>
-              <div className="text-[10px] text-muted-foreground font-mono truncate">{s.products?.sku}</div>
-            </div>
-            <div className="text-right shrink-0">
-              <div className="text-xs font-semibold text-foreground whitespace-nowrap">
-                {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
-              </div>
-              {showCosts && <div className="text-[10px] text-muted-foreground whitespace-nowrap">{fmt(value)}</div>}
-            </div>
-          </div>
-          <div className="mt-0.5 flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground">
-            {s.arrival_date && <span>Ank: {format(parseISO(s.arrival_date), "d MMM", { locale: sv })}</span>}
-            {s.expiry_date && <span>B.före: {format(parseISO(s.expiry_date), "d MMM", { locale: sv })}</span>}
-            {freshness && (
-              <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
-                {freshness.isExpired ? (
-                  <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
-                ) : (
-                  <Clock className="h-2.5 w-2.5 mr-0.5" />
-                )}
-                {freshness.label}
-              </Badge>
-            )}
-          </div>
-        </div>
+        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-foreground">
+          {s.products?.name}
+          {fifoIssue && <AlertCircle className="inline h-3 w-3 ml-1 text-amber-500 align-[-2px]" />}
+        </span>
+        {s.expiry_date && (
+          <span className="shrink-0 text-[10px] text-muted-foreground font-mono tabular-nums">
+            {format(parseISO(s.expiry_date), "d/M", { locale: sv })}
+          </span>
+        )}
+        {freshness && (
+          <span className={`shrink-0 rounded px-1 text-[9px] border ${freshness.badgeClass}`}>
+            {freshness.label}
+          </span>
+        )}
+        <span className="shrink-0 text-[11px] font-semibold text-foreground font-mono tabular-nums whitespace-nowrap">
+          {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
+        </span>
+        {showCosts && (
+          <span className="shrink-0 text-[10px] text-muted-foreground font-mono tabular-nums whitespace-nowrap">
+            {fmt(value)}
+          </span>
+        )}
       </div>
     );
   };
@@ -2095,71 +2084,52 @@ export default function Inventory() {
                           {isOpen && (
                             <div className="p-1 space-y-1">
                               {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
-                              {allCats.filter((cat) => (catMap.get(cat)?.length ?? 0) > 0).map((cat) => {
-                                const items = catMap.get(cat) || [];
-                                const catKey = `${loc.id}::${cat}`;
-                                const catOpen = openSubLocations[catKey] !== false;
-                                const catQty = items.reduce((s: number, i: any) => s + Number(i.quantity), 0);
-                                const catValue = items.reduce(
-                                  (s: number, i: any) =>
-                                    s +
-                                    Number(i.quantity) *
-                                      (Number(i.unit_cost) || 0),
-                                  0,
-                                );
+                              {(() => {
+                                const filledCats = allCats.filter((c) => (catMap.get(c)?.length ?? 0) > 0);
+                                const selected = locationCatFilter[loc.id] || "__all";
+                                const items =
+                                  selected === "__all"
+                                    ? loc.items
+                                    : catMap.get(selected) || [];
                                 return (
-                                  <div key={catKey} className="rounded-md overflow-hidden border border-border/50 bg-card">
-                                    <div className="flex items-center gap-2 bg-accent/10 border-l-2 border-accent pl-2">
-                                      <Checkbox
-                                        checked={!!printSel[catKey]}
-                                        onCheckedChange={() => togglePrintSel(catKey)}
-                                        aria-label={`Välj ${cat} för utskrift`}
-                                        className="h-3.5 w-3.5"
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          setOpenSubLocations((prev) => ({
-                                            ...prev,
-                                            [catKey]: prev[catKey] === false ? true : false,
-                                          }))
+                                  <div className="rounded-md overflow-hidden border border-border/50 bg-card">
+                                    <div className="flex items-center gap-1.5 bg-accent/10 border-l-2 border-accent px-2 py-1">
+                                      <Select
+                                        value={selected}
+                                        onValueChange={(v) =>
+                                          setLocationCatFilter((prev) => ({ ...prev, [loc.id]: v }))
                                         }
-                                        className="flex-1 flex items-center justify-between gap-2 px-2 py-1 hover:bg-accent/15 transition-colors"
                                       >
-                                        <span className="flex items-center gap-1.5 min-w-0">
-                                          {catOpen ? (
-                                            <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
-                                          ) : (
-                                            <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                                          )}
-                                          <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground truncate">
-                                            {cat}
-                                          </span>
-                                          <Badge variant="secondary" className="text-[9px] h-4">{items.length}</Badge>
-                                        </span>
-                                        <span className="flex items-center gap-2 shrink-0 font-mono tabular-nums">
-                                          <span className="text-[10px] text-muted-foreground">
-                                            {catQty.toLocaleString("sv-SE")} kg
-                                          </span>
-                                          <span className="text-[10px] font-semibold text-foreground">{fmt(catValue)}</span>
-                                        </span>
-                                      </button>
-                                      <div className="pr-2">
-                                        {renderReportBtn({
-                                          locationId: loc.id,
-                                          locationName: loc.name,
-                                          storeId: loc.store_id,
-                                          category: cat,
-                                          items,
-                                        })}
-                                      </div>
+                                        <SelectTrigger className="h-7 w-auto min-w-[150px] text-[11px]">
+                                          <SelectValue placeholder="Alla kategorier" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="__all">Alla kategorier ({loc.items.length})</SelectItem>
+                                          {filledCats.map((c) => (
+                                            <SelectItem key={c} value={c}>
+                                              {c} ({catMap.get(c)?.length ?? 0})
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <span className="ml-auto text-[10px] text-muted-foreground font-mono tabular-nums">
+                                        {items
+                                          .reduce((s: number, i: any) => s + Number(i.quantity), 0)
+                                          .toLocaleString("sv-SE")}{" "}
+                                        kg
+                                      </span>
+                                      {renderReportBtn({
+                                        locationId: loc.id,
+                                        locationName: loc.name,
+                                        storeId: loc.store_id,
+                                        category: selected === "__all" ? undefined : selected,
+                                        items,
+                                      })}
                                     </div>
-                                    {catOpen && (
-                                      <div className="p-1">{renderLocationTable({ ...loc, items })}</div>
-                                    )}
+                                    <div className="p-1">{renderLocationTable({ ...loc, items })}</div>
                                   </div>
                                 );
-                              })}
+                              })()}
                               {(() => {
                                 const empties = allCats.filter((cat) => (catMap.get(cat)?.length ?? 0) === 0);
                                 if (empties.length === 0) return null;
