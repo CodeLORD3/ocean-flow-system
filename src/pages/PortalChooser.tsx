@@ -31,9 +31,10 @@ export default function PortalChooser() {
   const access = staff?.portal_access ?? [];
   // Butik ska alltid ligga längst till vänster i portalvalet
   const PORTAL_ORDER: PortalKey[] = ["shop", "production", "wholesale", "admin"];
-  const orderedAccess = [...access].sort(
-    (a, b) => PORTAL_ORDER.indexOf(a) - PORTAL_ORDER.indexOf(b)
-  );
+  // "admin" och "wholesale" öppnar exakt samma adminportal – visa bara ett kort
+  const orderedAccess = [...access]
+    .filter((k) => !(k === "admin" && access.includes("wholesale")))
+    .sort((a, b) => PORTAL_ORDER.indexOf(a) - PORTAL_ORDER.indexOf(b));
   const needsPwd = !!staff?.must_change_password;
 
   const allowedStores = useMemo(() => {
@@ -50,9 +51,9 @@ export default function PortalChooser() {
   // If only one portal, jump straight in
   useEffect(() => {
     if (loading || !staff || needsPwd) return;
-    if (access.length === 1) {
-      if (access[0] === "shop" && stores.length === 0) return; // wait for stores
-      enterPortal(access[0]);
+    if (orderedAccess.length === 1) {
+      if (orderedAccess[0] === "shop" && stores.length === 0) return; // wait for stores
+      enterPortal(orderedAccess[0]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, staff?.id, needsPwd, stores.length]);
@@ -208,7 +209,7 @@ export default function PortalChooser() {
           </p>
         </div>
 
-        <div className={`grid gap-4 ${access.length >= 4 ? "md:grid-cols-2 lg:grid-cols-4" : access.length === 3 ? "md:grid-cols-3" : access.length === 2 ? "md:grid-cols-2" : "grid-cols-1"}`}>
+        <div className={`grid gap-4 ${orderedAccess.length >= 4 ? "md:grid-cols-2 lg:grid-cols-4" : orderedAccess.length === 3 ? "md:grid-cols-3" : orderedAccess.length === 2 ? "md:grid-cols-2" : "grid-cols-1"}`}>
 
           {orderedAccess.map((key) => {
             const meta = PORTAL_META[key];
