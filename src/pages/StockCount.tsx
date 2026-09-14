@@ -674,6 +674,16 @@ export default function StockCount() {
         )}
       </div>
 
+      {/* Klar rapport — tom sida med stor startknapp, rapporten ligger i listan nedan */}
+      {session && locked && effectiveStoreId && (
+        <Button
+          className="h-12 w-full gap-2 text-sm font-semibold"
+          onClick={() => createSessionFor(date)}
+        >
+          <Plus className="h-4 w-4" /> Skapa inventeringsrapport
+        </Button>
+      )}
+
       {/* Start — guidat läge när ingen rapport är igång för datumet */}
       {!session && (
         <CountStartPanel
