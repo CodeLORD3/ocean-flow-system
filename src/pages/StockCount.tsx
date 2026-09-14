@@ -1261,7 +1261,7 @@ export default function StockCount() {
               Avbryt
             </Button>
             <Button onClick={lockSession} className="gap-1.5">
-              <Lock className="h-3.5 w-3.5" /> Lås
+              <Check className="h-3.5 w-3.5" /> Klar
             </Button>
           </DialogFooter>
         </DialogContent>
