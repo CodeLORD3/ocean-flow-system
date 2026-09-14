@@ -67,7 +67,7 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
 };
 
 
-function AccountMenu() {
+function AccountMenu({ portalItems }: { portalItems?: React.ReactNode }) {
   const { staff, signOut } = useStaffAuth();
   const navigate = useNavigate();
   const initials = staff ? `${staff.first_name[0]}${staff.last_name[0]}` : "?";
@@ -104,8 +104,16 @@ function AccountMenu() {
         <DropdownMenuItem className="text-xs gap-2 cursor-pointer" onClick={() => navigate("/profile")}>
           <UserRound className="h-3.5 w-3.5" /> Min profil
         </DropdownMenuItem>
+        {/* Portalväljare direkt i profillistan på mobil */}
+        {portalItems && (
+          <div className="sm:hidden">
+            <DropdownMenuSeparator />
+            {portalItems}
+            <DropdownMenuSeparator />
+          </div>
+        )}
         {portalCount > 1 && (
-          <DropdownMenuItem className="text-xs gap-2 cursor-pointer" onClick={() => navigate("/choose-portal")}>
+          <DropdownMenuItem className="hidden sm:flex text-xs gap-2 cursor-pointer" onClick={() => navigate("/choose-portal")}>
             <ArrowLeftRight className="h-3.5 w-3.5" /> Byt portal
           </DropdownMenuItem>
         )}
@@ -148,9 +156,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const currentPortalLabel =
     site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Grossist" : "Admin";
 
-  /* Portalväljarens innehåll – återanvänds i statusraden (desktop) och headern (mobil) */
-  const portalMenuContent = (
-    <DropdownMenuContent align="end" className="w-52">
+  /* Portalvalen – återanvänds i statusraden (desktop) och i profillistan (mobil) */
+  const portalItems = (
+    <>
       <DropdownMenuLabel className="text-[10px]">Välj portal</DropdownMenuLabel>
       <DropdownMenuSeparator />
       {access.includes("wholesale") && (
@@ -190,6 +198,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           )}
         </>
       )}
+    </>
+  );
+
+  const portalMenuContent = (
+    <DropdownMenuContent align="end" className="w-52">
+      {portalItems}
     </DropdownMenuContent>
   );
 
@@ -249,22 +263,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2">
-              {/* Portalväljare i headern — synlig i stående mobilvy där statusraden är dold */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="sm:hidden h-9 max-w-[130px] gap-1 px-2 text-[11px]"
-                  >
-                    <ArrowLeftRight className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{currentPortalLabel}</span>
-                    <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                {portalMenuContent}
-              </DropdownMenu>
-
               <div className="relative hidden lg:block">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input placeholder="Sök i hela systemet... (Ctrl+K)" className="h-8 w-64 pl-8 text-xs bg-muted/50" />
@@ -274,7 +272,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                <HrNotificationCenter />
 
 
-              <AccountMenu />
+              <AccountMenu portalItems={portalItems} />
             </div>
           </header>
 
