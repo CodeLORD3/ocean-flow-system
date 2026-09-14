@@ -117,12 +117,18 @@ type Line = {
 };
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
-const monthBounds = (period: string) => {
+/**
+ * Löneperioder löper 16:e till 15:e. Etiketten YYYY-MM avser månaden perioden
+ * SLUTAR i: "2026-10" = 2026-09-16 → 2026-10-15.
+ */
+const periodBounds = (period: string) => {
   const [y, m] = period.split("-").map(Number);
-  const from = `${period}-01`;
-  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  return { from, to: `${period}-${String(last).padStart(2, "0")}` };
+  const py = m === 1 ? y - 1 : y;
+  const pm = m === 1 ? 12 : m - 1;
+  return { from: `${py}-${String(pm).padStart(2, "0")}-16`, to: `${period}-15` };
 };
+/** Perioder som slutar 2026-09-15 eller tidigare har Personalkollen som källa. */
+const periodSource = (period: string) => (`${period}-15` <= "2026-09-15" ? "personalkollen" : "makrilltrade");
 
 // OB-, mertids- och övertidsfördelningen görs numera enbart av
 // public.berakna_arbetstid i databasen. Ingen parallell logik får finnas här.
@@ -156,7 +162,13 @@ Deno.serve(async (req) => {
   if (!legalEntityId || !period || !/^\d{4}-\d{2}$/.test(period)) {
     return json({ error: "legal_entity_id och period (YYYY-MM) krävs" }, 400);
   }
-  const { from, to } = monthBounds(period);
+  if (periodSource(period) === "personalkollen") {
+    return json({
+      error:
+        "Perioden har Personalkollen som källa (till och med 2026-09-15) och beräknas aldrig i Makrilltrade.",
+    }, 409);
+  }
+  const { from, to } = periodBounds(period);
   const issues: { kind: string; detail: string; employee_id?: string }[] = [];
 
   // Periodrad

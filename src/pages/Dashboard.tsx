@@ -10,6 +10,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
 import { OurStoresSection } from "@/components/dashboard/OurStoresSection";
 import { ParallelRunCards } from "@/components/staff/ParallelRunCards";
+import { ClockOpsCards } from "@/components/staff/ClockOpsCards";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import { PosTodayLive } from "@/components/dashboard/PosTodayLive";
 
@@ -277,7 +278,14 @@ export default function Dashboard() {
       {/* Our stores */}
       <OurStoresSection storeFilterId={isShop ? activeStoreId : null} />
 
-      {/* Parallellkörning klocka mot Personalkollen — per butik och dag */}
+      {/* Daglig driftbevakning av stämpelklockan — primär bevakning från 2026-09-16 */}
+      {!isShop && (
+        <motion.div variants={fadeUp}>
+          <ClockOpsCards />
+        </motion.div>
+      )}
+
+      {/* Parallellkörning klocka mot Personalkollen — historik */}
       {!isShop && (
         <motion.div variants={fadeUp}>
           <ParallelRunCards />

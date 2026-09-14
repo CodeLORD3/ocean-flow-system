@@ -76,6 +76,7 @@ export const STAFF_MODULE_GROUPS: StaffNavGroup[] = [
     items: [
       { title: "Granska lön", url: "/payroll-review", icon: ClipboardCheck, desc: "Granska löneperiod rad för rad" },
       { title: "Löneunderlag", url: "/payroll-exports", icon: FileText, desc: "Exportfiler och exportlogg" },
+      { title: "Löneunderlag per period", url: "/payroll-basis", icon: FileText, desc: "16:e–15:e per person, Excel för Fortnox" },
     ],
   },
   {

@@ -16,6 +16,7 @@ const EMPLOYEE_PATHS = ["/my-shifts", "/my-time", "/profile"];
 const MANAGER_BLOCKED = [
   "/payroll-review",
   "/payroll-exports",
+  "/payroll-basis",
   "/staff-rules",
   "/personalkollen",
   "/clock-vs-pk",

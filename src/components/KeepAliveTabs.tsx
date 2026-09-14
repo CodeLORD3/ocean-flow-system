@@ -44,6 +44,7 @@ import StaffRules from "@/pages/StaffRules";
 import HRControlCenter from "@/pages/HRControlCenter";
 import PayrollExports from "@/pages/PayrollExports";
 import PayrollReview from "@/pages/PayrollReview";
+import PayrollBasisPeriod from "@/pages/PayrollBasisPeriod";
 import ClockVsPk from "@/pages/ClockVsPk";
 import FortnoxSettings from "@/pages/FortnoxSettings";
 
@@ -145,6 +146,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/hr-control": { component: <HRControlCenter /> },
   "/payroll-exports": { component: <PayrollExports /> },
   "/payroll-review": { component: <PayrollReview /> },
+  "/payroll-basis": { component: <PayrollBasisPeriod /> },
   "/clock-vs-pk": { component: <ClockVsPk /> },
   "/on-site-now": { component: <LiveStaff /> },
   "/staff-schedule": { component: <StaffSchedule /> },
