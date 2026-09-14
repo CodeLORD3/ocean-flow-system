@@ -211,6 +211,37 @@ export default function StockCount() {
     },
   });
 
+  // ── Butikens inskickade inventeringsrapporter (dagsrapporter) ─────────────
+  const reportsQuery = useQuery({
+    queryKey: ["stock_report_history", effectiveStoreId],
+    enabled: !!effectiveStoreId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("daily_stock_sheets")
+        .select("id,sheet_date,status,line_count,counted_total_kg,closed_at,closed_by")
+        .eq("store_id", effectiveStoreId)
+        .is("location_id", null)
+        .order("sheet_date", { ascending: false })
+        .limit(60);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+  const [openReportId, setOpenReportId] = useState<string | null>(null);
+  const reportLinesQuery = useQuery({
+    queryKey: ["stock_report_lines", openReportId],
+    enabled: !!openReportId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("daily_stock_sheet_lines")
+        .select("id,product_name,unit,counted_qty_kg")
+        .eq("sheet_id", openReportId!)
+        .order("sort_order");
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   /** Klockslag som namn på tillfället, t.ex. "10:42". */
   const clockNow = () =>
     new Intl.DateTimeFormat("sv-SE", {
