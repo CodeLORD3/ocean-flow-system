@@ -21,6 +21,7 @@ import {
   Fish,
   Sparkles,
   Package2,
+  Camera,
 } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { sv } from "date-fns/locale";
@@ -45,6 +46,7 @@ import ProductStockFlow from "@/components/inventory/ProductStockFlow";
 import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 import FamilyStockView from "@/components/inventory/FamilyStockView";
 import { useProductFamilies, useOrderedByProduct } from "@/hooks/useProductFamilies";
+import { useProductPhotoCounts } from "@/hooks/useEntityImages";
 import { useSite } from "@/contexts/SiteContext";
 import { Layers } from "lucide-react";
 
