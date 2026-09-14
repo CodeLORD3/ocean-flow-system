@@ -391,24 +391,93 @@ export function TotalOrderedView({
       if (k && byName.has(k)) return byName.get(k) ?? 0;
       return null;
     };
-    return baseGroups.map((g) => ({
-      ...g,
-      rows: g.rows.map((r) => {
-        const stock = lookup(r, extras.stockById, extras.stockByName);
-        const onOrder = lookup(r, extras.orderedById, extras.orderedByName);
-        const remaining = Math.max(r.total - r.packed, 0);
-        return {
-          ...r,
-          stock,
-          onOrder,
-          // Lager och order ihop: räknas när minst en av dem är känd.
-          combined:
-            stock == null && onOrder == null ? null : (stock ?? 0) + (onOrder ?? 0),
-          sellable: stock == null ? null : stock - remaining,
-        };
-      }),
-    }));
-  }, [baseGroups, anyExtra, extras]);
+
+    // Grossistbeställda varor utan kundbeställning läggs till som egna rader, så
+    // inget som är beställt hos grossisten kan saknas i listan.
+    const term = productSearch.trim().toLowerCase();
+    const selected = picked.length > 0 ? new Set(picked) : null;
+    const working = baseGroups.map((g) => ({ ...g, rows: [...g.rows] }));
+    const byKey = new Map(working.map((g) => [g.key, g]));
+    if (cols.onOrder || cols.combined) {
+      for (const l of extras.orderedRows) {
+        const name = l.name?.trim() || "Okänd vara";
+        if (term && !name.toLowerCase().includes(term)) continue;
+        const cat = (l.category || "").trim() || OTHER_CATEGORY;
+        if (category !== "all" && normalizeCategoryKey(cat) !== normalizeCategoryKey(category))
+          continue;
+        const date = l.date ?? bounds.fromDate;
+        if (selected && !selected.has(date)) continue;
+        const { week, year } = isoWeekOf(date);
+        const groupKey =
+          mode === "day" ? date : `${year}-${String(week).padStart(2, "0")}`;
+        let group = byKey.get(groupKey);
+        if (!group) {
+          group = {
+            key: groupKey,
+            label: mode === "day" ? dayLabel(date) : `Vecka ${week}`,
+            orderCount: 0,
+            rows: [],
+          };
+          byKey.set(groupKey, group);
+          working.push(group);
+        }
+        const already = group.rows.some(
+          (r) =>
+            (l.productId && r.productId === l.productId) ||
+            (matchKey(r.name) && matchKey(r.name) === matchKey(name)),
+        );
+        if (already) continue;
+        group.rows.push({
+          key: `order__${l.productId ?? matchKey(name)}__${l.unit}`,
+          name,
+          unit: l.unit,
+          total: 0,
+          packed: 0,
+          value: 0,
+          category: cat,
+          productId: l.productId,
+          imageUrl: l.imageUrl,
+          orders: [],
+        });
+      }
+    }
+
+    return working
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .map((g) => ({
+        ...g,
+        rows: g.rows
+          .map((r) => {
+            const stock = lookup(r, extras.stockById, extras.stockByName);
+            const onOrder = lookup(r, extras.orderedById, extras.orderedByName);
+            const remaining = Math.max(r.total - r.packed, 0);
+            return {
+              ...r,
+              stock,
+              onOrder,
+              // Lager och order ihop: räknas när minst en av dem är känd.
+              combined:
+                stock == null && onOrder == null ? null : (stock ?? 0) + (onOrder ?? 0),
+              sellable: stock == null ? null : stock - remaining,
+            };
+          })
+          .sort(
+            (a, b) =>
+              compareCategory(a.category, b.category) || a.name.localeCompare(b.name, "sv"),
+          ),
+      }));
+  }, [
+    baseGroups,
+    anyExtra,
+    extras,
+    cols.onOrder,
+    cols.combined,
+    productSearch,
+    picked,
+    category,
+    mode,
+    bounds.fromDate,
+  ]);
 
 
 
