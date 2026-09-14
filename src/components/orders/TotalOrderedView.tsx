@@ -126,6 +126,32 @@ type ProductRow = {
 };
 
 
+/** Valfria kolumner: lager, beställt hos grossisten och vad som kan säljas. */
+type ExtraCols = { stock: boolean; onOrder: boolean; sellable: boolean };
+
+const COLS_KEY = "totalList.columns";
+
+const loadCols = (): ExtraCols => {
+  try {
+    const raw = localStorage.getItem(COLS_KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      return {
+        stock: !!p.stock,
+        onOrder: !!p.onOrder,
+        sellable: !!p.sellable,
+      };
+    }
+  } catch {
+    /* tom: lagring kan vara blockerad */
+  }
+  return { stock: false, onOrder: false, sellable: false };
+};
+
+/** Mängd eller "–" när ingen koppling till lager/grossistorder finns. */
+const extraText = (v: number | null | undefined, unit: string) =>
+  v == null ? "–" : `${qtyText(v, unit)} ${unit}`;
+
 
 type Group = { key: string; label: string; orderCount: number; rows: ProductRow[] };
 
