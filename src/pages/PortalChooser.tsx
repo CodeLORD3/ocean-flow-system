@@ -51,9 +51,9 @@ export default function PortalChooser() {
   // If only one portal, jump straight in
   useEffect(() => {
     if (loading || !staff || needsPwd) return;
-    if (access.length === 1) {
-      if (access[0] === "shop" && stores.length === 0) return; // wait for stores
-      enterPortal(access[0]);
+    if (orderedAccess.length === 1) {
+      if (orderedAccess[0] === "shop" && stores.length === 0) return; // wait for stores
+      enterPortal(orderedAccess[0]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, staff?.id, needsPwd, stores.length]);
