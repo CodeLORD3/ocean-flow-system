@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ShopSidebar } from "@/components/ShopSidebar";
 import { ProductionSidebar } from "@/components/ProductionSidebar";
 import { StoreHero } from "@/components/StoreHero";
-import { BugReportButton } from "@/components/BugReportButton";
+
 import { MobileTabBar } from "@/components/MobileTabBar";
 
 
@@ -334,7 +334,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <MobileTabBar />
-      <BugReportButton />
     </SidebarProvider>
 
   );
