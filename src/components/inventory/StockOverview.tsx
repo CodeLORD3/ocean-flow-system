@@ -425,62 +425,30 @@ export default function StockOverview({
       )}
 
 
-      {/* Kategoriflikar + sök */}
+      {/* Kategorisorterare + sök */}
       <div className="flex flex-col lg:flex-row gap-2 lg:items-center justify-between">
-        <div className="flex flex-wrap items-center gap-1.5 pb-1">
-          <button
-            onClick={() => {
-              setCategory("__all__");
+        <div className="flex items-center gap-2">
+          <Select
+            value={category}
+            onValueChange={(v) => {
+              setCategory(v);
               setPage(1);
             }}
-            className={cn(
-              "shrink-0 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors border",
-              category === "__all__"
-                ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                : "bg-card text-foreground border-border hover:bg-muted",
-            )}
           >
-            Alla produkter
-            <span
-              className={cn(
-                "text-xs tabular-nums",
-                category === "__all__" ? "text-primary-foreground/70" : "text-muted-foreground",
-              )}
-            >
-              {groups.length}
-            </span>
-          </button>
-          {categories.map(([cat, count]) => {
-            const Icon = CATEGORY_ICONS[cat] || Package2;
-            const active = category === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => {
-                  setCategory(cat);
-                  setPage(1);
-                }}
-                className={cn(
-                  "shrink-0 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors border",
-                  active
-                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                    : "bg-card text-foreground border-border hover:bg-muted",
-                )}
-              >
-                <Icon className="h-3.5 w-3.5 opacity-70" />
-                {cat}
-                <span
-                  className={cn(
-                    "text-xs tabular-nums",
-                    active ? "text-primary-foreground/70" : "text-muted-foreground",
-                  )}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+            <SelectTrigger className="h-9 w-full lg:w-56 text-xs">
+              <SelectValue placeholder="Alla kategorier" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Alla produkter ({groups.length})</SelectItem>
+              {categories.map(([cat, count]) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat} ({count})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+
 
         <div className="flex items-center gap-2">
           <div className="relative flex-1 lg:w-72">
@@ -642,19 +610,23 @@ export default function StockOverview({
                             {!dense && (
                               <ProductThumb src={g.image_url} alt={g.name} productId={g.product_id} className="hidden w-8 h-6 sm:block" />
                             )}
-                            <div className="min-w-0">
-                              <div className="font-semibold text-foreground truncate">{g.name}</div>
-                              <div className="text-[10px] text-muted-foreground font-mono truncate">
-                                SKU: {g.sku}
+                            <div className="min-w-0 flex-1">
+                              {/* Desktop: namn + SKU staplat */}
+                              <div className="hidden sm:block">
+                                <div className="font-semibold text-foreground truncate">{g.name}</div>
+                                <div className="text-[10px] text-muted-foreground font-mono truncate">
+                                  SKU: {g.sku}
+                                </div>
                               </div>
-                              {/* Mobil: kategori, status och dagar kvar visas här när kolumnerna är dolda */}
-                              <div className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground sm:hidden">
+                              {/* Mobil: allt på en horisontell rad */}
+                              <div className="flex sm:hidden items-center gap-1.5 min-w-0 whitespace-nowrap">
                                 <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", st.dot)} />
-                                <span className="truncate">{g.category}</span>
+                                <span className="font-semibold text-foreground truncate">{g.name}</span>
+                                <span className="text-[10px] text-muted-foreground truncate">{g.category}</span>
                                 {g.daysLeft !== null && (
                                   <span
                                     className={cn(
-                                      "shrink-0 font-medium",
+                                      "shrink-0 text-[10px] font-medium",
                                       g.daysLeft < 0 || g.daysLeft <= 2
                                         ? "text-destructive"
                                         : g.daysLeft <= 5
@@ -662,11 +634,12 @@ export default function StockOverview({
                                           : "text-emerald-600",
                                     )}
                                   >
-                                    {g.daysLeft < 0 ? `${Math.abs(g.daysLeft)} d sen` : `${g.daysLeft} d kvar`}
+                                    {g.daysLeft < 0 ? `${Math.abs(g.daysLeft)} d sen` : `${g.daysLeft} d`}
                                   </span>
                                 )}
                               </div>
                             </div>
+
                           </div>
                         </td>
                         <td className="hidden px-2 text-xs text-muted-foreground whitespace-nowrap sm:table-cell">{g.category}</td>
