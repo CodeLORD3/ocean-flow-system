@@ -249,34 +249,100 @@ export default function ProductStockFlow({
                 </ResponsiveContainer>
               </div>
 
-              <div className="max-h-48 overflow-y-auto rounded-md border border-border/60">
-                <table className="w-full text-xs">
-                  <thead className="sticky top-0 bg-muted/60">
-                    <tr>
-                      <th className="px-2 py-1 text-left font-semibold">Datum</th>
-                      <th className="px-2 py-1 text-right font-semibold">In</th>
-                      <th className="px-2 py-1 text-right font-semibold">Ut</th>
-                      <th className="px-2 py-1 text-right font-semibold">Saldo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...points].reverse().map((r) => (
-                      <tr key={r.key} className="border-t border-border/40">
-                        <td className="px-2 py-1">{r.label}</td>
-                        <td className="px-2 py-1 text-right font-mono tabular-nums text-emerald-500">
-                          {r.in ? `+${nf(r.in)}` : "–"}
-                        </td>
-                        <td className="px-2 py-1 text-right font-mono tabular-nums text-destructive">
-                          {r.ut ? nf(r.ut) : "–"}
-                        </td>
-                        <td className="px-2 py-1 text-right font-mono font-semibold tabular-nums">
-                          {nf(r.saldo)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {/* Växla mellan dagssummor och rad-för-rad bokföring */}
+              <div className="flex w-fit items-center gap-1 rounded-md border border-border bg-muted/30 p-0.5">
+                {[
+                  { v: "days" as const, l: "Per dag" },
+                  { v: "ledger" as const, l: "Bokföring" },
+                ].map((o) => (
+                  <button
+                    key={o.v}
+                    onClick={() => setMode(o.v)}
+                    className={`rounded px-2 py-1 text-[11px] font-semibold transition-colors ${
+                      mode === o.v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {o.l}
+                  </button>
+                ))}
               </div>
+
+              {mode === "days" ? (
+                <div className="max-h-56 overflow-y-auto rounded-md border border-border/60">
+                  <table className="w-full text-xs">
+                    <thead className="sticky top-0 bg-muted/60">
+                      <tr>
+                        <th className="px-2 py-1.5 text-left font-semibold">Datum</th>
+                        <th className="px-2 py-1.5 text-right font-semibold">In</th>
+                        <th className="px-2 py-1.5 text-right font-semibold">Ut</th>
+                        <th className="px-2 py-1.5 text-right font-semibold">Saldo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...points].reverse().map((r) => (
+                        <tr key={r.key} className="border-t border-border/40">
+                          <td className="px-2 py-1">{r.label}</td>
+                          <td className="px-2 py-1 text-right font-mono tabular-nums text-emerald-500">
+                            {r.in ? `+${nf(r.in)}` : "–"}
+                          </td>
+                          <td className="px-2 py-1 text-right font-mono tabular-nums text-destructive">
+                            {r.ut ? nf(r.ut) : "–"}
+                          </td>
+                          <td className="px-2 py-1 text-right font-mono font-semibold tabular-nums">
+                            {nf(r.saldo)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="max-h-72 overflow-x-auto overflow-y-auto rounded-md border border-border/60">
+                  <table className="w-full min-w-[640px] text-xs">
+                    <thead className="sticky top-0 bg-muted/60">
+                      <tr>
+                        <th className="px-2 py-1.5 text-left font-semibold">Tid</th>
+                        <th className="px-2 py-1.5 text-left font-semibold">Händelse</th>
+                        <th className="px-2 py-1.5 text-left font-semibold">Lagerplats</th>
+                        <th className="px-2 py-1.5 text-left font-semibold">Parti</th>
+                        <th className="px-2 py-1.5 text-left font-semibold">Utförd av</th>
+                        <th className="px-2 py-1.5 text-right font-semibold">Förändring</th>
+                        <th className="px-2 py-1.5 text-right font-semibold">Saldo efter</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ledger.map((e: any) => (
+                        <tr key={e.id} className="border-t border-border/40 align-top hover:bg-muted/40">
+                          <td className="whitespace-nowrap px-2 py-1.5 font-mono tabular-nums text-muted-foreground">
+                            {stampFull(e.created_at)}
+                          </td>
+                          <td className="px-2 py-1.5">
+                            <span className="font-medium">{movementLabel(e.type)}</span>
+                            {e.note && (
+                              <span className="block text-[10px] text-muted-foreground">{e.note}</span>
+                            )}
+                          </td>
+                          <td className="px-2 py-1.5 text-muted-foreground">{e.location || "–"}</td>
+                          <td className="px-2 py-1.5 font-mono text-[11px] text-muted-foreground">
+                            {e.lot || "–"}
+                          </td>
+                          <td className="px-2 py-1.5">{e.who || <span className="text-muted-foreground">System</span>}</td>
+                          <td
+                            className={`whitespace-nowrap px-2 py-1.5 text-right font-mono font-semibold tabular-nums ${
+                              e.qty >= 0 ? "text-emerald-500" : "text-destructive"
+                            }`}
+                          >
+                            {e.qty >= 0 ? `+${nf(e.qty)}` : nf(e.qty)}
+                          </td>
+                          <td className="whitespace-nowrap px-2 py-1.5 text-right font-mono font-semibold tabular-nums">
+                            {nf(e.saldo)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </>
           )}
         </div>
