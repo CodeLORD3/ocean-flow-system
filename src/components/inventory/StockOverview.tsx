@@ -118,6 +118,20 @@ function qtyToKg(quantity: number, product: any): number {
 
 type Status = "ok" | "warning" | "critical" | "expired" | "low";
 
+/**
+ * Dagar kvar med veckodag när det är nära: "idag", "imorgon (tis)", "3 dagar (tors)".
+ * Veckodagen visas bara inom 5 dagar, för då tänker man i veckodagar i butiken.
+ */
+function daysLeftLabel(daysLeft: number | null, expiry?: string | null, short = false): string {
+  if (daysLeft === null) return "–";
+  if (daysLeft < 0) return `${Math.abs(daysLeft)} d sen`;
+  const wd = expiry && daysLeft <= 5 ? format(parseISO(expiry), "EEE", { locale: sv }) : "";
+  if (daysLeft === 0) return wd ? `idag (${wd})` : "idag";
+  const base = short ? `${daysLeft} d` : `${daysLeft} dag${daysLeft === 1 ? "" : "ar"}`;
+  if (daysLeft === 1) return wd ? `imorgon (${wd})` : base;
+  return wd ? `${base} (${wd})` : base;
+}
+
 function statusOf(daysLeft: number | null, low: boolean): Status {
   if (daysLeft !== null && daysLeft < 0) return "expired";
   if (daysLeft !== null && daysLeft <= 2) return "critical";
