@@ -634,28 +634,40 @@ export default function StockCount() {
           </p>
         </div>
         {session && effectiveStoreId && (
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-nowrap w-full sm:w-auto">
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5 text-xs h-9 sm:h-8"
+              className="gap-1 text-[11px] sm:text-xs h-8 px-2 flex-1 sm:flex-none"
               onClick={() => createSessionFor(date)}
             >
-              <Plus className="h-3.5 w-3.5" /> Ny rapport
+              <Plus className="h-3 w-3" /> Ny
             </Button>
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={openPrintDialog}>
+            <Button size="sm" variant="outline" className="gap-1 text-[11px] sm:text-xs h-8 px-2 flex-1 sm:flex-none" onClick={openPrintDialog}>
               <Printer className="h-3 w-3" /> Skriv ut
             </Button>
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs h-9 sm:h-8" onClick={exportCsv}>
-              <Download className="h-3 w-3" /> Exportera
+            <Button size="sm" variant="outline" className="gap-1 text-[11px] sm:text-xs h-8 px-2 flex-1 sm:flex-none" onClick={exportCsv}>
+              <Download className="h-3 w-3" /> Export
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 w-8 p-0 shrink-0"
+              aria-label="Uppdatera"
+              onClick={() => {
+                sessionQuery.refetch();
+                linesQuery.refetch();
+              }}
+            >
+              <RefreshCw className="h-3 w-3" />
             </Button>
             {!locked && (
               <Button
                 size="sm"
-                className="gap-1.5 text-xs h-9 sm:h-8 font-semibold"
+                className="gap-1 text-[11px] sm:text-xs h-8 px-2 font-semibold flex-1 sm:flex-none"
                 onClick={() => setLockOpen(true)}
               >
-                <Lock className="h-3 w-3" /> Lås rapporten
+                <Lock className="h-3 w-3" /> Lås
               </Button>
             )}
           </div>
