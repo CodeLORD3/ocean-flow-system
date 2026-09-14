@@ -1196,10 +1196,10 @@ export default function StockCount() {
       <Dialog open={lockOpen} onOpenChange={setLockOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Lås inventeringen?</DialogTitle>
+            <DialogTitle>Klar med inventeringen?</DialogTitle>
             <DialogDescription>
-              {storeName} — {date}. Vid låsning skrivs de räknade saldona in i lagret och raderna
-              kan inte längre ändras.
+              {storeName} — {date}. Inventeringsrapporten skapas, de räknade saldona blir det nya
+              lagret och raderna kan inte längre ändras.
             </DialogDescription>
           </DialogHeader>
 
