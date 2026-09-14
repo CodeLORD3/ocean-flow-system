@@ -642,8 +642,14 @@ export default function StockOverview({
                               {/* Mobil: allt på en horisontell rad */}
                               <div className="flex sm:hidden items-center gap-1.5 min-w-0 whitespace-nowrap">
                                 <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", st.dot)} />
-                                <span className="font-semibold text-foreground truncate">{g.name}</span>
-                                <span className="text-[10px] text-muted-foreground truncate">{g.category}</span>
+                                 <span className="font-semibold text-foreground truncate">{g.name}</span>
+                                 {!!photoCounts?.get(g.product_id) && (
+                                   <span className="flex shrink-0 items-center gap-0.5 text-[10px] font-medium text-primary">
+                                     <Camera className="h-3 w-3" />
+                                     <span className="font-mono tabular-nums">{photoCounts.get(g.product_id)}</span>
+                                   </span>
+                                 )}
+                                 <span className="text-[10px] text-muted-foreground truncate">{g.category}</span>
                                 {g.daysLeft !== null && (
                                   <span
                                     className={cn(
