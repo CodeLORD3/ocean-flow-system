@@ -528,7 +528,7 @@ export default function StockOverview({
           orderedByProduct={orderedByProduct}
           search={search}
           category={category}
-          onTransform={openTransform}
+          
         />
       ) : (
       /* Tabell */
@@ -739,9 +739,6 @@ export default function StockOverview({
                               <DropdownMenuItem onClick={() => onLineAction?.("split", g.lines[0])}>
                                 <Scissors className="h-3.5 w-3.5 mr-2" /> Splitta
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => onLineAction?.("transform", g.lines[0])}>
-                                <RefreshCw className="h-3.5 w-3.5 mr-2" /> Omvandla
-                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() => onLineAction?.("delete", g.lines[0])}
@@ -759,7 +756,35 @@ export default function StockOverview({
                       rowNodes.push(
                         <tr key={`${g.product_id}-sub`} className="bg-muted/20 border-b">
                           <td colSpan={showCosts ? 10 : 9} className="px-2 py-2">
-                            <div className="space-y-1 w-full max-w-[calc(100vw-2rem)] sm:max-w-none overflow-hidden">
+                             <div className="space-y-1 w-full max-w-[calc(100vw-2rem)] sm:max-w-none overflow-hidden">
+
+                              {/* Enheter och förpackningar varan finns i */}
+                              {(() => {
+                                const master = productsById.get(g.product_id) || {};
+                                const famId = master.family_id;
+                                const variants = famId
+                                  ? allProductList.filter((p: any) => p.family_id === famId)
+                                  : [master];
+                                return (
+                                  <div className="flex items-center gap-2 overflow-hidden rounded-md border border-border/60 bg-card px-2.5 py-1.5">
+                                    <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground">
+                                      Förpackningar
+                                    </span>
+                                    <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto">
+                                      {variants.map((p: any) => (
+                                        <Badge
+                                          key={p.id || g.product_id}
+                                          variant={p.id === g.product_id ? "default" : "outline"}
+                                          className="h-5 shrink-0 whitespace-nowrap text-[10px]"
+                                        >
+                                          {p.name || g.name} · {p.unit || g.unit}
+                                          {p.weight_per_piece ? ` · ${p.weight_per_piece} kg/st` : ""}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
 
                               {g.lines.map((l) => {
                                 const kg = qtyToKg(Number(l.quantity) || 0, l.products);
@@ -767,8 +792,9 @@ export default function StockOverview({
                                 return (
                                   <div
                                     key={l.id}
-                                    className="flex flex-wrap items-center gap-3 rounded-md border border-border/60 bg-card px-2.5 py-1.5"
+                                    className="flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-md border border-border/60 bg-card px-2.5 py-1.5"
                                   >
+
                                     <span
                                       className={cn(
                                         "h-2.5 w-2.5 rounded-full shrink-0",
@@ -817,14 +843,6 @@ export default function StockOverview({
                                         onClick={() => onLineAction?.("split", l)}
                                       >
                                         <Scissors className="h-3 w-3" /> Splitta
-                                      </Button>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-6 px-2 text-[10px] gap-1"
-                                        onClick={() => onLineAction?.("transform", l)}
-                                      >
-                                        <RefreshCw className="h-3 w-3" /> Omvandla
                                       </Button>
                                       <Button
                                         variant="outline"
