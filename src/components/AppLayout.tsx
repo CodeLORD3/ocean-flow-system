@@ -272,7 +272,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                <HrNotificationCenter />
 
 
-              <AccountMenu />
+              <AccountMenu portalItems={portalItems} />
             </div>
           </header>
 
