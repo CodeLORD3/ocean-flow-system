@@ -823,6 +823,93 @@ export default function StockCount() {
         </CardContent>
       </Card>
 
+      {/* Inventeringsrapporter — butikens inskickade rapporter */}
+      <Card>
+        <div className="flex items-center justify-between gap-2 border-b bg-muted/50 px-2 py-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Inventeringsrapporter
+          </span>
+          <span className="text-[10px] text-muted-foreground">
+            {(reportsQuery.data ?? []).length} rapporter
+          </span>
+        </div>
+        <CardContent className="p-1">
+          {!(reportsQuery.data ?? []).length ? (
+            <p className="px-1 py-2 text-[11px] text-muted-foreground">
+              Inga inventeringsrapporter har skickats in för {storeName || "butiken"}.
+            </p>
+          ) : (
+            <div className="divide-y">
+              {(reportsQuery.data ?? []).map((r: any) => {
+                const isOpen = openReportId === r.id;
+                return (
+                  <div key={r.id}>
+                    <button
+                      type="button"
+                      onClick={() => setOpenReportId(isOpen ? null : r.id)}
+                      className="flex w-full items-center justify-between gap-2 px-1.5 py-1 text-left hover:bg-muted/50"
+                    >
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        {isOpen ? (
+                          <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                        )}
+                        <span className="truncate text-[11px] font-medium">
+                          {dayLabel(r.sheet_date)} {r.sheet_date}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={`h-4 text-[9px] ${
+                            r.status === "godkand"
+                              ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-700"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {r.status === "godkand" ? "Inskickad" : "Utkast"}
+                        </Badge>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
+                        <span>{Number(r.line_count) || 0} rader</span>
+                        <span className="font-mono tabular-nums">
+                          {(Number(r.counted_total_kg) || 0).toLocaleString("sv-SE", {
+                            maximumFractionDigits: 1,
+                          })}{" "}
+                          kg
+                        </span>
+                        {r.closed_at && <span>{stampLabel(r.closed_at)}</span>}
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div className="bg-muted/30 px-3 py-1.5">
+                        {reportLinesQuery.isLoading ? (
+                          <p className="text-[11px] text-muted-foreground">Laddar rader…</p>
+                        ) : !(reportLinesQuery.data ?? []).length ? (
+                          <p className="text-[11px] text-muted-foreground">Inga rader.</p>
+                        ) : (
+                          <div className="divide-y divide-border/50">
+                            {(reportLinesQuery.data ?? []).map((l: any) => (
+                              <div key={l.id} className="flex justify-between gap-2 py-0.5 text-[11px]">
+                                <span className="truncate">{l.product_name}</span>
+                                <span className="shrink-0 font-mono tabular-nums">
+                                  {fmtQty(Number(l.counted_qty_kg) || 0, unitOf(l.unit))}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
+
 
 
       {/* Lista */}
