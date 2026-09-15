@@ -134,9 +134,22 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
         l.products?.sku,
       ]
         .filter(Boolean)
-        .some((v: string) => String(v).toLowerCase().includes(s)),
-    );
-  }, [lots, q]);
+            .some((v: string) => String(v).toLowerCase().includes(s)),
+        );
+    const kopia = [...bas];
+    if (sort === "senaste") kopia.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    if (sort === "bast_fore")
+      kopia.sort((a, b) => String(a.best_before || "9999-12-31").localeCompare(String(b.best_before || "9999-12-31")));
+    if (sort === "storst") kopia.sort((a, b) => Number(b.quantity_kg || 0) - Number(a.quantity_kg || 0));
+    if (sort === "namn")
+      kopia.sort((a, b) =>
+        String(a.products?.name || a.commercial_name || "").localeCompare(
+          String(b.products?.name || b.commercial_name || ""),
+          "sv",
+        ),
+      );
+    return kopia;
+  }, [lots, q, sort]);
 
   useEffect(() => {
     if (mode !== "flode") return;
