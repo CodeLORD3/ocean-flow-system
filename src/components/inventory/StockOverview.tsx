@@ -1761,6 +1761,75 @@ export default function StockOverview({
                     }
                     return rowNodes;
                   }),
+                  ...(catCollapsed
+                    ? []
+                    : [
+                        (() => {
+                          // Kategorisumma: saldo, kvar att packa, beställt och lagervärde
+                          const nq = (v: number) =>
+                            v.toLocaleString("sv-SE", { maximumFractionDigits: 1 });
+                          let qty = 0;
+                          let value = 0;
+                          let remaining = 0;
+                          let ordered = 0;
+                          for (const g of list) {
+                            qty += g.totalQty;
+                            value += g.value;
+                            const pk = packedByProduct?.get(g.product_id);
+                            if (pk) {
+                              remaining += pk.ordered;
+                              ordered += pk.packed + pk.ordered;
+                            }
+                          }
+                          const diff = qty - ordered;
+                          return (
+                            <tr
+                              key={`cat-total-${cat}`}
+                              className="border-x border-b border-grid-line bg-muted/40 text-[11px]"
+                            >
+                              <td className="hidden px-2 sm:table-cell" />
+                              <td className="px-2 py-1.5 font-semibold uppercase tracking-wider text-[10px] text-muted-foreground">
+                                Totalt {cat}
+                              </td>
+                              <td className="hidden px-2 sm:table-cell" />
+                              <td className="hidden px-2 sm:table-cell" />
+                              <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums whitespace-nowrap">
+                                {nq(qty)} kg
+                              </td>
+                              <td className="px-2 py-1.5 text-right font-mono tabular-nums whitespace-nowrap text-muted-foreground">
+                                {remaining > 0.005 ? `${nq(remaining)} kg` : "–"}
+                              </td>
+                              <td className="px-2 py-1.5 text-right font-mono tabular-nums whitespace-nowrap">
+                                {ordered > 0.005 ? `${nq(ordered)} kg` : "–"}
+                              </td>
+                              <td className="px-2 py-1.5 text-right font-mono tabular-nums whitespace-nowrap">
+                                {ordered > 0.005 ? (
+                                  <span
+                                    className={cn(
+                                      "font-semibold",
+                                      diff < -0.005 ? "text-destructive" : "text-emerald-600",
+                                    )}
+                                  >
+                                    {diff < -0.005 ? "−" : "+"}
+                                    {nq(Math.abs(diff))} kg
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground/60">–</span>
+                                )}
+                              </td>
+                              {showCosts && (
+                                <td className="hidden px-2 py-1.5 text-right font-mono font-semibold tabular-nums whitespace-nowrap sm:table-cell">
+                                  {fmt(value)}
+                                </td>
+                              )}
+                              <td className="hidden sm:table-cell" />
+                              <td className="hidden sm:table-cell" />
+                              <td className="hidden sm:table-cell" />
+                              <td />
+                            </tr>
+                          );
+                        })(),
+                      ]),
                 ];
               })}
             </tbody>
