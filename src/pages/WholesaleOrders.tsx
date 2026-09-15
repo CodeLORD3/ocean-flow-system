@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import { ProductThumb } from "@/components/products/ProductThumb";
