@@ -1268,6 +1268,20 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
   const { toast } = useToast();
   const createChange = useCreateChangeRequest();
   const updateLineStatus = useUpdateOrderLineStatus();
+  // Djuplänk från lagret: ?line=<produkt> markerar och skrollar till raden.
+  const detailLocation = useLocation();
+  const detailParams = new URLSearchParams(detailLocation.search);
+  const highlightProductId =
+    detailParams.get("order") === order.id ? detailParams.get("line") : null;
+  React.useEffect(() => {
+    if (!highlightProductId) return;
+    const t = setTimeout(() => {
+      document
+        .getElementById(`order-line-${order.id}-${highlightProductId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 450);
+    return () => clearTimeout(t);
+  }, [highlightProductId, order.id]);
   const { data: infiniteStock = true } = useQuery({
     queryKey: ["infinite_stock"],
     queryFn: isInfiniteStock,
