@@ -132,13 +132,10 @@
     overscroll-behavior-x: contain;
   }
 
-  /* Bottenmenyn på mobil ligger fast — ge innehållet plats så inget hamnar bakom */
-  .app-main {
-    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
-  }
-  @media (min-width: 640px) {
+  /* Bottenmenyn på mobil ligger fast — utfyllnad läggs i AppLayout (utilities vinner över base) */
+  @media (max-width: 639px) {
     .app-main {
-      padding-bottom: 1rem;
+      scroll-padding-bottom: 8rem;
     }
   }
 
