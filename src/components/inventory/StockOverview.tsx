@@ -560,8 +560,8 @@ export default function StockOverview({
       <Card className="shadow-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs sm:min-w-[900px]">
-            <thead>
-              <tr className="border-b bg-muted/40 text-[9px] uppercase tracking-wider text-muted-foreground">
+            <thead className="sticky top-[52px] z-20">
+              <tr className="border-b bg-background/95 backdrop-blur text-[9px] uppercase tracking-wider text-muted-foreground shadow-sm">
                 <th className="hidden w-6 px-1.5 py-1 text-left font-medium sm:table-cell">#</th>
                 <th className="px-1.5 py-1 text-left font-medium">Produkt</th>
                 <th className="hidden px-1.5 py-1 text-left font-medium sm:table-cell">Kategori</th>
