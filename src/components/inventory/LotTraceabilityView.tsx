@@ -233,14 +233,24 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
       ? matchade.filter((l) => (l.products?.name || l.commercial_name || "—") === valdProdukt)
       : matchade;
     const kopia = [...bas];
+    const varde = (l: any) => (l.unit_cost != null ? Number(l.quantity_kg || 0) * Number(l.unit_cost) : 0);
     if (sort === "senaste") kopia.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    if (sort === "aldst") kopia.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
     if (sort === "andrad")
       kopia.sort((a, b) =>
         String(senasteHandelse[b.id] || b.created_at).localeCompare(String(senasteHandelse[a.id] || a.created_at)),
       );
     if (sort === "bast_fore")
       kopia.sort((a, b) => String(a.best_before || "9999-12-31").localeCompare(String(b.best_before || "9999-12-31")));
+    if (sort === "langst")
+      kopia.sort((a, b) => String(b.best_before || "0000-01-01").localeCompare(String(a.best_before || "0000-01-01")));
     if (sort === "storst") kopia.sort((a, b) => Number(b.quantity_kg || 0) - Number(a.quantity_kg || 0));
+    if (sort === "minst") kopia.sort((a, b) => Number(a.quantity_kg || 0) - Number(b.quantity_kg || 0));
+    if (sort === "varde") kopia.sort((a, b) => varde(b) - varde(a));
+    if (sort === "leverantor")
+      kopia.sort((a, b) => String(a.suppliers?.name || "").localeCompare(String(b.suppliers?.name || ""), "sv"));
+    if (sort === "parti")
+      kopia.sort((a, b) => String(a.lot_number || "").localeCompare(String(b.lot_number || ""), "sv", { numeric: true }));
     if (sort === "namn")
       kopia.sort((a, b) =>
         String(a.products?.name || a.commercial_name || "").localeCompare(
