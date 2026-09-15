@@ -17,7 +17,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
 import { useStoreSidebarPrefs } from "@/hooks/useStoreSidebarPrefs";
 import { SidebarVisibilityDialog } from "@/components/SidebarVisibilityDialog";
-import { StoreSwitcher } from "@/components/StoreSwitcher";
+
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
@@ -215,7 +215,6 @@ export function ShopSidebar() {
           storeId={activeStoreId}
           storeLogoUrl={activeStore?.logo_url}
         />
-        <StoreSwitcher collapsed={collapsed} />
       </SidebarHeader>
 
       <SidebarContent>
