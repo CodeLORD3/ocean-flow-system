@@ -4,6 +4,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ShopSidebar } from "@/components/ShopSidebar";
 import { ProductionSidebar } from "@/components/ProductionSidebar";
 import { StoreHero } from "@/components/StoreHero";
+import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
 
 import { MobileTabBar } from "@/components/MobileTabBar";
 
