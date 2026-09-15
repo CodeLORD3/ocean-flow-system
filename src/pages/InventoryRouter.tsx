@@ -10,7 +10,7 @@ import WasteReports from "@/pages/WasteReports";
 import TraceabilityPage from "@/pages/TraceabilityPage";
 import StockTransformation from "@/pages/StockTransformation";
 import { useSite } from "@/contexts/SiteContext";
-import { canAccessRoute } from "@/lib/pageAccess";
+
 
 type SubTab =
   | "lager"
