@@ -122,6 +122,7 @@ export default function AllProductsHistoryTree({
         created_at: m.created_at,
         qty,
         type: m.movement_type,
+        label: movementLabel(m.movement_type),
         lot: m.lots?.lot_number ?? null,
         lotId: (m.lot_id as string | null) ?? null,
         location: [m.storage_locations?.stores?.name, m.storage_locations?.name].filter(Boolean).join(" · "),
