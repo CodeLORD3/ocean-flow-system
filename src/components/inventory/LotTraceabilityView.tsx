@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Fish, Search, Ship, Anchor } from "lucide-react";
+import { Fish, Search, Ship, Anchor, GitBranch, List } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import LineageGraphView from "@/components/inventory/LineageGraphView";
 import { EmptyState } from "@/components/EmptyState";
 import LotDocumentsPanel from "@/components/inventory/LotDocumentsPanel";
 import ParasiteFreezePanel from "@/components/inventory/ParasiteFreezePanel";
@@ -26,6 +28,7 @@ const nf = (n: number, d = 1) =>
 export default function LotTraceabilityView({ currency = "SEK", showCosts = true, onEmptyAction }: Props) {
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [mode, setMode] = useState<"lista" | "graf">("lista");
 
   const { data: lots = [], isLoading } = useQuery({
     queryKey: ["lots_traceability"],
@@ -81,6 +84,29 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
 
   return (
     <div className="space-y-3">
+      <div className="flex gap-1 print:hidden">
+        <Button
+          variant={mode === "lista" ? "default" : "outline"}
+          size="sm"
+          className="h-8 gap-1 text-xs"
+          onClick={() => setMode("lista")}
+        >
+          <List className="h-3.5 w-3.5" /> Lista
+        </Button>
+        <Button
+          variant={mode === "graf" ? "default" : "outline"}
+          size="sm"
+          className="h-8 gap-1 text-xs"
+          onClick={() => setMode("graf")}
+        >
+          <GitBranch className="h-3.5 w-3.5" /> Graf
+        </Button>
+      </div>
+
+      {mode === "graf" && <LineageGraphView currency={currency} startLotId={openId} />}
+
+      {mode === "lista" && (
+      <>
       <div className="relative max-w-md">
         <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -244,6 +270,8 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
           );
         })}
       </div>
+      </>
+      )}
     </div>
   );
 }
