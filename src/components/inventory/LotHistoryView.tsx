@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { movementLabel } from "@/hooks/useStockMovements";
 import { Button } from "@/components/ui/button";
 import LineageGraphView from "@/components/inventory/LineageGraphView";
+import AllProductsHistoryTree from "@/components/inventory/AllProductsHistoryTree";
 
 const nf = (n: number, d = 1) =>
   n.toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/\u00a0/g, " ");
