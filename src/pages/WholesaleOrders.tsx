@@ -1388,13 +1388,27 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
   };
   const { data: allStock = [] } = useAllStockByLocation();
   const { data: allProducts } = useQuery({
-    queryKey: ["products"],
+    queryKey: ["products", "alt-match"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("id, name, unit").eq("active", true).order("name");
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, unit, family_id, category")
+        .eq("active", true)
+        .order("name");
       if (error) throw error;
       return data;
     },
   });
+
+  /**
+   * Syskonvaror: samma produktgrupp, annars samma namn frånsett storleks-
+   * ändelsen (t.ex. "Kokta Krabbklor L" och "Kokta Krabbklor XL").
+   */
+  const baseName = (name: string) =>
+    (name || "")
+      .toLowerCase()
+      .replace(/\s+(xxl|xl|l|m|s|xs|stor|mellan|liten)\s*$/i, "")
+      .trim();
 
   // Tillgängligt vid packning läses ur det aktiva grossistlagret (nivå), aldrig
   // ur den gamla namngivna platsen "Grossist Flytande" som är inaktiverad.
