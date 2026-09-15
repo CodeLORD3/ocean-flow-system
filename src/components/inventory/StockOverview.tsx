@@ -444,9 +444,7 @@ export default function StockOverview({
         </span>
       </button>
 
-      {showStats && (
-        <div className="space-y-3">
-      {/* KPI-kort */}
+      {/* KPI-kort — alltid synliga ovanför lagerlistan */}
       {compactKpis ? (
         <div className="grid grid-cols-2 gap-2 sm:max-w-md">
           <Card className="shadow-card">
