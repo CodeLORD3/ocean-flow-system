@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Truck, Factory, Warehouse, Store, ShoppingBasket, Loader2 } from "lucide-react";
+import { ChevronDown, Truck, Factory, Warehouse, Store, ShoppingBasket, Loader2, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -89,6 +89,25 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
     );
     return () => window.clearTimeout(t);
   }, [mapStore]);
+
+  /** Stänger enhetspanelen och rullar tillbaka till kartan. */
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const closeStore = () => {
+    setMapStore(null);
+    mapRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  /** Esc stänger det som är öppet — panelen först, annars utfälld nod. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (mapStore) closeStore();
+      else if (open) setOpen(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mapStore, open]);
+
   const qc = useQueryClient();
 
   const { data: transfers = [] } = useTransferOrders();
@@ -563,11 +582,18 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
       <Connector />
 
       {/* 4. Butikslager — karta i stället för rutor */}
-      <div className="rounded-lg border border-dashed border-border p-2">
-        <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold">
-          <Store className="h-3.5 w-3.5 text-primary" aria-hidden />
-          Butikslager — välj enhet på kartan
-        </p>
+      <div ref={mapRef} className="scroll-mt-24 rounded-lg border border-dashed border-border p-2">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold">
+            <Store className="h-3.5 w-3.5 text-primary" aria-hidden />
+            Butikslager — välj enhet på kartan
+          </p>
+          {mapStore ? (
+            <Button size="sm" variant="ghost" className="h-6 gap-1 text-[11px]" onClick={closeStore}>
+              <X className="h-3 w-3" aria-hidden /> Stäng {storeName[mapStore] ?? "enhet"}
+            </Button>
+          ) : null}
+        </div>
         <StockMap
           stock={stock}
           showValue={showValue}
@@ -577,18 +603,19 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
         <div ref={storeDetailsRef} className="scroll-mt-24">
           {mapStore ? (
             <div className="mt-3 rounded-lg border border-border bg-card p-3">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div className="sticky top-14 z-10 -mx-3 -mt-3 mb-2 flex flex-wrap items-center justify-between gap-2 rounded-t-lg border-b border-border bg-card px-3 py-2">
                 <p className="flex items-center gap-1.5 text-xs font-semibold">
                   <Store className="h-3.5 w-3.5 text-primary" aria-hidden />
                   {storeName[mapStore] ?? "Enhet"}
                 </p>
                 <Button
                   size="sm"
-                  variant="ghost"
-                  className="h-6 text-[11px]"
-                  onClick={() => setMapStore(null)}
+                  variant="outline"
+                  className="h-7 gap-1 text-[11px]"
+                  onClick={() => closeStore()}
                 >
-                  Stäng
+                  <X className="h-3.5 w-3.5" aria-hidden />
+                  Stäng (Esc)
                 </Button>
               </div>
 
