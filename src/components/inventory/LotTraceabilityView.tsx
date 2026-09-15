@@ -44,6 +44,11 @@ interface Props {
   showCosts?: boolean;
   /** Åtgärd i det tomma tillståndet. */
   onEmptyAction?: () => void;
+  /**
+   * Sätts i butiksportalen: då visas bara partier som passerat butiken.
+   * Grossist och admin skickar null och ser all spårbarhet.
+   */
+  storeId?: string | null;
 }
 
 const nf = (n: number, d = 1) =>
