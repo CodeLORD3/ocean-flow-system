@@ -181,6 +181,40 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
     [movements],
   );
 
+  /** Var partiets kilon ligger just nu, per lagerplats. */
+  const perPlats = useMemo(() => {
+    const map = new Map<string, number>();
+    movements.forEach((m) => {
+      const namn = m.storage_locations?.name || "Okänd plats";
+      map.set(namn, (map.get(namn) || 0) + Number(m.quantity_kg || 0));
+    });
+    return [...map.entries()]
+      .map(([plats, kg]) => ({ plats, kg }))
+      .filter((r) => Math.abs(r.kg) > 0.001)
+      .sort((a, b) => b.kg - a.kg);
+  }, [movements]);
+
+  /** Löpande saldo per händelse — den röda tråden. */
+  const tidslinje = useMemo(() => {
+    let saldoLopande = 0;
+    return movements.map((m, i) => {
+      saldoLopande += Number(m.quantity_kg || 0);
+      return {
+        ...m,
+        saldoEfter: saldoLopande,
+        gap: i === 0 ? null : gapBetween(movements[i - 1].created_at, m.created_at),
+        sist: i === movements.length - 1,
+      };
+    });
+  }, [movements]);
+
+  const sorteringar = [
+    { v: "senaste", label: "Senast registrerat" },
+    { v: "bast_fore", label: "Kortast hållbarhet" },
+    { v: "storst", label: "Störst mängd" },
+    { v: "namn", label: "Namn A–Ö" },
+  ] as const;
+
   const modes = [
     { v: "flode", label: "Flöde", icon: Route },
     { v: "graf", label: "Släktträd", icon: GitBranch },
