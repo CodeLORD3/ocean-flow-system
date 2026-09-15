@@ -19,6 +19,8 @@ import SavedPriceLists from "@/components/SavedPriceLists";
 import StockPricePoster from "@/components/pricing/StockPricePoster";
 import { ReferencePricesPanel } from "@/components/pricing/ReferencePricesPanel";
 import PricingRulesPanel from "@/components/pricing/PricingRulesPanel";
+import TierPricingPanel from "@/components/pricing/TierPricingPanel";
+import TierMarginOverview from "@/components/pricing/TierMarginOverview";
 import { effectiveCost, COST_SOURCE_LABEL } from "@/lib/effectiveCost";
 
 interface InlineEdit {
@@ -394,6 +396,10 @@ export default function Pricing() {
       </div>
 
       <PricingRulesPanel isShop={isShop} />
+
+      {!isShop && <TierPricingPanel />}
+
+      {!isShop && <TierMarginOverview />}
 
       <StockPricePoster />
 
