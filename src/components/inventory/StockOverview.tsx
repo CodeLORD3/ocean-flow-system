@@ -1136,17 +1136,8 @@ export default function StockOverview({
                                       </>
                                     ) : null}
                                   </span>
-                                  <span className="inline-flex w-[80px] items-center justify-end gap-1">
-                                    {pk && pk.ordered > 0.005 ? (
-                                      <>
-                                        <span className="h-1.5 w-1.5 rounded-full bg-foreground/35" />
-                                        <span>
-                                          {pk.ordered.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit}
-                                        </span>
-                                        <span className="text-[9px] uppercase tracking-wider text-muted-foreground">best.</span>
-                                      </>
-                                    ) : null}
-                                  </span>
+
+
                                 </span>
                               </div>
                             )}
