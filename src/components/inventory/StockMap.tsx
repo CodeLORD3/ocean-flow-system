@@ -120,6 +120,33 @@ function FitAll({ positions }: { positions: [number, number][] }) {
   return null;
 }
 
+/**
+ * Sidan ska kunna skrollas fritt: hjulzoom är av tills man klickar i kartan,
+ * och stängs av igen när pekaren lämnar den.
+ */
+function WheelZoomOnClick({ onChange }: { onChange: (on: boolean) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    map.scrollWheelZoom.disable();
+    onChange(false);
+    const on = () => {
+      map.scrollWheelZoom.enable();
+      onChange(true);
+    };
+    const off = () => {
+      map.scrollWheelZoom.disable();
+      onChange(false);
+    };
+    map.on("click", on);
+    map.on("mouseout", off);
+    return () => {
+      map.off("click", on);
+      map.off("mouseout", off);
+    };
+  }, [map, onChange]);
+  return null;
+}
+
 /** Håller reda på zoomnivån för visning i hörnet. */
 function ZoomReadout({ onChange }: { onChange: (z: number) => void }) {
   const map = useMap();
@@ -148,6 +175,7 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
   const [zoom, setZoom] = useState(5);
   const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null);
   const [resetKey, setResetKey] = useState(0);
+  const [wheelZoom, setWheelZoom] = useState(false);
 
   const points = useMemo<Point[]>(() => {
     const agg = new Map<string, Point>();
@@ -264,17 +292,21 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
           <span className="pointer-events-none absolute bottom-2 left-2 z-[500] rounded bg-card/85 px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">
             zoom {zoom}
           </span>
+          <span className="pointer-events-none absolute bottom-2 right-2 z-[500] rounded bg-card/85 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+            {wheelZoom ? "Hjulzoom aktiv — flytta pekaren ut för att skrolla sidan" : "Klicka i kartan för att zooma med hjulet"}
+          </span>
           <MapContainer
             key={resetKey}
             center={[57, 13]}
             zoom={5}
             minZoom={3}
             maxZoom={tile.maxZoom}
-            scrollWheelZoom
+            scrollWheelZoom={false}
             className="h-full w-full"
           >
             <TileLayer url={tile.url} attribution={tile.attribution} maxZoom={tile.maxZoom} />
             <ZoomReadout onChange={setZoom} />
+            <WheelZoomOnClick onChange={setWheelZoom} />
             <FitAll positions={points.map((p) => p.position)} />
             <FlyTo position={flyTarget} zoom={13} />
 
