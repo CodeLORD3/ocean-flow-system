@@ -128,6 +128,7 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setUser(null);
     setStaff(null);
+    setStaffLoading(false);
   };
 
   const signOut = async () => {
