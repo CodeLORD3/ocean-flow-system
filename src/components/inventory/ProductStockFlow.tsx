@@ -82,7 +82,7 @@ export default function ProductStockFlow({
     },
   });
 
-  const { points, totals, ledger, branches } = useMemo(() => {
+  const { points, totals, ledger, branches, places, journey } = useMemo(() => {
     // Löpande saldo från noll — varje förändring av lagret är en rörelse.
     const perDay = new Map<string, { in: number; out: number }>();
     let running = 0;
