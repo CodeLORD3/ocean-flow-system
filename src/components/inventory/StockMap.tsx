@@ -263,6 +263,7 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
           >
             <TileLayer url={tile.url} attribution={tile.attribution} maxZoom={tile.maxZoom} />
             <ZoomReadout onChange={setZoom} />
+            <FitAll positions={points.map((p) => p.position)} />
             <FlyTo position={flyTarget} zoom={13} />
 
             {showRoutes && active
