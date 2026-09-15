@@ -18,6 +18,9 @@ interface Props {
   movements: ChainMovement[];
   lotNumber?: string | null;
   productName?: string | null;
+  /** Inköpspris per kilo, för värdet på varje händelse. */
+  unitCost?: number | null;
+  currency?: string;
 }
 
 const nf = (n: number, d = 1) =>
@@ -39,7 +42,13 @@ const GREN_DY = 34;
  * kedjan slutar i en "Live"-nod med aktuellt saldo. Klick på en nod öppnar
  * "All info"-rutan.
  */
-export default function LotChainGraph({ movements, lotNumber, productName }: Props) {
+export default function LotChainGraph({
+  movements,
+  lotNumber,
+  productName,
+  unitCost = null,
+  currency = "SEK",
+}: Props) {
   const [valdId, setValdId] = useState<string | null>(null);
 
   const noder = useMemo(() => {
@@ -97,7 +106,7 @@ export default function LotChainGraph({ movements, lotNumber, productName }: Pro
                     x2={n.x}
                     y2={n.y}
                     stroke="currentColor"
-                    className={n.gren ? "text-destructive/50" : "text-foreground/40"}
+                    className={n.gren ? "text-rose-500/60" : "text-emerald-600/50"}
                     strokeWidth={n.gren ? 1 : 1.5}
                   />
                 )}
@@ -114,7 +123,7 @@ export default function LotChainGraph({ movements, lotNumber, productName }: Pro
                   cx={n.x}
                   cy={n.y}
                   r={aktiv ? 8 : 5.5}
-                  className={n.kg < 0 ? "cursor-pointer fill-destructive" : "cursor-pointer fill-foreground"}
+                  className={n.kg < 0 ? "cursor-pointer fill-rose-500" : "cursor-pointer fill-emerald-600"}
                   onClick={() => setValdId(n.m.id)}
                 />
                 {aktiv && (
@@ -138,6 +147,7 @@ export default function LotChainGraph({ movements, lotNumber, productName }: Pro
                 <text x={n.x + 14} y={n.y + 15} className="fill-muted-foreground text-[10px]">
                   {stampSv(n.m.created_at)} · {n.kg > 0 ? "+" : ""}
                   {nf(n.kg, 1)} kg
+                  {unitCost != null ? ` · ${nf(Math.abs(n.kg) * unitCost, 0)} ${currency}` : ""}
                 </text>
               </g>
             );
@@ -175,6 +185,12 @@ export default function LotChainGraph({ movements, lotNumber, productName }: Pro
               ["Datum och tid", stampSv(vald.m.created_at)],
               ["Förändring", `${vald.kg > 0 ? "+" : ""}${nf(vald.kg, 1)} kg`],
               ["Saldo efter", `${nf(vald.saldo, 1)} kg`],
+              ...(unitCost != null
+                ? ([
+                    ["Värde på händelsen", `${nf(Math.abs(vald.kg) * unitCost, 0)} ${currency}`],
+                    ["Värde kvar", `${nf(vald.saldo * unitCost, 0)} ${currency}`],
+                  ] as [string, string][])
+                : []),
               ["Plats", vald.m.storage_locations?.name || "—"],
               ["Av", namnPa(vald.m)],
               ["Låg orörd innan", vald.gap || "Första händelsen"],
