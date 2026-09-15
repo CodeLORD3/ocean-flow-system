@@ -66,6 +66,8 @@ interface Props {
   product: { id: string; name: string; sku?: string | null; unit?: string | null } | null;
   locationId?: string | null;
   storeId?: string | null;
+  /** Tillåtna lagernivåer — grossisten får inte omvandla butikernas eget lager. */
+  allowedLevels?: string[] | null;
   /** Förvald målprodukt, t.ex. från omvandlingsprognosen i familjevyn. */
   initialTargetProductId?: string | null;
   onDone?: () => void;
