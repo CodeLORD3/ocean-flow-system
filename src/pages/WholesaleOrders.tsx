@@ -715,6 +715,17 @@ export default function WholesaleOrders() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-2.5">
+      {/* Kom hit från lagret — tydlig väg tillbaka, som på totallistan. */}
+      {new URLSearchParams(location.search).get("from") === "stock" && (
+        <button
+          type="button"
+          onClick={() => navigate("/inventory")}
+          className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-primary/20"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Tillbaka till lagret
+        </button>
+      )}
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 font-heading text-lg font-bold tracking-tight text-foreground sm:text-xl">
