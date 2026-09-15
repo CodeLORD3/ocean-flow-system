@@ -460,6 +460,30 @@ export default function ShopOrders() {
     setOrderLines(prev => prev.map((l, i) => i === idx ? { ...l, quantity: qty } : l));
   };
 
+  /** Sätter prioritet på en rad. "Måste med" förifylls med hela raden som kritisk mängd. */
+  const setLinePriority = (idx: number, priority: LinePriority) => {
+    setOrderLines(prev =>
+      prev.map((l, i) =>
+        i === idx
+          ? {
+              ...l,
+              priority,
+              priorityQty:
+                priority === "must"
+                  ? l.priorityQty ||
+                    String(customerCommitted.get(l.product_id)?.quantity ?? l.quantity ?? "")
+                  : "",
+              priorityNote: priority === "must" ? l.priorityNote : "",
+            }
+          : l,
+      ),
+    );
+  };
+
+  const setLineField = (idx: number, field: "priorityQty" | "priorityNote", value: string) => {
+    setOrderLines(prev => prev.map((l, i) => (i === idx ? { ...l, [field]: value } : l)));
+  };
+
   const removeLine = (idx: number) => {
     setOrderLines(prev => prev.filter((_, i) => i !== idx));
   };
