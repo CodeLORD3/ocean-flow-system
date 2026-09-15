@@ -303,6 +303,17 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
                     click: () => (isActive ? selectPoint(null) : selectPoint(p, true)),
                   }}
                 >
+                  <Tooltip
+                    direction="bottom"
+                    offset={[0, r + 2]}
+                    permanent
+                    interactive
+                    opacity={1}
+                    className="store-name-label"
+                  >
+                    <span className="text-[11px] font-semibold">{p.name}</span>
+                  </Tooltip>
+
                   <Tooltip direction="top" offset={[0, -r]} permanent={isActive}>
                     <span className="text-[11px] font-semibold">{p.name}</span>
                     {p.city ? <span className="text-[10px]"> · {p.city}</span> : null}

@@ -210,3 +210,19 @@
   z-index: 0;
   isolation: isolate;
 }
+
+/* Butiksnamn vid prickarna på kartan */
+.leaflet-tooltip.store-name-label {
+  background: hsl(var(--card) / 0.95);
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  padding: 1px 6px;
+  box-shadow: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.leaflet-tooltip.store-name-label::before {
+  display: none;
+}
