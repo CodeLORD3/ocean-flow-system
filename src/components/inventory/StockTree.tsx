@@ -537,6 +537,10 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
           ))}
         </div>
       </div>
+
+      <div className="mt-3">
+        <StockMap stock={stock} showValue={showValue} />
+      </div>
     </div>
   );
 }
