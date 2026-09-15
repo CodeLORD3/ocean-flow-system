@@ -213,6 +213,9 @@ export default function StockCount() {
 
   const [date, setDate] = useState<string>(todayStockholm());
   const [search, setSearch] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [focusRowKey, setFocusRowKey] = useState<string | null>(null);
+  const [openDetail, setOpenDetail] = useState<Record<string, "quality" | "comment" | null>>({});
   const [category, setCategory] = useState<string>("all");
   const [onlyUncounted, setOnlyUncounted] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
