@@ -66,7 +66,10 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     // med sina scopes, så klienten har ett enda begrepp att läsa.
     // Hämtningen får inte tysta misslyckas — då blir portalvalet tomt.
     let lastMessage: string | null = null;
-    for (let attempt = 0; attempt < 3; attempt++) {
+    // Backend kan vara kall efter inaktivitet: första svaret dröjer ibland
+    // flera sekunder. Ge det gott om försök innan vi visar ett fel.
+    const waits = [600, 1200, 2400, 4000, 6000];
+    for (let attempt = 0; attempt < waits.length + 1; attempt++) {
       const { data, error } = await supabase
         .from("staff_access")
         .select("id, user_id, first_name, last_name, email, phone, age, workplace, profile_image_url, portal_access, allowed_store_ids, must_change_password, primary_role, is_platform_admin")
@@ -80,9 +83,12 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
       }
       lastMessage = `${(error as any).code ?? "fel"}: ${error.message}`;
       console.error("[auth] kunde inte hämta staff_access", error);
-      // Nätverksglapp eller kall token: vänta kort och försök igen
-      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+      // Nätverksglapp eller kall token: vänta och försök igen
+      if (attempt < waits.length) {
+        await new Promise((r) => setTimeout(r, waits[attempt]));
+      }
     }
+
     setStaff(null);
     setLastError(lastMessage);
 
