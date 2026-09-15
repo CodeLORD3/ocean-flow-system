@@ -1336,7 +1336,8 @@ export default function PurchaseReporting() {
 
               const qty = Number(p.quantity) || 0;
               const unitPrice = Number(p.unit_price ?? 0) || 0;
-              const lineTotal = Number(p.line_total ?? 0) || 0;
+              // Radsumma saknas ibland i dokumentet — räkna då fram den.
+              const lineTotal = Number(p.line_total ?? 0) || qty * unitPrice;
               const ordered = Number(p.ordered_quantity ?? 0) || null;
 
               accepted.push({
