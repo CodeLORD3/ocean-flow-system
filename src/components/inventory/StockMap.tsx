@@ -175,6 +175,16 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
           <span className="flex items-center gap-1">
             <span className="inline-block h-2 w-2 rounded-full bg-muted-foreground/40" /> Tomt lager
           </span>
+          <button
+            type="button"
+            onClick={() => setShowRoutes((v) => !v)}
+            className={cn(
+              "flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 transition-colors",
+              showRoutes ? "bg-accent text-foreground" : "hover:bg-accent",
+            )}
+          >
+            <Route className="h-3 w-3" aria-hidden /> Avstånd
+          </button>
         </div>
       </div>
 
