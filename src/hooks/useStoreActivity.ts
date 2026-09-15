@@ -1,69 +1,82 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useChatConversations, useChatUnread, useCurrentPortal } from "@/hooks/useChat";
-import { storePortalKey } from "@/lib/portalProfiles";
 
 export type StoreActivity = {
-  /** Olästa chattmeddelanden från butiken */
-  messages: number;
-  /** Nya (obehandlade) ordrar från butiken */
-  orders: number;
-  /** Öppna önskemål från butiken */
-  wishes: number;
+  /** Senaste lagerrörelse (inleverans, försäljning, justering m.m.). */
+  lastMovementAt: string | null;
+  /** Senaste inventering (rörelse av typen inventering). */
+  lastCountAt: string | null;
+  /** Senaste inventeringsrapport som stängdes. */
+  lastReportAt: string | null;
+  /** Senaste händelse av alla slag. */
+  lastAnyAt: string | null;
 };
 
-const EMPTY: StoreActivity = { messages: 0, orders: 0, wishes: 0 };
+const newer = (a: string | null, b: string | null) => {
+  if (!a) return b;
+  if (!b) return a;
+  return new Date(a) > new Date(b) ? a : b;
+};
 
 /**
- * Notissignaler per butik för grossist-/adminportalen:
- * nya meddelanden, nya ordrar och öppna önskemål.
+ * Senaste lageraktivitet per enhet — används för att direkt kunna se om någon
+ * lagt in i lager eller inventerat inom 24 timmar.
  */
 export function useStoreActivity() {
-  const portal = useCurrentPortal();
-  const { data: conversations = [] } = useChatConversations(portal?.key);
-  const unread = useChatUnread();
-
-  const { data: rows } = useQuery({
-    queryKey: ["store-activity-counts"],
+  return useQuery({
+    queryKey: ["store-activity"],
     queryFn: async () => {
-      const [{ data: orders, error: oErr }, { data: wishes, error: wErr }] = await Promise.all([
-        supabase.from("shop_orders").select("store_id").eq("status", "Ny"),
-        supabase.from("shop_wishes").select("store_id, status, archived").neq("status", "Klar"),
+      const [locs, moves, sheets] = await Promise.all([
+        supabase.from("storage_locations").select("id, store_id"),
+        supabase
+          .from("stock_movements")
+          .select("location_id, movement_type, created_at")
+          .order("created_at", { ascending: false })
+          .limit(5000),
+        supabase
+          .from("daily_stock_sheets")
+          .select("store_id, closed_at, updated_at, created_at")
+          .order("created_at", { ascending: false })
+          .limit(1000),
       ]);
-      if (oErr) throw oErr;
-      if (wErr) throw wErr;
+      if (locs.error) throw locs.error;
+      if (moves.error) throw moves.error;
+      if (sheets.error) throw sheets.error;
 
-      const byStore: Record<string, { orders: number; wishes: number }> = {};
-      const bump = (id: string | null, key: "orders" | "wishes") => {
-        if (!id) return;
-        byStore[id] = byStore[id] || { orders: 0, wishes: 0 };
-        byStore[id][key] += 1;
-      };
-      (orders || []).forEach((o: any) => bump(o.store_id, "orders"));
-      (wishes || []).filter((w: any) => !w.archived).forEach((w: any) => bump(w.store_id, "wishes"));
-      return byStore;
-    },
-    enabled: !!portal && portal.kind !== "store",
-    refetchInterval: 30000,
-  });
-
-  const messagesByStore: Record<string, number> = {};
-  conversations.forEach((c) => {
-    const count = unread.byConv[c.id] || 0;
-    if (!count) return;
-    c.participants
-      .filter((p) => p.portal_key.startsWith("store:"))
-      .forEach((p) => {
-        const storeId = p.portal_key.slice("store:".length);
-        messagesByStore[storeId] = (messagesByStore[storeId] || 0) + count;
+      const storeOfLocation = new Map<string, string>();
+      (locs.data || []).forEach((l: any) => {
+        if (l.store_id) storeOfLocation.set(l.id, l.store_id);
       });
-  });
 
-  const get = (storeId: string): StoreActivity => ({
-    messages: messagesByStore[storeId] || 0,
-    orders: rows?.[storeId]?.orders || 0,
-    wishes: rows?.[storeId]?.wishes || 0,
-  });
+      const map = new Map<string, StoreActivity>();
+      const ensure = (id: string) => {
+        let e = map.get(id);
+        if (!e) {
+          e = { lastMovementAt: null, lastCountAt: null, lastReportAt: null, lastAnyAt: null };
+          map.set(id, e);
+        }
+        return e;
+      };
 
-  return { get, empty: EMPTY, portalKeyForStore: storePortalKey };
+      (moves.data || []).forEach((m: any) => {
+        const sid = m.location_id ? storeOfLocation.get(m.location_id) : undefined;
+        if (!sid) return;
+        const e = ensure(sid);
+        e.lastMovementAt = newer(e.lastMovementAt, m.created_at);
+        if (m.movement_type === "inventering") e.lastCountAt = newer(e.lastCountAt, m.created_at);
+        e.lastAnyAt = newer(e.lastAnyAt, m.created_at);
+      });
+
+      (sheets.data || []).forEach((s: any) => {
+        if (!s.store_id) return;
+        const e = ensure(s.store_id);
+        const ts = s.closed_at || s.updated_at || s.created_at;
+        e.lastReportAt = newer(e.lastReportAt, ts);
+        e.lastAnyAt = newer(e.lastAnyAt, ts);
+      });
+
+      return map;
+    },
+    staleTime: 60_000,
+  });
 }
