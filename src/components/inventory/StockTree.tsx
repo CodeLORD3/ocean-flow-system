@@ -582,11 +582,18 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
       <Connector />
 
       {/* 4. Butikslager — karta i stället för rutor */}
-      <div className="rounded-lg border border-dashed border-border p-2">
-        <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold">
-          <Store className="h-3.5 w-3.5 text-primary" aria-hidden />
-          Butikslager — välj enhet på kartan
-        </p>
+      <div ref={mapRef} className="scroll-mt-24 rounded-lg border border-dashed border-border p-2">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold">
+            <Store className="h-3.5 w-3.5 text-primary" aria-hidden />
+            Butikslager — välj enhet på kartan
+          </p>
+          {mapStore ? (
+            <Button size="sm" variant="ghost" className="h-6 gap-1 text-[11px]" onClick={closeStore}>
+              <X className="h-3 w-3" aria-hidden /> Stäng {storeName[mapStore] ?? "enhet"}
+            </Button>
+          ) : null}
+        </div>
         <StockMap
           stock={stock}
           showValue={showValue}
