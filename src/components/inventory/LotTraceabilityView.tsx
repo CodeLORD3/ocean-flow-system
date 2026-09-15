@@ -29,6 +29,7 @@ import ParasiteFreezePanel from "@/components/inventory/ParasiteFreezePanel";
 import BivalvePanel from "@/components/inventory/BivalvePanel";
 import LotPricePanel from "@/components/inventory/LotPricePanel";
 import LotHistoryView from "@/components/inventory/LotHistoryView";
+import LotChainGraph from "@/components/inventory/LotChainGraph";
 import ProductNetworkGraph from "@/components/inventory/ProductNetworkGraph";
 import { gapBetween, sinceNow, stampSv } from "@/lib/dwell";
 import { movementLabel } from "@/hooks/useStockMovements";
