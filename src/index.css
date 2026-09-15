@@ -210,9 +210,3 @@
   z-index: 0;
   isolation: isolate;
 }
-.leaflet-pane,
-.leaflet-top,
-.leaflet-bottom,
-.leaflet-control {
-  z-index: 1;
-}
