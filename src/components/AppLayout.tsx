@@ -319,6 +319,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           >
             <StoreHero />
             {children}
+            {/* Luft under innehållet så den fasta bottenmenyn aldrig täcker något */}
+            <div aria-hidden className="h-24 sm:hidden" />
           </main>
 
 
