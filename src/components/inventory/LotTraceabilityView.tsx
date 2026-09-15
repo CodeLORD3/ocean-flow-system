@@ -509,9 +509,17 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
               )}
 
               <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
-                <p className="text-[11px] text-muted-foreground">
-                  {filtered.length} {filtered.length === 1 ? "parti" : "partier"}
-                </p>
+                <div className="min-w-0">
+                  {(q.trim() || kategori || valdProdukt) && (
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {valdProdukt || q.trim() || kategori}
+                    </p>
+                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    {filtered.length} {filtered.length === 1 ? "parti" : "partier"}
+                  </p>
+                </div>
+
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as typeof sort)}
