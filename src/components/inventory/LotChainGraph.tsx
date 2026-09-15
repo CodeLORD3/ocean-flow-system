@@ -154,9 +154,26 @@ export default function LotChainGraph({
         </div>
 
         <ol>
-          {noder.map((n, i) => {
+          {/* Live-läge först: senaste läget högst upp */}
+          <li className="grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-center gap-x-2 border-b-2 border-border px-3 py-3">
+            <span />
+            <div className="flex flex-col items-center">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">nu</p>
+              <span className="my-1 h-4 w-4 rounded-full bg-primary shadow" />
+              <span className="h-4 w-0.5 bg-border" />
+            </div>
+            <div>
+              <p className={`text-sm font-bold ${slutSaldo > 0 ? "text-emerald-700" : "text-rose-600"}`}>
+                {slutSaldo > 0 ? `Finns i lager · ${nf(slutSaldo, 1)} kg` : "Slut i lager · 0 kg"}
+              </p>
+              <p className="text-[11px] text-muted-foreground">senaste händelsen {sinceNow(senaste)} sedan</p>
+            </div>
+          </li>
+
+          {[...noder].reverse().map((n, j) => {
+            const i = noder.length - 1 - j;
             const aktiv = n.m.id === vald?.m.id;
-            const nyDag = i === 0 || datumSv(noder[i - 1].m.created_at) !== datumSv(n.m.created_at);
+            const nyDag = j === 0 || datumSv(noder[i + 1].m.created_at) !== datumSv(n.m.created_at);
             const steg = i + 1;
             const kort = (
               <button
@@ -222,24 +239,11 @@ export default function LotChainGraph({
                       {datumSv(n.m.created_at)}
                     </span>
                     <span className="h-px flex-1 bg-border" />
-                    {i === 0 && (
-                      <span className="rounded-full border border-emerald-600/40 px-1.5 py-px text-[9px] font-bold uppercase text-emerald-700">
-                        start
+                    {j === 0 && (
+                      <span className="rounded-full border border-primary/40 px-1.5 py-px text-[9px] font-bold uppercase text-primary">
+                        senaste
                       </span>
                     )}
-                  </div>
-                )}
-                {n.gap && (
-                  <div className="grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-center gap-x-2 px-3">
-                    <span className="h-px" />
-                    <span className="flex flex-col items-center">
-                      <span className="h-3 w-0.5 bg-border" />
-                      <span className="whitespace-nowrap rounded-full border border-border bg-background px-2 py-px text-[10px] font-medium text-muted-foreground">
-                        orörd {n.gap}
-                      </span>
-                      <span className="h-3 w-0.5 bg-border" />
-                    </span>
-                    <span className="h-px" />
                   </div>
                 )}
                 <div
@@ -267,27 +271,36 @@ export default function LotChainGraph({
 
                   <div className="flex items-center gap-2">{n.gren && <>{pil}{kort}</>}</div>
                 </div>
+
+                {/* Tiden ned till den äldre händelsen */}
+                {n.gap && (
+                  <div className="grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-center gap-x-2 px-3">
+                    <span className="h-px" />
+                    <span className="flex flex-col items-center">
+                      <span className="h-3 w-0.5 bg-border" />
+                      <span className="whitespace-nowrap rounded-full border border-border bg-background px-2 py-px text-[10px] font-medium text-muted-foreground">
+                        orörd {n.gap}
+                      </span>
+                      <span className="h-3 w-0.5 bg-border" />
+                    </span>
+                    <span className="h-px" />
+                  </div>
+                )}
+
+                {/* Startpunkt: äldsta händelsen ligger längst ned */}
+                {i === 0 && (
+                  <div className="flex items-center gap-2 border-t border-border bg-muted/30 px-3 py-1">
+                    <span className="rounded-full border border-emerald-600/40 px-1.5 py-px text-[9px] font-bold uppercase text-emerald-700">
+                      start
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      partiets första händelse {datumSv(n.m.created_at)} {timeSv(n.m.created_at)}
+                    </span>
+                  </div>
+                )}
               </li>
             );
           })}
-
-          {/* Live-läge */}
-          <li className="grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-center gap-x-2 border-t-2 border-border px-3 py-3">
-            <span />
-            <div className="flex flex-col items-center">
-              <span className="h-4 w-0.5 bg-border" />
-              <span className="my-1 h-4 w-4 rounded-full bg-primary shadow" />
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">nu</p>
-            </div>
-            <div>
-              <p
-                className={`text-sm font-bold ${slutSaldo > 0 ? "text-emerald-700" : "text-rose-600"}`}
-              >
-                {slutSaldo > 0 ? `Finns i lager · ${nf(slutSaldo, 1)} kg` : "Slut i lager · 0 kg"}
-              </p>
-              <p className="text-[11px] text-muted-foreground">senaste händelsen {sinceNow(senaste)} sedan</p>
-            </div>
-          </li>
         </ol>
       </div>
 
