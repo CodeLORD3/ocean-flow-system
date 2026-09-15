@@ -327,18 +327,26 @@ export default function StaffSchedule() {
           {overhead.data ? <span className="sl-pill sl-pill--neutral ml-auto">Påslag {overhead.data} %</span> : null}
         </div>
 
-        <section className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Nyckeltal">
-          <KpiCard label="Planerad tid" tone="blue" value={formatHm(weekMinutes)} />
-          <KpiCard label="Arbetad tid" tone="green" value={formatHm(actualMinutes)} />
-          <KpiCard label="Personalkostnad" tone="yellow" value={weekCost > 0 ? formatKrPrel(weekCost) : "—"} />
-          <KpiCard label="Arbete / omsättning" tone="purple" value={laborRatio === null ? "—" : `${laborRatio.toFixed(1)} %`} />
-          <KpiCard
-            label="Åtgärd krävs"
-            tone={extraCount + missingRates > 0 ? "yellow" : "green"}
-            value={String(extraCount + missingRates)}
-            history={extraCount ? `${extraCount} över avtal` : missingRates ? `${missingRates} utan lön` : "Inget akut"}
-          />
+        <section className="mb-4 flex flex-wrap items-end gap-x-8 gap-y-3 px-1" aria-label="Veckans siffror">
+          <div className="sl-figure">
+            <span className="sl-label">Schemalagda timmar</span>
+            <strong className="sl-num">{formatDecimalHours(weekMinutes)}</strong>
+            <span className="sl-faint">arbetad {formatHm(actualMinutes)}</span>
+          </div>
+          <div className="sl-figure">
+            <span className="sl-label">Lönekostnad</span>
+            <strong className="sl-num">{weekCost > 0 ? formatKrPrel(weekCost) : "—"}</strong>
+            <span className="sl-faint">{laborRatio === null ? "omsättning saknas" : `${laborRatio.toFixed(1)} % av omsättning`}</span>
+          </div>
+          <div className="sl-figure">
+            <span className="sl-label">Kräver åtgärd</span>
+            <strong className="sl-num">{violationCount + extraCount + missingRates}</strong>
+            <span className="sl-faint">
+              {violationCount ? `${violationCount} vilotid` : extraCount ? `${extraCount} över avtal` : missingRates ? `${missingRates} utan lön` : "inget akut"}
+            </span>
+          </div>
         </section>
+
 
         <section className="sl-card overflow-hidden" aria-label="Schema">
           {emptyState ? (
