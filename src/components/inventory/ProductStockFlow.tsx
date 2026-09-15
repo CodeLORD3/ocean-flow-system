@@ -381,6 +381,7 @@ export default function ProductStockFlow({
               {/* Växla mellan dagssummor och rad-för-rad bokföring */}
               <div className="flex w-fit items-center gap-1 rounded-md border border-border bg-muted/30 p-0.5">
                 {[
+                  { v: "places" as const, l: "Var finns den" },
                   { v: "days" as const, l: "Per dag" },
                   { v: "ledger" as const, l: "Bokföring" },
                   { v: "tree" as const, l: "Träd" },
