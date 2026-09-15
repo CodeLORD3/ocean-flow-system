@@ -16,11 +16,13 @@ import { usePayrollOverhead, useStoreRevenueRange } from "@/hooks/useStaffKpi";
 import { useMinuteTick } from "@/hooks/useLiveStaff";
 import { buildActualMap, localDay, hhmm } from "@/lib/scheduleCompare";
 import { dateKey, type PlannedShiftRow } from "@/lib/liveStaff";
-import { formatHm, formatKrPrel, storeMonocode, minutesOfTime } from "@/lib/scheduleFormat";
+import { formatHm, formatKrPrel, formatDecimalHours, storeMonocode, minutesOfTime } from "@/lib/scheduleFormat";
 import { DayLaneView } from "@/components/schedule/DayLaneView";
 import { WeekGridView } from "@/components/schedule/WeekGridView";
-import { IndustryButton, SectionLabel } from "@/components/industry";
-import { KpiCard, SegmentSwitch } from "@/components/staff/ui";
+import { ShiftInspector, type ShiftInspectorData } from "@/components/schedule/ShiftInspector";
+import { coveragePerDay, coveragePerHour, dailyRestViolations, staffingGap, weeklyRestHours } from "@/lib/scheduleRules";
+import { useDeletePlannedShift } from "@/hooks/usePlannedShifts";
+import { SegmentSwitch } from "@/components/staff/ui";
 import type { AbsenceMark, ActualMark, ComingGoingEvent, DayCell, ShiftCellItem, WeekRow } from "@/components/schedule/scheduleViewTypes";
 
 const DAY_NAMES = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
