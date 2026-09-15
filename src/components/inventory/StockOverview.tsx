@@ -407,11 +407,14 @@ export default function StockOverview({
     const maxWeekKg = Math.max(1, ...list.map((w) => w.kg));
     const packedList = Array.from(packedWeeks.values()).sort((a, b) => a.key.localeCompare(b.key));
     return {
+      // kg/value = enbart det som ännu inte är packat
       kg,
       value,
       packedKg,
       packedValue,
-      restKg: Math.max(0, kg - packedKg),
+      restKg: kg,
+      totalKg: kg + packedKg,
+      totalValue: value + packedValue,
       kgPct: kpis.qty > 0 ? Math.min(100, (kg / kpis.qty) * 100) : 0,
       valuePct: kpis.value > 0 ? Math.min(100, (value / kpis.value) * 100) : 0,
       packedKgPct: kpis.qty > 0 ? Math.min(100, (packedKg / kpis.qty) * 100) : 0,
