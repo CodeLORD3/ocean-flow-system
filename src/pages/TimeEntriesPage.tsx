@@ -339,67 +339,68 @@ export default function TimeEntriesPage() {
   const days = [...new Set(summaries.map((s) => s.day))].sort((a, b) => b.localeCompare(a));
 
   return (
-    <IndustryFrame className="p-4 sm:p-6">
-      <DecisionBar>
-        <div className="mr-auto">
-          <SectionLabel>Personal · journal</SectionLabel>
-          <h1 className="ind-h1">Rapporterad tid</h1>
-          <p className="ind-muted text-sm">
-            Stämplingar från klockan, manuella efterregistreringar och rättelser.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <IndustryButton variant="secondary" size="touch" onClick={() => setManualOpen(true)}>
-            <Plus className="h-4 w-4" /> Efterregistrera
-          </IndustryButton>
-           <IndustryButton variant="secondary" size="touch" onClick={() => void openInspector()}>
-             <ShieldCheck className="h-4 w-4" /> Visa för Skatteverket
-           </IndustryButton>
-        </div>
-      </DecisionBar>
+    <div className="staff-light h-full overflow-auto px-3 pb-8 sm:px-5">
+      <StaffModuleNav />
+      <div className="mx-auto max-w-[1400px]">
+        <header className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <span className="sl-label">Personal · journal</span>
+            <h1 className="sl-h1 mt-1">Tider</h1>
+            <p className="mt-1 text-[14px] sl-muted">Stämplingar från klockan, manuella efterregistreringar och rättelser.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="sl-btn" onClick={() => setManualOpen(true)}>
+              <Plus className="h-4 w-4" /> Efterregistrera
+            </button>
+            <button type="button" className="sl-btn sl-btn--primary" onClick={() => void openInspector()}>
+              <ShieldCheck className="h-4 w-4" /> Visa för Skatteverket
+            </button>
+          </div>
+        </header>
 
-      <div className="mt-4">{filters}</div>
+        <div className="sl-card mb-5 p-3">{filters}</div>
 
       {syncFailures.length > 0 && (
-        <section className="mt-6 space-y-2">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-            <SectionLabel>Offlineposter som kräver åtgärd ({syncFailures.length})</SectionLabel>
+        <section className="sl-card mb-5 overflow-hidden" aria-label="Offlineposter">
+          <div className="border-b border-[var(--sl-line)] px-4 py-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-[var(--sl-red-ink)]" />
+              <h2 className="sl-h3">Offlineposter som kräver åtgärd ({syncFailures.length})</h2>
+            </div>
+            <p className="mt-1 text-[13px] sl-muted">
+              Dessa stämplingar kunde inte synkroniseras automatiskt. Registrera dem i journalen eller avfärda dem med ett dokumenterat skäl.
+            </p>
           </div>
-          <p className="ind-muted text-sm">
-            Dessa stämplingar kunde inte synkroniseras automatiskt. Registrera dem i journalen eller avfärda dem med ett dokumenterat skäl.
-          </p>
           {syncFailures.map((item) => (
-            <IndustryRow key={item.id} edge="alert" className="flex-wrap">
+            <div key={item.id} className="sl-row">
               <div className="min-w-[220px] flex-1">
-                <p className="font-medium">{item.identifier_masked ?? "Offlinepost"} · {TYPE_LABEL[item.punch_type]}</p>
-                <p className="ind-muted text-xs">{svenskDatum(item.occurred_at)} {svenskTid(item.occurred_at)} · {item.reason}</p>
+                <p className="text-[14px] font-semibold">{item.identifier_masked ?? "Offlinepost"} · {TYPE_LABEL[item.punch_type]}</p>
+                <p className="text-[12.5px] sl-muted">{svenskDatum(item.occurred_at)} {svenskTid(item.occurred_at)} · {item.reason}</p>
               </div>
-              <IndustryButton variant="secondary" size="touch" onClick={() => { setFailure(item); setFailureForm({ employee_id: "", note: "" }); }}>
+              <button type="button" className="sl-btn ml-auto" onClick={() => { setFailure(item); setFailureForm({ employee_id: "", note: "" }); }}>
                 Hantera
-              </IndustryButton>
-            </IndustryRow>
+              </button>
+            </div>
           ))}
         </section>
       )}
 
-      <section className="mt-6">
-        <SectionLabel className="mb-2">Dagslista</SectionLabel>
+      <section className="sl-card mb-5 overflow-hidden" aria-label="Dagslista">
+        <div className="border-b border-[var(--sl-line)] px-4 py-3"><h2 className="sl-h3">Dagslista</h2></div>
         {isLoading ? (
-          <Loader2 className="h-5 w-5 animate-spin ind-muted" />
+          <div className="px-4 py-6"><Loader2 className="h-5 w-5 animate-spin sl-muted" /></div>
         ) : summaries.length === 0 ? (
-          <p className="ind-muted text-sm">Inga stämplingar för perioden.</p>
+          <p className="px-4 py-6 text-[14px] sl-muted">Inga stämplingar för perioden.</p>
         ) : (
           days.map((day) => (
-            <div key={day} className="mb-6">
-              <SectionLabel className="mb-1">{day}</SectionLabel>
+            <div key={day}>
+              <div className="sl-group-head">{day}</div>
               {summaries
                 .filter((r) => r.day === day)
                 .map((r) => {
                   const key = `${r.employee_id}-${r.day}`;
-                  const primarySource = r.sources[0] ?? "clock";
                   return (
-                    <IndustryRow key={key} edge={sourceEdge(primarySource)} className="flex-wrap">
+                    <div key={key} className="sl-row flex-wrap">
                       <Checkbox
                         checked={selected.has(key)}
                         aria-label={`Markera ${employeeName.get(r.employee_id) ?? r.employee_id}`}
@@ -412,61 +413,52 @@ export default function TimeEntriesPage() {
                           })
                         }
                       />
-                      <span className="min-w-[180px]">{employeeName.get(r.employee_id) ?? r.employee_id}</span>
-                      <span className="ind-mono">{hhmm(r.first_in)} – {hhmm(r.last_out)}</span>
-                      <span className="ind-muted ind-mono text-sm">rast {durationLabel(r.break_seconds)}</span>
-                      <span className="ind-mono">{durationLabel(r.work_seconds)}</span>
-                      <span className="ml-auto flex gap-3">
+                      <span className="min-w-[180px] text-[14px] font-semibold">{employeeName.get(r.employee_id) ?? r.employee_id}</span>
+                      <span className="sl-num text-[14px]">{hhmm(r.first_in)} – {hhmm(r.last_out)}</span>
+                      <span className="sl-num text-[13px] sl-muted">rast {durationLabel(r.break_seconds)}</span>
+                      <span className="sl-num text-[14px]">{durationLabel(r.work_seconds)}</span>
+                      <span className="ml-auto flex gap-2">
                         {r.sources.map((s) => (
-                          <StatusLabel
-                            key={s}
-                            tone={s === "clock" ? "ok" : s === "correction" ? "progress" : "neutral"}
-                          >
+                          <StatusPill key={s} tone={s === "clock" ? "ok" : s === "correction" ? "info" : "neutral"}>
                             {SOURCE_LABEL[s as TimeEntry["source"]]}
-                          </StatusLabel>
+                          </StatusPill>
                         ))}
                       </span>
-                    </IndustryRow>
+                    </div>
                   );
                 })}
             </div>
           ))
         )}
         {selected.size > 0 && (
-          <p className="ind-muted text-sm">{selected.size} rader markerade. Attest kommer i etapp 3.</p>
+          <p className="px-4 py-3 text-[13px] sl-muted">{selected.size} rader markerade.</p>
         )}
       </section>
 
-      <section className="mt-8">
-        <SectionLabel className="mb-2">Journal ({entries.length})</SectionLabel>
+      <section className="sl-card overflow-hidden" aria-label="Journal">
+        <div className="border-b border-[var(--sl-line)] px-4 py-3"><h2 className="sl-h3">Journal ({entries.length})</h2></div>
         {journal.map((e) => {
           const isEffective = effective.some((x) => x.id === e.id);
           return (
-            <IndustryRow
-              key={e.id}
-              edge={sourceEdge(e.source)}
-              muted={!isEffective}
-              className={`flex-wrap ${isEffective ? "" : "line-through"}`}
-            >
-              <span className="ind-mono min-w-[130px]">{`${svenskDatum(e.occurred_at)} ${svenskTid(e.occurred_at)}`}</span>
-              <span className="min-w-[170px]">{employeeName.get(e.employee_id) ?? e.employee_id}</span>
-              <span>{TYPE_LABEL[e.type]}</span>
-              <StatusLabel tone={e.source === "clock" ? "ok" : e.source === "correction" ? "progress" : "neutral"}>
+            <div key={e.id} className={`sl-row flex-wrap ${isEffective ? "" : "line-through opacity-60"}`}>
+              <span className="sl-num min-w-[130px] text-[13px]">{`${svenskDatum(e.occurred_at)} ${svenskTid(e.occurred_at)}`}</span>
+              <span className="min-w-[170px] text-[14px] font-semibold">{employeeName.get(e.employee_id) ?? e.employee_id}</span>
+              <span className="text-[13px]">{TYPE_LABEL[e.type]}</span>
+              <StatusPill tone={e.source === "clock" ? "ok" : e.source === "correction" ? "info" : "neutral"}>
                 {SOURCE_LABEL[e.source]}
-              </StatusLabel>
+              </StatusPill>
               {e.corrects_entry_id && (
-                <span className="ind-muted text-sm">
-                  ersätter {e.correction_kind} · {e.corrects_entry_id.slice(0, 8)}
-                </span>
+                <span className="text-[13px] sl-muted">ersätter {e.correction_kind} · {e.corrects_entry_id.slice(0, 8)}</span>
               )}
-              {e.note && <span className="ind-muted text-sm">{e.note}</span>}
-              <IndustryButton variant="ghost" className="ml-auto" onClick={() => openCorrection(e)}>
+              {e.note && <span className="text-[13px] sl-muted">{e.note}</span>}
+              <button type="button" className="sl-btn ml-auto" onClick={() => openCorrection(e)}>
                 <Pencil className="h-3.5 w-3.5" /> Rätta
-              </IndustryButton>
-            </IndustryRow>
+              </button>
+            </div>
           );
         })}
       </section>
+      </div>
 
 
       {/* Misslyckad offlinestämpling */}
