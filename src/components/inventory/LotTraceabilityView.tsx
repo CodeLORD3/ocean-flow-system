@@ -185,11 +185,14 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
     return [...s].sort((a, b) => a.localeCompare(b, "sv"));
   }, [lots]);
   const [kategori, setKategori] = useState<string | null>(null);
+  /** Vald produkt (namn) — steg 1b, listar bara den produktens partier. */
+  const [valdProdukt, setValdProdukt] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     let bas = lots;
     if (kategori) bas = bas.filter((l) => l.products?.category === kategori);
+    if (valdProdukt) bas = bas.filter((l) => (l.products?.name || l.commercial_name || "—") === valdProdukt);
     if (s)
       bas = bas.filter((l) =>
         [
