@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Layers, RefreshCw, Search } from "lucide-react";
+import { Layers, RefreshCw, Search, Warehouse } from "lucide-react";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import TransformFlow from "@/components/inventory/TransformFlow";
 import FamilyStockView from "@/components/inventory/FamilyStockView";
