@@ -309,7 +309,7 @@ export default function LineageGraphView({ startLotId = null, currency = "SEK" }
               <p className="p-6 text-center text-xs text-muted-foreground">Läser spårbarhetskedjan…</p>
             ) : nodes.length === 0 ? (
               <EmptyState
-                icon={GitBranch}
+                icon={<GitBranch className="h-4 w-4" />}
                 title="Ingen kedja att visa"
                 description="Sök upp ett parti ovan för att rita dess spårbarhetskedja."
               />
