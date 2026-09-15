@@ -1185,7 +1185,7 @@ export default function StockOverview({
                                 {orderedTotal > 0.005 ? (
                                   <span
                                     className={cn(
-                                      "inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 font-mono text-[11px] font-semibold tabular-nums",
+                                      "inline-flex w-[104px] items-center justify-end rounded-sm px-1.5 py-0.5 font-mono text-[11px] font-semibold tabular-nums",
                                       short
                                         ? "bg-destructive/10 text-destructive"
                                         : "bg-emerald-500/10 text-emerald-700",
@@ -1196,16 +1196,19 @@ export default function StockOverview({
                                         : `Täckt – ${nq(diff)} ${unit} kvar efter beställt`
                                     }
                                   >
-                                    {short ? "−" : "+"}
-                                    {nq(diff)} {unit}
-                                    <span className="text-[9px] font-medium uppercase tracking-wider opacity-80">
+                                    <span className="flex-1 text-right">
+                                      {short ? "−" : "+"}
+                                      {nq(diff)} {unit}
+                                    </span>
+                                    <span className="ml-1.5 w-[46px] text-left text-[9px] font-medium uppercase tracking-wider opacity-80">
                                       {short ? "saknas" : "täckt"}
                                     </span>
                                   </span>
                                 ) : (
-                                  <span className="text-[11px] text-muted-foreground/60">–</span>
+                                  <span className="inline-block w-[104px] text-center text-[11px] text-muted-foreground/60">–</span>
                                 )}
                               </td>
+
                             </>
                           );
                         })()}
