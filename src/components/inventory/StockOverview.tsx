@@ -865,57 +865,58 @@ export default function StockOverview({
                           const packedPct =
                             g.totalKg > 0 ? Math.min(100, (packedKg / g.totalKg) * 100) : 0;
                           return (
-                          <div className="min-w-[140px]">
-                            <div
-                              className="relative flex items-stretch gap-0.5 h-4 rounded-sm overflow-hidden"
-                              style={{ width: `${Math.max(12, (g.totalKg / maxKg) * 100)}%` }}
-                            >
-                              {packedPct > 0 && (
-                                <span
-                                  className="pointer-events-none absolute inset-y-0 left-0 z-10 border-r border-amber-600 bg-amber-400/85"
-                                  style={{ width: `${packedPct}%` }}
-                                  title={`Packat till order: ${packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg`}
-                                />
-                              )}
-                              {g.lines.map((l) => {
-                                const kg = qtyToKg(Number(l.quantity) || 0, l.products);
-                                const pct = g.totalKg > 0 ? (kg / g.totalKg) * 100 : 100;
-                                return (
-                                  <div
-                                    key={l.id}
-                                    className={cn(
-                                      "flex items-center justify-center text-[9px] font-semibold text-white overflow-hidden",
-                                      locationColor.get(l.location_id) || "bg-primary",
-                                    )}
-                                    style={{ width: `${pct}%` }}
-                                    title={`${locName(l)}: ${kg.toLocaleString("sv-SE")} kg`}
-                                  >
-                                    {pct > 18
-                                      ? `${kg.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kg`
-                                      : ""}
-                                  </div>
-                                );
-                              })}
+                          <div className="min-w-[160px] space-y-1">
+                            {/* Full bredd som spår, fyllnaden är andelen av största saldot */}
+                            <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/70">
+                              <div
+                                className="relative flex h-full items-stretch overflow-hidden rounded-full"
+                                style={{ width: `${Math.max(4, (g.totalKg / maxKg) * 100)}%` }}
+                              >
+                                {g.lines.map((l) => {
+                                  const kg = qtyToKg(Number(l.quantity) || 0, l.products);
+                                  const pct = g.totalKg > 0 ? (kg / g.totalKg) * 100 : 100;
+                                  return (
+                                    <div
+                                      key={l.id}
+                                      className={cn(
+                                        "h-full",
+                                        locationColor.get(l.location_id) || "bg-primary",
+                                      )}
+                                      style={{ width: `${pct}%` }}
+                                      title={`${locName(l)}: ${kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg`}
+                                    />
+                                  );
+                                })}
+                                {packedPct > 0 && (
+                                  <span
+                                    className="pointer-events-none absolute inset-y-0 left-0 z-10 rounded-l-full bg-amber-400/85"
+                                    style={{ width: `${packedPct}%` }}
+                                    title={`Packat till order: ${packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg`}
+                                  />
+                                )}
+                              </div>
                             </div>
                             {!dense && (
-                              <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                                <span>
+                              <div className="flex items-center justify-between gap-2 text-[10px] leading-none text-muted-foreground">
+                                <span className="truncate">
                                   {g.lines.length} lagerplats{g.lines.length > 1 ? "er" : ""}
                                 </span>
-                                {packedPct > 0 && (
-                                  <span className="font-mono font-semibold tabular-nums text-amber-600">
-                                    {packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg packat
-                                    {packedPct >= 99.5 ? " (allt)" : ""}
-                                  </span>
-                                )}
-                                {pk && pk.ordered > 0.005 && (
-                                  <span className="font-mono tabular-nums text-muted-foreground">
-                                    {pk.ordered.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit} beställt
-                                  </span>
-                                )}
+                                <span className="flex shrink-0 items-center gap-1">
+                                  {packedPct > 0 && (
+                                    <span className="rounded-sm bg-amber-400/20 px-1.5 py-0.5 font-mono font-semibold tabular-nums text-amber-700">
+                                      {packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg packat
+                                    </span>
+                                  )}
+                                  {pk && pk.ordered > 0.005 && (
+                                    <span className="font-mono tabular-nums">
+                                      {pk.ordered.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit} best.
+                                    </span>
+                                  )}
+                                </span>
                               </div>
                             )}
                           </div>
+
                           );
                           })()}
                         </td>
