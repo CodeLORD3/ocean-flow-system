@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
 import { movementLabel } from "@/hooks/useStockMovements";
-import { ChevronDown, ChevronRight, GitBranch, Search, ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { ChevronDown, ChevronRight, GitBranch, Search, ArrowDownRight, ArrowUpRight, Network } from "lucide-react";
+import ProductMovementDag from "@/components/inventory/ProductMovementDag";
 
 const nf = (n: number, d = 1) =>
   Number(n)
