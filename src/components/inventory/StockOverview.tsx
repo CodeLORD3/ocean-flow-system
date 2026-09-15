@@ -883,10 +883,11 @@ export default function StockOverview({
                                           key={`${o.orderId}-${o.kind}-${i}`}
                                           onClick={(e) => {
                                             e.stopPropagation();
+                                            const q = `order=${o.orderId}&line=${g.product_id}&from=stock&t=${Date.now()}`;
                                             navigate(
                                               site === "shop"
-                                                ? `/customer-orders?order=${o.orderId}&t=${Date.now()}`
-                                                : `/orders?order=${o.orderId}&t=${Date.now()}`,
+                                                ? `/customer-orders?${q}`
+                                                : `/orders?${q}`,
                                             );
                                           }}
                                           className="flex w-full items-center gap-2 whitespace-nowrap rounded px-1 py-0.5 text-left text-xs hover:bg-amber-400/20"
