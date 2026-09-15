@@ -1448,9 +1448,11 @@ export default function StockOverview({
                                          <div className={cn("flex items-center gap-1.5 text-[9px] uppercase tracking-wider", gr.head)}>
                                            <span className={cn("h-1.5 w-1.5 rounded-full", gr.dot)} />
                                            <span className="font-semibold">{gr.title}</span>
-                                           <span className="ml-auto font-mono text-[11px] font-bold tabular-nums">
-                                             {gr.qty.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit}
-                                           </span>
+                                            {gr.rows.length > 1 && (
+                                              <span className="ml-auto font-mono text-[11px] font-bold tabular-nums">
+                                                {gr.qty.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit}
+                                              </span>
+                                            )}
                                          </div>
                                          <div className="mt-0.5 flex flex-col divide-y divide-border/40">
                                            {gr.rows.map((o, i) => (
