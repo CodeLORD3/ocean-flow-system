@@ -1043,8 +1043,8 @@ export default function StockCount() {
                              <span className="w-5 shrink-0" />
                              <span className="min-w-0 flex-1">Produkt</span>
                              <span className="w-[52px] shrink-0 text-right">Antal</span>
-                             <span className="w-[86px] shrink-0 text-center sm:w-[136px]">Hållb.</span>
-                             <span className="w-[60px] shrink-0 sm:w-[96px]">Komm.</span>
+                             <span className="hidden w-[136px] shrink-0 text-center sm:block">Hållb.</span>
+                             <span className="hidden w-[96px] shrink-0 sm:block">Komm.</span>
                              <span className="w-6 shrink-0 text-center">Bild</span>
                            </div>
                           {g.products.flatMap((prodRows) =>
