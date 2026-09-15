@@ -1096,6 +1096,12 @@ export default function StockCount() {
                                     defaultValue={line?.counted_qty ?? ""}
                                     placeholder={r.unit}
                                     className="h-6 w-[52px] shrink-0 px-1 text-right font-mono text-[11px] tabular-nums"
+                                    ref={(el) => {
+                                      if (el && focusRowKey && r.productId === focusRowKey) {
+                                        setFocusRowKey(null);
+                                        el.focus();
+                                      }
+                                    }}
                                     onFocus={(e) => e.currentTarget.select()}
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter") e.currentTarget.blur();
@@ -1106,8 +1112,47 @@ export default function StockCount() {
                                       if (val !== null && Number.isNaN(val)) return;
                                       if ((line?.counted_qty ?? null) === val) return;
                                       saveLine(r, { counted_qty: val });
+                                      if (val !== null) {
+                                        setSearch("");
+                                        requestAnimationFrame(() => searchRef.current?.focus());
+                                      }
                                     }}
                                   />
+                                  {/* Mobil: hållbarhet och kommentar som symboler */}
+                                  <button
+                                    type="button"
+                                    disabled={locked || !session}
+                                    title="Hållbarhet"
+                                    aria-label="Hållbarhet"
+                                    onClick={() =>
+                                      setOpenDetail((prev) => ({
+                                        ...prev,
+                                        [r.key]: detail === "quality" ? null : "quality",
+                                      }))
+                                    }
+                                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border disabled:opacity-50 sm:hidden ${qualityClass(
+                                      (line?.quality ?? "") as string,
+                                    )}`}
+                                  >
+                                    <CalendarClock className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={locked || !session}
+                                    title="Kommentar"
+                                    aria-label="Kommentar"
+                                    onClick={() =>
+                                      setOpenDetail((prev) => ({
+                                        ...prev,
+                                        [r.key]: detail === "comment" ? null : "comment",
+                                      }))
+                                    }
+                                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border disabled:opacity-50 sm:hidden ${
+                                      line?.comment ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"
+                                    }`}
+                                  >
+                                    <MessageSquare className="h-3 w-3" />
+                                  </button>
                                   <select
                                     disabled={locked || !session}
                                     value={(line?.quality ?? "") as string}
@@ -1116,7 +1161,7 @@ export default function StockCount() {
                                         quality: (e.target.value || null) as Quality | null,
                                       })
                                     }
-                                     className={`h-6 w-[86px] shrink-0 rounded-md border px-1 text-[10px] font-medium disabled:opacity-50 sm:w-[136px] sm:text-[11px] ${qualityClass(
+                                     className={`hidden h-6 w-[136px] shrink-0 rounded-md border px-1 text-[11px] font-medium disabled:opacity-50 sm:block ${qualityClass(
                                        (line?.quality ?? "") as string,
                                      )}`}
                                      title="Hållbarhet"
@@ -1132,7 +1177,7 @@ export default function StockCount() {
                                      disabled={locked || !session}
                                      defaultValue={line?.comment ?? ""}
                                      placeholder="Komm."
-                                     className="h-6 w-[60px] shrink-0 px-1 text-[10px] sm:w-[96px] sm:text-[11px]"
+                                     className="hidden h-6 w-[96px] shrink-0 px-1 text-[11px] sm:block"
                                      onBlur={(e) => {
                                        const val = e.target.value.trim() || null;
                                        if ((line?.comment ?? null) === val) return;
@@ -1145,6 +1190,53 @@ export default function StockCount() {
                                      productName={r.productName}
                                      disabled={locked || !session}
                                    />
+                                </div>
+                                {detail && (
+                                  <div className="flex items-center gap-1 border-t border-border/60 px-1.5 py-1 sm:hidden">
+                                    {detail === "quality" ? (
+                                      <select
+                                        autoFocus
+                                        disabled={locked || !session}
+                                        value={(line?.quality ?? "") as string}
+                                        onChange={(e) => {
+                                          saveLine(r, {
+                                            quality: (e.target.value || null) as Quality | null,
+                                          });
+                                          setOpenDetail((prev) => ({ ...prev, [r.key]: null }));
+                                        }}
+                                        className={`h-8 w-full rounded-md border px-2 text-xs font-medium ${qualityClass(
+                                          (line?.quality ?? "") as string,
+                                        )}`}
+                                      >
+                                        <option value="">Hållbarhet</option>
+                                        {QUALITY_DAYS.map((d) => (
+                                          <option key={d} value={d}>
+                                            {qualityLabel(date, d)}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    ) : (
+                                      <Input
+                                        autoFocus
+                                        disabled={locked || !session}
+                                        defaultValue={line?.comment ?? ""}
+                                        placeholder="Kommentar"
+                                        className="h-8 w-full text-xs"
+                                        enterKeyHint="done"
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") e.currentTarget.blur();
+                                        }}
+                                        onBlur={(e) => {
+                                          const val = e.target.value.trim() || null;
+                                          if ((line?.comment ?? null) !== val) {
+                                            saveLine(r, { comment: val });
+                                          }
+                                          setOpenDetail((prev) => ({ ...prev, [r.key]: null }));
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+                                )}
                                 </div>
                               );
                             }),
