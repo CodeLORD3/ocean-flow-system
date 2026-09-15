@@ -862,8 +862,12 @@ export default function StockOverview({
                           {(() => {
                           const pk = packedByProduct?.get(g.product_id);
                           const packedKg = pk ? qtyToKg(pk.packed, productsById.get(g.product_id)) : 0;
+                          const orderedRestKg = pk ? qtyToKg(pk.ordered, productsById.get(g.product_id)) : 0;
+                          const bookedKg = packedKg + orderedRestKg;
                           const packedPct =
                             g.totalKg > 0 ? Math.min(100, (packedKg / g.totalKg) * 100) : 0;
+                          const bookedPct =
+                            g.totalKg > 0 ? Math.min(100, (bookedKg / g.totalKg) * 100) : 0;
                           return (
                           <div className="min-w-[160px] space-y-1">
                             {/* Full bredd som spår, fyllnaden är andelen av största saldot */}
@@ -887,6 +891,13 @@ export default function StockOverview({
                                     />
                                   );
                                 })}
+                                {bookedPct > 0 && (
+                                  <span
+                                    className="pointer-events-none absolute inset-y-0 left-0 z-[9] rounded-l-full bg-foreground/35"
+                                    style={{ width: `${bookedPct}%` }}
+                                    title={`Beställt: ${bookedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg`}
+                                  />
+                                )}
                                 {packedPct > 0 && (
                                   <span
                                     className="pointer-events-none absolute inset-y-0 left-0 z-10 rounded-l-full bg-amber-400/85"
@@ -1005,7 +1016,9 @@ export default function StockOverview({
                                 const packedKg = pk ? qtyToKg(pk.packed, master) : 0;
                                 const orderedKg = pk ? qtyToKg(pk.ordered, master) : 0;
                                 const packedPct = g.totalKg > 0 ? Math.min(100, (packedKg / g.totalKg) * 100) : 0;
-                                const freeKg = Math.max(0, g.totalKg - packedKg);
+                                 const freeKg = Math.max(0, g.totalKg - packedKg);
+                                 const bookedKg = packedKg + orderedKg;
+                                 const bookedPct = g.totalKg > 0 ? Math.min(100, (bookedKg / g.totalKg) * 100) : 0;
                                 const unitCost = g.totalQty > 0 ? g.value / g.totalQty : 0;
                                 const nf = (v: number, d = 1) =>
                                   v.toLocaleString("sv-SE", { maximumFractionDigits: d });
@@ -1056,6 +1069,13 @@ export default function StockOverview({
                                     </div>
 
                                     <div className="relative flex h-9 w-full items-stretch overflow-hidden rounded-md ring-1 ring-border">
+                                      {bookedPct > 0 && (
+                                        <span
+                                          className="pointer-events-none absolute inset-y-0 left-0 z-[9] border-r border-foreground/40 bg-foreground/30"
+                                          style={{ width: `${bookedPct}%` }}
+                                          title={`Beställt: ${nf(bookedKg)} kg`}
+                                        />
+                                      )}
                                       {packedPct > 0 && (
                                         <span
                                           className="pointer-events-none absolute inset-y-0 left-0 z-10 border-r-2 border-amber-600 bg-amber-400/80"
