@@ -91,6 +91,7 @@ export default function LotHistoryView({
 
       {view === "tree" && (
         <AllProductsHistoryTree
+          locationIds={locationIds}
           onTraceLot={(lotId, label) => {
             setTraceLotId(lotId);
             setTraceLabel(label);
