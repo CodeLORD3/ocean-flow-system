@@ -466,9 +466,12 @@ export default function StockOverview({
           <span className="truncate text-sm font-semibold">Beställt av lagret</span>
           {booked.kg > 0.005 && (
             <span className="hidden font-mono text-xs tabular-nums text-amber-600 sm:inline">
-              {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg ·{" "}
-              {booked.kgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
-              {showCosts ? ` · ${fmt(booked.value)}` : ""}
+              {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg kvar att packa
+              <span className="text-muted-foreground">
+                {" "}
+                (av {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg beställt −{" "}
+                {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg packat)
+              </span>
             </span>
           )}
         </span>
