@@ -315,6 +315,12 @@ export default function AllProductsHistoryTree({
                                         </div>
                                         <div className="truncate text-[10px] text-muted-foreground">
                                           {stamp(e.created_at)}
+                                          {i > 0
+                                            ? ` · orörd ${gapBetween(b.events[i - 1].created_at, e.created_at)} innan`
+                                            : ""}
+                                          {i === b.events.length - 1
+                                            ? ` · orörd ${sinceNow(e.created_at)} sedan dess`
+                                            : ""}
                                           {e.location ? ` · ${e.location}` : ""}
                                           {` · ${e.who || "System"}`}
                                           {e.reference ? ` · ${e.reference}` : ""}
