@@ -175,6 +175,7 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
   const [zoom, setZoom] = useState(5);
   const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null);
   const [resetKey, setResetKey] = useState(0);
+  const [wheelZoom, setWheelZoom] = useState(false);
 
   const points = useMemo<Point[]>(() => {
     const agg = new Map<string, Point>();
