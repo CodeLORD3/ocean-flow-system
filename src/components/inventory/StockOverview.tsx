@@ -688,11 +688,24 @@ export default function StockOverview({
                         </td>
                         <td className="hidden border-r border-grid-line/70 px-2 text-xs text-muted-foreground whitespace-nowrap sm:table-cell">{g.category}</td>
                         <td className="hidden border-r border-grid-line/70 px-2 sm:table-cell">
+                          {(() => {
+                          const pk = packedByProduct?.get(g.product_id);
+                          const packedKg = pk ? qtyToKg(pk.packed, productsById.get(g.product_id)) : 0;
+                          const packedPct =
+                            g.totalKg > 0 ? Math.min(100, (packedKg / g.totalKg) * 100) : 0;
+                          return (
                           <div className="min-w-[140px]">
                             <div
-                              className="flex items-stretch gap-0.5 h-4 rounded-sm overflow-hidden"
+                              className="relative flex items-stretch gap-0.5 h-4 rounded-sm overflow-hidden"
                               style={{ width: `${Math.max(12, (g.totalKg / maxKg) * 100)}%` }}
                             >
+                              {packedPct > 0 && (
+                                <span
+                                  className="pointer-events-none absolute inset-y-0 left-0 z-10 border-r border-amber-600 bg-amber-400/85"
+                                  style={{ width: `${packedPct}%` }}
+                                  title={`Packat till order: ${packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg`}
+                                />
+                              )}
                               {g.lines.map((l) => {
                                 const kg = qtyToKg(Number(l.quantity) || 0, l.products);
                                 const pct = g.totalKg > 0 ? (kg / g.totalKg) * 100 : 100;
