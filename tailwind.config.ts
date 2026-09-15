@@ -14,8 +14,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ["Space Grotesk", "sans-serif"],
-        body: ["DM Sans", "sans-serif"],
+        sans: ["Barlow", "system-ui", "sans-serif"],
+        mono: ["IBM Plex Mono", "ui-monospace", "monospace"],
+        heading: ["Barlow", "system-ui", "sans-serif"],
+        body: ["Barlow", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
