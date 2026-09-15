@@ -54,6 +54,8 @@ import {
   SOURCE_LABEL,
 } from "@/lib/timeEntries";
 import { svenskDatum, svenskTid, svenskTidpunkt } from "@/lib/swedishTime";
+import { StaffModuleNav } from "@/components/staff/StaffModuleNav";
+import { StatusPill } from "@/components/staff/ui";
 
 const today = () => svenskDatum();
 
