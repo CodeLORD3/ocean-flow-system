@@ -252,7 +252,7 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[1fr_240px]">
-        <div className="relative h-[420px] overflow-hidden rounded-lg border border-border lg:h-[520px]">
+        <div className="relative isolate z-0 h-[420px] overflow-hidden rounded-lg border border-border lg:h-[520px]">
           <span className="pointer-events-none absolute bottom-2 left-2 z-[500] rounded bg-card/85 px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">
             zoom {zoom}
           </span>
