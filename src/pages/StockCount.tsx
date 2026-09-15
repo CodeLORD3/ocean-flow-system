@@ -1165,13 +1165,13 @@ export default function StockCount() {
                 </div>
               ) : (
                 <div>
-                  <div className="flex items-center border-x border-b border-grid-line bg-muted px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    <span className="min-w-0 flex-1 border-r border-grid-line/70 pr-2">Produkt</span>
-                    <span className="hidden w-24 shrink-0 border-r border-grid-line/70 px-2 text-center sm:block">
-                      Hållbarhet
+                  <div className="flex items-center border-x border-b border-grid-line bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span className="min-w-0 flex-1 border-r border-grid-line/70 pr-1.5">Produkt</span>
+                    <span className="w-[68px] shrink-0 border-r border-grid-line/70 px-1.5 text-center sm:w-24">
+                      Hållb.
                     </span>
-                    <span className="w-14 shrink-0 border-r border-grid-line/70 px-2 text-right">Diff</span>
-                    <span className="w-20 shrink-0 px-2 text-right">Antal</span>
+                    <span className="w-11 shrink-0 border-r border-grid-line/70 px-1.5 text-right sm:w-14">Diff</span>
+                    <span className="w-16 shrink-0 px-1.5 text-right sm:w-20">Antal</span>
                   </div>
                   {countedRows.map((r) => {
                     const line = linesByKey.get(r.key);
@@ -1183,27 +1183,28 @@ export default function StockCount() {
                         <button
                           type="button"
                           onClick={() => setEditKey(editKey === r.key ? null : r.key)}
-                          className="flex w-full items-center px-2 py-1 text-left hover:bg-muted/50"
+                          className="flex w-full items-center px-1.5 py-0.5 text-left hover:bg-muted/50"
                         >
-                          <span className="min-w-0 flex-1 truncate border-r border-grid-line/70 pr-2 text-[12px] font-medium">
+                          <span className="min-w-0 flex-1 truncate border-r border-grid-line/70 pr-1.5 text-[11px] font-medium">
                             {r.productName}
                           </span>
-                          <span className="hidden w-24 shrink-0 border-r border-grid-line/70 px-2 text-center text-[10px] text-muted-foreground sm:block">
+                          <span className="w-[68px] shrink-0 border-r border-grid-line/70 px-1.5 text-center text-[10px] text-muted-foreground sm:w-24">
                             {quality
                               ? `${quality === "7+" ? "7" : quality} ${quality === "1" ? "dag" : "dagar"}`
                               : "—"}
                           </span>
-                          <span className="w-14 shrink-0 border-r border-grid-line/70 px-2 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
+                          <span className="w-11 shrink-0 border-r border-grid-line/70 px-1.5 text-right font-mono text-[10px] tabular-nums text-muted-foreground sm:w-14">
                             {diff === 0
                               ? "±0"
                               : `${diff > 0 ? "+" : ""}${diff.toLocaleString("sv-SE", {
                                   maximumFractionDigits: 1,
                                 })}`}
                           </span>
-                          <span className="w-20 shrink-0 px-2 text-right font-mono text-[12px] font-semibold tabular-nums">
+                          <span className="w-16 shrink-0 px-1.5 text-right font-mono text-[11px] font-semibold tabular-nums sm:w-20">
                             {fmtQty(counted, r.unit)}
                           </span>
                         </button>
+
                         {editKey === r.key && (
                           <div className="flex items-center gap-1 bg-muted/30 px-2 py-1.5">
                             <select
