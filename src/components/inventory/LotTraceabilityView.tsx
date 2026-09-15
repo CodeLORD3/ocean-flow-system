@@ -195,7 +195,9 @@ export default function LotTraceabilityView({
     | "parti"
   >("senaste");
 
-  const { data: lots = [], isLoading } = useQuery({
+  const { lotIds: butiksPartier, locationIds: butiksPlatser, loading: scopeLoading } = useStoreLotIds(storeId);
+
+  const { data: allaLots = [], isLoading: lotsLoading } = useQuery({
     queryKey: ["lots_traceability"],
     queryFn: async () => {
       const { data, error } = await supabase
