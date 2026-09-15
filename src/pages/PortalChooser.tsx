@@ -27,6 +27,8 @@ export default function PortalChooser() {
 
   const navigate = useNavigate();
   const [pickStore, setPickStore] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+
 
   const access = staff?.portal_access ?? [];
   // Butik ska alltid ligga längst till vänster i portalvalet
