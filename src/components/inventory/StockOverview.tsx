@@ -417,6 +417,7 @@ export default function StockOverview({
       maxWeekKg,
       packedWeeks: packedList,
       maxPackedWeekKg: Math.max(1, ...packedList.map((w) => w.kg)),
+      restItems: Array.from(restItems.values()).sort((a, b) => b.kg - a.kg),
     };
   }, [filtered, packedByProduct, productsById, kpis.qty, kpis.value]);
 
