@@ -431,6 +431,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                   <div className="flex gap-4 border-b border-border">
                     {(
                       [
+                        { v: "kedja", label: "Kedja" },
                         { v: "handelser", label: `Händelser (${movements.length})` },
                         { v: "pass", label: "Partipass" },
                         { v: "detaljer", label: "Dokument och pris" },
