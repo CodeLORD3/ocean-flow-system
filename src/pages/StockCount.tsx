@@ -915,6 +915,58 @@ export default function StockCount() {
           className="h-9 w-full pl-8 text-sm"
         />
       </div>
+
+      {/* Lägg till vara som inte finns i lager — skapas i lager när den räknas */}
+      <div className="space-y-1">
+        <div className="relative w-full">
+          <Plus className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={addSearch}
+            onChange={(e) => setAddSearch(e.target.value)}
+            placeholder="Lägg till vara som saknas i lager — sök i produktregistret"
+            className="h-9 w-full pl-8 text-sm"
+          />
+        </div>
+        {addSearch.trim().length >= 2 && (
+          <div className="overflow-hidden rounded-md border">
+            {!addCandidates.length ? (
+              <p className="px-2 py-2 text-[11px] text-muted-foreground">
+                Ingen ny vara matchar — varan finns kanske redan i listan.
+              </p>
+            ) : (
+              addCandidates.map((p: any) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="flex w-full items-center justify-between gap-2 border-b px-2 py-1.5 text-left last:border-b-0 hover:bg-muted/60"
+                  onClick={() => {
+                    if (!defaultLocation?.id) {
+                      toast({
+                        title: "Ingen lagerplats",
+                        description: "Enheten saknar lagerplats — lägg till en först.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    setExtraProductIds((prev) => new Set(prev).add(p.id));
+                    setAddSearch("");
+                    setCategory("all");
+                    toast({
+                      title: "Vara tillagd i inventeringen",
+                      description: `${p.name} — skriv in mängden, varan skapas i lager när rapporten färdigställs.`,
+                    });
+                  }}
+                >
+                  <span className="min-w-0 flex-1 truncate text-[12px] font-medium">{p.name}</span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">
+                    {p.category || "Övrigt"} · {unitOf(p.unit)}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
       </>
       )}
 
