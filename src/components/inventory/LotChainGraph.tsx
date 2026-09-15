@@ -185,6 +185,12 @@ export default function LotChainGraph({
               ["Datum och tid", stampSv(vald.m.created_at)],
               ["Förändring", `${vald.kg > 0 ? "+" : ""}${nf(vald.kg, 1)} kg`],
               ["Saldo efter", `${nf(vald.saldo, 1)} kg`],
+              ...(unitCost != null
+                ? ([
+                    ["Värde på händelsen", `${nf(Math.abs(vald.kg) * unitCost, 0)} ${currency}`],
+                    ["Värde kvar", `${nf(vald.saldo * unitCost, 0)} ${currency}`],
+                  ] as [string, string][])
+                : []),
               ["Plats", vald.m.storage_locations?.name || "—"],
               ["Av", namnPa(vald.m)],
               ["Låg orörd innan", vald.gap || "Första händelsen"],
