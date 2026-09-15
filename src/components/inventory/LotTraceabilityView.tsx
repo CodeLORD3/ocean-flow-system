@@ -598,8 +598,18 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                       {valdProdukt || q.trim() || kategori}
                     </p>
                   )}
-                  <p className="text-[11px] text-muted-foreground">
-                    {filtered.length} {filtered.length === 1 ? "parti" : "partier"}
+                  <p className="flex flex-wrap items-center gap-x-2 text-[11px] text-muted-foreground">
+                    <span>
+                      {filtered.length} {filtered.length === 1 ? "parti" : "partier"}
+                    </span>
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                      {liveAntal} finns i lager
+                    </span>
+                    {filtered.length - liveAntal > 0 && (
+                      <span className="font-semibold text-destructive">
+                        {filtered.length - liveAntal} finns inte
+                      </span>
+                    )}
                   </p>
                 </div>
 
