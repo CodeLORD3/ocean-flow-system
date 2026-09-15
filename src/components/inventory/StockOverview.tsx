@@ -536,6 +536,10 @@ export default function StockOverview({
       </div>
       )}
 
+      {showStats && (
+        <div className="space-y-3">
+
+
       {/* Beställt av lagret — kilo, andel och lagervärde per leveransvecka */}
       {booked.kg > 0.005 && (
         <Card className="shadow-card border-amber-500/30 bg-amber-500/[0.04]">
