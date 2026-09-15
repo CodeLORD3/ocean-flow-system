@@ -1210,6 +1210,19 @@ export default function StockCount() {
                                      productName={r.productName}
                                      disabled={locked || !session}
                                    />
+                                   {/* Feltryck ska kunna tas bort direkt i inmatningen */}
+                                   {line?.counted_qty !== null && line?.counted_qty !== undefined && (
+                                     <button
+                                       type="button"
+                                       disabled={locked || !session}
+                                       title="Ta bort varan från inventeringen"
+                                       aria-label="Ta bort varan från inventeringen"
+                                       onClick={() => removeCountedLine(r)}
+                                       className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-destructive/40 text-destructive disabled:opacity-50"
+                                     >
+                                       <Trash2 className="h-3 w-3" />
+                                     </button>
+                                   )}
                                 </div>
                                 {detail && (
                                   <div className="flex items-center gap-1 border-t border-border/60 px-1.5 py-1 sm:hidden">
