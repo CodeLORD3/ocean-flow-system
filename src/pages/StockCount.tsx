@@ -478,8 +478,8 @@ export default function StockCount() {
 
   /** Träffar i produktregistret som ännu inte finns i inventeringslistan. */
   const addCandidates = useMemo(() => {
-    const q = addSearch.trim().toLowerCase();
-    if (q.length < 2) return [] as any[];
+    const q = search.trim().toLowerCase();
+    if (q.length < 1) return [] as any[];
     const inList = new Set(allRows.map((r) => r.productId));
     return (products as any[])
       .filter((p: any) => {
@@ -490,8 +490,8 @@ export default function StockCount() {
           String(p.sku ?? "").toLowerCase().includes(q)
         );
       })
-      .slice(0, 8);
-  }, [addSearch, allRows, products]);
+      .slice(0, 12);
+  }, [search, allRows, products]);
 
   const categories = useMemo(
     () => [...new Set(allRows.map((r) => r.category))].sort(collator.compare),
