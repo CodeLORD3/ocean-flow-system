@@ -249,6 +249,46 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
                 }
               </Geographies>
 
+              {/* Sträckor och avstånd från vald enhet */}
+              {showRoutes && active
+                ? legs.slice(0, 8).map(({ point: p, km }) => {
+                    const k = 1 / view.zoom;
+                    const mid: [number, number] = [
+                      (active.coordinates[0] + p.coordinates[0]) / 2,
+                      (active.coordinates[1] + p.coordinates[1]) / 2,
+                    ];
+                    return (
+                      <g key={`leg-${p.storeId}`}>
+                        <Line
+                          from={active.coordinates}
+                          to={p.coordinates}
+                          stroke={p.color}
+                          strokeWidth={1.6 * k}
+                          strokeLinecap="round"
+                          strokeDasharray={`${5 * k} ${4 * k}`}
+                          fill="none"
+                        />
+                        <Marker coordinates={mid}>
+                          <text
+                            textAnchor="middle"
+                            y={-3 * k}
+                            style={{
+                              fontSize: 11 * k,
+                              fontWeight: 700,
+                              fill: p.color,
+                              paintOrder: "stroke",
+                              stroke: "#ffffff",
+                              strokeWidth: 3 * k,
+                            }}
+                          >
+                            {kmFmt(km)}
+                          </text>
+                        </Marker>
+                      </g>
+                    );
+                  })
+                : null}
+
               {points.map((p) => {
                 const has = p.kg > 0;
                 const k = 1 / view.zoom;
