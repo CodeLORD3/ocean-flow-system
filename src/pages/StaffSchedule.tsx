@@ -20,7 +20,6 @@ import { formatHm, formatKrPrel, storeMonocode, minutesOfTime } from "@/lib/sche
 import { DayLaneView } from "@/components/schedule/DayLaneView";
 import { WeekGridView } from "@/components/schedule/WeekGridView";
 import { IndustryButton, SectionLabel } from "@/components/industry";
-import { StaffModuleNav } from "@/components/staff/StaffModuleNav";
 import { KpiCard, SegmentSwitch } from "@/components/staff/ui";
 import type { AbsenceMark, ActualMark, ComingGoingEvent, DayCell, ShiftCellItem, WeekRow } from "@/components/schedule/scheduleViewTypes";
 
@@ -229,7 +228,6 @@ export default function StaffSchedule() {
 
   return (
     <motion.main initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="staff-light min-h-full overflow-auto px-3 pb-8 sm:px-5">
-      <StaffModuleNav />
       <div className="mx-auto max-w-[1600px]">
         <header className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>

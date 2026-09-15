@@ -54,7 +54,6 @@ import {
   SOURCE_LABEL,
 } from "@/lib/timeEntries";
 import { svenskDatum, svenskTid, svenskTidpunkt } from "@/lib/swedishTime";
-import { StaffModuleNav } from "@/components/staff/StaffModuleNav";
 import { StatusPill } from "@/components/staff/ui";
 
 const today = () => svenskDatum();
@@ -342,7 +341,6 @@ export default function TimeEntriesPage() {
 
   return (
     <div className="staff-light h-full overflow-auto px-3 pb-8 sm:px-5">
-      <StaffModuleNav />
       <div className="mx-auto max-w-[1400px]">
         <header className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>

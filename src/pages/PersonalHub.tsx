@@ -5,7 +5,6 @@ import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { staffGroupsForSite } from "@/lib/staffModuleNav";
 import { staffLevelOf, staffLevelLabel } from "@/lib/staffModuleAccess";
-import { StaffModuleNav } from "@/components/staff/StaffModuleNav";
 import { KpiCard, LinkCard, PersonRow, SectionHead, SegmentSwitch, SlEmpty, StatusPill, GroupHeader, SubHeader } from "@/components/staff/ui";
 import { useLiveStaffDay } from "@/hooks/useLiveStaff";
 import { useStaffKpi } from "@/hooks/useStaffKpi";
@@ -101,7 +100,6 @@ export default function PersonalHub() {
 
   return (
     <div className="staff-light h-full overflow-auto px-3 pb-8 sm:px-5">
-      <StaffModuleNav />
 
       <main className="mx-auto max-w-[1400px]">
         <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
