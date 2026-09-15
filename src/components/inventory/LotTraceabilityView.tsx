@@ -212,6 +212,13 @@ export default function LotTraceabilityView({
     },
   });
 
+  /** Butiken ser bara partier som passerat den egna butiken. */
+  const lots = useMemo(
+    () => (butiksPartier ? allaLots.filter((l: any) => butiksPartier.has(l.id)) : allaLots),
+    [allaLots, butiksPartier],
+  );
+  const isLoading = lotsLoading || scopeLoading;
+
   /**
    * Senaste händelsen per parti (för sortering på "senast ändrad") och
    * verkligt saldo per parti räknat från stock_movements — lagrets enda sanning.
