@@ -327,7 +327,10 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                           >
                             {l.products?.name || l.commercial_name || "—"}
                           </p>
-                          <p className="truncate font-mono text-[10px] text-muted-foreground">{l.lot_number}</p>
+                          <p className="truncate font-mono text-[10px] text-muted-foreground">
+                            {l.lot_number} · in {String(l.created_at).slice(0, 10)}
+                            {l.best_before ? ` · bäst före ${l.best_before}` : ""}
+                          </p>
                         </div>
                         <p className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
                           {nf(Number(l.quantity_kg || 0), 1)}
