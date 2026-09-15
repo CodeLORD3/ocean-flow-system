@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import { ProductThumb } from "@/components/products/ProductThumb";
@@ -331,6 +332,22 @@ export default function WholesaleOrders() {
   const selectedOrderId = expandedOrderIds.size > 0 ? Array.from(expandedOrderIds)[0] : null;
   const setSelectedOrderId = (id: string | null) => { if (id) setExpandedOrderIds(new Set([id])); else setExpandedOrderIds(new Set()); };
   const selectedOrder = useMemo(() => selectedOrderId ? orders.find((o: any) => o.id === selectedOrderId) || null : null, [selectedOrderId, orders]);
+  // Djuplänk från lagret: /orders?order=<id> öppnar och skrollar till ordern.
+  const location = useLocation();
+  React.useEffect(() => {
+    const wanted = new URLSearchParams(location.search).get("order");
+    if (!wanted) return;
+    setActiveTab("per-order");
+    setSearch("");
+    setStatusFilter("Alla");
+    setStoreFilter("alla");
+    setExpandedOrderIds(new Set([wanted]));
+    const t = setTimeout(() => {
+      document.getElementById(`wholesale-order-${wanted}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 300);
+    return () => clearTimeout(t);
+  }, [location.search]);
+
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
   const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
   const [packingSlipOrder, setPackingSlipOrder] = useState<any>(null);
