@@ -32,6 +32,7 @@ import { format, getDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
+import { useStoreTierPrices } from "@/hooks/usePriceTiers";
 import { useProducts } from "@/hooks/useProducts";
 import { useTransportSchedules } from "@/hooks/useTransportSchedules";
 import { supabase } from "@/integrations/supabase/client";
@@ -788,7 +789,7 @@ export default function ShopOrders() {
                               </td>
                               {(() => {
                                 const tp = tierPrices?.get(line.product_id);
-                                const unitPrice = tp ? Number(tp.price) : Number(line.wholesale_price ?? 0);
+                                const unitPrice = tp ? Number(tp.price) : 0;
                                 const cur = tp?.currency || activeStore?.currency || "SEK";
                                 const locked = tp?.lock_mode === "locked";
                                 const qty = Number(String(line.quantity).replace(",", ".")) || 0;
