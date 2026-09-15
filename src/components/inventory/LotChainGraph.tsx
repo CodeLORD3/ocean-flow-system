@@ -191,7 +191,7 @@ export default function LotChainGraph({
               </div>
               <div className="text-right">
                 <p className="font-mono text-sm font-bold tabular-nums text-foreground">
-                  {sinceNow(senaste)} sedan senaste händelsen
+                  {sinceNowLong(senaste)} sedan senaste händelsen
                 </p>
                 <p className="text-[11px] text-muted-foreground">
                   {datumSv(senaste)} {arSv(senaste)} · {timeSv(senaste)}
