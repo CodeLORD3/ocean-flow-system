@@ -1293,8 +1293,8 @@ export default function PurchaseReporting() {
           .select()
           .single();
         if (reportError) throw reportError;
+        createdReportId = report.id;
 
-        setSelectedReportId(report.id);
         queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
 
         setParsing(true);
