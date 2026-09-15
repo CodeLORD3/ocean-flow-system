@@ -147,6 +147,7 @@ export default function LotChainGraph({
                 <text x={n.x + 14} y={n.y + 15} className="fill-muted-foreground text-[10px]">
                   {stampSv(n.m.created_at)} · {n.kg > 0 ? "+" : ""}
                   {nf(n.kg, 1)} kg
+                  {unitCost != null ? ` · ${nf(Math.abs(n.kg) * unitCost, 0)} ${currency}` : ""}
                 </text>
               </g>
             );
