@@ -469,63 +469,68 @@ export default function StockOverview({
           </Card>
         </div>
       ) : (
-      <div className={cn("grid grid-cols-2 gap-3", showCosts ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
+      <div className={cn("grid grid-cols-2 gap-1.5 sm:grid-cols-3", showCosts ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
         {showCosts && (
-          <Card className="shadow-card">
-            <CardContent className="p-3 space-y-1">
-              <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-                <Coins className="h-3.5 w-3.5 text-primary" /> Totalt lagervärde
+          <Card className="shadow-none">
+            <CardContent className="px-2 py-1.5">
+              <p className="flex items-center gap-1 text-[9px] uppercase tracking-wide text-muted-foreground">
+                <Coins className="h-3 w-3 text-primary" /> Lagervärde
               </p>
-              <p className="text-2xl font-heading font-bold tabular-nums">{fmt(kpis.value)}</p>
-              <p className="text-[10px] text-muted-foreground">Kostnadsbaserat ({currency})</p>
+              <p className="font-heading text-sm font-bold tabular-nums leading-tight">{fmt(kpis.value)}</p>
+              <p className="text-[9px] text-muted-foreground">Kostnad ({currency})</p>
             </CardContent>
           </Card>
         )}
-        <Card className="shadow-card">
-          <CardContent className="p-3 space-y-1">
-            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-              <Boxes className="h-3.5 w-3.5 text-primary" /> Total kvantitet
+        <Card className="shadow-none">
+          <CardContent className="px-2 py-1.5">
+            <p className="flex items-center gap-1 text-[9px] uppercase tracking-wide text-muted-foreground">
+              <Boxes className="h-3 w-3 text-primary" /> Total kvantitet
             </p>
-            <p className="text-2xl font-heading font-bold tabular-nums">
+            <p className="font-heading text-sm font-bold tabular-nums leading-tight">
               {kpis.qty.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kg
             </p>
-            <p className="text-[10px] text-muted-foreground">Omräknat till kg</p>
+            <p className="text-[9px] text-muted-foreground">Omräknat till kg</p>
           </CardContent>
         </Card>
-        <Card className="shadow-card">
-          <CardContent className="p-3 space-y-1">
-            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-              <Package className="h-3.5 w-3.5 text-primary" /> Antal produkter
+        <Card className="shadow-none">
+          <CardContent className="px-2 py-1.5">
+            <p className="flex items-center gap-1 text-[9px] uppercase tracking-wide text-muted-foreground">
+              <Package className="h-3 w-3 text-primary" /> Antal produkter
             </p>
-            <p className="text-2xl font-heading font-bold tabular-nums">{kpis.count}</p>
-            <p className="text-[10px] text-muted-foreground">{rows.length} lagerrader</p>
+            <p className="font-heading text-sm font-bold tabular-nums leading-tight">{kpis.count}</p>
+            <p className="text-[9px] text-muted-foreground">{rows.length} lagerrader</p>
           </CardContent>
         </Card>
-        <Card className={cn("shadow-card", kpis.low > 0 && "border-amber-500/30 bg-amber-500/5")}>
-          <CardContent className="p-3 space-y-1">
-            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Lågt lager
-            </p>
-            <p className={cn("text-2xl font-heading font-bold tabular-nums", kpis.low > 0 && "text-amber-600")}>
-              {kpis.low}
-            </p>
-            <p className="text-[10px] text-muted-foreground">{kpis.low} produkter under min</p>
-          </CardContent>
-        </Card>
-        <Card className={cn("shadow-card", kpis.critical > 0 && "border-destructive/30 bg-destructive/5")}>
-          <CardContent className="p-3 space-y-1">
-            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-destructive" /> Utgångna/kritiska
+        <Card className={cn("shadow-none", kpis.low > 0 && "border-amber-500/30 bg-amber-500/5")}>
+          <CardContent className="px-2 py-1.5">
+            <p className="flex items-center gap-1 text-[9px] uppercase tracking-wide text-muted-foreground">
+              <AlertTriangle className="h-3 w-3 text-amber-500" /> Lågt lager
             </p>
             <p
               className={cn(
-                "text-2xl font-heading font-bold tabular-nums",
+                "font-heading text-sm font-bold tabular-nums leading-tight",
+                kpis.low > 0 && "text-amber-600",
+              )}
+            >
+              {kpis.low}
+            </p>
+            <p className="text-[9px] text-muted-foreground">under min</p>
+          </CardContent>
+        </Card>
+        <Card className={cn("shadow-none", kpis.critical > 0 && "border-destructive/30 bg-destructive/5")}>
+          <CardContent className="px-2 py-1.5">
+            <p className="flex items-center gap-1 text-[9px] uppercase tracking-wide text-muted-foreground">
+              <Clock className="h-3 w-3 text-destructive" /> Utgångna/kritiska
+            </p>
+            <p
+              className={cn(
+                "font-heading text-sm font-bold tabular-nums leading-tight",
                 kpis.critical > 0 && "text-destructive",
               )}
             >
               {kpis.critical}
             </p>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-[9px] text-muted-foreground">
               {kpis.critical > 0 ? "Kräver åtgärd" : "Inga varningar"}
             </p>
           </CardContent>
