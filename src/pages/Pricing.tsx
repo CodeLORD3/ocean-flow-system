@@ -392,7 +392,7 @@ export default function Pricing() {
         </Select>
       </div>
 
-      {isShop && <StockPricePoster />}
+      <StockPricePoster />
 
       {isShop && <SavedPriceLists />}
 
