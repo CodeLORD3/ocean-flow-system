@@ -2017,6 +2017,22 @@ export default function PurchaseReporting() {
                             {r.status === "Godkänd" && <Lock className="h-3 w-3 mr-0.5" />}
                             {r.status}
                           </Badge>
+                          {["Fel", "Bearbetar", "Inga produkter hittades"].includes(r.status) && r.file_url && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 shrink-0"
+                              title="Läs in dokumentet igen"
+                              disabled={parsing}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedReportId(r.id);
+                                parseIntoReport(r.id, r.file_url, (r as any).file_hash ?? undefined).catch(() => {});
+                              }}
+                            >
+                              <RefreshCw className={`h-3.5 w-3.5 ${parsing ? "animate-spin" : ""}`} />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
