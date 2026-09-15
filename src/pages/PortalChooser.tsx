@@ -85,7 +85,20 @@ export default function PortalChooser() {
           </p>
         )}
         <div className="flex items-center gap-2">
-          <Button onClick={() => refresh()}>Försök igen</Button>
+          <Button
+            disabled={retrying}
+            onClick={async () => {
+              setRetrying(true);
+              try {
+                await refresh();
+              } finally {
+                setRetrying(false);
+              }
+            }}
+          >
+            {retrying && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {retrying ? "Försöker igen…" : "Försök igen"}
+          </Button>
           <Button
             variant="outline"
             onClick={async () => {
@@ -96,6 +109,7 @@ export default function PortalChooser() {
             <LogOut className="h-4 w-4 mr-2" /> Logga in igen
           </Button>
         </div>
+
       </div>
     );
   }
