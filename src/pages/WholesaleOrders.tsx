@@ -231,7 +231,7 @@ function WholesaleOrderAccordionRow({
         >
           <div className="hidden min-h-5 w-full min-w-0 items-center text-xs sm:flex">
             <span className="w-36 shrink-0 border-r border-grid-line/70 pr-3 font-mono text-[11px] font-semibold tabular-nums">{day}<span className="block text-[10px] font-normal text-muted-foreground">{displayOrderWeek(order)}</span></span>
-            <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "text-[13px] font-bold tracking-tight" : "font-semibold"}`}>{order.stores?.name || "Okänd butik"}<span className="block text-[10px] font-normal text-muted-foreground">{order.created_by || "–"}</span></span>
+            <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "text-[13px] font-bold tracking-tight" : "font-semibold"}`}>{order.stores?.name || "Okänd butik"}<OrdererName name={order.created_by} className="block text-[10px] font-normal text-muted-foreground" /></span>
             <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 text-center font-mono text-[10px] tabular-nums text-muted-foreground">{orderLines} rader</span>
              <span className="flex w-32 shrink-0 items-center overflow-hidden border-r border-grid-line/70 px-2">{statusChip}</span>
              <span className="flex w-12 shrink-0 items-center justify-center border-r border-grid-line/70 px-2">
