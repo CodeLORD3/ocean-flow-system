@@ -103,3 +103,45 @@ export function staffGroupsForSite(site: SiteMode, level: StaffLevel = "admin"):
     }))
     .filter(g => g.items.length > 0);
 }
+
+/* ------------------------------------------------------------------ sektioner */
+
+const ITEM_BY_URL = new Map(STAFF_MODULE_GROUPS.flatMap(g => g.items).map(i => [i.url, i]));
+
+export type StaffSection = {
+  /** Stabilt id, används i flikraden. */
+  key: string;
+  label: string;
+  icon: any;
+  /** Sektionens startsida. */
+  url: string;
+  items: StaffNavItem[];
+};
+
+/**
+ * Fem sektioner istället för sexton flikar. Varje sektion har underflikar som
+ * pekar på de sidor som redan finns — inget nås längre bara via menyn.
+ */
+const SECTION_LAYOUT: { key: string; label: string; icon: any; urls: string[] }[] = [
+  { key: "start", label: "Start", icon: LayoutGrid, urls: [] },
+  { key: "schema", label: "Schema", icon: CalendarRange, urls: ["/staff-schedule", "/schedule-planner", "/my-shifts"] },
+  { key: "tider", label: "Tider", icon: Clock, urls: ["/time-entries", "/my-time", "/live-staff", "/clock-stations", "/attestations", "/clock-vs-pk"] },
+  { key: "analys", label: "Analys & Lön", icon: BarChart3, urls: ["/payroll-basis", "/payroll-review", "/payroll-exports", "/staff-rules"] },
+  { key: "personal", label: "Personal", icon: UserCheck, urls: ["/staff", "/employees", "/hr-control", "/profile", "/personalkollen"] },
+];
+
+/** Sektioner filtrerade på portal och nivå. Tomma sektioner faller bort. */
+export function staffSectionsForSite(site: SiteMode, level: StaffLevel = "admin"): StaffSection[] {
+  return SECTION_LAYOUT.map(section => {
+    const items = section.urls
+      .map(url => ITEM_BY_URL.get(url))
+      .filter((item): item is StaffNavItem => !!item)
+      .filter(item => canAccessRoute(site, item.url) && canOpenStaffPage(level, item.url));
+    return { key: section.key, label: section.label, icon: section.icon, url: section.key === "start" ? "/personal" : items[0]?.url ?? "", items };
+  }).filter(section => section.key === "start" || section.items.length > 0);
+}
+
+/** Vilken sektion en rutt hör till. */
+export function staffSectionOf(sections: StaffSection[], path: string): StaffSection | null {
+  return sections.find(section => section.items.some(item => item.url === path)) ?? null;
+}
