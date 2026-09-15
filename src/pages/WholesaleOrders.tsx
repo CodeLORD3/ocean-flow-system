@@ -209,8 +209,14 @@ function WholesaleOrderAccordionRow({
   );
 
   return (
-    <div id={`wholesale-order-${order.id}`} className={`relative overflow-hidden border-x border-b border-grid-line transition-all duration-200 ${rowTone.row} ${open ? "z-10 my-3 rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] pl-2.5 shadow-[0_10px_30px_-18px_hsl(var(--primary)/0.55)]" : ""} ${selected && !open ? "ring-1 ring-inset ring-primary" : ""}`}>
+    <div id={`wholesale-order-${order.id}`} className={`relative overflow-hidden border-x border-b border-grid-line transition-all duration-200 ${rowTone.row} ${open ? "z-10 my-3 rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] pl-2.5 shadow-[0_10px_30px_-18px_hsl(var(--primary)/0.55)]" : ""} ${selected && !open ? "ring-1 ring-inset ring-primary" : ""} ${highlight ? "z-20 animate-pulse-slow ring-2 ring-warning ring-offset-2 ring-offset-background" : ""}`}>
       {open && <span className="pointer-events-none absolute bottom-2 left-1.5 top-2 w-1.5 rounded-full bg-primary/80" aria-hidden />}
+      {highlight && (
+        <div className="flex items-center gap-2 border-b border-warning/40 bg-warning/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-warning-foreground">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-warning" aria-hidden />
+          Hitkommen från lagret — {order.stores?.name || "butik"}
+        </div>
+      )}
 
       <div className="flex min-w-0 items-stretch">
         {!open && <div className={`w-1 shrink-0 ${rowTone.edge}`} aria-hidden />}
