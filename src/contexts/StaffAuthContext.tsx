@@ -70,7 +70,7 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     let lastMessage: string | null = null;
     // Backend kan vara kall efter inaktivitet: första svaret dröjer ibland
     // flera sekunder. Ge det gott om försök innan vi visar ett fel.
-    const waits = [600, 1200, 2400, 4000, 6000];
+    const waits = [500, 1200, 2500];
     for (let attempt = 0; attempt < waits.length + 1; attempt++) {
       const { data, error } = await supabase
         .from("staff_access")
