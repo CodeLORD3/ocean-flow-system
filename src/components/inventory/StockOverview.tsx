@@ -745,6 +745,46 @@ export default function StockOverview({
                 );
               })}
             </div>
+
+            {/* Kvar att packa per produkt = beställt minus redan packat */}
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Kvar att packa · {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+              </p>
+              {booked.restItems.length === 0 ? (
+                <p className="rounded-md bg-card/70 px-2 py-2 text-xs text-muted-foreground">
+                  Allt beställt är packat.
+                </p>
+              ) : (
+                booked.restItems.map((it) => (
+                  <div key={it.productId} className="rounded-md bg-card/70 px-2 py-1.5">
+                    <div className="flex items-center gap-2 text-xs">
+                      <ProductThumb name={it.name} imageUrl={it.image_url} size="xs" />
+                      <span className="min-w-0 flex-1 truncate font-semibold">{it.name}</span>
+                      <span className="shrink-0 font-mono tabular-nums text-amber-600">
+                        {it.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                      </span>
+                      {showCosts && (
+                        <span className="hidden w-20 shrink-0 text-right font-mono text-[10px] tabular-nums text-muted-foreground sm:block">
+                          {fmt(it.value)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 pl-7 text-[10px] text-muted-foreground">
+                      {it.orders.map((o, i) => (
+                        <span key={`${o.orderId}-${i}`} className="font-mono tabular-nums">
+                          {o.customerName || "Butik"} ·{" "}
+                          {o.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                          {o.wantedDate
+                            ? ` · ${format(parseISO(o.wantedDate), "d MMM", { locale: sv })}`
+                            : ""}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
