@@ -848,6 +848,19 @@ export default function LotTraceabilityView({
                         Frysbehandling saknas
                       </Badge>
                     )}
+                    {/* Packat till order: varan står kvar men håller på att byta plats — visas suddigt. */}
+                    {(() => {
+                      const pk = packedByProduct?.get((lot as any).product_id);
+                      if (!pk) return null;
+                      return (
+                        <span
+                          className="animate-pulse rounded border border-amber-500/40 bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 opacity-70 blur-[0.4px]"
+                          title={`Packat till ${pk.orders.map((o) => o.orderNumber).join(", ")}`}
+                        >
+                          Packad · byter plats · {nf(pk.packed, 1)} {pk.unit}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div className="text-right">
