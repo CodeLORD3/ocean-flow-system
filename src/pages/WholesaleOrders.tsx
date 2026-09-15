@@ -355,14 +355,17 @@ export default function WholesaleOrders() {
     setShowHistory(true);
     setExpandedOrderIds(new Set([wanted]));
     setDeepLinkOrderId(wanted);
+    const wantedLine = new URLSearchParams(location.search).get("line");
     let tries = 0;
     const timers: ReturnType<typeof setTimeout>[] = [];
     const tick = () => {
       const el = document.getElementById(`wholesale-order-${wanted}`);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        // Skrolla en gång till när raden expanderat och layouten satt sig.
-        timers.push(setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 600));
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        // Har vi en specifik produktrad tar radens egen skroll över här.
+        if (!wantedLine) {
+          timers.push(setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 600));
+        }
         return;
       }
       if (tries++ < 25) timers.push(setTimeout(tick, 200));
