@@ -1484,6 +1484,13 @@ export default function StockOverview({
                                          </div>
                                        </div>
                                      ))}
+                                     <div className="flex items-center gap-1.5 rounded border border-amber-500/40 bg-amber-500/[0.08] px-2 py-1 text-[9px] uppercase tracking-wider text-amber-800">
+                                       <span className="font-semibold">Totalt</span>
+                                       <span className="ml-auto font-mono text-[11px] font-bold tabular-nums text-foreground">
+                                         {(pk.packed + pk.ordered).toLocaleString("sv-SE", { maximumFractionDigits: 1 })}{" "}
+                                         {pk.unit}
+                                       </span>
+                                     </div>
                                    </div>
                                  );
 
