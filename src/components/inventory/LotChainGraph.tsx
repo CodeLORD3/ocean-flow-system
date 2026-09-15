@@ -42,7 +42,13 @@ const GREN_DY = 34;
  * kedjan slutar i en "Live"-nod med aktuellt saldo. Klick på en nod öppnar
  * "All info"-rutan.
  */
-export default function LotChainGraph({ movements, lotNumber, productName }: Props) {
+export default function LotChainGraph({
+  movements,
+  lotNumber,
+  productName,
+  unitCost = null,
+  currency = "SEK",
+}: Props) {
   const [valdId, setValdId] = useState<string | null>(null);
 
   const noder = useMemo(() => {
