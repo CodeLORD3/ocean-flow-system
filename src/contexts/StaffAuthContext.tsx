@@ -104,8 +104,9 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
 
 
   const refresh = async () => {
-    await loadStaff(user?.id);
+    await loadStaff(user?.id, { silent: true });
   };
+
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
