@@ -403,6 +403,29 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                     })}
                   </div>
 
+                  {/* Var kilona finns just nu */}
+                  <div className="border-y border-border py-2">
+                    <p className="pb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                      I lager nu
+                    </p>
+                    {perPlats.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        Inget saldo kvar på partiet – allt är sålt, omvandlat eller bortskrivet.
+                      </p>
+                    ) : (
+                      <div className="flex flex-wrap gap-x-6 gap-y-1">
+                        {perPlats.map((r) => (
+                          <p key={r.plats} className="text-xs">
+                            <span className="text-muted-foreground">{r.plats}</span>{" "}
+                            <span className="font-mono font-semibold tabular-nums text-foreground">
+                              {nf(r.kg, 1)} kg
+                            </span>
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Flikar så allt ryms på skärmen */}
                   <div className="flex gap-4 border-b border-border">
                     {(
@@ -428,49 +451,47 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
 
                   <div className="min-h-0 flex-1 overflow-y-auto pr-1">
                     {panel === "handelser" &&
-                      (movements.length === 0 ? (
+                      (tidslinje.length === 0 ? (
                         <p className="py-4 text-xs text-muted-foreground">Inga rörelser kopplade till partiet.</p>
                       ) : (
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="text-left text-[10px] uppercase tracking-wider text-muted-foreground">
-                              <th className="py-2 pr-3 font-medium">Datum &amp; tid</th>
-                              <th className="py-2 pr-3 font-medium">Händelse</th>
-                              <th className="py-2 pr-3 font-medium">Lagerplats</th>
-                              <th className="py-2 pr-3 font-medium">Av</th>
-                              <th className="py-2 pr-3 font-medium">Låg orörd</th>
-                              <th className="py-2 text-right font-medium">Kg</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {movements.map((m, i, arr) => (
-                              <tr key={m.id} className="border-t border-border/50">
-                                <td className="whitespace-nowrap py-2 pr-3 font-mono tabular-nums text-muted-foreground">
-                                  {stampSv(m.created_at)}
-                                </td>
-                                <td className="py-2 pr-3 text-foreground">
-                                  {movementLabel(m.movement_type)}
-                                  {m.note && <span className="block text-[10px] text-muted-foreground">{m.note}</span>}
-                                </td>
-                                <td className="py-2 pr-3 text-muted-foreground">{m.storage_locations?.name || "—"}</td>
-                                <td className="py-2 pr-3 text-muted-foreground">
-                                  {m.staff ? `${m.staff.first_name} ${m.staff.last_name}` : "System"}
-                                </td>
-                                <td className="whitespace-nowrap py-2 pr-3 text-muted-foreground">
-                                  {i === 0 ? "—" : gapBetween(arr[i - 1].created_at, m.created_at)}
-                                  {i === arr.length - 1 ? ` (nu ${sinceNow(m.created_at)})` : ""}
-                                </td>
-                                <td
-                                  className={`py-2 text-right font-mono tabular-nums ${
-                                    Number(m.quantity_kg) < 0 ? "text-destructive" : "text-foreground"
+                        <ol className="relative border-l border-border pl-4">
+                          {tidslinje.map((m) => {
+                            const minus = Number(m.quantity_kg) < 0;
+                            return (
+                              <li key={m.id} className="relative pb-4">
+                                <span
+                                  className={`absolute -left-[21px] top-1.5 h-2 w-2 rounded-full ${
+                                    minus ? "bg-destructive" : "bg-foreground"
                                   }`}
-                                >
-                                  {nf(Number(m.quantity_kg), 1)}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                                />
+                                <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+                                  <p className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                                    {stampSv(m.created_at)}
+                                  </p>
+                                  <p className="font-mono text-xs tabular-nums">
+                                    <span className={minus ? "text-destructive" : "text-foreground"}>
+                                      {minus ? "" : "+"}
+                                      {nf(Number(m.quantity_kg), 1)} kg
+                                    </span>
+                                    <span className="text-muted-foreground"> → saldo {nf(m.saldoEfter, 1)} kg</span>
+                                  </p>
+                                </div>
+                                <p className="text-xs font-medium text-foreground">
+                                  {movementLabel(m.movement_type)}
+                                  <span className="font-normal text-muted-foreground">
+                                    {m.storage_locations?.name ? ` · ${m.storage_locations.name}` : ""}
+                                    {` · ${m.staff ? `${m.staff.first_name} ${m.staff.last_name}` : "System"}`}
+                                  </span>
+                                </p>
+                                {m.note && <p className="text-[11px] text-muted-foreground">{m.note}</p>}
+                                <p className="text-[10px] text-muted-foreground">
+                                  {m.gap ? `Låg orörd ${m.gap} innan detta` : "Första händelsen"}
+                                  {m.sist ? ` · senaste händelsen var ${sinceNow(m.created_at)} sedan` : ""}
+                                </p>
+                              </li>
+                            );
+                          })}
+                        </ol>
                       ))}
 
                     {panel === "pass" && (
