@@ -214,8 +214,15 @@ Deno.serve(async (req) => {
     }
   }
 
-  const { data: recent } = await db.from("time_entries").select("id, type, occurred_at").eq("employee_id", hit.id).order("occurred_at", { ascending: false }).limit(1);
-  const last = recent?.[0]?.type as PunchType | undefined;
+  // Nuläget måste läsas ur den gällande journalen: makulerade rättelser och
+  // rader med framtida tid får inte styra vilka knappar klockan visar.
+  const { data: recent } = await db
+    .from("time_entries")
+    .select("id, type, occurred_at, corrects_entry_id, correction_kind")
+    .eq("employee_id", hit.id)
+    .order("occurred_at", { ascending: false })
+    .limit(60);
+  const last = (effectiveLast(recent ?? [])?.type ?? undefined) as PunchType | undefined;
   const suggested: PunchType = last === "in" || last === "rast_slut" ? "ut" : last === "rast_start" ? "rast_slut" : "in";
   if (mode === "lookup") return json(req, { status: "found", employee: { id: hit.id, first_name: hit.first_name, pnr_masked: hit.pnr_masked ?? (pnr ? maskPnr(pnr) : null) }, last_type: last ?? null, suggested_action: suggested, expires_at: expiresAt });
   if (!PUNCH_TYPES.includes(action)) return json(req, { error: "Ogiltig åtgärd." }, 400);
