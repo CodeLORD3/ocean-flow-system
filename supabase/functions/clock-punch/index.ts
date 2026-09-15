@@ -16,6 +16,8 @@ import {
   applyRounding,
   checkRateLimit,
   corsHeaders,
+  effectiveLast,
+  isOpenShift,
   json,
   maskPnr,
   normalizePnr,
