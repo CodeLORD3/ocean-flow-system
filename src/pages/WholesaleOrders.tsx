@@ -372,6 +372,19 @@ export default function WholesaleOrders() {
     return () => timers.forEach(clearTimeout);
   }, [location.search]);
 
+  const [stockReturnDismissed, setStockReturnDismissed] = useState(false);
+  React.useEffect(() => { setStockReturnDismissed(false); }, [location.search]);
+  const stockReturn = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("from") !== "stock" || stockReturnDismissed) return null;
+    const orderId = params.get("order");
+    const productId = params.get("line");
+    const order = orders.find((o: any) => o.id === orderId);
+    const line = (order?.shop_order_lines || []).find((l: any) => l.product_id === productId);
+    const parts = [line?.products?.name, order?.stores?.name].filter(Boolean);
+    return { label: parts.join(" · ") || "Från lagret" };
+  }, [location.search, stockReturnDismissed, orders]);
+
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
   const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
   const [packingSlipOrder, setPackingSlipOrder] = useState<any>(null);
@@ -739,15 +752,25 @@ export default function WholesaleOrders() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-2.5">
-      {/* Kom hit från lagret — tydlig väg tillbaka, som på totallistan. */}
-      {new URLSearchParams(location.search).get("from") === "stock" && (
-        <button
-          type="button"
-          onClick={() => navigate("/inventory")}
-          className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-primary/20"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Tillbaka till lagret
-        </button>
+      {/* Kom hit från lagret — flytande väg tillbaka, som på totallistan. */}
+      {stockReturn && (
+        <div className="fixed left-1/2 top-2 z-50 flex max-w-[95vw] -translate-x-1/2 items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-2 py-1.5 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-primary/15">
+          <Button size="sm" className="h-8 rounded-full font-semibold" onClick={() => navigate("/inventory")}>
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> Tillbaka till lagret
+          </Button>
+          <span className="truncate text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">{stockReturn.label}</span>
+          </span>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8 shrink-0 rounded-full"
+            title="Stäng och stanna i ordrarna"
+            onClick={() => setStockReturnDismissed(true)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       )}
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
