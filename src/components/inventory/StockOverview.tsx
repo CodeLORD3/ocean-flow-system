@@ -338,7 +338,9 @@ export default function StockOverview({
     let kg = 0;
     let value = 0;
     let packedKg = 0;
+    let packedValue = 0;
     const weeks = new Map<string, { key: string; label: string; range: string; kg: number; value: number }>();
+    const packedWeeks = new Map<string, { key: string; label: string; range: string; kg: number; value: number }>();
     for (const g of filtered) {
       const pk = packedByProduct?.get(g.product_id);
       if (!pk) continue;
