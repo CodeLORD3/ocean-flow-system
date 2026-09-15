@@ -287,9 +287,28 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
             <div className="grid gap-6 lg:h-[calc(100dvh-15rem)] lg:min-h-[420px] lg:grid-cols-[260px_minmax(0,1fr)]">
               {/* Partilista */}
               <div className="flex min-h-0 flex-col">
-                <div className="flex items-baseline justify-between pb-2">
+                <div className="flex items-baseline justify-between pb-1">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Partier</p>
                   <span className="text-[11px] text-muted-foreground">{filtered.length}</span>
+                </div>
+                <div className="flex items-center gap-1.5 pb-2">
+                  <ArrowDownUp className="h-3 w-3 text-muted-foreground" />
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value as typeof sort)}
+                    className="w-full bg-transparent text-[11px] text-muted-foreground focus:outline-none"
+                    aria-label="Sortera partier"
+                  >
+                    {sorteringar.map((s) => (
+                      <option key={s.v} value={s.v}>
+                        Sorterat: {s.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-baseline justify-between border-b border-border pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <span>Produkt och parti</span>
+                  <span>Kg i partiet</span>
                 </div>
                 <div className="max-h-[180px] min-h-0 flex-1 overflow-y-auto border-t border-border lg:max-h-none">
                   {filtered.map((l) => {
