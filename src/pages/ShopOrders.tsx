@@ -729,6 +729,7 @@ export default function ShopOrders() {
                         <th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th>
                         <th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th>
                         <th className="pb-2 text-right font-medium text-muted-foreground w-32">Antal</th>
+                        <th className="pb-2 text-left font-medium text-muted-foreground">Varför</th>
                         <th className="pb-2 w-8"></th>
                       </tr>
                     </thead>
@@ -736,7 +737,7 @@ export default function ShopOrders() {
                       {groupedOrderLines.map(([cat, items]) => (
                         <React.Fragment key={cat}>
                           <tr className="bg-muted/40">
-                            <td colSpan={4} className="py-1 px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                            <td colSpan={5} className="py-1 px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                               ▸ {cat} ({items.length})
                             </td>
                           </tr>
