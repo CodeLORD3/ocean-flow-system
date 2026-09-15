@@ -50,27 +50,31 @@ export default function InventoryRouter() {
   ];
 
   return (
-    <div className="w-full flex flex-col">
-      <div className="sticky top-0 z-30 -mx-2 -mt-2 sm:-mx-4 sm:-mt-4 lg:-mx-6 lg:-mt-6 border-b bg-background px-2 pt-2 pb-1 sm:px-4 sm:pt-3">
+    <div
+      className="w-full flex flex-col"
+      style={{ ["--stock-subnav-h" as any]: "52px" }}
+    >
+      <div className="sticky top-0 z-30 -mx-2 -mt-2 sm:-mx-4 sm:-mt-4 lg:-mx-6 lg:-mt-6 h-[var(--stock-subnav-h)] flex items-center border-b border-border bg-background/95 px-2 shadow-[0_1px_0_0_hsl(var(--border)),0_6px_16px_-12px_hsl(var(--foreground)/0.35)] backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-4">
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as SubTab)} className="w-full">
           <TabsList
-            className="grid w-full h-auto flex-nowrap gap-0.5 p-0.5 sm:h-12 sm:gap-1 sm:p-1"
+            className="grid w-full h-auto flex-nowrap gap-0.5 bg-muted/60 p-0.5 sm:gap-1 sm:p-1"
             style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
           >
             {tabs.map((t) => (
               <TabsTrigger
                 key={t.value}
                 value={t.value}
-                className="min-h-8 min-w-0 px-0.5 text-[10px] font-semibold leading-tight sm:h-full sm:px-2 sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+                className="min-h-7 min-w-0 rounded-md px-0.5 text-[10px] font-semibold leading-tight tracking-tight transition-all duration-200 sm:h-8 sm:px-2 sm:text-[13px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
               >
                 <span className="truncate sm:hidden">{t.shortLabel ?? t.label}</span>
-                <span className="hidden sm:inline">{t.label}</span>
+                <span className="hidden truncate sm:inline">{t.label}</span>
               </TabsTrigger>
             ))}
           </TabsList>
         </Tabs>
       </div>
+
 
       <div className="pt-4">
         <div style={{ display: tab === "lager" ? "block" : "none" }}>
