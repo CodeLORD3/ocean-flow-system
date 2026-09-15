@@ -365,6 +365,36 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
                   ))
                 )}
               </div>
+
+              {legs.length > 0 ? (
+                <div className="mt-2 border-t border-border pt-1.5">
+                  <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold">
+                    <Route className="h-3 w-3" aria-hidden /> Avstånd härifrån
+                  </p>
+                  <div className="max-h-[130px] space-y-0.5 overflow-y-auto pr-1">
+                    {legs.map(({ point: p, km }) => (
+                      <button
+                        key={`d-${p.storeId}`}
+                        type="button"
+                        onClick={() => selectPoint(p, true)}
+                        className="flex w-full items-center justify-between gap-2 rounded px-1 py-0.5 text-left text-[10px] hover:bg-accent"
+                      >
+                        <span className="flex min-w-0 items-center gap-1 truncate">
+                          <span
+                            className="inline-block h-2 w-2 shrink-0 rounded-full"
+                            style={{ background: p.color }}
+                          />
+                          <span className="truncate">{p.city ?? p.name}</span>
+                        </span>
+                        <span className="shrink-0 font-mono tabular-nums">
+                          {kmFmt(km)}
+                          <span className="text-muted-foreground"> · {driveLabel(km)}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : (
             <p className="rounded-lg border border-dashed border-border p-2 text-[10px] text-muted-foreground">
