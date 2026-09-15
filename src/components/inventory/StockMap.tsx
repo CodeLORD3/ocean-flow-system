@@ -98,6 +98,7 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
     coordinates: [12, 54],
     zoom: 1,
   });
+  const [showRoutes, setShowRoutes] = useState(true);
 
   const points = useMemo<Point[]>(() => {
     const agg = new Map<string, Point>();
