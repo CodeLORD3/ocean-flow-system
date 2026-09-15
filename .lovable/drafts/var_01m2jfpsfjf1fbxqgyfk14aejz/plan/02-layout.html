@@ -1,0 +1,96 @@
+<svg viewBox="0 0 640 400" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: var(--font-sans); fill: var(--fg-secondary); font-size: 12px; }
+    .lbl { fill: var(--fg-primary); font-size: 14px; font-weight: 480; }
+    .box { fill: none; stroke: var(--fg-secondary); stroke-width: 1; rx: 8; }
+    .surf { fill: var(--bg-muted); stroke: none; rx: 8; }
+    .card { fill: var(--bg-secondary); stroke: var(--fg-secondary); stroke-width: 1; rx: 8; }
+    .zone { fill: none; stroke: var(--border-translucent); stroke-width: 1; stroke-dasharray: 4 3; rx: 8; }
+    .bar { fill: var(--border-translucent); rx: 3; }
+    .acc { fill: var(--bg-accent-translucent); stroke: var(--fg-accent); stroke-width: 1; rx: 8; }
+    .accT { fill: var(--fg-accent); font-size: 12px; }
+    .rail { stroke: var(--border-translucent); stroke-width: 1; }
+  </style>
+
+  <!-- tab rail -->
+  <rect class="surf" x="8" y="8" width="624" height="30"/>
+  <rect class="acc" x="16" y="14" width="58" height="18"/>
+  <text class="accT" x="30" y="27">Start</text>
+  <text x="94" y="27">Schema</text>
+  <text x="152" y="27">Tider</text>
+  <text x="200" y="27">Analys</text>
+  <text x="254" y="27">Personal</text>
+
+  <!-- KPI cards -->
+  <text class="lbl" x="8" y="62">Nyckeltal</text>
+  <g>
+    <rect class="card" x="8" y="72" width="120" height="58"/>
+    <circle cx="26" cy="90" r="8" fill="var(--bg-tertiary)"/>
+    <rect class="bar" x="40" y="86" width="52" height="6"/>
+    <text class="lbl" x="22" y="118">0 kr</text>
+  </g>
+  <g>
+    <rect class="card" x="136" y="72" width="120" height="58"/>
+    <circle cx="154" cy="90" r="8" fill="var(--bg-tertiary)"/>
+    <rect class="bar" x="168" y="86" width="60" height="6"/>
+    <text class="lbl" x="150" y="118">3 137 kr</text>
+  </g>
+  <g>
+    <rect class="card" x="264" y="72" width="120" height="58"/>
+    <circle cx="282" cy="90" r="8" fill="var(--bg-tertiary)"/>
+    <rect class="bar" x="296" y="86" width="44" height="6"/>
+    <text class="lbl" x="278" y="118">11 tim</text>
+  </g>
+  <g>
+    <rect class="card" x="392" y="72" width="120" height="58"/>
+    <circle cx="410" cy="90" r="8" fill="var(--bg-tertiary)"/>
+    <rect class="bar" x="424" y="86" width="56" height="6"/>
+    <text class="lbl" x="406" y="118">—</text>
+  </g>
+  <g>
+    <rect class="card" x="520" y="72" width="112" height="58"/>
+    <circle cx="538" cy="90" r="8" fill="var(--bg-tertiary)"/>
+    <rect class="bar" x="552" y="86" width="48" height="6"/>
+    <text class="lbl" x="534" y="118">0 kr</text>
+  </g>
+
+  <!-- Dagens pass -->
+  <text class="lbl" x="8" y="158">Dagens pass</text>
+  <rect class="zone" x="8" y="166" width="624" height="226"/>
+  <rect class="surf" x="18" y="176" width="604" height="24"/>
+  <text x="30" y="192">Fisk &amp; Skaldjursspecialisten No1 AB</text>
+  <line class="rail" x1="18" y1="212" x2="622" y2="212"/>
+  <text x="30" y="226">Torslanda Amhult</text>
+
+  <g>
+    <line class="rail" x1="18" y1="236" x2="622" y2="236"/>
+    <circle cx="40" cy="258" r="12" fill="var(--bg-muted)"/>
+    <rect class="bar" x="62" y="250" width="96" height="7"/>
+    <rect class="bar" x="62" y="263" width="72" height="5"/>
+    <text x="300" y="262">07:17</text>
+    <rect class="acc" x="440" y="248" width="86" height="20"/>
+    <text class="accT" x="452" y="262">Instämplad</text>
+    <text x="548" y="262">6 tim 55 min</text>
+  </g>
+  <g>
+    <line class="rail" x1="18" y1="282" x2="622" y2="282"/>
+    <circle cx="40" cy="304" r="12" fill="var(--bg-muted)"/>
+    <rect class="bar" x="62" y="296" width="84" height="7"/>
+    <rect class="bar" x="62" y="309" width="72" height="5"/>
+    <text x="300" y="308">08:28</text>
+    <rect class="box" x="440" y="294" width="86" height="20"/>
+    <text x="452" y="308">Instämplad</text>
+    <text x="548" y="308">5 tim 43 min</text>
+  </g>
+  <line class="rail" x1="18" y1="328" x2="622" y2="328"/>
+  <text x="30" y="344">Torslanda Torg</text>
+  <g>
+    <line class="rail" x1="18" y1="354" x2="622" y2="354"/>
+    <circle cx="40" cy="374" r="12" fill="var(--bg-muted)"/>
+    <rect class="bar" x="62" y="366" width="92" height="7"/>
+    <text x="300" y="378">09:04</text>
+    <rect class="box" x="440" y="364" width="86" height="20"/>
+    <text x="452" y="378">Instämplad</text>
+    <text x="548" y="378">5 tim 8 min</text>
+  </g>
+</svg>
