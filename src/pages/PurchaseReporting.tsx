@@ -1395,7 +1395,6 @@ export default function PurchaseReporting() {
           queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
           queryClient.invalidateQueries({ queryKey: ["purchase-report-lines"] });
           toast({ title: "Följesedel bearbetad", description: `${parsedProducts.length} produkter extraherade.` });
-        toast({ title: "Följesedel bearbetad" });
       } catch (err: any) {
         console.error(err);
         const reason = await edgeErrorMessage(err, "Kunde inte bearbeta filen.");
