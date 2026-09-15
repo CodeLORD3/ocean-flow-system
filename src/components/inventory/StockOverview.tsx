@@ -461,72 +461,75 @@ export default function StockOverview({
 
   return (
     <div className="space-y-3">
-      {/* Övertexter: beställt och packat — symmetriska kolumner med totalt kg */}
-      <button
-        type="button"
-        onClick={() => setShowStats((v) => !v)}
-        className="flex w-full items-center gap-3 rounded-md border border-amber-500/30 bg-amber-500/[0.04] px-3 py-2 text-left transition-colors hover:bg-amber-500/[0.08]"
-      >
-        <span className="flex w-44 shrink-0 items-center gap-2">
-          <ClipboardList className="h-4 w-4 shrink-0 text-amber-500" />
-          <span className="truncate text-sm font-semibold">Beställt av lagret</span>
-        </span>
-        <span className="hidden w-32 shrink-0 sm:block">
-          <span className="block font-mono text-sm font-semibold tabular-nums text-amber-600">
-            {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+      {/* Övertexter: beställt och packat — kompakta, symmetriska rader */}
+      <div className="space-y-1.5">
+        <button
+          type="button"
+          onClick={() => setShowStats((v) => !v)}
+          className="flex h-10 w-full items-center gap-2 rounded-md border border-amber-500/25 bg-amber-500/[0.04] px-2.5 text-left transition-colors hover:bg-amber-500/[0.08]"
+        >
+          <span className="flex w-36 shrink-0 items-center gap-1.5">
+            <ClipboardList className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+            <span className="truncate text-xs font-semibold">Beställt av lagret</span>
           </span>
-          <span className="block text-[10px] text-muted-foreground">kvar att packa</span>
-        </span>
-        <span className="hidden w-32 shrink-0 sm:block">
-          <span className="block font-mono text-sm font-semibold tabular-nums">
-            {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+          <span className="hidden w-24 shrink-0 sm:block">
+            <span className="block font-mono text-xs font-semibold leading-tight tabular-nums text-amber-600">
+              {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+            </span>
+            <span className="block text-[9px] leading-tight text-muted-foreground">kvar att packa</span>
           </span>
-          <span className="block text-[10px] text-muted-foreground">totalt beställt</span>
-        </span>
-        <span className="ml-auto flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-          {showStats ? "Dölj statistik" : "Visa statistik"}
-          {showStats ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-        </span>
-      </button>
+          <span className="hidden w-24 shrink-0 sm:block">
+            <span className="block font-mono text-xs font-semibold leading-tight tabular-nums">
+              {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+            </span>
+            <span className="block text-[9px] leading-tight text-muted-foreground">totalt beställt</span>
+          </span>
+          {showCosts && <span className="hidden w-24 shrink-0 md:block" />}
+          <span className="ml-auto flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+            {showStats ? "Dölj" : "Visa"}
+            {showStats ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+          </span>
+        </button>
 
-      <button
-        type="button"
-        onClick={() => setShowPacked((v) => !v)}
-        className="flex w-full items-center gap-3 rounded-md border border-amber-500/30 bg-amber-500/[0.04] px-3 py-2 text-left transition-colors hover:bg-amber-500/[0.08]"
-      >
-        <span className="flex w-44 shrink-0 items-center gap-2">
-          <Package className="h-4 w-4 shrink-0 text-amber-500" />
-          <span className="truncate text-sm font-semibold">Packat av lagret</span>
-        </span>
-        <span className="hidden w-32 shrink-0 sm:block">
-          <span className="block font-mono text-sm font-semibold tabular-nums text-amber-600">
-            {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+        <button
+          type="button"
+          onClick={() => setShowPacked((v) => !v)}
+          className="flex h-10 w-full items-center gap-2 rounded-md border border-amber-500/25 bg-amber-500/[0.04] px-2.5 text-left transition-colors hover:bg-amber-500/[0.08]"
+        >
+          <span className="flex w-36 shrink-0 items-center gap-1.5">
+            <Package className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+            <span className="truncate text-xs font-semibold">Packat av lagret</span>
           </span>
-          <span className="block text-[10px] text-muted-foreground">
-            {booked.packedKgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
+          <span className="hidden w-24 shrink-0 sm:block">
+            <span className="block font-mono text-xs font-semibold leading-tight tabular-nums text-amber-600">
+              {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+            </span>
+            <span className="block text-[9px] leading-tight text-muted-foreground">
+              {booked.packedKgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
+            </span>
           </span>
-        </span>
-        <span className="hidden w-32 shrink-0 sm:block">
-          <span className="block font-mono text-sm font-semibold tabular-nums">
-            {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+          <span className="hidden w-24 shrink-0 sm:block">
+            <span className="block font-mono text-xs font-semibold leading-tight tabular-nums">
+              {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+            </span>
+            <span className="block text-[9px] leading-tight text-muted-foreground">totalt beställt</span>
           </span>
-          <span className="block text-[10px] text-muted-foreground">totalt beställt</span>
-        </span>
-        {showCosts && (
-          <span className="hidden w-28 shrink-0 md:block">
-            <span className="block font-mono text-sm font-semibold tabular-nums">{fmt(booked.packedValue)}</span>
-            <span className="block text-[10px] text-muted-foreground">packat värde</span>
+          {showCosts && (
+            <span className="hidden w-24 shrink-0 md:block">
+              <span className="block font-mono text-xs font-semibold leading-tight tabular-nums">
+                {fmt(booked.packedValue)}
+              </span>
+              <span className="block text-[9px] leading-tight text-muted-foreground">packat värde</span>
+            </span>
+          )}
+          <span className="ml-auto flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+            {showPacked ? "Dölj" : "Visa"}
+            {showPacked ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
           </span>
-        )}
-        <span className="ml-auto flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-          {showPacked ? "Dölj statistik" : "Visa statistik"}
-          {showPacked ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </span>
-      </button>
+        </button>
+      </div>
+
+
 
 
       {showPacked && (

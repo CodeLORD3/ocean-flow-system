@@ -1610,15 +1610,15 @@ export default function Inventory() {
             <button
               type="button"
               onClick={() => setShowTree((v) => !v)}
-              className="flex w-full items-center gap-3 rounded-md border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/50"
+              className="flex h-10 w-full items-center gap-2 rounded-md border border-border bg-card px-2.5 text-left transition-colors hover:bg-muted/50"
             >
-              <span className="flex w-44 shrink-0 items-center gap-2">
-                <Package className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate text-sm font-semibold">Lagerträd och karta</span>
+              <span className="flex w-36 shrink-0 items-center gap-1.5">
+                <Package className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <span className="truncate text-xs font-semibold">Lagerträd och karta</span>
               </span>
-              <span className="ml-auto flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-                {showTree ? "Dölj lagerträd" : "Visa lagerträd"}
-                {showTree ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              <span className="ml-auto flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+                {showTree ? "Dölj" : "Visa"}
+                {showTree ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
               </span>
             </button>
             {showTree && (
