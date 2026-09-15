@@ -1252,7 +1252,6 @@ export default function PurchaseReporting() {
       const report = { id: reportId };
       setParsing(true);
       try {
-          setParsing(true);
           const { data: fnData, error: fnError } = await supabase.functions.invoke("parse-foljesedel", {
             body: { fileUrl, fileHash },
           });
