@@ -37,6 +37,12 @@ export default {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+        tone: {
+          brick: "hsl(var(--tone-brick))",
+          amber: "hsl(var(--tone-amber))",
+          spruce: "hsl(var(--tone-spruce))",
+          navy: "hsl(var(--tone-navy))",
+        },
         success: {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
