@@ -327,7 +327,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <main
             className="app-main flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 lg:p-6"
           >
-            <StoreHero />
+            {!isStaffModule && <StoreHero />}
             {children}
           </main>
 
