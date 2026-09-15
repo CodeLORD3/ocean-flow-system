@@ -275,6 +275,9 @@ export default function ShopOrders() {
   const { data: currentStaff } = useCurrentStaff();
   const loggedInName = staffFullName(currentStaff);
   const { data: products = [] } = useProducts();
+  /** Butikens gällande inköpspriser: låsta priser eller cirkapriser från tidigare inleveranser. */
+  const { data: tierPrices } = useStoreTierPrices(activeStoreId);
+
   const { isCategoryVisible } = useCategoryVisibility(activeStoreId);
   const { data: transportSchedules = [] } = useTransportSchedules();
   const [creatingOrder, setCreatingOrder] = useState(false);
@@ -738,15 +741,18 @@ export default function ShopOrders() {
                         <th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th>
                         <th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th>
                         <th className="pb-2 text-right font-medium text-muted-foreground w-32">Antal</th>
+                        <th className="pb-2 text-right font-medium text-muted-foreground">Pris</th>
+                        <th className="pb-2 text-right font-medium text-muted-foreground">Radvärde</th>
                         <th className="pb-2 text-left font-medium text-muted-foreground">Varför</th>
                         <th className="pb-2 w-8"></th>
                       </tr>
+
                     </thead>
                     <tbody>
                       {groupedOrderLines.map(([cat, items]) => (
                         <React.Fragment key={cat}>
                           <tr className="bg-muted/40">
-                            <td colSpan={5} className="py-1 px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                            <td colSpan={7} className="py-1 px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                               ▸ {cat} ({items.length})
                             </td>
                           </tr>
@@ -780,6 +786,40 @@ export default function ShopOrders() {
                                 />
 
                               </td>
+                              {(() => {
+                                const tp = tierPrices?.get(line.product_id);
+                                const unitPrice = tp ? Number(tp.price) : Number(line.wholesale_price ?? 0);
+                                const cur = tp?.currency || activeStore?.currency || "SEK";
+                                const locked = tp?.lock_mode === "locked";
+                                const qty = Number(String(line.quantity).replace(",", ".")) || 0;
+                                return (
+                                  <>
+                                    <td className="py-2 text-right">
+                                      {unitPrice > 0 ? (
+                                        <div className="space-y-0.5">
+                                          <div className="font-mono tabular-nums text-foreground">
+                                            {unitPrice.toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {cur}
+                                          </div>
+                                          <Badge
+                                            variant="outline"
+                                            className={cn("text-[9px]", locked ? "border-success/40 text-success" : "text-muted-foreground")}
+                                          >
+                                            {locked ? "Fast pris" : "Cirkapris"}
+                                          </Badge>
+                                        </div>
+                                      ) : (
+                                        <span className="text-muted-foreground">–</span>
+                                      )}
+                                    </td>
+                                    <td className="py-2 text-right font-mono tabular-nums text-foreground">
+                                      {unitPrice > 0 && qty > 0
+                                        ? `${(unitPrice * qty).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} ${cur}`
+                                        : "–"}
+                                    </td>
+                                  </>
+                                );
+                              })()}
+
                               <td className="py-2">
                                 {(() => {
                                   const committed = customerCommitted.get(line.product_id);

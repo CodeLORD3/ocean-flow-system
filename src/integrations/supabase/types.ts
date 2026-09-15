@@ -9833,6 +9833,42 @@ export type Database = {
           },
         ]
       }
+      price_tiers: {
+        Row: {
+          active: boolean
+          created_at: string
+          currency: string
+          id: string
+          name: string
+          region: string | null
+          sort_order: number
+          updated_at: string
+          vat_rate: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          name: string
+          region?: string | null
+          sort_order?: number
+          updated_at?: string
+          vat_rate?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          name?: string
+          region?: string | null
+          sort_order?: number
+          updated_at?: string
+          vat_rate?: number
+        }
+        Relationships: []
+      }
       pricing_rules: {
         Row: {
           active: boolean
@@ -13847,6 +13883,7 @@ export type Database = {
           manager: string | null
           name: string
           phone: string | null
+          price_tier_id: string | null
           region: string | null
           requires_identification_mark: boolean
           slug: string
@@ -13882,6 +13919,7 @@ export type Database = {
           manager?: string | null
           name: string
           phone?: string | null
+          price_tier_id?: string | null
           region?: string | null
           requires_identification_mark?: boolean
           slug: string
@@ -13917,6 +13955,7 @@ export type Database = {
           manager?: string | null
           name?: string
           phone?: string | null
+          price_tier_id?: string | null
           region?: string | null
           requires_identification_mark?: boolean
           slug?: string
@@ -13954,6 +13993,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "legal_entities"
             referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "stores_price_tier_id_fkey"
+            columns: ["price_tier_id"]
+            isOneToOne: false
+            referencedRelation: "price_tiers"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -16378,6 +16424,89 @@ export type Database = {
           },
         ]
       }
+      wholesale_prices: {
+        Row: {
+          basis_cost: number | null
+          created_at: string
+          currency: string
+          id: string
+          lock_mode: string
+          margin_pct: number | null
+          note: string | null
+          price: number
+          price_tier_id: string
+          product_id: string
+          retail_suggested: number | null
+          set_by: string | null
+          source_lot_id: string | null
+          updated_at: string
+          valid_from: string
+        }
+        Insert: {
+          basis_cost?: number | null
+          created_at?: string
+          currency?: string
+          id?: string
+          lock_mode?: string
+          margin_pct?: number | null
+          note?: string | null
+          price: number
+          price_tier_id: string
+          product_id: string
+          retail_suggested?: number | null
+          set_by?: string | null
+          source_lot_id?: string | null
+          updated_at?: string
+          valid_from?: string
+        }
+        Update: {
+          basis_cost?: number | null
+          created_at?: string
+          currency?: string
+          id?: string
+          lock_mode?: string
+          margin_pct?: number | null
+          note?: string | null
+          price?: number
+          price_tier_id?: string
+          product_id?: string
+          retail_suggested?: number | null
+          set_by?: string | null
+          source_lot_id?: string | null
+          updated_at?: string
+          valid_from?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wholesale_prices_price_tier_id_fkey"
+            columns: ["price_tier_id"]
+            isOneToOne: false
+            referencedRelation: "price_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_prices_source_lot_id_fkey"
+            columns: ["source_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "wholesale_prices_source_lot_id_fkey"
+            columns: ["source_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_rules: {
         Row: {
           agreement_source: string | null
@@ -16955,6 +17084,53 @@ export type Database = {
           week_start: string | null
         }
         Relationships: []
+      }
+      wholesale_prices_current: {
+        Row: {
+          basis_cost: number | null
+          currency: string | null
+          id: string | null
+          lock_mode: string | null
+          margin_pct: number | null
+          note: string | null
+          price: number | null
+          price_tier_id: string | null
+          product_id: string | null
+          retail_suggested: number | null
+          set_by: string | null
+          source_lot_id: string | null
+          valid_from: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wholesale_prices_price_tier_id_fkey"
+            columns: ["price_tier_id"]
+            isOneToOne: false
+            referencedRelation: "price_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wholesale_prices_source_lot_id_fkey"
+            columns: ["source_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "wholesale_prices_source_lot_id_fkey"
+            columns: ["source_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -17598,6 +17774,17 @@ export type Database = {
         Args: { _rounding: string; _value: number }
         Returns: number
       }
+      product_cost_history: {
+        Args: { _product_id: string }
+        Returns: {
+          avg_cost_30d: number
+          last_cost: number
+          last_cost_at: string
+          lots_30d: number
+          max_cost_90d: number
+          min_cost_90d: number
+        }[]
+      }
       product_export_documentation_required: {
         Args: { _hs_code: string }
         Returns: boolean
@@ -17790,6 +17977,16 @@ export type Database = {
       }
       vacation_year_of: { Args: { _d: string }; Returns: number }
       vacation_year_rollover: { Args: { _from_year?: number }; Returns: Json }
+      wholesale_price_for: {
+        Args: { _product_id: string; _store_id: string }
+        Returns: {
+          currency: string
+          lock_mode: string
+          price: number
+          price_tier_id: string
+          valid_from: string
+        }[]
+      }
       zero_stale_day_prices: { Args: never; Returns: number }
       zero_stale_day_prices_midnight: { Args: never; Returns: number }
       zero_stock_balances: {
