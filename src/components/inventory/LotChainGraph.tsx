@@ -147,32 +147,40 @@ export default function LotChainGraph({
         </div>
 
         {/* Symmetriskt flöde: IN till vänster, tid och saldo i mitten, UT till höger */}
-        <div className="grid grid-cols-[minmax(0,1fr)_92px_minmax(0,1fr)] items-center gap-x-2 border-b border-border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em]">
-          <p className="text-right text-emerald-700">In</p>
+        <div className="sticky top-0 z-10 grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-center gap-x-2 border-b-2 border-border bg-muted/40 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] backdrop-blur">
+          <p className="text-right text-emerald-700">In till lagret</p>
           <p className="text-center text-muted-foreground">Tid · saldo</p>
-          <p className="text-rose-600">Ut</p>
+          <p className="text-rose-600">Ut ur lagret</p>
         </div>
 
         <ol>
           {noder.map((n, i) => {
             const aktiv = n.m.id === vald?.m.id;
             const nyDag = i === 0 || datumSv(noder[i - 1].m.created_at) !== datumSv(n.m.created_at);
+            const steg = i + 1;
             const kort = (
               <button
                 type="button"
                 onClick={() => setValdId(n.m.id)}
-                className={`w-full rounded border px-2 py-1.5 text-left transition-colors ${
+                className={`w-full rounded-md border-2 px-2.5 py-2 text-left transition-colors ${
                   n.gren
-                    ? "border-rose-600/30 bg-rose-600/5 hover:bg-rose-600/10"
-                    : "border-emerald-600/30 bg-emerald-600/5 hover:bg-emerald-600/10"
-                } ${aktiv ? "ring-2 ring-foreground/30" : ""}`}
+                    ? "border-rose-600/40 bg-rose-600/[0.07] hover:bg-rose-600/15"
+                    : "border-emerald-600/40 bg-emerald-600/[0.07] hover:bg-emerald-600/15"
+                } ${aktiv ? "ring-2 ring-foreground/40" : ""}`}
               >
-                <div className={`flex items-baseline justify-between gap-2 ${n.gren ? "" : "flex-row-reverse"}`}>
-                  <span className="truncate text-xs font-semibold text-foreground">
+                <div className={`flex items-center gap-2 ${n.gren ? "" : "flex-row-reverse"}`}>
+                  <span
+                    className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold ${
+                      n.gren ? "bg-rose-600/15 text-rose-700" : "bg-emerald-600/15 text-emerald-700"
+                    }`}
+                  >
+                    {steg}
+                  </span>
+                  <span className="flex-1 truncate text-sm font-semibold text-foreground">
                     {movementLabel(n.m.movement_type)}
                   </span>
                   <span
-                    className={`shrink-0 font-mono text-xs font-semibold tabular-nums ${
+                    className={`shrink-0 font-mono text-sm font-bold tabular-nums ${
                       n.gren ? "text-rose-600" : "text-emerald-700"
                     }`}
                   >
@@ -181,11 +189,14 @@ export default function LotChainGraph({
                   </span>
                 </div>
                 <div
-                  className={`mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground ${
+                  className={`mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground ${
                     n.gren ? "" : "justify-end"
                   }`}
                 >
-                  <span className="truncate">{n.m.storage_locations?.name || "Plats saknas"}</span>
+                  <span className="truncate font-medium text-foreground/80">
+                    {n.gren ? "från " : "till "}
+                    {n.m.storage_locations?.name || "plats saknas"}
+                  </span>
                   <span className="truncate">{namnPa(n.m)}</span>
                   {unitCost != null && (
                     <span className="font-mono tabular-nums">
@@ -195,63 +206,86 @@ export default function LotChainGraph({
                 </div>
               </button>
             );
+            const pil = (
+              <span
+                aria-hidden
+                className={`shrink-0 text-sm font-bold ${n.gren ? "text-rose-500" : "text-emerald-600"}`}
+              >
+                {n.gren ? "→" : "→"}
+              </span>
+            );
             return (
               <li key={n.m.id}>
-                {n.gap && (
-                  <div className="grid grid-cols-[minmax(0,1fr)_92px_minmax(0,1fr)] items-center gap-x-2 px-3">
-                    <span />
-                    <span className="flex flex-col items-center">
-                      <span className="h-3 w-px bg-border" />
-                      <span className="whitespace-nowrap rounded-full bg-muted px-1.5 py-px text-[9px] text-muted-foreground">
-                        {n.gap}
-                      </span>
-                      <span className="h-3 w-px bg-border" />
+                {nyDag && (
+                  <div className="flex items-center gap-2 bg-muted/40 px-3 py-1">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-foreground">
+                      {datumSv(n.m.created_at)}
                     </span>
-                    <span />
+                    <span className="h-px flex-1 bg-border" />
+                    {i === 0 && (
+                      <span className="rounded-full border border-emerald-600/40 px-1.5 py-px text-[9px] font-bold uppercase text-emerald-700">
+                        start
+                      </span>
+                    )}
                   </div>
                 )}
-                <div className="grid grid-cols-[minmax(0,1fr)_92px_minmax(0,1fr)] items-center gap-x-2 px-3 py-1">
-                  <div>{!n.gren && kort}</div>
+                {n.gap && (
+                  <div className="grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-center gap-x-2 px-3">
+                    <span className="h-px" />
+                    <span className="flex flex-col items-center">
+                      <span className="h-3 w-0.5 bg-border" />
+                      <span className="whitespace-nowrap rounded-full border border-border bg-background px-2 py-px text-[10px] font-medium text-muted-foreground">
+                        orörd {n.gap}
+                      </span>
+                      <span className="h-3 w-0.5 bg-border" />
+                    </span>
+                    <span className="h-px" />
+                  </div>
+                )}
+                <div
+                  className={`grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-center gap-x-2 px-3 py-1.5 ${
+                    aktiv ? "bg-muted/40" : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-2">{!n.gren && <>{kort}{pil}</>}</div>
 
-                  {/* Mittspår */}
-                  <div className="flex flex-col items-center">
-                    {nyDag && (
-                      <p className="text-[10px] font-semibold leading-tight text-foreground">
-                        {datumSv(n.m.created_at)}
-                      </p>
-                    )}
-                    <p className="font-mono text-[11px] leading-tight tabular-nums text-muted-foreground">
+                  {/* Mittspår med genomgående linje */}
+                  <div className="relative flex flex-col items-center py-1">
+                    <span aria-hidden className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-border" />
+                    <p className="relative font-mono text-[11px] font-semibold leading-tight tabular-nums text-muted-foreground">
                       {timeSv(n.m.created_at)}
                     </p>
                     <span
-                      className={`my-0.5 h-3 w-3 rounded-full border-2 border-background ${
+                      className={`relative my-1 h-4 w-4 rounded-full border-2 border-background shadow ${
                         n.gren ? "bg-rose-500" : "bg-emerald-600"
-                      } ${aktiv ? "ring-2 ring-foreground/40" : ""}`}
+                      } ${aktiv ? "ring-2 ring-foreground/50" : ""}`}
                     />
-                    <p className="font-mono text-[10px] font-semibold leading-tight tabular-nums text-foreground">
+                    <p className="relative rounded bg-background px-1 font-mono text-[11px] font-bold leading-tight tabular-nums text-foreground">
                       {nf(n.saldo, 1)} kg
                     </p>
                   </div>
 
-                  <div>{n.gren && kort}</div>
+                  <div className="flex items-center gap-2">{n.gren && <>{pil}{kort}</>}</div>
                 </div>
               </li>
             );
           })}
 
           {/* Live-läge */}
-          <li className="grid grid-cols-[minmax(0,1fr)_92px_minmax(0,1fr)] items-center gap-x-2 border-t border-border px-3 py-2">
+          <li className="grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-center gap-x-2 border-t-2 border-border px-3 py-3">
             <span />
             <div className="flex flex-col items-center">
-              <span className="h-3 w-px bg-border" />
-              <span className="my-0.5 h-3 w-3 rounded-full bg-primary" />
-              <p className="text-[10px] font-semibold text-muted-foreground">nu</p>
+              <span className="h-4 w-0.5 bg-border" />
+              <span className="my-1 h-4 w-4 rounded-full bg-primary shadow" />
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">nu</p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-foreground">
-                {slutSaldo > 0 ? `I lager · ${nf(slutSaldo, 1)} kg` : "Slut i lager · 0 kg"}
+              <p
+                className={`text-sm font-bold ${slutSaldo > 0 ? "text-emerald-700" : "text-rose-600"}`}
+              >
+                {slutSaldo > 0 ? `Finns i lager · ${nf(slutSaldo, 1)} kg` : "Slut i lager · 0 kg"}
               </p>
-              <p className="text-[10px] text-muted-foreground">senaste händelsen {sinceNow(senaste)} sedan</p>
+              <p className="text-[11px] text-muted-foreground">senaste händelsen {sinceNow(senaste)} sedan</p>
             </div>
           </li>
         </ol>
