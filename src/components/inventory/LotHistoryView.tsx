@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { movementLabel } from "@/hooks/useStockMovements";
 import { Button } from "@/components/ui/button";
 import LineageGraphView from "@/components/inventory/LineageGraphView";
+import AllProductsHistoryTree from "@/components/inventory/AllProductsHistoryTree";
 
 const nf = (n: number, d = 1) =>
   n.toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/\u00a0/g, " ");
@@ -21,6 +22,7 @@ const dt = (ts?: string | null) => (ts ? new Date(ts).toLocaleDateString("sv-SE"
  */
 export default function LotHistoryView({ currency = "SEK" }: { currency?: string }) {
   const [q, setQ] = useState("");
+  const [view, setView] = useState<"tree" | "list">("tree");
   const [traceLotId, setTraceLotId] = useState<string | null>(null);
   const [traceLabel, setTraceLabel] = useState<string>("");
 
@@ -59,6 +61,35 @@ export default function LotHistoryView({ currency = "SEK" }: { currency?: string
 
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap gap-1">
+        <Button
+          variant={view === "tree" ? "default" : "outline"}
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => setView("tree")}
+        >
+          Träd — alla produkter
+        </Button>
+        <Button
+          variant={view === "list" ? "default" : "outline"}
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => setView("list")}
+        >
+          Lista
+        </Button>
+      </div>
+
+      {view === "tree" && (
+        <AllProductsHistoryTree
+          onTraceLot={(lotId, label) => {
+            setTraceLotId(lotId);
+            setTraceLabel(label);
+          }}
+        />
+      )}
+
+      {view === "list" && (
       <div className="relative max-w-md">
         <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -68,6 +99,8 @@ export default function LotHistoryView({ currency = "SEK" }: { currency?: string
           className="h-9 pl-7 text-sm"
         />
       </div>
+      )}
+
 
       {traceLotId && (
         <Card className="shadow-card">
@@ -85,9 +118,9 @@ export default function LotHistoryView({ currency = "SEK" }: { currency?: string
         </Card>
       )}
 
-      {isLoading && <p className="text-sm text-muted-foreground">Hämtar historik…</p>}
+      {view === "list" && isLoading && <p className="text-sm text-muted-foreground">Hämtar historik…</p>}
 
-      {!isLoading && filtered.length === 0 && (
+      {view === "list" && !isLoading && filtered.length === 0 && (
         <EmptyState
           icon={<History className="h-4 w-4" />}
           title={q.trim() ? "Inget i historiken matchar sökningen" : "Ingen historik ännu"}
@@ -101,7 +134,7 @@ export default function LotHistoryView({ currency = "SEK" }: { currency?: string
         />
       )}
 
-      {filtered.length > 0 && (
+      {view === "list" && filtered.length > 0 && (
         <Card className="shadow-card">
           <CardContent className="p-0">
             <div className="grid grid-cols-[70px_1fr_104px] items-center gap-2 border-b border-border px-2 py-1.5 text-[10px] uppercase text-muted-foreground sm:grid-cols-[92px_1fr_150px_130px_116px]">
