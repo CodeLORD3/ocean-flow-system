@@ -1034,13 +1034,13 @@ export default function StockCount() {
                       </div>
                        {!isCollapsed && (
                          <CardContent className="divide-y divide-border/60 p-0">
-                           <div className="flex items-center gap-1.5 bg-muted/30 px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-                             <span className="w-6 shrink-0" />
+                           <div className="flex items-center gap-1 bg-muted/30 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                             <span className="w-5 shrink-0" />
                              <span className="min-w-0 flex-1">Produkt</span>
-                             <span className="w-[62px] shrink-0 text-right">Antal</span>
-                             <span className="w-[136px] shrink-0 text-center">Hållbarhet</span>
-                             <span className="w-[96px] shrink-0">Kommentar</span>
-                             <span className="w-7 shrink-0 text-center">Bild</span>
+                             <span className="w-[52px] shrink-0 text-right">Antal</span>
+                             <span className="w-[86px] shrink-0 text-center sm:w-[136px]">Hållb.</span>
+                             <span className="w-[60px] shrink-0 sm:w-[96px]">Komm.</span>
+                             <span className="w-6 shrink-0 text-center">Bild</span>
                            </div>
                           {g.products.flatMap((prodRows) =>
                             prodRows.map((r) => {
@@ -1049,7 +1049,7 @@ export default function StockCount() {
                               return (
                                 <div
                                   key={r.key}
-                                  className={`flex items-center gap-1.5 px-2 py-1 transition-colors ${
+                                  className={`flex items-center gap-1 px-1.5 py-0.5 transition-colors ${
                                     isCounted ? "bg-emerald-500/10" : ""
                                   }`}
                                 >
@@ -1057,23 +1057,23 @@ export default function StockCount() {
                                     <img
                                       src={r.imageUrl}
                                       alt={r.productName}
-                                      className="h-6 w-6 shrink-0 rounded-sm border object-cover"
+                                      className="h-5 w-5 shrink-0 rounded-sm border object-cover"
                                       loading="lazy"
                                     />
                                   ) : (
-                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm border bg-muted">
+                                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border bg-muted">
                                       <Package className="h-3 w-3 text-muted-foreground" />
                                     </div>
                                   )}
                                   <span className="min-w-0 flex-1">
                                     <span
-                                      className={`block truncate text-[12px] font-medium leading-tight ${
+                                      className={`block truncate text-[11px] font-medium leading-tight ${
                                         isCounted ? "text-emerald-800 dark:text-emerald-200" : ""
                                       }`}
                                     >
                                       {r.productName}
                                     </span>
-                                    <span className="block truncate text-[9px] leading-tight text-muted-foreground">
+                                    <span className="block truncate text-[9px] leading-none text-muted-foreground">
                                       {prodRows.length > 1 ? `${r.locationName} · ` : ""}
                                       Lager{" "}
                                       <span className="font-mono tabular-nums">
@@ -1090,7 +1090,7 @@ export default function StockCount() {
                                     disabled={locked || !session}
                                     defaultValue={line?.counted_qty ?? ""}
                                     placeholder={r.unit}
-                                    className="h-7 w-[62px] shrink-0 px-1.5 text-right font-mono text-[12px] tabular-nums"
+                                    className="h-6 w-[52px] shrink-0 px-1 text-right font-mono text-[11px] tabular-nums"
                                     onFocus={(e) => e.currentTarget.select()}
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter") e.currentTarget.blur();
@@ -1111,12 +1111,12 @@ export default function StockCount() {
                                         quality: (e.target.value || null) as Quality | null,
                                       })
                                     }
-                                     className={`h-7 w-[136px] shrink-0 rounded-md border px-1 text-[11px] font-medium disabled:opacity-50 ${qualityClass(
+                                     className={`h-6 w-[86px] shrink-0 rounded-md border px-1 text-[10px] font-medium disabled:opacity-50 sm:w-[136px] sm:text-[11px] ${qualityClass(
                                        (line?.quality ?? "") as string,
                                      )}`}
                                      title="Hållbarhet"
                                    >
-                                     <option value="">Välj hållbarhet</option>
+                                     <option value="">Hållbarhet</option>
                                      {QUALITY_DAYS.map((d) => (
                                        <option key={d} value={d}>
                                          {qualityLabel(date, d)}
@@ -1126,14 +1126,15 @@ export default function StockCount() {
                                    <Input
                                      disabled={locked || !session}
                                      defaultValue={line?.comment ?? ""}
-                                     placeholder="Kommentar"
-                                     className="h-7 w-[96px] shrink-0 px-1.5 text-[11px]"
+                                     placeholder="Komm."
+                                     className="h-6 w-[60px] shrink-0 px-1 text-[10px] sm:w-[96px] sm:text-[11px]"
                                      onBlur={(e) => {
                                        const val = e.target.value.trim() || null;
                                        if ((line?.comment ?? null) === val) return;
                                        saveLine(r, { comment: val });
                                      }}
                                    />
+
                                    <RowPhotoButton
                                      productId={r.productId}
                                      productName={r.productName}
@@ -1164,13 +1165,13 @@ export default function StockCount() {
                 </div>
               ) : (
                 <div>
-                  <div className="flex items-center border-x border-b border-grid-line bg-muted px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    <span className="min-w-0 flex-1 border-r border-grid-line/70 pr-2">Produkt</span>
-                    <span className="hidden w-24 shrink-0 border-r border-grid-line/70 px-2 text-center sm:block">
-                      Hållbarhet
+                  <div className="flex items-center border-x border-b border-grid-line bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span className="min-w-0 flex-1 border-r border-grid-line/70 pr-1.5">Produkt</span>
+                    <span className="w-[68px] shrink-0 border-r border-grid-line/70 px-1.5 text-center sm:w-24">
+                      Hållb.
                     </span>
-                    <span className="w-14 shrink-0 border-r border-grid-line/70 px-2 text-right">Diff</span>
-                    <span className="w-20 shrink-0 px-2 text-right">Antal</span>
+                    <span className="w-11 shrink-0 border-r border-grid-line/70 px-1.5 text-right sm:w-14">Diff</span>
+                    <span className="w-16 shrink-0 px-1.5 text-right sm:w-20">Antal</span>
                   </div>
                   {countedRows.map((r) => {
                     const line = linesByKey.get(r.key);
@@ -1182,27 +1183,28 @@ export default function StockCount() {
                         <button
                           type="button"
                           onClick={() => setEditKey(editKey === r.key ? null : r.key)}
-                          className="flex w-full items-center px-2 py-1 text-left hover:bg-muted/50"
+                          className="flex w-full items-center px-1.5 py-0.5 text-left hover:bg-muted/50"
                         >
-                          <span className="min-w-0 flex-1 truncate border-r border-grid-line/70 pr-2 text-[12px] font-medium">
+                          <span className="min-w-0 flex-1 truncate border-r border-grid-line/70 pr-1.5 text-[11px] font-medium">
                             {r.productName}
                           </span>
-                          <span className="hidden w-24 shrink-0 border-r border-grid-line/70 px-2 text-center text-[10px] text-muted-foreground sm:block">
+                          <span className="w-[68px] shrink-0 border-r border-grid-line/70 px-1.5 text-center text-[10px] text-muted-foreground sm:w-24">
                             {quality
                               ? `${quality === "7+" ? "7" : quality} ${quality === "1" ? "dag" : "dagar"}`
                               : "—"}
                           </span>
-                          <span className="w-14 shrink-0 border-r border-grid-line/70 px-2 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
+                          <span className="w-11 shrink-0 border-r border-grid-line/70 px-1.5 text-right font-mono text-[10px] tabular-nums text-muted-foreground sm:w-14">
                             {diff === 0
                               ? "±0"
                               : `${diff > 0 ? "+" : ""}${diff.toLocaleString("sv-SE", {
                                   maximumFractionDigits: 1,
                                 })}`}
                           </span>
-                          <span className="w-20 shrink-0 px-2 text-right font-mono text-[12px] font-semibold tabular-nums">
+                          <span className="w-16 shrink-0 px-1.5 text-right font-mono text-[11px] font-semibold tabular-nums sm:w-20">
                             {fmtQty(counted, r.unit)}
                           </span>
                         </button>
+
                         {editKey === r.key && (
                           <div className="flex items-center gap-1 bg-muted/30 px-2 py-1.5">
                             <select
