@@ -537,19 +537,88 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
           selectedStoreId={mapStore}
           onSelect={setMapStore}
         />
-        {mapStore ? (
-          <div className="mt-2">
-            <Card
-              n={node(
-                "butik",
-                `butik:${mapStore}`,
-                storeName[mapStore] ?? "Enhet",
-                rowsForStore("butik", mapStore),
-                "Butikens eget lager",
+        <div ref={storeDetailsRef} className="scroll-mt-24">
+          {mapStore ? (
+            <div className="mt-3 rounded-lg border border-border bg-card p-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="flex items-center gap-1.5 text-xs font-semibold">
+                  <Store className="h-3.5 w-3.5 text-primary" aria-hidden />
+                  {storeName[mapStore] ?? "Enhet"}
+                </p>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 text-[11px]"
+                  onClick={() => setMapStore(null)}
+                >
+                  Stäng
+                </Button>
+              </div>
+
+              <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="rounded-md border border-border bg-muted/20 p-2">
+                  <p className="text-[10px] text-muted-foreground">Lagervikt</p>
+                  <p className="font-mono text-sm tabular-nums">{kg(storeSummary.kg)}</p>
+                </div>
+                {showValue && (
+                  <div className="rounded-md border border-border bg-muted/20 p-2">
+                    <p className="text-[10px] text-muted-foreground">Lagervärde</p>
+                    <p className="font-mono text-sm tabular-nums">{money(storeSummary.value)}</p>
+                  </div>
+                )}
+                <div className="rounded-md border border-border bg-muted/20 p-2">
+                  <p className="text-[10px] text-muted-foreground">Artiklar</p>
+                  <p className="font-mono text-sm tabular-nums">{storeSummary.articles}</p>
+                </div>
+                <div className="rounded-md border border-border bg-muted/20 p-2">
+                  <p className="text-[10px] text-muted-foreground">På väg in</p>
+                  <p className="font-mono text-sm tabular-nums">{storeSummary.inTransit}</p>
+                </div>
+              </div>
+
+              {storeSummary.levels.length > 0 && (
+                <div className="mt-2 space-y-0.5">
+                  {storeSummary.levels.map(([lvl, v]) => (
+                    <div key={lvl} className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">
+                        {LEVEL_LABEL[lvl as LocationLevel] ?? lvl}
+                      </span>
+                      <span className="font-mono tabular-nums">{kg(v)}</span>
+                    </div>
+                  ))}
+                </div>
               )}
-            />
-          </div>
-        ) : null}
+
+              {storeSummary.top.length > 0 && (
+                <div className="mt-2 border-t border-border pt-2">
+                  <p className="mb-1 text-[10px] font-semibold text-muted-foreground">
+                    Största artiklar
+                  </p>
+                  <div className="space-y-0.5">
+                    {storeSummary.top.map((r: any) => (
+                      <div key={r.id} className="flex justify-between gap-2 text-[11px]">
+                        <span className="min-w-0 truncate">{r.products?.name ?? "—"}</span>
+                        <span className="shrink-0 font-mono tabular-nums">{qtyLabel(r)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-2">
+                <Card
+                  n={node(
+                    "butik",
+                    `butik:${mapStore}`,
+                    "Hela butikslagret",
+                    rowsForStore("butik", mapStore),
+                    "Butikens eget lager",
+                  )}
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
