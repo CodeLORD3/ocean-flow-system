@@ -1565,104 +1565,6 @@ export default function Inventory() {
 
       </div>
 
-      {/* Kontrollrad: saldon som inte kan stämma, för lite kvar, eller passerat bäst före. */}
-      {(negativeStock.length > 0 || lowStockItems > 0 || expiredCount > 0) && (
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-md border border-amber-500/30 bg-amber-500/[0.07] px-2 py-1 text-[10px]">
-          <AlertTriangle className="h-3 w-3 text-amber-700 shrink-0" />
-          {negativeStock.length > 0 && (
-            <button
-              type="button"
-              className="font-semibold text-destructive underline-offset-2 hover:underline"
-              onClick={() => setShowNegativeStock((v) => !v)}
-            >
-              {negativeStock.length} negativa saldon
-            </button>
-          )}
-          {lowStockItems > 0 && <span className="text-amber-800">{lowStockItems} under miniminivå</span>}
-          {expiredCount > 0 && <span className="text-amber-800">{expiredCount} passerat bäst före</span>}
-          <span className="text-muted-foreground">
-            Negativt saldo betyder uttag utan bokförd inleverans — rätta med inventering.
-          </span>
-        </div>
-      )}
-      {showNegativeStock && negativeStock.length > 0 && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-[11px] space-y-1">
-          {negativeStock.map((n: any) => (
-            <div key={n.id} className="flex justify-between gap-2">
-              <span className="truncate">
-                {n.products?.name ?? "Okänd produkt"}
-                <span className="text-muted-foreground"> · {n.storage_locations?.name ?? "Lager"}</span>
-              </span>
-              <span className="font-mono tabular-nums text-destructive">
-                {Number(n.quantity).toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {n.products?.unit ?? "kg"}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-
-
-      {/* Grossist/Admin: interaktivt lagerträd. Butik: nivåväljare. */}
-      <div className="space-y-2">
-        {isGrossist ? (
-          <>
-            <button
-              type="button"
-              onClick={() => setShowTree((v) => !v)}
-              className="flex h-8 w-full items-center gap-2 rounded-md border border-border bg-card px-2 text-left transition-colors hover:bg-muted/50"
-            >
-              <span className="flex w-32 shrink-0 items-center gap-1.5">
-                <Package className="h-3 w-3 shrink-0 text-primary" />
-                <span className="truncate text-[11px] font-semibold">Lagerträd och karta</span>
-              </span>
-              <span className="ml-auto flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
-                {showTree ? "Dölj" : "Visa"}
-                {showTree ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-              </span>
-            </button>
-            {showTree && (
-              <StockTree
-                stock={allStock as any[]}
-                stores={(() => {
-                  // Bara enheter som faktiskt har ett butikslager — grossistenheten
-                  // hör hemma i grossist-/produktionsnoderna, inte bland butikerna.
-                  const withShop = new Set(
-                    (locations as any[])
-                      .filter((l: any) => l.location_type === "butik" && l.store_id)
-                      .map((l: any) => l.store_id),
-                  );
-                  return (stores as any[])
-                    .filter((s: any) => withShop.has(s.id))
-                    .map((s: any) => ({ id: s.id, name: s.name }));
-                })()}
-                showValue={showCosts}
-                onFocusLevel={(l) => setLevel(l)}
-              />
-            )}
-          </>
-        ) : (
-          <LevelSelector
-            available={allowedLevels}
-            visible={shownLevels}
-            value={level}
-            onChange={setLevel}
-            totals={levelTotals}
-            lockedReason={lockedReason}
-            showValue={showCosts}
-          />
-        )}
-        {level !== "all" && (levelTotals[level]?.quantityKg ?? 0) === 0 && (
-          <p className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">
-              {LEVEL_LABEL[level as LocationLevel]} är tomt.
-            </span>{" "}
-            {LEVEL_EMPTY_HINT[level as LocationLevel]}
-          </p>
-        )}
-      </div>
-
-
 
       {/* Vyväxling — butikslagret visar alltid den samlade lagerbilden (ingen flikmeny) */}
       <div className="flex flex-wrap items-center gap-2">
@@ -1710,6 +1612,94 @@ export default function Inventory() {
               </button>
             ))}
           </div>
+        )}
+
+        <div className="ml-auto flex flex-wrap items-center gap-2 text-[10px]">
+          {(negativeStock.length > 0 || lowStockItems > 0) && (
+            <button
+              type="button"
+              onClick={() => setShowNegativeStock((v) => !v)}
+              className="flex h-7 items-center gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/[0.07] px-2 text-amber-800 transition-colors hover:bg-amber-500/[0.12]"
+            >
+              <AlertTriangle className="h-3 w-3 shrink-0 text-amber-700" />
+              {negativeStock.length > 0 && (
+                <span className="font-semibold text-destructive">{negativeStock.length} negativa</span>
+              )}
+              {lowStockItems > 0 && <span>{lowStockItems} under min</span>}
+            </button>
+          )}
+          {isGrossist && (
+            <button
+              type="button"
+              onClick={() => setShowTree((v) => !v)}
+              className="flex h-7 items-center gap-1.5 rounded-md border border-border bg-card px-2 font-semibold text-muted-foreground transition-colors hover:bg-muted"
+            >
+              <Package className="h-3 w-3 shrink-0 text-primary" />
+              Lagerträd och karta
+              {showTree ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {showNegativeStock && negativeStock.length > 0 && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-[11px] space-y-1">
+          {negativeStock.map((n: any) => (
+            <div key={n.id} className="flex justify-between gap-2">
+              <span className="truncate">
+                {n.products?.name ?? "Okänd produkt"}
+                <span className="text-muted-foreground"> · {n.storage_locations?.name ?? "Lager"}</span>
+              </span>
+              <span className="font-mono tabular-nums text-destructive">
+                {Number(n.quantity).toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {n.products?.unit ?? "kg"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Grossist/Admin: interaktivt lagerträd. Butik: nivåväljare. */}
+      <div className="space-y-2">
+        {isGrossist ? (
+          <>
+           {showTree && (
+              <StockTree
+                stock={allStock as any[]}
+                stores={(() => {
+                  // Bara enheter som faktiskt har ett butikslager — grossistenheten
+                  // hör hemma i grossist-/produktionsnoderna, inte bland butikerna.
+                  const withShop = new Set(
+                    (locations as any[])
+                      .filter((l: any) => l.location_type === "butik" && l.store_id)
+                      .map((l: any) => l.store_id),
+                  );
+                  return (stores as any[])
+                    .filter((s: any) => withShop.has(s.id))
+                    .map((s: any) => ({ id: s.id, name: s.name }));
+                })()}
+                showValue={showCosts}
+                onFocusLevel={(l) => setLevel(l)}
+              />
+            )}
+          </>
+        ) : (
+          <LevelSelector
+            available={allowedLevels}
+            visible={shownLevels}
+            value={level}
+            onChange={setLevel}
+            totals={levelTotals}
+            lockedReason={lockedReason}
+            showValue={showCosts}
+          />
+        )}
+        {level !== "all" && (levelTotals[level]?.quantityKg ?? 0) === 0 && (
+          <p className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">
+              {LEVEL_LABEL[level as LocationLevel]} är tomt.
+            </span>{" "}
+            {LEVEL_EMPTY_HINT[level as LocationLevel]}
+          </p>
         )}
       </div>
 
