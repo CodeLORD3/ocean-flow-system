@@ -727,11 +727,21 @@ export default function StockOverview({
                               })}
                             </div>
                             {!dense && (
-                              <div className="text-[10px] text-muted-foreground mt-0.5">
-                                {g.lines.length} lagerplats{g.lines.length > 1 ? "er" : ""}
+                              <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                <span>
+                                  {g.lines.length} lagerplats{g.lines.length > 1 ? "er" : ""}
+                                </span>
+                                {packedPct > 0 && (
+                                  <span className="font-mono font-semibold tabular-nums text-amber-600">
+                                    {packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg packat
+                                    {packedPct >= 99.5 ? " (allt)" : ""}
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
+                          );
+                          })()}
                         </td>
                         <td className="border-r border-grid-line/70 px-2 text-right font-semibold tabular-nums whitespace-nowrap">
                           {g.totalQty.toLocaleString("sv-SE", { maximumFractionDigits: g.unit === "st" ? 0 : 1 })} {g.unit}
