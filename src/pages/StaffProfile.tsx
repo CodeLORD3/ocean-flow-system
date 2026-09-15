@@ -16,7 +16,7 @@ import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useStores } from "@/hooks/useStores";
 import { PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
 import {
-  useMyOpenShift, useShiftHistory, useClockIn, useClockOut, shiftClock, shiftDuration,
+  useMyOpenShift, useShiftHistory, useClockIn, useClockOut, useDirectClockAccess, shiftClock, shiftDuration,
 } from "@/hooks/useStaffShifts";
 
 export default function StaffProfile() {
@@ -27,6 +27,7 @@ export default function StaffProfile() {
   const clockOut = useClockOut();
 
   const { data: openShift } = useMyOpenShift(staff?.id);
+  const { data: mayClockDirectly = false } = useDirectClockAccess(staff?.id);
   const { data: history = [] } = useShiftHistory(staff?.id);
 
   const portalAccess = (staff?.portal_access ?? []) as string[];
@@ -184,7 +185,12 @@ export default function StaffProfile() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {openShift ? (
+            {!mayClockDirectly ? (
+              <div className="rounded-md border border-border bg-muted p-3">
+                <p className="text-sm font-medium text-foreground">Stämpling sker i stämpelklockan</p>
+                <p className="mt-1 text-xs text-muted-foreground">Svensk personal kan inte stämpla in eller ut direkt i Makrilltrade.</p>
+              </div>
+            ) : openShift ? (
               <>
                 <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
                   <p className="text-[11px] text-muted-foreground">Instämplad sedan</p>

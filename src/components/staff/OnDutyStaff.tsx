@@ -2,7 +2,7 @@ import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
 import { useState } from "react";
 import { LogIn, LogOut, Clock } from "lucide-react";
 import { useStaff } from "@/hooks/useStaff";
-import { useOpenShifts, useMyOpenShift, useClockIn, useClockOut, shiftClock, shiftDuration } from "@/hooks/useStaffShifts";
+import { useOpenShifts, useMyOpenShift, useClockIn, useClockOut, useDirectClockAccess, shiftClock, shiftDuration } from "@/hooks/useStaffShifts";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useStores } from "@/hooks/useStores";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
   const effectiveStoreId = storeId ?? wholesaleStoreId;
   const { data: openShifts = [] } = useOpenShifts(effectiveStoreId ?? undefined);
   const { data: myShift } = useMyOpenShift(staff?.id);
+  const { data: mayClockDirectly = false } = useDirectClockAccess(staff?.id);
   const clockIn = useClockIn();
   const clockOut = useClockOut();
   const { toast } = useToast();
@@ -83,7 +84,7 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
   return (
     <div className="flex items-stretch gap-2 sm:justify-end">
       {/* Stämpelklockan — till vänster om kortet */}
-      {staff && (
+      {staff && mayClockDirectly && (
         <div className="flex shrink-0 items-stretch">
           {myShift ? (
             <Button
@@ -124,7 +125,7 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
             {onDuty.length > 0 ? `Arbetar nu · ${onDuty.length}` : "Ingen instämplad"}
           </p>
           {onDuty.length === 0 ? (
-            <p className="text-[11px] leading-tight text-muted-foreground">Stämpla in med knappen här</p>
+            <p className="text-[11px] leading-tight text-muted-foreground">Stämpling sker i stämpelklockan</p>
           ) : (
             <div className="mt-0.5 flex flex-wrap gap-1">
               {onDuty.map(({ shift, person }) => (

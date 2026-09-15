@@ -9,6 +9,53 @@ export interface StaffShift {
   clocked_out_at: string | null;
 }
 
+/**
+ * Svensk personal stämplar endast i den fristående stämpelklockan. Landet
+ * avgörs av personens aktiva anställningsbolag, inte av var användaren råkar
+ * vara inloggad.
+ */
+export function useDirectClockAccess(staffId?: string | null) {
+  return useQuery({
+    queryKey: ["direct-clock-access", staffId],
+    enabled: !!staffId,
+    queryFn: async () => {
+      if (!staffId) return false;
+
+      const { data: employee, error: employeeError } = await supabase
+        .from("employees")
+        .select("id")
+        .eq("staff_id", staffId)
+        .maybeSingle();
+      if (employeeError) throw employeeError;
+      if (!employee) return false;
+
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: employments, error: employmentError } = await supabase
+        .from("employments")
+        .select("legal_entity_id")
+        .eq("employee_id", employee.id)
+        .eq("is_active", true)
+        .or(`start_date.is.null,start_date.lte.${today}`)
+        .or(`end_date.is.null,end_date.gte.${today}`);
+      if (employmentError) throw employmentError;
+
+      const entityIds = Array.from(new Set(
+        (employments ?? []).map((employment) => employment.legal_entity_id).filter((id): id is string => !!id),
+      ));
+      if (entityIds.length === 0) return false;
+
+      const { data: entities, error: entityError } = await supabase
+        .from("legal_entities")
+        .select("country")
+        .in("legal_entity_id", entityIds);
+      if (entityError) throw entityError;
+
+      return !(entities ?? []).some((entity) => entity.country?.trim().toUpperCase() === "SE");
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
 /** Början av dagens dygn (lokal tid) som ISO-sträng. */
 function startOfTodayIso(): string {
   const d = new Date();
