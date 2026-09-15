@@ -590,7 +590,6 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                 >
                   <X className="h-3.5 w-3.5" aria-hidden />
                   Stäng (Esc)
-                  Stäng
                 </Button>
               </div>
 
