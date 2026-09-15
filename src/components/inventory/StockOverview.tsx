@@ -560,20 +560,21 @@ export default function StockOverview({
       <Card className="shadow-card overflow-hidden sm:overflow-visible">
         <div className="overflow-x-auto sm:overflow-x-visible">
           <table className="w-full text-xs sm:min-w-[900px]">
-            <thead className="sm:sticky sm:top-[52px] z-20">
-              <tr className="border-b bg-background text-[9px] uppercase tracking-wider text-muted-foreground shadow-sm">
-                <th className="hidden w-6 px-1.5 py-1 text-left font-medium sm:table-cell">#</th>
-                <th className="px-1.5 py-1 text-left font-medium">Produkt</th>
-                <th className="hidden px-1.5 py-1 text-left font-medium sm:table-cell">Kategori</th>
-                <th className="hidden px-1.5 py-1 text-left font-medium sm:table-cell">Lager</th>
-                <th className="px-1.5 py-1 text-right font-medium">Totalt</th>
-                {showCosts && <th className="hidden px-1.5 py-1 text-right font-medium sm:table-cell">Lagervärde</th>}
-                <th className="hidden px-1.5 py-1 text-center font-medium sm:table-cell">Bäst före</th>
-                <th className="hidden px-1.5 py-1 text-center font-medium sm:table-cell">Dagar kvar</th>
-                <th className="hidden px-1.5 py-1 text-center font-medium sm:table-cell">Status</th>
-                <th className="w-6 px-1.5 py-1"></th>
+            <thead className="sm:sticky sm:top-[var(--stock-subnav-h,52px)] z-20">
+              <tr className="border-b border-border bg-background text-[9px] uppercase leading-tight tracking-wider text-muted-foreground shadow-[0_1px_0_0_hsl(var(--border)),0_8px_14px_-14px_hsl(var(--foreground)/0.4)]">
+                <th className="hidden w-6 px-1.5 py-2 text-left align-middle font-semibold sm:table-cell">#</th>
+                <th className="px-1.5 py-2 text-left align-middle font-semibold">Produkt</th>
+                <th className="hidden px-1.5 py-2 text-left align-middle font-semibold sm:table-cell">Kategori</th>
+                <th className="hidden px-1.5 py-2 text-left align-middle font-semibold sm:table-cell">Lager</th>
+                <th className="px-1.5 py-2 text-right align-middle font-semibold">Totalt</th>
+                {showCosts && <th className="hidden px-1.5 py-2 text-right align-middle font-semibold sm:table-cell">Lagervärde</th>}
+                <th className="hidden whitespace-nowrap px-1.5 py-2 text-center align-middle font-semibold sm:table-cell">Bäst före</th>
+                <th className="hidden whitespace-nowrap px-1.5 py-2 text-center align-middle font-semibold sm:table-cell">Dagar kvar</th>
+                <th className="hidden px-1.5 py-2 text-center align-middle font-semibold sm:table-cell">Status</th>
+                <th className="w-6 px-1.5 py-2"></th>
               </tr>
             </thead>
+
             <tbody>
               {pageRows.length === 0 && (
                 <tr>
