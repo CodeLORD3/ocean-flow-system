@@ -772,6 +772,78 @@ export default function ShopOrders() {
 
                               </td>
                               <td className="py-2">
+                                {(() => {
+                                  const committed = customerCommitted.get(line.product_id);
+                                  return (
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-1">
+                                        {PRIORITY_ORDER.map((p) => {
+                                          const meta = PRIORITY_META[p];
+                                          const Icon = meta.icon;
+                                          const active = line.priority === p;
+                                          return (
+                                            <button
+                                              key={p}
+                                              type="button"
+                                              onClick={() => setLinePriority(idx, p)}
+                                              title={`${meta.label} – ${meta.hint}`}
+                                              aria-label={meta.label}
+                                              aria-pressed={active}
+                                              className={cn(
+                                                "flex h-8 min-w-8 items-center gap-1 rounded-md border px-1.5 text-[10px] font-semibold transition-colors",
+                                                active
+                                                  ? meta.chip
+                                                  : "border-border/60 text-muted-foreground/70 hover:bg-muted",
+                                              )}
+                                            >
+                                              <Icon className="h-3.5 w-3.5" />
+                                              {active && <span className="hidden sm:inline uppercase tracking-wider">{meta.label}</span>}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                      {line.priority === "must" && (
+                                        <div className="flex flex-wrap items-center gap-1">
+                                          <Input
+                                            type="number"
+                                            inputMode="decimal"
+                                            step="0.1"
+                                            value={line.priorityQty}
+                                            onChange={(e) => setLineField(idx, "priorityQty", e.target.value)}
+                                            onFocus={(e) => e.currentTarget.select()}
+                                            className="h-8 w-20 text-right text-xs"
+                                            placeholder="kg"
+                                            title="Hur mycket är kundbeställt"
+                                          />
+                                          <span className="text-[10px] text-muted-foreground">{line.unit} till kund</span>
+                                          <Input
+                                            value={line.priorityNote}
+                                            onChange={(e) => setLineField(idx, "priorityNote", e.target.value)}
+                                            className="h-8 w-full text-xs sm:w-40"
+                                            placeholder="Kund / hämtdag"
+                                          />
+                                        </div>
+                                      )}
+                                      {committed && committed.quantity > 0 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setLinePriority(idx, "must");
+                                            setLineField(idx, "priorityQty", String(committed.quantity));
+                                          }}
+                                          className="text-left text-[10px] text-destructive underline-offset-2 hover:underline"
+                                          title="Hämtat från butikens kundbeställningar"
+                                        >
+                                          {committed.quantity.toLocaleString("sv-SE", { maximumFractionDigits: 1 })}{" "}
+                                          {committed.unit} kundbeställt
+                                          {committed.customers.length > 0 && ` · ${committed.customers.slice(0, 2).join(", ")}`}
+                                        </button>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+                              </td>
+                              <td className="py-2">
                                 <div className="flex items-center justify-end gap-1">
                                   <Button
                                     variant="ghost"
