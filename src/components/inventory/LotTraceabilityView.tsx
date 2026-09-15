@@ -392,8 +392,9 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
 
   const [panel, setPanel] = useState<"kedja" | "handelser" | "pass" | "detaljer">("kedja");
 
-  /** Visa produktvalet först när sökningen träffar flera produkter. */
-  const visaProduktval = !valdProdukt && q.trim().length > 0 && produktTraffar.length > 1;
+  /** Sökningen går direkt till partilistan — partiet är rubriken. */
+  const visaProduktval = false;
+
 
   return (
     <div className="flex flex-col gap-4">
