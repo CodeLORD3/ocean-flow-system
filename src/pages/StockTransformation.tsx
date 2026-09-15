@@ -386,14 +386,17 @@ export default function StockTransformation() {
           if (!o) {
             setTarget(null);
             setInitialTarget(null);
+            setStartLocation(null);
           }
         }}
         product={target}
         initialTargetProductId={initialTarget}
+        locationId={startLocation}
         storeId={activeStoreId || null}
         onDone={() => {
           setTarget(null);
           setInitialTarget(null);
+          setStartLocation(null);
         }}
       />
     </motion.div>
