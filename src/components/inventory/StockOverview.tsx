@@ -462,69 +462,69 @@ export default function StockOverview({
   return (
     <div className="space-y-3">
       {/* Övertexter: beställt och packat — kompakta, symmetriska rader */}
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         <button
           type="button"
           onClick={() => setShowStats((v) => !v)}
-          className="flex h-10 w-full items-center gap-2 rounded-md border border-amber-500/25 bg-amber-500/[0.04] px-2.5 text-left transition-colors hover:bg-amber-500/[0.08]"
+          className="flex h-8 w-full items-center gap-2 rounded-md border border-amber-500/25 bg-amber-500/[0.04] px-2 text-left transition-colors hover:bg-amber-500/[0.08]"
         >
-          <span className="flex w-36 shrink-0 items-center gap-1.5">
-            <ClipboardList className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-            <span className="truncate text-xs font-semibold">Beställt av lagret</span>
+          <span className="flex w-32 shrink-0 items-center gap-1.5">
+            <ClipboardList className="h-3 w-3 shrink-0 text-amber-500" />
+            <span className="truncate text-[11px] font-semibold">Beställt av lagret</span>
           </span>
-          <span className="hidden w-24 shrink-0 sm:block">
-            <span className="block font-mono text-xs font-semibold leading-tight tabular-nums text-amber-600">
+          <span className="hidden w-20 shrink-0 sm:block">
+            <span className="block font-mono text-[11px] font-semibold leading-tight tabular-nums text-amber-600">
               {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
             </span>
             <span className="block text-[9px] leading-tight text-muted-foreground">kvar att packa</span>
           </span>
-          <span className="hidden w-24 shrink-0 sm:block">
-            <span className="block font-mono text-xs font-semibold leading-tight tabular-nums">
+          <span className="hidden w-20 shrink-0 sm:block">
+            <span className="block font-mono text-[11px] font-semibold leading-tight tabular-nums">
               {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
             </span>
             <span className="block text-[9px] leading-tight text-muted-foreground">totalt beställt</span>
           </span>
-          {showCosts && <span className="hidden w-24 shrink-0 md:block" />}
-          <span className="ml-auto flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+          {showCosts && <span className="hidden w-20 shrink-0 md:block" />}
+          <span className="ml-auto flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
             {showStats ? "Dölj" : "Visa"}
-            {showStats ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            {showStats ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           </span>
         </button>
 
         <button
           type="button"
           onClick={() => setShowPacked((v) => !v)}
-          className="flex h-10 w-full items-center gap-2 rounded-md border border-amber-500/25 bg-amber-500/[0.04] px-2.5 text-left transition-colors hover:bg-amber-500/[0.08]"
+          className="flex h-8 w-full items-center gap-2 rounded-md border border-amber-500/25 bg-amber-500/[0.04] px-2 text-left transition-colors hover:bg-amber-500/[0.08]"
         >
-          <span className="flex w-36 shrink-0 items-center gap-1.5">
-            <Package className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-            <span className="truncate text-xs font-semibold">Packat av lagret</span>
+          <span className="flex w-32 shrink-0 items-center gap-1.5">
+            <Package className="h-3 w-3 shrink-0 text-amber-500" />
+            <span className="truncate text-[11px] font-semibold">Packat av lagret</span>
           </span>
-          <span className="hidden w-24 shrink-0 sm:block">
-            <span className="block font-mono text-xs font-semibold leading-tight tabular-nums text-amber-600">
+          <span className="hidden w-20 shrink-0 sm:block">
+            <span className="block font-mono text-[11px] font-semibold leading-tight tabular-nums text-amber-600">
               {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
             </span>
             <span className="block text-[9px] leading-tight text-muted-foreground">
               {booked.packedKgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
             </span>
           </span>
-          <span className="hidden w-24 shrink-0 sm:block">
-            <span className="block font-mono text-xs font-semibold leading-tight tabular-nums">
+          <span className="hidden w-20 shrink-0 sm:block">
+            <span className="block font-mono text-[11px] font-semibold leading-tight tabular-nums">
               {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
             </span>
             <span className="block text-[9px] leading-tight text-muted-foreground">totalt beställt</span>
           </span>
           {showCosts && (
-            <span className="hidden w-24 shrink-0 md:block">
-              <span className="block font-mono text-xs font-semibold leading-tight tabular-nums">
+            <span className="hidden w-20 shrink-0 md:block">
+              <span className="block font-mono text-[11px] font-semibold leading-tight tabular-nums">
                 {fmt(booked.packedValue)}
               </span>
               <span className="block text-[9px] leading-tight text-muted-foreground">packat värde</span>
             </span>
           )}
-          <span className="ml-auto flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+          <span className="ml-auto flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
             {showPacked ? "Dölj" : "Visa"}
-            {showPacked ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            {showPacked ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           </span>
         </button>
       </div>
