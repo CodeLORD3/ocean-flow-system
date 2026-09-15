@@ -53,6 +53,7 @@ export default function StockPricePoster() {
   });
 
   const [title, setTitle] = useState("Fisk & Skaldjur");
+  // Rubrikerna på affischen sätts i versaler precis som butikstavlan.
   const [search, setSearch] = useState("");
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [excluded, setExcluded] = useState<Record<string, boolean>>({});
