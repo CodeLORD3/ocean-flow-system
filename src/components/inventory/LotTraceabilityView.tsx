@@ -229,7 +229,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
     !(lot?.freeze_start && lot?.freeze_end) &&
     !(lot?.exemption_reason && lot?.exemption_source);
 
-  const [panel, setPanel] = useState<"handelser" | "pass" | "detaljer">("handelser");
+  const [panel, setPanel] = useState<"kedja" | "handelser" | "pass" | "detaljer">("kedja");
 
   return (
     <div className="flex flex-col gap-4">
