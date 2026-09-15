@@ -605,6 +605,26 @@ export default function StockCount() {
     [session?.id, locked, qc, toast, date],
   );
 
+  /** Tar bort en vara helt från inventeringen — feltryck ska kunna ångras. */
+  const removeCountedLine = useCallback(
+    async (row: Row) => {
+      if (!session?.id || locked) return;
+      const { error } = await supabase
+        .from("stock_count_lines")
+        .delete()
+        .eq("session_id", session.id)
+        .eq("product_id", row.productId)
+        .eq("location_id", row.locationId);
+      if (error) {
+        toast({ title: "Kunde inte ta bort", description: error.message, variant: "destructive" });
+        return;
+      }
+      qc.invalidateQueries({ queryKey: ["stock_count_lines", session.id] });
+      toast({ title: "Varan togs bort", description: row.productName });
+    },
+    [session?.id, locked, qc, toast],
+  );
+
   /** Ej räknade rader med saldo nollas i ett svep — inget lämnas tyst. */
   const zeroSkippedRows = useCallback(async () => {
     if (!session?.id || locked || !lockSummary.skipped.length) return;
