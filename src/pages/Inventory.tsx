@@ -229,6 +229,8 @@ export default function Inventory() {
     "overview" | "locations" | "movements" | "lots" | "shelflife"
   >("overview");
   const [wasteOpen, setWasteOpen] = useState(false);
+  /** Lagerträdet tar mycket plats — fällt ihop som standard. */
+  const [showTree, setShowTree] = useState(false);
   const [wasteRowId, setWasteRowId] = useState<string | null>(null);
 
 
@@ -1604,23 +1606,41 @@ export default function Inventory() {
       {/* Grossist/Admin: interaktivt lagerträd. Butik: nivåväljare. */}
       <div className="space-y-2">
         {isGrossist ? (
-          <StockTree
-            stock={allStock as any[]}
-            stores={(() => {
-              // Bara enheter som faktiskt har ett butikslager — grossistenheten
-              // hör hemma i grossist-/produktionsnoderna, inte bland butikerna.
-              const withShop = new Set(
-                (locations as any[])
-                  .filter((l: any) => l.location_type === "butik" && l.store_id)
-                  .map((l: any) => l.store_id),
-              );
-              return (stores as any[])
-                .filter((s: any) => withShop.has(s.id))
-                .map((s: any) => ({ id: s.id, name: s.name }));
-            })()}
-            showValue={showCosts}
-            onFocusLevel={(l) => setLevel(l)}
-          />
+          <>
+            <button
+              type="button"
+              onClick={() => setShowTree((v) => !v)}
+              className="flex w-full items-center gap-3 rounded-md border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/50"
+            >
+              <span className="flex w-44 shrink-0 items-center gap-2">
+                <Package className="h-4 w-4 shrink-0 text-primary" />
+                <span className="truncate text-sm font-semibold">Lagerträd och karta</span>
+              </span>
+              <span className="ml-auto flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+                {showTree ? "Dölj lagerträd" : "Visa lagerträd"}
+                {showTree ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </span>
+            </button>
+            {showTree && (
+              <StockTree
+                stock={allStock as any[]}
+                stores={(() => {
+                  // Bara enheter som faktiskt har ett butikslager — grossistenheten
+                  // hör hemma i grossist-/produktionsnoderna, inte bland butikerna.
+                  const withShop = new Set(
+                    (locations as any[])
+                      .filter((l: any) => l.location_type === "butik" && l.store_id)
+                      .map((l: any) => l.store_id),
+                  );
+                  return (stores as any[])
+                    .filter((s: any) => withShop.has(s.id))
+                    .map((s: any) => ({ id: s.id, name: s.name }));
+                })()}
+                showValue={showCosts}
+                onFocusLevel={(l) => setLevel(l)}
+              />
+            )}
+          </>
         ) : (
           <LevelSelector
             available={allowedLevels}
