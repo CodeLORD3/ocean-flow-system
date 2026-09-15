@@ -23,7 +23,15 @@ import {
   Package2,
   Camera,
 } from "lucide-react";
-import { format, parseISO, differenceInDays, startOfISOWeek, endOfISOWeek, getISOWeek } from "date-fns";
+import {
+  format,
+  parseISO,
+  differenceInDays,
+  differenceInCalendarDays,
+  startOfISOWeek,
+  endOfISOWeek,
+  getISOWeek,
+} from "date-fns";
 import { sv } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
