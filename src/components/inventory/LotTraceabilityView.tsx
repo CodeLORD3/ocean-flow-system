@@ -87,39 +87,31 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-1 print:hidden">
-        <Button
-          variant={mode === "lista" ? "default" : "outline"}
-          size="sm"
-          className="h-8 gap-1 text-xs"
-          onClick={() => setMode("lista")}
-        >
-          <List className="h-3.5 w-3.5" /> Lista
-        </Button>
-        <Button
-          variant={mode === "graf" ? "default" : "outline"}
-          size="sm"
-          className="h-8 gap-1 text-xs"
-          onClick={() => setMode("graf")}
-        >
-          <GitBranch className="h-3.5 w-3.5" /> Graf
-        </Button>
-        <Button
-          variant={mode === "historik" ? "default" : "outline"}
-          size="sm"
-          className="h-8 gap-1 text-xs"
-          onClick={() => setMode("historik")}
-        >
-          <History className="h-3.5 w-3.5" /> Historik
-        </Button>
-        <Button
-          variant={mode === "natverk" ? "default" : "outline"}
-          size="sm"
-          className="h-8 gap-1 text-xs"
-          onClick={() => setMode("natverk")}
-        >
-          <Network className="h-3.5 w-3.5" /> Nätverk
-        </Button>
+      <div className="rounded-lg border border-border bg-muted/30 p-2 print:hidden">
+        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Välj vy
+        </p>
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+          {(
+            [
+              { v: "lista", label: "Partilista", icon: <List className="h-4 w-4" /> },
+              { v: "graf", label: "Släktträd", icon: <GitBranch className="h-4 w-4" /> },
+              { v: "historik", label: "Historik & träd", icon: <History className="h-4 w-4" /> },
+              { v: "natverk", label: "Nätverksgraf", icon: <Network className="h-4 w-4" /> },
+            ] as const
+          ).map((t) => (
+            <Button
+              key={t.v}
+              variant={mode === t.v ? "default" : "outline"}
+              size="sm"
+              className="h-9 w-full justify-center gap-1.5 text-xs font-semibold"
+              onClick={() => setMode(t.v as typeof mode)}
+            >
+              {t.icon}
+              <span className="truncate">{t.label}</span>
+            </Button>
+          ))}
+        </div>
       </div>
 
       {mode === "graf" && <LineageGraphView currency={currency} startLotId={openId} />}
