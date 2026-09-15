@@ -1142,27 +1142,31 @@ export default function Inventory() {
           <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
         </td>
         <td className="px-1.5 py-0 font-medium text-foreground">
-          <div className="flex items-center gap-1.5">
-            {s.products?.name}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="truncate">{s.products?.name}</span>
             {fifoIssue && (
-              <span title="FIFO-varning: äldre batch finns på annat lagerställe">
+              <span title="FIFO-varning: äldre batch finns på annat lagerställe" className="shrink-0">
                 <AlertCircle className="h-3 w-3 text-amber-500" />
               </span>
             )}
           </div>
         </td>
-        <td className="px-1.5 py-0 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
-        <td className="px-1.5 py-0 text-right font-medium text-foreground">
+        <td className="px-1.5 py-0 font-mono text-muted-foreground text-[10px] truncate">{s.products?.sku}</td>
+        <td className="px-1.5 py-0 text-right font-medium text-foreground font-mono tabular-nums whitespace-nowrap">
           {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
         </td>
-        {showCosts && <td className="px-1.5 py-0 text-right text-muted-foreground">{fmt(value)}</td>}
-        <td className="px-1.5 py-0 text-center text-[10px] text-muted-foreground">
+        {showCosts && (
+          <td className="px-1.5 py-0 text-right text-muted-foreground font-mono tabular-nums whitespace-nowrap">
+            {fmt(value)}
+          </td>
+        )}
+        <td className="px-1.5 py-0 text-right text-[10px] text-muted-foreground font-mono tabular-nums whitespace-nowrap">
           {s.arrival_date ? format(parseISO(s.arrival_date), "d MMM", { locale: sv }) : "–"}
         </td>
-        <td className="px-1.5 py-0 text-center text-[10px] text-muted-foreground">
+        <td className="px-1.5 py-0 text-right text-[10px] text-muted-foreground font-mono tabular-nums whitespace-nowrap">
           {s.expiry_date ? format(parseISO(s.expiry_date), "d MMM", { locale: sv }) : "–"}
         </td>
-        <td className="px-1.5 py-0 text-center">
+        <td className="px-1.5 py-0 text-right">
           {freshness ? (
             <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
               {freshness.isExpired ? (
