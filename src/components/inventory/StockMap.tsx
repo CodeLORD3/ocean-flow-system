@@ -307,6 +307,13 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
                     <span className="text-[11px] font-semibold">{p.name}</span>
                     {p.city ? <span className="text-[10px]"> · {p.city}</span> : null}
                     <br />
+                    {p.address ? (
+                      <>
+                        <span className="text-[10px] text-muted-foreground">{p.address}</span>
+                        <br />
+                      </>
+                    ) : null}
+
                     <span className="font-mono text-[10px] tabular-nums">
                       {has ? `${kgFmt(p.kg)} · ${p.articles} artiklar` : "tomt lager"}
                     </span>
