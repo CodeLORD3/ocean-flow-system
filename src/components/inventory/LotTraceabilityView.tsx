@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 import LineageGraphView from "@/components/inventory/LineageGraphView";
+import { ProductThumb } from "@/components/products/ProductThumb";
 import { EmptyState } from "@/components/EmptyState";
 import LotDocumentsPanel from "@/components/inventory/LotDocumentsPanel";
 import ParasiteFreezePanel from "@/components/inventory/ParasiteFreezePanel";
