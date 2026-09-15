@@ -147,12 +147,29 @@ export default function StockTransformation() {
           <div className="flex flex-wrap gap-1.5">
             <Button
               size="sm"
-              variant={familyView ? "default" : "outline"}
+              variant={view === "lager" ? "default" : "outline"}
               className="h-7 gap-1 px-2 text-[11px]"
-              onClick={() => setFamilyView((v) => !v)}
+              onClick={() => setView("lager")}
+              title="Visa allt tillgängligt lager per lagerplats"
+            >
+              <Warehouse className="h-3 w-3" /> Allt lager
+            </Button>
+            <Button
+              size="sm"
+              variant={view === "grupper" ? "default" : "outline"}
+              className="h-7 gap-1 px-2 text-[11px]"
+              onClick={() => setView("grupper")}
               title="Visa produktgrupper med omvandlingsförslag"
             >
               <Layers className="h-3 w-3" /> Produktgrupper
+            </Button>
+            <Button
+              size="sm"
+              variant={view === "produkter" ? "default" : "outline"}
+              className="h-7 gap-1 px-2 text-[11px]"
+              onClick={() => setView("produkter")}
+            >
+              Produktkort
             </Button>
             <Button
               size="sm"
