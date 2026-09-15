@@ -1615,7 +1615,7 @@ export default function Inventory() {
         )}
 
         <div className="ml-auto flex flex-wrap items-center gap-2 text-[10px]">
-          {(negativeStock.length > 0 || lowStockItems > 0 || expiredCount > 0) && (
+          {(negativeStock.length > 0 || lowStockItems > 0) && (
             <button
               type="button"
               onClick={() => setShowNegativeStock((v) => !v)}
@@ -1626,7 +1626,6 @@ export default function Inventory() {
                 <span className="font-semibold text-destructive">{negativeStock.length} negativa</span>
               )}
               {lowStockItems > 0 && <span>{lowStockItems} under min</span>}
-              {expiredCount > 0 && <span>{expiredCount} passerat bäst före</span>}
             </button>
           )}
           {isGrossist && (
