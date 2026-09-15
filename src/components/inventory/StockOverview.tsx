@@ -1144,6 +1144,38 @@ export default function StockOverview({
                                         </span>
                                       </span>
                                     </div>
+
+                                    <div className="mt-2 grid gap-1 sm:grid-cols-2">
+                                      {g.lines.map((l) => {
+                                        const qty = Number(l.quantity) || 0;
+                                        const kg = qtyToKg(qty, l.products || master);
+                                        const pct = g.totalKg > 0 ? (kg / g.totalKg) * 100 : 100;
+                                        return (
+                                          <div
+                                            key={`legend-${l.id}`}
+                                            className="flex items-center gap-2 rounded-md bg-muted/40 px-2 py-1 text-[11px]"
+                                          >
+                                            <span
+                                              className={cn(
+                                                "h-2.5 w-2.5 shrink-0 rounded-sm",
+                                                locationColor.get(l.location_id) || "bg-primary",
+                                              )}
+                                            />
+                                            <span className="min-w-0 flex-1 truncate">{locName(l)}</span>
+                                            <span className="font-mono font-semibold tabular-nums">{nf(kg)} kg</span>
+                                            <span className="w-10 text-right text-muted-foreground tabular-nums">
+                                              {nf(pct, 0)} %
+                                            </span>
+                                            {showCosts && (
+                                              <span className="w-20 text-right font-mono text-muted-foreground tabular-nums">
+                                                {fmt(qty * unitCost)}
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
                                 );
                               })()}
 
