@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ClipboardCheck, Check, Lock, Printer, Download, Search, Plus, Package, RefreshCw, ChevronDown, ChevronRight, Camera, Loader2 } from "lucide-react";
+import { ClipboardCheck, Check, Lock, Printer, Download, Search, Plus, Package, RefreshCw, ChevronDown, ChevronRight, Camera, Loader2, CalendarClock, MessageSquare } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -213,6 +213,9 @@ export default function StockCount() {
 
   const [date, setDate] = useState<string>(todayStockholm());
   const [search, setSearch] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [focusRowKey, setFocusRowKey] = useState<string | null>(null);
+  const [openDetail, setOpenDetail] = useState<Record<string, "quality" | "comment" | null>>({});
   const [category, setCategory] = useState<string>("all");
   const [onlyUncounted, setOnlyUncounted] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
@@ -910,6 +913,7 @@ export default function StockCount() {
         <div className="relative w-full">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
+            ref={searchRef}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Sök vara — i lager eller i produktregistret"
@@ -938,6 +942,7 @@ export default function StockCount() {
                     return;
                   }
                   setExtraProductIds((prev) => new Set(prev).add(p.id));
+                  setFocusRowKey(p.id);
                   setSearch("");
                   setCategory("all");
                   setOnlyUncounted(false);
@@ -1038,21 +1043,21 @@ export default function StockCount() {
                              <span className="w-5 shrink-0" />
                              <span className="min-w-0 flex-1">Produkt</span>
                              <span className="w-[52px] shrink-0 text-right">Antal</span>
-                             <span className="w-[86px] shrink-0 text-center sm:w-[136px]">Hållb.</span>
-                             <span className="w-[60px] shrink-0 sm:w-[96px]">Komm.</span>
+                             <span className="hidden w-[136px] shrink-0 text-center sm:block">Hållb.</span>
+                             <span className="hidden w-[96px] shrink-0 sm:block">Komm.</span>
                              <span className="w-6 shrink-0 text-center">Bild</span>
                            </div>
                           {g.products.flatMap((prodRows) =>
                             prodRows.map((r) => {
                               const line = linesByKey.get(r.key);
                               const isCounted = line?.counted_qty != null;
-                              return (
-                                <div
-                                  key={r.key}
-                                  className={`flex items-center gap-1 px-1.5 py-0.5 transition-colors ${
-                                    isCounted ? "bg-emerald-500/10" : ""
-                                  }`}
-                                >
+                               const detail = openDetail[r.key] ?? null;
+                               return (
+                                 <div
+                                   key={r.key}
+                                   className={`transition-colors ${isCounted ? "bg-emerald-500/10" : ""}`}
+                                 >
+                                 <div className="flex items-center gap-1 px-1.5 py-0.5">
                                   {r.imageUrl ? (
                                     <img
                                       src={r.imageUrl}
@@ -1091,6 +1096,12 @@ export default function StockCount() {
                                     defaultValue={line?.counted_qty ?? ""}
                                     placeholder={r.unit}
                                     className="h-6 w-[52px] shrink-0 px-1 text-right font-mono text-[11px] tabular-nums"
+                                    ref={(el) => {
+                                      if (el && focusRowKey && r.productId === focusRowKey) {
+                                        setFocusRowKey(null);
+                                        el.focus();
+                                      }
+                                    }}
                                     onFocus={(e) => e.currentTarget.select()}
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter") e.currentTarget.blur();
@@ -1101,8 +1112,47 @@ export default function StockCount() {
                                       if (val !== null && Number.isNaN(val)) return;
                                       if ((line?.counted_qty ?? null) === val) return;
                                       saveLine(r, { counted_qty: val });
+                                      if (val !== null) {
+                                        setSearch("");
+                                        requestAnimationFrame(() => searchRef.current?.focus());
+                                      }
                                     }}
                                   />
+                                  {/* Mobil: hållbarhet och kommentar som symboler */}
+                                  <button
+                                    type="button"
+                                    disabled={locked || !session}
+                                    title="Hållbarhet"
+                                    aria-label="Hållbarhet"
+                                    onClick={() =>
+                                      setOpenDetail((prev) => ({
+                                        ...prev,
+                                        [r.key]: detail === "quality" ? null : "quality",
+                                      }))
+                                    }
+                                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border disabled:opacity-50 sm:hidden ${qualityClass(
+                                      (line?.quality ?? "") as string,
+                                    )}`}
+                                  >
+                                    <CalendarClock className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={locked || !session}
+                                    title="Kommentar"
+                                    aria-label="Kommentar"
+                                    onClick={() =>
+                                      setOpenDetail((prev) => ({
+                                        ...prev,
+                                        [r.key]: detail === "comment" ? null : "comment",
+                                      }))
+                                    }
+                                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border disabled:opacity-50 sm:hidden ${
+                                      line?.comment ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"
+                                    }`}
+                                  >
+                                    <MessageSquare className="h-3 w-3" />
+                                  </button>
                                   <select
                                     disabled={locked || !session}
                                     value={(line?.quality ?? "") as string}
@@ -1111,7 +1161,7 @@ export default function StockCount() {
                                         quality: (e.target.value || null) as Quality | null,
                                       })
                                     }
-                                     className={`h-6 w-[86px] shrink-0 rounded-md border px-1 text-[10px] font-medium disabled:opacity-50 sm:w-[136px] sm:text-[11px] ${qualityClass(
+                                     className={`hidden h-6 w-[136px] shrink-0 rounded-md border px-1 text-[11px] font-medium disabled:opacity-50 sm:block ${qualityClass(
                                        (line?.quality ?? "") as string,
                                      )}`}
                                      title="Hållbarhet"
@@ -1127,7 +1177,7 @@ export default function StockCount() {
                                      disabled={locked || !session}
                                      defaultValue={line?.comment ?? ""}
                                      placeholder="Komm."
-                                     className="h-6 w-[60px] shrink-0 px-1 text-[10px] sm:w-[96px] sm:text-[11px]"
+                                     className="hidden h-6 w-[96px] shrink-0 px-1 text-[11px] sm:block"
                                      onBlur={(e) => {
                                        const val = e.target.value.trim() || null;
                                        if ((line?.comment ?? null) === val) return;
@@ -1140,6 +1190,53 @@ export default function StockCount() {
                                      productName={r.productName}
                                      disabled={locked || !session}
                                    />
+                                </div>
+                                {detail && (
+                                  <div className="flex items-center gap-1 border-t border-border/60 px-1.5 py-1 sm:hidden">
+                                    {detail === "quality" ? (
+                                      <select
+                                        autoFocus
+                                        disabled={locked || !session}
+                                        value={(line?.quality ?? "") as string}
+                                        onChange={(e) => {
+                                          saveLine(r, {
+                                            quality: (e.target.value || null) as Quality | null,
+                                          });
+                                          setOpenDetail((prev) => ({ ...prev, [r.key]: null }));
+                                        }}
+                                        className={`h-8 w-full rounded-md border px-2 text-xs font-medium ${qualityClass(
+                                          (line?.quality ?? "") as string,
+                                        )}`}
+                                      >
+                                        <option value="">Hållbarhet</option>
+                                        {QUALITY_DAYS.map((d) => (
+                                          <option key={d} value={d}>
+                                            {qualityLabel(date, d)}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    ) : (
+                                      <Input
+                                        autoFocus
+                                        disabled={locked || !session}
+                                        defaultValue={line?.comment ?? ""}
+                                        placeholder="Kommentar"
+                                        className="h-8 w-full text-xs"
+                                        enterKeyHint="done"
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") e.currentTarget.blur();
+                                        }}
+                                        onBlur={(e) => {
+                                          const val = e.target.value.trim() || null;
+                                          if ((line?.comment ?? null) !== val) {
+                                            saveLine(r, { comment: val });
+                                          }
+                                          setOpenDetail((prev) => ({ ...prev, [r.key]: null }));
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+                                )}
                                 </div>
                               );
                             }),
