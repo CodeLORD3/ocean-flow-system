@@ -1222,19 +1222,29 @@ export default function Inventory() {
 
             {/* Desktop: tabell med kategorirubriker */}
             <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-[10px] min-w-[560px]">
-                <thead>
-                  <tr className="bg-muted/20 h-5">
-                    <th className="px-1.5 py-0 w-6"></th>
+              <table className="w-full table-fixed text-[10px] min-w-[560px]">
+                <colgroup>
+                  <col className="w-7" />
+                  <col />
+                  <col className="w-24" />
+                  <col className="w-24" />
+                  {showCosts && <col className="w-24" />}
+                  <col className="w-20" />
+                  <col className="w-20" />
+                  <col className="w-24" />
+                </colgroup>
+                <thead className="sticky top-[52px] z-10">
+                  <tr className="h-6 bg-background/95 backdrop-blur border-b border-border/60">
+                    <th className="px-1.5 py-0"></th>
                     <th className="px-1.5 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
                     <th className="px-1.5 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
                     <th className="px-1.5 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Antal</th>
                     {showCosts && (
                       <th className="px-1.5 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Värde</th>
                     )}
-                    <th className="px-1.5 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ank.</th>
-                    <th className="px-1.5 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">B.före</th>
-                    <th className="px-1.5 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Färskh.</th>
+                    <th className="px-1.5 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ank.</th>
+                    <th className="px-1.5 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">B.före</th>
+                    <th className="px-1.5 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Färskh.</th>
                   </tr>
                 </thead>
                 {cats.map(([cat, list]) => {
