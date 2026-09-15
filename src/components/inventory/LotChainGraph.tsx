@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { movementLabel } from "@/hooks/useStockMovements";
-import { gapBetween, sinceNow, stampSv } from "@/lib/dwell";
+import { gapBetween, sinceNow, timeSv } from "@/lib/dwell";
 
 export interface ChainMovement {
   id: string;
@@ -29,18 +29,16 @@ const nf = (n: number, d = 1) =>
 const namnPa = (m: ChainMovement) =>
   m.staff ? `${m.staff.first_name ?? ""} ${m.staff.last_name ?? ""}`.trim() || "System" : "System";
 
-const DX = 58;
-const DY = 70;
-const X0 = 34;
-const Y0 = 34;
-const GREN_DX = 52;
-const GREN_DY = 34;
+const datumSv = (iso: string) =>
+  new Date(iso).toLocaleDateString("sv-SE", { weekday: "short", day: "2-digit", month: "2-digit" });
+
+const arSv = (iso: string) => new Date(iso).toLocaleDateString("sv-SE", { year: "numeric" });
 
 /**
- * Visuell transaktionskedja enligt skissen: en diagonal kedja av händelser
- * där tiden mellan dem står på linjen, uttag grenar av snett nedåt, och
- * kedjan slutar i en "Live"-nod med aktuellt saldo. Klick på en nod öppnar
- * "All info"-rutan.
+ * Flödesträd för ett parti: en lodrät tidslinje där varje händelse är ett eget
+ * kort med datum, tid, mängd, saldo, plats och person. Inleveranser ligger i
+ * stammen, uttag grenar in åt höger, och tiden mellan händelserna står på
+ * linjen. Ingen text kan krocka eftersom allt ligger i ett rutnät.
  */
 export default function LotChainGraph({
   movements,
@@ -53,22 +51,14 @@ export default function LotChainGraph({
 
   const noder = useMemo(() => {
     let saldo = 0;
-    let stam = 0;
     return movements.map((m, i) => {
       const kg = Number(m.quantity_kg || 0);
       saldo += kg;
-      const gren = kg < 0;
-      const punkt = { x: X0 + stam * DX, y: Y0 + stam * DY };
-      if (!gren) stam += 1;
       return {
         m,
         kg,
         saldo,
-        gren,
-        x: gren ? punkt.x + GREN_DX : punkt.x,
-        y: gren ? punkt.y + GREN_DY : punkt.y,
-        stamX: punkt.x,
-        stamY: punkt.y,
+        gren: kg < 0,
         gap: i === 0 ? "" : gapBetween(movements[i - 1].created_at, m.created_at),
       };
     });
@@ -79,98 +69,115 @@ export default function LotChainGraph({
   if (!movements.length)
     return <p className="py-4 text-xs text-muted-foreground">Inga rörelser kopplade till partiet ännu.</p>;
 
-  const stamNoder = noder.filter((n) => !n.gren);
-  const sista = stamNoder[stamNoder.length - 1] ?? noder[0];
-  const liveX = sista.stamX + DX;
-  const liveY = sista.stamY + DY;
-  const width = Math.max(liveX + 150, 420);
-  const height = liveY + 60;
   const slutSaldo = noder[noder.length - 1].saldo;
+  const senaste = noder[noder.length - 1].m.created_at;
+  const in_ = noder.filter((n) => n.kg > 0).reduce((s, n) => s + n.kg, 0);
+  const ut = noder.filter((n) => n.kg < 0).reduce((s, n) => s + Math.abs(n.kg), 0);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_250px]">
-      <div className="overflow-auto rounded-md border border-border bg-background p-2">
-        <svg width={width} height={height} style={{ minWidth: width }}>
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+      <div className="rounded-md border border-border bg-background">
+        {/* Sammanfattning */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-b border-border px-3 py-2 text-[11px] sm:grid-cols-4">
+          {[
+            ["Händelser", `${noder.length}`],
+            ["In totalt", `${nf(in_, 1)} kg`],
+            ["Ut totalt", `${nf(ut, 1)} kg`],
+            ["Saldo nu", `${nf(slutSaldo, 1)} kg`],
+          ].map(([k, v]) => (
+            <div key={k}>
+              <p className="uppercase tracking-[0.14em] text-muted-foreground">{k}</p>
+              <p className="font-mono font-semibold tabular-nums text-foreground">{v}</p>
+            </div>
+          ))}
+        </div>
+
+        <ol className="divide-y divide-border/60">
           {noder.map((n, i) => {
-            const forra = i > 0 ? noder[i - 1] : null;
-            const fran = n.gren ? { x: n.stamX, y: n.stamY } : forra ? { x: forra.stamX, y: forra.stamY } : null;
-            const visaLinje = n.gren || i > 0;
-            const mitt = fran ? { x: (fran.x + n.x) / 2, y: (fran.y + n.y) / 2 } : null;
             const aktiv = n.m.id === vald?.m.id;
+            const nyDag = i === 0 || datumSv(noder[i - 1].m.created_at) !== datumSv(n.m.created_at);
             return (
-              <g key={n.m.id}>
-                {visaLinje && fran && (
-                  <line
-                    x1={fran.x}
-                    y1={fran.y}
-                    x2={n.x}
-                    y2={n.y}
-                    stroke="currentColor"
-                    className={n.gren ? "text-rose-500/60" : "text-emerald-600/50"}
-                    strokeWidth={n.gren ? 1 : 1.5}
-                  />
+              <li key={n.m.id}>
+                {n.gap && (
+                  <div className="flex items-center gap-2 px-3 py-1">
+                    <span className="ml-[52px] h-4 w-px bg-border" />
+                    <span className="text-[10px] text-muted-foreground">orörd {n.gap}</span>
+                  </div>
                 )}
-                {mitt && n.gap && (
-                  <text
-                    x={mitt.x + 8}
-                    y={mitt.y - 4}
-                    className="fill-muted-foreground text-[10px]"
-                  >
-                    {n.gap}
-                  </text>
-                )}
-                <circle
-                  cx={n.x}
-                  cy={n.y}
-                  r={aktiv ? 8 : 5.5}
-                  className={n.kg < 0 ? "cursor-pointer fill-rose-500" : "cursor-pointer fill-emerald-600"}
+                <button
+                  type="button"
                   onClick={() => setValdId(n.m.id)}
-                />
-                {aktiv && (
-                  <circle
-                    cx={n.x}
-                    cy={n.y}
-                    r={12}
-                    fill="none"
-                    stroke="currentColor"
-                    className="text-foreground/30"
-                  />
-                )}
-                <text
-                  x={n.x + 14}
-                  y={n.y + 2}
-                  className="cursor-pointer fill-foreground text-[11px] font-medium"
-                  onClick={() => setValdId(n.m.id)}
+                  className={`grid w-full grid-cols-[58px_18px_minmax(0,1fr)] items-start gap-2 px-3 py-2 text-left transition-colors ${
+                    aktiv ? "bg-muted/60" : "hover:bg-muted/30"
+                  }`}
                 >
-                  {movementLabel(n.m.movement_type)}
-                </text>
-                <text x={n.x + 14} y={n.y + 15} className="fill-muted-foreground text-[10px]">
-                  {stampSv(n.m.created_at)} · {n.kg > 0 ? "+" : ""}
-                  {nf(n.kg, 1)} kg
-                  {unitCost != null ? ` · ${nf(Math.abs(n.kg) * unitCost, 0)} ${currency}` : ""}
-                </text>
-              </g>
+                  {/* Tidkolumn */}
+                  <div className="pt-0.5">
+                    {nyDag && (
+                      <p className="text-[10px] font-medium leading-tight text-foreground">{datumSv(n.m.created_at)}</p>
+                    )}
+                    <p className="font-mono text-[11px] leading-tight tabular-nums text-muted-foreground">
+                      {timeSv(n.m.created_at)}
+                    </p>
+                  </div>
+
+                  {/* Stam och punkt */}
+                  <div className="flex h-full flex-col items-center">
+                    <span
+                      className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
+                        n.gren ? "bg-rose-500" : "bg-emerald-600"
+                      } ${aktiv ? "ring-2 ring-foreground/30" : ""}`}
+                    />
+                    {i < noder.length - 1 && <span className="mt-1 w-px flex-1 bg-border" />}
+                  </div>
+
+                  {/* Innehåll */}
+                  <div className={n.gren ? "pl-4" : ""}>
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                      <span className="text-xs font-semibold text-foreground">
+                        {movementLabel(n.m.movement_type)}
+                      </span>
+                      <span
+                        className={`font-mono text-xs font-semibold tabular-nums ${
+                          n.gren ? "text-rose-600" : "text-emerald-700"
+                        }`}
+                      >
+                        {n.kg > 0 ? "+" : ""}
+                        {nf(n.kg, 1)} kg
+                      </span>
+                    </div>
+                    <div className="mt-0.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                      <span>{n.m.storage_locations?.name || "Plats saknas"}</span>
+                      <span>{namnPa(n.m)}</span>
+                      <span className="font-mono tabular-nums">saldo {nf(n.saldo, 1)} kg</span>
+                      {unitCost != null && (
+                        <span className="font-mono tabular-nums">
+                          {nf(Math.abs(n.kg) * unitCost, 0)} {currency}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              </li>
             );
           })}
 
-          {/* Live-nod: aktuellt läge */}
-          <line
-            x1={sista.stamX}
-            y1={sista.stamY}
-            x2={liveX}
-            y2={liveY}
-            stroke="currentColor"
-            className="text-foreground/40"
-            strokeWidth={1.5}
-          />
-          <circle cx={liveX} cy={liveY} r={7} className="fill-primary" />
-          <text x={liveX + 14} y={liveY - 2} className="fill-foreground text-[11px] font-semibold">
-            Live · {nf(slutSaldo, 1)} kg
-          </text>
-          <text x={liveX + 14} y={liveY + 12} className="fill-muted-foreground text-[10px]">
-            senaste händelsen {sinceNow(noder[noder.length - 1].m.created_at)} sedan
-          </text>
-        </svg>
+          {/* Live-läge */}
+          <li className="grid grid-cols-[58px_18px_minmax(0,1fr)] items-start gap-2 px-3 py-2">
+            <p className="pt-0.5 text-[10px] text-muted-foreground">nu</p>
+            <div className="flex justify-center">
+              <span className="mt-1 h-2.5 w-2.5 rounded-full bg-primary" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-foreground">
+                {slutSaldo > 0 ? `I lager · ${nf(slutSaldo, 1)} kg` : "Slut i lager · 0 kg"}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                senaste händelsen {sinceNow(senaste)} sedan
+              </p>
+            </div>
+          </li>
+        </ol>
       </div>
 
       {/* All info om vald nod */}
@@ -182,7 +189,8 @@ export default function LotChainGraph({
             {[
               ["Produkt", productName || "—"],
               ["Parti", lotNumber || "—"],
-              ["Datum och tid", stampSv(vald.m.created_at)],
+              ["Datum", `${datumSv(vald.m.created_at)} ${arSv(vald.m.created_at)}`],
+              ["Klockslag", timeSv(vald.m.created_at)],
               ["Förändring", `${vald.kg > 0 ? "+" : ""}${nf(vald.kg, 1)} kg`],
               ["Saldo efter", `${nf(vald.saldo, 1)} kg`],
               ...(unitCost != null
@@ -198,8 +206,8 @@ export default function LotChainGraph({
               ["Notering", vald.m.note || "—"],
             ].map(([k, v]) => (
               <div key={k} className="flex items-baseline justify-between gap-3">
-                <dt className="text-muted-foreground">{k}</dt>
-                <dd className="text-right font-medium text-foreground">{v}</dd>
+                <dt className="shrink-0 text-muted-foreground">{k}</dt>
+                <dd className="break-words text-right font-medium text-foreground">{v}</dd>
               </div>
             ))}
           </dl>
