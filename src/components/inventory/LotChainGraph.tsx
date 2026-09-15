@@ -154,9 +154,26 @@ export default function LotChainGraph({
         </div>
 
         <ol>
-          {noder.map((n, i) => {
+          {/* Live-läge först: senaste läget högst upp */}
+          <li className="grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-center gap-x-2 border-b-2 border-border px-3 py-3">
+            <span />
+            <div className="flex flex-col items-center">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">nu</p>
+              <span className="my-1 h-4 w-4 rounded-full bg-primary shadow" />
+              <span className="h-4 w-0.5 bg-border" />
+            </div>
+            <div>
+              <p className={`text-sm font-bold ${slutSaldo > 0 ? "text-emerald-700" : "text-rose-600"}`}>
+                {slutSaldo > 0 ? `Finns i lager · ${nf(slutSaldo, 1)} kg` : "Slut i lager · 0 kg"}
+              </p>
+              <p className="text-[11px] text-muted-foreground">senaste händelsen {sinceNow(senaste)} sedan</p>
+            </div>
+          </li>
+
+          {[...noder].reverse().map((n, j) => {
+            const i = noder.length - 1 - j;
             const aktiv = n.m.id === vald?.m.id;
-            const nyDag = i === 0 || datumSv(noder[i - 1].m.created_at) !== datumSv(n.m.created_at);
+            const nyDag = j === 0 || datumSv(noder[i + 1].m.created_at) !== datumSv(n.m.created_at);
             const steg = i + 1;
             const kort = (
               <button
