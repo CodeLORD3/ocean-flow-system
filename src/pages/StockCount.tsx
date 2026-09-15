@@ -1310,10 +1310,11 @@ export default function StockCount() {
                     const quality = (line?.quality ?? "") as string;
                     return (
                       <div key={r.key} className="border-x border-b border-grid-line bg-card">
+                        <div className="flex w-full items-center">
                         <button
                           type="button"
                           onClick={() => setEditKey(editKey === r.key ? null : r.key)}
-                          className="flex w-full items-center px-1.5 py-0.5 text-left hover:bg-muted/50"
+                          className="flex min-w-0 flex-1 items-center px-1.5 py-0.5 text-left hover:bg-muted/50"
                         >
                           <span className="min-w-0 flex-1 truncate border-r border-grid-line/70 pr-1.5 text-[11px] font-medium">
                             {r.productName}
@@ -1334,6 +1335,21 @@ export default function StockCount() {
                             {fmtQty(counted, r.unit)}
                           </span>
                         </button>
+                        {/* Ta bort varan direkt från den färdiga listan */}
+                        <button
+                          type="button"
+                          disabled={locked || !session}
+                          title="Ta bort varan från inventeringen"
+                          aria-label="Ta bort varan från inventeringen"
+                          onClick={() => {
+                            removeCountedLine(r);
+                            if (editKey === r.key) setEditKey(null);
+                          }}
+                          className="flex h-7 w-8 shrink-0 items-center justify-center border-l border-grid-line/70 text-destructive hover:bg-destructive/10 disabled:opacity-40"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                        </div>
 
                         {editKey === r.key && (
                           <div className="flex items-center gap-1 bg-muted/30 px-2 py-1.5">
