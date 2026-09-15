@@ -183,6 +183,7 @@ function WholesaleOrderAccordionRow({
   selected,
   stores,
   photoCount = 0,
+  highlight = false,
   onToggle,
   onSelect,
   onStatusChange,
