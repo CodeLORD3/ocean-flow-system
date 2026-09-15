@@ -392,6 +392,48 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                 </div>
               )}
 
+              {visaProduktval ? (
+                <>
+                  <p className="border-b border-border pb-2 text-[11px] text-muted-foreground">
+                    {produktTraffar.length} produkter matchar — välj produkt för att se dess partier
+                  </p>
+                  <div className="max-h-[calc(100dvh-20rem)] min-h-[240px] overflow-y-auto rounded-md border border-border">
+                    {produktTraffar.map((p) => (
+                      <button
+                        key={p.namn}
+                        onClick={() => setValdProdukt(p.namn)}
+                        className="flex w-full items-center gap-3 border-b border-border/60 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/40"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-foreground">{p.namn}</p>
+                          {p.kategori && (
+                            <p className="truncate text-[10px] uppercase tracking-wider text-muted-foreground">
+                              {p.kategori}
+                            </p>
+                          )}
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="font-mono text-sm tabular-nums text-foreground">{nf(p.kg, 1)} kg</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {p.antal} {p.antal === 1 ? "parti" : "partier"}
+                          </p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+              {valdProdukt && (
+                <button
+                  onClick={() => setValdProdukt(null)}
+                  className="flex w-fit items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="h-3 w-3" /> Alla produkter · visar {valdProdukt}
+                </button>
+              )}
+
               <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
                 <p className="text-[11px] text-muted-foreground">
                   {filtered.length} {filtered.length === 1 ? "parti" : "partier"}
