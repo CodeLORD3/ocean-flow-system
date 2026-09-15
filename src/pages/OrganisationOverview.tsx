@@ -444,8 +444,8 @@ export default function OrganisationOverview() {
         </div>
       )}
 
-      {/* Shop: daglig lagerrapport */}
-      {isShop && <StockReportCard storeId={activeStoreId!} storeName={activeStoreName} />}
+      {/* Shop: inventeringsrapport — samma vy som Lager → Inventering */}
+      {isShop && <InventoryReportCard storeName={activeStoreName} />}
 
 
 
