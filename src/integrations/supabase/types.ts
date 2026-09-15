@@ -9833,6 +9833,91 @@ export type Database = {
           },
         ]
       }
+      pricing_rules: {
+        Row: {
+          active: boolean
+          category: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          labour_per_unit: number
+          method: string
+          note: string | null
+          product_id: string | null
+          rounding: string
+          scope_type: string
+          stage: string
+          store_id: string | null
+          updated_at: string
+          valid_from: string
+          value: number
+          vat_rate: number
+          yield_pct: number | null
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          labour_per_unit?: number
+          method?: string
+          note?: string | null
+          product_id?: string | null
+          rounding?: string
+          scope_type?: string
+          stage: string
+          store_id?: string | null
+          updated_at?: string
+          valid_from?: string
+          value?: number
+          vat_rate?: number
+          yield_pct?: number | null
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          labour_per_unit?: number
+          method?: string
+          note?: string | null
+          product_id?: string | null
+          rounding?: string
+          scope_type?: string
+          stage?: string
+          store_id?: string | null
+          updated_at?: string
+          valid_from?: string
+          value?: number
+          vat_rate?: number
+          yield_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_rules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_rules_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "pricing_rules_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       processing_surcharges: {
         Row: {
           applies: boolean
@@ -17463,6 +17548,55 @@ export type Database = {
           sku: string
           stock_value: number
         }[]
+      }
+      pricing_apply: {
+        Args: {
+          _base: number
+          _rule: Database["public"]["Tables"]["pricing_rules"]["Row"]
+        }
+        Returns: number
+      }
+      pricing_calc: {
+        Args: { _product_id: string; _store_id?: string }
+        Returns: Json
+      }
+      pricing_pick_rule: {
+        Args: {
+          _category: string
+          _product_id: string
+          _stage: string
+          _store_id: string
+        }
+        Returns: {
+          active: boolean
+          category: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          labour_per_unit: number
+          method: string
+          note: string | null
+          product_id: string | null
+          rounding: string
+          scope_type: string
+          stage: string
+          store_id: string | null
+          updated_at: string
+          valid_from: string
+          value: number
+          vat_rate: number
+          yield_pct: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pricing_rules"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      pricing_round: {
+        Args: { _rounding: string; _value: number }
+        Returns: number
       }
       product_export_documentation_required: {
         Args: { _hs_code: string }
