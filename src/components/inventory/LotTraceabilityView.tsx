@@ -663,33 +663,64 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                     const foregProdukt = foregaende
                       ? foregaende.products?.name || foregaende.commercial_name || "—"
                       : null;
+                    const live = arLive(l);
+                    const kvar = liveKg(l);
+                    const kvarVarde = l.unit_cost != null ? kvar * Number(l.unit_cost) : null;
+                    /** Utan sökning delas listan i "finns i lager" och "finns inte längre". */
+                    const grupperaPaLive = !q.trim() && !kategori && !valdProdukt;
                     /** Vid sökning grupperas partierna under produktnamnet, annars på tid. */
                     const grupperaPaProdukt = !!q.trim() && !valdProdukt;
-                    const visaRubrik = grupperaPaProdukt
-                      ? produktNamn !== foregProdukt
-                      : ["senaste", "aldst", "andrad"].includes(sort) && grupp.key !== foregGrupp?.key;
-                    const rubrik = grupperaPaProdukt ? produktNamn : grupp.label;
+                    const visaRubrik = grupperaPaLive
+                      ? i === 0 || arLive(foregaende) !== live
+                      : grupperaPaProdukt
+                        ? produktNamn !== foregProdukt
+                        : ["senaste", "aldst", "andrad"].includes(sort) && grupp.key !== foregGrupp?.key;
+                    const rubrik = grupperaPaLive
+                      ? live
+                        ? `Finns i lager nu · ${liveAntal} ${liveAntal === 1 ? "parti" : "partier"}`
+                        : `Finns inte längre · ${filtered.length - liveAntal} slut`
+                      : grupperaPaProdukt
+                        ? produktNamn
+                        : grupp.label;
                     const kol = tidsKolumn(tidsstampel);
                     return (
                       <div key={l.id}>
                         {visaRubrik && (
-                          <p className="sticky top-0 z-10 border-b border-border/60 bg-muted/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur">
+                          <p
+                            className={`sticky top-0 z-10 border-b px-3 py-1 text-[10px] font-semibold uppercase tracking-wider backdrop-blur ${
+                              grupperaPaLive
+                                ? live
+                                  ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                                  : "border-destructive/30 bg-destructive/15 text-destructive"
+                                : "border-border/60 bg-muted/70 text-muted-foreground"
+                            }`}
+                          >
                             {rubrik}
                           </p>
                         )}
 
                       <button
                         onClick={() => setSelectedId(l.id)}
-                        className="flex w-full items-center gap-3 border-b border-border/60 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/40"
+                        className={`flex w-full items-center gap-3 border-b border-border/60 px-3 py-3 text-left transition-colors last:border-0 ${
+                          live ? "hover:bg-muted/40" : "bg-destructive/5 hover:bg-destructive/10"
+                        }`}
                       >
                         <div className="w-[74px] shrink-0 border-r border-border/60 pr-2 font-mono text-[10px] leading-tight tabular-nums text-muted-foreground">
                           <p className="font-semibold text-foreground">{kol.veckodag}</p>
                           <p>{kol.datum}</p>
                           <p>{kol.tid}</p>
                         </div>
-                        <span className={`h-8 w-1 shrink-0 rounded-full ${hallbarhetsFarg(d).split(" ")[0]}`} />
+                        <span
+                          className={`h-8 w-1 shrink-0 rounded-full ${
+                            live ? hallbarhetsFarg(d).split(" ")[0] : "bg-destructive"
+                          }`}
+                        />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-mono text-sm font-semibold text-foreground">
+                          <p
+                            className={`truncate font-mono text-sm font-semibold ${
+                              live ? "text-foreground" : "text-destructive"
+                            }`}
+                          >
                             {l.lot_number || "Utan partinummer"}
                           </p>
                           <p className="truncate text-[11px] text-muted-foreground">
@@ -704,16 +735,39 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                           </p>
                         </div>
 
-                        {l.best_before && (
+                        <span
+                          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                            live
+                              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                              : "bg-destructive/15 text-destructive"
+                          }`}
+                        >
+                          {live ? "Finns" : "Finns inte"}
+                        </span>
+
+                        {l.best_before && live && (
                           <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${hallbarhetsFarg(d)}`}>
                             {d !== null && d < 0 ? `${Math.abs(d)} d sedan` : `${d} d kvar`}
                           </span>
                         )}
                         <div className="shrink-0 text-right">
-                          <p className="font-mono text-sm tabular-nums text-foreground">{nf(kg, 1)} kg</p>
-                          {showCosts && varde != null && (
-                            <p className="font-mono text-[10px] tabular-nums text-muted-foreground">
-                              {nf(varde, 0)} {currency}
+                          <p
+                            className={`font-mono text-sm tabular-nums ${
+                              live ? "text-foreground" : "text-destructive"
+                            }`}
+                          >
+                            {live ? `${nf(kvar, 1)} kg` : "0 kg"}
+                          </p>
+                          {live ? (
+                            showCosts &&
+                            kvarVarde != null && (
+                              <p className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                                {nf(kvarVarde, 0)} {currency}
+                              </p>
+                            )
+                          ) : (
+                            <p className="text-[10px] text-destructive">
+                              slut{andrad ? ` ${String(andrad).slice(0, 10)}` : ""}
                             </p>
                           )}
                         </div>
