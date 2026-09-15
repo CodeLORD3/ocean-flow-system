@@ -74,9 +74,63 @@ export default function LotChainGraph({
   const in_ = noder.filter((n) => n.kg > 0).reduce((s, n) => s + n.kg, 0);
   const ut = noder.filter((n) => n.kg < 0).reduce((s, n) => s + Math.abs(n.kg), 0);
 
+  // Var ligger partiet just nu: saldo per lagerplats, senaste händelse per plats.
+  const perPlats = new Map<string, { kg: number; senast: string }>();
+  for (const n of noder) {
+    const namn = n.m.storage_locations?.name || "Plats saknas";
+    const rad = perPlats.get(namn) ?? { kg: 0, senast: n.m.created_at };
+    rad.kg += n.kg;
+    if (new Date(n.m.created_at) > new Date(rad.senast)) rad.senast = n.m.created_at;
+    perPlats.set(namn, rad);
+  }
+  const platser = [...perPlats.entries()]
+    .filter(([, v]) => Math.abs(v.kg) > 0.001)
+    .sort((a, b) => b[1].kg - a[1].kg);
+
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
       <div className="rounded-md border border-border bg-background">
+        {/* Var ligger partiet just nu */}
+        <div
+          className={`border-b px-3 py-3 ${
+            platser.length ? "border-emerald-600/30 bg-emerald-600/5" : "border-rose-600/30 bg-rose-600/5"
+          }`}
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Var ligger partiet just nu
+          </p>
+          {platser.length ? (
+            <>
+              <p className="mt-1 text-sm font-semibold text-emerald-700">
+                {platser.length === 1 ? "1 lagerplats" : `${platser.length} lagerplatser`} ·{" "}
+                <span className="font-mono tabular-nums">{nf(slutSaldo, 1)} kg</span> totalt
+              </p>
+              <ul className="mt-2 space-y-1">
+                {platser.map(([namn, v]) => (
+                  <li
+                    key={namn}
+                    className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 rounded border border-emerald-600/20 bg-background px-2 py-1.5"
+                  >
+                    <span className="text-xs font-semibold text-foreground">{namn}</span>
+                    <span className="flex items-baseline gap-3">
+                      <span className="text-[10px] text-muted-foreground">
+                        senast rört {datumSv(v.senast)} {timeSv(v.senast)}
+                      </span>
+                      <span className="font-mono text-xs font-semibold tabular-nums text-emerald-700">
+                        {nf(v.kg, 1)} kg
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="mt-1 text-sm font-semibold text-rose-600">
+              Partiet ligger inte på någon lagerplats – slut i lager (0 kg)
+            </p>
+          )}
+        </div>
+
         {/* Sammanfattning */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-b border-border px-3 py-2 text-[11px] sm:grid-cols-4">
           {[
