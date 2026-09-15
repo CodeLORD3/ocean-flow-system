@@ -335,6 +335,7 @@ export default function WholesaleOrders() {
   const selectedOrder = useMemo(() => selectedOrderId ? orders.find((o: any) => o.id === selectedOrderId) || null : null, [selectedOrderId, orders]);
   // Djuplänk från lagret: /orders?order=<id> öppnar och skrollar till ordern.
   const location = useLocation();
+  const navigate = useNavigate();
   React.useEffect(() => {
     const wanted = new URLSearchParams(location.search).get("order");
     if (!wanted) return;
