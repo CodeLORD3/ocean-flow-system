@@ -138,12 +138,12 @@ export default function StockPricePoster() {
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card id="prislista" className="scroll-mt-24 border-2 border-primary shadow-lg ring-4 ring-primary/15">
+      <CardHeader className="rounded-t-lg border-b border-primary/20 bg-primary/5 pb-3">
         <CardTitle className="text-lg flex flex-wrap items-center gap-2">
           <LayoutTemplate className="h-5 w-5 text-primary" />
-          Prislista att sätta upp
-          <Badge variant="outline">{totalRows} varor</Badge>
+          <span className="text-primary">Prislista att sätta upp</span>
+          <Badge className="bg-primary text-primary-foreground">{totalRows} varor</Badge>
           <div className="ml-auto flex gap-2">
             <Button size="sm" variant="outline" className="gap-1.5" onClick={print}>
               <Printer className="h-3.5 w-3.5" /> Skriv ut
