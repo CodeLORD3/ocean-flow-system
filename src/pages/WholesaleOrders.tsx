@@ -167,6 +167,7 @@ type WholesaleOrderAccordionRowProps = {
   selected: boolean;
    stores: any[];
    photoCount?: number;
+   highlight?: boolean;
    onToggle: (id: string) => void;
   onSelect: (id: string) => void;
   onStatusChange: (id: string, status: string) => void;
@@ -182,6 +183,7 @@ function WholesaleOrderAccordionRow({
   selected,
   stores,
   photoCount = 0,
+  highlight = false,
   onToggle,
   onSelect,
   onStatusChange,
@@ -207,8 +209,14 @@ function WholesaleOrderAccordionRow({
   );
 
   return (
-    <div id={`wholesale-order-${order.id}`} className={`relative overflow-hidden border-x border-b border-grid-line transition-all duration-200 ${rowTone.row} ${open ? "z-10 my-3 rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] pl-2.5 shadow-[0_10px_30px_-18px_hsl(var(--primary)/0.55)]" : ""} ${selected && !open ? "ring-1 ring-inset ring-primary" : ""}`}>
+    <div id={`wholesale-order-${order.id}`} className={`relative overflow-hidden border-x border-b border-grid-line transition-all duration-200 ${rowTone.row} ${open ? "z-10 my-3 rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] pl-2.5 shadow-[0_10px_30px_-18px_hsl(var(--primary)/0.55)]" : ""} ${selected && !open ? "ring-1 ring-inset ring-primary" : ""} ${highlight ? "z-20 ring-2 ring-warning ring-offset-2 ring-offset-background" : ""}`}>
       {open && <span className="pointer-events-none absolute bottom-2 left-1.5 top-2 w-1.5 rounded-full bg-primary/80" aria-hidden />}
+      {highlight && (
+        <div className="flex items-center gap-2 border-b border-warning/40 bg-warning/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-warning-foreground">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-warning" aria-hidden />
+          Hitkommen från lagret — {order.stores?.name || "butik"}
+        </div>
+      )}
 
       <div className="flex min-w-0 items-stretch">
         {!open && <div className={`w-1 shrink-0 ${rowTone.edge}`} aria-hidden />}
@@ -336,6 +344,7 @@ export default function WholesaleOrders() {
   // Djuplänk från lagret: /orders?order=<id> öppnar och skrollar till ordern.
   const location = useLocation();
   const navigate = useNavigate();
+  const [deepLinkOrderId, setDeepLinkOrderId] = useState<string | null>(null);
   React.useEffect(() => {
     const wanted = new URLSearchParams(location.search).get("order");
     if (!wanted) return;
@@ -343,11 +352,24 @@ export default function WholesaleOrders() {
     setSearch("");
     setStatusFilter("Alla");
     setStoreFilter("alla");
+    setShowHistory(true);
     setExpandedOrderIds(new Set([wanted]));
-    const t = setTimeout(() => {
-      document.getElementById(`wholesale-order-${wanted}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 300);
-    return () => clearTimeout(t);
+    setDeepLinkOrderId(wanted);
+    let tries = 0;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const tick = () => {
+      const el = document.getElementById(`wholesale-order-${wanted}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Skrolla en gång till när raden expanderat och layouten satt sig.
+        timers.push(setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 600));
+        return;
+      }
+      if (tries++ < 25) timers.push(setTimeout(tick, 200));
+    };
+    timers.push(setTimeout(tick, 200));
+    timers.push(setTimeout(() => setDeepLinkOrderId(null), 9000));
+    return () => timers.forEach(clearTimeout);
   }, [location.search]);
 
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
@@ -920,7 +942,7 @@ export default function WholesaleOrders() {
                 <div className="flex items-center gap-3 border-b-2 border-primary bg-primary/10 px-3 py-2"><span className="text-[12px] font-bold uppercase tracking-wide text-foreground">Vecka {week.week}</span><span className="truncate text-[11px] text-muted-foreground">{rangeLabel([...week.days.keys()])}</span><span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">{week.count} order</span></div>
                 {[...week.days.entries()].map(([day, dayOrders]) => <div key={day} className={day === todayIso ? "bg-primary/[0.04]" : undefined}>
                   <div className={`flex items-center gap-2 border-b px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide ${day === todayIso ? "border-primary/40 bg-primary/15 text-foreground" : "border-grid-line bg-muted text-muted-foreground"}`}><span className="truncate">{dayLabel(day)}</span>{day === todayIso && <Badge className="rounded-sm px-1.5 py-0 text-[10px]">Idag</Badge>}<span className="font-mono normal-case tabular-nums">{dayOrders.length} order</span></div>
-                  {dayOrders.map((order: any) => <WholesaleOrderAccordionRow key={order.id} order={order} day={day} open={expandedOrderIds.has(order.id)} selected={marked.includes(order.id)} stores={stores} photoCount={photoCounts?.[order.id] ?? 0} onToggle={toggleExpandOrder} onSelect={toggleMarked} onStatusChange={handleOrderStatusChange} onPrint={setPackingSlipOrder} onArchive={setArchiveConfirmOrder} onClose={collapseOrder} />)}
+                  {dayOrders.map((order: any) => <WholesaleOrderAccordionRow key={order.id} order={order} day={day} open={expandedOrderIds.has(order.id)} selected={marked.includes(order.id)} stores={stores} photoCount={photoCounts?.[order.id] ?? 0} highlight={deepLinkOrderId === order.id} onToggle={toggleExpandOrder} onSelect={toggleMarked} onStatusChange={handleOrderStatusChange} onPrint={setPackingSlipOrder} onArchive={setArchiveConfirmOrder} onClose={collapseOrder} />)}
                 </div>)}
               </div>)}
               {historicOrders.length > 0 && <div className="border-t border-grid-line">
@@ -933,7 +955,7 @@ export default function WholesaleOrders() {
                   <div className="flex items-center gap-3 border-b border-grid-line bg-muted/40 px-3 py-2"><span className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground">Vecka {week.week}</span><span className="truncate text-[11px] text-muted-foreground">{rangeLabel([...week.days.keys()])}</span><span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">{week.count} order</span></div>
                   {[...week.days.entries()].map(([day, dayOrders]) => <div key={day}>
                     <div className="flex items-center gap-2 border-b border-grid-line bg-muted px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><span className="truncate">{dayLabel(day)}</span><span className="font-mono normal-case tabular-nums">{dayOrders.length} order</span></div>
-                    {dayOrders.map((order: any) => <WholesaleOrderAccordionRow key={order.id} order={order} day={day} open={expandedOrderIds.has(order.id)} selected={marked.includes(order.id)} stores={stores} photoCount={photoCounts?.[order.id] ?? 0} onToggle={toggleExpandOrder} onSelect={toggleMarked} onStatusChange={handleOrderStatusChange} onPrint={setPackingSlipOrder} onArchive={setArchiveConfirmOrder} onClose={collapseOrder} />)}
+                    {dayOrders.map((order: any) => <WholesaleOrderAccordionRow key={order.id} order={order} day={day} open={expandedOrderIds.has(order.id)} selected={marked.includes(order.id)} stores={stores} photoCount={photoCounts?.[order.id] ?? 0} highlight={deepLinkOrderId === order.id} onToggle={toggleExpandOrder} onSelect={toggleMarked} onStatusChange={handleOrderStatusChange} onPrint={setPackingSlipOrder} onArchive={setArchiveConfirmOrder} onClose={collapseOrder} />)}
                   </div>)}
                 </div>)}
               </div>}
@@ -1288,12 +1310,18 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
     detailParams.get("order") === order.id ? detailParams.get("line") : null;
   React.useEffect(() => {
     if (!highlightProductId) return;
-    const t = setTimeout(() => {
-      document
-        .getElementById(`order-line-${order.id}-${highlightProductId}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 450);
-    return () => clearTimeout(t);
+    let tries = 0;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const tick = () => {
+      const el = document.getElementById(`order-line-${order.id}-${highlightProductId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      if (tries++ < 25) timers.push(setTimeout(tick, 200));
+    };
+    timers.push(setTimeout(tick, 400));
+    return () => timers.forEach(clearTimeout);
   }, [highlightProductId, order.id]);
   const { data: infiniteStock = true } = useQuery({
     queryKey: ["infinite_stock"],
@@ -1482,7 +1510,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   currentStatus === "Beställd" ? "bg-accent/20" :
                   currentStatus === "Pågående" ? "bg-warning/10" :
                   ""
-                } ${highlightProductId === line.product_id ? "ring-2 ring-inset ring-warning bg-warning/25" : ""}`}>
+                } ${highlightProductId === line.product_id ? "!bg-warning/30 ring-2 ring-inset ring-warning font-semibold" : ""}`}>
                    <td className="min-w-0 px-2 py-0.5 font-medium text-foreground">
                      <div className="flex min-w-0 items-center gap-2">
                        <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="h-5 w-7 shrink-0" />
