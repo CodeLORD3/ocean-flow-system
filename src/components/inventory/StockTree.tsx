@@ -577,17 +577,19 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
         <div ref={storeDetailsRef} className="scroll-mt-24">
           {mapStore ? (
             <div className="mt-3 rounded-lg border border-border bg-card p-3">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div className="sticky top-14 z-10 -mx-3 -mt-3 mb-2 flex flex-wrap items-center justify-between gap-2 rounded-t-lg border-b border-border bg-card px-3 py-2">
                 <p className="flex items-center gap-1.5 text-xs font-semibold">
                   <Store className="h-3.5 w-3.5 text-primary" aria-hidden />
                   {storeName[mapStore] ?? "Enhet"}
                 </p>
                 <Button
                   size="sm"
-                  variant="ghost"
-                  className="h-6 text-[11px]"
-                  onClick={() => setMapStore(null)}
+                  variant="outline"
+                  className="h-7 gap-1 text-[11px]"
+                  onClick={() => closeStore()}
                 >
+                  <X className="h-3.5 w-3.5" aria-hidden />
+                  Stäng (Esc)
                   Stäng
                 </Button>
               </div>
