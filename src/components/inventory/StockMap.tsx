@@ -12,6 +12,9 @@ interface Props {
   /** Rader från product_stock_locations med storage_locations + products. */
   stock: any[];
   showValue?: boolean;
+  /** Vald enhet — styrs utifrån när kartan ersätter enhetsrutorna. */
+  selectedStoreId?: string | null;
+  onSelect?: (storeId: string | null) => void;
 }
 
 type Point = {
@@ -33,9 +36,14 @@ const moneyFmt = (v: number) => `${Number(v || 0).toLocaleString("sv-SE", { maxi
  * Europakarta över alla enheter med lager. Visar var varje ställe ligger och
  * hur mycket som finns där just nu — klick på en prick visar fördelningen per nivå.
  */
-export default function StockMap({ stock, showValue = true }: Props) {
+export default function StockMap({ stock, showValue = true, selectedStoreId, onSelect }: Props) {
   const { data: stores = [] } = useStores();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [internal, setInternal] = useState<string | null>(null);
+  const selected = selectedStoreId !== undefined ? selectedStoreId : internal;
+  const setSelected = (id: string | null) => {
+    setInternal(id);
+    onSelect?.(id);
+  };
 
   const points = useMemo<Point[]>(() => {
     const agg = new Map<string, Point>();

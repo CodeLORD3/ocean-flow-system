@@ -69,6 +69,8 @@ const LEVEL_ICON: Record<LocationLevel, any> = {
  */
 export default function StockTree({ stock, stores, showValue = true, onFocusLevel, canMove = true }: StockTreeProps) {
   const [open, setOpen] = useState<string | null>(null);
+  /** Vald enhet på lagerkartan (ersätter butiksrutorna). */
+  const [mapStore, setMapStore] = useState<string | null>(null);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [moving, setMoving] = useState<null | "grossistlager" | "tillverkningslager">(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
@@ -523,24 +525,31 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
 
       <Connector />
 
-      {/* 4. Butikslager */}
+      {/* 4. Butikslager — karta i stället för rutor */}
       <div className="rounded-lg border border-dashed border-border p-2">
         <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold">
           <Store className="h-3.5 w-3.5 text-primary" aria-hidden />
-          Butikslager
+          Butikslager — välj enhet på kartan
         </p>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {stores.map((s) => (
+        <StockMap
+          stock={stock}
+          showValue={showValue}
+          selectedStoreId={mapStore}
+          onSelect={setMapStore}
+        />
+        {mapStore ? (
+          <div className="mt-2">
             <Card
-              key={s.id}
-              n={node("butik", `butik:${s.id}`, s.name, rowsForStore("butik", s.id), "Butikens eget lager")}
+              n={node(
+                "butik",
+                `butik:${mapStore}`,
+                storeName[mapStore] ?? "Enhet",
+                rowsForStore("butik", mapStore),
+                "Butikens eget lager",
+              )}
             />
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-3">
-        <StockMap stock={stock} showValue={showValue} />
+          </div>
+        ) : null}
       </div>
     </div>
   );
