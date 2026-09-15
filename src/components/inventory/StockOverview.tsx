@@ -351,37 +351,52 @@ export default function StockOverview({
         const qValue = o.quantity * unitCost;
         kg += qKg;
         value += qValue;
-        if (o.kind === "packed") packedKg += qKg;
+        const isPacked = o.kind === "packed";
+        if (isPacked) {
+          packedKg += qKg;
+          packedValue += qValue;
+        }
         const d = o.wantedDate ? parseISO(o.wantedDate) : null;
         const start = d ? startOfISOWeek(d) : null;
         const key = start ? format(start, "yyyy-MM-dd") : "utan-datum";
-        const entry =
-          weeks.get(key) ??
-          {
-            key,
-            label: d ? `v. ${getISOWeek(d)}` : "Utan datum",
-            range: start
-              ? `${format(start, "d MMM", { locale: sv })} – ${format(endOfISOWeek(start), "d MMM", { locale: sv })}`
-              : "Leveransdatum saknas",
-            kg: 0,
-            value: 0,
-          };
+        const meta = {
+          key,
+          label: d ? `v. ${getISOWeek(d)}` : "Utan datum",
+          range: start
+            ? `${format(start, "d MMM", { locale: sv })} – ${format(endOfISOWeek(start), "d MMM", { locale: sv })}`
+            : "Leveransdatum saknas",
+          kg: 0,
+          value: 0,
+        };
+        const entry = weeks.get(key) ?? { ...meta };
         entry.kg += qKg;
         entry.value += qValue;
         weeks.set(key, entry);
+        if (isPacked) {
+          const pEntry = packedWeeks.get(key) ?? { ...meta };
+          pEntry.kg += qKg;
+          pEntry.value += qValue;
+          packedWeeks.set(key, pEntry);
+        }
       }
     }
     const list = Array.from(weeks.values()).sort((a, b) => a.key.localeCompare(b.key));
     const maxWeekKg = Math.max(1, ...list.map((w) => w.kg));
+    const packedList = Array.from(packedWeeks.values()).sort((a, b) => a.key.localeCompare(b.key));
     return {
       kg,
       value,
       packedKg,
+      packedValue,
       restKg: Math.max(0, kg - packedKg),
       kgPct: kpis.qty > 0 ? Math.min(100, (kg / kpis.qty) * 100) : 0,
       valuePct: kpis.value > 0 ? Math.min(100, (value / kpis.value) * 100) : 0,
+      packedKgPct: kpis.qty > 0 ? Math.min(100, (packedKg / kpis.qty) * 100) : 0,
+      packedValuePct: kpis.value > 0 ? Math.min(100, (packedValue / kpis.value) * 100) : 0,
       weeks: list,
       maxWeekKg,
+      packedWeeks: packedList,
+      maxPackedWeekKg: Math.max(1, ...packedList.map((w) => w.kg)),
     };
   }, [filtered, packedByProduct, productsById, kpis.qty, kpis.value]);
 
