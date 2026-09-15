@@ -485,8 +485,8 @@ export default function LotTraceabilityView({
       </div>
 
       {mode === "graf" && <LineageGraphView currency={currency} startLotId={selectedId} />}
-      {mode === "historik" && <LotHistoryView currency={currency} />}
-      {mode === "natverk" && <ProductNetworkGraph currency={currency} />}
+      {mode === "historik" && <LotHistoryView currency={currency} locationIds={butiksPlatser} />}
+      {mode === "natverk" && <ProductNetworkGraph currency={currency} locationIds={butiksPlatser} />}
 
       {mode === "flode" && (
         <>
