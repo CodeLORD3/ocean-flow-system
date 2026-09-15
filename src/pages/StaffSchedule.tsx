@@ -138,6 +138,9 @@ export default function StaffSchedule() {
     return map;
   }, [absenceRequests, absenceTypes, visibleStaffIds, days]);
 
+  /** Dygnsvila per pass — nyckeln är passets id. */
+  const restMap = useMemo(() => dailyRestViolations(visibleShifts), [visibleShifts]);
+
   const costForShift = (shift: PlannedShiftRow): number | null => {
     const rate = rateMap.get(shift.staff_id);
     if (rate === null || rate === undefined || !Number.isFinite(rate)) return null;
