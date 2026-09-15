@@ -174,6 +174,8 @@ interface ProductGroup {
   earliestExpiry: string | null;
   daysLeft: number | null;
   status: Status;
+  /** Prisuppgifter som saknas på produkten, t.ex. "inköpspris". */
+  missingPrices: string[];
 }
 
 export default function StockOverview({
@@ -263,6 +265,7 @@ export default function StockOverview({
           earliestExpiry: null,
           daysLeft: null,
           status: "ok",
+          missingPrices: [],
         };
         map.set(r.product_id, g);
       }
@@ -281,10 +284,18 @@ export default function StockOverview({
       g.daysLeft = g.earliestExpiry ? differenceInDays(parseISO(g.earliestExpiry), new Date()) : null;
       const low = g.minStock > 0 && g.totalQty < g.minStock;
       g.status = statusOf(g.daysLeft, low);
+      // Alla varor i lagret måste ha pris — saknas något flaggas raden
+      const master: any = productsById.get(g.product_id) || {};
+      const missing: string[] = [];
+      const purchase = Number(master.day_price) || Number(master.cost_price) || 0;
+      if (purchase <= 0 && g.value <= 0) missing.push("inköpspris");
+      if (showCosts && !(Number(master.wholesale_price) > 0)) missing.push("grossistpris");
+      if (!(Number(master.retail_suggested) > 0)) missing.push("butikspris");
+      g.missingPrices = missing;
       g.lines.sort((a, b) => (a.expiry_date || "9999").localeCompare(b.expiry_date || "9999"));
     }
     return list.sort((a, b) => a.name.localeCompare(b.name, "sv"));
-  }, [rows, productsById]);
+  }, [rows, productsById, showCosts]);
 
   /** Saldo per produkt i produktens egen enhet — underlag för familjevyn. */
   const stockByProduct = useMemo(() => {
@@ -320,6 +331,7 @@ export default function StockOverview({
         if (statusFilter === "expiring" && !(g.daysLeft !== null && g.daysLeft <= 5)) return false;
         if (statusFilter === "expired" && !(g.daysLeft !== null && g.daysLeft < 0)) return false;
         if (statusFilter === "ok" && g.status !== "ok") return false;
+        if (statusFilter === "no_price" && g.missingPrices.length === 0) return false;
       }
       if (!q) return true;
       return (
@@ -336,7 +348,8 @@ export default function StockOverview({
     const qty = filtered.reduce((s, g) => s + g.totalKg, 0);
     const low = filtered.filter((g) => g.minStock > 0 && g.totalQty < g.minStock).length;
     const critical = filtered.filter((g) => g.daysLeft !== null && g.daysLeft <= 2).length;
-    return { value, qty, count: filtered.length, low, critical };
+    const noPrice = filtered.filter((g) => g.missingPrices.length > 0).length;
+    return { value, qty, count: filtered.length, low, critical, noPrice };
   }, [filtered]);
 
   /**
@@ -630,7 +643,7 @@ export default function StockOverview({
           </Card>
         </div>
       ) : (
-      <div className={cn("grid grid-cols-2 gap-1.5 sm:grid-cols-3", showCosts ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
+      <div className={cn("grid grid-cols-2 gap-1.5 sm:grid-cols-3", showCosts ? "lg:grid-cols-6" : "lg:grid-cols-5")}>
         {showCosts && (
           <Card className="shadow-none">
             <CardContent className="px-2 py-1.5">
@@ -693,6 +706,24 @@ export default function StockOverview({
             </p>
             <p className="text-[9px] text-muted-foreground">
               {kpis.critical > 0 ? "Kräver åtgärd" : "Inga varningar"}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className={cn("shadow-none", kpis.noPrice > 0 && "border-destructive/30 bg-destructive/5")}>
+          <CardContent className="px-2 py-1.5">
+            <p className="flex items-center gap-1 text-[9px] uppercase tracking-wide text-muted-foreground">
+              <AlertTriangle className="h-3 w-3 text-destructive" /> Saknar pris
+            </p>
+            <p
+              className={cn(
+                "font-heading text-sm font-bold tabular-nums leading-tight",
+                kpis.noPrice > 0 && "text-destructive",
+              )}
+            >
+              {kpis.noPrice}
+            </p>
+            <p className="text-[9px] text-muted-foreground">
+              {kpis.noPrice > 0 ? "Sätt pris" : "Alla har pris"}
             </p>
           </CardContent>
         </Card>
@@ -880,6 +911,7 @@ export default function StockOverview({
                 { v: "low", l: "Lågt lager" },
                 { v: "expiring", l: "Utgår inom 5 dagar" },
                 { v: "expired", l: "Utgången" },
+                { v: "no_price", l: "Saknar pris" },
               ].map((o) => (
                 <label key={o.v} className="flex items-center gap-2 text-xs cursor-pointer">
                   <Checkbox
@@ -1051,6 +1083,14 @@ export default function StockOverview({
                                    </span>
                                  )}
                                  <span className="text-[10px] text-muted-foreground truncate">{g.category}</span>
+                                {g.missingPrices.length > 0 && (
+                                  <span
+                                    className="inline-flex shrink-0 items-center gap-1 rounded-sm bg-destructive/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-destructive"
+                                    title={`Saknar ${g.missingPrices.join(" och ")} – sätt pris på produkten`}
+                                  >
+                                    <AlertTriangle className="h-3 w-3" /> Pris saknas
+                                  </span>
+                                )}
                                 {g.daysLeft !== null && (
                                   <span
                                     className={cn(
@@ -1217,7 +1257,18 @@ export default function StockOverview({
                           );
                         })()}
                         {showCosts && (
-                          <td className="hidden border-r border-grid-line/70 px-2 text-right tabular-nums whitespace-nowrap sm:table-cell">{fmt(g.value)}</td>
+                          <td className="hidden border-r border-grid-line/70 px-2 text-right tabular-nums whitespace-nowrap sm:table-cell">
+                            {g.value > 0 ? (
+                              fmt(g.value)
+                            ) : (
+                              <span
+                                className="inline-flex items-center gap-1 text-[10px] font-semibold text-destructive"
+                                title="Inköpspris saknas – lagervärdet kan inte räknas"
+                              >
+                                <AlertTriangle className="h-3 w-3" /> Pris saknas
+                              </span>
+                            )}
+                          </td>
                         )}
                         <td className="hidden border-r border-grid-line/70 px-2 text-center text-xs text-muted-foreground whitespace-nowrap sm:table-cell">
                           {g.earliestExpiry
