@@ -10,6 +10,8 @@ import {
 import "leaflet/dist/leaflet.css";
 import { MapPin, Route, Crosshair, Layers } from "lucide-react";
 import { useStores } from "@/hooks/useStores";
+import { useStoreStockActivity } from "@/hooks/useStoreStockActivity";
+import { activityLabel, activityTone, activityDotColor, isFresh, sinceLabel } from "@/lib/lastActivity";
 import { stockQtyToKg } from "@/lib/units";
 import { LEVEL_LABEL, type LocationLevel } from "@/lib/locations";
 import { cn } from "@/lib/utils";
@@ -36,6 +38,9 @@ type Point = {
   articles: number;
   byLevel: Record<string, number>;
   color: string;
+  /** Senaste lagerhändelse och senaste inventering på enheten. */
+  lastAnyAt: string | null;
+  lastCountAt: string | null;
 };
 
 const kgFmt = (v: number) =>
@@ -135,6 +140,7 @@ function ZoomReadout({ onChange }: { onChange: (z: number) => void }) {
  */
 export default function StockMap({ stock, showValue = true, selectedStoreId, onSelect }: Props) {
   const { data: stores = [] } = useStores();
+  const { data: activity } = useStoreStockActivity();
   const [internal, setInternal] = useState<string | null>(null);
   const selected = selectedStoreId !== undefined ? selectedStoreId : internal;
   const [showRoutes, setShowRoutes] = useState(true);
@@ -161,6 +167,8 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
         articles: 0,
         byLevel: {},
         color: PALETTE[i % PALETTE.length],
+        lastAnyAt: activity?.get(s.id)?.lastAnyAt ?? null,
+        lastCountAt: activity?.get(s.id)?.lastCountAt ?? null,
       });
     });
 
@@ -180,7 +188,7 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
     });
 
     return [...agg.values()].sort((a, b) => b.kg - a.kg);
-  }, [stores, stock]);
+  }, [stores, stock, activity]);
 
   const maxKg = Math.max(1, ...points.map((p) => p.kg));
   const active = points.find((p) => p.storeId === selected) ?? null;
@@ -311,6 +319,11 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
                     opacity={1}
                     className="store-name-label"
                   >
+                    <span
+                      className="mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle"
+                      style={{ background: activityDotColor(p.lastAnyAt) }}
+                      aria-hidden
+                    />
                     <span className="text-[11px] font-semibold">{p.name}</span>
                   </Tooltip>
 
@@ -327,6 +340,13 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
 
                     <span className="font-mono text-[10px] tabular-nums">
                       {has ? `${kgFmt(p.kg)} · ${p.articles} artiklar` : "tomt lager"}
+                    </span>
+                    <br />
+                    <span
+                      className="text-[10px] font-semibold"
+                      style={{ color: activityDotColor(p.lastAnyAt) }}
+                    >
+                      Senast: {activityLabel(p.lastAnyAt)}
                     </span>
                   </Tooltip>
                 </CircleMarker>
@@ -347,6 +367,27 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
                 {kgFmt(active.kg)}
                 {showValue ? ` · ${moneyFmt(active.value)}` : ""} · {active.articles} artiklar
               </p>
+              <div
+                className={cn(
+                  "mt-1.5 rounded-md border px-1.5 py-1 text-[10px]",
+                  activityTone(active.lastAnyAt),
+                )}
+              >
+                <p className="font-semibold">
+                  {isFresh(active.lastAnyAt)
+                    ? "Lagerhändelse inom 24 h"
+                    : active.lastAnyAt
+                      ? "Inget gjort på över 24 h"
+                      : "Ingen lagerhändelse alls"}
+                </p>
+                <p className="font-mono tabular-nums">
+                  Senast: {activityLabel(active.lastAnyAt)}
+                  {sinceLabel(active.lastAnyAt) ? ` · ${sinceLabel(active.lastAnyAt)}` : ""}
+                </p>
+                <p className="font-mono tabular-nums">
+                  Inventering: {activityLabel(active.lastCountAt)}
+                </p>
+              </div>
               <div className="mt-1.5 space-y-0.5">
                 {Object.entries(active.byLevel).length === 0 ? (
                   <p className="text-[10px] text-muted-foreground">Inget lager på enheten just nu.</p>
@@ -415,8 +456,16 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
                   <span className="font-semibold">{p.name}</span>
                   {p.city ? <span className="text-muted-foreground"> · {p.city}</span> : null}
                 </span>
-                <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
-                  {p.kg > 0 ? kgFmt(p.kg) : "—"}
+                <span className="flex shrink-0 flex-col items-end gap-0.5">
+                  <span className="font-mono tabular-nums text-muted-foreground">
+                    {p.kg > 0 ? kgFmt(p.kg) : "—"}
+                  </span>
+                  <span
+                    className="font-mono text-[9px] tabular-nums"
+                    style={{ color: activityDotColor(p.lastAnyAt) }}
+                  >
+                    {activityLabel(p.lastAnyAt)}
+                  </span>
                 </span>
               </button>
             ))}
