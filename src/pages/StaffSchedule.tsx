@@ -212,6 +212,16 @@ export default function StaffSchedule() {
     setDialogOpen(true);
   };
 
+  /** Klick på ett pass väljer det i panelen; klick på tom cell planerar nytt. */
+  const handleShiftClick = (staffId: string, day: string, shiftId?: string) => {
+    if (shiftId) {
+      setSelectedShiftId((current) => (current === shiftId ? null : shiftId));
+      return;
+    }
+    setSelectedShiftId(null);
+    openDialog(staffId, day);
+  };
+
   const shiftPeriod = (delta: number) => {
     const next = new Date(`${anchor}T12:00:00`);
     next.setDate(next.getDate() + delta * 7);
