@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
 import { movementLabel } from "@/hooks/useStockMovements";
-import { Network, Search, Boxes } from "lucide-react";
+import { Network, Search, Boxes, ZoomIn, ZoomOut, Maximize2, Move } from "lucide-react";
 
 const nf = (n: number, d = 1) =>
   Number(n)
@@ -79,6 +79,43 @@ export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: s
   const [q, setQ] = useState("");
   const [onlyStock, setOnlyStock] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [hover, setHover] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [view, setView] = useState({ x: 0, y: 0, w: 1040, h: 900 });
+  const [dragPos, setDragPos] = useState<Record<string, { x: number; y: number }>>({});
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const pan = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
+  const nodeDrag = useRef<{ id: string; dx: number; dy: number } | null>(null);
+
+  /** Skärmkoordinat → graf-koordinat. */
+  const toGraph = useCallback(
+    (clientX: number, clientY: number) => {
+      const rect = svgRef.current?.getBoundingClientRect();
+      if (!rect) return { x: 0, y: 0 };
+      return {
+        x: view.x + ((clientX - rect.left) / rect.width) * view.w,
+        y: view.y + ((clientY - rect.top) / rect.height) * view.h,
+      };
+    },
+    [view],
+  );
+
+  const zoomAt = useCallback((factor: number, gx?: number, gy?: number) => {
+    setView((v) => {
+      const w = Math.min(2600, Math.max(220, v.w * factor));
+      const h = w * (v.h / v.w);
+      const px = gx ?? v.x + v.w / 2;
+      const py = gy ?? v.y + v.h / 2;
+      const rx = (px - v.x) / v.w;
+      const ry = (py - v.y) / v.h;
+      return { x: px - rx * w, y: py - ry * h, w, h };
+    });
+  }, []);
+
+  const resetView = useCallback(() => {
+    setView({ x: 0, y: 0, w: 1040, h: 900 });
+    setDragPos({});
+  }, []);
 
   const { data: products = [], isLoading: loadingProducts } = useQuery({
     queryKey: ["product_network_products"],
