@@ -50,8 +50,18 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
   const loadStaff = async (uid: string | undefined) => {
     if (!uid) {
       setStaff(null);
+      setStaffLoading(false);
       return;
     }
+    setStaffLoading(true);
+    try {
+      await fetchStaff(uid);
+    } finally {
+      setStaffLoading(false);
+    }
+  };
+
+  const fetchStaff = async (uid: string) => {
     // Behörigheten bor i user_scopes. Vyn staff_access sätter ihop personalen
     // med sina scopes, så klienten har ett enda begrepp att läsa.
     // Hämtningen får inte tysta misslyckas — då blir portalvalet tomt.
