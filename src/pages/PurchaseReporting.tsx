@@ -1257,6 +1257,9 @@ export default function PurchaseReporting() {
       }
 
       setUploading(true);
+      // Behövs utanför try: misslyckas tolkningen ska rapporten markeras som
+      // fel i stället för att ligga kvar på "Bearbetar" för alltid.
+      let createdReportId: string | null = null;
       try {
         // Dubblettspärr steg 1: samma fil har redan lästs in.
         const fileHash = await sha256Hex(file);
