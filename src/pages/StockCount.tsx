@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ClipboardCheck, Check, Lock, Printer, Download, Search, Plus, Package, RefreshCw, ChevronDown, ChevronRight, Camera, Loader2, CalendarClock, MessageSquare } from "lucide-react";
+import { ClipboardCheck, Check, Lock, Printer, Download, Search, Plus, Package, RefreshCw, ChevronDown, ChevronRight, Camera, Loader2, CalendarClock, MessageSquare, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
