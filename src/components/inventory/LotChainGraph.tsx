@@ -239,24 +239,11 @@ export default function LotChainGraph({
                       {datumSv(n.m.created_at)}
                     </span>
                     <span className="h-px flex-1 bg-border" />
-                    {i === 0 && (
-                      <span className="rounded-full border border-emerald-600/40 px-1.5 py-px text-[9px] font-bold uppercase text-emerald-700">
-                        start
+                    {j === 0 && (
+                      <span className="rounded-full border border-primary/40 px-1.5 py-px text-[9px] font-bold uppercase text-primary">
+                        senaste
                       </span>
                     )}
-                  </div>
-                )}
-                {n.gap && (
-                  <div className="grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-center gap-x-2 px-3">
-                    <span className="h-px" />
-                    <span className="flex flex-col items-center">
-                      <span className="h-3 w-0.5 bg-border" />
-                      <span className="whitespace-nowrap rounded-full border border-border bg-background px-2 py-px text-[10px] font-medium text-muted-foreground">
-                        orörd {n.gap}
-                      </span>
-                      <span className="h-3 w-0.5 bg-border" />
-                    </span>
-                    <span className="h-px" />
                   </div>
                 )}
                 <div
