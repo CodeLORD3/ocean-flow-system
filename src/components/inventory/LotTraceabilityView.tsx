@@ -200,22 +200,38 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
     },
   });
 
-  /** Senaste händelsen per parti, så listan kan sorteras på "senast ändrad". */
-  const { data: senasteHandelse = {} } = useQuery({
+  /**
+   * Senaste händelsen per parti (för sortering på "senast ändrad") och
+   * verkligt saldo per parti räknat från stock_movements — lagrets enda sanning.
+   */
+  const { data: partiFakta = { senast: {}, saldo: {} } } = useQuery({
     queryKey: ["lots_last_movement"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stock_movements")
-        .select("lot_id, created_at")
+        .select("lot_id, created_at, quantity_kg")
         .not("lot_id", "is", null)
         .order("created_at", { ascending: false })
         .limit(5000);
       if (error) throw error;
-      const map: Record<string, string> = {};
-      for (const r of data as any[]) if (r.lot_id && !map[r.lot_id]) map[r.lot_id] = r.created_at;
-      return map;
+      const senast: Record<string, string> = {};
+      const saldo: Record<string, number> = {};
+      for (const r of data as any[]) {
+        if (!r.lot_id) continue;
+        if (!senast[r.lot_id]) senast[r.lot_id] = r.created_at;
+        saldo[r.lot_id] = (saldo[r.lot_id] || 0) + Number(r.quantity_kg || 0);
+      }
+      for (const k of Object.keys(saldo)) saldo[k] = Math.round(saldo[k] * 1000) / 1000;
+      return { senast, saldo };
     },
   });
+  const senasteHandelse = partiFakta.senast as Record<string, string>;
+  const partiSaldo = partiFakta.saldo as Record<string, number>;
+
+  /** Finns partiet kvar? Saldo från rörelser, annars partiets registrerade mängd. */
+  const liveKg = (l: any) =>
+    partiSaldo[l.id] != null ? partiSaldo[l.id] : Number(l.quantity_kg || 0);
+  const arLive = (l: any) => liveKg(l) > 0.0001;
 
   const { data: movements = [] } = useQuery({
     queryKey: ["lot_movements", selectedId],
