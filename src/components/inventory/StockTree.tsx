@@ -79,6 +79,16 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
 
   /** Rader som följer med det pågående draget (alla ibockade rader). */
   const dragRowsRef = useRef<any[] | null>(null);
+  /** Enhetspanelen under kartan — rullas fram när man väljer en butik. */
+  const storeDetailsRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!mapStore) return;
+    const t = window.setTimeout(
+      () => storeDetailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      120,
+    );
+    return () => window.clearTimeout(t);
+  }, [mapStore]);
   const qc = useQueryClient();
 
   const { data: transfers = [] } = useTransferOrders();
