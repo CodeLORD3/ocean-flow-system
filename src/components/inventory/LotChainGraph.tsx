@@ -18,6 +18,9 @@ interface Props {
   movements: ChainMovement[];
   lotNumber?: string | null;
   productName?: string | null;
+  /** Inköpspris per kilo, för värdet på varje händelse. */
+  unitCost?: number | null;
+  currency?: string;
 }
 
 const nf = (n: number, d = 1) =>
