@@ -28,6 +28,7 @@ type Ev = {
   created_at: string;
   qty: number;
   type: string;
+  label: string;
   lot: string | null;
   lotId: string | null;
   location: string;
