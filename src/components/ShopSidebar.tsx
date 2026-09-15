@@ -89,7 +89,7 @@ const sections: NavSection[] = [
   { label: "Hjälp", items: helpNav },
 ];
 
-export function ShopSidebar() {
+export function ShopSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "offcanvas" } = {}) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const closeMobileSidebar = () => { if (isMobile) setOpenMobile(false); };
   const collapsed = state === "collapsed";
@@ -202,7 +202,7 @@ export function ShopSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r-2 border-r-emerald-700/30" style={{ background: 'hsl(160 30% 12%)' }}>
+    <Sidebar collapsible={collapsible} className="border-r-2 border-r-emerald-700/30" style={{ background: 'hsl(160 30% 12%)' }}>
       <SidebarHeader className="p-4 space-y-2">
         <PortalLogo
           portalName="shop"

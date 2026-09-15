@@ -93,7 +93,7 @@ const sections: NavSection[] = [
   { label: "Organisation", items: orgNav },
 ];
 
-export function ProductionSidebar() {
+export function ProductionSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "offcanvas" } = {}) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const closeMobileSidebar = () => { if (isMobile) setOpenMobile(false); };
   const collapsed = state === "collapsed";
@@ -116,7 +116,7 @@ export function ProductionSidebar() {
   }, [location.pathname]);
 
   return (
-    <Sidebar collapsible="icon" className="border-r-2 border-r-amber-700/30 bg-gradient-to-b from-sidebar-background to-amber-950/10">
+    <Sidebar collapsible={collapsible} className="border-r-2 border-r-amber-700/30 bg-gradient-to-b from-sidebar-background to-amber-950/10">
       <SidebarHeader className="p-4">
         <PortalLogo
           portalName="production"

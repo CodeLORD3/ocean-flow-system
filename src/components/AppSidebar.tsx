@@ -175,7 +175,7 @@ const sections: NavSection[] = [
 const OPEN_KEY = "admin-sidebar-open-sections";
 
 
-export function AppSidebar() {
+export function AppSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "offcanvas" } = {}) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const closeMobileSidebar = () => { if (isMobile) setOpenMobile(false); };
   const collapsed = state === "collapsed";
@@ -282,7 +282,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r-2 border-r-sky-700/30 bg-gradient-to-b from-sidebar-background to-sky-950/10">
+    <Sidebar collapsible={collapsible} className="border-r-2 border-r-sky-700/30 bg-gradient-to-b from-sidebar-background to-sky-950/10">
       <SidebarHeader className="p-4">
         <PortalLogo
           portalName="wholesale"
