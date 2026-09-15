@@ -229,6 +229,8 @@ export default function Inventory() {
     "overview" | "locations" | "movements" | "lots" | "shelflife"
   >("overview");
   const [wasteOpen, setWasteOpen] = useState(false);
+  /** Lagerträdet tar mycket plats — fällt ihop som standard. */
+  const [showTree, setShowTree] = useState(false);
   const [wasteRowId, setWasteRowId] = useState<string | null>(null);
 
 
