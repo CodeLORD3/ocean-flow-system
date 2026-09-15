@@ -92,26 +92,16 @@ serve(async (req) => {
         },
       };
     } else {
-      // For images, try data URL first to avoid URL format issues
-      const lowerUrl = fileUrl.toLowerCase();
-      const isImage = lowerUrl.endsWith(".png") || lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") ||
-        lowerUrl.endsWith(".webp") || lowerUrl.endsWith(".gif");
-
-      if (isImage) {
-        imageContent = {
-          type: "image_url",
-          image_url: { url: fileUrl },
-        };
-      } else {
-        // Unknown format — download and send as data URL
-        const { dataUrl, hash } = await toDataUrl(fileUrl);
-        fileHash = fileHash ?? hash;
-        imageContent = {
-          type: "image_url",
-          image_url: { url: dataUrl },
-        };
-      }
+      // Always download the bytes ourselves — the AI gateway cannot fetch
+      // private storage URLs, which made every image upload fail.
+      const { dataUrl, hash } = await toDataUrl(fileUrl);
+      fileHash = fileHash ?? hash;
+      imageContent = {
+        type: "image_url",
+        image_url: { url: dataUrl },
+      };
     }
+
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
