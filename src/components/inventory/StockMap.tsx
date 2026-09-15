@@ -27,6 +27,8 @@ type Point = {
   storeId: string;
   name: string;
   city: string | null;
+  address: string | null;
+
   /** [lat, lon] — Leaflet-ordning. */
   position: [number, number];
   kg: number;
@@ -151,6 +153,8 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
         storeId: s.id,
         name: s.name,
         city: s.city ?? null,
+        address: s.address ?? null,
+
         position: [lat, lon],
         kg: 0,
         value: 0,
