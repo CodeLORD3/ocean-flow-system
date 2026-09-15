@@ -30,12 +30,16 @@ export default function StockTransformation() {
   const { data: orderedByProduct } = useOrderedByProduct(activeStoreId || null);
 
   const [tab, setTab] = useState<"omvandla" | "historik">("omvandla");
-  const [familyView, setFamilyView] = useState(true);
+  /** Vy: lagerlista per lagerplats (förval), produktgrupper eller produktkort. */
+  const [view, setView] = useState<"lager" | "grupper" | "produkter">("lager");
+  const familyView = view === "grupper";
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("alla");
   const [target, setTarget] = useState<{ id: string; name: string; sku?: string | null; unit?: string | null } | null>(
     null,
   );
+  /** Vald lagerplats när omvandlingen startas från lagerlistan. */
+  const [startLocation, setStartLocation] = useState<string | null>(null);
   /** Förvald målprodukt när omvandlingen startas från en familjeprognos. */
   const [initialTarget, setInitialTarget] = useState<string | null>(null);
 
