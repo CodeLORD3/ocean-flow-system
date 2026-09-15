@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Truck, Factory, Warehouse, Store, ShoppingBasket, Loader2 } from "lucide-react";
+import { ChevronDown, Truck, Factory, Warehouse, Store, ShoppingBasket, Loader2, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
