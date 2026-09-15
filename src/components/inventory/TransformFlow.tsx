@@ -66,6 +66,8 @@ interface Props {
   product: { id: string; name: string; sku?: string | null; unit?: string | null } | null;
   locationId?: string | null;
   storeId?: string | null;
+  /** Tillåtna lagernivåer — grossisten får inte omvandla butikernas eget lager. */
+  allowedLevels?: string[] | null;
   /** Förvald målprodukt, t.ex. från omvandlingsprognosen i familjevyn. */
   initialTargetProductId?: string | null;
   onDone?: () => void;
@@ -82,6 +84,7 @@ export default function TransformFlow({
   product,
   locationId,
   storeId,
+  allowedLevels,
   initialTargetProductId,
   onDone,
 }: Props) {
@@ -124,9 +127,10 @@ export default function TransformFlow({
         (s) =>
           s.product_id === product?.id &&
           Number(s.quantity) > 0 &&
-          (!storeId || s.storage_locations?.store_id === storeId),
+          (!storeId || s.storage_locations?.store_id === storeId) &&
+          (!allowedLevels?.length || allowedLevels.includes(s.storage_locations?.location_type)),
       ),
-    [allStock, product?.id, storeId],
+    [allStock, product?.id, storeId, allowedLevels],
   );
 
   useEffect(() => {
