@@ -461,27 +461,29 @@ export default function StockOverview({
 
   return (
     <div className="space-y-3">
-      {/* Övertext: beställt av lagret — hela statistikvyn fälls ut vid klick */}
+      {/* Övertexter: beställt och packat — symmetriska kolumner med totalt kg */}
       <button
         type="button"
         onClick={() => setShowStats((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 rounded-md border border-amber-500/30 bg-amber-500/[0.04] px-3 py-2 text-left transition-colors hover:bg-amber-500/[0.08]"
+        className="flex w-full items-center gap-3 rounded-md border border-amber-500/30 bg-amber-500/[0.04] px-3 py-2 text-left transition-colors hover:bg-amber-500/[0.08]"
       >
-        <span className="flex min-w-0 items-center gap-2">
+        <span className="flex w-44 shrink-0 items-center gap-2">
           <ClipboardList className="h-4 w-4 shrink-0 text-amber-500" />
           <span className="truncate text-sm font-semibold">Beställt av lagret</span>
-          {booked.totalKg > 0.005 && (
-            <span className="hidden font-mono text-xs tabular-nums text-amber-600 sm:inline">
-              {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg kvar att packa
-              <span className="text-muted-foreground">
-                {" "}
-                (totalt beställt {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg, varav{" "}
-                {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg redan packat)
-              </span>
-            </span>
-          )}
         </span>
-        <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+        <span className="hidden w-32 shrink-0 sm:block">
+          <span className="block font-mono text-sm font-semibold tabular-nums text-amber-600">
+            {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+          </span>
+          <span className="block text-[10px] text-muted-foreground">kvar att packa</span>
+        </span>
+        <span className="hidden w-32 shrink-0 sm:block">
+          <span className="block font-mono text-sm font-semibold tabular-nums">
+            {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+          </span>
+          <span className="block text-[10px] text-muted-foreground">totalt beställt</span>
+        </span>
+        <span className="ml-auto flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
           {showStats ? "Dölj statistik" : "Visa statistik"}
           {showStats ? (
             <ChevronDown className="h-4 w-4" />
@@ -491,28 +493,41 @@ export default function StockOverview({
         </span>
       </button>
 
-      {/* Övertext: packat av lagret — samma upplägg som beställt */}
       <button
         type="button"
         onClick={() => setShowPacked((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 rounded-md border border-amber-500/30 bg-amber-500/[0.04] px-3 py-2 text-left transition-colors hover:bg-amber-500/[0.08]"
+        className="flex w-full items-center gap-3 rounded-md border border-amber-500/30 bg-amber-500/[0.04] px-3 py-2 text-left transition-colors hover:bg-amber-500/[0.08]"
       >
-        <span className="flex min-w-0 items-center gap-2">
+        <span className="flex w-44 shrink-0 items-center gap-2">
           <Package className="h-4 w-4 shrink-0 text-amber-500" />
           <span className="truncate text-sm font-semibold">Packat av lagret</span>
-          {booked.packedKg > 0.005 && (
-            <span className="hidden font-mono text-xs tabular-nums text-amber-600 sm:inline">
-              {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg ·{" "}
-              {booked.packedKgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
-              {showCosts ? ` · ${fmt(booked.packedValue)}` : ""}
-            </span>
-          )}
         </span>
-        <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+        <span className="hidden w-32 shrink-0 sm:block">
+          <span className="block font-mono text-sm font-semibold tabular-nums text-amber-600">
+            {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+          </span>
+          <span className="block text-[10px] text-muted-foreground">
+            {booked.packedKgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
+          </span>
+        </span>
+        <span className="hidden w-32 shrink-0 sm:block">
+          <span className="block font-mono text-sm font-semibold tabular-nums">
+            {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+          </span>
+          <span className="block text-[10px] text-muted-foreground">totalt beställt</span>
+        </span>
+        {showCosts && (
+          <span className="hidden w-28 shrink-0 md:block">
+            <span className="block font-mono text-sm font-semibold tabular-nums">{fmt(booked.packedValue)}</span>
+            <span className="block text-[10px] text-muted-foreground">packat värde</span>
+          </span>
+        )}
+        <span className="ml-auto flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
           {showPacked ? "Dölj statistik" : "Visa statistik"}
           {showPacked ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </span>
       </button>
+
 
       {showPacked && (
         <Card className="shadow-card border-amber-500/30 bg-amber-500/[0.04]">
