@@ -106,13 +106,14 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
       // Defer Supabase call out of the auth callback
       setTimeout(() => loadStaff(sess?.user?.id), 0);
       // Aldrig fastna i evig snurra — även misslyckad förnyelse släpper laddning
-      setLoading(false);
+      setSessionLoading(false);
+      if (!sess?.user) setStaffLoading(false);
     });
 
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      loadStaff(sess?.user?.id).finally(() => setLoading(false));
+      loadStaff(sess?.user?.id).finally(() => setSessionLoading(false));
     });
 
     return () => subscription.unsubscribe();
