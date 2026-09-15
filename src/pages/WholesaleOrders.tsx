@@ -1555,6 +1555,24 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               const stockQty = stockByProduct.get(line.product_id) || 0;
               const alreadyPacked = currentStatus === "Packad" ? qtyDelivered : 0;
               const availableStock = stockQty + alreadyPacked;
+              // Räcker inte lagret? Visa syskonvaran (annan storlek) som finns i lager.
+              const matchAlt = (() => {
+                if (infiniteStock || isUnavailable) return null;
+                if (availableStock >= qtyOrdered) return null;
+                const me = (allProducts || []).find((p: any) => p.id === line.product_id);
+                const myBase = baseName(line.products?.name || me?.name || "");
+                if (!myBase) return null;
+                const cands = (allProducts || [])
+                  .filter((p: any) => p.id !== line.product_id)
+                  .filter((p: any) =>
+                    (me?.family_id && p.family_id && p.family_id === me.family_id) ||
+                    baseName(p.name) === myBase,
+                  )
+                  .map((p: any) => ({ id: p.id, name: p.name, stock: stockByProduct.get(p.id) || 0 }))
+                  .filter((p) => p.stock > 0.005)
+                  .sort((a, b) => b.stock - a.stock);
+                return cands[0] || null;
+              })();
               const idx = STATUS_FLOW.indexOf(currentStatus as any);
               const prev = idx > 0 ? STATUS_FLOW[idx - 1] : null;
               const next = idx === -1 ? "Pågående" : (idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null);
