@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { movementLabel } from "@/hooks/useStockMovements";
-import { gapBetween, sinceNow, timeSv } from "@/lib/dwell";
+import { gapBetweenLong, sinceNow, sinceNowLong, timeSv } from "@/lib/dwell";
 
 export interface ChainMovement {
   id: string;
