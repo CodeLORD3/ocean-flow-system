@@ -123,7 +123,7 @@ export default function LotChainGraph({
                   cx={n.x}
                   cy={n.y}
                   r={aktiv ? 8 : 5.5}
-                  className={n.kg < 0 ? "cursor-pointer fill-destructive" : "cursor-pointer fill-foreground"}
+                  className={n.kg < 0 ? "cursor-pointer fill-rose-500" : "cursor-pointer fill-emerald-600"}
                   onClick={() => setValdId(n.m.id)}
                 />
                 {aktiv && (
