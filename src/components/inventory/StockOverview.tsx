@@ -849,6 +849,41 @@ export default function StockOverview({
                                 );
                               })()}
 
+                              {/* Packat till kundbeställningar — samma bild som i totallistan */}
+                              {(() => {
+                                const pk = packedByProduct?.get(g.product_id);
+                                if (!pk || pk.orders.length === 0) return null;
+                                return (
+                                  <div className="rounded-md border border-amber-500/40 bg-amber-400/10 px-2.5 py-1.5">
+                                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-amber-700">
+                                      Packat till order
+                                      <span className="font-mono text-[11px] font-semibold tabular-nums">
+                                        {pk.packed.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit}
+                                      </span>
+                                    </div>
+                                    <div className="mt-1 flex flex-col gap-1">
+                                      {pk.orders.map((o, i) => (
+                                        <div
+                                          key={`${o.orderId}-${i}`}
+                                          className="flex items-center gap-2 whitespace-nowrap text-xs"
+                                        >
+                                          <span className="font-mono font-semibold">{o.orderNumber}</span>
+                                          <span className="truncate">{o.customerName}</span>
+                                          {o.wantedDate && (
+                                            <Badge variant="outline" className="h-5 text-[10px]">
+                                              {format(parseISO(o.wantedDate), "d MMM", { locale: sv })}
+                                            </Badge>
+                                          )}
+                                          <span className="ml-auto font-mono font-semibold tabular-nums text-amber-700">
+                                            {o.quantity.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {o.unit}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
                               {g.lines.map((l) => {
                                 const kg = qtyToKg(Number(l.quantity) || 0, l.products);
                                 const store = l.storage_locations?.stores?.name;
