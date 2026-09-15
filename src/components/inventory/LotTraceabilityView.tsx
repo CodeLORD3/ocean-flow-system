@@ -20,7 +20,7 @@ import {
   Store,
   ShoppingBasket,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import LineageGraphView from "@/components/inventory/LineageGraphView";
 import { EmptyState } from "@/components/EmptyState";
 import LotDocumentsPanel from "@/components/inventory/LotDocumentsPanel";
@@ -178,31 +178,35 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
     !(lot?.freeze_start && lot?.freeze_end) &&
     !(lot?.exemption_reason && lot?.exemption_source);
 
+  const [panel, setPanel] = useState<"handelser" | "pass" | "detaljer">("handelser");
+
   return (
-    <div className="space-y-3">
-      {/* Ett enda kontrollhuvud: sök + vy */}
-      <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-2 sm:flex-row sm:items-center print:hidden">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+    <div className="flex flex-col gap-4">
+      {/* Rent kontrollhuvud: sök + vy */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
+        <div className="relative w-full sm:max-w-md">
+          <Search className="absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Sök parti, produkt, leverantör, art, fångstområde eller fartyg"
-            className="h-9 pl-8 text-sm"
+            placeholder="Sök parti, produkt, leverantör eller art"
+            className="h-9 rounded-none border-0 border-b border-border bg-transparent pl-6 text-sm shadow-none focus-visible:ring-0"
           />
         </div>
-        <div className="flex shrink-0 gap-1 overflow-hidden rounded-md border border-border bg-muted/40 p-1">
+        <div className="flex shrink-0 gap-4 overflow-hidden">
           {modes.map((m) => (
-            <Button
+            <button
               key={m.v}
-              variant={mode === m.v ? "default" : "ghost"}
-              size="sm"
-              className="h-7 flex-1 gap-1.5 px-2.5 text-[11px] font-semibold"
               onClick={() => setMode(m.v as typeof mode)}
+              className={`flex items-center gap-1.5 border-b pb-1 text-xs transition-colors ${
+                mode === m.v
+                  ? "border-foreground font-semibold text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
             >
               <m.icon className="h-3.5 w-3.5" />
               <span>{m.label}</span>
-            </Button>
+            </button>
           ))}
         </div>
       </div>
@@ -230,38 +234,35 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
           )}
 
           {!isLoading && filtered.length > 0 && (
-            <div className="grid gap-3 lg:grid-cols-[300px_minmax(0,1fr)]">
+            <div className="grid gap-6 lg:h-[calc(100dvh-15rem)] lg:min-h-[420px] lg:grid-cols-[260px_minmax(0,1fr)]">
               {/* Partilista */}
-              <div className="rounded-lg border border-border bg-card">
-                <div className="flex items-center justify-between border-b border-border px-3 py-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Partier</p>
-                  <span className="text-[11px] text-muted-foreground">{filtered.length} st</span>
+              <div className="flex min-h-0 flex-col">
+                <div className="flex items-baseline justify-between pb-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Partier</p>
+                  <span className="text-[11px] text-muted-foreground">{filtered.length}</span>
                 </div>
-                <div className="max-h-[220px] overflow-y-auto lg:max-h-[620px]">
+                <div className="max-h-[180px] min-h-0 flex-1 overflow-y-auto border-t border-border lg:max-h-none">
                   {filtered.map((l) => {
                     const aktiv = l.id === selectedId;
                     return (
                       <button
                         key={l.id}
                         onClick={() => setSelectedId(l.id)}
-                        className={`flex w-full items-center justify-between gap-2 border-b border-border/60 px-3 py-2 text-left transition-colors ${
-                          aktiv ? "bg-primary/10" : "hover:bg-muted/50"
+                        className={`flex w-full items-center justify-between gap-2 border-b border-border/50 px-1 py-2.5 text-left transition-colors ${
+                          aktiv ? "bg-muted/60" : "hover:bg-muted/30"
                         }`}
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-xs font-semibold text-foreground">
+                          <p
+                            className={`truncate text-xs ${aktiv ? "font-semibold text-foreground" : "text-foreground"}`}
+                          >
                             {l.products?.name || l.commercial_name || "—"}
                           </p>
                           <p className="truncate font-mono text-[10px] text-muted-foreground">{l.lot_number}</p>
                         </div>
-                        <div className="shrink-0 text-right">
-                          <p className="font-mono text-xs tabular-nums text-foreground">
-                            {nf(Number(l.quantity_kg || 0), 1)}
-                          </p>
-                          {l.best_before && (
-                            <p className="font-mono text-[10px] text-muted-foreground">{l.best_before}</p>
-                          )}
-                        </div>
+                        <p className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+                          {nf(Number(l.quantity_kg || 0), 1)}
+                        </p>
                       </button>
                     );
                   })}
@@ -270,225 +271,200 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
 
               {/* Valt parti */}
               {lot && (
-                <div className="space-y-3">
-                  {/* Passet */}
-                  <div className="rounded-lg border border-border bg-card p-3">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Fish className="h-4 w-4 shrink-0 text-primary" />
-                          <h3 className="text-base font-semibold text-foreground">{namn}</h3>
-                          <Badge variant="secondary" className="text-[10px]">
-                            {lot.status}
+                <div className="flex min-h-0 flex-col gap-4">
+                  {/* Rubrik */}
+                  <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-3">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-xl font-semibold tracking-tight text-foreground">{namn}</h3>
+                      <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+                        {lot.lot_number}
+                        {lot.suppliers?.name ? ` · ${lot.suppliers.name}` : ""}
+                        {lot.best_before ? ` · bäst före ${lot.best_before}` : ""}
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        <Badge variant="secondary" className="text-[10px]">
+                          {lot.status}
+                        </Badge>
+                        {lot.is_thawed && (
+                          <Badge variant="outline" className="text-[10px]">
+                            Upptinad
                           </Badge>
-                          {lot.is_thawed && (
-                            <Badge variant="outline" className="text-[10px]">
-                              Upptinad
-                            </Badge>
-                          )}
-                          {lot.products?.export_documentation_required && (
-                            <Badge variant="outline" className="text-[10px]">
-                              Exportdokumentation
-                            </Badge>
-                          )}
-                          {varningFrys && (
-                            <Badge variant="destructive" className="text-[10px]">
-                              Frysbehandling saknas
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-                          {lot.lot_number}
-                          {lot.latin_name ? ` · ${lot.latin_name}` : ""}
-                          {lot.products?.sku ? ` · ${lot.products.sku}` : ""}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
-                          {nf(saldo, 1)} kg
-                        </p>
-                        {showCosts && lot.unit_cost != null && (
-                          <p className="font-mono text-[11px] text-muted-foreground">
-                            {nf(Number(lot.unit_cost), 2)} {currency}/kg
-                          </p>
                         )}
-                        {showCosts && (lot.price_status || "preliminar") !== "faststalld" && (
-                          <p className="text-[10px] font-medium text-amber-500">Preliminärt pris</p>
+                        {varningFrys && (
+                          <Badge variant="destructive" className="text-[10px]">
+                            Frysbehandling saknas
+                          </Badge>
                         )}
                       </div>
                     </div>
-
-                    <div className="mt-3 grid gap-x-6 gap-y-1.5 border-t border-border pt-3 sm:grid-cols-2">
-                      <Rad label="Leverantör" value={lot.suppliers?.name} />
-                      <Rad label="Lev. parti" value={lot.supplier_lot_id} />
-                      <Rad
-                        label="Fångstområde"
-                        value={
-                          lot.catch_area ? (
-                            <span className="inline-flex items-center gap-1">
-                              <Anchor className="h-3 w-3" /> {lot.catch_area}
-                            </span>
-                          ) : null
-                        }
-                      />
-                      <Rad label="Redskap" value={lot.fishing_gear} />
-                      <Rad
-                        label="Fartyg"
-                        value={
-                          lot.vessel_name ? (
-                            <span className="inline-flex items-center gap-1">
-                              <Ship className="h-3 w-3" /> {lot.vessel_name}
-                            </span>
-                          ) : null
-                        }
-                      />
-                      <Rad label="Fiskeresa" value={lot.fishing_trip_id} />
-                      <Rad label="Art (FAO)" value={lot.species_fao_code} />
-                      <Rad label="Fångstintyg" value={lot.incoming_catch_cert} />
-                      <Rad label="Statistikdok" value={lot.statistical_doc} />
-                      <Rad label="Plomb" value={lot.seal_number} />
-                      <Rad label="Bäst före" value={lot.best_before} />
-                      <Rad label="Registrerat" value={stampSv(lot.created_at)} />
+                    <div className="text-right">
+                      <p className="font-mono text-2xl font-semibold tabular-nums leading-none text-foreground">
+                        {nf(saldo, 1)}
+                      </p>
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">kg kvar</p>
+                      {showCosts && lot.unit_cost != null && (
+                        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+                          {nf(Number(lot.unit_cost), 2)} {currency}/kg
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   {/* Flödet */}
-                  <div className="rounded-lg border border-border bg-card p-3">
-                    <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                      Flödet — inköp till slutkund
-                    </p>
-                    <div className="flex items-stretch gap-1 overflow-x-auto pb-1">
-                      {steps.map((s, i) => {
-                        const aktiv = s.count > 0;
-                        return (
-                          <div key={s.key} className="flex items-center gap-1">
-                            <div
-                              className={`min-w-[112px] rounded-md border px-2.5 py-2 ${
-                                aktiv ? "border-primary/40 bg-primary/5" : "border-dashed border-border bg-muted/20"
-                              }`}
-                            >
-                              <div className="flex items-center gap-1.5">
-                                <s.icon
-                                  className={`h-3.5 w-3.5 ${aktiv ? "text-primary" : "text-muted-foreground"}`}
-                                />
-                                <span
-                                  className={`text-[11px] font-semibold ${
-                                    aktiv ? "text-foreground" : "text-muted-foreground"
-                                  }`}
-                                >
-                                  {s.label}
-                                </span>
-                              </div>
-                              {aktiv ? (
-                                <>
-                                  <p className="mt-1 font-mono text-xs tabular-nums text-foreground">
-                                    {s.kg > 0 ? "+" : ""}
-                                    {nf(s.kg, 1)} kg
-                                  </p>
-                                  <p className="font-mono text-[10px] text-muted-foreground">
-                                    {s.first ? stampSv(s.first) : ""}
-                                  </p>
-                                </>
-                              ) : (
-                                <p className="mt-1 text-[10px] text-muted-foreground">Ej ännu</p>
-                              )}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    {steps.map((s, i) => {
+                      const aktiv = s.count > 0;
+                      return (
+                        <div key={s.key} className="flex items-center gap-2">
+                          <div className={`min-w-[96px] ${aktiv ? "" : "opacity-40"}`}>
+                            <div className="flex items-center gap-1.5">
+                              <s.icon className="h-3.5 w-3.5 text-foreground" />
+                              <span className="text-[11px] font-medium text-foreground">{s.label}</span>
                             </div>
-                            {i < steps.length - 1 && <div className="h-px w-3 shrink-0 bg-border" />}
+                            <p className="mt-0.5 font-mono text-[11px] tabular-nums text-muted-foreground">
+                              {aktiv ? `${s.kg > 0 ? "+" : ""}${nf(s.kg, 1)} kg` : "—"}
+                            </p>
                           </div>
-                        );
-                      })}
-                    </div>
-                    {movements.length > 0 && (
-                      <p className="mt-2 text-[11px] text-muted-foreground">
-                        Kvar i lager: <span className="font-mono tabular-nums">{nf(saldo, 3)} kg</span> · orörd{" "}
-                        {sinceNow(movements[movements.length - 1].created_at)} sedan senaste händelsen
-                      </p>
-                    )}
+                          {i < steps.length - 1 && <div className="h-px w-6 shrink-0 bg-border" />}
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  {/* Rörelser */}
-                  <div className="rounded-lg border border-border bg-card">
-                    <div className="flex items-center justify-between border-b border-border px-3 py-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                        Händelser
-                      </p>
-                      <span className="text-[11px] text-muted-foreground">{movements.length} st</span>
-                    </div>
-                    {movements.length === 0 ? (
-                      <p className="px-3 py-4 text-xs text-muted-foreground">Inga rörelser kopplade till partiet.</p>
-                    ) : (
-                      <div className="overflow-x-auto">
+                  {/* Flikar så allt ryms på skärmen */}
+                  <div className="flex gap-4 border-b border-border">
+                    {(
+                      [
+                        { v: "handelser", label: `Händelser (${movements.length})` },
+                        { v: "pass", label: "Partipass" },
+                        { v: "detaljer", label: "Dokument och pris" },
+                      ] as const
+                    ).map((t) => (
+                      <button
+                        key={t.v}
+                        onClick={() => setPanel(t.v)}
+                        className={`-mb-px border-b pb-2 text-xs transition-colors ${
+                          panel === t.v
+                            ? "border-foreground font-semibold text-foreground"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                    {panel === "handelser" &&
+                      (movements.length === 0 ? (
+                        <p className="py-4 text-xs text-muted-foreground">Inga rörelser kopplade till partiet.</p>
+                      ) : (
                         <table className="w-full text-xs">
-                          <thead className="bg-muted/40">
-                            <tr className="text-left text-[10px] uppercase tracking-wide text-muted-foreground">
-                              <th className="px-3 py-2 font-semibold">Datum &amp; tid</th>
-                              <th className="px-3 py-2 font-semibold">Händelse</th>
-                              <th className="px-3 py-2 font-semibold">Lagerplats</th>
-                              <th className="px-3 py-2 font-semibold">Av</th>
-                              <th className="px-3 py-2 font-semibold">Låg orörd</th>
-                              <th className="px-3 py-2 text-right font-semibold">Kg</th>
+                          <thead>
+                            <tr className="text-left text-[10px] uppercase tracking-wider text-muted-foreground">
+                              <th className="py-2 pr-3 font-medium">Datum &amp; tid</th>
+                              <th className="py-2 pr-3 font-medium">Händelse</th>
+                              <th className="py-2 pr-3 font-medium">Lagerplats</th>
+                              <th className="py-2 pr-3 font-medium">Av</th>
+                              <th className="py-2 pr-3 font-medium">Låg orörd</th>
+                              <th className="py-2 text-right font-medium">Kg</th>
                             </tr>
                           </thead>
                           <tbody>
                             {movements.map((m, i, arr) => (
-                              <tr key={m.id} className="border-t border-border/60 hover:bg-muted/30">
-                                <td className="whitespace-nowrap px-3 py-1.5 font-mono tabular-nums text-muted-foreground">
+                              <tr key={m.id} className="border-t border-border/50">
+                                <td className="whitespace-nowrap py-2 pr-3 font-mono tabular-nums text-muted-foreground">
                                   {stampSv(m.created_at)}
                                 </td>
-                                <td className="px-3 py-1.5 text-foreground">
+                                <td className="py-2 pr-3 text-foreground">
                                   {movementLabel(m.movement_type)}
                                   {m.note && <span className="block text-[10px] text-muted-foreground">{m.note}</span>}
                                 </td>
-                                <td className="px-3 py-1.5 text-muted-foreground">
-                                  {m.storage_locations?.name || "—"}
-                                </td>
-                                <td className="px-3 py-1.5 text-muted-foreground">
+                                <td className="py-2 pr-3 text-muted-foreground">{m.storage_locations?.name || "—"}</td>
+                                <td className="py-2 pr-3 text-muted-foreground">
                                   {m.staff ? `${m.staff.first_name} ${m.staff.last_name}` : "System"}
                                 </td>
-                                <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">
+                                <td className="whitespace-nowrap py-2 pr-3 text-muted-foreground">
                                   {i === 0 ? "—" : gapBetween(arr[i - 1].created_at, m.created_at)}
                                   {i === arr.length - 1 ? ` (nu ${sinceNow(m.created_at)})` : ""}
                                 </td>
                                 <td
-                                  className={`px-3 py-1.5 text-right font-mono tabular-nums ${
+                                  className={`py-2 text-right font-mono tabular-nums ${
                                     Number(m.quantity_kg) < 0 ? "text-destructive" : "text-foreground"
                                   }`}
                                 >
-                                  {nf(Number(m.quantity_kg), 3)}
+                                  {nf(Number(m.quantity_kg), 1)}
                                 </td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
+                      ))}
+
+                    {panel === "pass" && (
+                      <div className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+                        <Rad label="Leverantör" value={lot.suppliers?.name} />
+                        <Rad label="Lev. parti" value={lot.supplier_lot_id} />
+                        <Rad
+                          label="Fångstområde"
+                          value={
+                            lot.catch_area ? (
+                              <span className="inline-flex items-center gap-1">
+                                <Anchor className="h-3 w-3" /> {lot.catch_area}
+                              </span>
+                            ) : null
+                          }
+                        />
+                        <Rad label="Redskap" value={lot.fishing_gear} />
+                        <Rad
+                          label="Fartyg"
+                          value={
+                            lot.vessel_name ? (
+                              <span className="inline-flex items-center gap-1">
+                                <Ship className="h-3 w-3" /> {lot.vessel_name}
+                              </span>
+                            ) : null
+                          }
+                        />
+                        <Rad label="Fiskeresa" value={lot.fishing_trip_id} />
+                        <Rad label="Art (latin)" value={lot.latin_name} />
+                        <Rad label="Art (FAO)" value={lot.species_fao_code} />
+                        <Rad label="Artikelnummer" value={lot.products?.sku} />
+                        <Rad label="Fångstintyg" value={lot.incoming_catch_cert} />
+                        <Rad label="Statistikdok" value={lot.statistical_doc} />
+                        <Rad label="Plomb" value={lot.seal_number} />
+                        <Rad label="Bäst före" value={lot.best_before} />
+                        <Rad label="Registrerat" value={stampSv(lot.created_at)} />
                       </div>
                     )}
-                  </div>
 
-                  {/* Detaljer bakom utfällning */}
-                  <div className="space-y-2">
-                    {showCosts && (
-                      <Sektion title="Pris och faktura">
-                        <LotPricePanel
-                          lotId={lot.id}
-                          lotNumber={lot.lot_number}
-                          currency={currency}
-                          unitCost={lot.unit_cost}
-                          priceStatus={lot.price_status}
-                          preliminaryUnitCost={lot.preliminary_unit_cost}
-                          invoiceNumber={lot.invoice_number}
-                          invoiceDate={lot.invoice_date}
-                        />
-                      </Sektion>
+                    {panel === "detaljer" && (
+                      <div className="space-y-2">
+                        {showCosts && (
+                          <Sektion title="Pris och faktura">
+                            <LotPricePanel
+                              lotId={lot.id}
+                              lotNumber={lot.lot_number}
+                              currency={currency}
+                              unitCost={lot.unit_cost}
+                              priceStatus={lot.price_status}
+                              preliminaryUnitCost={lot.preliminary_unit_cost}
+                              invoiceNumber={lot.invoice_number}
+                              invoiceDate={lot.invoice_date}
+                            />
+                          </Sektion>
+                        )}
+                        <Sektion title="Frysbehandling (parasiter)">
+                          <ParasiteFreezePanel lotId={lot.id} />
+                        </Sektion>
+                        <Sektion title="Musslor och ostron">
+                          <BivalvePanel lotId={lot.id} />
+                        </Sektion>
+                        <Sektion title="Dokument">
+                          <LotDocumentsPanel lotId={lot.id} />
+                        </Sektion>
+                      </div>
                     )}
-                    <Sektion title="Frysbehandling (parasiter)">
-                      <ParasiteFreezePanel lotId={lot.id} />
-                    </Sektion>
-                    <Sektion title="Musslor och ostron">
-                      <BivalvePanel lotId={lot.id} />
-                    </Sektion>
-                    <Sektion title="Dokument">
-                      <LotDocumentsPanel lotId={lot.id} />
-                    </Sektion>
                   </div>
                 </div>
               )}
