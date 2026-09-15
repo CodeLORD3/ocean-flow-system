@@ -167,6 +167,7 @@ type WholesaleOrderAccordionRowProps = {
   selected: boolean;
    stores: any[];
    photoCount?: number;
+   highlight?: boolean;
    onToggle: (id: string) => void;
   onSelect: (id: string) => void;
   onStatusChange: (id: string, status: string) => void;
