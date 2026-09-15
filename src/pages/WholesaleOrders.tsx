@@ -246,7 +246,7 @@ function WholesaleOrderAccordionRow({
               <span className={`min-w-0 flex-1 break-words leading-snug ${open ? "text-[17px] font-bold" : "text-[15px] font-semibold"}`}>{order.stores?.name || "Okänd butik"}</span>
               <ChevronDown className={`mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
             </div>
-            <div className="flex flex-wrap items-center gap-1.5">{statusChip}<span className="font-mono text-[11px] text-muted-foreground">{day} · {orderLines} rader</span></div>
+            <div className="flex flex-wrap items-center gap-1.5">{statusChip}<span className="font-mono text-[11px] text-muted-foreground">{day} · {orderLines} rader</span><OrdererName name={order.created_by} className="text-[11px] text-muted-foreground" /></div>
             <div className="font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</div>
           </div>
         </button>
