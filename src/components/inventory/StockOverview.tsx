@@ -1139,35 +1139,52 @@ export default function StockOverview({
                         </td>
                         {(() => {
                           const pk = packedByProduct?.get(g.product_id);
+                          const unit = pk?.unit ?? g.unit;
                           const orderedTotal = pk ? pk.packed + pk.ordered : 0;
-                          const shortfall = orderedTotal - g.totalQty;
-                          const critical = shortfall > 0.005;
+                          const diff = g.totalQty - orderedTotal;
+                          const nq = (v: number) =>
+                            Math.abs(v).toLocaleString("sv-SE", { maximumFractionDigits: 1 });
+                          const short = diff < -0.005;
                           return (
-                            <td
-                              className={cn(
-                                "border-r border-grid-line/70 px-2 text-right font-mono tabular-nums whitespace-nowrap",
-                                critical ? "text-destructive font-bold" : "text-muted-foreground",
-                              )}
-                              title={
-                                critical
-                                  ? `Kritisk: ${shortfall.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} ${pk?.unit ?? g.unit} saknas mot beställt`
-                                  : "Beställt (packat + kvar att packa)"
-                              }
-                            >
-                              {orderedTotal > 0.005 ? (
-                                <>
-                                  {orderedTotal.toLocaleString("sv-SE", { maximumFractionDigits: 1 })}{" "}
-                                  {pk?.unit ?? g.unit}
-                                  {critical && (
-                                    <span className="ml-1 text-[10px] font-semibold uppercase">
-                                      −{shortfall.toLocaleString("sv-SE", { maximumFractionDigits: 1 })}
+                            <>
+                              <td
+                                className="border-r border-grid-line/70 px-2 text-right font-mono tabular-nums whitespace-nowrap"
+                                title="Beställt totalt (packat + kvar att packa)"
+                              >
+                                {orderedTotal > 0.005 ? (
+                                  <span className="font-semibold text-foreground">
+                                    {nq(orderedTotal)} {unit}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground/60">–</span>
+                                )}
+                              </td>
+                              <td className="border-r border-grid-line/70 px-2 text-right whitespace-nowrap">
+                                {orderedTotal > 0.005 ? (
+                                  <span
+                                    className={cn(
+                                      "inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 font-mono text-[11px] font-semibold tabular-nums",
+                                      short
+                                        ? "bg-destructive/10 text-destructive"
+                                        : "bg-emerald-500/10 text-emerald-700",
+                                    )}
+                                    title={
+                                      short
+                                        ? `Översålt – ${nq(diff)} ${unit} saknas mot beställt`
+                                        : `Täckt – ${nq(diff)} ${unit} kvar efter beställt`
+                                    }
+                                  >
+                                    {short ? "−" : "+"}
+                                    {nq(diff)} {unit}
+                                    <span className="text-[9px] font-medium uppercase tracking-wider opacity-80">
+                                      {short ? "saknas" : "täckt"}
                                     </span>
-                                  )}
-                                </>
-                              ) : (
-                                "–"
-                              )}
-                            </td>
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-muted-foreground/60">–</span>
+                                )}
+                              </td>
+                            </>
                           );
                         })()}
                         {showCosts && (
