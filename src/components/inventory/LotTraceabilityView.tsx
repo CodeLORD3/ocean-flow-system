@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 import LineageGraphView from "@/components/inventory/LineageGraphView";
+import { ProductThumb } from "@/components/products/ProductThumb";
 import { EmptyState } from "@/components/EmptyState";
 import LotDocumentsPanel from "@/components/inventory/LotDocumentsPanel";
 import ParasiteFreezePanel from "@/components/inventory/ParasiteFreezePanel";
@@ -241,6 +242,19 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
   const [kategori, setKategori] = useState<string | null>(null);
   /** Vald produkt (namn) — steg 1b, listar bara den produktens partier. */
   const [valdProdukt, setValdProdukt] = useState<string | null>(null);
+  const [visaForslag, setVisaForslag] = useState(false);
+
+  /** Produktbilder per namn, för sökförslagen. */
+  const { data: produktBilder = {} } = useQuery({
+    queryKey: ["lot_trace_product_images"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("products").select("name, image_url").limit(3000);
+      if (error) throw error;
+      const map: Record<string, string | null> = {};
+      for (const p of data as any[]) if (p.name && !map[p.name]) map[p.name] = p.image_url ?? null;
+      return map;
+    },
+  });
 
   /** Partier som matchar sökningen, oavsett vald produkt. */
   const matchade = useMemo(() => {
@@ -443,11 +457,46 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                 <Input
                   autoFocus
                   value={q}
-                  onChange={(e) => setQ(e.target.value)}
+                  onChange={(e) => {
+                    setQ(e.target.value);
+                    setValdProdukt(null);
+                    setVisaForslag(true);
+                  }}
+                  onFocus={() => setVisaForslag(true)}
                   placeholder="Sök produkt, kategori, parti, leverantör eller art"
                   className="h-11 pl-9 text-sm"
                 />
+                {visaForslag && q.trim().length > 0 && produktTraffar.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-80 overflow-y-auto rounded-md border border-border bg-popover shadow-lg">
+                    {produktTraffar.slice(0, 10).map((p) => (
+                      <button
+                        key={p.namn}
+                        onClick={() => {
+                          setValdProdukt(p.namn);
+                          setVisaForslag(false);
+                        }}
+                        className="flex w-full items-center gap-3 border-b border-border/60 px-3 py-2 text-left transition-colors last:border-0 hover:bg-muted/50"
+                      >
+                        <ProductThumb
+                          src={produktBilder[p.namn] ?? null}
+                          alt={p.namn}
+                          className="h-8 w-9 shrink-0 rounded-sm"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-foreground">{p.namn}</p>
+                          <p className="truncate text-[10px] uppercase tracking-wider text-muted-foreground">
+                            {p.kategori || "Utan kategori"} · {p.antal} {p.antal === 1 ? "parti" : "partier"}
+                          </p>
+                        </div>
+                        <p className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+                          {nf(p.kg, 1)} kg
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
 
               {kategorier.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
