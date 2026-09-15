@@ -102,9 +102,18 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
         >
           <GitBranch className="h-3.5 w-3.5" /> Graf
         </Button>
+        <Button
+          variant={mode === "historik" ? "default" : "outline"}
+          size="sm"
+          className="h-8 gap-1 text-xs"
+          onClick={() => setMode("historik")}
+        >
+          <History className="h-3.5 w-3.5" /> Historik
+        </Button>
       </div>
 
       {mode === "graf" && <LineageGraphView currency={currency} startLotId={openId} />}
+      {mode === "historik" && <LotHistoryView />}
 
       {mode === "lista" && (
       <>
