@@ -346,6 +346,8 @@ export default function ShopOrders() {
     setTimeout(() => noteRef.current?.focus(), 60);
   };
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
+  /** Kundbeställda mängder i butiken — underlag för "måste med"-förslag. */
+  const { data: customerCommitted = new Map() } = useCustomerCommitted(activeStoreId);
   const [productSearch, setProductSearch] = useState("");
   const [desiredDeliveryDate, setDesiredDeliveryDate] = useState<Date | undefined>(undefined);
 
