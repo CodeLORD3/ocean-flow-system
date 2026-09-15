@@ -60,7 +60,7 @@ export default function ProductStockFlow({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [days, setDays] = useState(90);
-  const [mode, setMode] = useState<"days" | "ledger" | "tree">("days");
+  const [mode, setMode] = useState<"places" | "days" | "ledger" | "tree">("places");
   const [openBranches, setOpenBranches] = useState<Record<string, boolean>>({});
 
   const { data: movements = [], isLoading } = useQuery({
