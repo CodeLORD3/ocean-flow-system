@@ -10,43 +10,52 @@
 
 @layer base {
   :root {
-    --background: 210 12% 93%;
-    --foreground: 210 35% 10%;
+    /* Verktygstema v1: sju färgroller. Grund, yta, sänkt, linje, marin,
+       tegel, bärnsten, gran. Funktionsfärgerna används på kanter, text och
+       små plattor — inte som fyllning på hela rader. */
+    --background: 180 14% 98.4%;      /* #fbfcfc grund */
+    --foreground: 210 13% 10%;        /* #16191c text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 210 35% 10%;
+    --card: 0 0% 100%;                /* #ffffff yta */
+    --card-foreground: 210 13% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 35% 10%;
+    --popover-foreground: 210 13% 10%;
 
-    --primary: 207 65% 15%;
+    --primary: 203 55% 27%;           /* #1f4d6b marin */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 172 30% 90%;
-    --secondary-foreground: 207 65% 15%;
+    --secondary: 200 10% 96%;         /* #f4f6f7 sänkt */
+    --secondary-foreground: 203 55% 27%;
 
-    --muted: 210 15% 90%;
-    --muted-foreground: 210 12% 46%;
+    --muted: 200 10% 96%;             /* #f4f6f7 sänkt */
+    --muted-foreground: 210 10% 40%;  /* #5c6570 sekundär */
 
-    --accent: 172 62% 32%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 205 33% 94%;            /* #eaf0f4 marin ton */
+    --accent-foreground: 203 55% 27%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 10 55% 41%;        /* #a1402f tegel */
     --destructive-foreground: 0 0% 100%;
 
-    --success: 168 55% 38%;
+    --success: 155 39% 30%;           /* #2f6b4f gran */
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 38 62% 33%;            /* #8a6220 bärnsten */
     --warning-foreground: 0 0% 100%;
 
-    --mackerel: 172 62% 32%;
-    --mackerel-foreground: 0 0% 100%;
-    --mackerel-light: 172 40% 92%;
-    --mackerel-shimmer: 48 65% 55%;
+    /* Ljusa tonvarianter för plattor */
+    --tone-brick: 14 48% 95%;         /* #fbeeeb */
+    --tone-amber: 42 79% 95%;         /* #fdf6e7 */
+    --tone-spruce: 150 25% 94%;       /* #edf5f0 */
+    --tone-navy: 205 33% 94%;         /* #eaf0f4 */
 
-    --mackerel-dark: 207 55% 12%;
-    --mackerel-gold: 48 65% 55%;
+    --mackerel: 203 55% 27%;
+    --mackerel-foreground: 0 0% 100%;
+    --mackerel-light: 205 33% 94%;
+    --mackerel-shimmer: 38 62% 33%;
+
+    --mackerel-dark: 203 55% 18%;
+    --mackerel-gold: 38 62% 33%;
 
     /* Radfärger för orderlistor: hel radton + mättad kant.
        Ett steg starkare än pastell så statusen läses på avstånd i butiken. */
