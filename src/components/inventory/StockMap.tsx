@@ -139,6 +139,15 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
   const active = points.find((p) => p.storeId === selected) ?? null;
   const withStock = points.filter((p) => p.kg > 0);
 
+  /** Avstånd från vald enhet till övriga, närmast först. */
+  const legs = useMemo(() => {
+    if (!active) return [];
+    return points
+      .filter((p) => p.storeId !== active.storeId)
+      .map((p) => ({ point: p, km: distanceKm(active.coordinates, p.coordinates) }))
+      .sort((a, b) => a.km - b.km);
+  }, [active, points]);
+
   const selectPoint = (p: Point | null, zoomIn = false) => {
     setInternal(p?.storeId ?? null);
     onSelect?.(p?.storeId ?? null);
