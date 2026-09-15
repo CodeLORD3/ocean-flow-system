@@ -139,6 +139,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       .replace(/^./, (c) => c.toUpperCase()) || "Översikt");
   const page = pageTitles[location.pathname] || { title: fallbackTitle, breadcrumb: ["Hem", fallbackTitle] };
   const allowedStores = useAllowedStores();
+  /** Personal & schema: ingen toppbild och sidomenyn helt gömd bakom hamburgaren. */
+  const isStaffModule =
+    location.pathname === "/personal" || STAFF_MODULE_PATHS.includes(location.pathname);
+  const sidebarMode: "icon" | "offcanvas" = isStaffModule ? "offcanvas" : "icon";
 
   const { staff } = useStaffAuth();
   useSessionTracking();
