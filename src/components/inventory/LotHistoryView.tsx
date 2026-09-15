@@ -118,9 +118,9 @@ export default function LotHistoryView({ currency = "SEK" }: { currency?: string
         </Card>
       )}
 
-      {isLoading && <p className="text-sm text-muted-foreground">Hämtar historik…</p>}
+      {view === "list" && isLoading && <p className="text-sm text-muted-foreground">Hämtar historik…</p>}
 
-      {!isLoading && filtered.length === 0 && (
+      {view === "list" && !isLoading && filtered.length === 0 && (
         <EmptyState
           icon={<History className="h-4 w-4" />}
           title={q.trim() ? "Inget i historiken matchar sökningen" : "Ingen historik ännu"}
