@@ -192,7 +192,66 @@ export default function StockTransformation() {
             ))}
           </div>
 
-          {familyView ? (
+          {view === "lager" ? (
+            stockByLocation.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Inget lager att omvandla just nu.</p>
+            ) : (
+              <div className="space-y-3">
+                {stockByLocation.map((g) => (
+                  <Card key={g.locationId} className="overflow-hidden">
+                    <div className="flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-semibold">{g.locationName}</p>
+                        {g.storeName ? (
+                          <p className="truncate text-[10px] text-muted-foreground">{g.storeName}</p>
+                        ) : null}
+                      </div>
+                      <Badge variant="outline" className="shrink-0 font-mono text-[10px] tabular-nums">
+                        {g.total.toLocaleString("sv-SE")} kg
+                      </Badge>
+                    </div>
+                    <div className="divide-y">
+                      {g.rows.map((s: any) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            setStartLocation(g.locationId);
+                            setTarget({
+                              id: s.product_id,
+                              name: s.products?.name || "Produkt",
+                              sku: s.products?.sku,
+                              unit: s.products?.unit,
+                            });
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-muted/50"
+                        >
+                          <ProductThumb
+                            src={s.products?.image_url}
+                            alt={s.products?.name || ""}
+                            static
+                            className="h-8 w-10 shrink-0"
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-xs font-medium">{s.products?.name}</span>
+                            <span className="block truncate font-mono text-[10px] text-muted-foreground">
+                              {s.products?.sku}
+                              {s.products?.category ? ` · ${s.products.category}` : ""}
+                            </span>
+                          </span>
+                          <span className="shrink-0 font-mono text-[11px] tabular-nums">
+                            {Number(s.quantity || 0).toLocaleString("sv-SE")}{" "}
+                            {s.products?.unit?.toLowerCase() || "kg"}
+                          </span>
+                          <RefreshCw className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        </button>
+                      ))}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )
+          ) : familyView ? (
             <FamilyStockView
               products={products as any}
               families={families as any}
