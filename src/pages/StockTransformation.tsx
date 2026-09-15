@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Layers, RefreshCw, Search } from "lucide-react";
+import { Layers, RefreshCw, Search, Warehouse } from "lucide-react";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import TransformFlow from "@/components/inventory/TransformFlow";
 import FamilyStockView from "@/components/inventory/FamilyStockView";
@@ -30,12 +30,16 @@ export default function StockTransformation() {
   const { data: orderedByProduct } = useOrderedByProduct(activeStoreId || null);
 
   const [tab, setTab] = useState<"omvandla" | "historik">("omvandla");
-  const [familyView, setFamilyView] = useState(true);
+  /** Vy: lagerlista per lagerplats (förval), produktgrupper eller produktkort. */
+  const [view, setView] = useState<"lager" | "grupper" | "produkter">("lager");
+  const familyView = view === "grupper";
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("alla");
   const [target, setTarget] = useState<{ id: string; name: string; sku?: string | null; unit?: string | null } | null>(
     null,
   );
+  /** Vald lagerplats när omvandlingen startas från lagerlistan. */
+  const [startLocation, setStartLocation] = useState<string | null>(null);
   /** Förvald målprodukt när omvandlingen startas från en familjeprognos. */
   const [initialTarget, setInitialTarget] = useState<string | null>(null);
 
@@ -65,6 +69,40 @@ export default function StockTransformation() {
       .filter((p) => !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name, "sv"));
   }, [products, stockByProduct, category, search]);
+
+  /** Allt tillgängligt lager, grupperat per lagerplats. */
+  const stockByLocation = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const groups = new Map<
+      string,
+      { locationId: string; locationName: string; storeName: string; rows: any[]; total: number }
+    >();
+    for (const s of allStock as any[]) {
+      if (activeStoreId && s.storage_locations?.store_id !== activeStoreId) continue;
+      const qty = Number(s.quantity || 0);
+      if (qty <= 0) continue;
+      const p = s.products || {};
+      if (category !== "alla" && (p.category || "Övrigt") !== category) continue;
+      if (q && !`${p.name || ""} ${p.sku || ""}`.toLowerCase().includes(q)) continue;
+      const key = s.location_id;
+      const g =
+        groups.get(key) ||
+        {
+          locationId: key,
+          locationName: s.storage_locations?.name || "Lagerplats",
+          storeName: s.storage_locations?.stores?.name || "",
+          rows: [],
+          total: 0,
+        };
+      g.rows.push(s);
+      g.total += qty;
+      groups.set(key, g);
+    }
+    const list = [...groups.values()];
+    for (const g of list)
+      g.rows.sort((a, b) => String(a.products?.name || "").localeCompare(String(b.products?.name || ""), "sv"));
+    return list.sort((a, b) => a.locationName.localeCompare(b.locationName, "sv"));
+  }, [allStock, activeStoreId, category, search]);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -109,12 +147,29 @@ export default function StockTransformation() {
           <div className="flex flex-wrap gap-1.5">
             <Button
               size="sm"
-              variant={familyView ? "default" : "outline"}
+              variant={view === "lager" ? "default" : "outline"}
               className="h-7 gap-1 px-2 text-[11px]"
-              onClick={() => setFamilyView((v) => !v)}
+              onClick={() => setView("lager")}
+              title="Visa allt tillgängligt lager per lagerplats"
+            >
+              <Warehouse className="h-3 w-3" /> Allt lager
+            </Button>
+            <Button
+              size="sm"
+              variant={view === "grupper" ? "default" : "outline"}
+              className="h-7 gap-1 px-2 text-[11px]"
+              onClick={() => setView("grupper")}
               title="Visa produktgrupper med omvandlingsförslag"
             >
               <Layers className="h-3 w-3" /> Produktgrupper
+            </Button>
+            <Button
+              size="sm"
+              variant={view === "produkter" ? "default" : "outline"}
+              className="h-7 gap-1 px-2 text-[11px]"
+              onClick={() => setView("produkter")}
+            >
+              Produktkort
             </Button>
             <Button
               size="sm"
@@ -137,7 +192,66 @@ export default function StockTransformation() {
             ))}
           </div>
 
-          {familyView ? (
+          {view === "lager" ? (
+            stockByLocation.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Inget lager att omvandla just nu.</p>
+            ) : (
+              <div className="space-y-3">
+                {stockByLocation.map((g) => (
+                  <Card key={g.locationId} className="overflow-hidden">
+                    <div className="flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-semibold">{g.locationName}</p>
+                        {g.storeName ? (
+                          <p className="truncate text-[10px] text-muted-foreground">{g.storeName}</p>
+                        ) : null}
+                      </div>
+                      <Badge variant="outline" className="shrink-0 font-mono text-[10px] tabular-nums">
+                        {g.total.toLocaleString("sv-SE")} kg
+                      </Badge>
+                    </div>
+                    <div className="divide-y">
+                      {g.rows.map((s: any) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            setStartLocation(g.locationId);
+                            setTarget({
+                              id: s.product_id,
+                              name: s.products?.name || "Produkt",
+                              sku: s.products?.sku,
+                              unit: s.products?.unit,
+                            });
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-muted/50"
+                        >
+                          <ProductThumb
+                            src={s.products?.image_url}
+                            alt={s.products?.name || ""}
+                            static
+                            className="h-8 w-10 shrink-0"
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-xs font-medium">{s.products?.name}</span>
+                            <span className="block truncate font-mono text-[10px] text-muted-foreground">
+                              {s.products?.sku}
+                              {s.products?.category ? ` · ${s.products.category}` : ""}
+                            </span>
+                          </span>
+                          <span className="shrink-0 font-mono text-[11px] tabular-nums">
+                            {Number(s.quantity || 0).toLocaleString("sv-SE")}{" "}
+                            {s.products?.unit?.toLowerCase() || "kg"}
+                          </span>
+                          <RefreshCw className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        </button>
+                      ))}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )
+          ) : familyView ? (
             <FamilyStockView
               products={products as any}
               families={families as any}
@@ -272,14 +386,17 @@ export default function StockTransformation() {
           if (!o) {
             setTarget(null);
             setInitialTarget(null);
+            setStartLocation(null);
           }
         }}
         product={target}
         initialTargetProductId={initialTarget}
+        locationId={startLocation}
         storeId={activeStoreId || null}
         onDone={() => {
           setTarget(null);
           setInitialTarget(null);
+          setStartLocation(null);
         }}
       />
     </motion.div>
