@@ -1442,17 +1442,17 @@ export default function StockOverview({
                                    },
                                  ].filter((gr) => gr.rows.length > 0 || gr.qty > 0.005);
                                  return (
-                                   <div className="grid gap-2 rounded-md border border-amber-500/30 bg-amber-500/[0.04] p-2 sm:grid-cols-2">
+                                   <div className="space-y-1 rounded-md border border-amber-500/30 bg-amber-500/[0.04] p-1.5">
                                      {groups.map((gr) => (
-                                       <div key={gr.kind} className={cn("rounded-md border px-2.5 py-1.5", gr.wrap)}>
-                                         <div className={cn("flex items-center gap-2 text-[10px] uppercase tracking-wider", gr.head)}>
-                                           <span className={cn("h-2 w-2 rounded-full", gr.dot)} />
+                                       <div key={gr.kind} className={cn("rounded border px-2 py-1", gr.wrap)}>
+                                         <div className={cn("flex items-center gap-1.5 text-[9px] uppercase tracking-wider", gr.head)}>
+                                           <span className={cn("h-1.5 w-1.5 rounded-full", gr.dot)} />
                                            <span className="font-semibold">{gr.title}</span>
-                                           <span className="ml-auto font-mono text-xs font-bold tabular-nums">
+                                           <span className="ml-auto font-mono text-[11px] font-bold tabular-nums">
                                              {gr.qty.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit}
                                            </span>
                                          </div>
-                                         <div className="mt-1 flex flex-col gap-1">
+                                         <div className="mt-0.5 flex flex-col divide-y divide-border/40">
                                            {gr.rows.map((o, i) => (
                                              <button
                                                type="button"
@@ -1462,16 +1462,16 @@ export default function StockOverview({
                                                  openOrder(o);
                                                }}
                                                className={cn(
-                                                 "flex w-full items-center gap-2 whitespace-nowrap rounded px-1 py-0.5 text-left text-xs",
+                                                 "flex w-full items-center gap-2 whitespace-nowrap rounded px-1 py-0.5 text-left text-[11px]",
                                                  gr.hover,
                                                )}
                                                title="Öppna ordern"
                                              >
-                                               <span className="truncate font-semibold">{o.customerName}</span>
+                                               <span className="truncate font-medium">{o.customerName}</span>
                                                {o.wantedDate && (
-                                                 <Badge variant="outline" className="h-5 text-[10px]">
+                                                 <span className="shrink-0 text-[9px] text-muted-foreground">
                                                    {format(parseISO(o.wantedDate), "d MMM", { locale: sv })}
-                                                 </Badge>
+                                                 </span>
                                                )}
                                                <span className={cn("ml-auto font-mono font-semibold tabular-nums", gr.head)}>
                                                  {o.quantity.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {o.unit}
@@ -1479,14 +1479,14 @@ export default function StockOverview({
                                              </button>
                                            ))}
                                            {gr.rows.length === 0 && (
-                                             <span className="px-1 text-[10px] text-muted-foreground">Inga rader</span>
+                                             <span className="px-1 text-[9px] text-muted-foreground">Inga rader</span>
                                            )}
                                          </div>
-                                         <p className="mt-1 px-1 text-[10px] text-muted-foreground">{gr.note}</p>
                                        </div>
                                      ))}
                                    </div>
                                  );
+
                               })()}
 
                               {g.lines.map((l) => {
