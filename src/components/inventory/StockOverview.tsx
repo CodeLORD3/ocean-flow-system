@@ -1067,6 +1067,13 @@ export default function StockOverview({
                                     </div>
 
                                     <div className="relative flex h-9 w-full items-stretch overflow-hidden rounded-md ring-1 ring-border">
+                                      {bookedPct > 0 && (
+                                        <span
+                                          className="pointer-events-none absolute inset-y-0 left-0 z-[9] border-r border-foreground/40 bg-foreground/30"
+                                          style={{ width: `${bookedPct}%` }}
+                                          title={`Beställt: ${nf(bookedKg)} kg`}
+                                        />
+                                      )}
                                       {packedPct > 0 && (
                                         <span
                                           className="pointer-events-none absolute inset-y-0 left-0 z-10 border-r-2 border-amber-600 bg-amber-400/80"
