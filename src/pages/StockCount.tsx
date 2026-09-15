@@ -1051,13 +1051,13 @@ export default function StockCount() {
                             prodRows.map((r) => {
                               const line = linesByKey.get(r.key);
                               const isCounted = line?.counted_qty != null;
-                              return (
-                                <div
-                                  key={r.key}
-                                  className={`flex items-center gap-1 px-1.5 py-0.5 transition-colors ${
-                                    isCounted ? "bg-emerald-500/10" : ""
-                                  }`}
-                                >
+                               const detail = openDetail[r.key] ?? null;
+                               return (
+                                 <div
+                                   key={r.key}
+                                   className={`transition-colors ${isCounted ? "bg-emerald-500/10" : ""}`}
+                                 >
+                                 <div className="flex items-center gap-1 px-1.5 py-0.5">
                                   {r.imageUrl ? (
                                     <img
                                       src={r.imageUrl}
