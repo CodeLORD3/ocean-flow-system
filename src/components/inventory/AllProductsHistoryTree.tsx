@@ -267,6 +267,9 @@ export default function AllProductsHistoryTree({
                                   <span className="min-w-0 truncate font-medium text-foreground">{b.label}</span>
                                   <span className="ml-auto shrink-0 font-mono tabular-nums text-muted-foreground">
                                     {nf(b.balance)} · {b.events.length} händelser
+                                    {b.events.length > 0
+                                      ? ` · orörd ${sinceNow(b.events[b.events.length - 1].created_at)}`
+                                      : ""}
                                   </span>
                                 </button>
                                 {b.lotId && onTraceLot && (
