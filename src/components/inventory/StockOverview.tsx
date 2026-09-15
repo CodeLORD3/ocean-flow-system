@@ -1124,20 +1124,33 @@ export default function StockOverview({
                                 <span className="truncate">
                                   {g.lines.length} lagerplats{g.lines.length > 1 ? "er" : ""}
                                 </span>
-                                <span className="flex shrink-0 items-center gap-1">
-                                  {packedPct > 0 && (
-                                    <span className="rounded-sm bg-amber-400/20 px-1.5 py-0.5 font-mono font-semibold tabular-nums text-amber-700">
-                                      {packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg packat
-                                    </span>
-                                  )}
-                                  {pk && pk.ordered > 0.005 && (
-                                    <span className="font-mono tabular-nums">
-                                      {pk.ordered.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit} best.
-                                    </span>
-                                  )}
+                                <span className="flex shrink-0 items-center gap-3 font-mono tabular-nums">
+                                  <span className="inline-flex w-[86px] items-center justify-end gap-1">
+                                    {packedPct > 0 ? (
+                                      <>
+                                        <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                                        <span className="font-semibold text-amber-700">
+                                          {packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                                        </span>
+                                        <span className="text-[9px] uppercase tracking-wider text-muted-foreground">packat</span>
+                                      </>
+                                    ) : null}
+                                  </span>
+                                  <span className="inline-flex w-[80px] items-center justify-end gap-1">
+                                    {pk && pk.ordered > 0.005 ? (
+                                      <>
+                                        <span className="h-1.5 w-1.5 rounded-full bg-foreground/35" />
+                                        <span>
+                                          {pk.ordered.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit}
+                                        </span>
+                                        <span className="text-[9px] uppercase tracking-wider text-muted-foreground">best.</span>
+                                      </>
+                                    ) : null}
+                                  </span>
                                 </span>
                               </div>
                             )}
+
                           </div>
 
                           );
