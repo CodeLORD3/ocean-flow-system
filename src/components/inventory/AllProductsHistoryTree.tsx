@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
 import { movementLabel } from "@/hooks/useStockMovements";
-import { ChevronDown, ChevronRight, GitBranch, Search, ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { ChevronDown, ChevronRight, GitBranch, Search, ArrowDownRight, ArrowUpRight, Network } from "lucide-react";
+import ProductMovementDag from "@/components/inventory/ProductMovementDag";
 
 const nf = (n: number, d = 1) =>
   Number(n)
@@ -28,6 +29,7 @@ type Ev = {
   created_at: string;
   qty: number;
   type: string;
+  label: string;
   lot: string | null;
   lotId: string | null;
   location: string;
@@ -60,6 +62,7 @@ export default function AllProductsHistoryTree({
   onTraceLot?: (lotId: string, label: string) => void;
 }) {
   const [q, setQ] = useState("");
+  const [shape, setShape] = useState<"graph" | "list">("graph");
   const [openProducts, setOpenProducts] = useState<Record<string, boolean>>({});
   const [openBranches, setOpenBranches] = useState<Record<string, boolean>>({});
 
@@ -122,6 +125,7 @@ export default function AllProductsHistoryTree({
         created_at: m.created_at,
         qty,
         type: m.movement_type,
+        label: movementLabel(m.movement_type),
         lot: m.lots?.lot_number ?? null,
         lotId: (m.lot_id as string | null) ?? null,
         location: [m.storage_locations?.stores?.name, m.storage_locations?.name].filter(Boolean).join(" · "),
@@ -153,6 +157,27 @@ export default function AllProductsHistoryTree({
           placeholder="Sök produkt eller parti i hela historiken"
           className="h-9 pl-7 text-sm"
         />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-1">
+        <Button
+          variant={shape === "graph" ? "default" : "outline"}
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => setShape("graph")}
+        >
+          <Network className="mr-1 h-3.5 w-3.5" />
+          Visuell graf
+        </Button>
+        <Button
+          variant={shape === "list" ? "default" : "outline"}
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => setShape("list")}
+        >
+          Textlista
+        </Button>
+        <span className="text-[10px] text-muted-foreground">Öppna en produkt för att se trädet</span>
       </div>
 
       {isLoading && <p className="text-sm text-muted-foreground">Hämtar historik…</p>}
@@ -206,7 +231,22 @@ export default function AllProductsHistoryTree({
                       <span className="text-right font-mono tabular-nums text-foreground">{nf(n.balance)}</span>
                     </button>
 
-                    {isOpen && (
+                    {isOpen && shape === "graph" && (
+                      <div className="border-l-2 border-border/60 bg-muted/20 px-2 py-2 sm:ml-4">
+                        <ProductMovementDag
+                          productName={n.name}
+                          branches={n.branches.map((b) => ({
+                            key: b.key,
+                            label: b.label,
+                            lotId: b.lotId,
+                            events: b.events,
+                          }))}
+                          onTraceLot={onTraceLot}
+                        />
+                      </div>
+                    )}
+
+                    {isOpen && shape === "list" && (
                       <div className="space-y-1 border-l-2 border-border/60 bg-muted/20 px-2 py-1.5 sm:ml-4">
                         {n.branches.map((b) => {
                           const bk = `${n.productId}:${b.key}`;
