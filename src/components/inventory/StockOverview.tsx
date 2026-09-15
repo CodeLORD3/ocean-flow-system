@@ -854,35 +854,62 @@ export default function StockOverview({
                                 );
                               })()}
 
-                              {/* Packat till kundbeställningar — samma bild som i totallistan */}
+                              {/* Packat och beställt — samma bild som i totallistan. Klick öppnar ordern. */}
                               {(() => {
                                 const pk = packedByProduct?.get(g.product_id);
                                 if (!pk || pk.orders.length === 0) return null;
                                 return (
                                   <div className="rounded-md border border-amber-500/40 bg-amber-400/10 px-2.5 py-1.5">
-                                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-amber-700">
-                                      Packat till order
-                                      <span className="font-mono text-[11px] font-semibold tabular-nums">
-                                        {pk.packed.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit}
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] uppercase tracking-wider text-amber-700">
+                                      <span>
+                                        Packat
+                                        <span className="ml-1 font-mono text-[11px] font-semibold tabular-nums">
+                                          {pk.packed.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit}
+                                        </span>
+                                      </span>
+                                      <span className="text-muted-foreground">
+                                        Beställt
+                                        <span className="ml-1 font-mono text-[11px] font-semibold tabular-nums">
+                                          {pk.ordered.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit}
+                                        </span>
                                       </span>
                                     </div>
                                     <div className="mt-1 flex flex-col gap-1">
                                       {pk.orders.map((o, i) => (
-                                        <div
-                                          key={`${o.orderId}-${i}`}
-                                          className="flex items-center gap-2 whitespace-nowrap text-xs"
+                                        <button
+                                          type="button"
+                                          key={`${o.orderId}-${o.kind}-${i}`}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/orders?order=${o.orderId}`);
+                                          }}
+                                          className="flex w-full items-center gap-2 whitespace-nowrap rounded px-1 py-0.5 text-left text-xs hover:bg-amber-400/20"
+                                          title="Öppna ordern"
                                         >
-                                          <span className="font-mono font-semibold">{o.orderNumber}</span>
-                                          <span className="truncate">{o.customerName}</span>
+                                          <span
+                                            className={cn(
+                                              "h-1.5 w-1.5 rounded-full",
+                                              o.kind === "packed" ? "bg-amber-500" : "bg-muted-foreground/50",
+                                            )}
+                                          />
+                                          <span className="truncate font-semibold">{o.customerName}</span>
                                           {o.wantedDate && (
                                             <Badge variant="outline" className="h-5 text-[10px]">
                                               {format(parseISO(o.wantedDate), "d MMM", { locale: sv })}
                                             </Badge>
                                           )}
-                                          <span className="ml-auto font-mono font-semibold tabular-nums text-amber-700">
+                                          <span className="text-[10px] text-muted-foreground">
+                                            {o.kind === "packed" ? "packat" : "beställt"}
+                                          </span>
+                                          <span
+                                            className={cn(
+                                              "ml-auto font-mono font-semibold tabular-nums",
+                                              o.kind === "packed" ? "text-amber-700" : "text-muted-foreground",
+                                            )}
+                                          >
                                             {o.quantity.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {o.unit}
                                           </span>
-                                        </div>
+                                        </button>
                                       ))}
                                     </div>
                                   </div>
