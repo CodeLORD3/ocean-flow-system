@@ -89,6 +89,25 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
     );
     return () => window.clearTimeout(t);
   }, [mapStore]);
+
+  /** Stänger enhetspanelen och rullar tillbaka till kartan. */
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const closeStore = () => {
+    setMapStore(null);
+    mapRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  /** Esc stänger det som är öppet — panelen först, annars utfälld nod. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (mapStore) closeStore();
+      else if (open) setOpen(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mapStore, open]);
+
   const qc = useQueryClient();
 
   const { data: transfers = [] } = useTransferOrders();
