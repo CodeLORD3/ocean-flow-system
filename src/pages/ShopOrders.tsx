@@ -428,6 +428,7 @@ export default function ShopOrders() {
   const addProduct = (p: any) => {
     setOrderLines(prev => [{
       product_id: p.id, product_name: p.name, unit: p.unit, quantity: "", category: p.category || null, image_url: (p as any).image_url ?? null,
+      priority: "nice" as LinePriority, priorityQty: "", priorityNote: "",
     }, ...prev]);
     setProductSearch("");
     setHighlightedIndex(-1);
