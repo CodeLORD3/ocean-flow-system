@@ -108,6 +108,9 @@ export default function ProductStockFlow({
         note: m.note as string | null,
         lot: m.lots?.lot_number as string | null,
         lotId: (m as any).lot_id as string | null,
+        locId: (m as any).location_id as string | null,
+        store: (m.storage_locations?.stores?.name as string | null) || null,
+        placeName: (m.storage_locations?.name as string | null) || null,
         location: [m.storage_locations?.stores?.name, m.storage_locations?.name]
           .filter(Boolean)
           .join(" · "),
