@@ -210,25 +210,27 @@ export default function StockPricePoster() {
 
         {/* Förhandsgranskning i affischform — samma utseende som butikstavlan */}
         <div className="poster-sheet rounded-md border p-5 sm:p-8 print:border-0 print:p-0">
-          <h2 className="poster-marker text-center text-4xl sm:text-6xl uppercase">{title}</h2>
-          <div className="poster-rule mx-auto mt-2 h-2 w-2/3" />
+          <h2 className="poster-marker text-center text-5xl sm:text-[5.5rem] uppercase">{title}</h2>
+          <div className="poster-rule mx-auto mt-1 h-2.5 w-[92%]" />
           {activeStoreName && (
             <p className="poster-hand mt-2 text-center text-lg text-neutral-500">{activeStoreName}</p>
           )}
-          <div className="relative mt-6 grid gap-x-10 gap-y-8 sm:grid-cols-2">
+          <div className="relative mt-6 grid gap-x-10 gap-y-9 sm:grid-cols-2">
             <div className="poster-divider absolute inset-y-0 left-1/2 hidden w-[3px] -translate-x-1/2 sm:block" />
             {sections.map((s) => (
-              <div key={s.title}>
-                <h3 className="poster-marker text-2xl sm:text-4xl uppercase">{s.title}</h3>
-                <div className="poster-rule mt-1.5 h-[6px] w-full" />
-                <ul className="mt-3">
+              <div key={s.title} className="break-inside-avoid">
+                <h3 className="poster-marker text-3xl sm:text-5xl uppercase">{s.title}</h3>
+                <div className="poster-rule mt-1 h-[7px] w-full" />
+                <ul className="mt-4">
                   {s.rows.map((row) => (
-                    <li key={row.name} className="poster-row-line flex items-baseline gap-2 py-1.5">
-                      <span className="poster-hand flex-1 truncate text-xl sm:text-2xl">{row.name}</span>
-                      <span className="poster-price text-2xl sm:text-3xl tabular-nums">
+                    <li key={row.name} className="poster-row-line flex items-baseline gap-2 py-1">
+                      <span className="poster-hand flex-1 truncate text-xl sm:text-[1.65rem] leading-tight">
+                        {row.name}
+                      </span>
+                      <span className="poster-price w-[4.5rem] text-right text-2xl sm:text-[2rem] leading-none tabular-nums">
                         {formatPosterPrice(row.price)}
                       </span>
-                      <span className="poster-hand w-12 text-sm text-neutral-600">{row.unitLabel}</span>
+                      <span className="poster-unit w-11 text-[0.8rem] leading-none">{row.unitLabel}</span>
                     </li>
                   ))}
                 </ul>
