@@ -84,6 +84,7 @@ export default function TransformFlow({
   product,
   locationId,
   storeId,
+  allowedLevels,
   initialTargetProductId,
   onDone,
 }: Props) {
