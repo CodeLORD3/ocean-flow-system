@@ -82,19 +82,21 @@ export function usePackedByProduct(storeId?: string | null) {
           const delivered = Number(r.quantity_delivered || 0);
           // Packad rad: den plockade kvantiteten ligger i quantity_delivered
           // (faller tillbaka på beställd mängd när inget skrivits in).
-          const qty = packedLine ? delivered || ordered : ordered;
-          if (qty <= 0.005) continue;
+          const packedQty = packedLine ? delivered || ordered : 0;
+          const restQty = Math.max(0, ordered - packedQty);
           const unit = r.unit || r.products?.unit || "kg";
-          add(map, r.product_id, unit, qty, {
+          const base = {
             orderId: o.id,
             orderNumber: o.id ? String(o.id).slice(0, 8) : "",
             customerName: o.stores?.name || "Butik",
             wantedDate: r.delivery_date ?? o.desired_delivery_date ?? null,
-            quantity: qty,
             unit,
             status: lineStatus || o.status || "",
-            kind: packedLine ? "packed" : "ordered",
-          });
+          };
+          if (packedQty > 0.005)
+            add(map, r.product_id, unit, packedQty, { ...base, quantity: packedQty, kind: "packed" });
+          if (restQty > 0.005)
+            add(map, r.product_id, unit, restQty, { ...base, quantity: restQty, kind: "ordered" });
         }
       } else {
         let q = supabase
