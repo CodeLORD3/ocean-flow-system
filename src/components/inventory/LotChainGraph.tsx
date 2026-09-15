@@ -154,21 +154,64 @@ export default function LotChainGraph({
         </div>
 
         <ol>
-          {/* Live-läge först: senaste läget högst upp */}
-          <li className="grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-center gap-x-2 border-b-2 border-border px-3 py-3">
-            <span />
-            <div className="flex flex-col items-center">
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">nu</p>
-              <span className="my-1 h-4 w-4 rounded-full bg-primary shadow" />
+          {/* Live-läge först: senaste läget högst upp, tydligt markerat */}
+          <li
+            className={`border-b-2 px-3 py-4 ${
+              slutSaldo > 0
+                ? "border-emerald-600/40 bg-emerald-600/10"
+                : "border-rose-600/40 bg-rose-600/10"
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="relative grid h-5 w-5 place-items-center">
+                  <span
+                    className={`absolute h-5 w-5 animate-ping rounded-full ${
+                      slutSaldo > 0 ? "bg-emerald-500/40" : "bg-rose-500/40"
+                    }`}
+                  />
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full ${slutSaldo > 0 ? "bg-emerald-600" : "bg-rose-600"}`}
+                  />
+                </span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-background ${
+                    slutSaldo > 0 ? "bg-emerald-600" : "bg-rose-600"
+                  }`}
+                >
+                  live nu
+                </span>
+                <p
+                  className={`text-lg font-bold leading-none ${
+                    slutSaldo > 0 ? "text-emerald-700" : "text-rose-600"
+                  }`}
+                >
+                  {slutSaldo > 0 ? `${nf(slutSaldo, 1)} kg i lager` : "Slut i lager · 0 kg"}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="font-mono text-sm font-bold tabular-nums text-foreground">
+                  {sinceNow(senaste)} sedan senaste händelsen
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {datumSv(senaste)} {arSv(senaste)} · {timeSv(senaste)}
+                </p>
+              </div>
+            </div>
+            {platser.length > 0 && (
+              <p className="mt-2 text-[11px] font-medium text-foreground/80">
+                Ligger nu på: {platser.map(([namn, v]) => `${namn} (${nf(v.kg, 1)} kg)`).join(" · ")}
+              </p>
+            )}
+            <div className="mt-2 flex flex-col items-center">
+              <span className="h-4 w-0.5 bg-border" />
+              <span className="rounded-full border border-border bg-background px-2 py-px text-[10px] font-medium text-muted-foreground">
+                {slutSaldo > 0 ? `orörd ${sinceNow(senaste)}` : `slut sedan ${sinceNow(senaste)}`}
+              </span>
               <span className="h-4 w-0.5 bg-border" />
             </div>
-            <div>
-              <p className={`text-sm font-bold ${slutSaldo > 0 ? "text-emerald-700" : "text-rose-600"}`}>
-                {slutSaldo > 0 ? `Finns i lager · ${nf(slutSaldo, 1)} kg` : "Slut i lager · 0 kg"}
-              </p>
-              <p className="text-[11px] text-muted-foreground">senaste händelsen {sinceNow(senaste)} sedan</p>
-            </div>
           </li>
+
 
           {[...noder].reverse().map((n, j) => {
             const i = noder.length - 1 - j;
@@ -277,11 +320,16 @@ export default function LotChainGraph({
                   <div className="grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-center gap-x-2 px-3">
                     <span className="h-px" />
                     <span className="flex flex-col items-center">
-                      <span className="h-3 w-0.5 bg-border" />
-                      <span className="whitespace-nowrap rounded-full border border-border bg-background px-2 py-px text-[10px] font-medium text-muted-foreground">
-                        orörd {n.gap}
+                      <span className="h-4 w-0.5 bg-border" />
+                      <span className="flex flex-col items-center whitespace-nowrap rounded-md border border-border bg-muted/60 px-2 py-1">
+                        <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                          orörd
+                        </span>
+                        <span className="font-mono text-[12px] font-bold tabular-nums text-foreground">
+                          {n.gap}
+                        </span>
                       </span>
-                      <span className="h-3 w-0.5 bg-border" />
+                      <span className="h-4 w-0.5 bg-border" />
                     </span>
                     <span className="h-px" />
                   </div>
