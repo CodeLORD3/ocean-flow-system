@@ -3,13 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSite } from "@/contexts/SiteContext";
 
 /**
- * Packat per produkt — varan finns kvar fysiskt men är redan packad till en
- * order och håller på att byta plats. Används för den gula andelen i
- * lagerstapeln.
+ * Packat och beställt per produkt — samma bild som Totallistan, men sett från
+ * lagret. Packat betyder att varan finns kvar fysiskt men redan är plockad
+ * till en order och håller på att byta plats (gul andel i lagerstapeln).
  *
- * Grossistens kunder är butikerna: där räknas packade butiksorderrader
+ * Grossistens kunder är butikerna: där räknas butiksorderrader
  * (shop_order_lines). I butiksportalen är kunden privatkunden: där räknas
- * packat på kundbeställningarna (customer_order_lines).
+ * kundbeställningarna (customer_order_lines).
  */
 export interface PackedOrderRef {
   orderId: string;
@@ -19,24 +19,37 @@ export interface PackedOrderRef {
   quantity: number;
   unit: string;
   status: string;
+  /** Packat = redan plockat. Beställt = kvar att packa. */
+  kind: "packed" | "ordered";
 }
 
 export interface PackedProduct {
   /** Summa packat i produktens enhet. */
   packed: number;
+  /** Summa beställt som ännu inte är packat. */
+  ordered: number;
   unit: string;
   orders: PackedOrderRef[];
 }
 
-/** Butiksorderrader som är packade men ännu inte levererade. */
-const PACKED_LINE_STATUSES = ["Packad", "Skickad"];
-/** Ordrar som fortfarande står kvar i lagret trots att de är packade. */
-const CLOSED_SHOP_ORDER_STATUSES = ["Avbruten", "Levererad", "Klar / Levererad", "Arkiverad"];
+/** Rader som är plockade men ännu ligger i grossistlagret. */
+const PACKED_LINE_STATUS = "Packad";
+/** Rader som är beställda men ännu inte plockade. */
+const OPEN_LINE_STATUSES = ["", "Ny", "Pågående", "Beställd", "Producerad"];
+/** Ordrar som lämnat lagret eller är avslutade. */
+const CLOSED_SHOP_ORDER_STATUSES = ["Avbruten", "Levererad", "Klar / Levererad", "Arkiverad", "Skickad"];
 const OPEN_CUSTOMER_STATUSES = ["ny", "bekraftad", "packad"];
 
-function add(map: Map<string, PackedProduct>, productId: string, unit: string, qty: number, ref: PackedOrderRef) {
-  const entry = map.get(productId) ?? { packed: 0, unit, orders: [] };
-  entry.packed += qty;
+function add(
+  map: Map<string, PackedProduct>,
+  productId: string,
+  unit: string,
+  qty: number,
+  ref: PackedOrderRef,
+) {
+  const entry = map.get(productId) ?? { packed: 0, ordered: 0, unit, orders: [] };
+  if (ref.kind === "packed") entry.packed += qty;
+  else entry.ordered += qty;
   entry.orders.push(ref);
   map.set(productId, entry);
 }
@@ -56,14 +69,20 @@ export function usePackedByProduct(storeId?: string | null) {
           .from("shop_order_lines")
           .select(
             "product_id, quantity_ordered, quantity_delivered, unit, status, delivery_date, products(unit), shop_orders!inner(id, status, store_id, desired_delivery_date, stores(name))",
-          )
-          .in("status", PACKED_LINE_STATUSES);
+          );
         if (error) throw error;
         for (const r of (data || []) as any[]) {
           if (!r.product_id) continue;
           const o = r.shop_orders || {};
           if (CLOSED_SHOP_ORDER_STATUSES.includes(o.status)) continue;
-          const qty = Number(r.quantity_ordered || 0) - Number(r.quantity_delivered || 0);
+          const lineStatus: string = r.status || "";
+          const packedLine = lineStatus === PACKED_LINE_STATUS;
+          if (!packedLine && !OPEN_LINE_STATUSES.includes(lineStatus)) continue;
+          const ordered = Number(r.quantity_ordered || 0);
+          const delivered = Number(r.quantity_delivered || 0);
+          // Packad rad: den plockade kvantiteten ligger i quantity_delivered
+          // (faller tillbaka på beställd mängd när inget skrivits in).
+          const qty = packedLine ? delivered || ordered : ordered;
           if (qty <= 0.005) continue;
           const unit = r.unit || r.products?.unit || "kg";
           add(map, r.product_id, unit, qty, {
@@ -73,40 +92,47 @@ export function usePackedByProduct(storeId?: string | null) {
             wantedDate: r.delivery_date ?? o.desired_delivery_date ?? null,
             quantity: qty,
             unit,
-            status: r.status || "",
+            status: lineStatus || o.status || "",
+            kind: packedLine ? "packed" : "ordered",
           });
         }
       } else {
         let q = supabase
           .from("customer_order_lines")
           .select(
-            "product_id, quantity_packed, unit, customer_orders!inner(id, order_number, status, store_id, wanted_date, customer_name_snapshot, customers_retail(name))",
+            "product_id, quantity, quantity_packed, unit, customer_orders!inner(id, order_number, status, store_id, wanted_date, customer_name_snapshot, customers_retail(name))",
           )
-          .in("customer_orders.status", OPEN_CUSTOMER_STATUSES)
-          .gt("quantity_packed", 0);
+          .in("customer_orders.status", OPEN_CUSTOMER_STATUSES);
         if (storeId) q = q.eq("customer_orders.store_id", storeId);
         const { data, error } = await q;
         if (error) throw error;
         for (const r of (data || []) as any[]) {
           if (!r.product_id) continue;
-          const qty = Number(r.quantity_packed || 0);
-          if (qty <= 0.005) continue;
+          const packed = Number(r.quantity_packed || 0);
+          const rest = Math.max(0, Number(r.quantity || 0) - packed);
           const o = r.customer_orders || {};
           const unit = r.unit || "kg";
-          add(map, r.product_id, unit, qty, {
+          const base = {
             orderId: o.id,
             orderNumber: o.order_number || "",
             customerName: o.customers_retail?.name || o.customer_name_snapshot || "Kund",
             wantedDate: o.wanted_date ?? null,
-            quantity: qty,
             unit,
             status: o.status || "",
-          });
+          };
+          if (packed > 0.005)
+            add(map, r.product_id, unit, packed, { ...base, quantity: packed, kind: "packed" });
+          if (rest > 0.005)
+            add(map, r.product_id, unit, rest, { ...base, quantity: rest, kind: "ordered" });
         }
       }
 
       for (const e of map.values())
-        e.orders.sort((a, b) => (a.wantedDate || "").localeCompare(b.wantedDate || ""));
+        e.orders.sort(
+          (a, b) =>
+            (a.kind === b.kind ? 0 : a.kind === "packed" ? -1 : 1) ||
+            (a.wantedDate || "").localeCompare(b.wantedDate || ""),
+        );
       return map;
     },
   });
