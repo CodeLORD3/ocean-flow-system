@@ -105,15 +105,13 @@ Deno.serve(async (req) => {
   // nattjobbet stänger den, och personen får inget kvitto på sin utstämpling.
   let openShift = false;
   if (hit && !hit.is_active) {
-    const { data: lastRow } = await db
+    const { data: lastRows } = await db
       .from("time_entries")
-      .select("type")
+      .select("id, type, occurred_at, corrects_entry_id, correction_kind")
       .eq("employee_id", hit.id)
       .order("occurred_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const lastType = lastRow?.type as string | undefined;
-    openShift = lastType === "in" || lastType === "rast_start" || lastType === "rast_slut";
+      .limit(60);
+    openShift = isOpenShift(effectiveLast(lastRows ?? [])?.type);
   }
   const blocked = !hit || (!hit.is_active && !openShift);
 
