@@ -388,6 +388,20 @@ export default function StockCount() {
     [locations],
   );
 
+  /** Enhetens huvudlagerplats — hit bokförs varor som läggs till i inventeringen. */
+  const defaultLocation = useMemo(() => {
+    const list = locations as any[];
+    if (!list.length) return null;
+    const pick =
+      list.find((l: any) => /butik|f(ö|o)rs(ä|a)ljning|kyl/i.test(String(l.location_type ?? l.name ?? ""))) ??
+      list[0];
+    return pick ?? null;
+  }, [locations]);
+
+  /** Varor som lagts till manuellt i pågående inventering (fanns inte i lager). */
+  const [extraProductIds, setExtraProductIds] = useState<Set<string>>(new Set());
+  const [addSearch, setAddSearch] = useState("");
+
   const allRows = useMemo<Row[]>(() => {
     if (!effectiveStoreId) return [];
     const locIds = new Map<string, string>();
@@ -420,6 +434,39 @@ export default function StockCount() {
         costPrice: Number(p.cost_price) || 0,
       });
     });
+
+    // Varor utan saldo: manuellt tillagda i sessionen, eller redan sparade rader.
+    // Första inventeringen är startvärdet — då skapas varan i lager när den räknas.
+    const wanted = new Map<string, string>(); // produkt → lagerplats
+    extraProductIds.forEach((pid) => {
+      if (defaultLocation?.id) wanted.set(pid, defaultLocation.id);
+    });
+    (linesQuery.data ?? []).forEach((l: any) => {
+      if (l.product_id && l.location_id && locIds.has(l.location_id)) {
+        wanted.set(l.product_id, l.location_id);
+      }
+    });
+    wanted.forEach((locationId, productId) => {
+      const key = `${productId}|${locationId}`;
+      if (seen.has(key)) return;
+      const p = productsById.get(productId);
+      if (!p) return;
+      seen.add(key);
+      rows.push({
+        key,
+        productId,
+        locationId,
+        productName: p.name || "—",
+        sku: p.sku ?? null,
+        unit: unitOf(p.unit),
+        category: p.category || "Övrigt",
+        imageUrl: p.image_url ?? null,
+        locationName: locIds.get(locationId) || "Lager",
+        systemQty: 0,
+        costPrice: Number(p.cost_price) || 0,
+      });
+    });
+
     rows.sort(
       (a, b) =>
         collator.compare(a.category, b.category) ||
@@ -427,7 +474,24 @@ export default function StockCount() {
         collator.compare(a.locationName, b.locationName),
     );
     return rows;
-  }, [allStock, locations, productsById, effectiveStoreId]);
+  }, [allStock, locations, productsById, effectiveStoreId, extraProductIds, defaultLocation, linesQuery.data]);
+
+  /** Träffar i produktregistret som ännu inte finns i inventeringslistan. */
+  const addCandidates = useMemo(() => {
+    const q = addSearch.trim().toLowerCase();
+    if (q.length < 2) return [] as any[];
+    const inList = new Set(allRows.map((r) => r.productId));
+    return (products as any[])
+      .filter((p: any) => {
+        if (inList.has(p.id)) return false;
+        if (p.is_active === false) return false;
+        return (
+          String(p.name ?? "").toLowerCase().includes(q) ||
+          String(p.sku ?? "").toLowerCase().includes(q)
+        );
+      })
+      .slice(0, 8);
+  }, [addSearch, allRows, products]);
 
   const categories = useMemo(
     () => [...new Set(allRows.map((r) => r.category))].sort(collator.compare),
