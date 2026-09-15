@@ -355,14 +355,17 @@ export default function WholesaleOrders() {
     setShowHistory(true);
     setExpandedOrderIds(new Set([wanted]));
     setDeepLinkOrderId(wanted);
+    const wantedLine = new URLSearchParams(location.search).get("line");
     let tries = 0;
     const timers: ReturnType<typeof setTimeout>[] = [];
     const tick = () => {
       const el = document.getElementById(`wholesale-order-${wanted}`);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        // Skrolla en gång till när raden expanderat och layouten satt sig.
-        timers.push(setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 600));
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        // Har vi en specifik produktrad tar radens egen skroll över här.
+        if (!wantedLine) {
+          timers.push(setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 600));
+        }
         return;
       }
       if (tries++ < 25) timers.push(setTimeout(tick, 200));
@@ -1335,15 +1338,22 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
     if (!highlightProductId) return;
     let tries = 0;
     const timers: ReturnType<typeof setTimeout>[] = [];
-    const tick = () => {
+    const focusLine = () => {
       const el = document.getElementById(`order-line-${order.id}-${highlightProductId}`);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (!el) return false;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      return true;
+    };
+    const tick = () => {
+      if (focusLine()) {
+        // Skrolla om när layouten satt sig så vi stannar kvar på rätt rad.
+        timers.push(setTimeout(focusLine, 900));
+        timers.push(setTimeout(focusLine, 1800));
         return;
       }
       if (tries++ < 25) timers.push(setTimeout(tick, 200));
     };
-    timers.push(setTimeout(tick, 400));
+    timers.push(setTimeout(tick, 500));
     return () => timers.forEach(clearTimeout);
   }, [highlightProductId, order.id]);
   const { data: infiniteStock = true } = useQuery({
