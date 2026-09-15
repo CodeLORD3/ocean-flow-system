@@ -47,6 +47,7 @@ import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 import FamilyStockView from "@/components/inventory/FamilyStockView";
 import { useProductFamilies, useOrderedByProduct } from "@/hooks/useProductFamilies";
 import { usePackedByProduct } from "@/hooks/usePackedByProduct";
+import { useNavigate } from "react-router-dom";
 import { useProductPhotoCounts } from "@/hooks/useEntityImages";
 import { useSite } from "@/contexts/SiteContext";
 import { Layers } from "lucide-react";
@@ -181,6 +182,7 @@ export default function StockOverview({
   onTransformProduct,
 }: Props) {
   const { activeStoreId } = useSite();
+  const navigate = useNavigate();
   const { data: families = [] } = useProductFamilies();
   const { data: orderedByProduct } = useOrderedByProduct(activeStoreId || null);
   /** Packat till kundbeställningar — visas som gul andel i lagerstapeln. */
