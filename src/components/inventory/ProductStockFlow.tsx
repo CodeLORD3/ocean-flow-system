@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, TrendingUp } from "lucide-react";
+import { ChevronDown, ChevronRight, TrendingUp, GitBranch, ArrowDownRight, ArrowUpRight, Package } from "lucide-react";
 import {
   Area,
   Bar,
@@ -59,7 +59,8 @@ export default function ProductStockFlow({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [days, setDays] = useState(90);
-  const [mode, setMode] = useState<"days" | "ledger">("days");
+  const [mode, setMode] = useState<"days" | "ledger" | "tree">("days");
+  const [openBranches, setOpenBranches] = useState<Record<string, boolean>>({});
 
   const { data: movements = [], isLoading } = useQuery({
     queryKey: ["product_stock_flow", productId, locationIds],
@@ -68,7 +69,7 @@ export default function ProductStockFlow({
       let q = supabase
         .from("stock_movements")
         .select(
-          "id, created_at, quantity_kg, movement_type, note, location_id, reference_type, reference_id, unit_cost, storage_locations(name, stores!storage_locations_store_id_fkey(name)), lots(lot_number), staff(first_name, last_name)",
+          "id, created_at, quantity_kg, movement_type, note, location_id, lot_id, reference_type, reference_id, unit_cost, storage_locations(name, stores!storage_locations_store_id_fkey(name)), lots(lot_number), staff(first_name, last_name)",
         )
         .eq("product_id", productId)
         .order("created_at", { ascending: true })
@@ -80,7 +81,7 @@ export default function ProductStockFlow({
     },
   });
 
-  const { points, totals, ledger } = useMemo(() => {
+  const { points, totals, ledger, branches } = useMemo(() => {
     // Löpande saldo från noll — varje förändring av lagret är en rörelse.
     const perDay = new Map<string, { in: number; out: number }>();
     let running = 0;
@@ -105,6 +106,7 @@ export default function ProductStockFlow({
         saldo: running,
         note: m.note as string | null,
         lot: m.lots?.lot_number as string | null,
+        lotId: (m as any).lot_id as string | null,
         location: [m.storage_locations?.stores?.name, m.storage_locations?.name]
           .filter(Boolean)
           .join(" · "),
@@ -148,10 +150,50 @@ export default function ProductStockFlow({
     const totIn = rows.reduce((s, r) => s + r.in, 0);
     const totOut = rows.reduce((s, r) => s + Math.abs(r.ut), 0);
     const visible = cutoff ? entries.filter((e) => e.day >= cutoff) : entries;
+
+    // Trädet: varje parti är en gren, rörelserna hänger under i tidsordning.
+    // Saldot per gren räknas separat så man ser var partiet tog slut.
+    const branchMap = new Map<string, any>();
+    for (const e of visible) {
+      const key = e.lotId || "utan-parti";
+      let b = branchMap.get(key);
+      if (!b) {
+        b = {
+          key,
+          label: e.lot || "Utan parti",
+          events: [] as any[],
+          in: 0,
+          out: 0,
+          saldo: 0,
+          first: e.created_at,
+          last: e.created_at,
+          createdBy: "",
+          endedBy: "",
+          endedAt: null as string | null,
+        };
+        branchMap.set(key, b);
+      }
+      b.saldo += e.qty;
+      if (e.qty >= 0) {
+        b.in += e.qty;
+        if (!b.createdBy) b.createdBy = e.who || "System";
+      } else {
+        b.out += Math.abs(e.qty);
+        b.endedBy = e.who || "System";
+        b.endedAt = e.created_at;
+      }
+      b.last = e.created_at;
+      b.events.push({ ...e, branchSaldo: Math.round(b.saldo * 1000) / 1000 });
+    }
+    const branches = [...branchMap.values()].sort(
+      (a, b) => new Date(b.first).getTime() - new Date(a.first).getTime(),
+    );
+
     return {
       points: rows,
       totals: { in: totIn, out: totOut, now: running, net: totIn - totOut },
       ledger: [...visible].reverse(),
+      branches,
     };
   }, [movements, days]);
 
@@ -263,6 +305,7 @@ export default function ProductStockFlow({
                 {[
                   { v: "days" as const, l: "Per dag" },
                   { v: "ledger" as const, l: "Bokföring" },
+                  { v: "tree" as const, l: "Träd" },
                 ].map((o) => (
                   <button
                     key={o.v}
@@ -304,6 +347,101 @@ export default function ProductStockFlow({
                       ))}
                     </tbody>
                   </table>
+                </div>
+              ) : mode === "tree" ? (
+                <div className="max-h-[28rem] space-y-1.5 overflow-y-auto rounded-md border border-border/60 p-2">
+                  <p className="text-[11px] text-muted-foreground">
+                    Varje gren är ett parti. Under grenen ligger allt som hänt — vem som la in,
+                    varje flytt och vem som tog bort — i tidsordning.
+                  </p>
+                  {branches.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Inga rörelser i valt intervall.</p>
+                  )}
+                  {branches.map((b: any) => {
+                    const isOpen = openBranches[b.key] ?? branches.length <= 3;
+                    return (
+                      <div key={b.key} className="rounded-md border border-border/60 bg-muted/20">
+                        <button
+                          onClick={() =>
+                            setOpenBranches((p) => ({ ...p, [b.key]: !isOpen }))
+                          }
+                          className="flex w-full items-center gap-2 px-2 py-1.5 text-left"
+                        >
+                          {isOpen ? (
+                            <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                          ) : (
+                            <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                          )}
+                          <GitBranch className="h-3.5 w-3.5 shrink-0 text-primary" />
+                          <span className="min-w-0 flex-1 truncate text-xs font-semibold">
+                            {b.label}
+                            <span className="ml-1.5 font-normal text-muted-foreground">
+                              {b.events.length} händelser
+                            </span>
+                          </span>
+                          <span
+                            className={`shrink-0 font-mono text-xs font-semibold tabular-nums ${
+                              b.saldo > 0.0001 ? "text-foreground" : "text-muted-foreground"
+                            }`}
+                          >
+                            {nf(b.saldo)} {u}
+                          </span>
+                        </button>
+
+                        {isOpen && (
+                          <div className="space-y-1 border-t border-border/50 px-2 py-1.5">
+                            <p className="text-[10px] text-muted-foreground">
+                              Inlagt {stampFull(b.first)} av {b.createdBy || "System"}
+                              {b.saldo <= 0.0001 && b.endedAt
+                                ? ` · slut ${stampFull(b.endedAt)} av ${b.endedBy || "System"}`
+                                : ""}
+                            </p>
+                            <div className="relative space-y-1 pl-3">
+                              <span className="absolute bottom-1 left-0 top-1 w-px bg-border" />
+                              {b.events.map((e: any) => (
+                                <div
+                                  key={e.id}
+                                  className="relative rounded-md border border-border/50 bg-card px-2 py-1"
+                                >
+                                  <span className="absolute -left-3 top-3.5 h-px w-3 bg-border" />
+                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]">
+                                    {e.qty >= 0 ? (
+                                      <ArrowDownRight className="h-3 w-3 shrink-0 text-emerald-500" />
+                                    ) : (
+                                      <ArrowUpRight className="h-3 w-3 shrink-0 text-destructive" />
+                                    )}
+                                    <span className="font-semibold">{movementLabel(e.type)}</span>
+                                    <span className="font-mono tabular-nums text-muted-foreground">
+                                      {stampFull(e.created_at)}
+                                    </span>
+                                    <span
+                                      className={`font-mono font-semibold tabular-nums ${
+                                        e.qty >= 0 ? "text-emerald-500" : "text-destructive"
+                                      }`}
+                                    >
+                                      {e.qty >= 0 ? `+${nf(e.qty)}` : nf(e.qty)} {u}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                      kvar {nf(e.branchSaldo)} {u}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                      <Package className="h-3 w-3" />
+                                      {e.location || "Okänd lagerplats"}
+                                    </span>
+                                    <span>{e.who || "System"}</span>
+                                    {e.reference && <span>ref: {e.reference}</span>}
+                                    {e.note && <span className="truncate">{e.note}</span>}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="max-h-72 overflow-x-auto overflow-y-auto rounded-md border border-border/60">
