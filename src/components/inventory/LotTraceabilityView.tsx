@@ -19,6 +19,7 @@ import {
   Truck,
   Store,
   ShoppingBasket,
+  ArrowDownUp,
 } from "lucide-react";
 
 import LineageGraphView from "@/components/inventory/LineageGraphView";
@@ -84,6 +85,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
   const [q, setQ] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<"flode" | "graf" | "historik" | "natverk">("flode");
+  const [sort, setSort] = useState<"senaste" | "bast_fore" | "storst" | "namn">("senaste");
 
   const { data: lots = [], isLoading } = useQuery({
     queryKey: ["lots_traceability"],
@@ -118,8 +120,9 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
-    if (!s) return lots;
-    return lots.filter((l) =>
+    const bas = !s
+      ? lots
+      : lots.filter((l) =>
       [
         l.lot_number,
         l.supplier_lot_id,
@@ -132,9 +135,22 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
         l.products?.sku,
       ]
         .filter(Boolean)
-        .some((v: string) => String(v).toLowerCase().includes(s)),
-    );
-  }, [lots, q]);
+            .some((v: string) => String(v).toLowerCase().includes(s)),
+        );
+    const kopia = [...bas];
+    if (sort === "senaste") kopia.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    if (sort === "bast_fore")
+      kopia.sort((a, b) => String(a.best_before || "9999-12-31").localeCompare(String(b.best_before || "9999-12-31")));
+    if (sort === "storst") kopia.sort((a, b) => Number(b.quantity_kg || 0) - Number(a.quantity_kg || 0));
+    if (sort === "namn")
+      kopia.sort((a, b) =>
+        String(a.products?.name || a.commercial_name || "").localeCompare(
+          String(b.products?.name || b.commercial_name || ""),
+          "sv",
+        ),
+      );
+    return kopia;
+  }, [lots, q, sort]);
 
   useEffect(() => {
     if (mode !== "flode") return;
@@ -164,6 +180,40 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
       }),
     [movements],
   );
+
+  /** Var partiets kilon ligger just nu, per lagerplats. */
+  const perPlats = useMemo(() => {
+    const map = new Map<string, number>();
+    movements.forEach((m) => {
+      const namn = m.storage_locations?.name || "Okänd plats";
+      map.set(namn, (map.get(namn) || 0) + Number(m.quantity_kg || 0));
+    });
+    return [...map.entries()]
+      .map(([plats, kg]) => ({ plats, kg }))
+      .filter((r) => Math.abs(r.kg) > 0.001)
+      .sort((a, b) => b.kg - a.kg);
+  }, [movements]);
+
+  /** Löpande saldo per händelse — den röda tråden. */
+  const tidslinje = useMemo(() => {
+    let saldoLopande = 0;
+    return movements.map((m, i) => {
+      saldoLopande += Number(m.quantity_kg || 0);
+      return {
+        ...m,
+        saldoEfter: saldoLopande,
+        gap: i === 0 ? null : gapBetween(movements[i - 1].created_at, m.created_at),
+        sist: i === movements.length - 1,
+      };
+    });
+  }, [movements]);
+
+  const sorteringar = [
+    { v: "senaste", label: "Senast registrerat" },
+    { v: "bast_fore", label: "Kortast hållbarhet" },
+    { v: "storst", label: "Störst mängd" },
+    { v: "namn", label: "Namn A–Ö" },
+  ] as const;
 
   const modes = [
     { v: "flode", label: "Flöde", icon: Route },
@@ -237,9 +287,28 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
             <div className="grid gap-6 lg:h-[calc(100dvh-15rem)] lg:min-h-[420px] lg:grid-cols-[260px_minmax(0,1fr)]">
               {/* Partilista */}
               <div className="flex min-h-0 flex-col">
-                <div className="flex items-baseline justify-between pb-2">
+                <div className="flex items-baseline justify-between pb-1">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Partier</p>
                   <span className="text-[11px] text-muted-foreground">{filtered.length}</span>
+                </div>
+                <div className="flex items-center gap-1.5 pb-2">
+                  <ArrowDownUp className="h-3 w-3 text-muted-foreground" />
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value as typeof sort)}
+                    className="w-full bg-transparent text-[11px] text-muted-foreground focus:outline-none"
+                    aria-label="Sortera partier"
+                  >
+                    {sorteringar.map((s) => (
+                      <option key={s.v} value={s.v}>
+                        Sorterat: {s.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-baseline justify-between border-b border-border pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <span>Produkt och parti</span>
+                  <span>Kg i partiet</span>
                 </div>
                 <div className="max-h-[180px] min-h-0 flex-1 overflow-y-auto border-t border-border lg:max-h-none">
                   {filtered.map((l) => {
@@ -258,7 +327,10 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                           >
                             {l.products?.name || l.commercial_name || "—"}
                           </p>
-                          <p className="truncate font-mono text-[10px] text-muted-foreground">{l.lot_number}</p>
+                          <p className="truncate font-mono text-[10px] text-muted-foreground">
+                            {l.lot_number} · in {String(l.created_at).slice(0, 10)}
+                            {l.best_before ? ` · bäst före ${l.best_before}` : ""}
+                          </p>
                         </div>
                         <p className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
                           {nf(Number(l.quantity_kg || 0), 1)}
@@ -331,6 +403,29 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                     })}
                   </div>
 
+                  {/* Var kilona finns just nu */}
+                  <div className="border-y border-border py-2">
+                    <p className="pb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                      I lager nu
+                    </p>
+                    {perPlats.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        Inget saldo kvar på partiet – allt är sålt, omvandlat eller bortskrivet.
+                      </p>
+                    ) : (
+                      <div className="flex flex-wrap gap-x-6 gap-y-1">
+                        {perPlats.map((r) => (
+                          <p key={r.plats} className="text-xs">
+                            <span className="text-muted-foreground">{r.plats}</span>{" "}
+                            <span className="font-mono font-semibold tabular-nums text-foreground">
+                              {nf(r.kg, 1)} kg
+                            </span>
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Flikar så allt ryms på skärmen */}
                   <div className="flex gap-4 border-b border-border">
                     {(
@@ -356,49 +451,47 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
 
                   <div className="min-h-0 flex-1 overflow-y-auto pr-1">
                     {panel === "handelser" &&
-                      (movements.length === 0 ? (
+                      (tidslinje.length === 0 ? (
                         <p className="py-4 text-xs text-muted-foreground">Inga rörelser kopplade till partiet.</p>
                       ) : (
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="text-left text-[10px] uppercase tracking-wider text-muted-foreground">
-                              <th className="py-2 pr-3 font-medium">Datum &amp; tid</th>
-                              <th className="py-2 pr-3 font-medium">Händelse</th>
-                              <th className="py-2 pr-3 font-medium">Lagerplats</th>
-                              <th className="py-2 pr-3 font-medium">Av</th>
-                              <th className="py-2 pr-3 font-medium">Låg orörd</th>
-                              <th className="py-2 text-right font-medium">Kg</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {movements.map((m, i, arr) => (
-                              <tr key={m.id} className="border-t border-border/50">
-                                <td className="whitespace-nowrap py-2 pr-3 font-mono tabular-nums text-muted-foreground">
-                                  {stampSv(m.created_at)}
-                                </td>
-                                <td className="py-2 pr-3 text-foreground">
-                                  {movementLabel(m.movement_type)}
-                                  {m.note && <span className="block text-[10px] text-muted-foreground">{m.note}</span>}
-                                </td>
-                                <td className="py-2 pr-3 text-muted-foreground">{m.storage_locations?.name || "—"}</td>
-                                <td className="py-2 pr-3 text-muted-foreground">
-                                  {m.staff ? `${m.staff.first_name} ${m.staff.last_name}` : "System"}
-                                </td>
-                                <td className="whitespace-nowrap py-2 pr-3 text-muted-foreground">
-                                  {i === 0 ? "—" : gapBetween(arr[i - 1].created_at, m.created_at)}
-                                  {i === arr.length - 1 ? ` (nu ${sinceNow(m.created_at)})` : ""}
-                                </td>
-                                <td
-                                  className={`py-2 text-right font-mono tabular-nums ${
-                                    Number(m.quantity_kg) < 0 ? "text-destructive" : "text-foreground"
+                        <ol className="relative border-l border-border pl-4">
+                          {tidslinje.map((m) => {
+                            const minus = Number(m.quantity_kg) < 0;
+                            return (
+                              <li key={m.id} className="relative pb-4">
+                                <span
+                                  className={`absolute -left-[21px] top-1.5 h-2 w-2 rounded-full ${
+                                    minus ? "bg-destructive" : "bg-foreground"
                                   }`}
-                                >
-                                  {nf(Number(m.quantity_kg), 1)}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                                />
+                                <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+                                  <p className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                                    {stampSv(m.created_at)}
+                                  </p>
+                                  <p className="font-mono text-xs tabular-nums">
+                                    <span className={minus ? "text-destructive" : "text-foreground"}>
+                                      {minus ? "" : "+"}
+                                      {nf(Number(m.quantity_kg), 1)} kg
+                                    </span>
+                                    <span className="text-muted-foreground"> → saldo {nf(m.saldoEfter, 1)} kg</span>
+                                  </p>
+                                </div>
+                                <p className="text-xs font-medium text-foreground">
+                                  {movementLabel(m.movement_type)}
+                                  <span className="font-normal text-muted-foreground">
+                                    {m.storage_locations?.name ? ` · ${m.storage_locations.name}` : ""}
+                                    {` · ${m.staff ? `${m.staff.first_name} ${m.staff.last_name}` : "System"}`}
+                                  </span>
+                                </p>
+                                {m.note && <p className="text-[11px] text-muted-foreground">{m.note}</p>}
+                                <p className="text-[10px] text-muted-foreground">
+                                  {m.gap ? `Låg orörd ${m.gap} innan detta` : "Första händelsen"}
+                                  {m.sist ? ` · senaste händelsen var ${sinceNow(m.created_at)} sedan` : ""}
+                                </p>
+                              </li>
+                            );
+                          })}
+                        </ol>
                       ))}
 
                     {panel === "pass" && (
