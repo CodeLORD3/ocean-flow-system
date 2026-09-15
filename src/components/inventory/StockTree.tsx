@@ -73,6 +73,7 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
   const [open, setOpen] = useState<string | null>(null);
   /** Vald enhet på lagerkartan (ersätter butiksrutorna). */
   const [mapStore, setMapStore] = useState<string | null>(null);
+  const { data: storeActivity } = useStoreStockActivity();
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [moving, setMoving] = useState<null | "grossistlager" | "tillverkningslager">(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
