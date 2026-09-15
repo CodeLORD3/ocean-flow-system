@@ -938,6 +938,7 @@ export default function StockOverview({
                 <th className="hidden px-1.5 py-2 text-left align-middle font-semibold sm:table-cell">Lager</th>
                 <th className="px-1.5 py-2 text-right align-middle font-semibold">Totalt</th>
                 <th className="whitespace-nowrap px-1.5 py-2 text-right align-middle font-semibold">Beställt</th>
+                <th className="whitespace-nowrap px-1.5 py-2 text-right align-middle font-semibold">Differens</th>
                 {showCosts && <th className="hidden px-1.5 py-2 text-right align-middle font-semibold sm:table-cell">Lagervärde</th>}
                 <th className="hidden whitespace-nowrap px-1.5 py-2 text-center align-middle font-semibold sm:table-cell">Bäst före</th>
                 <th className="hidden whitespace-nowrap px-1.5 py-2 text-center align-middle font-semibold sm:table-cell">Dagar kvar</th>
