@@ -990,7 +990,7 @@ export default function StockCount() {
                   <CardContent className="p-6 text-center text-xs text-muted-foreground">
                     {search.trim()
                       ? "Ingen vara matchar sökningen."
-                      : "Inga varor med saldo i lagret för den här enheten."}
+                      : "Lagret är tomt. Använd fältet ovan och lägg till varorna du räknar — de skapas i lager när rapporten färdigställs."}
                   </CardContent>
                 </Card>
               ) : (
