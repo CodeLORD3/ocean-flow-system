@@ -862,8 +862,12 @@ export default function StockOverview({
                           {(() => {
                           const pk = packedByProduct?.get(g.product_id);
                           const packedKg = pk ? qtyToKg(pk.packed, productsById.get(g.product_id)) : 0;
+                          const orderedRestKg = pk ? qtyToKg(pk.ordered, productsById.get(g.product_id)) : 0;
+                          const bookedKg = packedKg + orderedRestKg;
                           const packedPct =
                             g.totalKg > 0 ? Math.min(100, (packedKg / g.totalKg) * 100) : 0;
+                          const bookedPct =
+                            g.totalKg > 0 ? Math.min(100, (bookedKg / g.totalKg) * 100) : 0;
                           return (
                           <div className="min-w-[160px] space-y-1">
                             {/* Full bredd som spår, fyllnaden är andelen av största saldot */}
@@ -887,6 +891,13 @@ export default function StockOverview({
                                     />
                                   );
                                 })}
+                                {bookedPct > 0 && (
+                                  <span
+                                    className="pointer-events-none absolute inset-y-0 left-0 z-[9] rounded-l-full bg-foreground/35"
+                                    style={{ width: `${bookedPct}%` }}
+                                    title={`Beställt: ${bookedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg`}
+                                  />
+                                )}
                                 {packedPct > 0 && (
                                   <span
                                     className="pointer-events-none absolute inset-y-0 left-0 z-10 rounded-l-full bg-amber-400/85"
