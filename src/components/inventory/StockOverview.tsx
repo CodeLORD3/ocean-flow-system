@@ -213,6 +213,7 @@ export default function StockOverview({
       next.has(cat) ? next.delete(cat) : next.add(cat);
       return next;
     });
+  const [showStats, setShowStats] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(30);
 
