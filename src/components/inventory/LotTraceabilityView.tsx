@@ -12,6 +12,7 @@ import LotDocumentsPanel from "@/components/inventory/LotDocumentsPanel";
 import ParasiteFreezePanel from "@/components/inventory/ParasiteFreezePanel";
 import BivalvePanel from "@/components/inventory/BivalvePanel";
 import LotPricePanel from "@/components/inventory/LotPricePanel";
+import LotHistoryView from "@/components/inventory/LotHistoryView";
 
 interface Props {
   currency?: string;
