@@ -1225,7 +1225,7 @@ export default function Inventory() {
             </div>
 
             {/* Desktop: tabell med kategorirubriker */}
-            <div className="hidden sm:block overflow-x-auto">
+            <div className="hidden sm:block">
               <table className="w-full table-fixed text-[10px] min-w-[560px]">
                 <colgroup>
                   <col className="w-7" />
