@@ -91,6 +91,7 @@ export default function StaffSchedule() {
   const revenue = useStoreRevenueRange(days[0], days[6]);
   const rateMap = rates.data ?? new Map<string, number | null>();
   const costFactor = 1 + Math.max(0, overhead.data ?? 0) / 100;
+  const deleteShift = useDeletePlannedShift();
 
   const storeById = useMemo(() => new Map(stores.map((store: any) => [store.id, store])), [stores]);
   const storeName = (id: string | null) => (id ? (storeById.get(id) as any)?.name ?? "Ingen enhet" : "Ingen enhet");
