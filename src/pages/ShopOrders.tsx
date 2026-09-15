@@ -43,6 +43,14 @@ import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { useCreateChangeRequest, useOrderChangeRequests, useResolveChangeRequest } from "@/hooks/useOrderChangeRequests";
 import { useNotificationFlash } from "@/lib/notificationFlash";
 import { thumbUrl, THUMB_CARD } from "@/lib/imageThumb";
+import {
+  LinePriority,
+  PRIORITY_META,
+  PRIORITY_ORDER,
+  LinePriorityBadge,
+  normalizePriority,
+} from "@/components/orders/linePriority";
+import { useCustomerCommitted } from "@/hooks/useCustomerCommitted";
 
 type OrderLine = {
   product_id: string;
