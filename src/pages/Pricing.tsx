@@ -16,6 +16,7 @@ import { toast } from "@/hooks/use-toast";
 import { Check, ChevronDown, ChevronRight, DollarSign, History, Layers, Search, Store, X } from "lucide-react";
 import { format } from "date-fns";
 import SavedPriceLists from "@/components/SavedPriceLists";
+import StockPricePoster from "@/components/pricing/StockPricePoster";
 import { ReferencePricesPanel } from "@/components/pricing/ReferencePricesPanel";
 import { effectiveCost, COST_SOURCE_LABEL } from "@/lib/effectiveCost";
 
