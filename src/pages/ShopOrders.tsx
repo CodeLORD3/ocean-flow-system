@@ -1367,7 +1367,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                                   unit={line.unit || line.products?.unit}
                                   note={line.priority_note}
                                   showLabel={false}
-                                />mt
+                                />
                                 <OrderPhotosButton
                                   compact
                                   entityType={ORDER_LINE_PHOTO_ENTITY}
