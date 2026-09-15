@@ -21,6 +21,7 @@ const dt = (ts?: string | null) => (ts ? new Date(ts).toLocaleDateString("sv-SE"
  */
 export default function LotHistoryView({ currency = "SEK" }: { currency?: string }) {
   const [q, setQ] = useState("");
+  const [view, setView] = useState<"tree" | "list">("tree");
   const [traceLotId, setTraceLotId] = useState<string | null>(null);
   const [traceLabel, setTraceLabel] = useState<string>("");
 
