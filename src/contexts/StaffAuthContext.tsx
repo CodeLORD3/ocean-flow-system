@@ -40,8 +40,12 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [staff, setStaff] = useState<StaffProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [staffLoading, setStaffLoading] = useState(true);
   const [lastError, setLastError] = useState<string | null>(null);
+  // Laddning är klar först när både session OCH behörighet är avgjord —
+  // annars hinner gaten se en tom profil vid omladdning och kasta till portalvalet.
+  const loading = sessionLoading || staffLoading;
 
   const loadStaff = async (uid: string | undefined) => {
     if (!uid) {
