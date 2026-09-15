@@ -963,7 +963,130 @@ export default function StockOverview({
                           <td colSpan={showCosts ? 10 : 9} className="px-2 py-2">
                              <div className="space-y-1 w-full max-w-[calc(100vw-2rem)] sm:max-w-none overflow-hidden">
 
-                              {/* Enheter och förpackningar varan finns i */}
+                              {/* Stor lagerstapel — hela saldot per lagerplats, packat och kvar att sälja */}
+                              {(() => {
+                                const master = productsById.get(g.product_id) || {};
+                                const pk = packedByProduct?.get(g.product_id);
+                                const packedKg = pk ? qtyToKg(pk.packed, master) : 0;
+                                const orderedKg = pk ? qtyToKg(pk.ordered, master) : 0;
+                                const packedPct = g.totalKg > 0 ? Math.min(100, (packedKg / g.totalKg) * 100) : 0;
+                                const freeKg = Math.max(0, g.totalKg - packedKg);
+                                const unitCost = g.totalQty > 0 ? g.value / g.totalQty : 0;
+                                const nf = (v: number, d = 1) =>
+                                  v.toLocaleString("sv-SE", { maximumFractionDigits: d });
+                                return (
+                                  <div className="rounded-md border border-border/60 bg-card px-3 py-2.5">
+                                    <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
+                                      <div>
+                                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                          Lagerstapel
+                                        </p>
+                                        <p className="font-heading text-xl font-bold tabular-nums">
+                                          {nf(g.totalKg)} kg
+                                          <span className="ml-2 text-xs font-medium text-muted-foreground">
+                                            {g.lines.length} lagerplats{g.lines.length > 1 ? "er" : ""}
+                                          </span>
+                                        </p>
+                                      </div>
+                                      <div className="flex flex-wrap items-center gap-3 text-[11px]">
+                                        <span className="text-emerald-600">
+                                          Kan säljas{" "}
+                                          <span className="font-mono font-semibold tabular-nums">{nf(freeKg)} kg</span>
+                                        </span>
+                                        {packedKg > 0.005 && (
+                                          <span className="text-amber-600">
+                                            Packat{" "}
+                                            <span className="font-mono font-semibold tabular-nums">
+                                              {nf(packedKg)} kg ({nf(packedPct, 0)} %)
+                                            </span>
+                                          </span>
+                                        )}
+                                        {orderedKg > 0.005 && (
+                                          <span className="text-muted-foreground">
+                                            Beställt kvar{" "}
+                                            <span className="font-mono font-semibold tabular-nums">
+                                              {nf(orderedKg)} kg
+                                            </span>
+                                          </span>
+                                        )}
+                                        {showCosts && (
+                                          <span className="text-muted-foreground">
+                                            Värde{" "}
+                                            <span className="font-mono font-semibold tabular-nums">
+                                              {fmt(g.value)}
+                                            </span>
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div className="relative flex h-9 w-full items-stretch overflow-hidden rounded-md ring-1 ring-border">
+                                      {packedPct > 0 && (
+                                        <span
+                                          className="pointer-events-none absolute inset-y-0 left-0 z-10 border-r-2 border-amber-600 bg-amber-400/80"
+                                          style={{ width: `${packedPct}%` }}
+                                          title={`Packat till order: ${nf(packedKg)} kg`}
+                                        />
+                                      )}
+                                      {g.lines.map((l) => {
+                                        const kg = qtyToKg(Number(l.quantity) || 0, l.products || master);
+                                        const pct = g.totalKg > 0 ? (kg / g.totalKg) * 100 : 100;
+                                        return (
+                                          <div
+                                            key={`bar-${l.id}`}
+                                            className={cn(
+                                              "flex flex-col items-center justify-center overflow-hidden border-r border-white/40 text-[10px] font-semibold leading-tight text-white last:border-r-0",
+                                              locationColor.get(l.location_id) || "bg-primary",
+                                            )}
+                                            style={{ width: `${pct}%` }}
+                                            title={`${locName(l)}: ${nf(kg)} kg`}
+                                          >
+                                            {pct > 12 && <span>{nf(kg, 0)} kg</span>}
+                                            {pct > 24 && (
+                                              <span className="max-w-full truncate px-1 font-normal opacity-90">
+                                                {locName(l)}
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+
+                                    <div className="mt-2 grid gap-1 sm:grid-cols-2">
+                                      {g.lines.map((l) => {
+                                        const qty = Number(l.quantity) || 0;
+                                        const kg = qtyToKg(qty, l.products || master);
+                                        const pct = g.totalKg > 0 ? (kg / g.totalKg) * 100 : 100;
+                                        return (
+                                          <div
+                                            key={`legend-${l.id}`}
+                                            className="flex items-center gap-2 rounded-md bg-muted/40 px-2 py-1 text-[11px]"
+                                          >
+                                            <span
+                                              className={cn(
+                                                "h-2.5 w-2.5 shrink-0 rounded-sm",
+                                                locationColor.get(l.location_id) || "bg-primary",
+                                              )}
+                                            />
+                                            <span className="min-w-0 flex-1 truncate">{locName(l)}</span>
+                                            <span className="font-mono font-semibold tabular-nums">{nf(kg)} kg</span>
+                                            <span className="w-10 text-right text-muted-foreground tabular-nums">
+                                              {nf(pct, 0)} %
+                                            </span>
+                                            {showCosts && (
+                                              <span className="w-20 text-right font-mono text-muted-foreground tabular-nums">
+                                                {fmt(qty * unitCost)}
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
+
                               {(() => {
                                 const master = productsById.get(g.product_id) || {};
                                 const famId = master.family_id;
