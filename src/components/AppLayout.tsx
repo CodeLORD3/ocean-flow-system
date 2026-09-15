@@ -314,8 +314,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <main
-            className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 lg:p-6 pb-20 sm:pb-4"
-            style={{ scrollPaddingBottom: "5rem" }}
+            className="app-main flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 lg:p-6"
+            style={{ scrollPaddingBottom: "8rem" }}
           >
             <StoreHero />
             {children}
