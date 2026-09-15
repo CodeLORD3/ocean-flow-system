@@ -234,6 +234,23 @@ Deno.serve(async (req) => {
     return json(req, { status: "pending_registration", message: "Registrering väntar på godkännande.", expires_at: expiresAt });
   }
 
+  // Spärr mot dubbel instämpling: den som redan är instämplad (även på rast)
+  // får ingen ny in-rad. Tryck ut först, eller be chefen rätta.
+  if (action === "in" && (last === "in" || last === "rast_start")) {
+    return json(req, {
+      error: last === "rast_start"
+        ? "Du är redan instämplad och på rast. Tryck Rast slut i stället."
+        : "Du är redan instämplad. Tryck Ut när du slutar — eller säg till chefen om något blivit fel.",
+      already_punched_in: true,
+    }, 409);
+  }
+  if (action === "rast_start" && last !== "in" && last !== "rast_slut") {
+    return json(req, { error: "Du måste vara instämplad för att börja rast." }, 409);
+  }
+  if (action === "rast_slut" && last !== "rast_start") {
+    return json(req, { error: "Ingen pågående rast att avsluta." }, 409);
+  }
+
   const workSiteId = body.work_site_id ? String(body.work_site_id) : null;
   let workSite: WorkSite | null = null;
   if (workSiteId) {
