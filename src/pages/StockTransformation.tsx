@@ -70,6 +70,40 @@ export default function StockTransformation() {
       .sort((a, b) => a.name.localeCompare(b.name, "sv"));
   }, [products, stockByProduct, category, search]);
 
+  /** Allt tillgängligt lager, grupperat per lagerplats. */
+  const stockByLocation = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const groups = new Map<
+      string,
+      { locationId: string; locationName: string; storeName: string; rows: any[]; total: number }
+    >();
+    for (const s of allStock as any[]) {
+      if (activeStoreId && s.storage_locations?.store_id !== activeStoreId) continue;
+      const qty = Number(s.quantity || 0);
+      if (qty <= 0) continue;
+      const p = s.products || {};
+      if (category !== "alla" && (p.category || "Övrigt") !== category) continue;
+      if (q && !`${p.name || ""} ${p.sku || ""}`.toLowerCase().includes(q)) continue;
+      const key = s.location_id;
+      const g =
+        groups.get(key) ||
+        {
+          locationId: key,
+          locationName: s.storage_locations?.name || "Lagerplats",
+          storeName: s.storage_locations?.stores?.name || "",
+          rows: [],
+          total: 0,
+        };
+      g.rows.push(s);
+      g.total += qty;
+      groups.set(key, g);
+    }
+    const list = [...groups.values()];
+    for (const g of list)
+      g.rows.sort((a, b) => String(a.products?.name || "").localeCompare(String(b.products?.name || ""), "sv"));
+    return list.sort((a, b) => a.locationName.localeCompare(b.locationName, "sv"));
+  }, [allStock, activeStoreId, category, search]);
+
   const categories = useMemo(() => {
     const set = new Set<string>();
     for (const p of products) if ((stockByProduct.get(p.id) || 0) > 0) set.add(p.category || "Övrigt");
