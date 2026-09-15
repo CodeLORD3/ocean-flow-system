@@ -342,6 +342,11 @@ export default function StockOverview({
     let packedValue = 0;
     const weeks = new Map<string, { key: string; label: string; range: string; kg: number; value: number }>();
     const packedWeeks = new Map<string, { key: string; label: string; range: string; kg: number; value: number }>();
+    /** Kvar att packa per produkt = beställt minus redan packat. */
+    const restItems = new Map<
+      string,
+      { productId: string; name: string; image_url: string | null; kg: number; value: number; orders: { orderId: string; orderNumber: string; customerName: string; wantedDate: string | null; kg: number }[] }
+    >();
     for (const g of filtered) {
       const pk = packedByProduct?.get(g.product_id);
       if (!pk) continue;
@@ -356,6 +361,20 @@ export default function StockOverview({
         if (isPacked) {
           packedKg += qKg;
           packedValue += qValue;
+        } else {
+          const item =
+            restItems.get(g.product_id) ??
+            { productId: g.product_id, name: g.name, image_url: g.image_url, kg: 0, value: 0, orders: [] };
+          item.kg += qKg;
+          item.value += qValue;
+          item.orders.push({
+            orderId: o.orderId,
+            orderNumber: o.orderNumber,
+            customerName: o.customerName,
+            wantedDate: o.wantedDate,
+            kg: qKg,
+          });
+          restItems.set(g.product_id, item);
         }
         const d = o.wantedDate ? parseISO(o.wantedDate) : null;
         const start = d ? startOfISOWeek(d) : null;
@@ -398,6 +417,7 @@ export default function StockOverview({
       maxWeekKg,
       packedWeeks: packedList,
       maxPackedWeekKg: Math.max(1, ...packedList.map((w) => w.kg)),
+      restItems: Array.from(restItems.values()).sort((a, b) => b.kg - a.kg),
     };
   }, [filtered, packedByProduct, productsById, kpis.qty, kpis.value]);
 
@@ -446,9 +466,12 @@ export default function StockOverview({
           <span className="truncate text-sm font-semibold">Beställt av lagret</span>
           {booked.kg > 0.005 && (
             <span className="hidden font-mono text-xs tabular-nums text-amber-600 sm:inline">
-              {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg ·{" "}
-              {booked.kgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
-              {showCosts ? ` · ${fmt(booked.value)}` : ""}
+              {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg kvar att packa
+              <span className="text-muted-foreground">
+                {" "}
+                (av {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg beställt −{" "}
+                {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg packat)
+              </span>
             </span>
           )}
         </span>
@@ -721,6 +744,46 @@ export default function StockOverview({
                   </div>
                 );
               })}
+            </div>
+
+            {/* Kvar att packa per produkt = beställt minus redan packat */}
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Kvar att packa · {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+              </p>
+              {booked.restItems.length === 0 ? (
+                <p className="rounded-md bg-card/70 px-2 py-2 text-xs text-muted-foreground">
+                  Allt beställt är packat.
+                </p>
+              ) : (
+                booked.restItems.map((it) => (
+                  <div key={it.productId} className="rounded-md bg-card/70 px-2 py-1.5">
+                    <div className="flex items-center gap-2 text-xs">
+                      <ProductThumb src={it.image_url} alt={it.name} productId={it.productId} className="h-7 w-10" />
+                      <span className="min-w-0 flex-1 truncate font-semibold">{it.name}</span>
+                      <span className="shrink-0 font-mono tabular-nums text-amber-600">
+                        {it.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                      </span>
+                      {showCosts && (
+                        <span className="hidden w-20 shrink-0 text-right font-mono text-[10px] tabular-nums text-muted-foreground sm:block">
+                          {fmt(it.value)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 pl-7 text-[10px] text-muted-foreground">
+                      {it.orders.map((o, i) => (
+                        <span key={`${o.orderId}-${i}`} className="font-mono tabular-nums">
+                          {o.customerName || "Butik"} ·{" "}
+                          {o.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                          {o.wantedDate
+                            ? ` · ${format(parseISO(o.wantedDate), "d MMM", { locale: sv })}`
+                            : ""}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
