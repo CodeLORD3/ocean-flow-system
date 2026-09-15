@@ -181,7 +181,7 @@ export default function StockOverview({
   emptyActionLabel = "Registrera inleverans",
   onTransformProduct,
 }: Props) {
-  const { activeStoreId } = useSite();
+  const { activeStoreId, site } = useSite();
   const navigate = useNavigate();
   const { data: families = [] } = useProductFamilies();
   const { data: orderedByProduct } = useOrderedByProduct(activeStoreId || null);
@@ -883,7 +883,11 @@ export default function StockOverview({
                                           key={`${o.orderId}-${o.kind}-${i}`}
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            navigate(`/orders?order=${o.orderId}`);
+                                            navigate(
+                                              site === "shop"
+                                                ? `/customer-orders?order=${o.orderId}&t=${Date.now()}`
+                                                : `/orders?order=${o.orderId}&t=${Date.now()}`,
+                                            );
                                           }}
                                           className="flex w-full items-center gap-2 whitespace-nowrap rounded px-1 py-0.5 text-left text-xs hover:bg-amber-400/20"
                                           title="Öppna ordern"
