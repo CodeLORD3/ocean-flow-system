@@ -1,12 +1,46 @@
 import { useMemo, useState } from "react";
-import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from "react-simple-maps";
-import { MapPin, Plus, Minus, Crosshair } from "lucide-react";
+import {
+  ComposableMap,
+  Geographies,
+  Geography,
+  Graticule,
+  Line,
+  Marker,
+  ZoomableGroup,
+} from "react-simple-maps";
+import { MapPin, Plus, Minus, Crosshair, Route } from "lucide-react";
 import { useStores } from "@/hooks/useStores";
 import { stockQtyToKg } from "@/lib/units";
 import { LEVEL_LABEL, type LocationLevel } from "@/lib/locations";
 import { cn } from "@/lib/utils";
 
-const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+/** 50m-upplösning ger tydligare kustlinjer och gränser än 110m. */
+const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
+
+/** Fågelvägen i km mellan två punkter (lon, lat). */
+const distanceKm = (a: [number, number], b: [number, number]) => {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b[1] - a[1]);
+  const dLon = toRad(b[0] - a[0]);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a[1])) * Math.cos(toRad(b[1])) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
+
+const kmFmt = (v: number) =>
+  `${Number(v).toLocaleString("sv-SE", { maximumFractionDigits: v < 10 ? 1 : 0 })} km`;
+
+/** Ungefärlig körtid på väg: fågelvägen × 1,25 vid 80 km/h. */
+const driveLabel = (km: number) => {
+  const road = km * 1.25;
+  const h = road / 80;
+  if (h < 1) return `${Math.round(h * 60)} min`;
+  const hh = Math.floor(h);
+  const mm = Math.round((h - hh) * 60);
+  return mm ? `${hh} h ${mm} min` : `${hh} h`;
+};
 
 interface Props {
   /** Rader från product_stock_locations med storage_locations + products. */
