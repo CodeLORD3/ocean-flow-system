@@ -85,6 +85,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
   const [q, setQ] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<"flode" | "graf" | "historik" | "natverk">("flode");
+  const [sort, setSort] = useState<"senaste" | "bast_fore" | "storst" | "namn">("senaste");
 
   const { data: lots = [], isLoading } = useQuery({
     queryKey: ["lots_traceability"],
