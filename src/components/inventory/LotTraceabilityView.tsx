@@ -452,6 +452,14 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                   </div>
 
                   <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                    {panel === "kedja" && (
+                      <LotChainGraph
+                        movements={movements as any}
+                        lotNumber={lot.lot_number}
+                        productName={namn}
+                      />
+                    )}
+
                     {panel === "handelser" &&
                       (tidslinje.length === 0 ? (
                         <p className="py-4 text-xs text-muted-foreground">Inga rörelser kopplade till partiet.</p>
