@@ -205,8 +205,10 @@ export default function LotChainGraph({
             )}
             <div className="mt-2 flex flex-col items-center">
               <span className="h-4 w-0.5 bg-border" />
-              <span className="rounded-full border border-border bg-background px-2 py-px text-[10px] font-medium text-muted-foreground">
-                {slutSaldo > 0 ? `orörd ${sinceNow(senaste)}` : `slut sedan ${sinceNow(senaste)}`}
+              <span className="rounded-md border border-border bg-background px-2 py-1 text-center text-[11px] font-medium text-foreground">
+                {slutSaldo > 0
+                  ? `har legat på lagret ${sinceNowLong(senaste)}`
+                  : `slut sedan ${sinceNowLong(senaste)}`}
               </span>
               <span className="h-4 w-0.5 bg-border" />
             </div>
