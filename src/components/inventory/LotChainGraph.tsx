@@ -373,7 +373,7 @@ export default function LotChainGraph({
                 : []),
               ["Plats", vald.m.storage_locations?.name || "—"],
               ["Av", namnPa(vald.m)],
-              ["Låg orörd innan", vald.gap || "Första händelsen"],
+              ["Legat på lagret innan", vald.gap || "Första händelsen"],
               ["Referens", vald.m.reference_id || "—"],
               ["Notering", vald.m.note || "—"],
             ].map(([k, v]) => (
