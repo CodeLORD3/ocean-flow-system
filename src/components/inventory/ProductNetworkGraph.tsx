@@ -76,7 +76,14 @@ const R_MAX = 15;
  * (inventering, omvandling, försäljning, svinn). Varje produkt som läggs in
  * i produktregistret finns med i nätverket direkt, även utan lagersaldo.
  */
-export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: string }) {
+export default function ProductNetworkGraph({
+  currency = "SEK",
+  locationIds = null,
+}: {
+  currency?: string;
+  /** Butiksportalen skickar sina lagerplatser — då visas bara butikens nätverk. */
+  locationIds?: string[] | null;
+}) {
   const [q, setQ] = useState("");
   const [onlyStock, setOnlyStock] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -147,16 +154,20 @@ export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: s
     },
   });
 
+  const tomPlats = ["00000000-0000-0000-0000-000000000000"];
+
   const { data: stockRows = [] } = useQuery({
-    queryKey: ["product_network_stock"],
+    queryKey: ["product_network_stock", locationIds],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let qy = supabase
         .from("product_stock_locations")
         .select(
           "product_id, quantity, expiry_date, storage_locations(name, stores!storage_locations_store_id_fkey(name))",
         )
         .neq("quantity", 0)
         .limit(3000);
+      if (locationIds) qy = qy.in("location_id", locationIds.length ? locationIds : tomPlats);
+      const { data, error } = await qy;
       if (error) throw error;
       return (data || []).map((r: any) => ({
         productId: r.product_id,
@@ -168,15 +179,17 @@ export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: s
   });
 
   const { data: movements = [] } = useQuery({
-    queryKey: ["product_network_movements"],
+    queryKey: ["product_network_movements", locationIds],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let qy = supabase
         .from("stock_movements")
         .select(
           "product_id, movement_type, quantity_kg, created_at, lots(lot_number), storage_locations(name, stores!storage_locations_store_id_fkey(name)), staff(first_name, last_name)",
         )
         .order("created_at", { ascending: false })
         .limit(5000);
+      if (locationIds) qy = qy.in("location_id", locationIds.length ? locationIds : tomPlats);
+      const { data, error } = await qy;
       if (error) throw error;
       return (data || []).map((r: any) => ({
         productId: r.product_id,

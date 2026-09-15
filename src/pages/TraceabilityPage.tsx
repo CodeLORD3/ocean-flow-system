@@ -4,6 +4,7 @@ import TraceabilityCheck from "@/components/inventory/TraceabilityCheck";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useSite } from "@/contexts/SiteContext";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useStores } from "@/hooks/useStores";
 import { getStoreCurrency } from "@/lib/currency";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +22,9 @@ export default function TraceabilityPage() {
   const activeStore = (stores as any[]).find((s: any) => s.id === activeStoreId);
   const currency = getStoreCurrency(activeStore as any);
   const [view, setView] = useState<"partier" | "kontroll">("partier");
+  const { staff } = useStaffAuth();
+  // Grossist och admin ser all spårbarhet. Butiken ser bara sina egna partier.
+  const traceStoreId = site === "shop" && !staff?.is_platform_admin ? activeStoreId : null;
   // Spårbarhetskontrollen är tillfälligt dold — sätt till true för att visa fliken igen.
   const SHOW_TRACEABILITY_CHECK = false;
 
@@ -64,6 +68,7 @@ export default function TraceabilityPage() {
       <div style={{ display: !SHOW_TRACEABILITY_CHECK || view === "partier" ? "block" : "none" }}>
         <LotTraceabilityView
           currency={currency}
+          storeId={traceStoreId}
           showCosts={canSeeCosts(site)}
           onEmptyAction={canSeeCosts(site) ? () => navigate("/purchase-reporting") : undefined}
         />

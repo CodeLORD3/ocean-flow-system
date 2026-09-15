@@ -36,6 +36,7 @@ import LotChainGraph from "@/components/inventory/LotChainGraph";
 import ProductNetworkGraph from "@/components/inventory/ProductNetworkGraph";
 import { gapBetween, sinceNow, stampSv } from "@/lib/dwell";
 import { movementLabel } from "@/hooks/useStockMovements";
+import { useStoreLotIds } from "@/hooks/useStoreScope";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Props {
@@ -44,6 +45,11 @@ interface Props {
   showCosts?: boolean;
   /** Åtgärd i det tomma tillståndet. */
   onEmptyAction?: () => void;
+  /**
+   * Sätts i butiksportalen: då visas bara partier som passerat butiken.
+   * Grossist och admin skickar null och ser all spårbarhet.
+   */
+  storeId?: string | null;
 }
 
 const nf = (n: number, d = 1) =>
@@ -167,7 +173,12 @@ function tidsKolumn(iso?: string | null) {
  * Spårbarhet i två tydliga steg: först söker man fram produkt eller kategori
  * och väljer parti i listan, sedan öppnas partiets hela flöde på egen yta.
  */
-export default function LotTraceabilityView({ currency = "SEK", showCosts = true, onEmptyAction }: Props) {
+export default function LotTraceabilityView({
+  currency = "SEK",
+  showCosts = true,
+  onEmptyAction,
+  storeId = null,
+}: Props) {
   const [q, setQ] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<"flode" | "graf" | "historik" | "natverk">("flode");
@@ -185,7 +196,9 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
     | "parti"
   >("senaste");
 
-  const { data: lots = [], isLoading } = useQuery({
+  const { lotIds: butiksPartier, locationIds: butiksPlatser, loading: scopeLoading } = useStoreLotIds(storeId);
+
+  const { data: allaLots = [], isLoading: lotsLoading } = useQuery({
     queryKey: ["lots_traceability"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -199,6 +212,13 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
       return data as any[];
     },
   });
+
+  /** Butiken ser bara partier som passerat den egna butiken. */
+  const lots = useMemo(
+    () => (butiksPartier ? allaLots.filter((l: any) => butiksPartier.has(l.id)) : allaLots),
+    [allaLots, butiksPartier],
+  );
+  const isLoading = lotsLoading || scopeLoading;
 
   /**
    * Senaste händelsen per parti (för sortering på "senast ändrad") och
@@ -465,8 +485,8 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
       </div>
 
       {mode === "graf" && <LineageGraphView currency={currency} startLotId={selectedId} />}
-      {mode === "historik" && <LotHistoryView currency={currency} />}
-      {mode === "natverk" && <ProductNetworkGraph currency={currency} />}
+      {mode === "historik" && <LotHistoryView currency={currency} locationIds={butiksPlatser} />}
+      {mode === "natverk" && <ProductNetworkGraph currency={currency} locationIds={butiksPlatser} />}
 
       {mode === "flode" && (
         <>

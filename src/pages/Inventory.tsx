@@ -1703,7 +1703,13 @@ export default function Inventory() {
         />
       )}
 
-      {viewMode === "lots" && <LotTraceabilityView currency={localCurrency} showCosts={showCosts} />}
+      {viewMode === "lots" && (
+        <LotTraceabilityView
+          currency={localCurrency}
+          showCosts={showCosts}
+          storeId={isShopPortal ? activeStoreId : null}
+        />
+      )}
 
 
 

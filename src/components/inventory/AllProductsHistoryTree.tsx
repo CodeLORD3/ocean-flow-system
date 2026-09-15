@@ -59,8 +59,11 @@ type Node = {
  */
 export default function AllProductsHistoryTree({
   onTraceLot,
+  locationIds = null,
 }: {
   onTraceLot?: (lotId: string, label: string) => void;
+  /** Butiksportalen skickar sina lagerplatser — då visas bara butikens flöde. */
+  locationIds?: string[] | null;
 }) {
   const [q, setQ] = useState("");
   const [shape, setShape] = useState<"graph" | "list">("graph");
@@ -68,15 +71,17 @@ export default function AllProductsHistoryTree({
   const [openBranches, setOpenBranches] = useState<Record<string, boolean>>({});
 
   const { data: movements = [], isLoading } = useQuery({
-    queryKey: ["all_products_history_tree"],
+    queryKey: ["all_products_history_tree", locationIds],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let qy = supabase
         .from("stock_movements")
         .select(
           "id, created_at, quantity_kg, movement_type, note, product_id, lot_id, reference_type, products(name, sku), storage_locations(name, stores!storage_locations_store_id_fkey(name)), lots(lot_number), staff(first_name, last_name)",
         )
         .order("created_at", { ascending: true })
         .limit(5000);
+      if (locationIds) qy = qy.in("location_id", locationIds.length ? locationIds : ["00000000-0000-0000-0000-000000000000"]);
+      const { data, error } = await qy;
       if (error) throw error;
       return (data || []) as any[];
     },
