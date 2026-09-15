@@ -17196,6 +17196,10 @@ export type Database = {
         Returns: number
       }
       get_employee_pnr: { Args: { _employee_id: string }; Returns: string }
+      get_lineage: {
+        Args: { p_entity_id: string; p_entity_type: string }
+        Returns: Json
+      }
       has_company_access: {
         Args: { _legal_entity_id: string; _user_id: string }
         Returns: boolean
