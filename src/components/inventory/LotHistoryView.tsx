@@ -134,7 +134,7 @@ export default function LotHistoryView({ currency = "SEK" }: { currency?: string
         />
       )}
 
-      {filtered.length > 0 && (
+      {view === "list" && filtered.length > 0 && (
         <Card className="shadow-card">
           <CardContent className="p-0">
             <div className="grid grid-cols-[70px_1fr_104px] items-center gap-2 border-b border-border px-2 py-1.5 text-[10px] uppercase text-muted-foreground sm:grid-cols-[92px_1fr_150px_130px_116px]">
