@@ -2,77 +2,78 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type StoreActivity = {
-  /** Senaste lagerrörelse (inleverans, försäljning, justering m.m.). */
-  lastMovementAt: string | null;
-  /** Senaste inventering (rörelse av typen inventering). */
-  lastCountAt: string | null;
-  /** Senaste inventeringsrapport som stängdes. */
-  lastReportAt: string | null;
-  /** Senaste händelse av alla slag. */
-  lastAnyAt: string | null;
+  /** Olästa meddelanden från butiken. */
+  messages: number;
+  /** Nya, ej hanterade butiksordrar. */
+  orders: number;
+  /** Öppna önskemål från butiken. */
+  wishes: number;
 };
 
-const newer = (a: string | null, b: string | null) => {
-  if (!a) return b;
-  if (!b) return a;
-  return new Date(a) > new Date(b) ? a : b;
-};
+const EMPTY: StoreActivity = { messages: 0, orders: 0, wishes: 0 };
 
 /**
- * Senaste lageraktivitet per enhet — används för att direkt kunna se om någon
- * lagt in i lager eller inventerat inom 24 timmar.
+ * Notissiffror per butik i grossistens butikslista: nya meddelanden,
+ * nya ordrar och öppna önskemål.
  */
 export function useStoreActivity() {
   return useQuery({
-    queryKey: ["store-activity"],
+    queryKey: ["store-activity-counts"],
     queryFn: async () => {
-      const [locs, moves, sheets] = await Promise.all([
-        supabase.from("storage_locations").select("id, store_id"),
+      const [messages, reads, orders, wishes] = await Promise.all([
         supabase
-          .from("stock_movements")
-          .select("location_id, movement_type, created_at")
+          .from("chat_messages")
+          .select("conversation_id, sender_portal_key, created_at")
+          .like("sender_portal_key", "store:%")
           .order("created_at", { ascending: false })
-          .limit(5000),
-        supabase
-          .from("daily_stock_sheets")
-          .select("store_id, closed_at, updated_at, created_at")
-          .order("created_at", { ascending: false })
-          .limit(1000),
+          .limit(2000),
+        supabase.from("chat_reads").select("conversation_id, portal_key, last_read_at"),
+        supabase.from("shop_orders").select("store_id, status"),
+        supabase.from("shop_wishes").select("store_id, status, archived"),
       ]);
-      if (locs.error) throw locs.error;
-      if (moves.error) throw moves.error;
-      if (sheets.error) throw sheets.error;
-
-      const storeOfLocation = new Map<string, string>();
-      (locs.data || []).forEach((l: any) => {
-        if (l.store_id) storeOfLocation.set(l.id, l.store_id);
-      });
+      if (messages.error) throw messages.error;
+      if (reads.error) throw reads.error;
+      if (orders.error) throw orders.error;
+      if (wishes.error) throw wishes.error;
 
       const map = new Map<string, StoreActivity>();
       const ensure = (id: string) => {
         let e = map.get(id);
         if (!e) {
-          e = { lastMovementAt: null, lastCountAt: null, lastReportAt: null, lastAnyAt: null };
+          e = { ...EMPTY };
           map.set(id, e);
         }
         return e;
       };
 
-      (moves.data || []).forEach((m: any) => {
-        const sid = m.location_id ? storeOfLocation.get(m.location_id) : undefined;
-        if (!sid) return;
-        const e = ensure(sid);
-        e.lastMovementAt = newer(e.lastMovementAt, m.created_at);
-        if (m.movement_type === "inventering") e.lastCountAt = newer(e.lastCountAt, m.created_at);
-        e.lastAnyAt = newer(e.lastAnyAt, m.created_at);
+      /** Grossistens/adminens senaste läsning per konversation. */
+      const readAt = new Map<string, string>();
+      (reads.data || []).forEach((r: any) => {
+        if (r.portal_key !== "grossist" && r.portal_key !== "admin") return;
+        const prev = readAt.get(r.conversation_id);
+        if (!prev || new Date(r.last_read_at) > new Date(prev)) {
+          readAt.set(r.conversation_id, r.last_read_at);
+        }
       });
 
-      (sheets.data || []).forEach((s: any) => {
-        if (!s.store_id) return;
-        const e = ensure(s.store_id);
-        const ts = s.closed_at || s.updated_at || s.created_at;
-        e.lastReportAt = newer(e.lastReportAt, ts);
-        e.lastAnyAt = newer(e.lastAnyAt, ts);
+      (messages.data || []).forEach((m: any) => {
+        const storeId = String(m.sender_portal_key || "").slice("store:".length);
+        if (!storeId) return;
+        const read = readAt.get(m.conversation_id);
+        if (read && new Date(m.created_at) <= new Date(read)) return;
+        ensure(storeId).messages += 1;
+      });
+
+      (orders.data || []).forEach((o: any) => {
+        if (!o.store_id) return;
+        if (o.status !== "Ny") return;
+        ensure(o.store_id).orders += 1;
+      });
+
+      (wishes.data || []).forEach((w: any) => {
+        if (!w.store_id || w.archived) return;
+        if (w.status && !["Inget", "Ny", "Öppen"].includes(w.status)) return;
+        ensure(w.store_id).wishes += 1;
       });
 
       return map;
