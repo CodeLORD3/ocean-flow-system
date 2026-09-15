@@ -26,24 +26,40 @@ const nf = (n: number, d = 1) =>
 const namnPa = (m: ChainMovement) =>
   m.staff ? `${m.staff.first_name ?? ""} ${m.staff.last_name ?? ""}`.trim() || "System" : "System";
 
+const DX = 58;
+const DY = 70;
+const X0 = 34;
+const Y0 = 34;
+const GREN_DX = 52;
+const GREN_DY = 34;
+
 /**
- * Visuell transaktionskedja för ett parti: varje händelse är en nod på en
- * tidsaxel, uttag grenar av åt sidan, och tiden mellan noderna står på linjen.
- * Klick på en nod visar all information om händelsen.
+ * Visuell transaktionskedja enligt skissen: en diagonal kedja av händelser
+ * där tiden mellan dem står på linjen, uttag grenar av snett nedåt, och
+ * kedjan slutar i en "Live"-nod med aktuellt saldo. Klick på en nod öppnar
+ * "All info"-rutan.
  */
 export default function LotChainGraph({ movements, lotNumber, productName }: Props) {
   const [valdId, setValdId] = useState<string | null>(null);
 
   const noder = useMemo(() => {
     let saldo = 0;
+    let stam = 0;
     return movements.map((m, i) => {
       const kg = Number(m.quantity_kg || 0);
       saldo += kg;
+      const gren = kg < 0;
+      const punkt = { x: X0 + stam * DX, y: Y0 + stam * DY };
+      if (!gren) stam += 1;
       return {
         m,
         kg,
         saldo,
-        gren: kg < 0,
+        gren,
+        x: gren ? punkt.x + GREN_DX : punkt.x,
+        y: gren ? punkt.y + GREN_DY : punkt.y,
+        stamX: punkt.x,
+        stamY: punkt.y,
         gap: i === 0 ? "" : gapBetween(movements[i - 1].created_at, m.created_at),
       };
     });
@@ -54,58 +70,72 @@ export default function LotChainGraph({ movements, lotNumber, productName }: Pro
   if (!movements.length)
     return <p className="py-4 text-xs text-muted-foreground">Inga rörelser kopplade till partiet ännu.</p>;
 
-  const STEG = 68;
-  const X = 40;
-  const GREN = 150;
-  const height = noder.length * STEG + 96;
+  const stamNoder = noder.filter((n) => !n.gren);
+  const sista = stamNoder[stamNoder.length - 1] ?? noder[0];
+  const liveX = sista.stamX + DX;
+  const liveY = sista.stamY + DY;
+  const width = Math.max(liveX + 150, 420);
+  const height = liveY + 60;
+  const slutSaldo = noder[noder.length - 1].saldo;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
-      <div className="overflow-x-auto overflow-y-auto">
-        <svg width={340} height={height} className="min-w-[340px]">
-          {/* Rotnod: inleverans av partiet */}
-          <text x={X - 24} y={20} className="fill-muted-foreground text-[10px]">
-            Start
-          </text>
-
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_250px]">
+      <div className="overflow-auto rounded-md border border-border bg-background p-2">
+        <svg width={width} height={height} style={{ minWidth: width }}>
           {noder.map((n, i) => {
-            const y = 40 + i * STEG;
-            const forraY = 40 + (i - 1) * STEG;
-            const nx = n.gren ? X + GREN : X;
+            const forra = i > 0 ? noder[i - 1] : null;
+            const fran = n.gren ? { x: n.stamX, y: n.stamY } : forra ? { x: forra.stamX, y: forra.stamY } : null;
+            const visaLinje = n.gren || i > 0;
+            const mitt = fran ? { x: (fran.x + n.x) / 2, y: (fran.y + n.y) / 2 } : null;
+            const aktiv = n.m.id === vald?.m.id;
             return (
               <g key={n.m.id}>
-                {/* Linje från föregående nod på stammen */}
-                {i > 0 && <line x1={X} y1={forraY} x2={X} y2={y} stroke="currentColor" className="text-border" />}
-                {n.gren && (
-                  <line x1={X} y1={y} x2={nx} y2={y} stroke="currentColor" className="text-border" strokeDasharray="3 3" />
+                {visaLinje && fran && (
+                  <line
+                    x1={fran.x}
+                    y1={fran.y}
+                    x2={n.x}
+                    y2={n.y}
+                    stroke="currentColor"
+                    className={n.gren ? "text-destructive/50" : "text-foreground/40"}
+                    strokeWidth={n.gren ? 1 : 1.5}
+                  />
                 )}
-                {/* Tid mellan händelser */}
-                {i > 0 && n.gap && (
-                  <text x={X + 6} y={(forraY + y) / 2 + 3} className="fill-muted-foreground text-[10px]">
+                {mitt && n.gap && (
+                  <text
+                    x={mitt.x + 8}
+                    y={mitt.y - 4}
+                    className="fill-muted-foreground text-[10px]"
+                  >
                     {n.gap}
                   </text>
                 )}
-                {/* Noden */}
                 <circle
-                  cx={nx}
-                  cy={y}
-                  r={n.m.id === vald?.m.id ? 7 : 5}
-                  className={
-                    n.kg < 0
-                      ? "cursor-pointer fill-destructive"
-                      : "cursor-pointer fill-foreground"
-                  }
+                  cx={n.x}
+                  cy={n.y}
+                  r={aktiv ? 8 : 5.5}
+                  className={n.kg < 0 ? "cursor-pointer fill-destructive" : "cursor-pointer fill-foreground"}
                   onClick={() => setValdId(n.m.id)}
                 />
+                {aktiv && (
+                  <circle
+                    cx={n.x}
+                    cy={n.y}
+                    r={12}
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-foreground/30"
+                  />
+                )}
                 <text
-                  x={nx + 12}
-                  y={y - 2}
+                  x={n.x + 14}
+                  y={n.y + 2}
                   className="cursor-pointer fill-foreground text-[11px] font-medium"
                   onClick={() => setValdId(n.m.id)}
                 >
                   {movementLabel(n.m.movement_type)}
                 </text>
-                <text x={nx + 12} y={y + 11} className="fill-muted-foreground text-[10px]">
+                <text x={n.x + 14} y={n.y + 15} className="fill-muted-foreground text-[10px]">
                   {stampSv(n.m.created_at)} · {n.kg > 0 ? "+" : ""}
                   {nf(n.kg, 1)} kg
                 </text>
@@ -113,20 +143,21 @@ export default function LotChainGraph({ movements, lotNumber, productName }: Pro
             );
           })}
 
-          {/* Nuvarande läge */}
+          {/* Live-nod: aktuellt läge */}
           <line
-            x1={X}
-            y1={40 + (noder.length - 1) * STEG}
-            x2={X}
-            y2={40 + noder.length * STEG}
+            x1={sista.stamX}
+            y1={sista.stamY}
+            x2={liveX}
+            y2={liveY}
             stroke="currentColor"
-            className="text-border"
+            className="text-foreground/40"
+            strokeWidth={1.5}
           />
-          <circle cx={X} cy={40 + noder.length * STEG} r={5} className="fill-primary" />
-          <text x={X + 12} y={40 + noder.length * STEG + 4} className="fill-foreground text-[11px] font-semibold">
-            Nu · {nf(noder[noder.length - 1].saldo, 1)} kg
+          <circle cx={liveX} cy={liveY} r={7} className="fill-primary" />
+          <text x={liveX + 14} y={liveY - 2} className="fill-foreground text-[11px] font-semibold">
+            Live · {nf(slutSaldo, 1)} kg
           </text>
-          <text x={X + 12} y={40 + noder.length * STEG + 17} className="fill-muted-foreground text-[10px]">
+          <text x={liveX + 14} y={liveY + 12} className="fill-muted-foreground text-[10px]">
             senaste händelsen {sinceNow(noder[noder.length - 1].m.created_at)} sedan
           </text>
         </svg>
@@ -134,7 +165,7 @@ export default function LotChainGraph({ movements, lotNumber, productName }: Pro
 
       {/* All info om vald nod */}
       {vald && (
-        <div className="h-fit rounded-md border border-border bg-muted/20 p-3">
+        <div className="h-fit rounded-md border border-foreground/30 bg-background p-3">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">All info</p>
           <p className="mt-1 text-sm font-semibold text-foreground">{movementLabel(vald.m.movement_type)}</p>
           <dl className="mt-2 space-y-1 text-xs">
