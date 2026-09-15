@@ -37,6 +37,7 @@ import ProductNetworkGraph from "@/components/inventory/ProductNetworkGraph";
 import { gapBetween, sinceNow, stampSv } from "@/lib/dwell";
 import { movementLabel } from "@/hooks/useStockMovements";
 import { useStoreLotIds } from "@/hooks/useStoreScope";
+import { usePackedByProduct } from "@/hooks/usePackedByProduct";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Props {
@@ -197,6 +198,8 @@ export default function LotTraceabilityView({
   >("senaste");
 
   const { lotIds: butiksPartier, locationIds: butiksPlatser, loading: scopeLoading } = useStoreLotIds(storeId);
+  /** Packat till kundbeställningar — markeras suddigt på partiet. */
+  const { data: packedByProduct } = usePackedByProduct(storeId ?? null);
 
   const { data: allaLots = [], isLoading: lotsLoading } = useQuery({
     queryKey: ["lots_traceability"],
