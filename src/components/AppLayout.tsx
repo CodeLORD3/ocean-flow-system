@@ -209,9 +209,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <SidebarProvider>
+    <SidebarProvider key={isStaffModule ? "staff" : "standard"} defaultOpen={!isStaffModule}>
       <div className="h-[100dvh] max-h-[100dvh] overflow-hidden flex w-full">
-        {site === "shop" ? <ShopSidebar /> : site === "production" ? <ProductionSidebar /> : <AppSidebar />}
+        {site === "shop" ? (
+          <ShopSidebar collapsible={sidebarMode} />
+        ) : site === "production" ? (
+          <ProductionSidebar collapsible={sidebarMode} />
+        ) : (
+          <AppSidebar collapsible={sidebarMode} />
+        )}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
 
