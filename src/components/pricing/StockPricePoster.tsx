@@ -208,29 +208,27 @@ export default function StockPricePoster() {
           )}
         </div>
 
-        {/* Förhandsgranskning i affischform */}
-        <div className="rounded-md border bg-background p-6 print:border-0 print:p-0">
-          <h2 className="text-center text-3xl font-black tracking-tight text-primary uppercase">{title}</h2>
-          <div className="mx-auto mt-1 h-1 w-40 rounded bg-primary/60" />
+        {/* Förhandsgranskning i affischform — samma utseende som butikstavlan */}
+        <div className="poster-sheet rounded-md border p-5 sm:p-8 print:border-0 print:p-0">
+          <h2 className="poster-marker text-center text-4xl sm:text-6xl uppercase">{title}</h2>
+          <div className="poster-rule mx-auto mt-2 h-2 w-2/3" />
           {activeStoreName && (
-            <p className="mt-2 text-center text-xs text-muted-foreground">{activeStoreName}</p>
+            <p className="poster-hand mt-2 text-center text-lg text-neutral-500">{activeStoreName}</p>
           )}
-          <div className="mt-5 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+          <div className="relative mt-6 grid gap-x-10 gap-y-8 sm:grid-cols-2">
+            <div className="poster-divider absolute inset-y-0 left-1/2 hidden w-[3px] -translate-x-1/2 sm:block" />
             {sections.map((s) => (
               <div key={s.title}>
-                <h3 className="text-xl font-black uppercase text-primary">{s.title}</h3>
-                <div className="mt-1 h-0.5 w-24 bg-primary/50" />
-                <ul className="mt-2">
+                <h3 className="poster-marker text-2xl sm:text-4xl uppercase">{s.title}</h3>
+                <div className="poster-rule mt-1.5 h-[6px] w-full" />
+                <ul className="mt-3">
                   {s.rows.map((row) => (
-                    <li
-                      key={row.name}
-                      className="flex items-baseline gap-2 border-b border-primary/20 py-1.5"
-                    >
-                      <span className="flex-1 truncate text-sm">{row.name}</span>
-                      <span className="font-mono text-lg font-bold tabular-nums text-destructive">
+                    <li key={row.name} className="poster-row-line flex items-baseline gap-2 py-1.5">
+                      <span className="poster-hand flex-1 truncate text-xl sm:text-2xl">{row.name}</span>
+                      <span className="poster-price text-2xl sm:text-3xl tabular-nums">
                         {formatPosterPrice(row.price)}
                       </span>
-                      <span className="w-11 text-[10px] text-muted-foreground">{row.unitLabel}</span>
+                      <span className="poster-hand w-12 text-sm text-neutral-600">{row.unitLabel}</span>
                     </li>
                   ))}
                 </ul>
@@ -238,7 +236,7 @@ export default function StockPricePoster() {
             ))}
           </div>
           {totalRows === 0 && (
-            <p className="mt-4 text-center text-sm text-muted-foreground">
+            <p className="poster-hand mt-4 text-center text-lg text-neutral-500">
               Ingen vara med pris vald ännu.
             </p>
           )}
