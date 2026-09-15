@@ -10,7 +10,7 @@ import WasteReports from "@/pages/WasteReports";
 import TraceabilityPage from "@/pages/TraceabilityPage";
 import StockTransformation from "@/pages/StockTransformation";
 import { useSite } from "@/contexts/SiteContext";
-import { canAccessRoute } from "@/lib/pageAccess";
+
 
 type SubTab =
   | "lager"
@@ -29,7 +29,8 @@ type SubTab =
  */
 export default function InventoryRouter() {
   const { site } = useSite();
-  const showPricing = canAccessRoute(site, "/pricing");
+  // Butikerna behöver prisfliken för prislistan att sätta upp.
+  const showPricing = true;
   // Butiksportalen har inga egna flikar för Överföringar, Streckkoder eller Svinn.
   // Svinn rapporteras direkt på produktraden i lagret.
   const isShopPortal = !(site === "wholesale" || site === "production");
