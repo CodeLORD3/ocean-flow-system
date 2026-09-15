@@ -128,7 +128,19 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
   const [q, setQ] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<"flode" | "graf" | "historik" | "natverk">("flode");
-  const [sort, setSort] = useState<"senaste" | "andrad" | "bast_fore" | "storst" | "namn">("senaste");
+  const [sort, setSort] = useState<
+    | "senaste"
+    | "aldst"
+    | "andrad"
+    | "bast_fore"
+    | "langst"
+    | "storst"
+    | "minst"
+    | "varde"
+    | "namn"
+    | "leverantor"
+    | "parti"
+  >("senaste");
 
   const { data: lots = [], isLoading } = useQuery({
     queryKey: ["lots_traceability"],
@@ -139,7 +151,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
           "id, lot_number, supplier_lot_id, commercial_name, latin_name, species_fao_code, catch_area, fishing_gear, vessel_name, best_before, quantity_kg, unit_cost, price_status, preliminary_unit_cost, invoice_number, invoice_date, status, is_thawed, created_at, fishing_trip_id, incoming_catch_cert, statistical_doc, seal_number, parasite_treatment_required, freeze_start, freeze_end, exemption_reason, exemption_source, suppliers(name), products(name, sku, category, hs_code, export_documentation_required)",
         )
         .order("created_at", { ascending: false })
-        .limit(300);
+        .limit(2000);
       if (error) throw error;
       return data as any[];
     },
@@ -233,14 +245,24 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
       ? matchade.filter((l) => (l.products?.name || l.commercial_name || "—") === valdProdukt)
       : matchade;
     const kopia = [...bas];
+    const varde = (l: any) => (l.unit_cost != null ? Number(l.quantity_kg || 0) * Number(l.unit_cost) : 0);
     if (sort === "senaste") kopia.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    if (sort === "aldst") kopia.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
     if (sort === "andrad")
       kopia.sort((a, b) =>
         String(senasteHandelse[b.id] || b.created_at).localeCompare(String(senasteHandelse[a.id] || a.created_at)),
       );
     if (sort === "bast_fore")
       kopia.sort((a, b) => String(a.best_before || "9999-12-31").localeCompare(String(b.best_before || "9999-12-31")));
+    if (sort === "langst")
+      kopia.sort((a, b) => String(b.best_before || "0000-01-01").localeCompare(String(a.best_before || "0000-01-01")));
     if (sort === "storst") kopia.sort((a, b) => Number(b.quantity_kg || 0) - Number(a.quantity_kg || 0));
+    if (sort === "minst") kopia.sort((a, b) => Number(a.quantity_kg || 0) - Number(b.quantity_kg || 0));
+    if (sort === "varde") kopia.sort((a, b) => varde(b) - varde(a));
+    if (sort === "leverantor")
+      kopia.sort((a, b) => String(a.suppliers?.name || "").localeCompare(String(b.suppliers?.name || ""), "sv"));
+    if (sort === "parti")
+      kopia.sort((a, b) => String(a.lot_number || "").localeCompare(String(b.lot_number || ""), "sv", { numeric: true }));
     if (sort === "namn")
       kopia.sort((a, b) =>
         String(a.products?.name || a.commercial_name || "").localeCompare(
@@ -300,10 +322,16 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
 
   const sorteringar = [
     { v: "senaste", label: "Senast skapad" },
+    { v: "aldst", label: "Äldst skapad" },
     { v: "andrad", label: "Senast ändrad" },
     { v: "bast_fore", label: "Kortast hållbarhet" },
+    { v: "langst", label: "Längst hållbarhet" },
     { v: "storst", label: "Störst mängd" },
+    { v: "minst", label: "Minst mängd" },
+    { v: "varde", label: "Högst värde" },
     { v: "namn", label: "Namn A–Ö" },
+    { v: "leverantor", label: "Leverantör A–Ö" },
+    { v: "parti", label: "Partinummer" },
   ] as const;
 
   const modes = [
