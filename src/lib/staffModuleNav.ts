@@ -1,6 +1,6 @@
 import {
   UserCheck, IdCard, Clock, ClipboardCheck, Activity, Scale, CalendarRange,
-  CalendarCheck, Settings, FileText, Plug,
+  CalendarCheck, Settings, FileText, Plug, LayoutGrid, BarChart3,
 } from "lucide-react";
 import type { SiteMode } from "@/contexts/SiteContext";
 import { canAccessRoute } from "@/lib/pageAccess";
