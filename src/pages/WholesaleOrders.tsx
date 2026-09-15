@@ -1460,14 +1460,16 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                      </td>
                    </tr>
                  )}
-                <tr className={`border-b border-border/30 h-7 transition-colors ${
+                <tr
+                  id={`order-line-${order.id}-${line.product_id}`}
+                  className={`border-b border-border/30 h-7 transition-colors ${
                   isUnavailable ? "opacity-50 bg-destructive/5" :
                   currentStatus === "Skickad" ? "bg-primary/10" :
                   currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/10" :
                   currentStatus === "Beställd" ? "bg-accent/20" :
                   currentStatus === "Pågående" ? "bg-warning/10" :
                   ""
-                }`}>
+                } ${highlightProductId === line.product_id ? "ring-2 ring-inset ring-warning bg-warning/25" : ""}`}>
                    <td className="min-w-0 px-2 py-0.5 font-medium text-foreground">
                      <div className="flex min-w-0 items-center gap-2">
                        <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="h-5 w-7 shrink-0" />
