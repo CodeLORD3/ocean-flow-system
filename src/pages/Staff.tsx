@@ -290,58 +290,60 @@ export default function Staff() {
   if (isLoading) return <div className="p-6 space-y-4"><Skeleton className="h-10 w-64" /><Skeleton className="h-96" /></div>;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-        <div>
-          <h2 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" /> Personal
-            {platformView && <Badge variant="secondary" className="text-[9px]">Admin · hela plattformen</Badge>}
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {platformView
-              ? "All personal i alla butiker och portaler — redigera uppgifter och behörigheter"
-              : "Personal kopplad till butiken — stämpling sker på Min profil"}
-          </p>
-
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="staff-light space-y-5">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex items-start gap-3">
+          <span className="sl-kpi__icon sl-kpi__icon--blue" aria-hidden="true"><Users size={20} /></span>
+          <div>
+            <span className="sl-label">Personal</span>
+            <h1 className="sl-h1 mt-1 flex items-center gap-2">
+              Personal
+              {platformView && <span className="sl-pill sl-pill--info">Admin · hela plattformen</span>}
+            </h1>
+            <p className="mt-1 text-[14px] sl-muted">
+              {platformView
+                ? "All personal i alla butiker och portaler — redigera uppgifter och behörigheter"
+                : "Personal kopplad till butiken — stämpling sker på Min profil"}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {site === "shop" && activeStoreId && (
-            <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setStoreStaffOpen(true)}>
-              <Users className="h-3.5 w-3.5" /> Personal i butiken
-            </Button>
+            <button type="button" className="sl-btn" onClick={() => setStoreStaffOpen(true)}>
+              <Users className="h-4 w-4" /> Personal i butiken
+            </button>
           )}
-          <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}>
-            <Plus className="h-3.5 w-3.5" /> Lägg till personal
-          </Button>
+          <button type="button" className="sl-btn sl-btn--primary" onClick={openAdd}>
+            <Plus className="h-4 w-4" /> Lägg till personal
+          </button>
         </div>
-      </div>
+      </header>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Totalt personal</p><p className="text-xl font-heading font-bold text-foreground">{staffList.length}</p></CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Instämplade nu</p><p className="text-xl font-heading font-bold text-foreground">{openShifts.length}</p></CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Arbetsplatser</p><p className="text-xl font-heading font-bold text-foreground">{new Set(staffList.map(s => s.workplace).filter(Boolean)).size}</p></CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Med e-post</p><p className="text-xl font-heading font-bold text-foreground">{staffList.filter(s => s.email).length}</p></CardContent></Card>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="sl-card p-4"><p className="sl-label">Totalt personal</p><p className="sl-kpi__value sl-num mt-1">{staffList.length}</p></div>
+        <div className="sl-card p-4"><p className="sl-label flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-[var(--sl-green-ink)]" /> Instämplade nu</p><p className="sl-kpi__value sl-num mt-1">{openShifts.length}</p></div>
+        <div className="sl-card p-4"><p className="sl-label">Arbetsplatser</p><p className="sl-kpi__value sl-num mt-1">{new Set(staffList.map(s => s.workplace).filter(Boolean)).size}</p></div>
+        <div className="sl-card p-4"><p className="sl-label">Med e-post</p><p className="sl-kpi__value sl-num mt-1">{staffList.filter(s => s.email).length}</p></div>
       </div>
 
       {/* Search */}
-      <div className="flex flex-wrap items-center gap-2">
-      <div className="relative max-w-xs flex-1 min-w-[180px]">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-        <Input placeholder="Sök personal..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
-      </div>
-      {isAdmin && (
-        <Button variant={adminAllStaff ? "default" : "outline"} size="sm" className="text-xs gap-1.5" onClick={() => setAdminAllStaff(v => !v)}>
-          <ShieldCheck className="h-3.5 w-3.5" />
-          {adminAllStaff ? "Visar all personal (plattform)" : "Visa all personal (plattform)"}
-        </Button>
-      )}
-      {!platformView && (
-        <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowAll(v => !v)}>
-          {showAll ? "Visa endast instämplade" : "Visa all personal i butiken"}
-        </Button>
-      )}
-
+      <div className="sl-card flex flex-wrap items-center gap-2 p-3">
+        <div className="relative min-w-[200px] max-w-xs flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--sl-ink-faint)]" />
+          <Input placeholder="Sök personal..." value={search} onChange={e => setSearch(e.target.value)} className="h-9 rounded-lg border-[var(--sl-line)] bg-white pl-9 text-[14px]" />
+        </div>
+        {isAdmin && (
+          <button type="button" className={adminAllStaff ? "sl-btn sl-btn--primary" : "sl-btn"} onClick={() => setAdminAllStaff(v => !v)}>
+            <ShieldCheck className="h-4 w-4" />
+            {adminAllStaff ? "Visar all personal (plattform)" : "Visa all personal (plattform)"}
+          </button>
+        )}
+        {!platformView && (
+          <button type="button" className="sl-btn" onClick={() => setShowAll(v => !v)}>
+            {showAll ? "Visa endast instämplade" : "Visa all personal i butiken"}
+          </button>
+        )}
       </div>
 
       {/* Staff grid */}
