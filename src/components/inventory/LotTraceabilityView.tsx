@@ -392,8 +392,9 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
 
   const [panel, setPanel] = useState<"kedja" | "handelser" | "pass" | "detaljer">("kedja");
 
-  /** Visa produktvalet först när sökningen träffar flera produkter. */
-  const visaProduktval = !valdProdukt && q.trim().length > 0 && produktTraffar.length > 1;
+  /** Sökningen går direkt till partilistan — partiet är rubriken. */
+  const visaProduktval = false;
+
 
   return (
     <div className="flex flex-col gap-4">
@@ -578,19 +579,21 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                         </div>
                         <span className={`h-8 w-1 shrink-0 rounded-full ${hallbarhetsFarg(d).split(" ")[0]}`} />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-foreground">
+                          <p className="truncate font-mono text-sm font-semibold text-foreground">
+                            {l.lot_number || "Utan partinummer"}
+                          </p>
+                          <p className="truncate text-[11px] text-muted-foreground">
                             {l.products?.name || l.commercial_name || "—"}
                             {l.products?.category && (
-                              <span className="ml-2 text-[10px] font-normal uppercase tracking-wider text-muted-foreground">
-                                {l.products.category}
-                              </span>
+                              <span className="ml-2 text-[10px] uppercase tracking-wider">{l.products.category}</span>
                             )}
                           </p>
                           <p className="truncate font-mono text-[10px] text-muted-foreground">
-                            {l.lot_number} · skapad {String(l.created_at).slice(0, 10)}
+                            skapad {String(l.created_at).slice(0, 10)}
                             {andrad ? ` · ändrad ${String(andrad).slice(0, 10)}` : ""}
                           </p>
                         </div>
+
                         {l.best_before && (
                           <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${hallbarhetsFarg(d)}`}>
                             {d !== null && d < 0 ? `${Math.abs(d)} d sedan` : `${d} d kvar`}
