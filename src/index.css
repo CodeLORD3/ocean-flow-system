@@ -232,26 +232,35 @@
   color: #111111;
 }
 .poster-marker {
-  font-family: "Permanent Marker", "Bebas Neue", system-ui, sans-serif;
+  font-family: "Anton", "Permanent Marker", system-ui, sans-serif;
   color: #10329b;
-  letter-spacing: 0.01em;
-  line-height: 1.05;
+  letter-spacing: 0.005em;
+  line-height: 0.95;
+  transform: skewX(-8deg);
+  transform-origin: left bottom;
+  -webkit-text-stroke: 1px #10329b;
 }
 .poster-hand {
-  font-family: "Caveat", "Segoe Script", cursive;
+  font-family: "Kalam", "Caveat", "Segoe Script", cursive;
   color: #111111;
+  font-weight: 400;
 }
 .poster-rule {
   background: #2f7fe6;
   border-radius: 999px;
+  transform: skewX(-8deg);
 }
 .poster-row-line {
-  border-bottom: 1.5px solid #6fb0f0;
+  border-bottom: 1.5px solid #7cb6f2;
 }
 .poster-price {
-  font-family: "Caveat", "Segoe Script", cursive;
+  font-family: "Kalam", "Caveat", cursive;
   color: #e01414;
   font-weight: 700;
+}
+.poster-unit {
+  font-family: "Kalam", "Caveat", cursive;
+  color: #1f2937;
 }
 .poster-divider {
   background: #1a49b8;
