@@ -325,9 +325,21 @@ export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: s
           <Boxes className="mr-1 h-3.5 w-3.5" />
           Bara med saldo
         </Button>
+        <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => zoomAt(0.8)} title="Zooma in">
+          <ZoomIn className="h-3.5 w-3.5" />
+        </Button>
+        <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => zoomAt(1.25)} title="Zooma ut">
+          <ZoomOut className="h-3.5 w-3.5" />
+        </Button>
+        <Button variant="outline" size="sm" className="h-7 px-2" onClick={resetView} title="Återställ vyn">
+          <Maximize2 className="h-3.5 w-3.5" />
+        </Button>
         <Badge variant="secondary" className="text-[10px]">
           {summary.count} produkter · {summary.withStock} med saldo · {nf(summary.total)} i lager
         </Badge>
+        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <Move className="h-3 w-3" /> dra för att panorera · rulla för att zooma · dra en produkt för att flytta
+        </span>
       </div>
 
       {loadingProducts && <p className="text-sm text-muted-foreground">Bygger nätverket…</p>}
