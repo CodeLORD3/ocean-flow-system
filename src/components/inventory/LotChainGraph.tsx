@@ -320,11 +320,16 @@ export default function LotChainGraph({
                   <div className="grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-center gap-x-2 px-3">
                     <span className="h-px" />
                     <span className="flex flex-col items-center">
-                      <span className="h-3 w-0.5 bg-border" />
-                      <span className="whitespace-nowrap rounded-full border border-border bg-background px-2 py-px text-[10px] font-medium text-muted-foreground">
-                        orörd {n.gap}
+                      <span className="h-4 w-0.5 bg-border" />
+                      <span className="flex flex-col items-center whitespace-nowrap rounded-md border border-border bg-muted/60 px-2 py-1">
+                        <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                          orörd
+                        </span>
+                        <span className="font-mono text-[12px] font-bold tabular-nums text-foreground">
+                          {n.gap}
+                        </span>
                       </span>
-                      <span className="h-3 w-0.5 bg-border" />
+                      <span className="h-4 w-0.5 bg-border" />
                     </span>
                     <span className="h-px" />
                   </div>
