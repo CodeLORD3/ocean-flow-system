@@ -88,7 +88,7 @@ import { generateStockSheetPdf } from "@/lib/stockSheetPdf";
 import InventoryReportsDialog from "@/components/inventory/InventoryReportsDialog";
 import DailySheetDialog from "@/components/inventory/DailySheetDialog";
 import StockCountDialog, { type StockCountScope } from "@/components/inventory/StockCountDialog";
-import StockOverview from "@/components/inventory/StockOverview";
+import StockOverview, { qtyToKg } from "@/components/inventory/StockOverview";
 import ShelfLifeTimeline from "@/components/inventory/ShelfLifeTimeline";
 import StockMovementsView from "@/components/inventory/StockMovementsView";
 import LotTraceabilityView from "@/components/inventory/LotTraceabilityView";
