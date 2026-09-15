@@ -249,7 +249,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
         ),
       );
     return kopia;
-  }, [lots, q, sort, kategori, senasteHandelse]);
+  }, [matchade, valdProdukt, sort, senasteHandelse]);
 
   const lot = useMemo(() => lots.find((l) => l.id === selectedId) ?? null, [lots, selectedId]);
 
