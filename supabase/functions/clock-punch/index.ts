@@ -302,13 +302,16 @@ Deno.serve(async (req) => {
   }
 
   // Dubbeltryck utan gemensamt client_punch_id: samma typ inom 90 sekunder är
-  // ett och samma tryck och ska inte bli två rader i journalen.
+  // ett och samma tryck och ska inte bli två rader i journalen. Fönstret måste
+  // vara stängt även framåt — en rad med framtida tid får aldrig läsas som ett
+  // dubbeltryck och blockera en verklig stämpling.
   if (!offlineQueued) {
     const { data: near } = await db
       .from("time_entries")
       .select("id, type, occurred_at, registered_at, work_site_id, cost_center, geofence_ok")
       .eq("employee_id", hit.id)
       .eq("type", action)
+      .lte("occurred_at", new Date(serverNow + DUPLICATE_WINDOW_MS).toISOString())
       .gte("occurred_at", new Date(serverNow - DUPLICATE_WINDOW_MS).toISOString())
       .order("occurred_at", { ascending: false })
       .limit(1)
