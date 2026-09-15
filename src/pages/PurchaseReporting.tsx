@@ -1294,6 +1294,7 @@ export default function PurchaseReporting() {
           .single();
         if (reportError) throw reportError;
         createdReportId = report.id;
+        setSelectedReportId(report.id);
 
         queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
 
