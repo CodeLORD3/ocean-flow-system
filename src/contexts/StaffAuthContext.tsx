@@ -47,19 +47,21 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
   // annars hinner gaten se en tom profil vid omladdning och kasta till portalvalet.
   const loading = sessionLoading || staffLoading;
 
-  const loadStaff = async (uid: string | undefined) => {
+  const loadStaff = async (uid: string | undefined, opts?: { silent?: boolean }) => {
     if (!uid) {
       setStaff(null);
       setStaffLoading(false);
       return;
     }
-    setStaffLoading(true);
+    // Tyst omhämtning (manuellt "Försök igen") får inte låsa hela gränssnittet
+    if (!opts?.silent) setStaffLoading(true);
     try {
       await fetchStaff(uid);
     } finally {
-      setStaffLoading(false);
+      if (!opts?.silent) setStaffLoading(false);
     }
   };
+
 
   const fetchStaff = async (uid: string) => {
     // Behörigheten bor i user_scopes. Vyn staff_access sätter ihop personalen
