@@ -566,16 +566,25 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                     const foregGrupp = foregaende
                       ? tidsGrupp(sort === "andrad" ? senasteHandelse[foregaende.id] || foregaende.created_at : foregaende.created_at)
                       : null;
-                    const visaRubrik =
-                      ["senaste", "aldst", "andrad"].includes(sort) && grupp.key !== foregGrupp?.key;
+                    const produktNamn = l.products?.name || l.commercial_name || "—";
+                    const foregProdukt = foregaende
+                      ? foregaende.products?.name || foregaende.commercial_name || "—"
+                      : null;
+                    /** Vid sökning grupperas partierna under produktnamnet, annars på tid. */
+                    const grupperaPaProdukt = !!q.trim() && !valdProdukt;
+                    const visaRubrik = grupperaPaProdukt
+                      ? produktNamn !== foregProdukt
+                      : ["senaste", "aldst", "andrad"].includes(sort) && grupp.key !== foregGrupp?.key;
+                    const rubrik = grupperaPaProdukt ? produktNamn : grupp.label;
                     const kol = tidsKolumn(tidsstampel);
                     return (
                       <div key={l.id}>
                         {visaRubrik && (
                           <p className="sticky top-0 z-10 border-b border-border/60 bg-muted/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur">
-                            {grupp.label}
+                            {rubrik}
                           </p>
                         )}
+
                       <button
                         onClick={() => setSelectedId(l.id)}
                         className="flex w-full items-center gap-3 border-b border-border/60 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/40"
