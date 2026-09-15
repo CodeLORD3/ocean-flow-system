@@ -37,6 +37,7 @@ import ProductNetworkGraph from "@/components/inventory/ProductNetworkGraph";
 import { gapBetween, sinceNow, stampSv } from "@/lib/dwell";
 import { movementLabel } from "@/hooks/useStockMovements";
 import { useStoreLotIds } from "@/hooks/useStoreScope";
+import { usePackedByProduct } from "@/hooks/usePackedByProduct";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Props {
@@ -197,6 +198,8 @@ export default function LotTraceabilityView({
   >("senaste");
 
   const { lotIds: butiksPartier, locationIds: butiksPlatser, loading: scopeLoading } = useStoreLotIds(storeId);
+  /** Packat till kundbeställningar — markeras suddigt på partiet. */
+  const { data: packedByProduct } = usePackedByProduct(storeId ?? null);
 
   const { data: allaLots = [], isLoading: lotsLoading } = useQuery({
     queryKey: ["lots_traceability"],
@@ -204,7 +207,7 @@ export default function LotTraceabilityView({
       const { data, error } = await supabase
         .from("lots")
         .select(
-          "id, lot_number, supplier_lot_id, commercial_name, latin_name, species_fao_code, catch_area, fishing_gear, vessel_name, best_before, quantity_kg, unit_cost, price_status, preliminary_unit_cost, invoice_number, invoice_date, status, is_thawed, created_at, fishing_trip_id, incoming_catch_cert, statistical_doc, seal_number, parasite_treatment_required, freeze_start, freeze_end, exemption_reason, exemption_source, suppliers(name), products(name, sku, category, hs_code, export_documentation_required)",
+          "id, product_id, lot_number, supplier_lot_id, commercial_name, latin_name, species_fao_code, catch_area, fishing_gear, vessel_name, best_before, quantity_kg, unit_cost, price_status, preliminary_unit_cost, invoice_number, invoice_date, status, is_thawed, created_at, fishing_trip_id, incoming_catch_cert, statistical_doc, seal_number, parasite_treatment_required, freeze_start, freeze_end, exemption_reason, exemption_source, suppliers(name), products(name, sku, category, hs_code, export_documentation_required)",
         )
         .order("created_at", { ascending: false })
         .limit(2000);
@@ -848,6 +851,19 @@ export default function LotTraceabilityView({
                         Frysbehandling saknas
                       </Badge>
                     )}
+                    {/* Packat till order: varan står kvar men håller på att byta plats — visas suddigt. */}
+                    {(() => {
+                      const pk = packedByProduct?.get((lot as any).product_id);
+                      if (!pk) return null;
+                      return (
+                        <span
+                          className="animate-pulse rounded border border-amber-500/40 bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 opacity-70 blur-[0.4px]"
+                          title={`Packat till ${pk.orders.map((o) => o.orderNumber).join(", ")}`}
+                        >
+                          Packad · byter plats · {nf(pk.packed, 1)} {pk.unit}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div className="text-right">

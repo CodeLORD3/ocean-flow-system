@@ -46,6 +46,7 @@ import ProductStockFlow from "@/components/inventory/ProductStockFlow";
 import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 import FamilyStockView from "@/components/inventory/FamilyStockView";
 import { useProductFamilies, useOrderedByProduct } from "@/hooks/useProductFamilies";
+import { usePackedByProduct } from "@/hooks/usePackedByProduct";
 import { useProductPhotoCounts } from "@/hooks/useEntityImages";
 import { useSite } from "@/contexts/SiteContext";
 import { Layers } from "lucide-react";
@@ -182,6 +183,8 @@ export default function StockOverview({
   const { activeStoreId } = useSite();
   const { data: families = [] } = useProductFamilies();
   const { data: orderedByProduct } = useOrderedByProduct(activeStoreId || null);
+  /** Packat till kundbeställningar — visas som gul andel i lagerstapeln. */
+  const { data: packedByProduct } = usePackedByProduct(activeStoreId || null);
   /** Antal bilder per produkt — visas som kameraikon med siffra i raden. */
   const { data: photoCounts } = useProductPhotoCounts(
     useMemo(() => rows.map((r) => r.product_id), [rows]),
@@ -685,11 +688,24 @@ export default function StockOverview({
                         </td>
                         <td className="hidden border-r border-grid-line/70 px-2 text-xs text-muted-foreground whitespace-nowrap sm:table-cell">{g.category}</td>
                         <td className="hidden border-r border-grid-line/70 px-2 sm:table-cell">
+                          {(() => {
+                          const pk = packedByProduct?.get(g.product_id);
+                          const packedKg = pk ? qtyToKg(pk.packed, productsById.get(g.product_id)) : 0;
+                          const packedPct =
+                            g.totalKg > 0 ? Math.min(100, (packedKg / g.totalKg) * 100) : 0;
+                          return (
                           <div className="min-w-[140px]">
                             <div
-                              className="flex items-stretch gap-0.5 h-4 rounded-sm overflow-hidden"
+                              className="relative flex items-stretch gap-0.5 h-4 rounded-sm overflow-hidden"
                               style={{ width: `${Math.max(12, (g.totalKg / maxKg) * 100)}%` }}
                             >
+                              {packedPct > 0 && (
+                                <span
+                                  className="pointer-events-none absolute inset-y-0 left-0 z-10 border-r border-amber-600 bg-amber-400/85"
+                                  style={{ width: `${packedPct}%` }}
+                                  title={`Packat till order: ${packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg`}
+                                />
+                              )}
                               {g.lines.map((l) => {
                                 const kg = qtyToKg(Number(l.quantity) || 0, l.products);
                                 const pct = g.totalKg > 0 ? (kg / g.totalKg) * 100 : 100;
@@ -711,11 +727,21 @@ export default function StockOverview({
                               })}
                             </div>
                             {!dense && (
-                              <div className="text-[10px] text-muted-foreground mt-0.5">
-                                {g.lines.length} lagerplats{g.lines.length > 1 ? "er" : ""}
+                              <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                <span>
+                                  {g.lines.length} lagerplats{g.lines.length > 1 ? "er" : ""}
+                                </span>
+                                {packedPct > 0 && (
+                                  <span className="font-mono font-semibold tabular-nums text-amber-600">
+                                    {packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg packat
+                                    {packedPct >= 99.5 ? " (allt)" : ""}
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
+                          );
+                          })()}
                         </td>
                         <td className="border-r border-grid-line/70 px-2 text-right font-semibold tabular-nums whitespace-nowrap">
                           {g.totalQty.toLocaleString("sv-SE", { maximumFractionDigits: g.unit === "st" ? 0 : 1 })} {g.unit}
@@ -817,6 +843,41 @@ export default function StockOverview({
                                           {p.name || g.name} · {p.unit || g.unit}
                                           {p.weight_per_piece ? ` · ${p.weight_per_piece} kg/st` : ""}
                                         </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
+                              {/* Packat till kundbeställningar — samma bild som i totallistan */}
+                              {(() => {
+                                const pk = packedByProduct?.get(g.product_id);
+                                if (!pk || pk.orders.length === 0) return null;
+                                return (
+                                  <div className="rounded-md border border-amber-500/40 bg-amber-400/10 px-2.5 py-1.5">
+                                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-amber-700">
+                                      Packat till order
+                                      <span className="font-mono text-[11px] font-semibold tabular-nums">
+                                        {pk.packed.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit}
+                                      </span>
+                                    </div>
+                                    <div className="mt-1 flex flex-col gap-1">
+                                      {pk.orders.map((o, i) => (
+                                        <div
+                                          key={`${o.orderId}-${i}`}
+                                          className="flex items-center gap-2 whitespace-nowrap text-xs"
+                                        >
+                                          <span className="font-mono font-semibold">{o.orderNumber}</span>
+                                          <span className="truncate">{o.customerName}</span>
+                                          {o.wantedDate && (
+                                            <Badge variant="outline" className="h-5 text-[10px]">
+                                              {format(parseISO(o.wantedDate), "d MMM", { locale: sv })}
+                                            </Badge>
+                                          )}
+                                          <span className="ml-auto font-mono font-semibold tabular-nums text-amber-700">
+                                            {o.quantity.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {o.unit}
+                                          </span>
+                                        </div>
                                       ))}
                                     </div>
                                   </div>
