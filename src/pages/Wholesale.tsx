@@ -23,6 +23,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useProducts, useUpdateProduct } from "@/hooks/useProducts";
+import TierPriceSetter from "@/components/pricing/TierPriceSetter";
+import TierPricingPanel from "@/components/pricing/TierPricingPanel";
+import TierMarginOverview from "@/components/pricing/TierMarginOverview";
 import { useStores } from "@/hooks/useStores";
 import { useDeliveryNotes, useCreateDeliveryNote } from "@/hooks/useDeliveryNotes";
 import { useIncomingDeliveries, useCreateIncomingDelivery } from "@/hooks/useIncomingDeliveries";
@@ -52,6 +55,8 @@ interface ILLineInput { product_id: string; qty: string; unit_cost: string; batc
 
 export default function Wholesale() {
   const [search, setSearch] = useState("");
+  /** Inleverans som är utfälld för prissättning till butikerna. */
+  const [pricingIlId, setPricingIlId] = useState<string | null>(null);
   const [priceDialogOpen, setPriceDialogOpen] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [fsDialogOpen, setFsDialogOpen] = useState(false);
@@ -392,7 +397,13 @@ export default function Wholesale() {
                     </thead>
                     <tbody>
                       {incomingDeliveries.map((il: any) => (
-                        <tr key={il.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors">
+                        <>
+                        <tr
+                          key={il.id}
+                          className="cursor-pointer border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors"
+                          onClick={() => setPricingIlId(pricingIlId === il.id ? null : il.id)}
+                          title="Klicka för att sätta priser till butikerna"
+                        >
                           <td className="py-2 font-mono font-medium text-foreground">{il.delivery_number}</td>
                           <td className="py-2 text-foreground">{il.suppliers?.name}</td>
                           <td className="py-2 text-muted-foreground">{il.received_date}</td>
@@ -404,6 +415,39 @@ export default function Wholesale() {
                             <Badge variant="outline" className={`${statusColor[il.status] || ""} text-[10px]`}>{il.status}</Badge>
                           </td>
                         </tr>
+                        {pricingIlId === il.id && (
+                          <tr key={`${il.id}-pricing`}>
+                            <td colSpan={8} className="py-2">
+                              <div className="space-y-2">
+                                {(il.incoming_delivery_lines || []).length === 0 ? (
+                                  <p className="text-[11px] text-muted-foreground">Inga rader på inleveransen.</p>
+                                ) : (
+                                  (il.incoming_delivery_lines || []).map((line: any) => {
+                                    const product = products.find((p: any) => p.id === line.product_id);
+                                    if (!product) return null;
+                                    return (
+                                      <div key={line.id} className="space-y-1">
+                                        <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                                          <span className="font-medium text-foreground">{product.name}</span>
+                                          <span className="text-muted-foreground">
+                                            {Number(line.quantity).toLocaleString("sv-SE")} kg
+                                          </span>
+                                        </div>
+                                        <TierPriceSetter
+                                          product={product}
+                                          incomingCost={line.unit_cost != null ? Number(line.unit_cost) : null}
+                                          sourceLotId={line.lot_id || null}
+                                          setBy={il.received_by || null}
+                                        />
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                        </>
                       ))}
                     </tbody>
                   </table>
@@ -414,7 +458,9 @@ export default function Wholesale() {
         </TabsContent>
 
         {/* Tab 3: Produktkatalog */}
-        <TabsContent value="catalog">
+        <TabsContent value="catalog" className="space-y-3">
+          <TierPricingPanel />
+          <TierMarginOverview />
           <Card className="shadow-card">
             <CardHeader className="pb-2">
               <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
