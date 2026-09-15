@@ -398,7 +398,169 @@ export default function ProductStockFlow({
                 ))}
               </div>
 
-              {mode === "days" ? (
+              {mode === "places" ? (
+                <div className="space-y-2">
+                  {/* Finns den eller inte — svaret först */}
+                  <div
+                    className={`rounded-md border p-2.5 ${
+                      totals.now > 0.0001
+                        ? "border-emerald-500/40 bg-emerald-500/10"
+                        : "border-border/60 bg-muted/30"
+                    }`}
+                  >
+                    <p className="text-xs font-semibold">
+                      {totals.now > 0.0001
+                        ? `Finns i lager · ${nf(totals.now)} ${u} på ${
+                            places.filter((p: any) => p.balance > 0.0001).length
+                          } ställe(n)`
+                        : "Finns inte i lager just nu"}
+                    </p>
+                    {places.length > 0 && (
+                      <p className="text-[11px] text-muted-foreground">
+                        Senaste händelse för {sinceNow(places[0].last)} sedan
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Var den finns nu */}
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-semibold text-muted-foreground">Här finns den nu</p>
+                    {places.filter((p: any) => p.balance > 0.0001).length === 0 ? (
+                      <p className="text-xs text-muted-foreground">Inget saldo på någon lagerplats.</p>
+                    ) : (
+                      places
+                        .filter((p: any) => p.balance > 0.0001)
+                        .map((p: any) => (
+                          <div
+                            key={p.key}
+                            className="flex items-center justify-between gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2 py-1.5"
+                          >
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-xs font-semibold">
+                                {p.store ? `${p.store} · ` : ""}
+                                {p.name}
+                              </span>
+                              <span className="block text-[10px] text-muted-foreground">
+                                Ligger här sedan {stampFull(p.last)} · {sinceNow(p.last)} orörd
+                              </span>
+                            </span>
+                            <span className="shrink-0 font-mono text-sm font-semibold tabular-nums text-emerald-500">
+                              {nf(p.balance)} {u}
+                            </span>
+                          </div>
+                        ))
+                    )}
+                  </div>
+
+                  {/* Vilka lager den passerat, med tider */}
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-semibold text-muted-foreground">
+                      Lager den passerat — senaste först
+                    </p>
+                    {journey.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">Inga rörelser registrerade.</p>
+                    ) : (
+                      <div className="relative max-h-[26rem] space-y-1.5 overflow-y-auto pl-4">
+                        <span className="absolute bottom-2 left-1 top-2 w-px bg-border" />
+                        {journey.map((v: any) => {
+                          const isOpen = openBranches[`v-${v.id}`] ?? false;
+                          const live = v.balance > 0.0001;
+                          return (
+                            <div
+                              key={v.id}
+                              className={`relative rounded-md border px-2 py-1.5 ${
+                                live ? "border-emerald-500/40 bg-emerald-500/5" : "border-border/60 bg-muted/20"
+                              }`}
+                            >
+                              <span
+                                className={`absolute -left-3 top-3.5 h-2 w-2 rounded-full ${
+                                  live ? "bg-emerald-500" : "bg-muted-foreground/50"
+                                }`}
+                              />
+                              <button
+                                onClick={() =>
+                                  setOpenBranches((prev) => ({ ...prev, [`v-${v.id}`]: !isOpen }))
+                                }
+                                className="flex w-full items-center gap-2 text-left"
+                              >
+                                {isOpen ? (
+                                  <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                                ) : (
+                                  <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                                )}
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-xs font-semibold">
+                                    {v.store ? `${v.store} · ` : ""}
+                                    {v.name}
+                                  </span>
+                                  <span className="block text-[10px] text-muted-foreground">
+                                    In {stampFull(v.arrivedAt)} av {v.arrivedBy}
+                                    {v.leftAt
+                                      ? ` · slut ${stampFull(v.leftAt)} av ${v.leftBy}`
+                                      : " · ligger kvar"}
+                                  </span>
+                                </span>
+                                <span className="shrink-0 text-right">
+                                  <span
+                                    className={`block font-mono text-xs font-semibold tabular-nums ${
+                                      live ? "text-emerald-500" : "text-muted-foreground"
+                                    }`}
+                                  >
+                                    {live ? `${nf(v.balance)} ${u}` : `max ${nf(v.peak)} ${u}`}
+                                  </span>
+                                  <span className="block text-[10px] text-muted-foreground">
+                                    {formatDuration(v.dwellMs)}
+                                    {live ? " hittills" : " på plats"}
+                                  </span>
+                                </span>
+                              </button>
+
+                              {isOpen && (
+                                <div className="mt-1 space-y-1 border-t border-border/50 pt-1">
+                                  {v.events.map((e: any, i: number) => (
+                                    <div
+                                      key={e.id}
+                                      className="flex flex-wrap items-center gap-x-2 text-[10px] text-muted-foreground"
+                                    >
+                                      {e.qty >= 0 ? (
+                                        <ArrowDownRight className="h-3 w-3 shrink-0 text-emerald-500" />
+                                      ) : (
+                                        <ArrowUpRight className="h-3 w-3 shrink-0 text-destructive" />
+                                      )}
+                                      <span className="font-semibold text-foreground">
+                                        {movementLabel(e.type)}
+                                      </span>
+                                      <span className="font-mono tabular-nums">{stampFull(e.created_at)}</span>
+                                      <span
+                                        className={`font-mono font-semibold tabular-nums ${
+                                          e.qty >= 0 ? "text-emerald-500" : "text-destructive"
+                                        }`}
+                                      >
+                                        {e.qty >= 0 ? `+${nf(e.qty)}` : nf(e.qty)} {u}
+                                      </span>
+                                      {i > 0 && (
+                                        <span>
+                                          efter{" "}
+                                          {formatDuration(
+                                            new Date(e.created_at).getTime() -
+                                              new Date(v.events[i - 1].created_at).getTime(),
+                                          )}
+                                        </span>
+                                      )}
+                                      {e.lot && <span className="font-mono">{e.lot}</span>}
+                                      <span>{e.who || "System"}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : mode === "days" ? (
                 <div className="max-h-56 overflow-y-auto rounded-md border border-border/60">
                   <table className="w-full text-xs">
                     <thead className="sticky top-0 bg-muted/60">
