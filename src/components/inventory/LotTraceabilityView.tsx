@@ -19,6 +19,7 @@ import {
   Truck,
   Store,
   ShoppingBasket,
+  ArrowDownUp,
 } from "lucide-react";
 
 import LineageGraphView from "@/components/inventory/LineageGraphView";
@@ -118,8 +119,9 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
-    if (!s) return lots;
-    return lots.filter((l) =>
+    const bas = !s
+      ? lots
+      : lots.filter((l) =>
       [
         l.lot_number,
         l.supplier_lot_id,
