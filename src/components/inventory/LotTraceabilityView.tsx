@@ -120,6 +120,48 @@ const hallbarhetsFarg = (d: number | null) =>
             ? "bg-sky-500/15 text-sky-600"
             : "bg-emerald-500/15 text-emerald-600";
 
+/** Måndag som veckostart, svensk tid. */
+function veckoStart(d: Date) {
+  const k = new Date(d);
+  k.setHours(0, 0, 0, 0);
+  const dag = (k.getDay() + 6) % 7;
+  k.setDate(k.getDate() - dag);
+  return k;
+}
+
+/** Grupperar en tidpunkt i Idag / Igår / Denna veckan / Förra veckan / månad. */
+function tidsGrupp(iso?: string | null): { key: string; label: string } {
+  if (!iso) return { key: "okant", label: "Utan datum" };
+  const d = new Date(iso);
+  const nu = new Date();
+  const idag = new Date(nu);
+  idag.setHours(0, 0, 0, 0);
+  const dagStart = new Date(d);
+  dagStart.setHours(0, 0, 0, 0);
+  const diffDagar = Math.round((idag.getTime() - dagStart.getTime()) / 86400000);
+  if (diffDagar === 0) return { key: "idag", label: "Idag" };
+  if (diffDagar === 1) return { key: "igar", label: "Igår" };
+  const v0 = veckoStart(nu);
+  const v1 = new Date(v0);
+  v1.setDate(v1.getDate() - 7);
+  if (d >= v0) return { key: "denna_vecka", label: "Denna veckan" };
+  if (d >= v1) return { key: "forra_vecka", label: "Förra veckan" };
+  const manad = d.toLocaleDateString("sv-SE", { month: "long", year: "numeric" });
+  return { key: `m-${d.getFullYear()}-${d.getMonth()}`, label: manad.charAt(0).toUpperCase() + manad.slice(1) };
+}
+
+/** Veckodag, datum och tid i egen kolumn. */
+function tidsKolumn(iso?: string | null) {
+  if (!iso) return { veckodag: "—", datum: "—", tid: "" };
+  const d = new Date(iso);
+  const veckodag = d.toLocaleDateString("sv-SE", { weekday: "short" }).replace(".", "");
+  return {
+    veckodag: veckodag.charAt(0).toUpperCase() + veckodag.slice(1),
+    datum: d.toLocaleDateString("sv-SE", { day: "2-digit", month: "2-digit" }),
+    tid: d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }),
+  };
+}
+
 /**
  * Spårbarhet i två tydliga steg: först söker man fram produkt eller kategori
  * och väljer parti i listan, sedan öppnas partiets hela flöde på egen yta.
