@@ -15,6 +15,8 @@ import LotPricePanel from "@/components/inventory/LotPricePanel";
 import LotHistoryView from "@/components/inventory/LotHistoryView";
 import ProductNetworkGraph from "@/components/inventory/ProductNetworkGraph";
 import { Network } from "lucide-react";
+import { gapBetween, sinceNow, stampSv } from "@/lib/dwell";
+import { movementLabel } from "@/hooks/useStockMovements";
 
 interface Props {
   currency?: string;
