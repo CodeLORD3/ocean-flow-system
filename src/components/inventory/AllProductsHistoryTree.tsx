@@ -157,6 +157,27 @@ export default function AllProductsHistoryTree({
         />
       </div>
 
+      <div className="flex flex-wrap items-center gap-1">
+        <Button
+          variant={shape === "graph" ? "default" : "outline"}
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => setShape("graph")}
+        >
+          <Network className="mr-1 h-3.5 w-3.5" />
+          Visuell graf
+        </Button>
+        <Button
+          variant={shape === "list" ? "default" : "outline"}
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => setShape("list")}
+        >
+          Textlista
+        </Button>
+        <span className="text-[10px] text-muted-foreground">Öppna en produkt för att se trädet</span>
+      </div>
+
       {isLoading && <p className="text-sm text-muted-foreground">Hämtar historik…</p>}
 
       {!isLoading && filtered.length === 0 && (
