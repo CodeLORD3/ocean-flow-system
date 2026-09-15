@@ -355,13 +355,15 @@ export default function StockOverview({
       for (const o of pk.orders) {
         const qKg = qtyToKg(o.quantity, p);
         const qValue = o.quantity * unitCost;
-        kg += qKg;
-        value += qValue;
         const isPacked = o.kind === "packed";
+        // Flödet är beställt → packat. En rad räknas därför bara på ett ställe,
+        // annars visas samma kilon dubbelt i statistiken.
         if (isPacked) {
           packedKg += qKg;
           packedValue += qValue;
         } else {
+          kg += qKg;
+          value += qValue;
           const item =
             restItems.get(g.product_id) ??
             { productId: g.product_id, name: g.name, image_url: g.image_url, kg: 0, value: 0, orders: [] };
@@ -388,15 +390,16 @@ export default function StockOverview({
           kg: 0,
           value: 0,
         };
-        const entry = weeks.get(key) ?? { ...meta };
-        entry.kg += qKg;
-        entry.value += qValue;
-        weeks.set(key, entry);
         if (isPacked) {
           const pEntry = packedWeeks.get(key) ?? { ...meta };
           pEntry.kg += qKg;
           pEntry.value += qValue;
           packedWeeks.set(key, pEntry);
+        } else {
+          const entry = weeks.get(key) ?? { ...meta };
+          entry.kg += qKg;
+          entry.value += qValue;
+          weeks.set(key, entry);
         }
       }
     }
