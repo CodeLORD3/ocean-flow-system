@@ -59,7 +59,7 @@ export default function LotChainGraph({
         kg,
         saldo,
         gren: kg < 0,
-        gap: i === 0 ? "" : gapBetween(movements[i - 1].created_at, m.created_at),
+        gap: i === 0 ? "" : gapBetweenLong(movements[i - 1].created_at, m.created_at),
       };
     });
   }, [movements]);
