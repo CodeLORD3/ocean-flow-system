@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { movementLabel } from "@/hooks/useStockMovements";
 import { ChevronDown, ChevronRight, GitBranch, Search, ArrowDownRight, ArrowUpRight, Network } from "lucide-react";
 import ProductMovementDag from "@/components/inventory/ProductMovementDag";
+import { gapBetween, sinceNow } from "@/lib/dwell";
 
 const nf = (n: number, d = 1) =>
   Number(n)
@@ -267,6 +268,9 @@ export default function AllProductsHistoryTree({
                                   <span className="min-w-0 truncate font-medium text-foreground">{b.label}</span>
                                   <span className="ml-auto shrink-0 font-mono tabular-nums text-muted-foreground">
                                     {nf(b.balance)} · {b.events.length} händelser
+                                    {b.events.length > 0
+                                      ? ` · orörd ${sinceNow(b.events[b.events.length - 1].created_at)}`
+                                      : ""}
                                   </span>
                                 </button>
                                 {b.lotId && onTraceLot && (
@@ -311,6 +315,12 @@ export default function AllProductsHistoryTree({
                                         </div>
                                         <div className="truncate text-[10px] text-muted-foreground">
                                           {stamp(e.created_at)}
+                                          {i > 0
+                                            ? ` · orörd ${gapBetween(b.events[i - 1].created_at, e.created_at)} innan`
+                                            : ""}
+                                          {i === b.events.length - 1
+                                            ? ` · orörd ${sinceNow(e.created_at)} sedan dess`
+                                            : ""}
                                           {e.location ? ` · ${e.location}` : ""}
                                           {` · ${e.who || "System"}`}
                                           {e.reference ? ` · ${e.reference}` : ""}

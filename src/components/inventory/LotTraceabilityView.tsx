@@ -15,6 +15,8 @@ import LotPricePanel from "@/components/inventory/LotPricePanel";
 import LotHistoryView from "@/components/inventory/LotHistoryView";
 import ProductNetworkGraph from "@/components/inventory/ProductNetworkGraph";
 import { Network } from "lucide-react";
+import { gapBetween, sinceNow, stampSv } from "@/lib/dwell";
+import { movementLabel } from "@/hooks/useStockMovements";
 
 interface Props {
   currency?: string;
@@ -221,24 +223,42 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                       <>
                         <p className="mb-1 text-[11px] text-muted-foreground">
                           Kvar i lager: {nf(remaining(lot, movements), 3)} kg
+                          {(() => {
+                            const senast = movements[0]?.created_at;
+                            return senast ? ` · orörd ${sinceNow(senast)} sedan senaste händelsen` : "";
+                          })()}
                         </p>
+                        <div className="overflow-x-auto">
                         <table className="w-full text-xs">
                           <thead>
                             <tr className="text-left text-[10px] uppercase text-muted-foreground">
-                              <th className="py-1">Datum</th>
-                              <th className="py-1">Typ</th>
+                              <th className="py-1">Datum &amp; tid</th>
+                              <th className="py-1">Händelse</th>
                               <th className="py-1">Lagerplats</th>
+                              <th className="py-1">Låg orörd</th>
                               <th className="py-1 text-right">Kg</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {movements.map((m) => (
+                            {[...movements]
+                              .slice()
+                              .sort(
+                                (a, b) =>
+                                  new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+                              )
+                              .map((m, i, arr) => (
                               <tr key={m.id} className="border-t border-border/50">
-                                <td className="py-1 text-muted-foreground">
-                                  {new Date(m.created_at).toLocaleDateString("sv-SE")}
+                                <td className="whitespace-nowrap py-1 font-mono tabular-nums text-muted-foreground">
+                                  {stampSv(m.created_at)}
                                 </td>
-                                <td className="py-1">{m.movement_type}</td>
+                                <td className="py-1">{movementLabel(m.movement_type)}</td>
                                 <td className="py-1 text-muted-foreground">{m.storage_locations?.name || "—"}</td>
+                                <td className="whitespace-nowrap py-1 text-muted-foreground">
+                                  {i === 0
+                                    ? "—"
+                                    : gapBetween(arr[i - 1].created_at, m.created_at)}
+                                  {i === arr.length - 1 ? ` (nu ${sinceNow(m.created_at)})` : ""}
+                                </td>
                                 <td
                                   className={`py-1 text-right font-mono tabular-nums ${
                                     Number(m.quantity_kg) < 0 ? "text-destructive" : "text-foreground"
@@ -250,6 +270,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                             ))}
                           </tbody>
                         </table>
+                        </div>
                       </>
                     )}
                     {showCosts && (
