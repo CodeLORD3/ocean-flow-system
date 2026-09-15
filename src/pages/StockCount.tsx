@@ -400,7 +400,7 @@ export default function StockCount() {
 
   /** Varor som lagts till manuellt i pågående inventering (fanns inte i lager). */
   const [extraProductIds, setExtraProductIds] = useState<Set<string>>(new Set());
-  const [addSearch, setAddSearch] = useState("");
+  
 
   const allRows = useMemo<Row[]>(() => {
     if (!effectiveStoreId) return [];
@@ -478,8 +478,8 @@ export default function StockCount() {
 
   /** Träffar i produktregistret som ännu inte finns i inventeringslistan. */
   const addCandidates = useMemo(() => {
-    const q = addSearch.trim().toLowerCase();
-    if (q.length < 2) return [] as any[];
+    const q = search.trim().toLowerCase();
+    if (q.length < 1) return [] as any[];
     const inList = new Set(allRows.map((r) => r.productId));
     return (products as any[])
       .filter((p: any) => {
@@ -490,8 +490,8 @@ export default function StockCount() {
           String(p.sku ?? "").toLowerCase().includes(q)
         );
       })
-      .slice(0, 8);
-  }, [addSearch, allRows, products]);
+      .slice(0, 12);
+  }, [search, allRows, products]);
 
   const categories = useMemo(
     () => [...new Set(allRows.map((r) => r.category))].sort(collator.compare),
@@ -906,67 +906,60 @@ export default function StockCount() {
         </button>
       </div>
 
-      <div className="relative w-full">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Sök produkt — namn eller SKU"
-          className="h-9 w-full pl-8 text-sm"
-        />
-      </div>
-
-      {/* Lägg till vara som inte finns i lager — skapas i lager när den räknas */}
       <div className="space-y-1">
         <div className="relative w-full">
-          <Plus className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            value={addSearch}
-            onChange={(e) => setAddSearch(e.target.value)}
-            placeholder="Lägg till vara som saknas i lager — sök i produktregistret"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Sök vara — i lager eller i produktregistret"
             className="h-9 w-full pl-8 text-sm"
           />
         </div>
-        {addSearch.trim().length >= 2 && (
-          <div className="overflow-hidden rounded-md border">
-            {!addCandidates.length ? (
-              <p className="px-2 py-2 text-[11px] text-muted-foreground">
-                Ingen ny vara matchar — varan finns kanske redan i listan.
-              </p>
-            ) : (
-              addCandidates.map((p: any) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className="flex w-full items-center justify-between gap-2 border-b px-2 py-1.5 text-left last:border-b-0 hover:bg-muted/60"
-                  onClick={() => {
-                    if (!defaultLocation?.id) {
-                      toast({
-                        title: "Ingen lagerplats",
-                        description: "Enheten saknar lagerplats — lägg till en först.",
-                        variant: "destructive",
-                      });
-                      return;
-                    }
-                    setExtraProductIds((prev) => new Set(prev).add(p.id));
-                    setAddSearch("");
-                    setCategory("all");
+
+        {/* Träffar ur produktregistret — läggs till med ett tryck */}
+        {search.trim().length >= 1 && addCandidates.length > 0 && (
+          <div className="overflow-hidden rounded-md border border-primary/40">
+            <p className="bg-primary/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary">
+              Lägg till från produktregistret
+            </p>
+            {addCandidates.map((p: any) => (
+              <button
+                key={p.id}
+                type="button"
+                className="flex w-full items-center justify-between gap-2 border-b px-2 py-2 text-left last:border-b-0 hover:bg-muted/60"
+                onClick={() => {
+                  if (!defaultLocation?.id) {
                     toast({
-                      title: "Vara tillagd i inventeringen",
-                      description: `${p.name} — skriv in mängden, varan skapas i lager när rapporten färdigställs.`,
+                      title: "Ingen lagerplats",
+                      description: "Enheten saknar lagerplats — lägg till en först.",
+                      variant: "destructive",
                     });
-                  }}
-                >
-                  <span className="min-w-0 flex-1 truncate text-[12px] font-medium">{p.name}</span>
-                  <span className="shrink-0 text-[10px] text-muted-foreground">
-                    {p.category || "Övrigt"} · {unitOf(p.unit)}
-                  </span>
-                </button>
-              ))
-            )}
+                    return;
+                  }
+                  setExtraProductIds((prev) => new Set(prev).add(p.id));
+                  setSearch("");
+                  setCategory("all");
+                  setOnlyUncounted(false);
+                  toast({
+                    title: "Vara tillagd i inventeringen",
+                    description: `${p.name} — skriv in mängden, varan skapas i lager när rapporten färdigställs.`,
+                  });
+                }}
+              >
+                <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <Plus className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span className="truncate text-[12px] font-medium">{p.name}</span>
+                </span>
+                <span className="shrink-0 text-[10px] text-muted-foreground">
+                  {p.category || "Övrigt"} · {unitOf(p.unit)}
+                </span>
+              </button>
+            ))}
           </div>
         )}
       </div>
+
       </>
       )}
 
