@@ -68,10 +68,11 @@ export default function StockTransformation() {
     const map = new Map<string, number>();
     for (const s of allStock as any[]) {
       if (activeStoreId && s.storage_locations?.store_id !== activeStoreId) continue;
+      if (!levelAllowed(s)) continue;
       map.set(s.product_id, (map.get(s.product_id) || 0) + Number(s.quantity || 0));
     }
     return map;
-  }, [allStock, activeStoreId]);
+  }, [allStock, activeStoreId, allowedLevels]);
 
   const cards = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -91,6 +92,7 @@ export default function StockTransformation() {
     >();
     for (const s of allStock as any[]) {
       if (activeStoreId && s.storage_locations?.store_id !== activeStoreId) continue;
+      if (!levelAllowed(s)) continue;
       const qty = Number(s.quantity || 0);
       if (qty <= 0) continue;
       const p = s.products || {};
@@ -114,7 +116,7 @@ export default function StockTransformation() {
     for (const g of list)
       g.rows.sort((a, b) => String(a.products?.name || "").localeCompare(String(b.products?.name || ""), "sv"));
     return list.sort((a, b) => a.locationName.localeCompare(b.locationName, "sv"));
-  }, [allStock, activeStoreId, category, search]);
+  }, [allStock, activeStoreId, allowedLevels, category, search]);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -404,6 +406,7 @@ export default function StockTransformation() {
         product={target}
         initialTargetProductId={initialTarget}
         locationId={startLocation}
+        allowedLevels={allowedLevels}
         storeId={activeStoreId || null}
         onDone={() => {
           setTarget(null);
