@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import { ProductThumb } from "@/components/products/ProductThumb";
@@ -334,6 +335,7 @@ export default function WholesaleOrders() {
   const selectedOrder = useMemo(() => selectedOrderId ? orders.find((o: any) => o.id === selectedOrderId) || null : null, [selectedOrderId, orders]);
   // Djuplänk från lagret: /orders?order=<id> öppnar och skrollar till ordern.
   const location = useLocation();
+  const navigate = useNavigate();
   React.useEffect(() => {
     const wanted = new URLSearchParams(location.search).get("order");
     if (!wanted) return;
@@ -715,6 +717,17 @@ export default function WholesaleOrders() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-2.5">
+      {/* Kom hit från lagret — tydlig väg tillbaka, som på totallistan. */}
+      {new URLSearchParams(location.search).get("from") === "stock" && (
+        <button
+          type="button"
+          onClick={() => navigate("/inventory")}
+          className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-primary/20"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Tillbaka till lagret
+        </button>
+      )}
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 font-heading text-lg font-bold tracking-tight text-foreground sm:text-xl">
@@ -1268,6 +1281,20 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
   const { toast } = useToast();
   const createChange = useCreateChangeRequest();
   const updateLineStatus = useUpdateOrderLineStatus();
+  // Djuplänk från lagret: ?line=<produkt> markerar och skrollar till raden.
+  const detailLocation = useLocation();
+  const detailParams = new URLSearchParams(detailLocation.search);
+  const highlightProductId =
+    detailParams.get("order") === order.id ? detailParams.get("line") : null;
+  React.useEffect(() => {
+    if (!highlightProductId) return;
+    const t = setTimeout(() => {
+      document
+        .getElementById(`order-line-${order.id}-${highlightProductId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 450);
+    return () => clearTimeout(t);
+  }, [highlightProductId, order.id]);
   const { data: infiniteStock = true } = useQuery({
     queryKey: ["infinite_stock"],
     queryFn: isInfiniteStock,
@@ -1446,14 +1473,16 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                      </td>
                    </tr>
                  )}
-                <tr className={`border-b border-border/30 h-7 transition-colors ${
+                <tr
+                  id={`order-line-${order.id}-${line.product_id}`}
+                  className={`border-b border-border/30 h-7 transition-colors ${
                   isUnavailable ? "opacity-50 bg-destructive/5" :
                   currentStatus === "Skickad" ? "bg-primary/10" :
                   currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/10" :
                   currentStatus === "Beställd" ? "bg-accent/20" :
                   currentStatus === "Pågående" ? "bg-warning/10" :
                   ""
-                }`}>
+                } ${highlightProductId === line.product_id ? "ring-2 ring-inset ring-warning bg-warning/25" : ""}`}>
                    <td className="min-w-0 px-2 py-0.5 font-medium text-foreground">
                      <div className="flex min-w-0 items-center gap-2">
                        <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="h-5 w-7 shrink-0" />
