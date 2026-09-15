@@ -244,7 +244,49 @@ export default function StaffSchedule() {
       .sort((a, b) => a.minutes - b.minutes);
   }, [actualShifts, selectedDay, staff, storeById]);
 
+  const coverage = useMemo(() => coveragePerDay(visibleShifts, days), [visibleShifts, days]);
+  const hourCoverage = useMemo(() => coveragePerHour(visibleShifts, selectedDay, 4, 20), [visibleShifts, selectedDay]);
+  const gap = useMemo(() => staffingGap(hourCoverage), [hourCoverage]);
+
+  /** Panelen till höger: valt pass med enheter, avtal, kronor och vilotider. */
+  const inspectorData = useMemo<ShiftInspectorData | null>(() => {
+    if (!selectedShiftId) return null;
+    const shift = visibleShifts.find((item) => item.id === selectedShiftId);
+    if (!shift) return null;
+    const person = staff.find((item: any) => item.id === shift.staff_id) as any;
+    const personName = person ? `${person.first_name ?? ""} ${person.last_name ?? ""}`.trim() : "Okänd personal";
+    const sameDay = visibleShifts
+      .filter((item) => item.staff_id === shift.staff_id && item.shift_date === shift.shift_date)
+      .sort((a, b) => minutesOfTime(a.start_time) - minutesOfTime(b.start_time));
+    const row = rows.find((item) => item.staffId === shift.staff_id);
+    const costPrel = sameDay.map(costForShift).some((value) => value !== null)
+      ? sameDay.reduce((total, item) => total + (costForShift(item) ?? 0), 0)
+      : null;
+    return {
+      shiftId: shift.id,
+      staffName: personName,
+      dayLabel: new Date(`${shift.shift_date}T12:00:00`).toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "short" }),
+      timeLabel: `${sameDay[0].start_time.slice(0, 5)}–${sameDay[sameDay.length - 1].end_time.slice(0, 5)}`,
+      segments: sameDay.map((item) => ({
+        id: item.id,
+        storeName: storeName(item.store_id),
+        costCentre: (storeById.get(item.store_id ?? "") as any)?.cost_center ?? null,
+        from: item.start_time.slice(0, 5),
+        to: item.end_time.slice(0, 5),
+        isHome: !!person?.store_id && item.store_id === person.store_id,
+      })),
+      costPrel,
+      obPrel: null,
+      weekMinutes: row?.weekMinutes ?? 0,
+      capMinutes: row?.capMinutes ?? null,
+      agreementArea: person?.agreement_area ?? null,
+      rule: restMap.get(shift.id) ?? null,
+      weeklyRest: weeklyRestHours(visibleShifts, shift.staff_id, days),
+    };
+  }, [selectedShiftId, visibleShifts, staff, rows, restMap, days, storeById]);
+
   const emptyState = visibleShifts.length === 0 && !plannedLoading && !staffLoading;
+  const violationCount = restMap.size;
 
   return (
     <motion.main initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="staff-light min-h-full overflow-auto px-3 pb-8 sm:px-5">
