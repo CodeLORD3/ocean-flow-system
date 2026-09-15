@@ -759,7 +759,7 @@ export default function StockOverview({
                 booked.restItems.map((it) => (
                   <div key={it.productId} className="rounded-md bg-card/70 px-2 py-1.5">
                     <div className="flex items-center gap-2 text-xs">
-                      <ProductThumb name={it.name} imageUrl={it.image_url} size="xs" />
+                      <ProductThumb src={it.image_url} alt={it.name} productId={it.productId} className="h-7 w-10" />
                       <span className="min-w-0 flex-1 truncate font-semibold">{it.name}</span>
                       <span className="shrink-0 font-mono tabular-nums text-amber-600">
                         {it.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
