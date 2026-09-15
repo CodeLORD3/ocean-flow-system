@@ -100,14 +100,30 @@ Deno.serve(async (req) => {
     return json(req, { error: "Personnummer ska vara 10 eller 12 siffror. Kontrollera och försök igen." }, 400);
   }
 
+  // En person som redan är instämplad måste alltid kunna stämpla ut, även om
+  // posten är provisorisk eller inaktiverad. Annars står tiden öppen tills
+  // nattjobbet stänger den, och personen får inget kvitto på sin utstämpling.
+  let openShift = false;
+  if (hit && !hit.is_active) {
+    const { data: lastRow } = await db
+      .from("time_entries")
+      .select("type")
+      .eq("employee_id", hit.id)
+      .order("occurred_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const lastType = lastRow?.type as string | undefined;
+    openShift = lastType === "in" || lastType === "rast_start" || lastType === "rast_slut";
+  }
+  const blocked = !hit || (!hit.is_active && !openShift);
 
   // Spärren för upprepade felförsök gäller bara okända identiteter. Känd
   // personal i kön ska aldrig hindras av någon annans felslag.
-  if ((!hit || !hit.is_active) && !(await checkRateLimit(db, station.id))) {
+  if (blocked && !(await checkRateLimit(db, station.id))) {
     return json(req, { error: "För många felaktiga försök på den här stationen. Vänta en minut." }, 429);
   }
 
-  if (!hit || !hit.is_active) {
+  if (blocked) {
     // Okänd person: stämplingen får inte kastas bort. Vi lägger en post i
     // granskningskön, och vid en faktisk stämpling också en provisorisk
     // personalpost så att tiden kan bokföras och kopplas av chef.
