@@ -13,6 +13,8 @@ import ParasiteFreezePanel from "@/components/inventory/ParasiteFreezePanel";
 import BivalvePanel from "@/components/inventory/BivalvePanel";
 import LotPricePanel from "@/components/inventory/LotPricePanel";
 import LotHistoryView from "@/components/inventory/LotHistoryView";
+import ProductNetworkGraph from "@/components/inventory/ProductNetworkGraph";
+import { Network } from "lucide-react";
 
 interface Props {
   currency?: string;
@@ -29,7 +31,7 @@ const nf = (n: number, d = 1) =>
 export default function LotTraceabilityView({ currency = "SEK", showCosts = true, onEmptyAction }: Props) {
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"lista" | "graf" | "historik">("lista");
+  const [mode, setMode] = useState<"lista" | "graf" | "historik" | "natverk">("lista");
 
   const { data: lots = [], isLoading } = useQuery({
     queryKey: ["lots_traceability"],
@@ -110,10 +112,19 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
         >
           <History className="h-3.5 w-3.5" /> Historik
         </Button>
+        <Button
+          variant={mode === "natverk" ? "default" : "outline"}
+          size="sm"
+          className="h-8 gap-1 text-xs"
+          onClick={() => setMode("natverk")}
+        >
+          <Network className="h-3.5 w-3.5" /> Nätverk
+        </Button>
       </div>
 
       {mode === "graf" && <LineageGraphView currency={currency} startLotId={openId} />}
       {mode === "historik" && <LotHistoryView currency={currency} />}
+      {mode === "natverk" && <ProductNetworkGraph currency={currency} />}
 
       {mode === "lista" && (
       <>
