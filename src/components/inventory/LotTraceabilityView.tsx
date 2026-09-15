@@ -151,7 +151,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
           "id, lot_number, supplier_lot_id, commercial_name, latin_name, species_fao_code, catch_area, fishing_gear, vessel_name, best_before, quantity_kg, unit_cost, price_status, preliminary_unit_cost, invoice_number, invoice_date, status, is_thawed, created_at, fishing_trip_id, incoming_catch_cert, statistical_doc, seal_number, parasite_treatment_required, freeze_start, freeze_end, exemption_reason, exemption_source, suppliers(name), products(name, sku, category, hs_code, export_documentation_required)",
         )
         .order("created_at", { ascending: false })
-        .limit(300);
+        .limit(2000);
       if (error) throw error;
       return data as any[];
     },
