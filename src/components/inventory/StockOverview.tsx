@@ -938,6 +938,7 @@ export default function StockOverview({
                 <th className="hidden px-1.5 py-2 text-left align-middle font-semibold sm:table-cell">Lager</th>
                 <th className="px-1.5 py-2 text-right align-middle font-semibold">Totalt</th>
                 <th className="whitespace-nowrap px-1.5 py-2 text-right align-middle font-semibold">Beställt</th>
+                <th className="whitespace-nowrap px-1.5 py-2 text-right align-middle font-semibold">Differens</th>
                 {showCosts && <th className="hidden px-1.5 py-2 text-right align-middle font-semibold sm:table-cell">Lagervärde</th>}
                 <th className="hidden whitespace-nowrap px-1.5 py-2 text-center align-middle font-semibold sm:table-cell">Bäst före</th>
                 <th className="hidden whitespace-nowrap px-1.5 py-2 text-center align-middle font-semibold sm:table-cell">Dagar kvar</th>
@@ -949,7 +950,7 @@ export default function StockOverview({
             <tbody>
               {pageRows.length === 0 && (
                 <tr>
-                  <td colSpan={showCosts ? 11 : 10} className="p-0">
+                  <td colSpan={showCosts ? 12 : 11} className="p-0">
                     <EmptyState
                       bare
                       icon={<Package2 className="h-4 w-4" />}
@@ -970,7 +971,7 @@ export default function StockOverview({
                     className="bg-muted border-x border-b border-grid-line cursor-pointer hover:bg-muted/70 transition-colors"
                     onClick={() => toggleCat(cat)}
                   >
-                    <td colSpan={showCosts ? 11 : 10} className="px-1.5 py-1">
+                    <td colSpan={showCosts ? 12 : 11} className="px-1.5 py-1">
                       <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                         {catCollapsed ? (
                           <ChevronRight className="h-3 w-3 shrink-0" />
@@ -1139,35 +1140,52 @@ export default function StockOverview({
                         </td>
                         {(() => {
                           const pk = packedByProduct?.get(g.product_id);
+                          const unit = pk?.unit ?? g.unit;
                           const orderedTotal = pk ? pk.packed + pk.ordered : 0;
-                          const shortfall = orderedTotal - g.totalQty;
-                          const critical = shortfall > 0.005;
+                          const diff = g.totalQty - orderedTotal;
+                          const nq = (v: number) =>
+                            Math.abs(v).toLocaleString("sv-SE", { maximumFractionDigits: 1 });
+                          const short = diff < -0.005;
                           return (
-                            <td
-                              className={cn(
-                                "border-r border-grid-line/70 px-2 text-right font-mono tabular-nums whitespace-nowrap",
-                                critical ? "text-destructive font-bold" : "text-muted-foreground",
-                              )}
-                              title={
-                                critical
-                                  ? `Kritisk: ${shortfall.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} ${pk?.unit ?? g.unit} saknas mot beställt`
-                                  : "Beställt (packat + kvar att packa)"
-                              }
-                            >
-                              {orderedTotal > 0.005 ? (
-                                <>
-                                  {orderedTotal.toLocaleString("sv-SE", { maximumFractionDigits: 1 })}{" "}
-                                  {pk?.unit ?? g.unit}
-                                  {critical && (
-                                    <span className="ml-1 text-[10px] font-semibold uppercase">
-                                      −{shortfall.toLocaleString("sv-SE", { maximumFractionDigits: 1 })}
+                            <>
+                              <td
+                                className="border-r border-grid-line/70 px-2 text-right font-mono tabular-nums whitespace-nowrap"
+                                title="Beställt totalt (packat + kvar att packa)"
+                              >
+                                {orderedTotal > 0.005 ? (
+                                  <span className="font-semibold text-foreground">
+                                    {nq(orderedTotal)} {unit}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground/60">–</span>
+                                )}
+                              </td>
+                              <td className="border-r border-grid-line/70 px-2 text-right whitespace-nowrap">
+                                {orderedTotal > 0.005 ? (
+                                  <span
+                                    className={cn(
+                                      "inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 font-mono text-[11px] font-semibold tabular-nums",
+                                      short
+                                        ? "bg-destructive/10 text-destructive"
+                                        : "bg-emerald-500/10 text-emerald-700",
+                                    )}
+                                    title={
+                                      short
+                                        ? `Översålt – ${nq(diff)} ${unit} saknas mot beställt`
+                                        : `Täckt – ${nq(diff)} ${unit} kvar efter beställt`
+                                    }
+                                  >
+                                    {short ? "−" : "+"}
+                                    {nq(diff)} {unit}
+                                    <span className="text-[9px] font-medium uppercase tracking-wider opacity-80">
+                                      {short ? "saknas" : "täckt"}
                                     </span>
-                                  )}
-                                </>
-                              ) : (
-                                "–"
-                              )}
-                            </td>
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-muted-foreground/60">–</span>
+                                )}
+                              </td>
+                            </>
                           );
                         })()}
                         {showCosts && (
@@ -1242,7 +1260,7 @@ export default function StockOverview({
                     if (isOpen) {
                       rowNodes.push(
                         <tr key={`${g.product_id}-sub`} className="bg-muted/20 border-b">
-                          <td colSpan={showCosts ? 11 : 10} className="px-2 py-2">
+                          <td colSpan={showCosts ? 12 : 11} className="px-2 py-2">
                              <div className="space-y-1 w-full max-w-[calc(100vw-2rem)] sm:max-w-none overflow-hidden">
 
                               {/* Stor lagerstapel — hela saldot per lagerplats, packat och kvar att sälja */}
