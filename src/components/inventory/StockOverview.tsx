@@ -503,6 +503,86 @@ export default function StockOverview({
       </div>
       )}
 
+      {/* Beställt av lagret — kilo, andel och lagervärde per leveransvecka */}
+      {booked.kg > 0.005 && (
+        <Card className="shadow-card border-amber-500/30 bg-amber-500/[0.04]">
+          <CardContent className="space-y-3 p-3">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <ClipboardList className="h-3.5 w-3.5 text-amber-500" /> Beställt av lagret
+                </p>
+                <p className="text-2xl font-heading font-bold tabular-nums text-amber-600">
+                  {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                  <span className="ml-2 text-sm font-semibold text-muted-foreground">
+                    {booked.kgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
+                  </span>
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg packat ·{" "}
+                  {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg kvar att packa
+                </p>
+              </div>
+              {showCosts && (
+                <div className="text-right">
+                  <p className="text-[11px] text-muted-foreground">Orderbundet lagervärde</p>
+                  <p className="text-xl font-heading font-bold tabular-nums text-amber-600">
+                    {fmt(booked.value)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {booked.valuePct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av{" "}
+                    {fmt(kpis.value)}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-amber-500" style={{ width: `${booked.kgPct}%` }} />
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Per leveransvecka
+              </p>
+              {booked.weeks.map((w) => {
+                const pctOfStock = kpis.qty > 0 ? Math.min(100, (w.kg / kpis.qty) * 100) : 0;
+                return (
+                  <div
+                    key={w.key}
+                    className="grid grid-cols-[64px_1fr_84px_56px] items-center gap-2 rounded-md bg-card/70 px-2 py-1.5 text-xs sm:grid-cols-[64px_150px_1fr_92px_60px]"
+                  >
+                    <span className="font-semibold">{w.label}</span>
+                    <span className="hidden truncate text-[10px] text-muted-foreground sm:block">
+                      {w.range}
+                    </span>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-amber-500/80"
+                        style={{ width: `${Math.max(3, (w.kg / booked.maxWeekKg) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-right font-mono tabular-nums">
+                      {w.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                      {showCosts && (
+                        <span className="ml-1 block text-[10px] text-muted-foreground">
+                          {fmt(w.value)}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-right text-[10px] text-muted-foreground tabular-nums">
+                      {pctOfStock.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} %
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
+
 
       {/* Kategorisorterare + sök */}
       <div className="flex flex-col lg:flex-row gap-2 lg:items-center justify-between">
