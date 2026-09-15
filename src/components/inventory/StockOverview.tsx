@@ -213,6 +213,7 @@ export default function StockOverview({
       next.has(cat) ? next.delete(cat) : next.add(cat);
       return next;
     });
+  const [showStats, setShowStats] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(30);
 
@@ -416,6 +417,35 @@ export default function StockOverview({
 
   return (
     <div className="space-y-3">
+      {/* Övertext: beställt av lagret — hela statistikvyn fälls ut vid klick */}
+      <button
+        type="button"
+        onClick={() => setShowStats((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 rounded-md border border-amber-500/30 bg-amber-500/[0.04] px-3 py-2 text-left transition-colors hover:bg-amber-500/[0.08]"
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <ClipboardList className="h-4 w-4 shrink-0 text-amber-500" />
+          <span className="truncate text-sm font-semibold">Beställt av lagret</span>
+          {booked.kg > 0.005 && (
+            <span className="hidden font-mono text-xs tabular-nums text-amber-600 sm:inline">
+              {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg ·{" "}
+              {booked.kgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
+              {showCosts ? ` · ${fmt(booked.value)}` : ""}
+            </span>
+          )}
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+          {showStats ? "Dölj statistik" : "Visa statistik"}
+          {showStats ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </span>
+      </button>
+
+      {showStats && (
+        <div className="space-y-3">
       {/* KPI-kort */}
       {compactKpis ? (
         <div className="grid grid-cols-2 gap-2 sm:max-w-md">
@@ -580,6 +610,10 @@ export default function StockOverview({
           </CardContent>
         </Card>
       )}
+        </div>
+      )}
+
+
 
 
 
