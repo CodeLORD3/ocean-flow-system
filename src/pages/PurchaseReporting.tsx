@@ -878,6 +878,7 @@ function ReportSection({
 import PostIncomingDialog from "@/components/purchase/PostIncomingDialog";
 import { buildSupplierIndex, lookupSupplier, matchProduct } from "@/lib/foljesedelMatch";
 import { unpostPurchaseReport } from "@/lib/purchaseReportPosting";
+import { edgeErrorMessage } from "@/lib/edgeError";
 
 /** SHA-256 av filen — grunden för dubblettspärren vid uppladdning. */
 async function sha256Hex(file: File): Promise<string> {
