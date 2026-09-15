@@ -29,6 +29,7 @@ import ParasiteFreezePanel from "@/components/inventory/ParasiteFreezePanel";
 import BivalvePanel from "@/components/inventory/BivalvePanel";
 import LotPricePanel from "@/components/inventory/LotPricePanel";
 import LotHistoryView from "@/components/inventory/LotHistoryView";
+import LotChainGraph from "@/components/inventory/LotChainGraph";
 import ProductNetworkGraph from "@/components/inventory/ProductNetworkGraph";
 import { gapBetween, sinceNow, stampSv } from "@/lib/dwell";
 import { movementLabel } from "@/hooks/useStockMovements";
@@ -228,7 +229,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
     !(lot?.freeze_start && lot?.freeze_end) &&
     !(lot?.exemption_reason && lot?.exemption_source);
 
-  const [panel, setPanel] = useState<"handelser" | "pass" | "detaljer">("handelser");
+  const [panel, setPanel] = useState<"kedja" | "handelser" | "pass" | "detaljer">("kedja");
 
   return (
     <div className="flex flex-col gap-4">
@@ -430,6 +431,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                   <div className="flex gap-4 border-b border-border">
                     {(
                       [
+                        { v: "kedja", label: "Kedja" },
                         { v: "handelser", label: `Händelser (${movements.length})` },
                         { v: "pass", label: "Partipass" },
                         { v: "detaljer", label: "Dokument och pris" },
@@ -450,6 +452,14 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                   </div>
 
                   <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                    {panel === "kedja" && (
+                      <LotChainGraph
+                        movements={movements as any}
+                        lotNumber={lot.lot_number}
+                        productName={namn}
+                      />
+                    )}
+
                     {panel === "handelser" &&
                       (tidslinje.length === 0 ? (
                         <p className="py-4 text-xs text-muted-foreground">Inga rörelser kopplade till partiet.</p>
