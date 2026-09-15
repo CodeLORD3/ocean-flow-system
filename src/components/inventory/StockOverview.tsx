@@ -1137,6 +1137,39 @@ export default function StockOverview({
                         <td className="border-r border-grid-line/70 px-2 text-right font-semibold tabular-nums whitespace-nowrap">
                           {g.totalQty.toLocaleString("sv-SE", { maximumFractionDigits: g.unit === "st" ? 0 : 1 })} {g.unit}
                         </td>
+                        {(() => {
+                          const pk = packedByProduct?.get(g.product_id);
+                          const orderedTotal = pk ? pk.packed + pk.ordered : 0;
+                          const shortfall = orderedTotal - g.totalQty;
+                          const critical = shortfall > 0.005;
+                          return (
+                            <td
+                              className={cn(
+                                "border-r border-grid-line/70 px-2 text-right font-mono tabular-nums whitespace-nowrap",
+                                critical ? "text-destructive font-bold" : "text-muted-foreground",
+                              )}
+                              title={
+                                critical
+                                  ? `Kritisk: ${shortfall.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} ${pk?.unit ?? g.unit} saknas mot beställt`
+                                  : "Beställt (packat + kvar att packa)"
+                              }
+                            >
+                              {orderedTotal > 0.005 ? (
+                                <>
+                                  {orderedTotal.toLocaleString("sv-SE", { maximumFractionDigits: 1 })}{" "}
+                                  {pk?.unit ?? g.unit}
+                                  {critical && (
+                                    <span className="ml-1 text-[10px] font-semibold uppercase">
+                                      −{shortfall.toLocaleString("sv-SE", { maximumFractionDigits: 1 })}
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                "–"
+                              )}
+                            </td>
+                          );
+                        })()}
                         {showCosts && (
                           <td className="hidden border-r border-grid-line/70 px-2 text-right tabular-nums whitespace-nowrap sm:table-cell">{fmt(g.value)}</td>
                         )}
