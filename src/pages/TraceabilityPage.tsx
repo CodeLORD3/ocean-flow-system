@@ -4,6 +4,7 @@ import TraceabilityCheck from "@/components/inventory/TraceabilityCheck";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useSite } from "@/contexts/SiteContext";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useStores } from "@/hooks/useStores";
 import { getStoreCurrency } from "@/lib/currency";
 import { useNavigate } from "react-router-dom";
