@@ -312,8 +312,19 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
           "sv",
         ),
       );
+    /** Vid sökning hålls partierna samlade under sin produkt, med vald sortering inom gruppen. */
+    if (q.trim() && !valdProdukt) {
+      const namnAv = (l: any) => String(l.products?.name || l.commercial_name || "—");
+      const ordning: string[] = [];
+      kopia.forEach((l) => {
+        const n = namnAv(l);
+        if (!ordning.includes(n)) ordning.push(n);
+      });
+      kopia.sort((a, b) => ordning.indexOf(namnAv(a)) - ordning.indexOf(namnAv(b)));
+    }
     return kopia;
-  }, [matchade, valdProdukt, sort, senasteHandelse]);
+  }, [matchade, valdProdukt, sort, senasteHandelse, q]);
+
 
   const lot = useMemo(() => lots.find((l) => l.id === selectedId) ?? null, [lots, selectedId]);
 
