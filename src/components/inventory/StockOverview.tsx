@@ -949,7 +949,7 @@ export default function StockOverview({
             <tbody>
               {pageRows.length === 0 && (
                 <tr>
-                  <td colSpan={showCosts ? 10 : 9} className="p-0">
+                  <td colSpan={showCosts ? 11 : 10} className="p-0">
                     <EmptyState
                       bare
                       icon={<Package2 className="h-4 w-4" />}
@@ -970,7 +970,7 @@ export default function StockOverview({
                     className="bg-muted border-x border-b border-grid-line cursor-pointer hover:bg-muted/70 transition-colors"
                     onClick={() => toggleCat(cat)}
                   >
-                    <td colSpan={showCosts ? 10 : 9} className="px-1.5 py-1">
+                    <td colSpan={showCosts ? 11 : 10} className="px-1.5 py-1">
                       <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                         {catCollapsed ? (
                           <ChevronRight className="h-3 w-3 shrink-0" />
@@ -1242,7 +1242,7 @@ export default function StockOverview({
                     if (isOpen) {
                       rowNodes.push(
                         <tr key={`${g.product_id}-sub`} className="bg-muted/20 border-b">
-                          <td colSpan={showCosts ? 10 : 9} className="px-2 py-2">
+                          <td colSpan={showCosts ? 11 : 10} className="px-2 py-2">
                              <div className="space-y-1 w-full max-w-[calc(100vw-2rem)] sm:max-w-none overflow-hidden">
 
                               {/* Stor lagerstapel — hela saldot per lagerplats, packat och kvar att sälja */}
