@@ -329,6 +329,60 @@ export default function StockOverview({
     return { value, qty, count: filtered.length, low, critical };
   }, [filtered]);
 
+  /**
+   * Beställt av lagret — hur mycket av saldot som redan är uppbokat på order,
+   * i kilo, i andel av lagret och i lagervärde, fördelat per leveransvecka.
+   */
+  const booked = useMemo(() => {
+    let kg = 0;
+    let value = 0;
+    let packedKg = 0;
+    const weeks = new Map<string, { key: string; label: string; range: string; kg: number; value: number }>();
+    for (const g of filtered) {
+      const pk = packedByProduct?.get(g.product_id);
+      if (!pk) continue;
+      const p = productsById.get(g.product_id) || {};
+      const unitCost = g.totalQty > 0 ? g.value / g.totalQty : 0;
+      for (const o of pk.orders) {
+        const qKg = qtyToKg(o.quantity, p);
+        const qValue = o.quantity * unitCost;
+        kg += qKg;
+        value += qValue;
+        if (o.kind === "packed") packedKg += qKg;
+        const d = o.wantedDate ? parseISO(o.wantedDate) : null;
+        const start = d ? startOfISOWeek(d) : null;
+        const key = start ? format(start, "yyyy-MM-dd") : "utan-datum";
+        const entry =
+          weeks.get(key) ??
+          {
+            key,
+            label: d ? `v. ${getISOWeek(d)}` : "Utan datum",
+            range: start
+              ? `${format(start, "d MMM", { locale: sv })} – ${format(endOfISOWeek(start), "d MMM", { locale: sv })}`
+              : "Leveransdatum saknas",
+            kg: 0,
+            value: 0,
+          };
+        entry.kg += qKg;
+        entry.value += qValue;
+        weeks.set(key, entry);
+      }
+    }
+    const list = Array.from(weeks.values()).sort((a, b) => a.key.localeCompare(b.key));
+    const maxWeekKg = Math.max(1, ...list.map((w) => w.kg));
+    return {
+      kg,
+      value,
+      packedKg,
+      restKg: Math.max(0, kg - packedKg),
+      kgPct: kpis.qty > 0 ? Math.min(100, (kg / kpis.qty) * 100) : 0,
+      valuePct: kpis.value > 0 ? Math.min(100, (value / kpis.value) * 100) : 0,
+      weeks: list,
+      maxWeekKg,
+    };
+  }, [filtered, packedByProduct, productsById, kpis.qty, kpis.value]);
+
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
