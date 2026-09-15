@@ -221,6 +221,11 @@ Deno.serve(async (req) => {
   const suggested: PunchType = last === "in" || last === "rast_slut" ? "ut" : last === "rast_start" ? "rast_slut" : "in";
   if (mode === "lookup") return json(req, { status: "found", employee: { id: hit.id, first_name: hit.first_name, pnr_masked: hit.pnr_masked ?? (pnr ? maskPnr(pnr) : null) }, last_type: last ?? null, suggested_action: suggested, expires_at: expiresAt });
   if (!PUNCH_TYPES.includes(action)) return json(req, { error: "Ogiltig åtgärd." }, 400);
+  // Ett öppet pass får avslutas, men en provisorisk eller inaktiverad person
+  // ska inte kunna starta ett nytt pass innan chefen godkänt registreringen.
+  if (openShift && action === "in") {
+    return json(req, { status: "pending_registration", message: "Registrering väntar på godkännande.", expires_at: expiresAt });
+  }
 
   const workSiteId = body.work_site_id ? String(body.work_site_id) : null;
   let workSite: WorkSite | null = null;
