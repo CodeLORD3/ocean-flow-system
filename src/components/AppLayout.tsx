@@ -315,13 +315,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
           <main
             className="app-main flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 lg:p-6"
-            style={{ scrollPaddingBottom: "8rem" }}
           >
             <StoreHero />
             {children}
-            {/* Luft under innehållet så den fasta bottenmenyn aldrig täcker något */}
-            <div aria-hidden className="h-24 sm:hidden" />
           </main>
+
+          <MobileTabBar />
 
 
           {/* Footer — hidden on mobile to save vertical space */}
@@ -334,7 +333,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
-      <MobileTabBar />
     </SidebarProvider>
 
   );

@@ -51,7 +51,7 @@ export function MobileTabBar() {
 
   return (
     <nav
-      className="sm:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur"
+      className="sm:hidden relative z-40 shrink-0 border-t border-border bg-card/95 backdrop-blur"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       aria-label="Snabbmeny"
     >

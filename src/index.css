@@ -132,16 +132,6 @@
     overscroll-behavior-x: contain;
   }
 
-  /* Bottenmenyn på mobil ligger fast — utfyllnad läggs i AppLayout (utilities vinner över base) */
-  @media (max-width: 639px) {
-    .app-main {
-      scroll-padding-bottom: 8rem;
-    }
-  }
-
-
-
-
   /* On mobile, prevent iOS zoom-on-focus by ensuring inputs are at least 16px.
      !important is required because Tailwind text-sm/text-xs utilities would win. */
   @media (max-width: 767px) {
