@@ -1406,32 +1406,25 @@ export default function StockCount() {
 
 
 
-      {/* Mobil: fast åtgärdsrad längst ned */}
+      {/* Mobil: åtgärdsrad efter listan (ingen fast overlay som täcker innehåll) */}
       {effectiveStoreId && (
-        <>
-          <div className="h-16 sm:hidden" aria-hidden />
-          <div
-            className="sm:hidden fixed bottom-14 left-0 right-0 z-30 border-t bg-background/95 backdrop-blur px-3 py-2 flex items-center justify-between gap-2"
-            style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
-          >
-            {!session || locked ? (
-              <Button
-                className="h-11 w-full gap-1.5 text-sm font-semibold"
-                onClick={() => (session ? createSessionFor(date) : createSession())}
-              >
-                <Plus className="h-4 w-4" /> Skapa inventeringsrapport
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                className="h-10 gap-1.5 text-xs font-semibold"
-                onClick={() => setLockOpen(true)}
-              >
-                <Check className="h-4 w-4" /> Klar
-              </Button>
-            )}
-          </div>
-        </>
+        <div className="sm:hidden pt-1">
+          {!session || locked ? (
+            <Button
+              className="h-11 w-full gap-1.5 text-sm font-semibold"
+              onClick={() => (session ? createSessionFor(date) : createSession())}
+            >
+              <Plus className="h-4 w-4" /> Skapa inventeringsrapport
+            </Button>
+          ) : (
+            <Button
+              className="h-12 w-full gap-1.5 text-sm font-semibold bg-success text-success-foreground hover:bg-success/90"
+              onClick={() => setLockOpen(true)}
+            >
+              <Check className="h-4 w-4" /> Färdigställ inventeringsrapport
+            </Button>
+          )}
+        </div>
       )}
 
 
