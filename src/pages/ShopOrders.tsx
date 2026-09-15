@@ -532,6 +532,15 @@ export default function ShopOrders() {
       quantity_ordered: Number(l.quantity),
       unit: l.unit,
       delivery_date: deliveryDateStr,
+      priority: l.priority,
+      // Kritisk mängd får aldrig överstiga det som faktiskt beställts.
+      priority_qty:
+        l.priority === "must"
+          ? Math.min(Number(l.priorityQty) || Number(l.quantity), Number(l.quantity))
+          : null,
+      priority_note: l.priority === "must" ? l.priorityNote?.trim() || null : null,
+      priority_set_by: l.priority === "must" ? loggedInName || null : null,
+      priority_set_at: l.priority === "must" ? new Date().toISOString() : null,
     }));
 
     const { error: lineError } = await supabase.from("shop_order_lines").insert(lines);
