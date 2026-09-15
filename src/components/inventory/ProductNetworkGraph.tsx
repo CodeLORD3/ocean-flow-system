@@ -179,15 +179,17 @@ export default function ProductNetworkGraph({
   });
 
   const { data: movements = [] } = useQuery({
-    queryKey: ["product_network_movements"],
+    queryKey: ["product_network_movements", locationIds],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let qy = supabase
         .from("stock_movements")
         .select(
           "product_id, movement_type, quantity_kg, created_at, lots(lot_number), storage_locations(name, stores!storage_locations_store_id_fkey(name)), staff(first_name, last_name)",
         )
         .order("created_at", { ascending: false })
         .limit(5000);
+      if (locationIds) qy = qy.in("location_id", locationIds.length ? locationIds : tomPlats);
+      const { data, error } = await qy;
       if (error) throw error;
       return (data || []).map((r: any) => ({
         productId: r.product_id,
