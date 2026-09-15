@@ -1385,7 +1385,7 @@ export default function StockCount() {
                               disabled={locked || !session}
                               className="h-7 shrink-0 px-1.5 text-[10px] text-destructive"
                               onClick={() => {
-                                saveLine(r, { counted_qty: null });
+                                removeCountedLine(r);
                                 setEditKey(null);
                               }}
                             >
