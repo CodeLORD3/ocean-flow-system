@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { movementLabel } from "@/hooks/useStockMovements";
-import { gapBetween, sinceNow, timeSv } from "@/lib/dwell";
+import { gapBetweenLong, sinceNow, sinceNowLong, timeSv } from "@/lib/dwell";
 
 export interface ChainMovement {
   id: string;
@@ -59,7 +59,7 @@ export default function LotChainGraph({
         kg,
         saldo,
         gren: kg < 0,
-        gap: i === 0 ? "" : gapBetween(movements[i - 1].created_at, m.created_at),
+        gap: i === 0 ? "" : gapBetweenLong(movements[i - 1].created_at, m.created_at),
       };
     });
   }, [movements]);
@@ -191,7 +191,7 @@ export default function LotChainGraph({
               </div>
               <div className="text-right">
                 <p className="font-mono text-sm font-bold tabular-nums text-foreground">
-                  {sinceNow(senaste)} sedan senaste händelsen
+                  {sinceNowLong(senaste)} sedan senaste händelsen
                 </p>
                 <p className="text-[11px] text-muted-foreground">
                   {datumSv(senaste)} {arSv(senaste)} · {timeSv(senaste)}
@@ -205,8 +205,10 @@ export default function LotChainGraph({
             )}
             <div className="mt-2 flex flex-col items-center">
               <span className="h-4 w-0.5 bg-border" />
-              <span className="rounded-full border border-border bg-background px-2 py-px text-[10px] font-medium text-muted-foreground">
-                {slutSaldo > 0 ? `orörd ${sinceNow(senaste)}` : `slut sedan ${sinceNow(senaste)}`}
+              <span className="rounded-md border border-border bg-background px-2 py-1 text-center text-[11px] font-medium text-foreground">
+                {slutSaldo > 0
+                  ? `har legat på lagret ${sinceNowLong(senaste)}`
+                  : `slut sedan ${sinceNowLong(senaste)}`}
               </span>
               <span className="h-4 w-0.5 bg-border" />
             </div>
@@ -321,13 +323,11 @@ export default function LotChainGraph({
                     <span className="h-px" />
                     <span className="flex flex-col items-center">
                       <span className="h-4 w-0.5 bg-border" />
-                      <span className="flex flex-col items-center whitespace-nowrap rounded-md border border-border bg-muted/60 px-2 py-1">
+                      <span className="flex flex-col items-center whitespace-nowrap rounded-md border border-border bg-muted/60 px-2 py-1 text-center">
                         <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                          orörd
+                          legat på lagret
                         </span>
-                        <span className="font-mono text-[12px] font-bold tabular-nums text-foreground">
-                          {n.gap}
-                        </span>
+                        <span className="text-[12px] font-bold text-foreground">{n.gap}</span>
                       </span>
                       <span className="h-4 w-0.5 bg-border" />
                     </span>
@@ -373,7 +373,7 @@ export default function LotChainGraph({
                 : []),
               ["Plats", vald.m.storage_locations?.name || "—"],
               ["Av", namnPa(vald.m)],
-              ["Låg orörd innan", vald.gap || "Första händelsen"],
+              ["Legat på lagret innan", vald.gap || "Första händelsen"],
               ["Referens", vald.m.reference_id || "—"],
               ["Notering", vald.m.note || "—"],
             ].map(([k, v]) => (
