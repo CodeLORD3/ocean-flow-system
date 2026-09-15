@@ -74,6 +74,7 @@ export default function StaffSchedule() {
   const [editing, setEditing] = useState<PlannedShiftRow | null>(null);
   const [salaryStaff, setSalaryStaff] = useState<any | null>(null);
   const [accessStaff, setAccessStaff] = useState<any | null>(null);
+  const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
 
   const { data: stores = [] } = useStores(true);
   const { data: staff = [], isLoading: staffLoading } = useStaff();
