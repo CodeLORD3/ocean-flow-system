@@ -241,6 +241,19 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
   const [kategori, setKategori] = useState<string | null>(null);
   /** Vald produkt (namn) — steg 1b, listar bara den produktens partier. */
   const [valdProdukt, setValdProdukt] = useState<string | null>(null);
+  const [visaForslag, setVisaForslag] = useState(false);
+
+  /** Produktbilder per namn, för sökförslagen. */
+  const { data: produktBilder = {} } = useQuery({
+    queryKey: ["lot_trace_product_images"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("products").select("name, image_url").limit(3000);
+      if (error) throw error;
+      const map: Record<string, string | null> = {};
+      for (const p of data as any[]) if (p.name && !map[p.name]) map[p.name] = p.image_url ?? null;
+      return map;
+    },
+  });
 
   /** Partier som matchar sökningen, oavsett vald produkt. */
   const matchade = useMemo(() => {
