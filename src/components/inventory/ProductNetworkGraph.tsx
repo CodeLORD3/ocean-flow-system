@@ -364,8 +364,49 @@ export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: s
       {layout.nodes.length > 0 && (
         <Card className="shadow-card">
           <CardContent className="p-0">
-            <div className="overflow-auto rounded-lg bg-gradient-to-b from-muted/30 to-background">
-              <svg width={layout.width} height={layout.height} className="block">
+            <div className="rounded-lg bg-gradient-to-b from-muted/30 to-background">
+              <svg
+                ref={svgRef}
+                viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
+                className="block h-[520px] w-full touch-none select-none"
+                style={{ cursor: pan.current ? "grabbing" : "grab" }}
+                onWheel={(e) => {
+                  e.preventDefault();
+                  const g = toGraph(e.clientX, e.clientY);
+                  zoomAt(e.deltaY > 0 ? 1.12 : 0.89, g.x, g.y);
+                }}
+                onPointerDown={(e) => {
+                  if (nodeDrag.current) return;
+                  (e.target as Element).setPointerCapture?.(e.pointerId);
+                  pan.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
+                }}
+                onPointerMove={(e) => {
+                  const rect = svgRef.current?.getBoundingClientRect();
+                  if (!rect) return;
+                  if (nodeDrag.current) {
+                    const g = toGraph(e.clientX, e.clientY);
+                    const d = nodeDrag.current;
+                    setDragPos((prev) => ({ ...prev, [d.id]: { x: g.x - d.dx, y: g.y - d.dy } }));
+                    return;
+                  }
+                  if (!pan.current) return;
+                  const p = pan.current;
+                  setView((v) => ({
+                    ...v,
+                    x: p.vx - ((e.clientX - p.x) / rect.width) * v.w,
+                    y: p.vy - ((e.clientY - p.y) / rect.height) * v.h,
+                  }));
+                }}
+                onPointerUp={() => {
+                  pan.current = null;
+                  nodeDrag.current = null;
+                }}
+                onPointerLeave={() => {
+                  pan.current = null;
+                  nodeDrag.current = null;
+                  setHover(null);
+                }}
+              >
                 <defs>
                   <marker id="pn-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
                     <path d="M0 0 L8 4 L0 8 z" className="fill-primary" />
@@ -382,43 +423,51 @@ export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: s
                     y2={h.y}
                     className="stroke-border"
                     strokeWidth={1.5}
+                    opacity={related && related.cat !== h.name ? 0.25 : 1}
                   />
                 ))}
 
                 {/* Kanter: kategorinav → produkt */}
                 {layout.nodes.map((n) => {
+                  if (n.hidden) return null;
                   const hub = layout.hubs.find((h) => h.name === (n.p.category?.trim() || "Utan kategori"));
                   if (!hub) return null;
+                  const pt = posOf(n);
+                  const dim = related && !related.set.has(n.p.id) && related.cat !== hub.name;
                   return (
                     <line
                       key={`pl-${n.p.id}`}
                       x1={hub.x}
                       y1={hub.y}
-                      x2={n.x}
-                      y2={n.y}
-                      className="stroke-border"
-                      strokeWidth={0.8}
-                      opacity={0.6}
+                      x2={pt.x}
+                      y2={pt.y}
+                      className={related?.set.has(n.p.id) ? "stroke-primary" : "stroke-border"}
+                      strokeWidth={related?.set.has(n.p.id) ? 1.6 : 0.8}
+                      opacity={dim ? 0.12 : 0.6}
                     />
                   );
                 })}
 
                 {/* Kanter: omvandling mellan produkter */}
                 {layout.edges.map((e, i) => {
-                  const a = layout.pos.get(e.from)!;
-                  const b = layout.pos.get(e.to)!;
+                  const na = layout.pos.get(e.from)!;
+                  const nb = layout.pos.get(e.to)!;
+                  if (na.hidden || nb.hidden) return null;
+                  const a = posOf(na);
+                  const b = posOf(nb);
                   const mx = (a.x + b.x) / 2;
                   const my = (a.y + b.y) / 2 - 40;
+                  const on = !related || related.set.has(e.from) || related.set.has(e.to);
                   return (
                     <path
                       key={`t-${i}`}
                       d={`M${a.x} ${a.y} Q ${mx} ${my} ${b.x} ${b.y}`}
                       className="stroke-primary"
-                      strokeWidth={1.4}
+                      strokeWidth={on ? 2 : 1.2}
                       strokeDasharray="4 3"
                       fill="none"
                       markerEnd="url(#pn-arrow)"
-                      opacity={0.7}
+                      opacity={on ? 0.85 : 0.15}
                     />
                   );
                 })}
@@ -431,10 +480,28 @@ export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: s
                   </text>
                 </g>
 
-                {/* Kategorinav */}
+                {/* Kategorinav — klicka för att fälla in/ut */}
                 {layout.hubs.map((h) => (
-                  <g key={`h-${h.name}`}>
-                    <circle cx={h.x} cy={h.y} r={18} className="fill-muted stroke-border" strokeWidth={1} />
+                  <g
+                    key={`h-${h.name}`}
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCollapsed((prev) => {
+                        const next = new Set(prev);
+                        next.has(h.name) ? next.delete(h.name) : next.add(h.name);
+                        return next;
+                      });
+                    }}
+                  >
+                    <circle
+                      cx={h.x}
+                      cy={h.y}
+                      r={18}
+                      className={h.collapsed ? "fill-primary/20 stroke-primary/70" : "fill-muted stroke-border"}
+                      strokeWidth={1}
+                      opacity={related && related.cat !== h.name ? 0.45 : 1}
+                    />
                     <text x={h.x} y={h.y + 3} textAnchor="middle" className="fill-foreground text-[9px] font-medium">
                       {h.count}
                     </text>
@@ -446,35 +513,70 @@ export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: s
 
                 {/* Produkter */}
                 {layout.nodes.map((n) => {
+                  if (n.hidden) return null;
                   const isActive = selected === n.p.id;
+                  const isHover = hover === n.p.id;
+                  const linked = related?.set.has(n.p.id);
+                  const dim = related && !linked;
                   const tone = n.stock > 0 ? "text-success" : n.p.active ? "text-muted-foreground" : "text-destructive";
+                  const pt = posOf(n);
+                  const r = Math.max(3, n.r) * (isActive || isHover ? 1.5 : 1);
                   return (
                     <g
                       key={n.p.id}
-                      className="cursor-pointer"
-                      onClick={() => setSelected(isActive ? null : n.p.id)}
+                      className="cursor-pointer transition-opacity"
+                      opacity={dim ? 0.2 : 1}
+                      onPointerEnter={() => setHover(n.p.id)}
+                      onPointerLeave={() => setHover((h) => (h === n.p.id ? null : h))}
+                      onPointerDown={(e) => {
+                        e.stopPropagation();
+                        const g = toGraph(e.clientX, e.clientY);
+                        nodeDrag.current = { id: n.p.id, dx: g.x - pt.x, dy: g.y - pt.y };
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelected(isActive ? null : n.p.id);
+                      }}
                     >
-                      <circle cx={n.x} cy={n.y} r={Math.max(3, n.r)} className={`${tone} fill-current`} opacity={0.9} />
+                      {(isActive || isHover) && (
+                        <circle cx={pt.x} cy={pt.y} r={r + 12} className={`${tone} fill-current`} opacity={0.12} />
+                      )}
+                      <circle cx={pt.x} cy={pt.y} r={r} className={`${tone} fill-current`} opacity={0.9} />
                       <circle
-                        cx={n.x}
-                        cy={n.y}
-                        r={Math.max(3, n.r) + 5}
+                        cx={pt.x}
+                        cy={pt.y}
+                        r={r + 5}
                         className={`${tone} stroke-current`}
-                        strokeWidth={1}
+                        strokeWidth={isActive ? 2 : 1}
                         fill="none"
-                        opacity={isActive ? 1 : 0.25}
+                        opacity={isActive || isHover ? 1 : 0.25}
                       />
-                      <text x={n.x} y={n.y - n.r - 8} textAnchor="middle" className="fill-foreground text-[9px]">
+                      <text
+                        x={pt.x}
+                        y={pt.y - r - 8}
+                        textAnchor="middle"
+                        className={`text-[9px] ${isActive || isHover ? "fill-foreground font-semibold" : "fill-foreground"}`}
+                      >
                         {n.p.name.length > 20 ? `${n.p.name.slice(0, 19)}…` : n.p.name}
                       </text>
                       {n.stock > 0 && (
                         <text
-                          x={n.x}
-                          y={n.y + n.r + 12}
+                          x={pt.x}
+                          y={pt.y + r + 12}
                           textAnchor="middle"
                           className="fill-muted-foreground font-mono text-[9px]"
                         >
                           {nf(n.stock)} {n.p.unit || ""}
+                        </text>
+                      )}
+                      {(isActive || isHover) && (
+                        <text
+                          x={pt.x}
+                          y={pt.y + r + (n.stock > 0 ? 23 : 12)}
+                          textAnchor="middle"
+                          className="fill-muted-foreground text-[9px]"
+                        >
+                          {n.events.length} händelser
                         </text>
                       )}
                     </g>
