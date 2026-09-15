@@ -942,6 +942,7 @@ export default function StockCount() {
                     return;
                   }
                   setExtraProductIds((prev) => new Set(prev).add(p.id));
+                  setFocusRowKey(p.id);
                   setSearch("");
                   setCategory("all");
                   setOnlyUncounted(false);
