@@ -1,5 +1,5 @@
 /** Vilka som är instämplade just nu på stationen. Aldrig personnummer. */
-import { corsHeaders, json, requireStation, service } from "../_shared/clock.ts";
+import { corsHeaders, effectiveEntries, isOpenShift, json, requireStation, service } from "../_shared/clock.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
@@ -20,17 +20,18 @@ Deno.serve(async (req) => {
   const since = new Date(Date.now() - 36 * 3600_000).toISOString();
   const { data: entries } = await db
     .from("time_entries")
-    .select("employee_id, type, occurred_at, corrects_entry_id")
+    .select("id, employee_id, type, occurred_at, corrects_entry_id, correction_kind")
     .eq("station_id", station.id)
     .gte("occurred_at", since)
     .order("occurred_at", { ascending: true });
 
   const state = new Map<string, { type: string; at: string }>();
-  for (const e of entries ?? []) {
+  // Makulerade rättelser och framtida rader räknas bort — annars visas fel läge.
+  for (const e of effectiveEntries(entries ?? [])) {
     state.set(e.employee_id as string, { type: e.type as string, at: e.occurred_at as string });
   }
   const activeIds = [...state.entries()]
-    .filter(([, v]) => v.type === "in" || v.type === "rast_start" || v.type === "rast_slut")
+    .filter(([, v]) => isOpenShift(v.type))
     .map(([id]) => id);
 
   let people: { first_name: string; initial: string; since: string; on_break: boolean }[] = [];
