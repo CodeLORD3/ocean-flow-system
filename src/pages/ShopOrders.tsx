@@ -51,6 +51,11 @@ type OrderLine = {
   quantity: string;
   category?: string | null;
   image_url?: string | null;
+  /** Varför varan behövs: kundbeställt, påfyllning eller kan strykas. */
+  priority: LinePriority;
+  /** Hur mycket av raden som är låst till kund (endast vid "måste med"). */
+  priorityQty: string;
+  priorityNote: string;
 };
 
 
