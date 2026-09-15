@@ -610,6 +610,10 @@ export default function StockOverview({
           </CardContent>
         </Card>
       )}
+        </div>
+      )}
+
+
 
 
 
