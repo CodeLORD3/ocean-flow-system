@@ -23,7 +23,15 @@ import {
   Package2,
   Camera,
 } from "lucide-react";
-import { format, parseISO, differenceInDays, startOfISOWeek, endOfISOWeek, getISOWeek } from "date-fns";
+import {
+  format,
+  parseISO,
+  differenceInDays,
+  differenceInCalendarDays,
+  startOfISOWeek,
+  endOfISOWeek,
+  getISOWeek,
+} from "date-fns";
 import { sv } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -1457,6 +1465,148 @@ export default function StockOverview({
                                         </Badge>
                                       ))}
                                     </div>
+                                  </div>
+                                );
+                              })()}
+
+                              {/* Utleverans — prioritetsordning per leveransdag med täckning mot saldo. */}
+                              {(() => {
+                                const pk = packedByProduct?.get(g.product_id);
+                                if (!pk || pk.orders.length === 0) return null;
+                                const unit = pk.unit ?? g.unit;
+                                const today = new Date();
+                                const nq = (v: number) =>
+                                  v.toLocaleString("sv-SE", { maximumFractionDigits: 1 });
+                                const sorted = [...pk.orders].sort((a, b) =>
+                                  (a.wantedDate || "9999-12-31").localeCompare(b.wantedDate || "9999-12-31"),
+                                );
+                                // Saldot fördelas i leveransordning: tidigast utleverans får täckning först.
+                                let left = g.totalQty;
+                                const plan = sorted.map((o) => {
+                                  const need = Number(o.quantity) || 0;
+                                  const covered = Math.max(0, Math.min(need, left));
+                                  left = Math.max(0, left - need);
+                                  const missing = Math.max(0, need - covered);
+                                  const days = o.wantedDate
+                                    ? differenceInCalendarDays(parseISO(o.wantedDate), today)
+                                    : null;
+                                  const dayLabel =
+                                    days === null
+                                      ? "Utan datum"
+                                      : days < 0
+                                        ? `Försenad ${Math.abs(days)} d`
+                                        : days === 0
+                                          ? "Idag"
+                                          : days === 1
+                                            ? "Imorgon"
+                                            : `Om ${days} dagar`;
+                                  return { o, need, missing, days, dayLabel, packed: o.kind === "packed" };
+                                });
+                                const totalMissing = plan.reduce((s, p) => s + p.missing, 0);
+                                const nextOut = plan.find((p) => p.days !== null);
+                                return (
+                                  <div className="space-y-1 rounded-md border border-border bg-card p-1.5">
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[9px] uppercase tracking-wider text-muted-foreground">
+                                      <span className="font-semibold text-foreground">Utleverans</span>
+                                      <span className="font-mono normal-case tracking-normal">
+                                        Idag {format(today, "EEE d MMM", { locale: sv })}
+                                      </span>
+                                      {nextOut && (
+                                        <span className="normal-case tracking-normal">
+                                          Nästa ut: {nextOut.dayLabel.toLowerCase()}
+                                        </span>
+                                      )}
+                                      <span
+                                        className={cn(
+                                          "ml-auto rounded-sm px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums normal-case tracking-normal",
+                                          totalMissing > 0.005
+                                            ? "bg-destructive/10 text-destructive"
+                                            : "bg-emerald-500/10 text-emerald-700",
+                                        )}
+                                      >
+                                        {totalMissing > 0.005
+                                          ? `${nq(totalMissing)} ${unit} saknas`
+                                          : "Allt täckt av lagret"}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-col divide-y divide-border/50">
+                                      {plan.map((p, i) => {
+                                        const urgent = p.days !== null && p.days <= 0;
+                                        return (
+                                          <button
+                                            type="button"
+                                            key={`out-${p.o.orderId}-${p.o.kind}-${i}`}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              const q = `order=${p.o.orderId}&line=${g.product_id}&from=stock&t=${Date.now()}`;
+                                              navigate(site === "shop" ? `/customer-orders?${q}` : `/orders?${q}`);
+                                            }}
+                                            className="flex w-full items-center gap-2 whitespace-nowrap rounded px-1 py-1 text-left text-[11px] hover:bg-muted"
+                                            title="Öppna ordern"
+                                          >
+                                            <span className="w-4 shrink-0 text-center font-mono text-[10px] font-bold text-muted-foreground tabular-nums">
+                                              {i + 1}
+                                            </span>
+                                            <span
+                                              className={cn(
+                                                "w-[86px] shrink-0 rounded-sm px-1 py-0.5 text-center text-[9px] font-semibold uppercase tracking-wider",
+                                                urgent
+                                                  ? "bg-destructive/10 text-destructive"
+                                                  : p.days === null
+                                                    ? "bg-muted text-muted-foreground"
+                                                    : "bg-muted text-foreground/70",
+                                              )}
+                                            >
+                                              {p.dayLabel}
+                                            </span>
+                                            <span className="w-14 shrink-0 font-mono text-[10px] text-muted-foreground tabular-nums">
+                                              {p.o.wantedDate
+                                                ? format(parseISO(p.o.wantedDate), "EEE d/M", { locale: sv })
+                                                : "–"}
+                                            </span>
+                                            <span className="min-w-0 flex-1 truncate font-medium">
+                                              {p.o.customerName}
+                                            </span>
+                                            <span
+                                              className={cn(
+                                                "shrink-0 rounded-sm px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
+                                                p.packed
+                                                  ? "bg-amber-400/20 text-amber-700"
+                                                  : "bg-muted text-muted-foreground",
+                                              )}
+                                            >
+                                              {p.packed ? "Packat" : "Ej packat"}
+                                            </span>
+                                            <span className="w-16 shrink-0 text-right font-mono font-semibold tabular-nums">
+                                              {nq(p.need)} {p.o.unit || unit}
+                                            </span>
+                                            <span
+                                              className={cn(
+                                                "w-[104px] shrink-0 text-right font-mono text-[10px] font-semibold tabular-nums",
+                                                p.missing > 0.005 ? "text-destructive" : "text-emerald-700",
+                                              )}
+                                            >
+                                              {p.missing > 0.005
+                                                ? `−${nq(p.missing)} ${unit} saknas`
+                                                : "täckt av lager"}
+                                            </span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                    {totalMissing > 0.005 && (
+                                      <p className="px-1 text-[10px] leading-snug text-muted-foreground">
+                                        {(() => {
+                                          const firstShort = plan.find((p) => p.missing > 0.005);
+                                          const d = firstShort?.days;
+                                          if (d === null || d === undefined)
+                                            return `${nq(totalMissing)} ${unit} behöver köpas in – leveransdatum saknas.`;
+                                          if (d <= 0)
+                                            return `${nq(totalMissing)} ${unit} saknas och första utleveransen är redan ${d === 0 ? "idag" : "försenad"} – lös nu eller flytta leveransen.`;
+                                          return `${nq(totalMissing)} ${unit} saknas, men första utleveransen är ${d === 1 ? "imorgon" : `om ${d} dagar`} – kan köpas in i tid.`;
+                                        })()}
+                                      </p>
+                                    )}
                                   </div>
                                 );
                               })()}
