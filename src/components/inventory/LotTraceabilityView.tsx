@@ -300,10 +300,16 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
 
   const sorteringar = [
     { v: "senaste", label: "Senast skapad" },
+    { v: "aldst", label: "Äldst skapad" },
     { v: "andrad", label: "Senast ändrad" },
     { v: "bast_fore", label: "Kortast hållbarhet" },
+    { v: "langst", label: "Längst hållbarhet" },
     { v: "storst", label: "Störst mängd" },
+    { v: "minst", label: "Minst mängd" },
+    { v: "varde", label: "Högst värde" },
     { v: "namn", label: "Namn A–Ö" },
+    { v: "leverantor", label: "Leverantör A–Ö" },
+    { v: "parti", label: "Partinummer" },
   ] as const;
 
   const modes = [
