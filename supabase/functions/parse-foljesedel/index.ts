@@ -226,10 +226,11 @@ Rules:
       }
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Skicka tillbaka det riktiga felet — annars går orsaken inte att se i UI:t.
+      return new Response(
+        JSON.stringify({ error: `AI-tolkning misslyckades (${response.status}): ${t.slice(0, 500)}` }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const data = await response.json();
