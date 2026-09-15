@@ -336,6 +336,7 @@ export default function WholesaleOrders() {
   // Djuplänk från lagret: /orders?order=<id> öppnar och skrollar till ordern.
   const location = useLocation();
   const navigate = useNavigate();
+  const [deepLinkOrderId, setDeepLinkOrderId] = useState<string | null>(null);
   React.useEffect(() => {
     const wanted = new URLSearchParams(location.search).get("order");
     if (!wanted) return;
@@ -343,11 +344,24 @@ export default function WholesaleOrders() {
     setSearch("");
     setStatusFilter("Alla");
     setStoreFilter("alla");
+    setShowHistory(true);
     setExpandedOrderIds(new Set([wanted]));
-    const t = setTimeout(() => {
-      document.getElementById(`wholesale-order-${wanted}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 300);
-    return () => clearTimeout(t);
+    setDeepLinkOrderId(wanted);
+    let tries = 0;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const tick = () => {
+      const el = document.getElementById(`wholesale-order-${wanted}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Skrolla en gång till när raden expanderat och layouten satt sig.
+        timers.push(setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 600));
+        return;
+      }
+      if (tries++ < 25) timers.push(setTimeout(tick, 200));
+    };
+    timers.push(setTimeout(tick, 200));
+    timers.push(setTimeout(() => setDeepLinkOrderId(null), 9000));
+    return () => timers.forEach(clearTimeout);
   }, [location.search]);
 
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
