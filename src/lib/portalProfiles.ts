@@ -38,13 +38,13 @@ export function currentPortalProfile(
 
 /**
  * Vem får en portal chatta med?
- * - Butik: bara Grossist
+ * - Butik: Grossist + Admin (Admin skickar bl.a. viktiga meddelanden)
  * - Grossist: Admin + alla butiker
  * - Admin: Grossist + alla butiker (samt specialmeddelanden till alla butiker)
  */
 export function canChatWith(mine: PortalProfile, other: PortalProfile) {
   if (mine.key === other.key) return false;
-  if (mine.kind === "store") return other.kind === "grossist";
+  if (mine.kind === "store") return other.kind === "grossist" || other.kind === "admin";
   if (mine.kind === "grossist") return other.kind === "admin" || other.kind === "store";
   if (mine.kind === "admin") return other.kind === "grossist" || other.kind === "store";
   return false;
