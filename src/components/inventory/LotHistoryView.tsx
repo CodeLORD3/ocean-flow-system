@@ -20,22 +20,31 @@ const dt = (ts?: string | null) => (ts ? new Date(ts).toLocaleDateString("sv-SE"
  * Historikläge i Spårbarhet: avslutade/tömda partier och alla lagerrörelser
  * bakåt i tiden, så gamla kedjor kan visas även när lagret är nollställt.
  */
-export default function LotHistoryView({ currency = "SEK" }: { currency?: string }) {
+export default function LotHistoryView({
+  currency = "SEK",
+  locationIds = null,
+}: {
+  currency?: string;
+  /** Butiksportalen skickar sina lagerplatser — då visas bara butikens historik. */
+  locationIds?: string[] | null;
+}) {
   const [q, setQ] = useState("");
   const [view, setView] = useState<"tree" | "list">("tree");
   const [traceLotId, setTraceLotId] = useState<string | null>(null);
   const [traceLabel, setTraceLabel] = useState<string>("");
 
   const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["lot_history_movements"],
+    queryKey: ["lot_history_movements", locationIds],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let qy = supabase
         .from("stock_movements")
         .select(
           "id, lot_id, movement_type, quantity_kg, created_at, note, reference_type, products(name, sku), storage_locations(name), lots(lot_number, status, catch_area, best_before)",
         )
         .order("created_at", { ascending: false })
         .limit(500);
+      if (locationIds) qy = qy.in("location_id", locationIds.length ? locationIds : ["00000000-0000-0000-0000-000000000000"]);
+      const { data, error } = await qy;
       if (error) throw error;
       return (data || []) as any[];
     },
