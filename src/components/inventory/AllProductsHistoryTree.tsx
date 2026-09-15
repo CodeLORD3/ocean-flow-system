@@ -62,6 +62,7 @@ export default function AllProductsHistoryTree({
   onTraceLot?: (lotId: string, label: string) => void;
 }) {
   const [q, setQ] = useState("");
+  const [shape, setShape] = useState<"graph" | "list">("graph");
   const [openProducts, setOpenProducts] = useState<Record<string, boolean>>({});
   const [openBranches, setOpenBranches] = useState<Record<string, boolean>>({});
 
