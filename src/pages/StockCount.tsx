@@ -400,7 +400,7 @@ export default function StockCount() {
 
   /** Varor som lagts till manuellt i pågående inventering (fanns inte i lager). */
   const [extraProductIds, setExtraProductIds] = useState<Set<string>>(new Set());
-  const [addSearch, setAddSearch] = useState("");
+  
 
   const allRows = useMemo<Row[]>(() => {
     if (!effectiveStoreId) return [];
