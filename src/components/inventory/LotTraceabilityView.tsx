@@ -120,6 +120,48 @@ const hallbarhetsFarg = (d: number | null) =>
             ? "bg-sky-500/15 text-sky-600"
             : "bg-emerald-500/15 text-emerald-600";
 
+/** Måndag som veckostart, svensk tid. */
+function veckoStart(d: Date) {
+  const k = new Date(d);
+  k.setHours(0, 0, 0, 0);
+  const dag = (k.getDay() + 6) % 7;
+  k.setDate(k.getDate() - dag);
+  return k;
+}
+
+/** Grupperar en tidpunkt i Idag / Igår / Denna veckan / Förra veckan / månad. */
+function tidsGrupp(iso?: string | null): { key: string; label: string } {
+  if (!iso) return { key: "okant", label: "Utan datum" };
+  const d = new Date(iso);
+  const nu = new Date();
+  const idag = new Date(nu);
+  idag.setHours(0, 0, 0, 0);
+  const dagStart = new Date(d);
+  dagStart.setHours(0, 0, 0, 0);
+  const diffDagar = Math.round((idag.getTime() - dagStart.getTime()) / 86400000);
+  if (diffDagar === 0) return { key: "idag", label: "Idag" };
+  if (diffDagar === 1) return { key: "igar", label: "Igår" };
+  const v0 = veckoStart(nu);
+  const v1 = new Date(v0);
+  v1.setDate(v1.getDate() - 7);
+  if (d >= v0) return { key: "denna_vecka", label: "Denna veckan" };
+  if (d >= v1) return { key: "forra_vecka", label: "Förra veckan" };
+  const manad = d.toLocaleDateString("sv-SE", { month: "long", year: "numeric" });
+  return { key: `m-${d.getFullYear()}-${d.getMonth()}`, label: manad.charAt(0).toUpperCase() + manad.slice(1) };
+}
+
+/** Veckodag, datum och tid i egen kolumn. */
+function tidsKolumn(iso?: string | null) {
+  if (!iso) return { veckodag: "—", datum: "—", tid: "" };
+  const d = new Date(iso);
+  const veckodag = d.toLocaleDateString("sv-SE", { weekday: "short" }).replace(".", "");
+  return {
+    veckodag: veckodag.charAt(0).toUpperCase() + veckodag.slice(1),
+    datum: d.toLocaleDateString("sv-SE", { day: "2-digit", month: "2-digit" }),
+    tid: d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }),
+  };
+}
+
 /**
  * Spårbarhet i två tydliga steg: först söker man fram produkt eller kategori
  * och väljer parti i listan, sedan öppnas partiets hela flöde på egen yta.
@@ -504,17 +546,36 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                 />
               ) : (
                 <div className="max-h-[calc(100dvh-20rem)] min-h-[240px] overflow-y-auto rounded-md border border-border">
-                  {filtered.map((l) => {
+                  {filtered.map((l, i) => {
                     const d = dagarKvar(l.best_before);
                     const kg = Number(l.quantity_kg || 0);
                     const varde = l.unit_cost != null ? kg * Number(l.unit_cost) : null;
                     const andrad = senasteHandelse[l.id];
+                    const tidsstampel = sort === "andrad" ? andrad || l.created_at : l.created_at;
+                    const grupp = tidsGrupp(tidsstampel);
+                    const foregaende = i === 0 ? null : filtered[i - 1];
+                    const foregGrupp = foregaende
+                      ? tidsGrupp(sort === "andrad" ? senasteHandelse[foregaende.id] || foregaende.created_at : foregaende.created_at)
+                      : null;
+                    const visaRubrik =
+                      ["senaste", "aldst", "andrad"].includes(sort) && grupp.key !== foregGrupp?.key;
+                    const kol = tidsKolumn(tidsstampel);
                     return (
+                      <div key={l.id}>
+                        {visaRubrik && (
+                          <p className="sticky top-0 z-10 border-b border-border/60 bg-muted/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur">
+                            {grupp.label}
+                          </p>
+                        )}
                       <button
-                        key={l.id}
                         onClick={() => setSelectedId(l.id)}
                         className="flex w-full items-center gap-3 border-b border-border/60 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/40"
                       >
+                        <div className="w-[74px] shrink-0 border-r border-border/60 pr-2 font-mono text-[10px] leading-tight tabular-nums text-muted-foreground">
+                          <p className="font-semibold text-foreground">{kol.veckodag}</p>
+                          <p>{kol.datum}</p>
+                          <p>{kol.tid}</p>
+                        </div>
                         <span className={`h-8 w-1 shrink-0 rounded-full ${hallbarhetsFarg(d).split(" ")[0]}`} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-foreground">
@@ -545,6 +606,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                         </div>
                         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                       </button>
+                      </div>
                     );
                   })}
                  </div>
