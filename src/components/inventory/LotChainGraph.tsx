@@ -323,13 +323,11 @@ export default function LotChainGraph({
                     <span className="h-px" />
                     <span className="flex flex-col items-center">
                       <span className="h-4 w-0.5 bg-border" />
-                      <span className="flex flex-col items-center whitespace-nowrap rounded-md border border-border bg-muted/60 px-2 py-1">
+                      <span className="flex flex-col items-center whitespace-nowrap rounded-md border border-border bg-muted/60 px-2 py-1 text-center">
                         <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                          orörd
+                          legat på lagret
                         </span>
-                        <span className="font-mono text-[12px] font-bold tabular-nums text-foreground">
-                          {n.gap}
-                        </span>
+                        <span className="text-[12px] font-bold text-foreground">{n.gap}</span>
                       </span>
                       <span className="h-4 w-0.5 bg-border" />
                     </span>
