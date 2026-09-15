@@ -227,6 +227,7 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
                 setView({ coordinates: coordinates as [number, number], zoom })
               }
             >
+              <Graticule stroke="#bcd3dc" strokeWidth={0.3 / view.zoom} step={[5, 5]} />
               <Geographies geography={GEO_URL}>
                 {({ geographies }) =>
                   geographies.map((geo, i) => (
