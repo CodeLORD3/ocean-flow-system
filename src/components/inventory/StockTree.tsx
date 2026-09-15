@@ -9,6 +9,7 @@ import { LEVEL_DESCRIPTION, LEVEL_LABEL, type LocationLevel } from "@/lib/locati
 import { grossistlagerId, tillverkningslagerId } from "@/lib/locations";
 import { lotBalancesAtLocation, transferStock } from "@/lib/stockLedger";
 import { useTransferOrders, INCOMING_STATUSES } from "@/hooks/useTransferOrders";
+import StockMap from "@/components/inventory/StockMap";
 
 interface StockTreeProps {
   /** Rader från product_stock_locations med storage_locations + products. */
