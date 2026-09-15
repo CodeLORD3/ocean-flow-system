@@ -11,15 +11,13 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeftRight, CalendarDays, ChevronLeft, ChevronRight, HandHelping, Plus, Stethoscope, Undo2 } from "lucide-react";
 import {
-  DecisionBar,
-  DecisionMetric,
   IndustryButton,
-  IndustryFrame,
   IndustryInput,
   IndustryRow,
   SectionLabel,
   StatusLabel,
 } from "@/components/industry";
+import { StaffPageShell, StaffMetric } from "@/components/staff/StaffPageShell";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -332,19 +330,16 @@ export default function MyShifts() {
   };
 
   return (
-    <IndustryFrame className="ind-page space-y-6 p-4 md:p-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <SectionLabel>Mitt schema</SectionLabel>
-          <h1 className="ind-h1">Vecka {isoWeek(anchor)}</h1>
-          <p className="ind-muted text-sm">
-            {week[0]} – {week[6]}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+    <>
+    <StaffPageShell
+      label="Mitt schema"
+      title={`Vecka ${isoWeek(anchor)}`}
+      meta={`${week[0]} – ${week[6]}`}
+      actions={
+        <div className="flex overflow-hidden rounded-md border border-border">
           <IndustryButton
-            size="touch"
             variant="ghost"
+            className="h-9 rounded-none border-0 px-2.5"
             aria-label="Föregående vecka"
             onClick={() => {
               const d = mondayOf(anchor);
@@ -352,11 +347,11 @@ export default function MyShifts() {
               setAnchor(dateKey(d));
             }}
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4" />
           </IndustryButton>
           <IndustryButton
-            size="touch"
             variant="ghost"
+            className="h-9 rounded-none border-0 border-l border-border px-2.5"
             aria-label="Nästa vecka"
             onClick={() => {
               const d = mondayOf(anchor);
@@ -364,17 +359,25 @@ export default function MyShifts() {
               setAnchor(dateKey(d));
             }}
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" />
           </IndustryButton>
         </div>
-      </div>
+      }
+      metrics={
+        <>
+          <StaffMetric label="Mina pass" value={published.length} />
+          <StaffMetric label="Planerad tid" value={formatMinutes(totalMinutes)} />
+          <StaffMetric label="Öppna pass" value={openShifts.length} />
+          <StaffMetric
+            label="Semester kvar"
+            value={remainingVacation === null ? "—" : `${remainingVacation.toFixed(1)} dagar`}
+            tone={remainingVacation !== null && remainingVacation < 5 ? "warn" : "neutral"}
+          />
+        </>
+      }
+    >
+      <div className="space-y-5 p-4">
 
-       <DecisionBar>
-         <DecisionMetric label="Mina pass" value={published.length} />
-         <DecisionMetric label="Planerad tid" value={formatMinutes(totalMinutes)} />
-         <DecisionMetric label="Öppna pass" value={openShifts.length} tone={openShifts.length ? "progress" : "neutral"} />
-         <DecisionMetric label="Semester kvar" value={remainingVacation === null ? "—" : `${remainingVacation.toFixed(1)} dagar`} tone={remainingVacation !== null && remainingVacation < 5 ? "progress" : "neutral"} />
-       </DecisionBar>
 
       {!myId && (
         <IndustryRow edge="alert">
@@ -551,6 +554,10 @@ export default function MyShifts() {
           </IndustryRow>
         )}
       </section>
+      </div>
+    </StaffPageShell>
+
+
 
       {/* Byt pass */}
       <Dialog open={Boolean(swapFor)} onOpenChange={(o) => !o && setSwapFor(null)}>
@@ -805,6 +812,6 @@ export default function MyShifts() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </IndustryFrame>
+    </>
   );
 }

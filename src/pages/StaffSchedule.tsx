@@ -23,6 +23,7 @@ import { ShiftInspector, type ShiftInspectorData } from "@/components/schedule/S
 import { coveragePerDay, coveragePerHour, dailyRestViolations, staffingGap, weeklyRestHours } from "@/lib/scheduleRules";
 import { useDeletePlannedShift } from "@/hooks/usePlannedShifts";
 import { SegmentSwitch } from "@/components/staff/ui";
+import { StaffPageShell, StaffMetric } from "@/components/staff/StaffPageShell";
 import type { AbsenceMark, ActualMark, ComingGoingEvent, DayCell, ShiftCellItem, WeekRow } from "@/components/schedule/scheduleViewTypes";
 
 const DAY_NAMES = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
@@ -289,15 +290,17 @@ export default function StaffSchedule() {
   const violationCount = restMap.size;
 
   return (
-    <motion.main initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="staff-light min-h-full overflow-auto px-3 pb-8 sm:px-5">
-      <div className="mx-auto max-w-[1600px]">
-        <header className="mb-5 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <span className="sl-label">Makrill Trade · Personal &amp; schema</span>
-            <h1 className="sl-h1 mt-1">Schema</h1>
-            <p className="mt-1 text-[14px] sl-muted">Vecka {isoWeek(mondayOf(anchor))} · {days[0]} – {days[6]}</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
+    <motion.main initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="staff-light h-full min-h-0">
+      <StaffPageShell
+        label="Personal & schema"
+        title={view === "day" ? "Schema · dagvy" : `Vecka ${isoWeek(mondayOf(anchor))}`}
+        meta={
+          view === "day"
+            ? `${new Date(`${selectedDay}T12:00:00`).toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })} · ${storeFilter === "all" ? "Alla enheter" : storeName(storeFilter)}`
+            : `${days[0]} – ${days[6]}`
+        }
+        actions={
+          <>
             <SegmentSwitch<"week" | "day">
               value={view}
               onChange={(next) => { setView(next); if (next === "day") setDayViewDate(days[0]); }}
@@ -305,51 +308,62 @@ export default function StaffSchedule() {
               options={[{ value: "week", label: "Vecka" }, { value: "day", label: "Dag" }]}
             />
             <button type="button" className="sl-btn sl-btn--primary" onClick={() => openDialog(null, selectedDay)}><Plus size={15} /> Planera pass</button>
+          </>
+        }
+        metrics={
+          <>
+            <StaffMetric label="Schemalagda timmar" value={formatDecimalHours(weekMinutes)} hint={`arbetad ${formatHm(actualMinutes)}`} />
+            <StaffMetric
+              label="Lönekostnad"
+              value={weekCost > 0 ? formatKrPrel(weekCost) : "—"}
+              hint={laborRatio === null ? "omsättning saknas" : `${laborRatio.toFixed(1)} % av omsättning`}
+            />
+            <StaffMetric
+              label="Kräver åtgärd"
+              value={violationCount + extraCount + missingRates}
+              tone={violationCount ? "alert" : extraCount || missingRates ? "warn" : "neutral"}
+              hint={violationCount ? `${violationCount} vilotid` : extraCount ? `${extraCount} över avtal` : missingRates ? `${missingRates} utan lön` : "inget akut"}
+            />
+          </>
+        }
+        toolbar={
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1">
+              <button type="button" className="sl-btn sl-btn--icon" onClick={() => shiftPeriod(-1)} aria-label="Föregående vecka"><ChevronLeft size={17} /></button>
+              <Input type="date" aria-label="Välj datum" className="h-9 w-[150px] rounded-lg border-[var(--sl-line)] bg-white text-[14px]" value={view === "day" ? dayViewDate : anchor} onChange={(event) => { const value = event.target.value || dateKey(); setAnchor(value); setDayViewDate(value); }} />
+              <button type="button" className="sl-btn sl-btn--icon" onClick={() => shiftPeriod(1)} aria-label="Nästa vecka"><ChevronRight size={17} /></button>
+            </div>
+            <button type="button" className="sl-btn" onClick={() => { const today = dateKey(); setAnchor(today); setDayViewDate(today); }}>Idag</button>
+            <span className="mx-1 hidden h-6 w-px bg-[var(--sl-line)] sm:block" aria-hidden="true" />
+            <Select value={cityFilter} onValueChange={(value) => { setCityFilter(value); setStoreFilter("all"); }}>
+              <SelectTrigger className="h-9 w-40 rounded-lg border-[var(--sl-line)] bg-white text-[14px]"><SelectValue placeholder="Alla städer" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">Alla städer</SelectItem>{cities.map((city) => <SelectItem key={city} value={city}>{city}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={storeFilter} onValueChange={setStoreFilter}>
+              <SelectTrigger className="h-9 w-48 rounded-lg border-[var(--sl-line)] bg-white text-[14px]"><SelectValue placeholder="Alla enheter" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">Alla enheter</SelectItem>{stores.filter((store: any) => cityFilter === "all" || store.city === cityFilter).map((store: any) => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}</SelectContent>
+            </Select>
+            {overhead.data ? <span className="sl-pill sl-pill--neutral">Påslag {overhead.data} %</span> : null}
           </div>
-        </header>
-
-        <div className="sl-card mb-4 flex flex-wrap items-center gap-2 p-3">
-          <div className="flex items-center gap-1">
-            <button type="button" className="sl-btn sl-btn--icon" onClick={() => shiftPeriod(-1)} aria-label="Föregående vecka"><ChevronLeft size={17} /></button>
-            <Input type="date" aria-label="Välj datum" className="h-9 w-[150px] rounded-lg border-[var(--sl-line)] bg-white text-[14px]" value={view === "day" ? dayViewDate : anchor} onChange={(event) => { const value = event.target.value || dateKey(); setAnchor(value); setDayViewDate(value); }} />
-            <button type="button" className="sl-btn sl-btn--icon" onClick={() => shiftPeriod(1)} aria-label="Nästa vecka"><ChevronRight size={17} /></button>
-          </div>
-          <button type="button" className="sl-btn" onClick={() => { const today = dateKey(); setAnchor(today); setDayViewDate(today); }}>Idag</button>
-          <span className="mx-1 hidden h-6 w-px bg-[var(--sl-line)] sm:block" aria-hidden="true" />
-          <Select value={cityFilter} onValueChange={(value) => { setCityFilter(value); setStoreFilter("all"); }}>
-            <SelectTrigger className="h-9 w-40 rounded-lg border-[var(--sl-line)] bg-white text-[14px]"><SelectValue placeholder="Alla städer" /></SelectTrigger>
-            <SelectContent><SelectItem value="all">Alla städer</SelectItem>{cities.map((city) => <SelectItem key={city} value={city}>{city}</SelectItem>)}</SelectContent>
-          </Select>
-          <Select value={storeFilter} onValueChange={setStoreFilter}>
-            <SelectTrigger className="h-9 w-48 rounded-lg border-[var(--sl-line)] bg-white text-[14px]"><SelectValue placeholder="Alla enheter" /></SelectTrigger>
-            <SelectContent><SelectItem value="all">Alla enheter</SelectItem>{stores.filter((store: any) => cityFilter === "all" || store.city === cityFilter).map((store: any) => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}</SelectContent>
-          </Select>
-          {overhead.data ? <span className="sl-pill sl-pill--neutral ml-auto">Påslag {overhead.data} %</span> : null}
-        </div>
-
-        <section className="mb-4 flex flex-wrap items-end gap-x-8 gap-y-3 px-1" aria-label="Veckans siffror">
-          <div className="sl-figure">
-            <span className="sl-label">Schemalagda timmar</span>
-            <strong className="sl-num">{formatDecimalHours(weekMinutes)}</strong>
-            <span className="sl-faint">arbetad {formatHm(actualMinutes)}</span>
-          </div>
-          <div className="sl-figure">
-            <span className="sl-label">Lönekostnad</span>
-            <strong className="sl-num">{weekCost > 0 ? formatKrPrel(weekCost) : "—"}</strong>
-            <span className="sl-faint">{laborRatio === null ? "omsättning saknas" : `${laborRatio.toFixed(1)} % av omsättning`}</span>
-          </div>
-          <div className="sl-figure">
-            <span className="sl-label">Kräver åtgärd</span>
-            <strong className="sl-num">{violationCount + extraCount + missingRates}</strong>
-            <span className="sl-faint">
-              {violationCount ? `${violationCount} vilotid` : extraCount ? `${extraCount} över avtal` : missingRates ? `${missingRates} utan lön` : "inget akut"}
-            </span>
-          </div>
-        </section>
-
-
-        <div className={inspectorData ? "grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]" : ""}>
-          <section className="sl-card overflow-hidden" aria-label="Schema">
+        }
+        side={
+          inspectorData ? (
+            <ShiftInspector
+              data={inspectorData}
+              onClose={() => setSelectedShiftId(null)}
+              onEdit={() => {
+                const shift = visibleShifts.find((item) => item.id === inspectorData.shiftId);
+                if (shift) openDialog(shift.staff_id, shift.shift_date, shift.id);
+              }}
+              onDelete={() => {
+                deleteShift.mutate(inspectorData.shiftId);
+                setSelectedShiftId(null);
+              }}
+            />
+          ) : undefined
+        }
+      >
+        <section className="overflow-hidden" aria-label="Schema">
             {emptyState ? (
               <div className="flex flex-col items-center px-6 py-14 text-center">
                 <span className="sl-kpi__icon sl-kpi__icon--blue" aria-hidden="true"><CalendarRange size={22} /></span>
@@ -383,6 +397,7 @@ export default function StaffSchedule() {
                   selectedShiftId={selectedShiftId}
                   onShiftClick={handleShiftClick}
                   onAdd={(staffId, day) => openDialog(staffId, day)}
+                  nowMinutes={selectedDay === dateKey() ? now.getHours() * 60 + now.getMinutes() : null}
                 />
               </div>
             )}
@@ -395,23 +410,8 @@ export default function StaffSchedule() {
                 {missingRates > 0 ? <span className="flex items-center gap-2 text-[var(--sl-red-ink)]"><AlertTriangle size={13} /> {missingRates} person(er) saknar löneunderlag</span> : null}
               </footer>
             ) : null}
-          </section>
-          {inspectorData ? (
-            <ShiftInspector
-              data={inspectorData}
-              onClose={() => setSelectedShiftId(null)}
-              onEdit={() => {
-                const shift = visibleShifts.find((item) => item.id === inspectorData.shiftId);
-                if (shift) openDialog(shift.staff_id, shift.shift_date, shift.id);
-              }}
-              onDelete={() => {
-                deleteShift.mutate(inspectorData.shiftId);
-                setSelectedShiftId(null);
-              }}
-            />
-          ) : null}
-        </div>
-      </div>
+        </section>
+      </StaffPageShell>
 
 
       <PlannedShiftDialog open={dialogOpen} onOpenChange={setDialogOpen} storeId={dialogStore ?? stores[0]?.id ?? ""} storeName={storeName(dialogStore)} day={dialogDay} editing={editing} />

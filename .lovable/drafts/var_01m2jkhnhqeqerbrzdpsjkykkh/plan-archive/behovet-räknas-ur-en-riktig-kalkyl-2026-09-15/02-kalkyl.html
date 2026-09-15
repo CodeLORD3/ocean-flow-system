@@ -1,0 +1,58 @@
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" style="font-family: var(--font-sans)">
+  <style>
+    .lbl { font-size: 14px; font-weight: 480; fill: var(--fg-primary); }
+    .sub { font-size: 12px; fill: var(--fg-secondary); font-family: var(--font-mono); }
+    .note { font-size: 12px; fill: var(--fg-secondary); }
+    .bx { fill: none; stroke: var(--fg-secondary); stroke-width: 1; }
+    .w { stroke: var(--fg-secondary); stroke-width: 1; fill: none; }
+  </style>
+  <defs>
+    <marker id="a" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="var(--fg-secondary)" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect class="bx" x="8" y="24" width="118" height="56" rx="8"/>
+  <text class="lbl" x="67" y="47" text-anchor="middle">Snittförsäljning</text>
+  <text class="sub" x="67" y="66" text-anchor="middle">42 000 kr</text>
+  <line class="w" x1="126" y1="52" x2="164" y2="52" marker-end="url(#a)"/>
+  <text class="note" x="145" y="42" text-anchor="middle" style="paint-order:stroke;stroke:var(--bg-primary);stroke-width:4px">−6 %</text>
+
+  <rect class="bx" x="164" y="24" width="118" height="56" rx="8"/>
+  <text class="lbl" x="223" y="47" text-anchor="middle">Netto</text>
+  <text class="sub" x="223" y="66" text-anchor="middle">39 623 kr</text>
+  <line class="w" x1="282" y1="52" x2="320" y2="52" marker-end="url(#a)"/>
+  <text class="note" x="301" y="42" text-anchor="middle" style="paint-order:stroke;stroke:var(--bg-primary);stroke-width:4px">35 %</text>
+
+  <rect class="bx" x="320" y="24" width="118" height="56" rx="8"/>
+  <text class="lbl" x="379" y="47" text-anchor="middle">Bruttovinst</text>
+  <text class="sub" x="379" y="66" text-anchor="middle">13 868 kr</text>
+  <line class="w" x1="438" y1="52" x2="476" y2="52" marker-end="url(#a)"/>
+  <text class="note" x="457" y="42" text-anchor="middle" style="paint-order:stroke;stroke:var(--bg-primary);stroke-width:4px">−övrigt</text>
+
+  <rect class="bx" x="476" y="24" width="156" height="56" rx="8" fill="var(--bg-accent-translucent)" stroke="var(--fg-accent)"/>
+  <text class="lbl" x="554" y="47" text-anchor="middle" fill="var(--fg-accent)">Lönebudget</text>
+  <text class="sub" x="554" y="66" text-anchor="middle" fill="var(--fg-accent)">kvar till löner</text>
+
+  <line class="w" x1="554" y1="80" x2="554" y2="120" marker-end="url(#a)"/>
+  <rect class="bx" x="454" y="120" width="178" height="56" rx="8"/>
+  <text class="lbl" x="543" y="143" text-anchor="middle">÷ timkostnad</text>
+  <text class="sub" x="543" y="162" text-anchor="middle">lön × 1,3142</text>
+
+  <line class="w" x1="454" y1="148" x2="416" y2="148" marker-end="url(#a)"/>
+  <rect class="bx" x="286" y="120" width="130" height="56" rx="8"/>
+  <text class="lbl" x="351" y="143" text-anchor="middle">Behov i timmar</text>
+  <text class="sub" x="351" y="162" text-anchor="middle">h / dag</text>
+
+  <line class="w" x1="286" y1="148" x2="248" y2="148" marker-end="url(#a)"/>
+  <rect class="bx" x="118" y="120" width="130" height="56" rx="8"/>
+  <text class="lbl" x="183" y="143" text-anchor="middle">Personer</text>
+  <text class="sub" x="183" y="162" text-anchor="middle">÷ snittpass</text>
+
+  <rect x="8" y="212" width="624" height="68" rx="8" fill="var(--bg-muted)"/>
+  <circle cx="30" cy="236" r="9" fill="var(--fg-accent)"/>
+  <text x="30" y="240" text-anchor="middle" style="font-size:11px;fill:var(--bg-primary);font-family:var(--font-sans)">1</text>
+  <text class="note" x="48" y="233">Moms, bruttovinstmarginal, övriga kostnader och vinstkrav är inställningar.</text>
+  <text class="note" x="48" y="251">Standard: moms 6 %, marginal 35 %, gemensamt vinstkrav — eget värde kan sättas per ställe.</text>
+  <text class="note" x="48" y="269">Saknas försäljningsunderlag visas inget behov, ingen gissning.</text>
+</svg>

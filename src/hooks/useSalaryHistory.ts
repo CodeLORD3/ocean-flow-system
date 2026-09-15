@@ -103,37 +103,86 @@ export function useDeleteSalaryRow() {
  *
  * Timanställd → timlönen. Månadsanställd → månadslönen slås ut på
  * {@link MONTHLY_HOURS} timmar, så kostnaden blir proportionell mot arbetad tid.
- * Den lönepost som gällde på datumet används, annars personalkortets aktuella
- * lön som reserv.
+ * Ordning: lönepost som gällde på datumet, annars anställningen i
+ * personalregistret (facit från löneimporten), annars personalkortet.
  */
 export function useEffectiveRates(day: string) {
   return useQuery({
     queryKey: ["staff-effective-rates", day],
     enabled: !!day,
     queryFn: async () => {
-      const [{ data: staffRows, error: staffErr }, { data: history, error: histErr }] = await Promise.all([
+      const [
+        { data: staffRows, error: staffErr },
+        { data: history, error: histErr },
+        { data: employees, error: empErr },
+        { data: employments, error: emplErr },
+      ] = await Promise.all([
         supabase.from("staff").select("id, hourly_rate, employment_type, monthly_salary"),
         supabase
           .from("staff_salary_history")
           .select(SELECT)
           .lte("valid_from", day)
           .order("valid_from", { ascending: true }),
+        supabase.from("employees").select("id, staff_id"),
+        supabase
+          .from("employments")
+          .select("employee_id, is_active, pay_type, hourly_rate, monthly_salary, start_date")
+          .order("start_date", { ascending: true }),
       ]);
       if (staffErr) throw staffErr;
       if (histErr) throw histErr;
+      if (empErr) throw empErr;
+      if (emplErr) throw emplErr;
 
       const latest = new Map<string, SalaryRow>();
       (history ?? []).forEach((r: any) => latest.set(r.staff_id, r as SalaryRow));
 
+      // Anställningens lön per personalkort-id, aktiva anställningar väger sist (senaste vinner).
+      const rateByEmployee = new Map<string, number>();
+      (employments ?? []).forEach((em: any) => {
+        const rate = effectiveHourlyRate(
+          (em.pay_type ?? "hourly") as EmploymentType,
+          em.hourly_rate,
+          em.monthly_salary,
+        );
+        if (rate === null || rate <= 0) return;
+        if (em.is_active === false && rateByEmployee.has(em.employee_id)) return;
+        rateByEmployee.set(em.employee_id, rate);
+      });
+      const rateByStaff = new Map<string, number>();
+      (employees ?? []).forEach((e: any) => {
+        if (!e.staff_id) return;
+        const rate = rateByEmployee.get(e.id);
+        if (rate !== undefined) rateByStaff.set(e.staff_id, rate);
+      });
+
       const map = new Map<string, number | null>();
       (staffRows ?? []).forEach((s: any) => {
         const row = latest.get(s.id);
-        const type = (row?.employment_type ?? s.employment_type ?? "hourly") as EmploymentType;
-        const hourly = row ? row.hourly_rate : s.hourly_rate;
-        const monthly = row ? row.monthly_salary : s.monthly_salary;
-        map.set(s.id, effectiveHourlyRate(type, hourly, monthly));
+        if (row) {
+          const type = (row.employment_type ?? s.employment_type ?? "hourly") as EmploymentType;
+          const fromHistory = effectiveHourlyRate(type, row.hourly_rate, row.monthly_salary);
+          if (fromHistory !== null && fromHistory > 0) {
+            map.set(s.id, fromHistory);
+            return;
+          }
+        }
+        const fromEmployment = rateByStaff.get(s.id);
+        if (fromEmployment !== undefined) {
+          map.set(s.id, fromEmployment);
+          return;
+        }
+        map.set(
+          s.id,
+          effectiveHourlyRate((s.employment_type ?? "hourly") as EmploymentType, s.hourly_rate, s.monthly_salary),
+        );
+      });
+      // Personer som bara finns i registret får också sin lön via personalkort-id.
+      rateByStaff.forEach((rate, staffId) => {
+        if (!map.has(staffId)) map.set(staffId, rate);
       });
       return map;
     },
   });
 }
+
