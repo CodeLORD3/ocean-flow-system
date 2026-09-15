@@ -127,9 +127,10 @@ export default function TransformFlow({
         (s) =>
           s.product_id === product?.id &&
           Number(s.quantity) > 0 &&
-          (!storeId || s.storage_locations?.store_id === storeId),
+          (!storeId || s.storage_locations?.store_id === storeId) &&
+          (!allowedLevels?.length || allowedLevels.includes(s.storage_locations?.location_type)),
       ),
-    [allStock, product?.id, storeId],
+    [allStock, product?.id, storeId, allowedLevels],
   );
 
   useEffect(() => {
