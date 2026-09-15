@@ -20,6 +20,8 @@ import { formatHm, formatKrPrel, storeMonocode, minutesOfTime } from "@/lib/sche
 import { DayLaneView } from "@/components/schedule/DayLaneView";
 import { WeekGridView } from "@/components/schedule/WeekGridView";
 import { IndustryButton, SectionLabel } from "@/components/industry";
+import { StaffModuleNav } from "@/components/staff/StaffModuleNav";
+import { KpiCard, SegmentSwitch } from "@/components/staff/ui";
 import type { AbsenceMark, ActualMark, ComingGoingEvent, DayCell, ShiftCellItem, WeekRow } from "@/components/schedule/scheduleViewTypes";
 
 const DAY_NAMES = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
