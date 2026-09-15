@@ -355,13 +355,15 @@ export default function StockOverview({
       for (const o of pk.orders) {
         const qKg = qtyToKg(o.quantity, p);
         const qValue = o.quantity * unitCost;
-        kg += qKg;
-        value += qValue;
         const isPacked = o.kind === "packed";
+        // Flödet är beställt → packat. En rad räknas därför bara på ett ställe,
+        // annars visas samma kilon dubbelt i statistiken.
         if (isPacked) {
           packedKg += qKg;
           packedValue += qValue;
         } else {
+          kg += qKg;
+          value += qValue;
           const item =
             restItems.get(g.product_id) ??
             { productId: g.product_id, name: g.name, image_url: g.image_url, kg: 0, value: 0, orders: [] };
@@ -388,15 +390,16 @@ export default function StockOverview({
           kg: 0,
           value: 0,
         };
-        const entry = weeks.get(key) ?? { ...meta };
-        entry.kg += qKg;
-        entry.value += qValue;
-        weeks.set(key, entry);
         if (isPacked) {
           const pEntry = packedWeeks.get(key) ?? { ...meta };
           pEntry.kg += qKg;
           pEntry.value += qValue;
           packedWeeks.set(key, pEntry);
+        } else {
+          const entry = weeks.get(key) ?? { ...meta };
+          entry.kg += qKg;
+          entry.value += qValue;
+          weeks.set(key, entry);
         }
       }
     }
@@ -404,11 +407,14 @@ export default function StockOverview({
     const maxWeekKg = Math.max(1, ...list.map((w) => w.kg));
     const packedList = Array.from(packedWeeks.values()).sort((a, b) => a.key.localeCompare(b.key));
     return {
+      // kg/value = enbart det som ännu inte är packat
       kg,
       value,
       packedKg,
       packedValue,
-      restKg: Math.max(0, kg - packedKg),
+      restKg: kg,
+      totalKg: kg + packedKg,
+      totalValue: value + packedValue,
       kgPct: kpis.qty > 0 ? Math.min(100, (kg / kpis.qty) * 100) : 0,
       valuePct: kpis.value > 0 ? Math.min(100, (value / kpis.value) * 100) : 0,
       packedKgPct: kpis.qty > 0 ? Math.min(100, (packedKg / kpis.qty) * 100) : 0,
@@ -464,13 +470,13 @@ export default function StockOverview({
         <span className="flex min-w-0 items-center gap-2">
           <ClipboardList className="h-4 w-4 shrink-0 text-amber-500" />
           <span className="truncate text-sm font-semibold">Beställt av lagret</span>
-          {booked.kg > 0.005 && (
+          {booked.totalKg > 0.005 && (
             <span className="hidden font-mono text-xs tabular-nums text-amber-600 sm:inline">
               {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg kvar att packa
               <span className="text-muted-foreground">
                 {" "}
-                (av {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg beställt −{" "}
-                {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg packat)
+                (totalt beställt {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg, varav{" "}
+                {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg redan packat)
               </span>
             </span>
           )}
@@ -524,7 +530,7 @@ export default function StockOverview({
                 </p>
                 <p className="text-[10px] text-muted-foreground">
                   {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg kvar att packa av{" "}
-                  {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg beställt
+                  {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg beställt
                 </p>
               </div>
               {showCosts && (
@@ -678,7 +684,7 @@ export default function StockOverview({
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <ClipboardList className="h-3.5 w-3.5 text-amber-500" /> Beställt av lagret
+                  <ClipboardList className="h-3.5 w-3.5 text-amber-500" /> Beställt, kvar att packa
                 </p>
                 <p className="text-2xl font-heading font-bold tabular-nums text-amber-600">
                   {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
@@ -687,8 +693,8 @@ export default function StockOverview({
                   </span>
                 </p>
                 <p className="text-[10px] text-muted-foreground">
-                  {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg packat ·{" "}
-                  {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg kvar att packa
+                  Totalt beställt {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg, varav{" "}
+                  {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg flyttat till packat
                 </p>
               </div>
               {showCosts && (
