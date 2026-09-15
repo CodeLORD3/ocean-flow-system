@@ -348,35 +348,71 @@ export default function StaffSchedule() {
         </section>
 
 
-        <section className="sl-card overflow-hidden" aria-label="Schema">
-          {emptyState ? (
-            <div className="flex flex-col items-center px-6 py-14 text-center">
-              <span className="sl-kpi__icon sl-kpi__icon--blue" aria-hidden="true"><CalendarRange size={22} /></span>
-              <h2 className="sl-h2 mt-4">Ingen planering för vecka {isoWeek(mondayOf(anchor))}</h2>
-              <p className="mt-1 max-w-md text-[14px] sl-muted">Lägg till ett pass eller importera ett schema för att komma igång.</p>
-              <div className="mt-5 flex flex-wrap justify-center gap-2">
-                <button type="button" className="sl-btn sl-btn--primary" onClick={() => openDialog(null, days[0])}><Plus size={15} /> Börja tomt</button>
-                <button type="button" className="sl-btn" onClick={() => window.location.assign("/schedule-planner")}><Upload size={15} /> Importera schema</button>
-                <button type="button" className="sl-btn sl-btn--ghost" onClick={() => shiftPeriod(-1)}><Copy size={15} /> Föregående vecka</button>
+        <div className={inspectorData ? "grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]" : ""}>
+          <section className="sl-card overflow-hidden" aria-label="Schema">
+            {emptyState ? (
+              <div className="flex flex-col items-center px-6 py-14 text-center">
+                <span className="sl-kpi__icon sl-kpi__icon--blue" aria-hidden="true"><CalendarRange size={22} /></span>
+                <h2 className="sl-h2 mt-4">Ingen planering för vecka {isoWeek(mondayOf(anchor))}</h2>
+                <p className="mt-1 max-w-md text-[14px] sl-muted">Lägg till ett pass eller importera ett schema för att komma igång.</p>
+                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                  <button type="button" className="sl-btn sl-btn--primary" onClick={() => openDialog(null, days[0])}><Plus size={15} /> Börja tomt</button>
+                  <button type="button" className="sl-btn" onClick={() => window.location.assign("/schedule-planner")}><Upload size={15} /> Importera schema</button>
+                  <button type="button" className="sl-btn sl-btn--ghost" onClick={() => shiftPeriod(-1)}><Copy size={15} /> Föregående vecka</button>
+                </div>
               </div>
-            </div>
-          ) : view === "week" ? (
-            <WeekGridView rows={rows} days={days} today={dateKey()} onShiftClick={openDialog} onSalaryClick={(id) => setSalaryStaff(staff.find((person: any) => person.id === id) ?? null)} storeName={storeName} />
-          ) : (
-            <div className="ind p-3">
-              <DayLaneView day={selectedDay} rows={rows} events={dayEvents} onShiftClick={openDialog} onAdd={(staffId, day) => openDialog(staffId, day)} />
-            </div>
-          )}
-          {!emptyState && rows.length > 0 ? (
-            <footer className="flex flex-wrap items-center gap-4 border-t border-[var(--sl-line)] px-4 py-3 text-[13px] sl-muted">
-              <span className="flex items-center gap-2"><span className="sl-shift__dot" style={{ background: "var(--sl-blue-ink)" }} /> Planerat</span>
-              <span className="flex items-center gap-2"><span className="sl-shift__dot" style={{ background: "var(--sl-green-ink)" }} /> Stämplat</span>
-              <span className="flex items-center gap-2"><span className="sl-shift__dot" style={{ background: "var(--sl-yellow-ink)" }} /> Över avtal / väntar</span>
-              {missingRates > 0 ? <span className="flex items-center gap-2 text-[var(--sl-red-ink)]"><AlertTriangle size={13} /> {missingRates} person(er) saknar löneunderlag</span> : null}
-            </footer>
+            ) : view === "week" ? (
+              <WeekGridView
+                rows={rows}
+                days={days}
+                today={dateKey()}
+                coverage={coverage}
+                selectedShiftId={selectedShiftId}
+                onShiftClick={handleShiftClick}
+                onSalaryClick={(id) => setSalaryStaff(staff.find((person: any) => person.id === id) ?? null)}
+                storeName={storeName}
+              />
+            ) : (
+              <div className="ind p-3">
+                <DayLaneView
+                  day={selectedDay}
+                  rows={rows}
+                  events={dayEvents}
+                  coverage={hourCoverage}
+                  gap={gap}
+                  selectedShiftId={selectedShiftId}
+                  onShiftClick={handleShiftClick}
+                  onAdd={(staffId, day) => openDialog(staffId, day)}
+                />
+              </div>
+            )}
+            {!emptyState && rows.length > 0 ? (
+              <footer className="flex flex-wrap items-center gap-4 border-t border-[var(--sl-line)] px-4 py-3 text-[13px] sl-muted">
+                <span className="flex items-center gap-2"><span className="sl-status-dot" style={{ background: "var(--sl-blue-ink)" }} /> Planerat</span>
+                <span className="flex items-center gap-2"><span className="sl-status-dot" style={{ background: "var(--sl-green-ink)" }} /> Stämplat</span>
+                <span className="flex items-center gap-2"><span className="sl-status-dot" style={{ background: "var(--sl-red-ink)" }} /> Bryter vilotid</span>
+                <span className="sl-faint">Enheter visas som grå kod, färg betyder status</span>
+                {missingRates > 0 ? <span className="flex items-center gap-2 text-[var(--sl-red-ink)]"><AlertTriangle size={13} /> {missingRates} person(er) saknar löneunderlag</span> : null}
+              </footer>
+            ) : null}
+          </section>
+          {inspectorData ? (
+            <ShiftInspector
+              data={inspectorData}
+              onClose={() => setSelectedShiftId(null)}
+              onEdit={() => {
+                const shift = visibleShifts.find((item) => item.id === inspectorData.shiftId);
+                if (shift) openDialog(shift.staff_id, shift.shift_date, shift.id);
+              }}
+              onDelete={() => {
+                deleteShift.mutate(inspectorData.shiftId);
+                setSelectedShiftId(null);
+              }}
+            />
           ) : null}
-        </section>
+        </div>
       </div>
+
 
       <PlannedShiftDialog open={dialogOpen} onOpenChange={setDialogOpen} storeId={dialogStore ?? stores[0]?.id ?? ""} storeName={storeName(dialogStore)} day={dialogDay} editing={editing} />
       <StaffSalaryDialog open={!!salaryStaff} onOpenChange={(open) => !open && setSalaryStaff(null)} staff={salaryStaff} />
