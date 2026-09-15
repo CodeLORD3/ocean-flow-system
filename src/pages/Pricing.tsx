@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import SavedPriceLists from "@/components/SavedPriceLists";
 import StockPricePoster from "@/components/pricing/StockPricePoster";
 import { ReferencePricesPanel } from "@/components/pricing/ReferencePricesPanel";
+import PricingRulesPanel from "@/components/pricing/PricingRulesPanel";
 import { effectiveCost, COST_SOURCE_LABEL } from "@/lib/effectiveCost";
 
 interface InlineEdit {
@@ -391,6 +392,8 @@ export default function Pricing() {
           </SelectContent>
         </Select>
       </div>
+
+      <PricingRulesPanel isShop={isShop} />
 
       <StockPricePoster />
 
