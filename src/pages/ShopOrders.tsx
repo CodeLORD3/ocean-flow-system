@@ -666,6 +666,9 @@ export default function ShopOrders() {
                     quantity: String(l.quantity_ordered || ""),
                     category: l.products?.category || null,
                     image_url: l.products?.image_url ?? null,
+                    priority: normalizePriority(l.priority),
+                    priorityQty: l.priority_qty != null ? String(l.priority_qty) : "",
+                    priorityNote: l.priority_note || "",
                   }));
 
                   setOrderLines(copied);
