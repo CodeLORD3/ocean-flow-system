@@ -22,16 +22,18 @@ export function KpiCard({
   label: string;
   value: ReactNode;
   tone?: SlTone;
-  icon: ReactNode;
+  icon?: ReactNode;
   history?: ReactNode;
   diff?: ReactNode;
   diffDirection?: "up" | "down" | null;
 }) {
   return (
     <div className="sl-card sl-kpi">
-      <span className={`sl-kpi__icon sl-kpi__icon--${tone}`} aria-hidden="true">
-        {icon}
-      </span>
+      {icon ? (
+        <span className={`sl-kpi__icon sl-kpi__icon--${tone}`} aria-hidden="true">
+          {icon}
+        </span>
+      ) : null}
       <div className="min-w-0">
         <div className="sl-label">{label}</div>
         <div className="sl-kpi__value sl-num mt-1 truncate">{value}</div>
