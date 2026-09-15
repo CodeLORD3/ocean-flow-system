@@ -154,16 +154,20 @@ export default function ProductNetworkGraph({
     },
   });
 
+  const tomPlats = ["00000000-0000-0000-0000-000000000000"];
+
   const { data: stockRows = [] } = useQuery({
-    queryKey: ["product_network_stock"],
+    queryKey: ["product_network_stock", locationIds],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let qy = supabase
         .from("product_stock_locations")
         .select(
           "product_id, quantity, expiry_date, storage_locations(name, stores!storage_locations_store_id_fkey(name))",
         )
         .neq("quantity", 0)
         .limit(3000);
+      if (locationIds) qy = qy.in("location_id", locationIds.length ? locationIds : tomPlats);
+      const { data, error } = await qy;
       if (error) throw error;
       return (data || []).map((r: any) => ({
         productId: r.product_id,
