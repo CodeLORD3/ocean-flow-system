@@ -27,6 +27,8 @@ type Point = {
   storeId: string;
   name: string;
   city: string | null;
+  address: string | null;
+
   /** [lat, lon] — Leaflet-ordning. */
   position: [number, number];
   kg: number;
@@ -151,6 +153,8 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
         storeId: s.id,
         name: s.name,
         city: s.city ?? null,
+        address: s.address ?? null,
+
         position: [lat, lon],
         kg: 0,
         value: 0,
@@ -303,6 +307,13 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
                     <span className="text-[11px] font-semibold">{p.name}</span>
                     {p.city ? <span className="text-[10px]"> · {p.city}</span> : null}
                     <br />
+                    {p.address ? (
+                      <>
+                        <span className="text-[10px] text-muted-foreground">{p.address}</span>
+                        <br />
+                      </>
+                    ) : null}
+
                     <span className="font-mono text-[10px] tabular-nums">
                       {has ? `${kgFmt(p.kg)} · ${p.articles} artiklar` : "tomt lager"}
                     </span>
