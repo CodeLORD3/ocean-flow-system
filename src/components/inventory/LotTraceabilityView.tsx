@@ -172,7 +172,12 @@ function tidsKolumn(iso?: string | null) {
  * Spårbarhet i två tydliga steg: först söker man fram produkt eller kategori
  * och väljer parti i listan, sedan öppnas partiets hela flöde på egen yta.
  */
-export default function LotTraceabilityView({ currency = "SEK", showCosts = true, onEmptyAction }: Props) {
+export default function LotTraceabilityView({
+  currency = "SEK",
+  showCosts = true,
+  onEmptyAction,
+  storeId = null,
+}: Props) {
   const [q, setQ] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<"flode" | "graf" | "historik" | "natverk">("flode");
