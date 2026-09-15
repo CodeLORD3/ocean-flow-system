@@ -409,6 +409,33 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
     </div>
   );
 
+  /** Sammanfattning för vald enhet på kartan — vikt, värde, nivåer, topplista. */
+  const storeSummary = useMemo(() => {
+    const rows = mapStore
+      ? (stock || []).filter((r: any) => r.storage_locations?.store_id === mapStore && qtyOf(r) > 0)
+      : [];
+    const levels: Record<string, number> = {};
+    let kgSum = 0;
+    let valSum = 0;
+    rows.forEach((r: any) => {
+      const lvl = (r.storage_locations?.location_type as LocationLevel) || "butik";
+      const k = kgOf(r);
+      kgSum += k;
+      valSum += valueOf(r);
+      levels[lvl] = (levels[lvl] || 0) + k;
+    });
+    return {
+      kg: kgSum,
+      value: valSum,
+      articles: rows.length,
+      levels: Object.entries(levels).sort((a, b) => b[1] - a[1]),
+      top: rows.slice().sort((a: any, b: any) => kgOf(b) - kgOf(a)).slice(0, 5),
+      inTransit: mapStore
+        ? activeTransfers.filter((t: any) => t.to_location?.store_id === mapStore).length
+        : 0,
+    };
+  }, [mapStore, stock, activeTransfers]);
+
   const transportStores = useMemo(() => {
     const ids = new Set<string>();
     (byLevel["leveranslager"] || []).forEach((s: any) => {
