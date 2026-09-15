@@ -516,10 +516,12 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                       </button>
                     );
                   })}
-                </div>
+                 </div>
+               )}
+                </>
               )}
-            </div>
-          )}
+             </div>
+           )}
 
           {/* STEG 2 — hela flödet för det valda partiet */}
           {!isLoading && lot && (
