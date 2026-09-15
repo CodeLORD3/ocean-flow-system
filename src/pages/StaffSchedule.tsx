@@ -226,77 +226,85 @@ export default function StaffSchedule() {
   const emptyState = visibleShifts.length === 0 && !plannedLoading && !staffLoading;
 
   return (
-    <motion.main initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="ind min-h-full p-3 sm:p-5">
+    <motion.main initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="staff-light min-h-full overflow-auto px-3 pb-8 sm:px-5">
+      <StaffModuleNav />
       <div className="mx-auto max-w-[1600px]">
-        <header className="ind-workspace-header ind-corners px-4 py-4 sm:px-6">
-          <span className="ind-corner-b" aria-hidden="true" />
-          <div className="ind-schedule-topline">
-            <div>
-              <SectionLabel className="text-[var(--color-accent-200)]">Makrill Trade · Personal & schema</SectionLabel>
-              <h1 className="ind-h1 mt-1 text-[var(--color-neutral-100)]">Schemaöversikt</h1>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="ind-view-switch" role="group" aria-label="Välj schemavy">
-                <IndustryButton className={view === "week" ? "ind-view-switch__item--active" : "ind-view-switch__item"} variant="ghost" aria-pressed={view === "week"} onClick={() => setView("week")}><Table2 size={15} /> Vecka</IndustryButton>
-                <IndustryButton className={view === "day" ? "ind-view-switch__item--active" : "ind-view-switch__item"} variant="ghost" aria-pressed={view === "day"} onClick={() => { setView("day"); setDayViewDate(days[0]); }}><CalendarDays size={15} /> Dag</IndustryButton>
-              </div>
-              <IndustryButton variant="primary" corners onClick={() => openDialog(null, selectedDay)}><Plus size={15} /> Planera pass</IndustryButton>
-            </div>
+        <header className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <span className="sl-label">Makrill Trade · Personal &amp; schema</span>
+            <h1 className="sl-h1 mt-1">Schema</h1>
+            <p className="mt-1 text-[14px] sl-muted">Vecka {isoWeek(mondayOf(anchor))} · {days[0]} – {days[6]}</p>
           </div>
-          <div className="ind-schedule-controls">
-            <div className="ind-period-control" aria-label="Period">
-              <IndustryButton variant="ghost" onClick={() => shiftPeriod(-1)} aria-label="Föregående vecka"><ChevronLeft size={17} /></IndustryButton>
-              <Input type="date" aria-label="Välj datum" className="ind-input ind-date-control" value={view === "day" ? dayViewDate : anchor} onChange={(event) => { const value = event.target.value || dateKey(); setAnchor(value); setDayViewDate(value); }} />
-              <IndustryButton variant="ghost" onClick={() => shiftPeriod(1)} aria-label="Nästa vecka"><ChevronRight size={17} /></IndustryButton>
-            </div>
-            <div className="ind-period-label"><span className="ind-num">V{isoWeek(mondayOf(anchor))}</span><span>{days[0]} – {days[6]}</span></div>
-            <IndustryButton variant="secondary" onClick={() => { const today = dateKey(); setAnchor(today); setDayViewDate(today); }}>Idag</IndustryButton>
-            <span className="ind-control-divider" aria-hidden="true" />
-            <div className="ind-filter-group">
-              <span className="ind-filter-label">Visa</span>
-              <Select value={cityFilter} onValueChange={(value) => { setCityFilter(value); setStoreFilter("all"); }}>
-                <SelectTrigger className="ind-select w-40"><SelectValue placeholder="Alla städer" /></SelectTrigger>
-                <SelectContent><SelectItem value="all">Alla städer</SelectItem>{cities.map((city) => <SelectItem key={city} value={city}>{city}</SelectItem>)}</SelectContent>
-              </Select>
-              <Select value={storeFilter} onValueChange={setStoreFilter}>
-                <SelectTrigger className="ind-select w-48"><SelectValue placeholder="Alla enheter" /></SelectTrigger>
-                <SelectContent><SelectItem value="all">Alla enheter</SelectItem>{stores.filter((store: any) => cityFilter === "all" || store.city === cityFilter).map((store: any) => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <SegmentSwitch<"week" | "day">
+              value={view}
+              onChange={(next) => { setView(next); if (next === "day") setDayViewDate(days[0]); }}
+              ariaLabel="Välj schemavy"
+              options={[{ value: "week", label: "Vecka" }, { value: "day", label: "Dag" }]}
+            />
+            <button type="button" className="sl-btn sl-btn--primary" onClick={() => openDialog(null, selectedDay)}><Plus size={15} /> Planera pass</button>
           </div>
         </header>
 
-        <section className="ind-decision mt-4" aria-label="Beslutsrad">
-          <div className="ind-metric"><SectionLabel>Planerad tid</SectionLabel><p className="ind-decision__value ind-num">{formatHm(weekMinutes)}</p></div>
-          <div className="ind-metric"><SectionLabel>Arbetad tid</SectionLabel><p className="ind-decision__value ind-num">{formatHm(actualMinutes)}</p></div>
-          <div className="ind-metric"><SectionLabel>Personalkostnad</SectionLabel><p className="ind-decision__value ind-num">{weekCost > 0 ? formatKrPrel(weekCost) : "—"}</p></div>
-          <div className="ind-metric"><SectionLabel>Arbete / omsättning</SectionLabel><p className={`ind-decision__value ind-num ${laborRatio === null ? "ind-muted" : laborRatio <= 20 ? "ind-status--ok" : "ind-status--alert"}`}>{laborRatio === null ? "—" : `${laborRatio.toFixed(1)} %`}</p></div>
-          <div className="ind-decision__action"><SectionLabel>Åtgärd krävs</SectionLabel><p className={`ind-decision__value ind-num ${extraCount > 0 || missingRates > 0 ? "ind-status--alert" : "ind-status--ok"}`}>{extraCount + missingRates || "0"}</p><span className="text-xs ind-muted">{extraCount ? `${extraCount} över avtal` : missingRates ? `${missingRates} utan lön` : "Inget akut"}</span></div>
-        </section>
-
-        <div className="ind-section-heading mt-5">
-          <div><SectionLabel>{view === "week" ? "Veckoplan" : "Dagens bemanning"}</SectionLabel><h2 className="ind-h3 mt-1">{view === "week" ? "Bemanning per dag" : "Bemanning över dagen"}</h2></div>
-          {overhead.data ? <span className="ind-meta-chip ind-num">Påslag {overhead.data} %</span> : null}
+        <div className="sl-card mb-4 flex flex-wrap items-center gap-2 p-3">
+          <div className="flex items-center gap-1">
+            <button type="button" className="sl-btn sl-btn--icon" onClick={() => shiftPeriod(-1)} aria-label="Föregående vecka"><ChevronLeft size={17} /></button>
+            <Input type="date" aria-label="Välj datum" className="h-9 w-[150px] rounded-lg border-[var(--sl-line)] bg-white text-[14px]" value={view === "day" ? dayViewDate : anchor} onChange={(event) => { const value = event.target.value || dateKey(); setAnchor(value); setDayViewDate(value); }} />
+            <button type="button" className="sl-btn sl-btn--icon" onClick={() => shiftPeriod(1)} aria-label="Nästa vecka"><ChevronRight size={17} /></button>
+          </div>
+          <button type="button" className="sl-btn" onClick={() => { const today = dateKey(); setAnchor(today); setDayViewDate(today); }}>Idag</button>
+          <span className="mx-1 hidden h-6 w-px bg-[var(--sl-line)] sm:block" aria-hidden="true" />
+          <Select value={cityFilter} onValueChange={(value) => { setCityFilter(value); setStoreFilter("all"); }}>
+            <SelectTrigger className="h-9 w-40 rounded-lg border-[var(--sl-line)] bg-white text-[14px]"><SelectValue placeholder="Alla städer" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">Alla städer</SelectItem>{cities.map((city) => <SelectItem key={city} value={city}>{city}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select value={storeFilter} onValueChange={setStoreFilter}>
+            <SelectTrigger className="h-9 w-48 rounded-lg border-[var(--sl-line)] bg-white text-[14px]"><SelectValue placeholder="Alla enheter" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">Alla enheter</SelectItem>{stores.filter((store: any) => cityFilter === "all" || store.city === cityFilter).map((store: any) => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}</SelectContent>
+          </Select>
+          {overhead.data ? <span className="sl-pill sl-pill--neutral ml-auto">Påslag {overhead.data} %</span> : null}
         </div>
 
-        <section className="ind-workspace mt-3" aria-label="Schema">
+        <section className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Nyckeltal">
+          <KpiCard label="Planerad tid" tone="blue" value={formatHm(weekMinutes)} />
+          <KpiCard label="Arbetad tid" tone="green" value={formatHm(actualMinutes)} />
+          <KpiCard label="Personalkostnad" tone="yellow" value={weekCost > 0 ? formatKrPrel(weekCost) : "—"} />
+          <KpiCard label="Arbete / omsättning" tone="purple" value={laborRatio === null ? "—" : `${laborRatio.toFixed(1)} %`} />
+          <KpiCard
+            label="Åtgärd krävs"
+            tone={extraCount + missingRates > 0 ? "yellow" : "green"}
+            value={String(extraCount + missingRates)}
+            history={extraCount ? `${extraCount} över avtal` : missingRates ? `${missingRates} utan lön` : "Inget akut"}
+          />
+        </section>
+
+        <section className="sl-card overflow-hidden" aria-label="Schema">
           {emptyState ? (
-            <div className="ind-empty-state">
-              <CalendarRange size={28} />
-              <h2 className="ind-h3 mt-3">Ingen planering för vecka {isoWeek(mondayOf(anchor))}</h2>
-              <p className="mt-1 max-w-md text-sm ind-muted">Lägg till ett pass eller importera ett schema för att komma igång.</p>
+            <div className="flex flex-col items-center px-6 py-14 text-center">
+              <span className="sl-kpi__icon sl-kpi__icon--blue" aria-hidden="true"><CalendarRange size={22} /></span>
+              <h2 className="sl-h2 mt-4">Ingen planering för vecka {isoWeek(mondayOf(anchor))}</h2>
+              <p className="mt-1 max-w-md text-[14px] sl-muted">Lägg till ett pass eller importera ett schema för att komma igång.</p>
               <div className="mt-5 flex flex-wrap justify-center gap-2">
-                <IndustryButton variant="primary" onClick={() => openDialog(null, days[0])}><Plus size={15} /> Börja tomt</IndustryButton>
-                <IndustryButton variant="secondary" onClick={() => window.location.assign("/schedule-planner")}><Upload size={15} /> Importera schema</IndustryButton>
-                <IndustryButton variant="ghost" onClick={() => shiftPeriod(-1)}><Copy size={15} /> Föregående vecka</IndustryButton>
+                <button type="button" className="sl-btn sl-btn--primary" onClick={() => openDialog(null, days[0])}><Plus size={15} /> Börja tomt</button>
+                <button type="button" className="sl-btn" onClick={() => window.location.assign("/schedule-planner")}><Upload size={15} /> Importera schema</button>
+                <button type="button" className="sl-btn sl-btn--ghost" onClick={() => shiftPeriod(-1)}><Copy size={15} /> Föregående vecka</button>
               </div>
             </div>
           ) : view === "week" ? (
             <WeekGridView rows={rows} days={days} today={dateKey()} onShiftClick={openDialog} onSalaryClick={(id) => setSalaryStaff(staff.find((person: any) => person.id === id) ?? null)} storeName={storeName} />
           ) : (
-            <DayLaneView day={selectedDay} rows={rows} events={dayEvents} onShiftClick={openDialog} onAdd={(staffId, day) => openDialog(staffId, day)} />
+            <div className="ind p-3">
+              <DayLaneView day={selectedDay} rows={rows} events={dayEvents} onShiftClick={openDialog} onAdd={(staffId, day) => openDialog(staffId, day)} />
+            </div>
           )}
-          {!emptyState && rows.length > 0 ? <footer className="ind-schema-footer"><span><span className="ind-legend-dot ind-legend-dot--accent" /> Planerat</span><span><span className="ind-legend-dot ind-legend-dot--ok" /> Stämplat</span><span><span className="ind-legend-dot ind-legend-dot--warn" /> Över avtal / väntar</span>{missingRates > 0 ? <span className="ind-footer-alert"><AlertTriangle size={13} /> {missingRates} person(er) saknar löneunderlag</span> : null}</footer> : null}
+          {!emptyState && rows.length > 0 ? (
+            <footer className="flex flex-wrap items-center gap-4 border-t border-[var(--sl-line)] px-4 py-3 text-[13px] sl-muted">
+              <span className="flex items-center gap-2"><span className="sl-shift__dot" style={{ background: "var(--sl-blue-ink)" }} /> Planerat</span>
+              <span className="flex items-center gap-2"><span className="sl-shift__dot" style={{ background: "var(--sl-green-ink)" }} /> Stämplat</span>
+              <span className="flex items-center gap-2"><span className="sl-shift__dot" style={{ background: "var(--sl-yellow-ink)" }} /> Över avtal / väntar</span>
+              {missingRates > 0 ? <span className="flex items-center gap-2 text-[var(--sl-red-ink)]"><AlertTriangle size={13} /> {missingRates} person(er) saknar löneunderlag</span> : null}
+            </footer>
+          ) : null}
         </section>
       </div>
 
