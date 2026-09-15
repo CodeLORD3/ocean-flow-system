@@ -231,7 +231,22 @@ export default function AllProductsHistoryTree({
                       <span className="text-right font-mono tabular-nums text-foreground">{nf(n.balance)}</span>
                     </button>
 
-                    {isOpen && (
+                    {isOpen && shape === "graph" && (
+                      <div className="border-l-2 border-border/60 bg-muted/20 px-2 py-2 sm:ml-4">
+                        <ProductMovementDag
+                          productName={n.name}
+                          branches={n.branches.map((b) => ({
+                            key: b.key,
+                            label: b.label,
+                            lotId: b.lotId,
+                            events: b.events,
+                          }))}
+                          onTraceLot={onTraceLot}
+                        />
+                      </div>
+                    )}
+
+                    {isOpen && shape === "list" && (
                       <div className="space-y-1 border-l-2 border-border/60 bg-muted/20 px-2 py-1.5 sm:ml-4">
                         {n.branches.map((b) => {
                           const bk = `${n.productId}:${b.key}`;
