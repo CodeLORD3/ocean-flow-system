@@ -391,6 +391,8 @@ export default function Pricing() {
         </Select>
       </div>
 
+      {isShop && <StockPricePoster />}
+
       {isShop && <SavedPriceLists />}
 
       <ReferencePricesPanel />
