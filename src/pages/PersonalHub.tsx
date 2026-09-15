@@ -117,7 +117,7 @@ export default function PersonalHub() {
               </p>
             </div>
           </div>
-          <SegmentSwitch
+          <SegmentSwitch<"today" | "yesterday">
             value={which}
             onChange={setWhich}
             ariaLabel="Dag"
