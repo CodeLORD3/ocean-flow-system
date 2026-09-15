@@ -214,6 +214,7 @@ export default function StockOverview({
       return next;
     });
   const [showStats, setShowStats] = useState(false);
+  const [showPacked, setShowPacked] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(30);
 
@@ -338,7 +339,9 @@ export default function StockOverview({
     let kg = 0;
     let value = 0;
     let packedKg = 0;
+    let packedValue = 0;
     const weeks = new Map<string, { key: string; label: string; range: string; kg: number; value: number }>();
+    const packedWeeks = new Map<string, { key: string; label: string; range: string; kg: number; value: number }>();
     for (const g of filtered) {
       const pk = packedByProduct?.get(g.product_id);
       if (!pk) continue;
@@ -349,37 +352,52 @@ export default function StockOverview({
         const qValue = o.quantity * unitCost;
         kg += qKg;
         value += qValue;
-        if (o.kind === "packed") packedKg += qKg;
+        const isPacked = o.kind === "packed";
+        if (isPacked) {
+          packedKg += qKg;
+          packedValue += qValue;
+        }
         const d = o.wantedDate ? parseISO(o.wantedDate) : null;
         const start = d ? startOfISOWeek(d) : null;
         const key = start ? format(start, "yyyy-MM-dd") : "utan-datum";
-        const entry =
-          weeks.get(key) ??
-          {
-            key,
-            label: d ? `v. ${getISOWeek(d)}` : "Utan datum",
-            range: start
-              ? `${format(start, "d MMM", { locale: sv })} – ${format(endOfISOWeek(start), "d MMM", { locale: sv })}`
-              : "Leveransdatum saknas",
-            kg: 0,
-            value: 0,
-          };
+        const meta = {
+          key,
+          label: d ? `v. ${getISOWeek(d)}` : "Utan datum",
+          range: start
+            ? `${format(start, "d MMM", { locale: sv })} – ${format(endOfISOWeek(start), "d MMM", { locale: sv })}`
+            : "Leveransdatum saknas",
+          kg: 0,
+          value: 0,
+        };
+        const entry = weeks.get(key) ?? { ...meta };
         entry.kg += qKg;
         entry.value += qValue;
         weeks.set(key, entry);
+        if (isPacked) {
+          const pEntry = packedWeeks.get(key) ?? { ...meta };
+          pEntry.kg += qKg;
+          pEntry.value += qValue;
+          packedWeeks.set(key, pEntry);
+        }
       }
     }
     const list = Array.from(weeks.values()).sort((a, b) => a.key.localeCompare(b.key));
     const maxWeekKg = Math.max(1, ...list.map((w) => w.kg));
+    const packedList = Array.from(packedWeeks.values()).sort((a, b) => a.key.localeCompare(b.key));
     return {
       kg,
       value,
       packedKg,
+      packedValue,
       restKg: Math.max(0, kg - packedKg),
       kgPct: kpis.qty > 0 ? Math.min(100, (kg / kpis.qty) * 100) : 0,
       valuePct: kpis.value > 0 ? Math.min(100, (value / kpis.value) * 100) : 0,
+      packedKgPct: kpis.qty > 0 ? Math.min(100, (packedKg / kpis.qty) * 100) : 0,
+      packedValuePct: kpis.value > 0 ? Math.min(100, (packedValue / kpis.value) * 100) : 0,
       weeks: list,
       maxWeekKg,
+      packedWeeks: packedList,
+      maxPackedWeekKg: Math.max(1, ...packedList.map((w) => w.kg)),
     };
   }, [filtered, packedByProduct, productsById, kpis.qty, kpis.value]);
 
@@ -443,6 +461,96 @@ export default function StockOverview({
           )}
         </span>
       </button>
+
+      {/* Övertext: packat av lagret — samma upplägg som beställt */}
+      <button
+        type="button"
+        onClick={() => setShowPacked((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 rounded-md border border-amber-500/30 bg-amber-500/[0.04] px-3 py-2 text-left transition-colors hover:bg-amber-500/[0.08]"
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <Package className="h-4 w-4 shrink-0 text-amber-500" />
+          <span className="truncate text-sm font-semibold">Packat av lagret</span>
+          {booked.packedKg > 0.005 && (
+            <span className="hidden font-mono text-xs tabular-nums text-amber-600 sm:inline">
+              {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg ·{" "}
+              {booked.packedKgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
+              {showCosts ? ` · ${fmt(booked.packedValue)}` : ""}
+            </span>
+          )}
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+          {showPacked ? "Dölj statistik" : "Visa statistik"}
+          {showPacked ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </span>
+      </button>
+
+      {showPacked && (
+        <Card className="shadow-card border-amber-500/30 bg-amber-500/[0.04]">
+          <CardContent className="space-y-3 p-3">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Package className="h-3.5 w-3.5 text-amber-500" /> Packat av lagret
+                </p>
+                <p className="font-heading text-2xl font-bold tabular-nums text-amber-600">
+                  {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                  <span className="ml-2 text-sm font-semibold text-muted-foreground">
+                    {booked.packedKgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
+                  </span>
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg kvar att packa av{" "}
+                  {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg beställt
+                </p>
+              </div>
+              {showCosts && (
+                <div className="text-right">
+                  <p className="text-[11px] text-muted-foreground">Packat lagervärde</p>
+                  <p className="font-heading text-xl font-bold tabular-nums text-amber-600">
+                    {fmt(booked.packedValue)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {booked.packedValuePct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av{" "}
+                    {fmt(kpis.value)}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-amber-500" style={{ width: `${booked.packedKgPct}%` }} />
+            </div>
+            {booked.packedWeeks.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Per leveransvecka</p>
+                {booked.packedWeeks.map((w) => (
+                  <div
+                    key={w.key}
+                    className="flex items-center gap-2 rounded-md border border-border/60 bg-background/60 px-2 py-1.5"
+                  >
+                    <span className="w-14 shrink-0 text-xs font-semibold">{w.label}</span>
+                    <span className="hidden w-32 shrink-0 truncate text-[10px] text-muted-foreground sm:block">
+                      {w.range}
+                    </span>
+                    <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                      <span
+                        className="block h-full rounded-full bg-amber-400"
+                        style={{ width: `${(w.kg / booked.maxPackedWeekKg) * 100}%` }}
+                      />
+                    </span>
+                    <span className="shrink-0 text-right font-mono text-xs tabular-nums">
+                      {w.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                      {showCosts && (
+                        <span className="block text-[10px] text-muted-foreground">{fmt(w.value)}</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPI-kort — alltid synliga ovanför lagerlistan */}
       {compactKpis ? (
