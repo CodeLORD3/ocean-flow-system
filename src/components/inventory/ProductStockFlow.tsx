@@ -15,6 +15,7 @@ import {
   YAxis,
 } from "recharts";
 import { movementLabel } from "@/hooks/useStockMovements";
+import { formatDuration, sinceNow } from "@/lib/dwell";
 
 const nf = (n: number, d = 1) =>
   Number(n)
