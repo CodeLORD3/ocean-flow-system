@@ -1460,6 +1460,26 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
     setAltSearch("");
   };
 
+  /** Ett klick: föreslå syskonvaran som butiken kan få i stället. */
+  const proposeMatch = async (line: any, alt: { id: string; name: string }) => {
+    await createChange.mutateAsync({
+      shop_order_id: order.id,
+      order_line_id: line.id,
+      change_type: "product_alternative",
+      product_id: alt.id,
+      old_value: line.product_id,
+      new_value: alt.name,
+      unit: line.unit || line.products?.unit || "ST",
+      requested_by: "grossist",
+    });
+    toast({
+      title: "Matchning föreslagen",
+      description: `"${alt.name}" föreslagen i stället för "${line.products?.name}".`,
+    });
+  };
+
+
+
   const filteredProducts = useMemo(() => {
     if (!allProducts) return [];
     const s = altSearch.toLowerCase();
