@@ -206,3 +206,47 @@ export function applyRounding(iso: string, profile: ClockProfile): string {
 export type PunchType = "in" | "ut" | "rast_start" | "rast_slut";
 
 export const PUNCH_TYPES: PunchType[] = ["in", "ut", "rast_start", "rast_slut"];
+
+/** En journalrad så som klockan behöver läsa den. */
+export interface JournalRow {
+  id?: string;
+  employee_id?: string;
+  type: string;
+  occurred_at: string;
+  corrects_entry_id?: string | null;
+  correction_kind?: string | null;
+}
+
+/**
+ * Journalen är append-only: rättelser läggs som nya rader. Klockan måste därför
+ * räkna bort både makulerade original och själva makuleringsraderna, annars
+ * läser den en struken stämpling som personens nuvarande läge (och erbjuder då
+ * bara "in" fast personen är instämplad, eller tvärtom). Rader med framtida
+ * tid får aldrig heller styra nuläget.
+ */
+export function effectiveEntries<T extends JournalRow>(rows: T[], now = Date.now()): T[] {
+  const voided = new Set<string>();
+  const superseded = new Set<string>();
+  for (const r of rows) {
+    if (!r.corrects_entry_id) continue;
+    if (r.correction_kind === "void") voided.add(r.corrects_entry_id);
+    else superseded.add(r.corrects_entry_id);
+  }
+  return rows
+    .filter((r) => {
+      if (r.correction_kind === "void") return false;
+      if (r.id && (voided.has(r.id) || superseded.has(r.id))) return false;
+      return new Date(r.occurred_at).getTime() <= now;
+    })
+    .sort((a, b) => new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime());
+}
+
+/** Senaste gällande stämpling för en person, eller null. */
+export function effectiveLast<T extends JournalRow>(rows: T[], now = Date.now()): T | null {
+  const list = effectiveEntries(rows, now);
+  return list.length ? list[list.length - 1] : null;
+}
+
+/** Är personen inne på ett öppet pass just nu? */
+export const isOpenShift = (type: string | null | undefined) =>
+  type === "in" || type === "rast_start" || type === "rast_slut";
