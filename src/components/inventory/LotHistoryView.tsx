@@ -60,6 +60,35 @@ export default function LotHistoryView({ currency = "SEK" }: { currency?: string
 
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap gap-1">
+        <Button
+          variant={view === "tree" ? "default" : "outline"}
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => setView("tree")}
+        >
+          Träd — alla produkter
+        </Button>
+        <Button
+          variant={view === "list" ? "default" : "outline"}
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => setView("list")}
+        >
+          Lista
+        </Button>
+      </div>
+
+      {view === "tree" && (
+        <AllProductsHistoryTree
+          onTraceLot={(lotId, label) => {
+            setTraceLotId(lotId);
+            setTraceLabel(label);
+          }}
+        />
+      )}
+
+      {view === "list" && (
       <div className="relative max-w-md">
         <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -69,6 +98,8 @@ export default function LotHistoryView({ currency = "SEK" }: { currency?: string
           className="h-9 pl-7 text-sm"
         />
       </div>
+      )}
+
 
       {traceLotId && (
         <Card className="shadow-card">
