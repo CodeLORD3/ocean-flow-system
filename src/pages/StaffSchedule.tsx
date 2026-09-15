@@ -162,14 +162,17 @@ export default function StaffSchedule() {
       const cells: DayCell[] = days.map((day) => {
         const cellShifts = shiftsByCell.get(`${person.id}|${day}`) ?? [];
         const actual = actualMap.get(`${person.id}|${day}`) ?? null;
-        const shifts: ShiftCellItem[] = cellShifts.map((shift) => ({
-          shift,
-          code: "PASS",
-          storeName: storeName(shift.store_id),
-          status: "published",
-          violation: null,
-          costPrel: costForShift(shift),
-        }));
+        const shifts: ShiftCellItem[] = cellShifts.map((shift) => {
+          const rule = restMap.get(shift.id) ?? null;
+          return {
+            shift,
+            code: "PASS",
+            storeName: storeName(shift.store_id),
+            status: rule ? "violation" : "published",
+            violation: rule?.short ?? null,
+            costPrel: costForShift(shift),
+          };
+        });
         return {
           day,
           shifts,
