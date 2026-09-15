@@ -74,6 +74,19 @@ export default function LotChainGraph({
   const in_ = noder.filter((n) => n.kg > 0).reduce((s, n) => s + n.kg, 0);
   const ut = noder.filter((n) => n.kg < 0).reduce((s, n) => s + Math.abs(n.kg), 0);
 
+  // Var ligger partiet just nu: saldo per lagerplats, senaste händelse per plats.
+  const perPlats = new Map<string, { kg: number; senast: string }>();
+  for (const n of noder) {
+    const namn = n.m.storage_locations?.name || "Plats saknas";
+    const rad = perPlats.get(namn) ?? { kg: 0, senast: n.m.created_at };
+    rad.kg += n.kg;
+    if (new Date(n.m.created_at) > new Date(rad.senast)) rad.senast = n.m.created_at;
+    perPlats.set(namn, rad);
+  }
+  const platser = [...perPlats.entries()]
+    .filter(([, v]) => Math.abs(v.kg) > 0.001)
+    .sort((a, b) => b[1].kg - a[1].kg);
+
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
       <div className="rounded-md border border-border bg-background">
