@@ -1016,7 +1016,9 @@ export default function StockOverview({
                                 const packedKg = pk ? qtyToKg(pk.packed, master) : 0;
                                 const orderedKg = pk ? qtyToKg(pk.ordered, master) : 0;
                                 const packedPct = g.totalKg > 0 ? Math.min(100, (packedKg / g.totalKg) * 100) : 0;
-                                const freeKg = Math.max(0, g.totalKg - packedKg);
+                                 const freeKg = Math.max(0, g.totalKg - packedKg);
+                                 const bookedKg = packedKg + orderedKg;
+                                 const bookedPct = g.totalKg > 0 ? Math.min(100, (bookedKg / g.totalKg) * 100) : 0;
                                 const unitCost = g.totalQty > 0 ? g.value / g.totalQty : 0;
                                 const nf = (v: number, d = 1) =>
                                   v.toLocaleString("sv-SE", { maximumFractionDigits: d });
