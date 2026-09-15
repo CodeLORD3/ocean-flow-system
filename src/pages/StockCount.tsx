@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ClipboardCheck, Check, Lock, Printer, Download, Search, Plus, Package, RefreshCw, ChevronDown, ChevronRight, Camera, Loader2, CalendarClock, MessageSquare } from "lucide-react";
+import { ClipboardCheck, Check, Lock, Printer, Download, Search, Plus, Package, RefreshCw, ChevronDown, ChevronRight, Camera, Loader2, CalendarClock, MessageSquare, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -605,6 +605,26 @@ export default function StockCount() {
     [session?.id, locked, qc, toast, date],
   );
 
+  /** Tar bort en vara helt från inventeringen — feltryck ska kunna ångras. */
+  const removeCountedLine = useCallback(
+    async (row: Row) => {
+      if (!session?.id || locked) return;
+      const { error } = await supabase
+        .from("stock_count_lines")
+        .delete()
+        .eq("session_id", session.id)
+        .eq("product_id", row.productId)
+        .eq("location_id", row.locationId);
+      if (error) {
+        toast({ title: "Kunde inte ta bort", description: error.message, variant: "destructive" });
+        return;
+      }
+      qc.invalidateQueries({ queryKey: ["stock_count_lines", session.id] });
+      toast({ title: "Varan togs bort", description: row.productName });
+    },
+    [session?.id, locked, qc, toast],
+  );
+
   /** Ej räknade rader med saldo nollas i ett svep — inget lämnas tyst. */
   const zeroSkippedRows = useCallback(async () => {
     if (!session?.id || locked || !lockSummary.skipped.length) return;
@@ -1190,6 +1210,19 @@ export default function StockCount() {
                                      productName={r.productName}
                                      disabled={locked || !session}
                                    />
+                                   {/* Feltryck ska kunna tas bort direkt i inmatningen */}
+                                   {line?.counted_qty !== null && line?.counted_qty !== undefined && (
+                                     <button
+                                       type="button"
+                                       disabled={locked || !session}
+                                       title="Ta bort varan från inventeringen"
+                                       aria-label="Ta bort varan från inventeringen"
+                                       onClick={() => removeCountedLine(r)}
+                                       className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-destructive/40 text-destructive disabled:opacity-50"
+                                     >
+                                       <Trash2 className="h-3 w-3" />
+                                     </button>
+                                   )}
                                 </div>
                                 {detail && (
                                   <div className="flex items-center gap-1 border-t border-border/60 px-1.5 py-1 sm:hidden">
@@ -1277,10 +1310,11 @@ export default function StockCount() {
                     const quality = (line?.quality ?? "") as string;
                     return (
                       <div key={r.key} className="border-x border-b border-grid-line bg-card">
+                        <div className="flex w-full items-center">
                         <button
                           type="button"
                           onClick={() => setEditKey(editKey === r.key ? null : r.key)}
-                          className="flex w-full items-center px-1.5 py-0.5 text-left hover:bg-muted/50"
+                          className="flex min-w-0 flex-1 items-center px-1.5 py-0.5 text-left hover:bg-muted/50"
                         >
                           <span className="min-w-0 flex-1 truncate border-r border-grid-line/70 pr-1.5 text-[11px] font-medium">
                             {r.productName}
@@ -1301,6 +1335,21 @@ export default function StockCount() {
                             {fmtQty(counted, r.unit)}
                           </span>
                         </button>
+                        {/* Ta bort varan direkt från den färdiga listan */}
+                        <button
+                          type="button"
+                          disabled={locked || !session}
+                          title="Ta bort varan från inventeringen"
+                          aria-label="Ta bort varan från inventeringen"
+                          onClick={() => {
+                            removeCountedLine(r);
+                            if (editKey === r.key) setEditKey(null);
+                          }}
+                          className="flex h-7 w-8 shrink-0 items-center justify-center border-l border-grid-line/70 text-destructive hover:bg-destructive/10 disabled:opacity-40"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                        </div>
 
                         {editKey === r.key && (
                           <div className="flex items-center gap-1 bg-muted/30 px-2 py-1.5">
@@ -1336,7 +1385,7 @@ export default function StockCount() {
                               disabled={locked || !session}
                               className="h-7 shrink-0 px-1.5 text-[10px] text-destructive"
                               onClick={() => {
-                                saveLine(r, { counted_qty: null });
+                                removeCountedLine(r);
                                 setEditKey(null);
                               }}
                             >
