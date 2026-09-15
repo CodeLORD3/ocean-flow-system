@@ -470,13 +470,13 @@ export default function StockOverview({
         <span className="flex min-w-0 items-center gap-2">
           <ClipboardList className="h-4 w-4 shrink-0 text-amber-500" />
           <span className="truncate text-sm font-semibold">Beställt av lagret</span>
-          {booked.kg > 0.005 && (
+          {booked.totalKg > 0.005 && (
             <span className="hidden font-mono text-xs tabular-nums text-amber-600 sm:inline">
               {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg kvar att packa
               <span className="text-muted-foreground">
                 {" "}
-                (av {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg beställt −{" "}
-                {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg packat)
+                (totalt beställt {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg, varav{" "}
+                {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg redan packat)
               </span>
             </span>
           )}
