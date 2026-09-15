@@ -36,6 +36,7 @@ import { useStores } from "@/hooks/useStores";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
 import { OrdererName } from "@/components/orders/OrdererName";
+import { LinePriorityBadge } from "@/components/orders/linePriority";
 import { useCustomerNeedByProduct, useOrderHistoryStats, useOutstandingOrdered } from "@/hooks/usePurchaseReconciliation";
 import { addDays, mondayOf, weekRange } from "@/lib/purchaseReconciliation";
 import { useProducts } from "@/hooks/useProducts";
