@@ -352,8 +352,15 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
       });
       kopia.sort((a, b) => ordning.indexOf(namnAv(a)) - ordning.indexOf(namnAv(b)));
     }
+    /** Utan sökning ligger allt som finns i lager först, slutsålda partier sist. */
+    if (!q.trim() && !kategori && !valdProdukt) {
+      kopia.sort((a, b) => Number(arLive(b)) - Number(arLive(a)));
+    }
     return kopia;
-  }, [matchade, valdProdukt, sort, senasteHandelse, q]);
+  }, [matchade, valdProdukt, sort, senasteHandelse, partiSaldo, kategori, q]);
+
+  /** Antal partier som finns respektive är slut, i aktuell lista. */
+  const liveAntal = useMemo(() => filtered.filter((l) => arLive(l)).length, [filtered, partiSaldo]);
 
 
   const lot = useMemo(() => lots.find((l) => l.id === selectedId) ?? null, [lots, selectedId]);
