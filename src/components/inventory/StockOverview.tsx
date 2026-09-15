@@ -361,6 +361,20 @@ export default function StockOverview({
         if (isPacked) {
           packedKg += qKg;
           packedValue += qValue;
+        } else {
+          const item =
+            restItems.get(g.product_id) ??
+            { productId: g.product_id, name: g.name, image_url: g.image_url, kg: 0, value: 0, orders: [] };
+          item.kg += qKg;
+          item.value += qValue;
+          item.orders.push({
+            orderId: o.orderId,
+            orderNumber: o.orderNumber,
+            customerName: o.customerName,
+            wantedDate: o.wantedDate,
+            kg: qKg,
+          });
+          restItems.set(g.product_id, item);
         }
         const d = o.wantedDate ? parseISO(o.wantedDate) : null;
         const start = d ? startOfISOWeek(d) : null;
