@@ -1326,67 +1326,80 @@ export default function StockOverview({
                               {(() => {
                                 const pk = packedByProduct?.get(g.product_id);
                                 if (!pk || pk.orders.length === 0) return null;
-                                return (
-                                  <div className="rounded-md border border-amber-500/40 bg-amber-400/10 px-2.5 py-1.5">
-                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] uppercase tracking-wider text-amber-700">
-                                      <span>
-                                        Packat
-                                        <span className="ml-1 font-mono text-[11px] font-semibold tabular-nums">
-                                          {pk.packed.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit}
-                                        </span>
-                                      </span>
-                                      <span className="text-muted-foreground">
-                                        Beställt
-                                        <span className="ml-1 font-mono text-[11px] font-semibold tabular-nums">
-                                          {pk.ordered.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit}
-                                        </span>
-                                      </span>
-                                    </div>
-                                    <div className="mt-1 flex flex-col gap-1">
-                                      {pk.orders.map((o, i) => (
-                                        <button
-                                          type="button"
-                                          key={`${o.orderId}-${o.kind}-${i}`}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            const q = `order=${o.orderId}&line=${g.product_id}&from=stock&t=${Date.now()}`;
-                                            navigate(
-                                              site === "shop"
-                                                ? `/customer-orders?${q}`
-                                                : `/orders?${q}`,
-                                            );
-                                          }}
-                                          className="flex w-full items-center gap-2 whitespace-nowrap rounded px-1 py-0.5 text-left text-xs hover:bg-amber-400/20"
-                                          title="Öppna ordern"
-                                        >
-                                          <span
-                                            className={cn(
-                                              "h-1.5 w-1.5 rounded-full",
-                                              o.kind === "packed" ? "bg-amber-500" : "bg-muted-foreground/50",
-                                            )}
-                                          />
-                                          <span className="truncate font-semibold">{o.customerName}</span>
-                                          {o.wantedDate && (
-                                            <Badge variant="outline" className="h-5 text-[10px]">
-                                              {format(parseISO(o.wantedDate), "d MMM", { locale: sv })}
-                                            </Badge>
-                                          )}
-                                          <span className="text-[10px] text-muted-foreground">
-                                            {o.kind === "packed" ? "packat" : "beställt"}
-                                          </span>
-                                          <span
-                                            className={cn(
-                                              "ml-auto font-mono font-semibold tabular-nums",
-                                              o.kind === "packed" ? "text-amber-700" : "text-muted-foreground",
-                                            )}
-                                          >
-                                            {o.quantity.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {o.unit}
-                                          </span>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                );
+                                 const openOrder = (o: any) => {
+                                   const q = `order=${o.orderId}&line=${g.product_id}&from=stock&t=${Date.now()}`;
+                                   navigate(site === "shop" ? `/customer-orders?${q}` : `/orders?${q}`);
+                                 };
+                                 const groups = [
+                                   {
+                                     kind: "packed" as const,
+                                     title: "Packat",
+                                     qty: pk.packed,
+                                     rows: pk.orders.filter((o) => o.kind === "packed"),
+                                     wrap: "border-amber-500/50 bg-amber-400/15",
+                                     dot: "bg-amber-500",
+                                     head: "text-amber-700",
+                                     hover: "hover:bg-amber-400/25",
+                                     note: "packat – på väg ut",
+                                   },
+                                   {
+                                     kind: "ordered" as const,
+                                     title: "Beställt",
+                                     qty: pk.ordered,
+                                     rows: pk.orders.filter((o) => o.kind !== "packed"),
+                                     wrap: "border-border bg-muted/50",
+                                     dot: "bg-muted-foreground/60",
+                                     head: "text-muted-foreground",
+                                     hover: "hover:bg-muted",
+                                     note: "beställt – ej packat",
+                                   },
+                                 ].filter((gr) => gr.rows.length > 0 || gr.qty > 0.005);
+                                 return (
+                                   <div className="grid gap-2 rounded-md border border-amber-500/30 bg-amber-500/[0.04] p-2 sm:grid-cols-2">
+                                     {groups.map((gr) => (
+                                       <div key={gr.kind} className={cn("rounded-md border px-2.5 py-1.5", gr.wrap)}>
+                                         <div className={cn("flex items-center gap-2 text-[10px] uppercase tracking-wider", gr.head)}>
+                                           <span className={cn("h-2 w-2 rounded-full", gr.dot)} />
+                                           <span className="font-semibold">{gr.title}</span>
+                                           <span className="ml-auto font-mono text-xs font-bold tabular-nums">
+                                             {gr.qty.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit}
+                                           </span>
+                                         </div>
+                                         <div className="mt-1 flex flex-col gap-1">
+                                           {gr.rows.map((o, i) => (
+                                             <button
+                                               type="button"
+                                               key={`${o.orderId}-${o.kind}-${i}`}
+                                               onClick={(e) => {
+                                                 e.stopPropagation();
+                                                 openOrder(o);
+                                               }}
+                                               className={cn(
+                                                 "flex w-full items-center gap-2 whitespace-nowrap rounded px-1 py-0.5 text-left text-xs",
+                                                 gr.hover,
+                                               )}
+                                               title="Öppna ordern"
+                                             >
+                                               <span className="truncate font-semibold">{o.customerName}</span>
+                                               {o.wantedDate && (
+                                                 <Badge variant="outline" className="h-5 text-[10px]">
+                                                   {format(parseISO(o.wantedDate), "d MMM", { locale: sv })}
+                                                 </Badge>
+                                               )}
+                                               <span className={cn("ml-auto font-mono font-semibold tabular-nums", gr.head)}>
+                                                 {o.quantity.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {o.unit}
+                                               </span>
+                                             </button>
+                                           ))}
+                                           {gr.rows.length === 0 && (
+                                             <span className="px-1 text-[10px] text-muted-foreground">Inga rader</span>
+                                           )}
+                                         </div>
+                                         <p className="mt-1 px-1 text-[10px] text-muted-foreground">{gr.note}</p>
+                                       </div>
+                                     ))}
+                                   </div>
+                                 );
                               })()}
 
                               {g.lines.map((l) => {
