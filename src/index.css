@@ -226,3 +226,33 @@
 .leaflet-tooltip.store-name-label::before {
   display: none;
 }
+/* ---- Prislista som affisch (samma stil som butikens handskrivna tavla) ---- */
+.poster-sheet {
+  background: #ffffff;
+  color: #111111;
+}
+.poster-marker {
+  font-family: "Permanent Marker", "Bebas Neue", system-ui, sans-serif;
+  color: #10329b;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+}
+.poster-hand {
+  font-family: "Caveat", "Segoe Script", cursive;
+  color: #111111;
+}
+.poster-rule {
+  background: #2f7fe6;
+  border-radius: 999px;
+}
+.poster-row-line {
+  border-bottom: 1.5px solid #6fb0f0;
+}
+.poster-price {
+  font-family: "Caveat", "Segoe Script", cursive;
+  color: #e01414;
+  font-weight: 700;
+}
+.poster-divider {
+  background: #1a49b8;
+}
