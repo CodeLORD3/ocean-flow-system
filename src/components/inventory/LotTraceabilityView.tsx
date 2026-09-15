@@ -20,7 +20,7 @@ import {
   Store,
   ShoppingBasket,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import LineageGraphView from "@/components/inventory/LineageGraphView";
 import { EmptyState } from "@/components/EmptyState";
 import LotDocumentsPanel from "@/components/inventory/LotDocumentsPanel";
