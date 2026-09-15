@@ -1310,12 +1310,18 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
     detailParams.get("order") === order.id ? detailParams.get("line") : null;
   React.useEffect(() => {
     if (!highlightProductId) return;
-    const t = setTimeout(() => {
-      document
-        .getElementById(`order-line-${order.id}-${highlightProductId}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 450);
-    return () => clearTimeout(t);
+    let tries = 0;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const tick = () => {
+      const el = document.getElementById(`order-line-${order.id}-${highlightProductId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      if (tries++ < 25) timers.push(setTimeout(tick, 200));
+    };
+    timers.push(setTimeout(tick, 400));
+    return () => timers.forEach(clearTimeout);
   }, [highlightProductId, order.id]);
   const { data: infiniteStock = true } = useQuery({
     queryKey: ["infinite_stock"],
@@ -1504,7 +1510,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   currentStatus === "Beställd" ? "bg-accent/20" :
                   currentStatus === "Pågående" ? "bg-warning/10" :
                   ""
-                } ${highlightProductId === line.product_id ? "ring-2 ring-inset ring-warning bg-warning/25" : ""}`}>
+                } ${highlightProductId === line.product_id ? "!bg-warning/30 ring-2 ring-inset ring-warning font-semibold" : ""}`}>
                    <td className="min-w-0 px-2 py-0.5 font-medium text-foreground">
                      <div className="flex min-w-0 items-center gap-2">
                        <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="h-5 w-7 shrink-0" />
