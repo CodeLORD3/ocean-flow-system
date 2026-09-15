@@ -1036,35 +1036,51 @@ export default function StockOverview({
                                           </span>
                                         </p>
                                       </div>
-                                      <div className="flex flex-wrap items-center gap-3 text-[11px]">
-                                        <span className="text-emerald-600">
-                                          Kan säljas{" "}
-                                          <span className="font-mono font-semibold tabular-nums">{nf(freeKg)} kg</span>
+                                      {showCosts && (
+                                        <span className="text-[11px] text-muted-foreground">
+                                          Värde{" "}
+                                          <span className="font-mono font-semibold tabular-nums">{fmt(g.value)}</span>
                                         </span>
-                                        {packedKg > 0.005 && (
-                                          <span className="text-amber-600">
-                                            Packat{" "}
-                                            <span className="font-mono font-semibold tabular-nums">
-                                              {nf(packedKg)} kg ({nf(packedPct, 0)} %)
-                                            </span>
+                                      )}
+                                    </div>
+
+                                    {/* Nyckeltal: totalt, beställt, packat, kvar */}
+                                    <div className="mb-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                                      <div className="rounded-md border border-border/60 bg-muted/30 px-2 py-1.5">
+                                        <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                                          Totalt i lager
+                                        </p>
+                                        <p className="font-mono text-sm font-bold tabular-nums">{nf(g.totalKg)} kg</p>
+                                      </div>
+                                      <div className="rounded-md border border-foreground/20 bg-foreground/5 px-2 py-1.5">
+                                        <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                                          Beställt totalt
+                                        </p>
+                                        <p className="font-mono text-sm font-bold tabular-nums">
+                                          {nf(bookedKg)} kg
+                                          <span className="ml-1 text-[10px] font-medium text-muted-foreground">
+                                            {nf(bookedPct, 0)} %
                                           </span>
-                                        )}
-                                        {orderedKg > 0.005 && (
-                                          <span className="text-muted-foreground">
-                                            Beställt kvar{" "}
-                                            <span className="font-mono font-semibold tabular-nums">
-                                              {nf(orderedKg)} kg
-                                            </span>
+                                        </p>
+                                      </div>
+                                      <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5">
+                                        <p className="text-[9px] uppercase tracking-wider text-amber-700">
+                                          Packat
+                                        </p>
+                                        <p className="font-mono text-sm font-bold tabular-nums text-amber-700">
+                                          {nf(packedKg)} kg
+                                          <span className="ml-1 text-[10px] font-medium">
+                                            {nf(packedPct, 0)} %
                                           </span>
-                                        )}
-                                        {showCosts && (
-                                          <span className="text-muted-foreground">
-                                            Värde{" "}
-                                            <span className="font-mono font-semibold tabular-nums">
-                                              {fmt(g.value)}
-                                            </span>
-                                          </span>
-                                        )}
+                                        </p>
+                                      </div>
+                                      <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5">
+                                        <p className="text-[9px] uppercase tracking-wider text-emerald-700">
+                                          Kvar att sälja
+                                        </p>
+                                        <p className="font-mono text-sm font-bold tabular-nums text-emerald-700">
+                                          {nf(Math.max(0, g.totalKg - bookedKg))} kg
+                                        </p>
                                       </div>
                                     </div>
 
@@ -1105,6 +1121,28 @@ export default function StockOverview({
                                           </div>
                                         );
                                       })}
+                                    </div>
+
+                                    {/* Förklaring till stapelns zoner */}
+                                    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-muted-foreground">
+                                      <span className="flex items-center gap-1.5">
+                                        <span className="h-2.5 w-2.5 rounded-sm bg-amber-400" /> Packat {nf(packedKg)} kg
+                                      </span>
+                                      <span className="flex items-center gap-1.5">
+                                        <span className="h-2.5 w-2.5 rounded-sm bg-foreground/30" /> Beställt kvar{" "}
+                                        {nf(orderedKg)} kg
+                                      </span>
+                                      <span className="flex items-center gap-1.5">
+                                        <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> Fritt{" "}
+                                        {nf(Math.max(0, g.totalKg - bookedKg))} kg
+                                      </span>
+                                      <span className="ml-auto">
+                                        Differans mot beställt:{" "}
+                                        <span className="font-mono font-semibold tabular-nums text-foreground">
+                                          {g.totalKg - bookedKg >= 0 ? "+" : "−"}
+                                          {nf(Math.abs(g.totalKg - bookedKg))} kg
+                                        </span>
+                                      </span>
                                     </div>
 
                                     <div className="mt-2 grid gap-1 sm:grid-cols-2">
