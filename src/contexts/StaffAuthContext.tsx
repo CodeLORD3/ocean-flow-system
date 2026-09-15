@@ -40,14 +40,28 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [staff, setStaff] = useState<StaffProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [staffLoading, setStaffLoading] = useState(true);
   const [lastError, setLastError] = useState<string | null>(null);
+  // Laddning är klar först när både session OCH behörighet är avgjord —
+  // annars hinner gaten se en tom profil vid omladdning och kasta till portalvalet.
+  const loading = sessionLoading || staffLoading;
 
   const loadStaff = async (uid: string | undefined) => {
     if (!uid) {
       setStaff(null);
+      setStaffLoading(false);
       return;
     }
+    setStaffLoading(true);
+    try {
+      await fetchStaff(uid);
+    } finally {
+      setStaffLoading(false);
+    }
+  };
+
+  const fetchStaff = async (uid: string) => {
     // Behörigheten bor i user_scopes. Vyn staff_access sätter ihop personalen
     // med sina scopes, så klienten har ett enda begrepp att läsa.
     // Hämtningen får inte tysta misslyckas — då blir portalvalet tomt.
@@ -92,13 +106,14 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
       // Defer Supabase call out of the auth callback
       setTimeout(() => loadStaff(sess?.user?.id), 0);
       // Aldrig fastna i evig snurra — även misslyckad förnyelse släpper laddning
-      setLoading(false);
+      setSessionLoading(false);
+      if (!sess?.user) setStaffLoading(false);
     });
 
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      loadStaff(sess?.user?.id).finally(() => setLoading(false));
+      loadStaff(sess?.user?.id).finally(() => setSessionLoading(false));
     });
 
     return () => subscription.unsubscribe();
@@ -113,6 +128,7 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setUser(null);
     setStaff(null);
+    setStaffLoading(false);
   };
 
   const signOut = async () => {
