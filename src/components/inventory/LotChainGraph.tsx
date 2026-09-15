@@ -106,7 +106,7 @@ export default function LotChainGraph({
                     x2={n.x}
                     y2={n.y}
                     stroke="currentColor"
-                    className={n.gren ? "text-destructive/50" : "text-foreground/40"}
+                    className={n.gren ? "text-rose-500/60" : "text-emerald-600/50"}
                     strokeWidth={n.gren ? 1 : 1.5}
                   />
                 )}
