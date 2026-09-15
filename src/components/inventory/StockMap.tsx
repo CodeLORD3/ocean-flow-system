@@ -102,6 +102,17 @@ function FlyTo({ position, zoom }: { position: [number, number] | null; zoom: nu
   return null;
 }
 
+/** Ramar in alla enheter vid start så inget ställe hamnar utanför kartan. */
+function FitAll({ positions }: { positions: [number, number][] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (positions.length === 0) return;
+    map.fitBounds(positions, { padding: [40, 40] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, positions.length]);
+  return null;
+}
+
 /** Håller reda på zoomnivån för visning i hörnet. */
 function ZoomReadout({ onChange }: { onChange: (z: number) => void }) {
   const map = useMap();
