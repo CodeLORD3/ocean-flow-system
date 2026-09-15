@@ -546,17 +546,36 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                 />
               ) : (
                 <div className="max-h-[calc(100dvh-20rem)] min-h-[240px] overflow-y-auto rounded-md border border-border">
-                  {filtered.map((l) => {
+                  {filtered.map((l, i) => {
                     const d = dagarKvar(l.best_before);
                     const kg = Number(l.quantity_kg || 0);
                     const varde = l.unit_cost != null ? kg * Number(l.unit_cost) : null;
                     const andrad = senasteHandelse[l.id];
+                    const tidsstampel = sort === "andrad" ? andrad || l.created_at : l.created_at;
+                    const grupp = tidsGrupp(tidsstampel);
+                    const foregaende = i === 0 ? null : filtered[i - 1];
+                    const foregGrupp = foregaende
+                      ? tidsGrupp(sort === "andrad" ? senasteHandelse[foregaende.id] || foregaende.created_at : foregaende.created_at)
+                      : null;
+                    const visaRubrik =
+                      ["senaste", "aldst", "andrad"].includes(sort) && grupp.key !== foregGrupp?.key;
+                    const kol = tidsKolumn(tidsstampel);
                     return (
+                      <div key={l.id}>
+                        {visaRubrik && (
+                          <p className="sticky top-0 z-10 border-b border-border/60 bg-muted/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur">
+                            {grupp.label}
+                          </p>
+                        )}
                       <button
-                        key={l.id}
                         onClick={() => setSelectedId(l.id)}
                         className="flex w-full items-center gap-3 border-b border-border/60 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/40"
                       >
+                        <div className="w-[74px] shrink-0 border-r border-border/60 pr-2 font-mono text-[10px] leading-tight tabular-nums text-muted-foreground">
+                          <p className="font-semibold text-foreground">{kol.veckodag}</p>
+                          <p>{kol.datum}</p>
+                          <p>{kol.tid}</p>
+                        </div>
                         <span className={`h-8 w-1 shrink-0 rounded-full ${hallbarhetsFarg(d).split(" ")[0]}`} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-foreground">
