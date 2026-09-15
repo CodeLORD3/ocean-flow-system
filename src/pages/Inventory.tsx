@@ -1965,7 +1965,7 @@ export default function Inventory() {
                         {subs.map((sub: any) => {
                           const isSubOpen = !!openSubLocations[sub.id];
                           return (
-                            <div key={sub.id} className="border border-border/50 rounded-md overflow-hidden">
+                            <div key={sub.id} className="border border-border/50 rounded-md sm:overflow-visible overflow-hidden">
                               <div className="flex items-center gap-1.5 bg-muted/20 pl-2">
                                 <Checkbox
                                   checked={!!printSel[sub.id]}
@@ -2052,7 +2052,7 @@ export default function Inventory() {
 
 
                       return (
-                        <div key={loc.id} className="mb-1.5 border border-border/50 rounded-md overflow-hidden">
+                        <div key={loc.id} className="mb-1.5 border border-border/50 rounded-md sm:overflow-visible overflow-hidden">
                           <div className="flex items-center gap-1.5 bg-muted/30 pl-2">
                             <Checkbox
                               checked={!!printSel[loc.id]}
@@ -2196,7 +2196,7 @@ export default function Inventory() {
 
                       const isParentOpen = openSubLocations[loc.id] !== false;
                       return (
-                        <div key={loc.id} className="mb-1.5 border border-border/50 rounded-md overflow-hidden">
+                        <div key={loc.id} className="mb-1.5 border border-border/50 rounded-md sm:overflow-visible overflow-hidden">
                           <div className="flex items-center gap-1.5 bg-muted/30 pl-2">
                             <Checkbox
                               checked={!!printSel[loc.id]}
