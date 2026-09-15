@@ -737,6 +737,11 @@ export default function StockOverview({
                                     {packedPct >= 99.5 ? " (allt)" : ""}
                                   </span>
                                 )}
+                                {pk && pk.ordered > 0.005 && (
+                                  <span className="font-mono tabular-nums text-muted-foreground">
+                                    {pk.ordered.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {pk.unit} beställt
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
