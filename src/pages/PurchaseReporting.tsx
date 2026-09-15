@@ -1444,7 +1444,16 @@ export default function PurchaseReporting() {
         toast({ title: "Följesedel bearbetad", description: `${parsedProducts.length} produkter extraherade.` });
       } catch (err: any) {
         console.error(err);
-        toast({ title: "Fel", description: err.message || "Kunde inte bearbeta filen.", variant: "destructive" });
+        const reason = await edgeErrorMessage(err, "Kunde inte bearbeta filen.");
+        if (createdReportId) {
+          // Rapporten får aldrig ligga kvar som "Bearbetar" när tolkningen brutit.
+          await supabase
+            .from("purchase_reports")
+            .update({ status: "Fel", notes: reason } as any)
+            .eq("id", createdReportId);
+          queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
+        }
+        toast({ title: "Fel", description: reason, variant: "destructive" });
       } finally {
         setUploading(false);
         setParsing(false);
