@@ -444,9 +444,7 @@ export default function StockOverview({
         </span>
       </button>
 
-      {showStats && (
-        <div className="space-y-3">
-      {/* KPI-kort */}
+      {/* KPI-kort — alltid synliga ovanför lagerlistan */}
       {compactKpis ? (
         <div className="grid grid-cols-2 gap-2 sm:max-w-md">
           <Card className="shadow-card">
@@ -537,6 +535,10 @@ export default function StockOverview({
         </Card>
       </div>
       )}
+
+      {showStats && (
+        <div className="space-y-3">
+
 
       {/* Beställt av lagret — kilo, andel och lagervärde per leveransvecka */}
       {booked.kg > 0.005 && (
