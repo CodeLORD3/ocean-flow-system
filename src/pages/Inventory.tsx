@@ -1142,27 +1142,31 @@ export default function Inventory() {
           <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
         </td>
         <td className="px-1.5 py-0 font-medium text-foreground">
-          <div className="flex items-center gap-1.5">
-            {s.products?.name}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="truncate">{s.products?.name}</span>
             {fifoIssue && (
-              <span title="FIFO-varning: äldre batch finns på annat lagerställe">
+              <span title="FIFO-varning: äldre batch finns på annat lagerställe" className="shrink-0">
                 <AlertCircle className="h-3 w-3 text-amber-500" />
               </span>
             )}
           </div>
         </td>
-        <td className="px-1.5 py-0 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
-        <td className="px-1.5 py-0 text-right font-medium text-foreground">
+        <td className="px-1.5 py-0 font-mono text-muted-foreground text-[10px] truncate">{s.products?.sku}</td>
+        <td className="px-1.5 py-0 text-right font-medium text-foreground font-mono tabular-nums whitespace-nowrap">
           {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
         </td>
-        {showCosts && <td className="px-1.5 py-0 text-right text-muted-foreground">{fmt(value)}</td>}
-        <td className="px-1.5 py-0 text-center text-[10px] text-muted-foreground">
+        {showCosts && (
+          <td className="px-1.5 py-0 text-right text-muted-foreground font-mono tabular-nums whitespace-nowrap">
+            {fmt(value)}
+          </td>
+        )}
+        <td className="px-1.5 py-0 text-right text-[10px] text-muted-foreground font-mono tabular-nums whitespace-nowrap">
           {s.arrival_date ? format(parseISO(s.arrival_date), "d MMM", { locale: sv }) : "–"}
         </td>
-        <td className="px-1.5 py-0 text-center text-[10px] text-muted-foreground">
+        <td className="px-1.5 py-0 text-right text-[10px] text-muted-foreground font-mono tabular-nums whitespace-nowrap">
           {s.expiry_date ? format(parseISO(s.expiry_date), "d MMM", { locale: sv }) : "–"}
         </td>
-        <td className="px-1.5 py-0 text-center">
+        <td className="px-1.5 py-0 text-right">
           {freshness ? (
             <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
               {freshness.isExpired ? (
@@ -1222,19 +1226,29 @@ export default function Inventory() {
 
             {/* Desktop: tabell med kategorirubriker */}
             <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-[10px] min-w-[560px]">
-                <thead>
-                  <tr className="bg-muted/20 h-5">
-                    <th className="px-1.5 py-0 w-6"></th>
+              <table className="w-full table-fixed text-[10px] min-w-[560px]">
+                <colgroup>
+                  <col className="w-7" />
+                  <col />
+                  <col className="w-24" />
+                  <col className="w-24" />
+                  {showCosts && <col className="w-24" />}
+                  <col className="w-20" />
+                  <col className="w-20" />
+                  <col className="w-24" />
+                </colgroup>
+                <thead className="sticky top-[52px] z-10">
+                  <tr className="h-6 bg-background/95 backdrop-blur border-b border-border/60">
+                    <th className="px-1.5 py-0"></th>
                     <th className="px-1.5 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
                     <th className="px-1.5 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
                     <th className="px-1.5 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Antal</th>
                     {showCosts && (
                       <th className="px-1.5 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Värde</th>
                     )}
-                    <th className="px-1.5 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ank.</th>
-                    <th className="px-1.5 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">B.före</th>
-                    <th className="px-1.5 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Färskh.</th>
+                    <th className="px-1.5 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ank.</th>
+                    <th className="px-1.5 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">B.före</th>
+                    <th className="px-1.5 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Färskh.</th>
                   </tr>
                 </thead>
                 {cats.map(([cat, list]) => {
