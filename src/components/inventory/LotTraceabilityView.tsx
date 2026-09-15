@@ -113,7 +113,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
       </div>
 
       {mode === "graf" && <LineageGraphView currency={currency} startLotId={openId} />}
-      {mode === "historik" && <LotHistoryView />}
+      {mode === "historik" && <LotHistoryView currency={currency} />}
 
       {mode === "lista" && (
       <>
