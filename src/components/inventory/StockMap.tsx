@@ -120,6 +120,33 @@ function FitAll({ positions }: { positions: [number, number][] }) {
   return null;
 }
 
+/**
+ * Sidan ska kunna skrollas fritt: hjulzoom är av tills man klickar i kartan,
+ * och stängs av igen när pekaren lämnar den.
+ */
+function WheelZoomOnClick({ onChange }: { onChange: (on: boolean) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    map.scrollWheelZoom.disable();
+    onChange(false);
+    const on = () => {
+      map.scrollWheelZoom.enable();
+      onChange(true);
+    };
+    const off = () => {
+      map.scrollWheelZoom.disable();
+      onChange(false);
+    };
+    map.on("click", on);
+    map.on("mouseout", off);
+    return () => {
+      map.off("click", on);
+      map.off("mouseout", off);
+    };
+  }, [map, onChange]);
+  return null;
+}
+
 /** Håller reda på zoomnivån för visning i hörnet. */
 function ZoomReadout({ onChange }: { onChange: (z: number) => void }) {
   const map = useMap();
