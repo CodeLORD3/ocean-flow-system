@@ -12,6 +12,9 @@ interface Props {
   /** Rader från product_stock_locations med storage_locations + products. */
   stock: any[];
   showValue?: boolean;
+  /** Vald enhet — styrs utifrån när kartan ersätter enhetsrutorna. */
+  selectedStoreId?: string | null;
+  onSelect?: (storeId: string | null) => void;
 }
 
 type Point = {
