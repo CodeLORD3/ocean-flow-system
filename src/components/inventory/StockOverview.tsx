@@ -46,6 +46,7 @@ import ProductStockFlow from "@/components/inventory/ProductStockFlow";
 import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 import FamilyStockView from "@/components/inventory/FamilyStockView";
 import { useProductFamilies, useOrderedByProduct } from "@/hooks/useProductFamilies";
+import { usePackedByProduct } from "@/hooks/usePackedByProduct";
 import { useProductPhotoCounts } from "@/hooks/useEntityImages";
 import { useSite } from "@/contexts/SiteContext";
 import { Layers } from "lucide-react";
@@ -182,6 +183,8 @@ export default function StockOverview({
   const { activeStoreId } = useSite();
   const { data: families = [] } = useProductFamilies();
   const { data: orderedByProduct } = useOrderedByProduct(activeStoreId || null);
+  /** Packat till kundbeställningar — visas som gul andel i lagerstapeln. */
+  const { data: packedByProduct } = usePackedByProduct(activeStoreId || null);
   /** Antal bilder per produkt — visas som kameraikon med siffra i raden. */
   const { data: photoCounts } = useProductPhotoCounts(
     useMemo(() => rows.map((r) => r.product_id), [rows]),
