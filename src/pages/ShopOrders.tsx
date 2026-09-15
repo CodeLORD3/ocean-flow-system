@@ -1361,6 +1361,13 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                               <div className="flex items-center gap-1">
                                 <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="w-7 h-5" />
                                 <span>{line.products?.name || "–"}</span>
+                                <LinePriorityBadge
+                                  priority={line.priority}
+                                  qty={line.priority_qty}
+                                  unit={line.unit || line.products?.unit}
+                                  note={line.priority_note}
+                                  showLabel={false}
+                                />mt
                                 <OrderPhotosButton
                                   compact
                                   entityType={ORDER_LINE_PHOTO_ENTITY}
