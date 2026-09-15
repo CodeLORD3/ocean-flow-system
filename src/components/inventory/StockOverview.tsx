@@ -23,7 +23,7 @@ import {
   Package2,
   Camera,
 } from "lucide-react";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { format, parseISO, differenceInDays, startOfISOWeek, endOfISOWeek, getISOWeek } from "date-fns";
 import { sv } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -329,6 +329,60 @@ export default function StockOverview({
     return { value, qty, count: filtered.length, low, critical };
   }, [filtered]);
 
+  /**
+   * Beställt av lagret — hur mycket av saldot som redan är uppbokat på order,
+   * i kilo, i andel av lagret och i lagervärde, fördelat per leveransvecka.
+   */
+  const booked = useMemo(() => {
+    let kg = 0;
+    let value = 0;
+    let packedKg = 0;
+    const weeks = new Map<string, { key: string; label: string; range: string; kg: number; value: number }>();
+    for (const g of filtered) {
+      const pk = packedByProduct?.get(g.product_id);
+      if (!pk) continue;
+      const p = productsById.get(g.product_id) || {};
+      const unitCost = g.totalQty > 0 ? g.value / g.totalQty : 0;
+      for (const o of pk.orders) {
+        const qKg = qtyToKg(o.quantity, p);
+        const qValue = o.quantity * unitCost;
+        kg += qKg;
+        value += qValue;
+        if (o.kind === "packed") packedKg += qKg;
+        const d = o.wantedDate ? parseISO(o.wantedDate) : null;
+        const start = d ? startOfISOWeek(d) : null;
+        const key = start ? format(start, "yyyy-MM-dd") : "utan-datum";
+        const entry =
+          weeks.get(key) ??
+          {
+            key,
+            label: d ? `v. ${getISOWeek(d)}` : "Utan datum",
+            range: start
+              ? `${format(start, "d MMM", { locale: sv })} – ${format(endOfISOWeek(start), "d MMM", { locale: sv })}`
+              : "Leveransdatum saknas",
+            kg: 0,
+            value: 0,
+          };
+        entry.kg += qKg;
+        entry.value += qValue;
+        weeks.set(key, entry);
+      }
+    }
+    const list = Array.from(weeks.values()).sort((a, b) => a.key.localeCompare(b.key));
+    const maxWeekKg = Math.max(1, ...list.map((w) => w.kg));
+    return {
+      kg,
+      value,
+      packedKg,
+      restKg: Math.max(0, kg - packedKg),
+      kgPct: kpis.qty > 0 ? Math.min(100, (kg / kpis.qty) * 100) : 0,
+      valuePct: kpis.value > 0 ? Math.min(100, (value / kpis.value) * 100) : 0,
+      weeks: list,
+      maxWeekKg,
+    };
+  }, [filtered, packedByProduct, productsById, kpis.qty, kpis.value]);
+
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -448,6 +502,86 @@ export default function StockOverview({
         </Card>
       </div>
       )}
+
+      {/* Beställt av lagret — kilo, andel och lagervärde per leveransvecka */}
+      {booked.kg > 0.005 && (
+        <Card className="shadow-card border-amber-500/30 bg-amber-500/[0.04]">
+          <CardContent className="space-y-3 p-3">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <ClipboardList className="h-3.5 w-3.5 text-amber-500" /> Beställt av lagret
+                </p>
+                <p className="text-2xl font-heading font-bold tabular-nums text-amber-600">
+                  {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                  <span className="ml-2 text-sm font-semibold text-muted-foreground">
+                    {booked.kgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
+                  </span>
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg packat ·{" "}
+                  {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg kvar att packa
+                </p>
+              </div>
+              {showCosts && (
+                <div className="text-right">
+                  <p className="text-[11px] text-muted-foreground">Orderbundet lagervärde</p>
+                  <p className="text-xl font-heading font-bold tabular-nums text-amber-600">
+                    {fmt(booked.value)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {booked.valuePct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av{" "}
+                    {fmt(kpis.value)}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-amber-500" style={{ width: `${booked.kgPct}%` }} />
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Per leveransvecka
+              </p>
+              {booked.weeks.map((w) => {
+                const pctOfStock = kpis.qty > 0 ? Math.min(100, (w.kg / kpis.qty) * 100) : 0;
+                return (
+                  <div
+                    key={w.key}
+                    className="grid grid-cols-[64px_1fr_84px_56px] items-center gap-2 rounded-md bg-card/70 px-2 py-1.5 text-xs sm:grid-cols-[64px_150px_1fr_92px_60px]"
+                  >
+                    <span className="font-semibold">{w.label}</span>
+                    <span className="hidden truncate text-[10px] text-muted-foreground sm:block">
+                      {w.range}
+                    </span>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-amber-500/80"
+                        style={{ width: `${Math.max(3, (w.kg / booked.maxWeekKg) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-right font-mono tabular-nums">
+                      {w.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                      {showCosts && (
+                        <span className="ml-1 block text-[10px] text-muted-foreground">
+                          {fmt(w.value)}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-right text-[10px] text-muted-foreground tabular-nums">
+                      {pctOfStock.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} %
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
 
 
       {/* Kategorisorterare + sök */}
