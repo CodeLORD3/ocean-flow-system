@@ -1237,8 +1237,9 @@ export default function Inventory() {
                   <col className="w-20" />
                   <col className="w-24" />
                 </colgroup>
-                <thead className="sticky top-[52px] z-10">
-                  <tr className="h-6 bg-background/95 backdrop-blur border-b border-border/60">
+                <thead className="sticky top-[var(--stock-subnav-h,52px)] z-10">
+                  <tr className="h-7 bg-background border-b border-border">
+
                     <th className="px-1.5 py-0"></th>
                     <th className="px-1.5 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
                     <th className="px-1.5 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
