@@ -59,8 +59,11 @@ type Node = {
  */
 export default function AllProductsHistoryTree({
   onTraceLot,
+  locationIds = null,
 }: {
   onTraceLot?: (lotId: string, label: string) => void;
+  /** Butiksportalen skickar sina lagerplatser — då visas bara butikens flöde. */
+  locationIds?: string[] | null;
 }) {
   const [q, setQ] = useState("");
   const [shape, setShape] = useState<"graph" | "list">("graph");
