@@ -1162,6 +1162,18 @@ export default function StockOverview({
                           return (
                             <>
                               <td
+                                className="border-r border-grid-line/70 px-2 text-right font-mono tabular-nums whitespace-nowrap text-muted-foreground"
+                                title="Kvar att packa"
+                              >
+                                {pk && pk.ordered > 0.005 ? (
+                                  <>
+                                    {nq(pk.ordered)} {unit}
+                                  </>
+                                ) : (
+                                  <span className="text-muted-foreground/60">–</span>
+                                )}
+                              </td>
+                              <td
                                 className="border-r border-grid-line/70 px-2 text-right font-mono tabular-nums whitespace-nowrap"
                                 title="Beställt totalt (packat + kvar att packa)"
                               >
