@@ -530,7 +530,7 @@ export default function StockOverview({
                 </p>
                 <p className="text-[10px] text-muted-foreground">
                   {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg kvar att packa av{" "}
-                  {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg beställt
+                  {booked.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg beställt
                 </p>
               </div>
               {showCosts && (
