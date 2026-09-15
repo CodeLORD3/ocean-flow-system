@@ -615,6 +615,6 @@ export default function TimeEntriesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </IndustryFrame>
+    </div>
   );
 }
