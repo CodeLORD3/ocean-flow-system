@@ -1,12 +1,46 @@
 import { useMemo, useState } from "react";
-import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from "react-simple-maps";
-import { MapPin, Plus, Minus, Crosshair } from "lucide-react";
+import {
+  ComposableMap,
+  Geographies,
+  Geography,
+  Graticule,
+  Line,
+  Marker,
+  ZoomableGroup,
+} from "react-simple-maps";
+import { MapPin, Plus, Minus, Crosshair, Route } from "lucide-react";
 import { useStores } from "@/hooks/useStores";
 import { stockQtyToKg } from "@/lib/units";
 import { LEVEL_LABEL, type LocationLevel } from "@/lib/locations";
 import { cn } from "@/lib/utils";
 
-const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+/** 50m-upplösning ger tydligare kustlinjer och gränser än 110m. */
+const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
+
+/** Fågelvägen i km mellan två punkter (lon, lat). */
+const distanceKm = (a: [number, number], b: [number, number]) => {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b[1] - a[1]);
+  const dLon = toRad(b[0] - a[0]);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a[1])) * Math.cos(toRad(b[1])) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
+
+const kmFmt = (v: number) =>
+  `${Number(v).toLocaleString("sv-SE", { maximumFractionDigits: v < 10 ? 1 : 0 })} km`;
+
+/** Ungefärlig körtid på väg: fågelvägen × 1,25 vid 80 km/h. */
+const driveLabel = (km: number) => {
+  const road = km * 1.25;
+  const h = road / 80;
+  if (h < 1) return `${Math.round(h * 60)} min`;
+  const hh = Math.floor(h);
+  const mm = Math.round((h - hh) * 60);
+  return mm ? `${hh} h ${mm} min` : `${hh} h`;
+};
 
 interface Props {
   /** Rader från product_stock_locations med storage_locations + products. */
@@ -64,6 +98,7 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
     coordinates: [12, 54],
     zoom: 1,
   });
+  const [showRoutes, setShowRoutes] = useState(true);
 
   const points = useMemo<Point[]>(() => {
     const agg = new Map<string, Point>();
@@ -105,6 +140,15 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
   const active = points.find((p) => p.storeId === selected) ?? null;
   const withStock = points.filter((p) => p.kg > 0);
 
+  /** Avstånd från vald enhet till övriga, närmast först. */
+  const legs = useMemo(() => {
+    if (!active) return [];
+    return points
+      .filter((p) => p.storeId !== active.storeId)
+      .map((p) => ({ point: p, km: distanceKm(active.coordinates, p.coordinates) }))
+      .sort((a, b) => a.km - b.km);
+  }, [active, points]);
+
   const selectPoint = (p: Point | null, zoomIn = false) => {
     setInternal(p?.storeId ?? null);
     onSelect?.(p?.storeId ?? null);
@@ -131,6 +175,16 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
           <span className="flex items-center gap-1">
             <span className="inline-block h-2 w-2 rounded-full bg-muted-foreground/40" /> Tomt lager
           </span>
+          <button
+            type="button"
+            onClick={() => setShowRoutes((v) => !v)}
+            className={cn(
+              "flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 transition-colors",
+              showRoutes ? "bg-accent text-foreground" : "hover:bg-accent",
+            )}
+          >
+            <Route className="h-3 w-3" aria-hidden /> Avstånd
+          </button>
         </div>
       </div>
 
@@ -183,6 +237,7 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
                 setView({ coordinates: coordinates as [number, number], zoom })
               }
             >
+              <Graticule stroke="#bcd3dc" strokeWidth={0.3 / view.zoom} step={[5, 5]} />
               <Geographies geography={GEO_URL}>
                 {({ geographies }) =>
                   geographies.map((geo, i) => (
@@ -203,6 +258,46 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
                   ))
                 }
               </Geographies>
+
+              {/* Sträckor och avstånd från vald enhet */}
+              {showRoutes && active
+                ? legs.slice(0, 8).map(({ point: p, km }) => {
+                    const k = 1 / view.zoom;
+                    const mid: [number, number] = [
+                      (active.coordinates[0] + p.coordinates[0]) / 2,
+                      (active.coordinates[1] + p.coordinates[1]) / 2,
+                    ];
+                    return (
+                      <g key={`leg-${p.storeId}`}>
+                        <Line
+                          from={active.coordinates}
+                          to={p.coordinates}
+                          stroke={p.color}
+                          strokeWidth={1.6 * k}
+                          strokeLinecap="round"
+                          strokeDasharray={`${5 * k} ${4 * k}`}
+                          fill="none"
+                        />
+                        <Marker coordinates={mid}>
+                          <text
+                            textAnchor="middle"
+                            y={-3 * k}
+                            style={{
+                              fontSize: 11 * k,
+                              fontWeight: 700,
+                              fill: p.color,
+                              paintOrder: "stroke",
+                              stroke: "#ffffff",
+                              strokeWidth: 3 * k,
+                            }}
+                          >
+                            {kmFmt(km)}
+                          </text>
+                        </Marker>
+                      </g>
+                    );
+                  })
+                : null}
 
               {points.map((p) => {
                 const has = p.kg > 0;
@@ -280,6 +375,36 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
                   ))
                 )}
               </div>
+
+              {legs.length > 0 ? (
+                <div className="mt-2 border-t border-border pt-1.5">
+                  <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold">
+                    <Route className="h-3 w-3" aria-hidden /> Avstånd härifrån
+                  </p>
+                  <div className="max-h-[130px] space-y-0.5 overflow-y-auto pr-1">
+                    {legs.map(({ point: p, km }) => (
+                      <button
+                        key={`d-${p.storeId}`}
+                        type="button"
+                        onClick={() => selectPoint(p, true)}
+                        className="flex w-full items-center justify-between gap-2 rounded px-1 py-0.5 text-left text-[10px] hover:bg-accent"
+                      >
+                        <span className="flex min-w-0 items-center gap-1 truncate">
+                          <span
+                            className="inline-block h-2 w-2 shrink-0 rounded-full"
+                            style={{ background: p.color }}
+                          />
+                          <span className="truncate">{p.city ?? p.name}</span>
+                        </span>
+                        <span className="shrink-0 font-mono tabular-nums">
+                          {kmFmt(km)}
+                          <span className="text-muted-foreground"> · {driveLabel(km)}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : (
             <p className="rounded-lg border border-dashed border-border p-2 text-[10px] text-muted-foreground">
