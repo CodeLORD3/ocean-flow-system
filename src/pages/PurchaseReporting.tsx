@@ -878,6 +878,7 @@ function ReportSection({
 import PostIncomingDialog from "@/components/purchase/PostIncomingDialog";
 import { buildSupplierIndex, lookupSupplier, matchProduct } from "@/lib/foljesedelMatch";
 import { unpostPurchaseReport } from "@/lib/purchaseReportPosting";
+import { edgeErrorMessage } from "@/lib/edgeError";
 
 /** SHA-256 av filen — grunden för dubblettspärren vid uppladdning. */
 async function sha256Hex(file: File): Promise<string> {
@@ -1257,6 +1258,9 @@ export default function PurchaseReporting() {
       }
 
       setUploading(true);
+      // Behövs utanför try: misslyckas tolkningen ska rapporten markeras som
+      // fel i stället för att ligga kvar på "Bearbetar" för alltid.
+      let createdReportId: string | null = null;
       try {
         // Dubblettspärr steg 1: samma fil har redan lästs in.
         const fileHash = await sha256Hex(file);
@@ -1290,8 +1294,9 @@ export default function PurchaseReporting() {
           .select()
           .single();
         if (reportError) throw reportError;
-
+        createdReportId = report.id;
         setSelectedReportId(report.id);
+
         queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
 
         setParsing(true);
@@ -1440,7 +1445,16 @@ export default function PurchaseReporting() {
         toast({ title: "Följesedel bearbetad", description: `${parsedProducts.length} produkter extraherade.` });
       } catch (err: any) {
         console.error(err);
-        toast({ title: "Fel", description: err.message || "Kunde inte bearbeta filen.", variant: "destructive" });
+        const reason = await edgeErrorMessage(err, "Kunde inte bearbeta filen.");
+        if (createdReportId) {
+          // Rapporten får aldrig ligga kvar som "Bearbetar" när tolkningen brutit.
+          await supabase
+            .from("purchase_reports")
+            .update({ status: "Fel", notes: reason } as any)
+            .eq("id", createdReportId);
+          queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
+        }
+        toast({ title: "Fel", description: reason, variant: "destructive" });
       } finally {
         setUploading(false);
         setParsing(false);

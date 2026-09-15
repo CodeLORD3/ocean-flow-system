@@ -187,7 +187,14 @@ export async function approveDeliveryNote(
   if (rejected.length) await supabase.from("purchase_report_rejected_lines").insert(rejected);
   if (accepted.length) {
     const { error } = await supabase.from("purchase_report_lines").insert(accepted);
-    if (error) throw error;
+    if (error) {
+      // Lämna aldrig rapporten kvar på "Bearbetar" när radinläsningen brutit.
+      await supabase
+        .from("purchase_reports")
+        .update({ status: "Fel", notes: error.message } as any)
+        .eq("id", report.id);
+      throw error;
+    }
   }
 
   const total = accepted.reduce((s, p) => s + (p.line_total ?? 0), 0);
