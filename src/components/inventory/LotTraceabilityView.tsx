@@ -28,6 +28,7 @@ const nf = (n: number, d = 1) =>
 export default function LotTraceabilityView({ currency = "SEK", showCosts = true, onEmptyAction }: Props) {
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [mode, setMode] = useState<"lista" | "graf">("lista");
 
   const { data: lots = [], isLoading } = useQuery({
     queryKey: ["lots_traceability"],
