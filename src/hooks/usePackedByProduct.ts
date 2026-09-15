@@ -40,6 +40,11 @@ const OPEN_LINE_STATUSES = ["", "Ny", "Pågående", "Beställd", "Producerad"];
 const CLOSED_SHOP_ORDER_STATUSES = ["Avbruten", "Levererad", "Klar / Levererad", "Arkiverad", "Skickad"];
 const OPEN_CUSTOMER_STATUSES = ["ny", "bekraftad", "packad"];
 
+/** Dagens datum i svensk tid — gamla ordrar ska aldrig visas i lagret. */
+function todayIsoSweden() {
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
+}
+
 function add(
   map: Map<string, PackedProduct>,
   productId: string,
@@ -63,6 +68,7 @@ export function usePackedByProduct(storeId?: string | null) {
     staleTime: 60 * 1000,
     queryFn: async (): Promise<Map<string, PackedProduct>> => {
       const map = new Map<string, PackedProduct>();
+      const today = todayIsoSweden();
 
       if (wholesale) {
         const { data, error } = await supabase
@@ -78,6 +84,9 @@ export function usePackedByProduct(storeId?: string | null) {
           const lineStatus: string = r.status || "";
           const packedLine = lineStatus === PACKED_LINE_STATUS;
           if (!packedLine && !OPEN_LINE_STATUSES.includes(lineStatus)) continue;
+          // Bara aktuella leveranser: gamla orderdatum hör till historiken.
+          const lineDate: string | null = r.delivery_date ?? o.desired_delivery_date ?? null;
+          if (lineDate && lineDate < today) continue;
           const ordered = Number(r.quantity_ordered || 0);
           const delivered = Number(r.quantity_delivered || 0);
           // Packad rad: den plockade kvantiteten ligger i quantity_delivered
@@ -113,6 +122,7 @@ export function usePackedByProduct(storeId?: string | null) {
           const packed = Number(r.quantity_packed || 0);
           const rest = Math.max(0, Number(r.quantity || 0) - packed);
           const o = r.customer_orders || {};
+          if (o.wanted_date && o.wanted_date < today) continue;
           const unit = r.unit || "kg";
           const base = {
             orderId: o.id,
