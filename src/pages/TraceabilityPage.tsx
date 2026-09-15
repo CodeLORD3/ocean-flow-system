@@ -21,6 +21,9 @@ export default function TraceabilityPage() {
   const activeStore = (stores as any[]).find((s: any) => s.id === activeStoreId);
   const currency = getStoreCurrency(activeStore as any);
   const [view, setView] = useState<"partier" | "kontroll">("partier");
+  const { staff } = useStaffAuth();
+  // Grossist och admin ser all spårbarhet. Butiken ser bara sina egna partier.
+  const traceStoreId = site === "shop" && !staff?.is_platform_admin ? activeStoreId : null;
   // Spårbarhetskontrollen är tillfälligt dold — sätt till true för att visa fliken igen.
   const SHOW_TRACEABILITY_CHECK = false;
 
