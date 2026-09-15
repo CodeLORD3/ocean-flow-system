@@ -292,17 +292,21 @@ export default function StockMap({ stock, showValue = true, selectedStoreId, onS
           <span className="pointer-events-none absolute bottom-2 left-2 z-[500] rounded bg-card/85 px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">
             zoom {zoom}
           </span>
+          <span className="pointer-events-none absolute bottom-2 right-2 z-[500] rounded bg-card/85 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+            {wheelZoom ? "Hjulzoom aktiv — flytta pekaren ut för att skrolla sidan" : "Klicka i kartan för att zooma med hjulet"}
+          </span>
           <MapContainer
             key={resetKey}
             center={[57, 13]}
             zoom={5}
             minZoom={3}
             maxZoom={tile.maxZoom}
-            scrollWheelZoom
+            scrollWheelZoom={false}
             className="h-full w-full"
           >
             <TileLayer url={tile.url} attribution={tile.attribution} maxZoom={tile.maxZoom} />
             <ZoomReadout onChange={setZoom} />
+            <WheelZoomOnClick onChange={setWheelZoom} />
             <FitAll positions={points.map((p) => p.position)} />
             <FlyTo position={flyTarget} zoom={13} />
 
