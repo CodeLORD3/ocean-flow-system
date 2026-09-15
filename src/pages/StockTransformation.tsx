@@ -79,7 +79,7 @@ export default function StockTransformation() {
     return products
       .filter((p) => (stockByProduct.get(p.id) || 0) > 0)
       .filter((p) => category === "alla" || (p.category || "Övrigt") === category)
-      .filter((p) => !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
+      .filter((p) => !q || `${p.name || ""} ${p.sku || ""}`.toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name, "sv"));
   }, [products, stockByProduct, category, search]);
 
