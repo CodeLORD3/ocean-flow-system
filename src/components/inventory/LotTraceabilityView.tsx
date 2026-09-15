@@ -267,6 +267,8 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
           );
         })}
       </div>
+      </>
+      )}
     </div>
   );
 }
