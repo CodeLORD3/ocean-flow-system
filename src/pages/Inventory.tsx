@@ -371,12 +371,14 @@ export default function Inventory() {
       )
         return;
       const qty = Number(s.quantity) || 0;
+      // Summan visas i kg, så styckvaror räknas om via nettovikt per styck.
+      const qtyKg = qtyToKg(qty, s.products);
       const value =
         qty * (Number(s.unit_cost) || 0);
-      add(lvl, qty, value);
+      add(lvl, qtyKg, value);
       // "Alla nivåer" speglar det portalen faktiskt hanterar, så summan aldrig
       // säger 769 kg när tabellen visar noll rader.
-      if (allowedLevels.includes(lvl)) add("all", qty, value);
+      if (allowedLevels.includes(lvl)) add("all", qtyKg, value);
     });
     return out;
   }, [allStock, activeStoreId, allowedLevels]);

@@ -107,7 +107,7 @@ const BAR_COLORS = [
   "bg-fuchsia-500",
 ];
 
-function qtyToKg(quantity: number, product: any): number {
+export function qtyToKg(quantity: number, product: any): number {
   if (!product) return quantity;
   const unit = (product.unit || "kg").toLowerCase();
   if (unit === "st" && Number(product.weight_per_piece) > 0) {
