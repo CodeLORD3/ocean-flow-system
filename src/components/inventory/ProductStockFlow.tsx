@@ -193,11 +193,85 @@ export default function ProductStockFlow({
       (a, b) => new Date(b.first).getTime() - new Date(a.first).getTime(),
     );
 
+    // Var finns produkten nu — saldo per lagerplats, hela historiken.
+    const placeMap = new Map<string, any>();
+    for (const e of entries) {
+      const key = e.locId || "utan-plats";
+      let p = placeMap.get(key);
+      if (!p) {
+        p = {
+          key,
+          store: e.store || "",
+          name: e.placeName || "Okänd lagerplats",
+          label: e.location || "Okänd lagerplats",
+          balance: 0,
+          in: 0,
+          out: 0,
+          first: e.created_at,
+          last: e.created_at,
+          events: [] as any[],
+        };
+        placeMap.set(key, p);
+      }
+      p.balance += e.qty;
+      if (e.qty >= 0) p.in += e.qty;
+      else p.out += Math.abs(e.qty);
+      p.last = e.created_at;
+      p.events.push({ ...e, placeSaldo: Math.round(p.balance * 1000) / 1000 });
+    }
+    const places = [...placeMap.values()]
+      .map((p) => ({ ...p, balance: Math.round(p.balance * 1000) / 1000 }))
+      .sort((a, b) => b.balance - a.balance || new Date(b.last).getTime() - new Date(a.last).getTime());
+
+    // Resvägen: varje besök på en lagerplats, från ankomst till att den tog slut.
+    const visitsByPlace = new Map<string, any>();
+    const journey: any[] = [];
+    for (const e of entries) {
+      const key = e.locId || "utan-plats";
+      let v = visitsByPlace.get(key);
+      if (!v) {
+        v = {
+          id: `${key}-${journey.length}`,
+          key,
+          store: e.store || "",
+          name: e.placeName || "Okänd lagerplats",
+          label: e.location || "Okänd lagerplats",
+          arrivedAt: e.created_at,
+          arrivedBy: e.who || "System",
+          leftAt: null as string | null,
+          leftBy: "",
+          balance: 0,
+          peak: 0,
+          events: [] as any[],
+        };
+        visitsByPlace.set(key, v);
+        journey.push(v);
+      }
+      v.balance += e.qty;
+      if (v.balance > v.peak) v.peak = v.balance;
+      v.events.push(e);
+      if (v.balance <= 0.0001) {
+        v.leftAt = e.created_at;
+        v.leftBy = e.who || "System";
+        v.balance = Math.round(v.balance * 1000) / 1000;
+        visitsByPlace.delete(key);
+      }
+    }
+    for (const v of journey) {
+      v.balance = Math.round(v.balance * 1000) / 1000;
+      v.peak = Math.round(v.peak * 1000) / 1000;
+      v.dwellMs =
+        new Date(v.leftAt || new Date().toISOString()).getTime() - new Date(v.arrivedAt).getTime();
+    }
+    journey.reverse();
+
     return {
       points: rows,
       totals: { in: totIn, out: totOut, now: running, net: totIn - totOut },
       ledger: [...visible].reverse(),
       branches,
+      places,
+      journey,
     };
   }, [movements, days]);
 
