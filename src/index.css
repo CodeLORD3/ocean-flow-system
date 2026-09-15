@@ -232,36 +232,43 @@
   color: #111111;
 }
 .poster-marker {
-  font-family: "Anton", "Permanent Marker", system-ui, sans-serif;
+  font-family: "Permanent Marker", "Caveat Brush", cursive;
   color: #10329b;
-  letter-spacing: 0.005em;
-  line-height: 0.95;
-  transform: skewX(-8deg);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  transform: skewX(-7deg) rotate(-0.6deg);
   transform-origin: left bottom;
-  -webkit-text-stroke: 1px #10329b;
+  -webkit-text-stroke: 1.5px #10329b;
+  text-shadow: 1px 1px 0 rgba(16, 50, 155, 0.35);
 }
 .poster-hand {
-  font-family: "Kalam", "Caveat", "Segoe Script", cursive;
+  font-family: "Caveat Brush", "Kalam", "Segoe Script", cursive;
   color: #111111;
   font-weight: 400;
 }
+/* Målad pensellinje: ojämn kant och lite lutning som en dragen streck */
 .poster-rule {
   background: #2f7fe6;
-  border-radius: 999px;
-  transform: skewX(-8deg);
+  border-radius: 40% 60% 50% 50% / 60% 40% 60% 40%;
+  transform: skewX(-7deg) rotate(-0.4deg);
+  opacity: 0.9;
 }
 .poster-row-line {
-  border-bottom: 1.5px solid #7cb6f2;
+  border-bottom: 2px solid #7cb6f2;
+  border-radius: 0 0 60% 40%;
 }
 .poster-price {
-  font-family: "Kalam", "Caveat", cursive;
+  font-family: "Caveat Brush", "Kalam", cursive;
   color: #e01414;
-  font-weight: 700;
+  font-weight: 400;
+  transform: rotate(-1.2deg);
+  display: inline-block;
 }
 .poster-unit {
-  font-family: "Kalam", "Caveat", cursive;
+  font-family: "Caveat Brush", "Kalam", cursive;
   color: #1f2937;
 }
 .poster-divider {
   background: #1a49b8;
+  border-radius: 50% 50% 45% 55% / 2% 2% 2% 2%;
 }
