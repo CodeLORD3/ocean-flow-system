@@ -64,6 +64,7 @@ type NodeP = {
   x: number;
   y: number;
   r: number;
+  hidden?: boolean;
 };
 
 const R_MIN = 5;
@@ -241,7 +242,7 @@ export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: s
     const cx = 520;
     const cy = 440;
     const hubR = cats.length <= 1 ? 0 : 250;
-    const hubs: { name: string; x: number; y: number; count: number }[] = [];
+    const hubs: { name: string; x: number; y: number; count: number; collapsed: boolean }[] = [];
     const nodes: NodeP[] = [];
 
     cats.forEach(([cat, list], ci) => {
