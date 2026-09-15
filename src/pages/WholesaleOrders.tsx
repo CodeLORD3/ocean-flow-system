@@ -36,6 +36,7 @@ import { useStores } from "@/hooks/useStores";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
 import { OrdererName } from "@/components/orders/OrdererName";
+import { LinePriorityBadge } from "@/components/orders/linePriority";
 import { useCustomerNeedByProduct, useOrderHistoryStats, useOutstandingOrdered } from "@/hooks/usePurchaseReconciliation";
 import { addDays, mondayOf, weekRange } from "@/lib/purchaseReconciliation";
 import { useProducts } from "@/hooks/useProducts";
@@ -1601,6 +1602,14 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                      <div className="flex min-w-0 items-center gap-2">
                        <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="h-5 w-7 shrink-0" />
                        <span className="truncate" title={line.products?.name || undefined}>{line.products?.name || "–"}</span>
+                       <LinePriorityBadge
+                         priority={line.priority}
+                         qty={line.priority_qty}
+                         unit={line.unit || line.products?.unit}
+                         note={line.priority_note}
+                         showLabel={false}
+                         className="shrink-0"
+                       />
                      </div>
                      {matchAlt && (
                        <button

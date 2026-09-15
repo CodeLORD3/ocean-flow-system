@@ -43,6 +43,14 @@ import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { useCreateChangeRequest, useOrderChangeRequests, useResolveChangeRequest } from "@/hooks/useOrderChangeRequests";
 import { useNotificationFlash } from "@/lib/notificationFlash";
 import { thumbUrl, THUMB_CARD } from "@/lib/imageThumb";
+import {
+  LinePriority,
+  PRIORITY_META,
+  PRIORITY_ORDER,
+  LinePriorityBadge,
+  normalizePriority,
+} from "@/components/orders/linePriority";
+import { useCustomerCommitted } from "@/hooks/useCustomerCommitted";
 
 type OrderLine = {
   product_id: string;
@@ -51,6 +59,11 @@ type OrderLine = {
   quantity: string;
   category?: string | null;
   image_url?: string | null;
+  /** Varför varan behövs: kundbeställt, påfyllning eller kan strykas. */
+  priority: LinePriority;
+  /** Hur mycket av raden som är låst till kund (endast vid "måste med"). */
+  priorityQty: string;
+  priorityNote: string;
 };
 
 
@@ -333,6 +346,8 @@ export default function ShopOrders() {
     setTimeout(() => noteRef.current?.focus(), 60);
   };
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
+  /** Kundbeställda mängder i butiken — underlag för "måste med"-förslag. */
+  const { data: customerCommitted = new Map() } = useCustomerCommitted(activeStoreId);
   const [productSearch, setProductSearch] = useState("");
   const [desiredDeliveryDate, setDesiredDeliveryDate] = useState<Date | undefined>(undefined);
 
@@ -423,6 +438,7 @@ export default function ShopOrders() {
   const addProduct = (p: any) => {
     setOrderLines(prev => [{
       product_id: p.id, product_name: p.name, unit: p.unit, quantity: "", category: p.category || null, image_url: (p as any).image_url ?? null,
+      priority: "nice" as LinePriority, priorityQty: "", priorityNote: "",
     }, ...prev]);
     setProductSearch("");
     setHighlightedIndex(-1);
@@ -444,6 +460,30 @@ export default function ShopOrders() {
 
   const updateLine = (idx: number, qty: string) => {
     setOrderLines(prev => prev.map((l, i) => i === idx ? { ...l, quantity: qty } : l));
+  };
+
+  /** Sätter prioritet på en rad. "Måste med" förifylls med hela raden som kritisk mängd. */
+  const setLinePriority = (idx: number, priority: LinePriority) => {
+    setOrderLines(prev =>
+      prev.map((l, i) =>
+        i === idx
+          ? {
+              ...l,
+              priority,
+              priorityQty:
+                priority === "must"
+                  ? l.priorityQty ||
+                    String(customerCommitted.get(l.product_id)?.quantity ?? l.quantity ?? "")
+                  : "",
+              priorityNote: priority === "must" ? l.priorityNote : "",
+            }
+          : l,
+      ),
+    );
+  };
+
+  const setLineField = (idx: number, field: "priorityQty" | "priorityNote", value: string) => {
+    setOrderLines(prev => prev.map((l, i) => (i === idx ? { ...l, [field]: value } : l)));
   };
 
   const removeLine = (idx: number) => {
@@ -492,6 +532,15 @@ export default function ShopOrders() {
       quantity_ordered: Number(l.quantity),
       unit: l.unit,
       delivery_date: deliveryDateStr,
+      priority: l.priority,
+      // Kritisk mängd får aldrig överstiga det som faktiskt beställts.
+      priority_qty:
+        l.priority === "must"
+          ? Math.min(Number(l.priorityQty) || Number(l.quantity), Number(l.quantity))
+          : null,
+      priority_note: l.priority === "must" ? l.priorityNote?.trim() || null : null,
+      priority_set_by: l.priority === "must" ? loggedInName || null : null,
+      priority_set_at: l.priority === "must" ? new Date().toISOString() : null,
     }));
 
     const { error: lineError } = await supabase.from("shop_order_lines").insert(lines);
@@ -652,6 +701,9 @@ export default function ShopOrders() {
                     quantity: String(l.quantity_ordered || ""),
                     category: l.products?.category || null,
                     image_url: l.products?.image_url ?? null,
+                    priority: normalizePriority(l.priority),
+                    priorityQty: l.priority_qty != null ? String(l.priority_qty) : "",
+                    priorityNote: l.priority_note || "",
                   }));
 
                   setOrderLines(copied);
@@ -686,6 +738,7 @@ export default function ShopOrders() {
                         <th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th>
                         <th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th>
                         <th className="pb-2 text-right font-medium text-muted-foreground w-32">Antal</th>
+                        <th className="pb-2 text-left font-medium text-muted-foreground">Varför</th>
                         <th className="pb-2 w-8"></th>
                       </tr>
                     </thead>
@@ -693,7 +746,7 @@ export default function ShopOrders() {
                       {groupedOrderLines.map(([cat, items]) => (
                         <React.Fragment key={cat}>
                           <tr className="bg-muted/40">
-                            <td colSpan={4} className="py-1 px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                            <td colSpan={5} className="py-1 px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                               ▸ {cat} ({items.length})
                             </td>
                           </tr>
@@ -726,6 +779,78 @@ export default function ShopOrders() {
                                   placeholder="0"
                                 />
 
+                              </td>
+                              <td className="py-2">
+                                {(() => {
+                                  const committed = customerCommitted.get(line.product_id);
+                                  return (
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-1">
+                                        {PRIORITY_ORDER.map((p) => {
+                                          const meta = PRIORITY_META[p];
+                                          const Icon = meta.icon;
+                                          const active = line.priority === p;
+                                          return (
+                                            <button
+                                              key={p}
+                                              type="button"
+                                              onClick={() => setLinePriority(idx, p)}
+                                              title={`${meta.label} – ${meta.hint}`}
+                                              aria-label={meta.label}
+                                              aria-pressed={active}
+                                              className={cn(
+                                                "flex h-8 min-w-8 items-center gap-1 rounded-md border px-1.5 text-[10px] font-semibold transition-colors",
+                                                active
+                                                  ? meta.chip
+                                                  : "border-border/60 text-muted-foreground/70 hover:bg-muted",
+                                              )}
+                                            >
+                                              <Icon className="h-3.5 w-3.5" />
+                                              {active && <span className="hidden sm:inline uppercase tracking-wider">{meta.label}</span>}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                      {line.priority === "must" && (
+                                        <div className="flex flex-wrap items-center gap-1">
+                                          <Input
+                                            type="number"
+                                            inputMode="decimal"
+                                            step="0.1"
+                                            value={line.priorityQty}
+                                            onChange={(e) => setLineField(idx, "priorityQty", e.target.value)}
+                                            onFocus={(e) => e.currentTarget.select()}
+                                            className="h-8 w-20 text-right text-xs"
+                                            placeholder="kg"
+                                            title="Hur mycket är kundbeställt"
+                                          />
+                                          <span className="text-[10px] text-muted-foreground">{line.unit} till kund</span>
+                                          <Input
+                                            value={line.priorityNote}
+                                            onChange={(e) => setLineField(idx, "priorityNote", e.target.value)}
+                                            className="h-8 w-full text-xs sm:w-40"
+                                            placeholder="Kund / hämtdag"
+                                          />
+                                        </div>
+                                      )}
+                                      {committed && committed.quantity > 0 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setLinePriority(idx, "must");
+                                            setLineField(idx, "priorityQty", String(committed.quantity));
+                                          }}
+                                          className="text-left text-[10px] text-destructive underline-offset-2 hover:underline"
+                                          title="Hämtat från butikens kundbeställningar"
+                                        >
+                                          {committed.quantity.toLocaleString("sv-SE", { maximumFractionDigits: 1 })}{" "}
+                                          {committed.unit} kundbeställt
+                                          {committed.customers.length > 0 && ` · ${committed.customers.slice(0, 2).join(", ")}`}
+                                        </button>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                               </td>
                               <td className="py-2">
                                 <div className="flex items-center justify-end gap-1">
@@ -1236,6 +1361,13 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                               <div className="flex items-center gap-1">
                                 <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="w-7 h-5" />
                                 <span>{line.products?.name || "–"}</span>
+                                <LinePriorityBadge
+                                  priority={line.priority}
+                                  qty={line.priority_qty}
+                                  unit={line.unit || line.products?.unit}
+                                  note={line.priority_note}
+                                  showLabel={false}
+                                />
                                 <OrderPhotosButton
                                   compact
                                   entityType={ORDER_LINE_PHOTO_ENTITY}

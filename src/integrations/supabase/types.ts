@@ -11487,6 +11487,11 @@ export type Database = {
           id: string
           order_date: string | null
           ordered_elsewhere: string | null
+          priority: string
+          priority_note: string | null
+          priority_qty: number | null
+          priority_set_at: string | null
+          priority_set_by: string | null
           product_id: string
           quantity_delivered: number | null
           quantity_ordered: number
@@ -11503,6 +11508,11 @@ export type Database = {
           id?: string
           order_date?: string | null
           ordered_elsewhere?: string | null
+          priority?: string
+          priority_note?: string | null
+          priority_qty?: number | null
+          priority_set_at?: string | null
+          priority_set_by?: string | null
           product_id: string
           quantity_delivered?: number | null
           quantity_ordered?: number
@@ -11519,6 +11529,11 @@ export type Database = {
           id?: string
           order_date?: string | null
           ordered_elsewhere?: string | null
+          priority?: string
+          priority_note?: string | null
+          priority_qty?: number | null
+          priority_set_at?: string | null
+          priority_set_by?: string | null
           product_id?: string
           quantity_delivered?: number | null
           quantity_ordered?: number
