@@ -132,6 +132,18 @@
     overscroll-behavior-x: contain;
   }
 
+  /* Bottenmenyn på mobil ligger fast — ge innehållet plats så inget hamnar bakom */
+  .app-main {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+  @media (min-width: 640px) {
+    .app-main {
+      padding-bottom: 1rem;
+    }
+  }
+
+
+
 
   /* On mobile, prevent iOS zoom-on-focus by ensuring inputs are at least 16px.
      !important is required because Tailwind text-sm/text-xs utilities would win. */
