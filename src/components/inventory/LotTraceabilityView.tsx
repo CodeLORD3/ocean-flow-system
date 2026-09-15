@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Fish, Search, Ship, Anchor, GitBranch, List } from "lucide-react";
+import { Fish, Search, Ship, Anchor, GitBranch, List, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LineageGraphView from "@/components/inventory/LineageGraphView";
 import { EmptyState } from "@/components/EmptyState";
@@ -12,6 +12,7 @@ import LotDocumentsPanel from "@/components/inventory/LotDocumentsPanel";
 import ParasiteFreezePanel from "@/components/inventory/ParasiteFreezePanel";
 import BivalvePanel from "@/components/inventory/BivalvePanel";
 import LotPricePanel from "@/components/inventory/LotPricePanel";
+import LotHistoryView from "@/components/inventory/LotHistoryView";
 
 interface Props {
   currency?: string;
@@ -28,7 +29,7 @@ const nf = (n: number, d = 1) =>
 export default function LotTraceabilityView({ currency = "SEK", showCosts = true, onEmptyAction }: Props) {
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"lista" | "graf">("lista");
+  const [mode, setMode] = useState<"lista" | "graf" | "historik">("lista");
 
   const { data: lots = [], isLoading } = useQuery({
     queryKey: ["lots_traceability"],
@@ -101,9 +102,18 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
         >
           <GitBranch className="h-3.5 w-3.5" /> Graf
         </Button>
+        <Button
+          variant={mode === "historik" ? "default" : "outline"}
+          size="sm"
+          className="h-8 gap-1 text-xs"
+          onClick={() => setMode("historik")}
+        >
+          <History className="h-3.5 w-3.5" /> Historik
+        </Button>
       </div>
 
       {mode === "graf" && <LineageGraphView currency={currency} startLotId={openId} />}
+      {mode === "historik" && <LotHistoryView />}
 
       {mode === "lista" && (
       <>
