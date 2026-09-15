@@ -1601,6 +1601,19 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                        <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="h-5 w-7 shrink-0" />
                        <span className="truncate" title={line.products?.name || undefined}>{line.products?.name || "–"}</span>
                      </div>
+                     {matchAlt && (
+                       <button
+                         type="button"
+                         onClick={() => proposeMatch(line, matchAlt)}
+                         title={`Föreslå ${matchAlt.name} i stället – ${Number(matchAlt.stock.toFixed(1))} i lager`}
+                         className="mt-0.5 flex w-full min-w-0 items-center gap-1 rounded border border-warning/50 bg-warning/10 px-1.5 py-0.5 text-left text-[10px] font-medium text-warning-foreground hover:bg-warning/20"
+                       >
+                         <ArrowLeftRight className="h-3 w-3 shrink-0" />
+                         <span className="truncate">
+                           Matcha med {matchAlt.name} · {Number(matchAlt.stock.toFixed(1))} i lager
+                         </span>
+                       </button>
+                     )}
                    </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
