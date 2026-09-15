@@ -76,7 +76,14 @@ const R_MAX = 15;
  * (inventering, omvandling, försäljning, svinn). Varje produkt som läggs in
  * i produktregistret finns med i nätverket direkt, även utan lagersaldo.
  */
-export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: string }) {
+export default function ProductNetworkGraph({
+  currency = "SEK",
+  locationIds = null,
+}: {
+  currency?: string;
+  /** Butiksportalen skickar sina lagerplatser — då visas bara butikens nätverk. */
+  locationIds?: string[] | null;
+}) {
   const [q, setQ] = useState("");
   const [onlyStock, setOnlyStock] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
