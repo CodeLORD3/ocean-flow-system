@@ -1567,8 +1567,8 @@ export default function Inventory() {
 
       {/* Kontrollrad: saldon som inte kan stämma, för lite kvar, eller passerat bäst före. */}
       {(negativeStock.length > 0 || lowStockItems > 0 || expiredCount > 0) && (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 text-[11px]">
-          <AlertTriangle className="h-3.5 w-3.5 text-amber-700 shrink-0" />
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-md border border-amber-500/30 bg-amber-500/[0.07] px-2 py-1 text-[10px]">
+          <AlertTriangle className="h-3 w-3 text-amber-700 shrink-0" />
           {negativeStock.length > 0 && (
             <button
               type="button"
@@ -1610,15 +1610,15 @@ export default function Inventory() {
             <button
               type="button"
               onClick={() => setShowTree((v) => !v)}
-              className="flex h-10 w-full items-center gap-2 rounded-md border border-border bg-card px-2.5 text-left transition-colors hover:bg-muted/50"
+              className="flex h-8 w-full items-center gap-2 rounded-md border border-border bg-card px-2 text-left transition-colors hover:bg-muted/50"
             >
-              <span className="flex w-36 shrink-0 items-center gap-1.5">
-                <Package className="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span className="truncate text-xs font-semibold">Lagerträd och karta</span>
+              <span className="flex w-32 shrink-0 items-center gap-1.5">
+                <Package className="h-3 w-3 shrink-0 text-primary" />
+                <span className="truncate text-[11px] font-semibold">Lagerträd och karta</span>
               </span>
-              <span className="ml-auto flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+              <span className="ml-auto flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
                 {showTree ? "Dölj" : "Visa"}
-                {showTree ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                {showTree ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
               </span>
             </button>
             {showTree && (
@@ -1667,7 +1667,7 @@ export default function Inventory() {
       {/* Vyväxling — butikslagret visar alltid den samlade lagerbilden (ingen flikmeny) */}
       <div className="flex flex-wrap items-center gap-2">
         {!isShopPortal && (
-        <div className="flex w-full max-w-full flex-wrap items-center gap-1 rounded-lg border border-border bg-card p-1 sm:w-fit sm:flex-nowrap">
+        <div className="flex w-full max-w-full flex-wrap items-center gap-0.5 rounded-md border border-border bg-card p-0.5 sm:w-fit sm:flex-nowrap">
           {[
             { v: "overview" as const, l: "Samlad lagerbild", s: "Samlad" },
             { v: "locations" as const, l: "Per lagerplats", s: "Lagerplats" },
@@ -1679,7 +1679,7 @@ export default function Inventory() {
             <button
               key={o.v}
               onClick={() => setViewMode(o.v)}
-              className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors sm:px-3 sm:text-sm ${
+              className={`h-7 shrink-0 whitespace-nowrap rounded px-2 text-[11px] font-semibold transition-colors ${
                 viewMode === o.v ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
               }`}
             >
@@ -1692,7 +1692,7 @@ export default function Inventory() {
 
         {/* Butiksportalen har ingen flikmeny — men hållbarheten behövs även där */}
         {isShopPortal && (
-          <div className="flex w-full max-w-full items-center gap-1 rounded-lg border border-border bg-card p-1 sm:w-fit">
+          <div className="flex w-full max-w-full items-center gap-0.5 rounded-md border border-border bg-card p-0.5 sm:w-fit">
             {[
               { v: "overview" as const, l: "Samlad lagerbild" },
               { v: "shelflife" as const, l: "Hållbarhet" },
@@ -1700,7 +1700,7 @@ export default function Inventory() {
               <button
                 key={o.v}
                 onClick={() => setViewMode(o.v)}
-                className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors sm:px-3 sm:text-sm ${
+                className={`h-7 shrink-0 whitespace-nowrap rounded px-2 text-[11px] font-semibold transition-colors ${
                   viewMode === o.v
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-muted"
