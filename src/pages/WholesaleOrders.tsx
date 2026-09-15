@@ -10,7 +10,7 @@ import { isInfiniteStock } from "@/lib/infiniteStock";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
-  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, Plus, CalendarIcon, ChevronDown, ChevronRight, CheckSquare, Camera,
+  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, ArrowLeftRight, Plus, CalendarIcon, ChevronDown, ChevronRight, CheckSquare, Camera,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -1388,13 +1388,27 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
   };
   const { data: allStock = [] } = useAllStockByLocation();
   const { data: allProducts } = useQuery({
-    queryKey: ["products"],
+    queryKey: ["products", "alt-match"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("id, name, unit").eq("active", true).order("name");
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, unit, family_id, category")
+        .eq("active", true)
+        .order("name");
       if (error) throw error;
       return data;
     },
   });
+
+  /**
+   * Syskonvaror: samma produktgrupp, annars samma namn frånsett storleks-
+   * ändelsen (t.ex. "Kokta Krabbklor L" och "Kokta Krabbklor XL").
+   */
+  const baseName = (name: string) =>
+    (name || "")
+      .toLowerCase()
+      .replace(/\s+(xxl|xl|l|m|s|xs|stor|mellan|liten)\s*$/i, "")
+      .trim();
 
   // Tillgängligt vid packning läses ur det aktiva grossistlagret (nivå), aldrig
   // ur den gamla namngivna platsen "Grossist Flytande" som är inaktiverad.
@@ -1445,6 +1459,26 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
     setAltProductId("");
     setAltSearch("");
   };
+
+  /** Ett klick: föreslå syskonvaran som butiken kan få i stället. */
+  const proposeMatch = async (line: any, alt: { id: string; name: string }) => {
+    await createChange.mutateAsync({
+      shop_order_id: order.id,
+      order_line_id: line.id,
+      change_type: "product_alternative",
+      product_id: alt.id,
+      old_value: line.product_id,
+      new_value: alt.name,
+      unit: line.unit || line.products?.unit || "ST",
+      requested_by: "grossist",
+    });
+    toast({
+      title: "Matchning föreslagen",
+      description: `"${alt.name}" föreslagen i stället för "${line.products?.name}".`,
+    });
+  };
+
+
 
   const filteredProducts = useMemo(() => {
     if (!allProducts) return [];
@@ -1521,6 +1555,24 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               const stockQty = stockByProduct.get(line.product_id) || 0;
               const alreadyPacked = currentStatus === "Packad" ? qtyDelivered : 0;
               const availableStock = stockQty + alreadyPacked;
+              // Räcker inte lagret? Visa syskonvaran (annan storlek) som finns i lager.
+              const matchAlt = (() => {
+                if (infiniteStock || isUnavailable) return null;
+                if (availableStock >= qtyOrdered) return null;
+                const me = (allProducts || []).find((p: any) => p.id === line.product_id);
+                const myBase = baseName(line.products?.name || me?.name || "");
+                if (!myBase) return null;
+                const cands = (allProducts || [])
+                  .filter((p: any) => p.id !== line.product_id)
+                  .filter((p: any) =>
+                    (me?.family_id && p.family_id && p.family_id === me.family_id) ||
+                    baseName(p.name) === myBase,
+                  )
+                  .map((p: any) => ({ id: p.id, name: p.name, stock: stockByProduct.get(p.id) || 0 }))
+                  .filter((p) => p.stock > 0.005)
+                  .sort((a, b) => b.stock - a.stock);
+                return cands[0] || null;
+              })();
               const idx = STATUS_FLOW.indexOf(currentStatus as any);
               const prev = idx > 0 ? STATUS_FLOW[idx - 1] : null;
               const next = idx === -1 ? "Pågående" : (idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null);
@@ -1549,6 +1601,19 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                        <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="h-5 w-7 shrink-0" />
                        <span className="truncate" title={line.products?.name || undefined}>{line.products?.name || "–"}</span>
                      </div>
+                     {matchAlt && (
+                       <button
+                         type="button"
+                         onClick={() => proposeMatch(line, matchAlt)}
+                         title={`Föreslå ${matchAlt.name} i stället – ${Number(matchAlt.stock.toFixed(1))} i lager`}
+                         className="mt-0.5 flex w-full min-w-0 items-center gap-1 rounded border border-warning/50 bg-warning/10 px-1.5 py-0.5 text-left text-[10px] font-medium text-warning-foreground hover:bg-warning/20"
+                       >
+                         <ArrowLeftRight className="h-3 w-3 shrink-0" />
+                         <span className="truncate">
+                           Matcha med {matchAlt.name} · {Number(matchAlt.stock.toFixed(1))} i lager
+                         </span>
+                       </button>
+                     )}
                    </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
