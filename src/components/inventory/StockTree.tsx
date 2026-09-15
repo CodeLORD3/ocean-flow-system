@@ -10,6 +10,8 @@ import { grossistlagerId, tillverkningslagerId } from "@/lib/locations";
 import { lotBalancesAtLocation, transferStock } from "@/lib/stockLedger";
 import { useTransferOrders, INCOMING_STATUSES } from "@/hooks/useTransferOrders";
 import StockMap from "@/components/inventory/StockMap";
+import { useStoreStockActivity } from "@/hooks/useStoreStockActivity";
+import { activityLabel, activityTone, isFresh, sinceLabel } from "@/lib/lastActivity";
 
 interface StockTreeProps {
   /** Rader från product_stock_locations med storage_locations + products. */
@@ -71,6 +73,7 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
   const [open, setOpen] = useState<string | null>(null);
   /** Vald enhet på lagerkartan (ersätter butiksrutorna). */
   const [mapStore, setMapStore] = useState<string | null>(null);
+  const { data: storeActivity } = useStoreStockActivity();
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [moving, setMoving] = useState<null | "grossistlager" | "tillverkningslager">(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
@@ -618,6 +621,33 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                   Stäng (Esc)
                 </Button>
               </div>
+
+              {(() => {
+                const act = storeActivity?.get(mapStore);
+                return (
+                  <div
+                    className={cn(
+                      "mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border px-2 py-1.5 text-[11px]",
+                      activityTone(act?.lastAnyAt),
+                    )}
+                  >
+                    <span className="font-semibold">
+                      {isFresh(act?.lastAnyAt)
+                        ? "Lagerhändelse inom 24 h"
+                        : act?.lastAnyAt
+                          ? "Inget gjort på över 24 h"
+                          : "Ingen lagerhändelse alls"}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      Senast i lager: {activityLabel(act?.lastAnyAt)}
+                      {sinceLabel(act?.lastAnyAt) ? ` · ${sinceLabel(act?.lastAnyAt)}` : ""}
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      Senaste inventering: {activityLabel(act?.lastCountAt)}
+                    </span>
+                  </div>
+                );
+              })()}
 
               <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <div className="rounded-md border border-border bg-muted/20 p-2">

@@ -119,7 +119,7 @@ export default function OrganisationOverview() {
   const { data: allCustomers = [] } = useCustomers();
   const { data: suppliers = [] } = useSuppliers();
   const covers = useStoreCoverImages();
-  const activity = useStoreActivity();
+  const { data: activity } = useStoreActivity();
   const [chatFocus, setChatFocus] = useState<{ key: string; nonce: number } | null>(null);
 
   // Storage locations for the active store (shop scope)
@@ -360,7 +360,8 @@ export default function OrganisationOverview() {
               <CardContent>
                 <div className="grid grid-cols-1 gap-1">
                   {stores.map((store) => {
-                    const act = activity.get(store.id);
+                    const act =
+                      activity?.get(store.id) ?? { messages: 0, orders: 0, wishes: 0 };
                     return (
                       <div key={store.id} className="flex items-center gap-2 sm:gap-3 py-1.5 border-b border-border/30 last:border-0">
                         <div className="h-9 w-12 sm:h-11 sm:w-16 shrink-0 overflow-hidden rounded-md bg-muted">
