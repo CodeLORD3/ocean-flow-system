@@ -36,6 +36,7 @@ import LotChainGraph from "@/components/inventory/LotChainGraph";
 import ProductNetworkGraph from "@/components/inventory/ProductNetworkGraph";
 import { gapBetween, sinceNow, stampSv } from "@/lib/dwell";
 import { movementLabel } from "@/hooks/useStockMovements";
+import { useStoreLotIds } from "@/hooks/useStoreScope";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Props {
