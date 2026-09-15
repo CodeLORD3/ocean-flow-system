@@ -22,7 +22,19 @@ import { transformKindLabel } from "@/lib/stockTransform";
  * ett kort öppnar omvandlingsflödet. Andra fliken visar omvandlingshistoriken.
  */
 export default function StockTransformation() {
-  const { activeStoreId, activeStoreName } = useSite();
+  const { site, activeStoreId, activeStoreName } = useSite();
+  /**
+   * Grossisten omvandlar bara sitt eget lager: inköpslager, grossistlager,
+   * produktionslager och transportlager. Butikernas eget lager är butikens.
+   */
+  const allowedLevels = useMemo(
+    () => (site === "wholesale" && !activeStoreId
+      ? ["inkopslager", "grossistlager", "tillverkningslager", "leveranslager"]
+      : null),
+    [site, activeStoreId],
+  );
+  const levelAllowed = (s: any) =>
+    !allowedLevels || allowedLevels.includes(s.storage_locations?.location_type);
   const { data: products = [] } = useProducts();
   const { data: allStock = [] } = useAllStockByLocation();
   const { data: history = [], isLoading: historyLoading } = useStockTransformations(activeStoreId || null);
