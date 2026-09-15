@@ -462,6 +462,96 @@ export default function StockOverview({
         </span>
       </button>
 
+      {/* Övertext: packat av lagret — samma upplägg som beställt */}
+      <button
+        type="button"
+        onClick={() => setShowPacked((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 rounded-md border border-amber-500/30 bg-amber-500/[0.04] px-3 py-2 text-left transition-colors hover:bg-amber-500/[0.08]"
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <Package className="h-4 w-4 shrink-0 text-amber-500" />
+          <span className="truncate text-sm font-semibold">Packat av lagret</span>
+          {booked.packedKg > 0.005 && (
+            <span className="hidden font-mono text-xs tabular-nums text-amber-600 sm:inline">
+              {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg ·{" "}
+              {booked.packedKgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
+              {showCosts ? ` · ${fmt(booked.packedValue)}` : ""}
+            </span>
+          )}
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+          {showPacked ? "Dölj statistik" : "Visa statistik"}
+          {showPacked ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </span>
+      </button>
+
+      {showPacked && (
+        <Card className="shadow-card border-amber-500/30 bg-amber-500/[0.04]">
+          <CardContent className="space-y-3 p-3">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Package className="h-3.5 w-3.5 text-amber-500" /> Packat av lagret
+                </p>
+                <p className="font-heading text-2xl font-bold tabular-nums text-amber-600">
+                  {booked.packedKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                  <span className="ml-2 text-sm font-semibold text-muted-foreground">
+                    {booked.packedKgPct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av lagret
+                  </span>
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {booked.restKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg kvar att packa av{" "}
+                  {booked.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg beställt
+                </p>
+              </div>
+              {showCosts && (
+                <div className="text-right">
+                  <p className="text-[11px] text-muted-foreground">Packat lagervärde</p>
+                  <p className="font-heading text-xl font-bold tabular-nums text-amber-600">
+                    {fmt(booked.packedValue)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {booked.packedValuePct.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} % av{" "}
+                    {fmt(kpis.value)}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-amber-500" style={{ width: `${booked.packedKgPct}%` }} />
+            </div>
+            {booked.packedWeeks.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Per leveransvecka</p>
+                {booked.packedWeeks.map((w) => (
+                  <div
+                    key={w.key}
+                    className="flex items-center gap-2 rounded-md border border-border/60 bg-background/60 px-2 py-1.5"
+                  >
+                    <span className="w-14 shrink-0 text-xs font-semibold">{w.label}</span>
+                    <span className="hidden w-32 shrink-0 truncate text-[10px] text-muted-foreground sm:block">
+                      {w.range}
+                    </span>
+                    <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                      <span
+                        className="block h-full rounded-full bg-amber-400"
+                        style={{ width: `${(w.kg / booked.maxPackedWeekKg) * 100}%` }}
+                      />
+                    </span>
+                    <span className="shrink-0 text-right font-mono text-xs tabular-nums">
+                      {w.kg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                      {showCosts && (
+                        <span className="block text-[10px] text-muted-foreground">{fmt(w.value)}</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* KPI-kort — alltid synliga ovanför lagerlistan */}
       {compactKpis ? (
         <div className="grid grid-cols-2 gap-2 sm:max-w-md">
