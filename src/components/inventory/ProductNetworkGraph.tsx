@@ -248,7 +248,8 @@ export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: s
       const a = (ci / Math.max(1, cats.length)) * Math.PI * 2 - Math.PI / 2;
       const hx = cx + Math.cos(a) * hubR;
       const hy = cy + Math.sin(a) * hubR;
-      hubs.push({ name: cat, x: hx, y: hy, count: list.length });
+      const isCollapsed = collapsed.has(cat);
+      hubs.push({ name: cat, x: hx, y: hy, count: list.length, collapsed: isCollapsed });
 
       const ring = Math.max(78, Math.min(190, 26 + list.length * 9));
       list.forEach((p, pi) => {
@@ -264,6 +265,7 @@ export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: s
           x: hx + Math.cos(pa) * (ring + wobble),
           y: hy + Math.sin(pa) * (ring + wobble),
           r: stock > 0 ? R_MIN + (Math.min(stock, maxStock) / maxStock) * (R_MAX - R_MIN) : R_MIN - 1,
+          hidden: isCollapsed,
         });
       });
     });
@@ -271,7 +273,26 @@ export default function ProductNetworkGraph({ currency = "SEK" }: { currency?: s
     const pos = new Map(nodes.map((n) => [n.p.id, n]));
     const edges = transforms.filter((t) => pos.has(t.from) && pos.has(t.to));
     return { cx, cy, hubs, nodes, pos, edges, width: 1040, height: 900 };
-  }, [filteredProducts, byProduct, transforms]);
+  }, [filteredProducts, byProduct, transforms, collapsed]);
+
+  /** Nodposition med hänsyn till manuell dragning. */
+  const posOf = useCallback(
+    (n: NodeP) => dragPos[n.p.id] ?? { x: n.x, y: n.y },
+    [dragPos],
+  );
+
+  /** Produkter som hör samman med den markerade/hovrade noden. */
+  const focusId = hover ?? selected;
+  const related = useMemo(() => {
+    if (!focusId) return null;
+    const set = new Set<string>([focusId]);
+    for (const e of layout.edges) {
+      if (e.from === focusId) set.add(e.to);
+      if (e.to === focusId) set.add(e.from);
+    }
+    const cat = layout.pos.get(focusId)?.p.category?.trim() || "Utan kategori";
+    return { set, cat };
+  }, [focusId, layout]);
 
   const active = selected ? layout.pos.get(selected) : null;
 
