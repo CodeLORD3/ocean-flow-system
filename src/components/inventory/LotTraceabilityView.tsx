@@ -188,11 +188,11 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
   /** Vald produkt (namn) — steg 1b, listar bara den produktens partier. */
   const [valdProdukt, setValdProdukt] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
+  /** Partier som matchar sökningen, oavsett vald produkt. */
+  const matchade = useMemo(() => {
     const s = q.trim().toLowerCase();
     let bas = lots;
     if (kategori) bas = bas.filter((l) => l.products?.category === kategori);
-    if (valdProdukt) bas = bas.filter((l) => (l.products?.name || l.commercial_name || "—") === valdProdukt);
     if (s)
       bas = bas.filter((l) =>
         [
@@ -210,6 +210,28 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
           .filter(Boolean)
           .some((v: string) => String(v).toLowerCase().includes(s)),
       );
+    return bas;
+  }, [lots, q, kategori]);
+
+  /** Träffade produkter med antal partier, så man först väljer produkt. */
+  const produktTraffar = useMemo(() => {
+    const map = new Map<string, { namn: string; kategori?: string; antal: number; kg: number; varde: number | null }>();
+    matchade.forEach((l) => {
+      const namnP = l.products?.name || l.commercial_name || "—";
+      const rad = map.get(namnP) || { namn: namnP, kategori: l.products?.category, antal: 0, kg: 0, varde: 0 };
+      rad.antal += 1;
+      rad.kg += Number(l.quantity_kg || 0);
+      if (rad.varde != null)
+        rad.varde = l.unit_cost != null ? rad.varde + Number(l.quantity_kg || 0) * Number(l.unit_cost) : rad.varde;
+      map.set(namnP, rad);
+    });
+    return [...map.values()].sort((a, b) => b.antal - a.antal || a.namn.localeCompare(b.namn, "sv"));
+  }, [matchade]);
+
+  const filtered = useMemo(() => {
+    const bas = valdProdukt
+      ? matchade.filter((l) => (l.products?.name || l.commercial_name || "—") === valdProdukt)
+      : matchade;
     const kopia = [...bas];
     if (sort === "senaste") kopia.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
     if (sort === "andrad")
