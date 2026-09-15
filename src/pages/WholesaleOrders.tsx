@@ -10,7 +10,7 @@ import { isInfiniteStock } from "@/lib/infiniteStock";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
-  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, Plus, CalendarIcon, ChevronDown, ChevronRight, CheckSquare, Camera,
+  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, ArrowLeftRight, Plus, CalendarIcon, ChevronDown, ChevronRight, CheckSquare, Camera,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
