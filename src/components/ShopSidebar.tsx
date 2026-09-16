@@ -107,7 +107,7 @@ export function ShopSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "
 
   const { hiddenUrls, itemOrder, sectionLabels, sectionOrder } = useStoreSidebarPrefs();
   const [customizeOpen, setCustomizeOpen] = useState(false);
-  const LOCKED_URLS = ["/organisation"];
+  const LOCKED_URLS = ["/store-map"];
 
   const visibleSections = sections
     .map((section, sIdx) => ({
