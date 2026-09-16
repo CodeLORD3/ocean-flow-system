@@ -460,7 +460,7 @@ export function DailyReportsArchive() {
                     </span>
                     <span className="col-start-2 row-start-1 text-right font-mono text-lg font-medium tabular-nums md:col-auto md:row-auto">{nf(report.net_sales)} kr</span>
                     <div className="col-start-2 row-start-2 flex items-center justify-end gap-3 md:col-auto md:row-auto">
-                      <span className={cn("flex items-center gap-2 font-mono text-[13px] tabular-nums", noStaff ? "font-semibold text-brick" : "text-muted-foreground")}>
+                      <span className={cn("flex items-center gap-2 font-mono text-[13px] tabular-nums", noStaff ? "font-semibold text-tone-brick" : "text-muted-foreground")}>
                         <Users className="h-3.5 w-3.5" />{(report.staff_entries ?? []).length} <span className="text-border">/</span> {reportHours.toFixed(1)} h
                       </span>
                       <button
