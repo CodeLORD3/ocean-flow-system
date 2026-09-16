@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ClipboardCheck, Check, Lock, Printer, Download, Search, Plus, Package, RefreshCw, ChevronDown, ChevronRight, Camera, Loader2, CalendarClock, MessageSquare, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { StockAsOfDate } from "@/components/stock/StockAsOfDate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -311,7 +312,7 @@ export default function StockCount() {
     },
   });
   const [openReportId, setOpenReportId] = useState<string | null>(null);
-  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(true);
   // Raden i inventeringslistan är kompakt; redigering öppnas först vid klick.
   const [editKey, setEditKey] = useState<string | null>(null);
   const reportLinesQuery = useQuery({
@@ -1402,6 +1403,9 @@ export default function StockCount() {
           </div>
         </div>
       )}
+
+      {/* Lagret ett valt datum — räknas fram ur lagerrörelserna */}
+      <StockAsOfDate storeId={effectiveStoreId || null} storeName={storeName} />
 
       {/* Tidigare inventeringar — låsta tillfällen + inskickade rapporter, gömda bakom en utfällning */}
       <Card>
