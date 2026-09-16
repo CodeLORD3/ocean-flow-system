@@ -77,6 +77,7 @@ export function MapDetailDrawer({
   zoneNumber,
   areaLabel,
   inline = false,
+  onOpenPage,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
