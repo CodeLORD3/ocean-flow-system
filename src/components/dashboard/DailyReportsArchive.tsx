@@ -459,8 +459,9 @@ export function DailyReportsArchive() {
                         )}
                       </span>
                     </button>
-                    <span className="hidden truncate text-sm md:block">
-                      {reporter ? <span className="font-medium text-foreground/80">{reporter}</span> : <span className="italic text-muted-foreground/70">Okänd rapportör</span>}
+                    <span className="col-start-2 flex min-w-0 items-center gap-2 text-sm md:col-auto">
+                      <StaffAvatar name={reporter} imageUrl={imageOfUser(report.created_by)} className="h-9 w-9" />
+                      {reporter ? <span className="truncate font-medium text-foreground/80">{reporter}</span> : <span className="truncate italic text-muted-foreground/70">Okänd rapportör</span>}
                     </span>
                     <span className="col-start-2 row-start-1 text-right font-mono text-lg font-medium tabular-nums md:col-auto md:row-auto">{nf(report.net_sales)} kr</span>
                     <div className="col-start-2 row-start-2 flex items-center justify-end gap-3 md:col-auto md:row-auto">
