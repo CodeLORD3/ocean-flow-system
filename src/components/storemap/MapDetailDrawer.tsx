@@ -112,7 +112,7 @@ export function MapDetailDrawer({
   const { data: logs = [] } = useActivityLogs({ storeId, limit: 300 });
   const { data: deviations = [] } = useDeviations(false);
   const { data: staff = [] } = useStaff(storeId);
-  const [tab, setTab] = useState("images");
+  const [tab, setTab] = useState("summary");
 
   const openIssues = deviations.filter(
     (d) => (d as { source?: string; source_id?: string }).source === entityType && (d as { source_id?: string }).source_id === entityId,
