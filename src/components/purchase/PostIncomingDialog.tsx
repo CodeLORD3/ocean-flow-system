@@ -324,9 +324,15 @@ export default function PostIncomingDialog({ open, onOpenChange, report, lines, 
           <Button
             className="min-h-[48px]"
             onClick={handlePost}
-            disabled={saving || !!report?.posted_at || plan.blockers.length > 0 || plan.lots.length === 0}
+            disabled={
+              saving ||
+              !locationId ||
+              !!report?.posted_at ||
+              plan.blockers.length > 0 ||
+              plan.lots.length === 0
+            }
           >
-            {saving ? "Bokför…" : `Bokför ${plan.lots.length} partier`}
+            {saving ? "Bokför…" : !locationId ? "Välj lager först" : `Bokför ${plan.lots.length} partier`}
           </Button>
         </DialogFooter>
       </DialogContent>
