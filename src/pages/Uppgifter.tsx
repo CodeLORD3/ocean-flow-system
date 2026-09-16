@@ -30,6 +30,7 @@ import {
 import { DAYPARTS, durationText, groupByDaypart, remainingMinutes } from "@/lib/taskTime";
 import { TaskRow, type TaskRowArea } from "@/components/tasks/TaskRow";
 import { TaskCalendar } from "@/components/tasks/TaskCalendar";
+import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { WORK_TYPES, workTypeLabel } from "@/lib/workType";
 
 const WEEKDAY_NAMES = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
@@ -319,7 +320,14 @@ export default function Uppgifter() {
                 <SelectItem value="none">Ingen tilldelad</SelectItem>
                 {staffList.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
-                    {s.first_name} {s.last_name}
+                    <span className="inline-flex items-center gap-2">
+                      <StaffAvatar
+                        name={`${s.first_name} ${s.last_name}`}
+                        imageUrl={s.profile_image_url}
+                        className="h-5 w-5"
+                      />
+                      {s.first_name} {s.last_name}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -653,9 +661,16 @@ export default function Uppgifter() {
                 <SelectContent>
                   <SelectItem value="none">Ingen tilldelad</SelectItem>
                   {staffList.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.first_name} {s.last_name}
-                    </SelectItem>
+                     <SelectItem key={s.id} value={s.id}>
+                       <span className="inline-flex items-center gap-2">
+                         <StaffAvatar
+                           name={`${s.first_name} ${s.last_name}`}
+                           imageUrl={s.profile_image_url}
+                           className="h-5 w-5"
+                         />
+                         {s.first_name} {s.last_name}
+                       </span>
+                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
