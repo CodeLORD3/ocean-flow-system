@@ -20,6 +20,7 @@ type Props = {
   onOpenDetail: () => void;
   onAddPhoto?: (file: File) => void;
   onOpenArea?: (areaId: string) => void;
+  onDelete?: () => void;
 };
 
 /**
