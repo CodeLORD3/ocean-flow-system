@@ -99,7 +99,7 @@ export function TaskRow({
             )}
             {assigneeName && (
               <span className="inline-flex items-center gap-1">
-                <StaffAvatar name={assigneeName} imageUrl={assigneeImage} className="h-4 w-4" /> {assigneeName}
+                <StaffAvatar name={assigneeName} imageUrl={assigneeImage} className="h-7 w-7" /> {assigneeName}
               </span>
             )}
             {task.requires_photo && (
@@ -117,7 +117,7 @@ export function TaskRow({
                 <StaffAvatar
                   name={completedByName || task.signature}
                   imageUrl={completedByImage}
-                  className="h-4 w-4"
+                  className="h-7 w-7"
                 />
                 Klar · {completedByName || task.signature}
               </span>
