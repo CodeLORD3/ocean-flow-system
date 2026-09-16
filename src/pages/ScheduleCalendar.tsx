@@ -104,6 +104,10 @@ export default function ScheduleCalendar() {
   const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  // Intervallmarkering: dra över dagarna eller skift-klicka på slutdagen.
+  const [rangeStart, setRangeStart] = useState<string | null>(null);
+  const [rangeEnd, setRangeEnd] = useState<string | null>(null);
+  const rangeDragging = useRef(false);
 
   const isShop = site === "shop";
   const { events, isLoading, addEvent, updateEvent, deleteEvent } = useScheduleEvents(site, year, isShop ? activeStoreId : null);
