@@ -21,8 +21,8 @@ export function OverviewQuickBar({ tasks }: { tasks: MapTask[] }) {
   const pct = total > 0 ? Math.round((done / total) * 100) : 100;
   const t = tone(pct);
 
-  /** Översikten är bara en översikt — knappen leder vidare till checklistsidan. */
-  const openTasks = () => navigate("/checklist");
+  /** Översikten är bara en översikt — knappen leder vidare till uppgiftssidan. */
+  const openTasks = () => navigate("/uppgifter");
 
   /** Max 60 stolpar så stapeln håller sig läsbar även med många uppgifter. */
   const bars = total > 0 && total <= 60 ? tasks : [];
