@@ -36,6 +36,7 @@ import { ZoneAreaPage } from "@/components/storemap/ZoneAreaPage";
 import { ObjectLibrary } from "@/components/storemap/ObjectLibrary";
 import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog";
 import { MapListViews } from "@/components/storemap/MapListViews";
+import { OverviewStatsBar } from "@/components/storemap/OverviewStatsBar";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
@@ -253,12 +254,20 @@ export default function StoreMap() {
 
   return (
     <div className="space-y-4">
+      {/* Viktig statistik högst upp — vilka som arbetar, stämpling, checklistor, avvikelser */}
+      <OverviewStatsBar
+        storeId={storeId}
+        openTasks={tasks.filter((t) => t.status !== "done").length}
+        openDeviations={Object.values(issuesByEntity).reduce((a, b) => a + b, 0)}
+        totalSqm={totalSqm}
+      />
+
       {/* Rubrikrad — stor titel, butik under, läge till höger */}
       <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
             <MapIcon className="h-5 w-5 text-primary" />
-            Butikskarta
+            Översikt
           </h1>
           {site !== "shop" && stores.length > 0 ? (
             <Select value={storeId} onValueChange={(v) => { setPickedStore(v); setPlanId(null); }}>

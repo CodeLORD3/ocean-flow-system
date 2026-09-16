@@ -32,12 +32,10 @@ import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 
 const overviewNav = [
-  { title: "Översikt", url: "/organisation", icon: LayoutDashboard },
+  { title: "Översikt", url: "/store-map", icon: Map },
   { title: "Bildflöde", url: "/image-feed", icon: Images },
-  { title: "Chatt", url: "/chat", icon: MessageSquare },
 
   { title: "Checklista", url: "/checklist", icon: ClipboardCheck },
-  { title: "Butikskarta", url: "/store-map", icon: Map },
   { title: "Egenkontroll", url: "/food-safety", icon: ClipboardCheck },
   { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
   { title: "Bokningsinställningar", url: "/booking-settings", icon: SlidersHorizontal },
