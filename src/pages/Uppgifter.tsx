@@ -38,6 +38,7 @@ import {
 import { DAYPARTS, durationText, groupByDaypart, remainingMinutes } from "@/lib/taskTime";
 import { TaskRow, type TaskRowArea } from "@/components/tasks/TaskRow";
 import { TaskCalendar } from "@/components/tasks/TaskCalendar";
+import { TaskRegister } from "@/components/tasks/TaskRegister";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { WORK_TYPES, workTypeLabel } from "@/lib/workType";
 import { TASK_LINKS, taskTarget } from "@/lib/taskLink";
@@ -376,6 +377,7 @@ export default function Uppgifter() {
         <TabsList className="h-auto flex-wrap gap-1 p-1">
           {[
             ["dag", "Dagens uppgifter"],
+            ["alla", "Alla uppgifter"],
             ["personer", "Personer"],
             ["kalender", "Kalender"],
             ["produktion", "Produktion"],
@@ -645,6 +647,17 @@ export default function Uppgifter() {
               setTab("dag");
             }}
             areas={areaOf}
+          />
+        </TabsContent>
+
+        <TabsContent value="alla">
+          <TaskRegister
+            storeId={storeId}
+            categories={categories}
+            areas={areaOf}
+            recipes={recipes}
+            onOpenTask={(id) => switchTab(`/uppgift/${id}`)}
+            onNavigate={(url) => switchTab(url)}
           />
         </TabsContent>
 
