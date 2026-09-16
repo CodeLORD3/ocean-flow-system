@@ -19,6 +19,7 @@ import { useUploadEntityImage } from "@/hooks/useEntityImages";
 import {
   useAddAdhocTask,
   useDayTasks,
+  useDeleteTask,
   useSetTaskDone,
   useStandardTasks,
   useTaskCategories,
