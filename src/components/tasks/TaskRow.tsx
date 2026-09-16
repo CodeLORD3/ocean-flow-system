@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Timer, Trash2, User } from "lucide-react";
+import { ArrowUpRight, Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Timer, Trash2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,9 @@ type Props = {
   onAddPhoto?: (file: File) => void;
   onOpenArea?: (areaId: string) => void;
   onDelete?: () => void;
+  /** Genväg dit arbetet görs (dagsrapport, checklista, recept …). */
+  linkLabel?: string | null;
+  onOpenLink?: () => void;
   /** Sparar det som krävs för att få bocka av (kommentar/mätvärde). */
   onSaveRequirement?: (patch: { completion_note?: string | null; completion_value?: number | null }) => void;
   /** Sätts när antalet bilder är känt — då spärras även bildkravet. */
@@ -55,6 +58,8 @@ export function TaskRow({
   onAddPhoto,
   onOpenArea,
   onDelete,
+  linkLabel,
+  onOpenLink,
   onSaveRequirement,
   photoCountKnown,
   staffOptions,
@@ -210,6 +215,15 @@ export function TaskRow({
               <span className="inline-flex items-center gap-1">
                 <Clock className="h-3 w-3" /> {time.label}
               </span>
+            )}
+            {linkLabel && onOpenLink && (
+              <button
+                type="button"
+                onClick={onOpenLink}
+                className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 font-medium text-primary hover:bg-primary/20"
+              >
+                <ArrowUpRight className="h-3 w-3" /> {linkLabel}
+              </button>
             )}
             {area && onOpenArea && (
               <button
