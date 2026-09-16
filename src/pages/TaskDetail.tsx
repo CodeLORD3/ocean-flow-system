@@ -16,6 +16,7 @@ import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 import { dayBadgeClass } from "@/lib/dayColor";
 import {
+  useDeleteTask,
   useSetTaskDone,
   useTaskHistory,
   useTaskImages,
