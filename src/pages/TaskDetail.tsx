@@ -344,6 +344,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
 
         <TabsContent value="inst" className="space-y-3">
           <div>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">Steg 1 · Uppgiften</p>
             <label className="text-sm font-medium">Vad ska göras?</label>
             <div className="flex gap-2">
               <Input value={title ?? task.task} onChange={(e) => setTitle(e.target.value)} />
