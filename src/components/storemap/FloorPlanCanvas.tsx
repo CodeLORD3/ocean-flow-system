@@ -266,6 +266,35 @@ export function FloorPlanCanvas({
 
   const snap = (v: number) => (plan.grid_size > 0 ? Math.round(v / plan.grid_size) * plan.grid_size : Math.round(v));
 
+  /* Rutnätet: små rutor (halva planens rutmått) med grövre linje var femte ruta. */
+  const gridId = `grid-${plan.id}`;
+  const minor = plan.grid_size > 0 ? plan.grid_size / 2 : 10;
+
+  /* Markera ett område med musen och zooma dit — fungerar även inne i en yta. */
+  const [marquee, setMarquee] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const [marqueeMode, setMarqueeMode] = useState(false);
+
+  const zoomToBox = (box: { x: number; y: number; width: number; height: number }) => {
+    const el = wrapRef.current;
+    if (!el || box.width < 4 || box.height < 4) return;
+    touched.current = true;
+    const z = clamp(Math.min(el.clientWidth / box.width, el.clientHeight / box.height) * 0.95, MIN_ZOOM, MAX_ZOOM);
+    setZoom(z);
+    setOffset({
+      x: el.clientWidth / 2 - (box.x + box.width / 2) * z,
+      y: el.clientHeight / 2 - (box.y + box.height / 2) * z,
+    });
+  };
+
+  const marqueeBox = marquee
+    ? {
+        x: Math.min(marquee.x0, marquee.x1),
+        y: Math.min(marquee.y0, marquee.y1),
+        width: Math.abs(marquee.x1 - marquee.x0),
+        height: Math.abs(marquee.y1 - marquee.y0),
+      }
+    : null;
+
   const startDrag = (
     e: React.PointerEvent,
     kind: "zone" | "object",
