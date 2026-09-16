@@ -280,6 +280,7 @@ export default function StoreMap() {
         onDayChange={setDay}
         onOpenZone={(id) => { setAreaPage({ kind: "zone", id }); setView("omrade"); }}
       />
+      </div>
 
       {/* Bilder från butiken — senaste bilderna som en rad man kan bläddra i */}
       <StorePhotoStrip
