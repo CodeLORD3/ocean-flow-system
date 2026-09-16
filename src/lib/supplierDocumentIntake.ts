@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildSupplierIndex, lookupSupplier, matchProduct } from "@/lib/foljesedelMatch";
 import type { MatchProduct } from "@/lib/foljesedelMatch";
 import type { SizeGrade } from "@/lib/sizeGrades";
+import { safeDate } from "@/lib/parsedDates";
 
 export interface SupplierDocument {
   id: string;
