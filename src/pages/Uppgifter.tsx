@@ -272,6 +272,12 @@ export default function Uppgifter() {
           </Card>
 
           <div className="flex flex-wrap gap-2">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Sök uppgift eller person"
+              className="h-8 w-[200px] text-xs"
+            />
             <Select value={fArea} onValueChange={setFArea}>
               <SelectTrigger className="h-8 w-[160px] text-xs">
                 <SelectValue placeholder="Område" />
