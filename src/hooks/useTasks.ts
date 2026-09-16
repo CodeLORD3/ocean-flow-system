@@ -60,7 +60,7 @@ function normalize<T = TaskRow>(row: any): T {
     : typeof raw === "string" && raw.trim()
       ? raw.split("\n").map((s) => s.trim()).filter(Boolean)
       : null;
-  return { ...row, instructions: steps && steps.length > 0 ? steps : null } as TaskRow;
+  return { ...row, instructions: steps && steps.length > 0 ? steps : null } as T;
 }
 
 /** Administrerbara kategorier: gemensamma plus butikens egna. */
