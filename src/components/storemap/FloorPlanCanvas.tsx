@@ -543,8 +543,8 @@ export function FloorPlanCanvas({
               );
             })}
 
-            {/* Lager 4 och 5 — inventarier och utrustning */}
-            {objects.map((o) => {
+            {/* Lager 4 och 5 — inventarier, bara i redigeringsläget */}
+            {(showObjects ? objects : []).map((o) => {
               const g = geom(o.id, o);
               const t = types[o.object_type_id];
               const p = objectProgress[o.id];
