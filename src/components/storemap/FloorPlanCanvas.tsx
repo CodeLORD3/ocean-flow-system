@@ -325,6 +325,11 @@ export function FloorPlanCanvas({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    if (marquee) {
+      const pt = planPoint(e);
+      if (pt) setMarquee((m) => (m ? { ...m, x1: pt.x, y1: pt.y } : m));
+      return;
+    }
     if (vDrag) {
       const dx = (e.clientX - vDrag.startX) / zoom;
       const dy = (e.clientY - vDrag.startY) / zoom;
