@@ -206,20 +206,31 @@ export default function ScheduleCalendar() {
   };
 
   const handleAdd = async () => {
-    if (!formTitle.trim()) return;
+    if (!formTitle.trim() || !formDate) return;
+    // Ett intervall (t.ex. ledighet 1–3) skapas som en post per dag.
+    const dates =
+      formEndDate && formEndDate > formDate
+        ? eachDayOfInterval({ start: parseISO(formDate), end: parseISO(formEndDate) }).map(d =>
+            format(d, "yyyy-MM-dd")
+          )
+        : [formDate];
+    const isRange = dates.length > 1;
     try {
-      await addEvent.mutateAsync({
-        event_date: formDate,
-        title: formTitle,
-        description: formDesc || undefined,
-        event_type: effectiveFormType,
-        severity: formSeverity,
-        portal: site,
-        store_id: site === "shop" ? activeStoreId : null,
-        recurrence_type: formRecurrence,
-        recurrence_end_date: formRecurrenceEnd || null,
-        assigned_to: formCategory === "task" && formAssignee !== "none" ? formAssignee : null,
-      });
+      for (const day of dates) {
+        await addEvent.mutateAsync({
+          event_date: day,
+          title: formTitle,
+          description: formDesc || undefined,
+          event_type: effectiveFormType,
+          severity: formSeverity,
+          portal: site,
+          store_id: site === "shop" ? activeStoreId : null,
+          // Upprepning gäller bara enstaka datum — ett intervall är redan utskrivet dag för dag.
+          recurrence_type: isRange ? "none" : formRecurrence,
+          recurrence_end_date: isRange ? null : formRecurrenceEnd || null,
+          assigned_to: formCategory === "task" && formAssignee !== "none" ? formAssignee : null,
+        });
+      }
       if (effectiveFormType === "meeting" && (isShop ? !!activeStoreId : true)) {
         await createProtocol.mutateAsync({
           store_id: isShop ? activeStoreId : null,
@@ -229,8 +240,18 @@ export default function ScheduleCalendar() {
           notes: formDesc || undefined,
         });
       }
-      toast({ title: effectiveFormType === "meeting" ? "Möte tillagt i kalender & mötesprotokoll" : formCategory === "task" ? "Uppgift tillagd" : "Händelse tillagd" });
+      toast({
+        title: isRange
+          ? `Tillagt ${dates.length} dagar (${format(parseISO(formDate), "d MMM", { locale: sv })}–${format(parseISO(formEndDate), "d MMM", { locale: sv })})`
+          : effectiveFormType === "meeting"
+            ? "Möte tillagt i kalender & mötesprotokoll"
+            : formCategory === "task"
+              ? "Uppgift tillagd"
+              : "Händelse tillagd",
+      });
       setShowAddPanel(false);
+      setRangeStart(null);
+      setRangeEnd(null);
     } catch {
       toast({ title: "Fel", description: "Kunde inte spara", variant: "destructive" });
     }
