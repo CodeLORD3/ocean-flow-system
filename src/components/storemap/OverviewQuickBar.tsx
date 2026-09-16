@@ -21,10 +21,8 @@ export function OverviewQuickBar({ tasks }: { tasks: MapTask[] }) {
   const pct = total > 0 ? Math.round((done / total) * 100) : 100;
   const t = tone(pct);
 
-  const scrollToTasks = () => {
-    const el = document.getElementById("dagens-uppgifter");
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  /** Översikten är bara en översikt — knappen leder vidare till checklistsidan. */
+  const openTasks = () => navigate("/checklist");
 
   /** Max 60 stolpar så stapeln håller sig läsbar även med många uppgifter. */
   const bars = total > 0 && total <= 60 ? tasks : [];
@@ -34,7 +32,7 @@ export function OverviewQuickBar({ tasks }: { tasks: MapTask[] }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button
           type="button"
-          onClick={scrollToTasks}
+          onClick={openTasks}
           className="flex items-center gap-3 rounded-2xl border border-border bg-primary px-5 py-5 text-left text-primary-foreground shadow-sm transition hover:brightness-110"
         >
           <ClipboardList className="h-7 w-7 shrink-0" />
