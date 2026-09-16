@@ -1651,6 +1651,23 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
                   <td className={`px-2 py-0.5 text-right font-mono ${infiniteStock ? "text-success" : availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
                     {infiniteStock ? <span title="Obegränsat lager (uppstartsläge)">∞</span> : availableStock > 0 ? Number(availableStock.toFixed(1)) : "0"}
+                    {!infiniteStock && availableStock < qtyOrdered && (() => {
+                      const other = elsewhereByProduct.get(line.product_id) || [];
+                      if (!other.length) return null;
+                      const label = other
+                        .slice(0, 2)
+                        .map((o) => `${o.place} ${Number(o.qty.toFixed(1))}`)
+                        .join(" · ");
+                      return (
+                        <div
+                          className="mt-0.5 text-[10px] font-sans font-normal leading-tight text-muted-foreground"
+                          title={other.map((o) => `${o.place}: ${Number(o.qty.toFixed(1))}`).join("\n")}
+                        >
+                          Finns i {label}
+                          {other.length > 2 ? ` +${other.length - 2}` : ""}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-2 py-0.5 text-right">
                     {(() => {
