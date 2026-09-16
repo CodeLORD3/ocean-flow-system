@@ -360,6 +360,9 @@ export default function Uppgifter() {
                       categoryName={catOf(t)?.name ?? null}
                       categoryColor={catOf(t)?.color ?? null}
                       assigneeName={staffName(t.assigned_staff_id)}
+                      assigneeImage={
+                        staffList.find((p) => p.id === t.assigned_staff_id)?.profile_image_url ?? null
+                      }
                       completedByName={staffName(t.completed_by_staff_id)}
                       completedByImage={
                         staffList.find((p) => p.id === t.completed_by_staff_id)?.profile_image_url ?? null
