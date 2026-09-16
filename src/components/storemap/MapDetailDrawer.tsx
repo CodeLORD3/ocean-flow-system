@@ -488,23 +488,49 @@ export function MapDetailDrawer({
           </TabsContent>
         </Tabs>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-[11px]"
-            onClick={() => {
-              const next = tasks.find((t) => !t.done);
-              if (!next) return toast({ title: "Allt är redan klart här" });
-              toggle.mutate({ id: next.id, done: true });
-            }}
-          >
-            ✓ Åtgärd klar
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 text-[11px]" onClick={() => setTab("overview")}>
-            Kommentar
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-[11px]"
+          onClick={() => {
+            const next = tasks.find((t) => !t.done);
+            if (!next) return toast({ title: "Allt är redan klart här" });
+            toggle.mutate({ id: next.id, done: true });
+          }}
+        >
+          ✓ Åtgärd klar
+        </Button>
+        <Button variant="outline" size="sm" className="h-8 text-[11px]" onClick={() => setTab("overview")}>
+          Kommentar
+        </Button>
+      </div>
+    </>
+  );
+
+  /* Panelläge: ligger som egen kolumn till höger, kartan syns hela tiden. */
+  if (inline) {
+    return (
+      <div className="max-h-[78vh] overflow-y-auto rounded-xl border border-border bg-card p-4">
+        <div className="flex justify-end">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onOpenChange(false)} title="Stäng">
+            <X className="h-4 w-4" />
           </Button>
         </div>
+        {head}
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="sr-only">{label}</SheetTitle>
+          {head}
+        </SheetHeader>
+        {body}
       </SheetContent>
     </Sheet>
   );
