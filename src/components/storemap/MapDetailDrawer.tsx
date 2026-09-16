@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -179,6 +179,28 @@ export function MapDetailDrawer({
     }
   };
 
+  /** Högerpil på tangentbordet flyttar fokus till Gå vidare och tänder knappen. */
+  const goRef = useRef<HTMLButtonElement | null>(null);
+  const [goLit, setGoLit] = useState(false);
+  useEffect(() => {
+    if (!onOpenPage) return;
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing = !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (typing) return;
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setGoLit(true);
+        goRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onOpenPage]);
+  useEffect(() => {
+    setGoLit(false);
+  }, [entityId]);
+
   const head = (
     <div className="space-y-3">
           <div className="flex items-center gap-3">
@@ -199,11 +221,21 @@ export function MapDetailDrawer({
             </div>
             {onOpenPage && (
               <Button
+                ref={goRef}
                 size="sm"
                 autoFocus
-                title="Gå vidare till områdets egna sida (Enter)"
-                className="ml-auto h-8 shrink-0 gap-1 text-xs text-white ring-offset-2 hover:opacity-90 focus-visible:ring-2"
-                style={zone?.color ? { background: zone.color } : undefined}
+                title="Tryck högerpil och sedan Enter för att gå vidare"
+                className={`ml-auto h-8 shrink-0 gap-1 text-xs text-white ring-offset-2 transition hover:opacity-90 focus-visible:ring-2 ${
+                  goLit ? "scale-105 animate-pulse ring-2 ring-offset-2" : ""
+                }`}
+                style={
+                  zone?.color
+                    ? {
+                        background: zone.color,
+                        boxShadow: goLit ? `0 0 0 4px ${zone.color}55` : undefined,
+                      }
+                    : undefined
+                }
                 onClick={onOpenPage}
               >
                 Gå vidare <ArrowRight className="h-3.5 w-3.5" />
