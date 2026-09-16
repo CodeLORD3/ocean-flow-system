@@ -235,6 +235,7 @@ export function useSaveDeviation() {
         description: input.description,
         title: input.title || null,
         source: input.source ?? "övrigt",
+        source_id: (input as { source_id?: string | null }).source_id ?? null,
         immediate_action: input.immediate_action || null,
         root_cause: input.root_cause || null,
         corrective_action: input.corrective_action || null,

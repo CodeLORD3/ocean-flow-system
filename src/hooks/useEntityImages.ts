@@ -107,12 +107,15 @@ export function useUploadEntityImage() {
       file,
       caption,
       sortOrder,
+      imageKind,
     }: {
       entityType: string;
       entityId: string;
       file: File;
       caption?: string;
       sortOrder?: number;
+      /** standard | progress | completion | issue | general */
+      imageKind?: string;
     }) => {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth?.user?.id ?? null;
@@ -144,6 +147,7 @@ export function useUploadEntityImage() {
           sort_order: sortOrder ?? 0,
           uploaded_by: uid,
           uploaded_by_name: uploaderName,
+          image_kind: imageKind ?? null,
         })
         .select("id")
         .single();

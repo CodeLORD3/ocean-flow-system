@@ -1,4 +1,5 @@
 import {
+  Map,
   CalendarOff,
   Images,
   LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText, SlidersHorizontal, MessageSquare, ClipboardCheck, History, ShieldCheck, ArrowLeftRight, Trash2,
@@ -36,6 +37,7 @@ const overviewNav = [
   { title: "Chatt", url: "/chat", icon: MessageSquare },
 
   { title: "Checklista", url: "/checklist", icon: ClipboardCheck },
+  { title: "Butikskarta", url: "/store-map", icon: Map },
   { title: "Egenkontroll", url: "/food-safety", icon: ClipboardCheck },
   { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
   { title: "Bokningsinställningar", url: "/booking-settings", icon: SlidersHorizontal },

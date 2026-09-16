@@ -1286,6 +1286,7 @@ export type Database = {
           done: boolean
           done_at: string | null
           id: string
+          map_object_id: string | null
           note: string | null
           section: string
           signature: string | null
@@ -1293,6 +1294,7 @@ export type Database = {
           task: string
           time_label: string | null
           updated_at: string
+          zone_id: string | null
         }
         Insert: {
           category?: string | null
@@ -1301,6 +1303,7 @@ export type Database = {
           done?: boolean
           done_at?: string | null
           id?: string
+          map_object_id?: string | null
           note?: string | null
           section: string
           signature?: string | null
@@ -1308,6 +1311,7 @@ export type Database = {
           task: string
           time_label?: string | null
           updated_at?: string
+          zone_id?: string | null
         }
         Update: {
           category?: string | null
@@ -1316,6 +1320,7 @@ export type Database = {
           done?: boolean
           done_at?: string | null
           id?: string
+          map_object_id?: string | null
           note?: string | null
           section?: string
           signature?: string | null
@@ -1323,6 +1328,7 @@ export type Database = {
           task?: string
           time_label?: string | null
           updated_at?: string
+          zone_id?: string | null
         }
         Relationships: [
           {
@@ -1330,6 +1336,20 @@ export type Database = {
             columns: ["day_id"]
             isOneToOne: false
             referencedRelation: "checklist_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_map_object_id_fkey"
+            columns: ["map_object_id"]
+            isOneToOne: false
+            referencedRelation: "map_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "map_zones"
             referencedColumns: ["id"]
           },
         ]
@@ -1428,6 +1448,7 @@ export type Database = {
           category: string | null
           created_at: string
           id: string
+          map_object_id: string | null
           section: string
           sort_order: number
           store_id: string | null
@@ -1435,12 +1456,14 @@ export type Database = {
           template_id: string
           time_label: string | null
           updated_at: string
+          zone_id: string | null
         }
         Insert: {
           active?: boolean
           category?: string | null
           created_at?: string
           id?: string
+          map_object_id?: string | null
           section: string
           sort_order?: number
           store_id?: string | null
@@ -1448,12 +1471,14 @@ export type Database = {
           template_id?: string
           time_label?: string | null
           updated_at?: string
+          zone_id?: string | null
         }
         Update: {
           active?: boolean
           category?: string | null
           created_at?: string
           id?: string
+          map_object_id?: string | null
           section?: string
           sort_order?: number
           store_id?: string | null
@@ -1461,8 +1486,16 @@ export type Database = {
           template_id?: string
           time_label?: string | null
           updated_at?: string
+          zone_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "checklist_template_items_map_object_id_fkey"
+            columns: ["map_object_id"]
+            isOneToOne: false
+            referencedRelation: "map_objects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "checklist_template_items_store_id_fkey"
             columns: ["store_id"]
@@ -1482,6 +1515,13 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "checklist_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "map_zones"
             referencedColumns: ["id"]
           },
         ]
@@ -2296,6 +2336,7 @@ export type Database = {
           limit_max: number | null
           limit_min: number | null
           location_id: string | null
+          map_object_id: string | null
           name: string
           note: string | null
           responsible_role: string | null
@@ -2315,6 +2356,7 @@ export type Database = {
           limit_max?: number | null
           limit_min?: number | null
           location_id?: string | null
+          map_object_id?: string | null
           name: string
           note?: string | null
           responsible_role?: string | null
@@ -2334,6 +2376,7 @@ export type Database = {
           limit_max?: number | null
           limit_min?: number | null
           location_id?: string | null
+          map_object_id?: string | null
           name?: string
           note?: string | null
           responsible_role?: string | null
@@ -2369,6 +2412,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "control_points_map_object_id_fkey"
+            columns: ["map_object_id"]
+            isOneToOne: false
+            referencedRelation: "map_objects"
             referencedColumns: ["id"]
           },
           {
@@ -4750,6 +4800,7 @@ export type Database = {
           entity_type: string
           focal_point: string
           id: string
+          image_kind: string | null
           is_cover: boolean
           is_featured: boolean
           sort_order: number
@@ -4767,6 +4818,7 @@ export type Database = {
           entity_type: string
           focal_point?: string
           id?: string
+          image_kind?: string | null
           is_cover?: boolean
           is_featured?: boolean
           sort_order?: number
@@ -4784,6 +4836,7 @@ export type Database = {
           entity_type?: string
           focal_point?: string
           id?: string
+          image_kind?: string | null
           is_cover?: boolean
           is_featured?: boolean
           sort_order?: number
@@ -4849,6 +4902,125 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "legal_entities"
             referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      floor_plan_versions: {
+        Row: {
+          created_at: string
+          floor_plan_id: string
+          id: string
+          note: string | null
+          published_by: string | null
+          published_by_name: string | null
+          snapshot: Json
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          floor_plan_id: string
+          id?: string
+          note?: string | null
+          published_by?: string | null
+          published_by_name?: string | null
+          snapshot: Json
+          version: number
+        }
+        Update: {
+          created_at?: string
+          floor_plan_id?: string
+          id?: string
+          note?: string | null
+          published_by?: string | null
+          published_by_name?: string | null
+          snapshot?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floor_plan_versions_floor_plan_id_fkey"
+            columns: ["floor_plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      floor_plans: {
+        Row: {
+          background_locked: boolean
+          background_opacity: number
+          background_scale: number
+          background_url: string | null
+          background_x: number
+          background_y: number
+          created_at: string
+          created_by: string | null
+          floor_label: string | null
+          grid_size: number
+          height: number
+          id: string
+          name: string
+          published_at: string | null
+          status: string
+          store_id: string
+          updated_at: string
+          width: number
+        }
+        Insert: {
+          background_locked?: boolean
+          background_opacity?: number
+          background_scale?: number
+          background_url?: string | null
+          background_x?: number
+          background_y?: number
+          created_at?: string
+          created_by?: string | null
+          floor_label?: string | null
+          grid_size?: number
+          height?: number
+          id?: string
+          name: string
+          published_at?: string | null
+          status?: string
+          store_id: string
+          updated_at?: string
+          width?: number
+        }
+        Update: {
+          background_locked?: boolean
+          background_opacity?: number
+          background_scale?: number
+          background_url?: string | null
+          background_x?: number
+          background_y?: number
+          created_at?: string
+          created_by?: string | null
+          floor_label?: string | null
+          grid_size?: number
+          height?: number
+          id?: string
+          name?: string
+          published_at?: string | null
+          status?: string
+          store_id?: string
+          updated_at?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floor_plans_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "floor_plans_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -7044,6 +7216,213 @@ export type Database = {
           },
         ]
       }
+      map_geometry: {
+        Row: {
+          created_at: string
+          floor_plan_id: string
+          id: string
+          kind: string
+          label: string | null
+          thickness: number
+          updated_at: string
+          x1: number
+          x2: number
+          y1: number
+          y2: number
+        }
+        Insert: {
+          created_at?: string
+          floor_plan_id: string
+          id?: string
+          kind?: string
+          label?: string | null
+          thickness?: number
+          updated_at?: string
+          x1: number
+          x2: number
+          y1: number
+          y2: number
+        }
+        Update: {
+          created_at?: string
+          floor_plan_id?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          thickness?: number
+          updated_at?: string
+          x1?: number
+          x2?: number
+          y1?: number
+          y2?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "map_geometry_floor_plan_id_fkey"
+            columns: ["floor_plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      map_object_types: {
+        Row: {
+          active: boolean
+          category: string
+          color: string | null
+          created_at: string
+          default_height: number
+          default_width: number
+          icon: string | null
+          id: string
+          key: string
+          name: string
+          recommended_tasks: Json
+          shape: string
+          sort_order: number
+          supports_temperature: boolean
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          color?: string | null
+          created_at?: string
+          default_height?: number
+          default_width?: number
+          icon?: string | null
+          id?: string
+          key: string
+          name: string
+          recommended_tasks?: Json
+          shape?: string
+          sort_order?: number
+          supports_temperature?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          color?: string | null
+          created_at?: string
+          default_height?: number
+          default_width?: number
+          icon?: string | null
+          id?: string
+          key?: string
+          name?: string
+          recommended_tasks?: Json
+          shape?: string
+          sort_order?: number
+          supports_temperature?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      map_objects: {
+        Row: {
+          active: boolean
+          control_point_id: string | null
+          created_at: string
+          created_by: string | null
+          floor_plan_id: string
+          height: number
+          id: string
+          name: string
+          note: string | null
+          object_type_id: string
+          rotation: number
+          store_id: string
+          updated_at: string
+          width: number
+          x: number
+          y: number
+          zone_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          control_point_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          floor_plan_id: string
+          height?: number
+          id?: string
+          name: string
+          note?: string | null
+          object_type_id: string
+          rotation?: number
+          store_id: string
+          updated_at?: string
+          width?: number
+          x?: number
+          y?: number
+          zone_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          control_point_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          floor_plan_id?: string
+          height?: number
+          id?: string
+          name?: string
+          note?: string | null
+          object_type_id?: string
+          rotation?: number
+          store_id?: string
+          updated_at?: string
+          width?: number
+          x?: number
+          y?: number
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "map_objects_control_point_id_fkey"
+            columns: ["control_point_id"]
+            isOneToOne: false
+            referencedRelation: "control_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "map_objects_floor_plan_id_fkey"
+            columns: ["floor_plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "map_objects_object_type_id_fkey"
+            columns: ["object_type_id"]
+            isOneToOne: false
+            referencedRelation: "map_object_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "map_objects_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "map_objects_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "map_objects_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "map_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       map_settings: {
         Row: {
           center_latitude: number
@@ -7067,6 +7446,79 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      map_zones: {
+        Row: {
+          color: string | null
+          created_at: string
+          floor_plan_id: string
+          height: number
+          id: string
+          name: string
+          points: Json | null
+          sort_order: number
+          store_id: string
+          updated_at: string
+          width: number
+          x: number
+          y: number
+          zone_key: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          floor_plan_id: string
+          height?: number
+          id?: string
+          name: string
+          points?: Json | null
+          sort_order?: number
+          store_id: string
+          updated_at?: string
+          width?: number
+          x?: number
+          y?: number
+          zone_key?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          floor_plan_id?: string
+          height?: number
+          id?: string
+          name?: string
+          points?: Json | null
+          sort_order?: number
+          store_id?: string
+          updated_at?: string
+          width?: number
+          x?: number
+          y?: number
+          zone_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "map_zones_floor_plan_id_fkey"
+            columns: ["floor_plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "map_zones_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "map_zones_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       margin_targets: {
         Row: {
