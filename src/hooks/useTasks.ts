@@ -412,7 +412,7 @@ export function useStandardTasks(storeId?: string | null) {
       return (data || [])
         .filter((r: any) => r.checklist_templates?.active !== false)
         .map((r: any) => ({
-          ...normalize(r),
+          ...normalize<StandardTask>(r),
           listName: r.checklist_templates?.name ?? "Daglig checklista",
           weekdays: r.checklist_templates?.weekdays ?? [],
         })) as StandardTask[];
