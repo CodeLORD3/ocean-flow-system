@@ -269,6 +269,7 @@ export default function StoreMap() {
       />
 
       {/* Dagens uppgifter — samma rader som checklistan, färgade per område */}
+      <div id="dagens-uppgifter" className="scroll-mt-4">
       <OverviewTaskPanel
         storeId={storeId}
         planId={plan?.id ?? null}
