@@ -39,6 +39,7 @@ import { MapListViews } from "@/components/storemap/MapListViews";
 import { OverviewStatsBar } from "@/components/storemap/OverviewStatsBar";
 import { StorePhotoStrip } from "@/components/storemap/StorePhotoStrip";
 import { OverviewTaskPanel } from "@/components/storemap/OverviewTaskPanel";
+import { OverviewQuickBar } from "@/components/storemap/OverviewQuickBar";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
@@ -256,6 +257,9 @@ export default function StoreMap() {
 
   return (
     <div className="space-y-4">
+      {/* Stora knappar och dagens stapel högst upp */}
+      <OverviewQuickBar tasks={tasks} />
+
       {/* Viktig statistik högst upp — vilka som arbetar, stämpling, checklistor, avvikelser */}
       <OverviewStatsBar
         storeId={storeId}
@@ -265,6 +269,7 @@ export default function StoreMap() {
       />
 
       {/* Dagens uppgifter — samma rader som checklistan, färgade per område */}
+      <div id="dagens-uppgifter" className="scroll-mt-4">
       <OverviewTaskPanel
         storeId={storeId}
         planId={plan?.id ?? null}
@@ -275,6 +280,7 @@ export default function StoreMap() {
         onDayChange={setDay}
         onOpenZone={(id) => { setAreaPage({ kind: "zone", id }); setView("omrade"); }}
       />
+      </div>
 
       {/* Bilder från butiken — senaste bilderna som en rad man kan bläddra i */}
       <StorePhotoStrip
