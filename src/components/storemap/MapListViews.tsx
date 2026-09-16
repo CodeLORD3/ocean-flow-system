@@ -121,7 +121,7 @@ export function MapListViews({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <AlertTriangle className="h-4 w-4" style={{ color: STATUS_COLOR.late }} /> Avvikelser på kartan ({mine.length})
+            <AlertTriangle className="h-4 w-4" style={{ color: STATUS_COLOR.red }} /> Avvikelser på kartan ({mine.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-1.5">
