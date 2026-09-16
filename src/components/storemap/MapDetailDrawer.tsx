@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { EmptyState } from "@/components/EmptyState";
-import { Camera, CheckCircle2, Info, Link2, MoreVertical, Thermometer, Trash2 } from "lucide-react";
+import { Camera, CheckCircle2, Info, Link2, MoreVertical, Thermometer, Trash2, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,6 +76,7 @@ export function MapDetailDrawer({
   canManage,
   zoneNumber,
   areaLabel,
+  inline = false,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -209,7 +210,9 @@ export function MapDetailDrawer({
               ))}
             </div>
           </div>
-        </SheetHeader>
+    </div>
+  );
+
 
   const body = (
     <>
