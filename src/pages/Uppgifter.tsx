@@ -131,6 +131,7 @@ export default function Uppgifter() {
 
   const createAdhoc = async () => {
     if (!storeId) return;
+    let newId: string | null = null;
     try {
       const payload = {
         storeId,
@@ -147,14 +148,16 @@ export default function Uppgifter() {
         await addStandard.mutateAsync(payload);
         toast({ title: "Standarduppgift tillagd", description: "Den återkommer varje dag." });
       } else {
-        await addAdhoc.mutateAsync(payload);
+        const id = await addAdhoc.mutateAsync(payload);
         toast({ title: "Tillfällig uppgift tillagd", description: "Den gäller bara valt datum." });
+        newId = id;
       }
       setNewOpen(false);
       setNTask("");
       setNNote("");
       setNTime("");
       setNMinutes("");
+      if (newId) switchTab(`/uppgift/${newId}`);
     } catch (e: any) {
       toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
     }
@@ -558,6 +561,10 @@ export default function Uppgifter() {
             <div>
               <label className="text-sm font-medium">Vad ska göras?</label>
               <Input value={nTask} onChange={(e) => setNTask(e.target.value)} autoFocus />
+              <p className="mt-1 text-xs text-muted-foreground">
+                När uppgiften är skapad öppnas den, så du kan lägga in mål, varor och steg med bilder. Det går att ändra
+                när som helst.
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

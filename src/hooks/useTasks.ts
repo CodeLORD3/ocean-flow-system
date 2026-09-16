@@ -48,10 +48,12 @@ export type TaskRow = {
   requires_photo: boolean;
   template_item_id: string | null;
   time_label: string | null;
+  /** Arbetsbeskrivning: mål, varor och steg med bilder. */
+  guide: unknown;
 };
 
 const TASK_FIELDS =
-  "id, day_id, task, section, note, sort_order, done, done_at, signature, category, category_id, work_type, zone_id, map_object_id, assigned_staff_id, completed_by_staff_id, specific_time, time_from, time_to, daypart, estimated_minutes, instructions, important_note, requires_photo, template_item_id, time_label";
+  "id, day_id, task, section, note, sort_order, done, done_at, signature, category, category_id, work_type, zone_id, map_object_id, assigned_staff_id, completed_by_staff_id, specific_time, time_from, time_to, daypart, estimated_minutes, instructions, important_note, requires_photo, template_item_id, time_label, guide";
 
 function normalize<T = TaskRow>(row: any): T {
   const raw = row.instructions;
@@ -522,6 +524,45 @@ export function useUpdateStandardTask() {
       if (error) throw error;
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["standard-tasks"] });
+      qc.invalidateQueries({ queryKey: ["checklist-day"] });
+    },
+  });
+}
+
+/**
+ * Sparar arbetsbeskrivningen. Skrivs både på dagens uppgift och på
+ * standarduppgiften, så beskrivningen följer med kommande dagar.
+ */
+export function useSaveTaskGuide() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      templateItemId,
+      guide,
+    }: {
+      id: string;
+      templateItemId?: string | null;
+      guide: unknown;
+    }) => {
+      const steps = Array.isArray((guide as any)?.steps)
+        ? (guide as any).steps.map((s: any) => String(s?.text ?? "")).filter((t: string) => t.trim())
+        : [];
+      const patch = { guide, instructions: steps.length > 0 ? steps : null } as never;
+      const { error } = await supabase.from("checklist_items").update(patch).eq("id", id);
+      if (error) throw error;
+      if (templateItemId) {
+        const { error: tErr } = await supabase
+          .from("checklist_template_items")
+          .update(patch)
+          .eq("id", templateItemId);
+        if (tErr) throw tErr;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["task-item"] });
+      qc.invalidateQueries({ queryKey: ["day-tasks"] });
       qc.invalidateQueries({ queryKey: ["standard-tasks"] });
       qc.invalidateQueries({ queryKey: ["checklist-day"] });
     },
