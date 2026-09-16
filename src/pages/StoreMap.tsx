@@ -867,6 +867,7 @@ export default function StoreMap() {
               </Card>
             )}
           </div>
+          )}
         </div>
       )}
 
