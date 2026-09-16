@@ -15,7 +15,7 @@ export function TaskGuideView({ guide }: { guide: TaskGuide }) {
       {hasGoal && (
         <section className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
           <h3 className="mb-1 flex items-center gap-2 text-sm font-semibold text-emerald-700">
-            <Target className="h-4 w-4" /> Så här ska det se ut
+            <Target className="h-4 w-4" /> Godkänt läge
           </h3>
           {guide.goal.trim() && <p className="text-sm">{guide.goal}</p>}
           {guide.goalImages.length > 0 && (
@@ -32,7 +32,7 @@ export function TaskGuideView({ guide }: { guide: TaskGuide }) {
 
       {hasMaterials && (
         <section>
-          <h3 className="mb-2 text-sm font-semibold">Det här behöver du</h3>
+          <h3 className="mb-2 text-sm font-semibold">Utrustning och material</h3>
           <div className="flex flex-wrap gap-3">
             {guide.materials.map((m, i) => (
               <div key={i} className="w-24 text-center">
@@ -52,7 +52,7 @@ export function TaskGuideView({ guide }: { guide: TaskGuide }) {
 
       {hasSteps && (
         <section>
-          <h3 className="mb-2 text-sm font-semibold">Steg för steg</h3>
+          <h3 className="mb-2 text-sm font-semibold">Arbetsgång</h3>
           <ol className="space-y-3">
             {guide.steps.map((s, i) => (
               <li key={i} className="flex gap-3">
