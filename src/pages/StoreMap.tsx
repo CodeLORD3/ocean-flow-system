@@ -37,6 +37,7 @@ import { ObjectLibrary } from "@/components/storemap/ObjectLibrary";
 import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog";
 import { MapListViews } from "@/components/storemap/MapListViews";
 import { OverviewStatsBar } from "@/components/storemap/OverviewStatsBar";
+import { StorePhotoStrip } from "@/components/storemap/StorePhotoStrip";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
