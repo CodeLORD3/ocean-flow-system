@@ -15,6 +15,7 @@ type Props = {
   categoryColor?: string | null;
   assigneeName?: string | null;
   completedByName?: string | null;
+  completedByImage?: string | null;
   photoCount?: number;
   onToggle: (done: boolean) => void;
   onOpenDetail: () => void;
