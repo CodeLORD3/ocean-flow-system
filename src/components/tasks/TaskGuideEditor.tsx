@@ -104,9 +104,9 @@ export function TaskGuideEditor({
       </div>
 
       <div>
-        <label className="text-sm font-medium">Det här behöver du</label>
+        <label className="text-sm font-medium">Utrustning och material</label>
         <p className="mb-2 text-xs text-muted-foreground">
-          Till exempel diskmedel, tvål eller sopborste — med bild så alla hittar rätt vara.
+          Plockas fram innan momentet startar. Bild på förpackningen gör att rätt medel eller redskap används varje gång.
         </p>
         <div className="space-y-2">
           {guide.materials.map((m, i) => (
