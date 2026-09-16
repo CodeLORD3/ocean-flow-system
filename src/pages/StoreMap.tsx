@@ -38,6 +38,7 @@ import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog
 import { MapListViews } from "@/components/storemap/MapListViews";
 import { OverviewStatsBar } from "@/components/storemap/OverviewStatsBar";
 import { StorePhotoStrip } from "@/components/storemap/StorePhotoStrip";
+import { OverviewTaskPanel } from "@/components/storemap/OverviewTaskPanel";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
@@ -263,13 +264,26 @@ export default function StoreMap() {
         totalSqm={totalSqm}
       />
 
+      {/* Dagens uppgifter — samma rader som checklistan, färgade per område */}
+      <OverviewTaskPanel
+        storeId={storeId}
+        planId={plan?.id ?? null}
+        zones={zones}
+        objects={objects}
+        tasks={tasks}
+        day={day}
+        onDayChange={setDay}
+        onOpenZone={(id) => { setAreaPage({ kind: "zone", id }); setView("omrade"); }}
+      />
+
       {/* Bilder från butiken — senaste bilderna som en rad man kan bläddra i */}
       <StorePhotoStrip
         storeId={storeId}
         planId={plan?.id ?? null}
         planImages={planImages}
         zones={zones}
-        onOpenZone={(id) => setAreaPage({ kind: "zone", id })}
+        objects={objects}
+        onOpenZone={(id) => { setAreaPage({ kind: "zone", id }); setView("omrade"); }}
       />
 
 

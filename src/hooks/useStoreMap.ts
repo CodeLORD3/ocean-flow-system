@@ -122,6 +122,8 @@ export type MapTask = {
   section: string;
   time_label: string | null;
   category: string | null;
+  /** Arbetstyp: stadning | temperatur | rapporter | bestallning | underhall | personal | ovrigt */
+  work_type: string | null;
   done: boolean;
   done_at: string | null;
   signature: string | null;
@@ -244,7 +246,7 @@ export function useMapTasks(storeId?: string | null, date?: string) {
       const { data, error } = await supabase
         .from("checklist_items")
         .select(
-          "id, day_id, task, section, time_label, category, done, done_at, signature, note, zone_id, map_object_id",
+          "id, day_id, task, section, time_label, category, work_type, done, done_at, signature, note, zone_id, map_object_id",
         )
         .in("day_id", ids)
         .order("sort_order");

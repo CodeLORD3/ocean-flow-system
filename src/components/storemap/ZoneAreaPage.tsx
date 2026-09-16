@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { MapComposer } from "@/components/storemap/MapComposer";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
+import { OverviewTaskPanel } from "@/components/storemap/OverviewTaskPanel";
 import { dueText, progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { useToggleChecklistItem } from "@/hooks/useChecklist";
 import { useDeleteEntityImage, useEntityImages, useUploadEntityImage } from "@/hooks/useEntityImages";
@@ -142,30 +143,26 @@ export function ZoneAreaPage({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Checklistor och uppgifter</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {tasks.length === 0 && <EmptyState title="Inga uppgifter" description="Koppla uppgifter till ytan i kartan." />}
-            {sections.map(([section, rows]) => (
-              <div key={section} className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{section}</p>
-                {rows.map((t) => (
-                  <label key={t.id} className="flex items-start gap-2 rounded-md border border-border p-2">
-                    <Checkbox checked={t.done} onCheckedChange={(v) => toggle.mutate({ id: t.id, done: !!v })} className="mt-0.5" />
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-xs ${t.done ? "text-muted-foreground line-through" : "font-medium"}`}>{t.task}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {t.done ? `${t.signature ?? "—"} · ${dt(t.done_at)}` : (dueText(t.time_label, t.done) ?? "")}
-                      </p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <div>
+          {tasks.length === 0 ? (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Checklistor och uppgifter</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <EmptyState title="Inga uppgifter" description="Koppla uppgifter till ytan i kartan." />
+              </CardContent>
+            </Card>
+          ) : (
+            <OverviewTaskPanel
+              storeId={storeId}
+              zones={zone ? [zone] : []}
+              objects={object ? [object] : []}
+              tasks={tasks}
+              day={""}
+            />
+          )}
+        </div>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
