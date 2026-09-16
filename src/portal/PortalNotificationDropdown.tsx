@@ -35,7 +35,9 @@ export default function PortalNotificationDropdown({ onNavigate }: Props) {
       return data;
     },
     enabled: !!userId,
-    refetchInterval: 15000,
+    staleTime: 60_000,
+    refetchInterval: 90_000,
+    refetchIntervalInBackground: false,
   });
 
   const unreadCount = notifications.filter((n: any) => !n.is_read).length;
