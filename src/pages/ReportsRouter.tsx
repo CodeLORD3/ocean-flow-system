@@ -178,7 +178,12 @@ export default function ReportsRouter() {
   }
   
   if (site === "production") {
-    return <ProductionReportsArchive />;
+    return (
+      <div className="space-y-4">
+        <ReportsStatsBand />
+        <ProductionReportsArchive />
+      </div>
+    );
   }
 
   return <ShopReportsPage />;
