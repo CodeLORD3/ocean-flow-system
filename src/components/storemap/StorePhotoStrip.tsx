@@ -197,15 +197,50 @@ export function StorePhotoStrip({
       )}
 
       {allOpen && (
-        <div className="mt-3 border-t border-border pt-3">
-          <EntityImageGallery
-            entityType="store"
-            entityId={storeId}
-            title="Alla bilder i butiken"
-            description="Favoriter, kommentarer, utvalda bilder och arkiv per dag."
-            editable
-            catalog
-          />
+        <div className="mt-3 space-y-4 border-t border-border pt-3">
+          {groups.map((g) => (
+            <div key={g.key}>
+              <div className="mb-2 flex items-center gap-2">
+                <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+                  {g.label}
+                </span>
+                <span className="text-[11px] tabular-nums text-muted-foreground">{g.items.length} bilder</span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                {g.items.map(({ img, index: i }) => {
+                  const color = colorOf(img);
+                  const zoneId = zoneById[img.entity_id] ? img.entity_id : null;
+                  return (
+                    <button
+                      key={img.id}
+                      type="button"
+                      onClick={() => setIndex(i)}
+                      onDoubleClick={() => zoneId && onOpenZone?.(zoneId)}
+                      className="group relative aspect-[4/3] overflow-hidden rounded-lg border border-border bg-muted text-left transition hover:shadow-md"
+                      title={img.caption ?? labelOf(img)}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.caption ?? labelOf(img)}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 pb-1.5 pt-4">
+                        <p className="flex items-center gap-1 truncate text-[10px] font-medium text-white">
+                          {color && (
+                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                          )}
+                          {labelOf(img)}
+                        </p>
+                        <p className="truncate text-[9px] text-white/75">{shortWhen(img.created_at)}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
