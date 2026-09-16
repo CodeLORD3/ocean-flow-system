@@ -107,12 +107,15 @@ export function useUploadEntityImage() {
       file,
       caption,
       sortOrder,
+      imageKind,
     }: {
       entityType: string;
       entityId: string;
       file: File;
       caption?: string;
       sortOrder?: number;
+      /** standard | progress | completion | issue | general */
+      imageKind?: string;
     }) => {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth?.user?.id ?? null;
