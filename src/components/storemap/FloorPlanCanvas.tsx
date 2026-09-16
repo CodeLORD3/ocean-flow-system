@@ -65,6 +65,7 @@ export function FloorPlanCanvas({
   onZonePointsCommit,
   showObjects = true,
   showPins = true,
+  onOpenArea,
 }: {
   plan: FloorPlan;
   zones: MapZone[];
@@ -75,6 +76,8 @@ export function FloorPlanCanvas({
   objectProgress: Record<string, MapProgress>;
   selected: Selection;
   onSelect: (s: Selection) => void;
+  /** Dubbelklick på en yta går direkt vidare till ytans egna sida. */
+  onOpenArea?: (s: Selection) => void;
   editMode: boolean;
   showBackground: boolean;
   showGrid: boolean;
@@ -537,6 +540,11 @@ export function FloorPlanCanvas({
                       e.stopPropagation();
                       setHover(null);
                       onSelect({ kind: "zone", id: z.id });
+                    }}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      setHover(null);
+                      onOpenArea?.({ kind: "zone", id: z.id });
                     }}
                   />
 
