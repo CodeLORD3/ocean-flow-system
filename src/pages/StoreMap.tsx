@@ -15,11 +15,26 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "@/hooks/use-toast";
-import { Copy, History, Map as MapIcon, MapPin as PinIcon, Pencil, RotateCw, Save, Trash2, Upload } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarDays,
+  Copy,
+  History,
+  ImageIcon,
+  Map as MapIcon,
+  MapPin as PinIcon,
+  Pencil,
+  RotateCw,
+  Save,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import { todayIso } from "@/hooks/useChecklist";
 import { FloorPlanCanvas, type Selection } from "@/components/storemap/FloorPlanCanvas";
 import { MapDetailDrawer } from "@/components/storemap/MapDetailDrawer";
 import { ObjectLibrary } from "@/components/storemap/ObjectLibrary";
 import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog";
+import { MapListViews } from "@/components/storemap/MapListViews";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
@@ -73,7 +88,9 @@ export default function StoreMap() {
   const { data: objects = [] } = useMapObjects(plan?.id ?? null);
   const { data: walls = [] } = useMapWalls(plan?.id ?? null);
   const { data: types = [] } = useMapObjectTypes();
-  const { data: tasks = [] } = useMapTasks(storeId);
+  /** Vald dag — styr uppgifterna och historiken i alla vyer. */
+  const [day, setDay] = useState(todayIso());
+  const { data: tasks = [] } = useMapTasks(storeId, day);
   const { data: deviations = [] } = useDeviations(false);
   const { data: versions = [] } = useFloorPlanVersions(plan?.id ?? null);
   const { data: pins = [] } = useMapPins(plan?.id ?? null);
@@ -90,6 +107,7 @@ export default function StoreMap() {
   const deletePin = useDeleteMapPin();
 
   const [mode, setMode] = useState<"drift" | "redigera">("drift");
+  const [view, setView] = useState("karta");
   const [layers, setLayers] = useState({ background: true, grid: false, tasks: true, issues: true, photos: true });
   /** Ytan man just nu placerar en bild i, tillsammans med den valda filen. */
   const [placing, setPlacing] = useState<{ zoneId: string; file: File } | null>(null);
@@ -242,20 +260,48 @@ export default function StoreMap() {
             </SelectContent>
           </Select>
         )}
-        <div className="ml-auto flex items-center gap-4">
+        {/* Vyväljare — samma fem vyer för hela butiken */}
+        <Tabs value={view} onValueChange={setView}>
+          <TabsList className="h-10 rounded-xl bg-muted p-1">
+            {(
+              [
+                ["karta", "Karta"],
+                ["uppgifter", "Uppgifter"],
+                ["bilder", "Bilder"],
+                ["avvikelser", "Avvikelser"],
+                ["historik", "Historik"],
+              ] as const
+            ).map(([key, label]) => (
+              <TabsTrigger key={key} value={key} className="h-8 rounded-lg px-4 text-xs">
+                {label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+        <div className="ml-auto flex items-center gap-3">
+          {/* Dagväljare — styr vilka uppgifter och vilken historik som visas */}
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5">
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <input
+              type="date"
+              value={day}
+              onChange={(e) => setDay(e.target.value || todayIso())}
+              className="bg-transparent text-xs outline-none tabular-nums"
+            />
+          </div>
           <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
             <StatusRing percent={dayProgress.percent} status={dayProgress.status} label={`${dayProgress.percent}%`} />
             <div className="leading-tight">
               <p className="text-[11px] font-medium">{STATUS_LABEL[dayProgress.status]}</p>
               <p className="text-[10px] text-muted-foreground tabular-nums">
-                {dayProgress.done}/{dayProgress.total} uppgifter idag
+                {dayProgress.done}/{dayProgress.total} uppgifter
               </p>
             </div>
           </div>
           {canManage && (
             <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
               <TabsList className="h-9 rounded-full bg-muted p-1">
-                <TabsTrigger value="drift" className="h-7 rounded-full px-4 text-xs">Karta</TabsTrigger>
+                <TabsTrigger value="drift" className="h-7 rounded-full px-4 text-xs">Visa</TabsTrigger>
                 <TabsTrigger value="redigera" className="h-7 gap-1 rounded-full px-4 text-xs">
                   <Pencil className="h-3 w-3" /> Redigera
                 </TabsTrigger>
@@ -265,12 +311,30 @@ export default function StoreMap() {
         </div>
       </div>
 
+
       {plansLoading ? (
         <p className="text-xs text-muted-foreground">Hämtar ritning…</p>
       ) : !plan ? (
         <EmptyState
           title="Ingen ritning ännu"
           description="En administratör lägger upp butikens planritning innan kartan kan användas."
+        />
+      ) : view !== "karta" ? (
+        <MapListViews
+          view={view}
+          zones={zones}
+          objects={objects}
+          tasks={tasks}
+          deviations={deviations as never}
+          images={planImages}
+          versions={versions as never}
+          zoneNumbers={zoneNumbers}
+          onOpenZone={(id) => {
+            setSelected({ kind: "zone", id });
+            setView("karta");
+            setFocus({ kind: "zone", id });
+            setDrawerOpen(true);
+          }}
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-[1fr_300px]">

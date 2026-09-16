@@ -7,7 +7,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { EmptyState } from "@/components/EmptyState";
-import { Camera, CheckCircle2, Info, Link2, Thermometer } from "lucide-react";
+import { Camera, CheckCircle2, Info, Link2, MoreVertical, Thermometer, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { bbox, zonePoints } from "@/lib/mapGeometry";
 import { toast } from "@/hooks/use-toast";
 import { MapComposer } from "@/components/storemap/MapComposer";
@@ -15,7 +21,13 @@ import { StatusRing } from "@/components/storemap/StatusRing";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
 import { dueText, progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { useToggleChecklistItem } from "@/hooks/useChecklist";
-import { useEntityImages, useUploadEntityImage } from "@/hooks/useEntityImages";
+import {
+  useDeleteEntityImage,
+  useEntityImages,
+  useSetImagePosition,
+  useUpdateEntityImage,
+  useUploadEntityImage,
+} from "@/hooks/useEntityImages";
 import { useActivityLogs } from "@/hooks/useActivityLog";
 import { useDeviations } from "@/hooks/useFoodSafety";
 import { useStaff } from "@/hooks/useStaff";
@@ -23,6 +35,18 @@ import { useLinkTaskToMap, type MapObject, type MapObjectType, type MapTask, typ
 
 const time = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }) : "";
+
+/** Idag, Igår eller datum — samma språk som resten av systemet. */
+const dayText = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const today = new Date();
+  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  const yesterday = new Date(today.getTime() - 86400000);
+  if (same(d, today)) return "Idag";
+  if (same(d, yesterday)) return "Igår";
+  return d.toLocaleDateString("sv-SE");
+};
 
 function ActorAvatar({ name, url }: { name: string; url?: string | null }) {
   const initials = name
@@ -75,6 +99,9 @@ export function MapDetailDrawer({
   const toggle = useToggleChecklistItem();
   const link = useLinkTaskToMap();
   const upload = useUploadEntityImage();
+  const deleteImage = useDeleteEntityImage();
+  const updateImage = useUpdateEntityImage();
+  const setPosition = useSetImagePosition();
   const { data: images = [] } = useEntityImages(entityType, entityId || null);
   const { data: logs = [] } = useActivityLogs({ storeId, limit: 300 });
   const { data: deviations = [] } = useDeviations(false);
@@ -321,11 +348,46 @@ export function MapDetailDrawer({
               {latest.map((i) => (
                 <div key={i.id} className="overflow-hidden rounded-xl border border-border">
                   <img src={i.url} alt={i.caption ?? label} className="h-28 w-full object-cover" />
-                  <div className="px-2 py-1.5">
-                    <p className="truncate text-xs font-medium">{i.caption ?? label}</p>
-                    <p className="truncate text-[10px] text-muted-foreground">
-                      {time(i.created_at)} · {i.uploaded_by_name ?? "—"}
-                    </p>
+                  <div className="flex items-start gap-1 px-2 py-1.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium">{i.caption ?? label}</p>
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        {dayText(i.created_at)} {time(i.created_at)} · {i.uploaded_by_name ?? "—"}
+                      </p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="rounded-md p-1 text-muted-foreground hover:bg-muted" aria-label="Fler val">
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="text-xs">
+                        {i.norm_x != null && (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setPosition.mutate({
+                                id: i.id,
+                                entityType,
+                                entityId,
+                                floorPlanId: i.floor_plan_id ?? "",
+                                norm: null,
+                              })
+                            }
+                          >
+                            Ta bort platsen i kartan
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => updateImage.mutate({ id: i.id, caption: label })}>
+                          Döp om till ytans namn
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => deleteImage.mutate(i.id, { onSuccess: () => toast({ title: "Bilden är borttagen" }) })}
+                        >
+                          Ta bort bilden
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))}
@@ -367,6 +429,19 @@ export function MapDetailDrawer({
                   </svg>
                 </div>
               </div>
+            )}
+
+            {latest.length > 0 && canManage && (
+              <Button
+                variant="outline"
+                className="w-full gap-2 border-destructive/50 text-destructive hover:bg-destructive/5"
+                onClick={() => {
+                  latest.forEach((i) => deleteImage.mutate(i.id));
+                  toast({ title: `${latest.length} bilder togs bort från ${label}` });
+                }}
+              >
+                <Trash2 className="h-4 w-4" /> Ta bort alla bilder från denna yta
+              </Button>
             )}
           </TabsContent>
 
