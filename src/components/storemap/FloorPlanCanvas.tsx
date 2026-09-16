@@ -119,16 +119,51 @@ export function FloorPlanCanvas({
   );
   const [ghostPts, setGhostPts] = useState<Record<string, Pt[]>>({});
 
+  /** Har användaren själv zoomat eller dragit? Då rör vi inte vyn vid omritning. */
+  const touched = useRef(false);
+
+  /**
+   * Passa in det som faktiskt är intressant: ytorna på kartan. Tom planyta
+   * runt om beskärs bort, så ritningen fyller rutan i stället för att bli liten.
+   */
   const fit = useCallback(() => {
     const el = wrapRef.current;
-    if (!el) return;
-    const z = Math.min(el.clientWidth / plan.width, el.clientHeight / plan.height) * 0.95;
+    if (!el || !el.clientWidth) return;
+    const boxes = zones.map((z) => bbox(zonePoints(z)));
+    let x = 0;
+    let y = 0;
+    let w = plan.width;
+    let h = plan.height;
+    if (boxes.length) {
+      const pad = Math.max(plan.width, plan.height) * 0.05;
+      const x1 = Math.max(0, Math.min(...boxes.map((b) => b.x)) - pad);
+      const y1 = Math.max(0, Math.min(...boxes.map((b) => b.y)) - pad);
+      const x2 = Math.min(plan.width, Math.max(...boxes.map((b) => b.x + b.width)) + pad);
+      const y2 = Math.min(plan.height, Math.max(...boxes.map((b) => b.y + b.height)) + pad);
+      x = x1;
+      y = y1;
+      w = Math.max(1, x2 - x1);
+      h = Math.max(1, y2 - y1);
+    }
+    const z = clamp(Math.min(el.clientWidth / w, el.clientHeight / h) * 0.96, MIN_ZOOM, MAX_ZOOM);
     setZoom(z);
-    setOffset({ x: (el.clientWidth - plan.width * z) / 2, y: (el.clientHeight - plan.height * z) / 2 });
-  }, [plan.width, plan.height]);
+    setOffset({ x: (el.clientWidth - w * z) / 2 - x * z, y: (el.clientHeight - h * z) / 2 - y * z });
+    touched.current = false;
+  }, [plan.width, plan.height, zones]);
 
   useEffect(() => {
     fit();
+  }, [fit]);
+
+  /* Följ rutans storlek: byter man fönsterbredd eller öppnar panelen passas kartan in igen. */
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      if (!touched.current) fit();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [fit]);
 
   /* Fokusläge: zooma mjukt in på den modul man tryckt på. */
@@ -169,6 +204,7 @@ export function FloorPlanCanvas({
   wheelRef.current = (e: WheelEvent) => {
     const el = wrapRef.current;
     if (!el) return;
+    touched.current = true;
     const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
     const next = clamp(zoom * Math.exp(-dy * 0.0015), MIN_ZOOM, MAX_ZOOM);
     const rect = el.getBoundingClientRect();
@@ -193,6 +229,7 @@ export function FloorPlanCanvas({
   const panRef = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const onBackgroundDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
+    touched.current = true;
     panRef.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
   };
@@ -200,6 +237,7 @@ export function FloorPlanCanvas({
   const zoomBy = (factor: number) => {
     const el = wrapRef.current;
     if (!el) return;
+    touched.current = true;
     const next = clamp(zoom * factor, MIN_ZOOM, MAX_ZOOM);
     const px = el.clientWidth / 2;
     const py = el.clientHeight / 2;
@@ -321,7 +359,7 @@ export function FloorPlanCanvas({
     <div className="relative rounded-md border border-border bg-muted/20 overflow-hidden">
       <div
         ref={wrapRef}
-        className={`h-[74vh] min-h-[440px] w-full touch-none ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
+        className={`h-[56vh] min-h-[320px] max-h-[560px] w-full touch-none ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
         onClickCapture={pinMode ? placePin : placeZoneId ? placePhoto : undefined}
         onPointerDown={onBackgroundDown}
         onPointerMove={(e) => {
@@ -489,35 +527,33 @@ export function FloorPlanCanvas({
                     </g>
                   )}
 
-                  {/* Nummerbricka, namn och yta i zonens tyngdpunkt */}
-                  <g style={{ pointerEvents: "none" }}>
+                  {/*
+                    Nummerbricka, namn och yta i zonens tyngdpunkt. Texten ritas i
+                    skärmstorlek (delat med zoomen) så brickorna alltid är små och
+                    lika stora, oavsett hur mycket man zoomat.
+                  */}
+                  <g
+                    style={{ pointerEvents: "none" }}
+                    transform={`translate(${c.x} ${c.y}) scale(${1 / zoom})`}
+                  >
                     {num != null && (
                       <>
-                        <circle cx={c.x} cy={c.y - 22} r={14} fill={identity} stroke="hsl(var(--card))" strokeWidth={2.5} />
-                        <text
-                          x={c.x}
-                          y={c.y - 17}
-                          textAnchor="middle"
-                          fontSize={14}
-                          fontWeight={700}
-                          fill="#ffffff"
-                        >
+                        <circle cx={0} cy={-14} r={9} fill={identity} stroke="hsl(var(--card))" strokeWidth={2} />
+                        <text x={0} y={-10.5} textAnchor="middle" fontSize={10} fontWeight={700} fill="#ffffff">
                           {num}
                         </text>
                       </>
                     )}
-                    <text x={c.x} y={c.y + 4} textAnchor="middle" fontSize={13} fontWeight={600} fill="hsl(var(--foreground))">
+                    <text x={0} y={4} textAnchor="middle" fontSize={11} fontWeight={600} fill="hsl(var(--foreground))">
                       {z.name}
                     </text>
-                    {area.sqm != null && (
-                      <text x={c.x} y={c.y + 20} textAnchor="middle" fontSize={11} fill="hsl(var(--muted-foreground))">
+                    {area.sqm != null && (isHover || isSel) && (
+                      <text x={0} y={17} textAnchor="middle" fontSize={9.5} fill="hsl(var(--muted-foreground))">
                         {area.exact ? "" : "≈ "}
                         {formatSqm(area.sqm)}
                       </text>
                     )}
-                    {p && p.total > 0 && (
-                      <circle cx={c.x + 34} cy={c.y - 22} r={5} fill={STATUS_COLOR[p.status]} />
-                    )}
+                    {p && p.total > 0 && <circle cx={22} cy={-14} r={4} fill={STATUS_COLOR[p.status]} />}
                   </g>
 
                   {/* Polygonpunkter: bara i redigeringsläget för vald zon */}
