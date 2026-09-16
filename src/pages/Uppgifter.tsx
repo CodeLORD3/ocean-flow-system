@@ -69,6 +69,7 @@ export default function Uppgifter() {
   const setDone = useSetTaskDone();
   const addAdhoc = useAddAdhocTask();
   const updateStandard = useUpdateStandardTask();
+  const removeTask = useDeleteTask();
   const upload = useUploadEntityImage();
 
   const tasks = dayData?.tasks ?? [];
