@@ -259,7 +259,7 @@ export function MapDetailDrawer({
           </TabsContent>
 
           <TabsContent value="activity" className="space-y-2 pt-3">
-            {activity.length === 0 && <EmptyState title="Ingen aktivitet idag" />}
+            {activity.length === 0 && <EmptyState title="Ingen aktivitet idag" description="Händelser visas här när något görs." />}
             {activity.map((a, i) => (
               <div key={i} className="flex items-start gap-2 text-[11px]">
                 <ActorAvatar name={a.who} url={avatarByName[a.who.toLowerCase()]} />
@@ -294,7 +294,7 @@ export function MapDetailDrawer({
                 </div>
               ))}
             </div>
-            {latest.length === 0 && <EmptyState title="Inga bilder ännu" />}
+            {latest.length === 0 && <EmptyState title="Inga bilder ännu" description="Ta ett foto för att dokumentera." />}
           </TabsContent>
 
           <TabsContent value="standard" className="space-y-2 pt-3">
