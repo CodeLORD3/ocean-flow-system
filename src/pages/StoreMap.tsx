@@ -870,6 +870,39 @@ export default function StoreMap() {
         </div>
       )}
 
+      {/* Vald yta glider in från höger, kartan ligger kvar i full bredd bakom */}
+      {!editMode && (selectedZone || selectedObject) && (
+        <MapDetailDrawer
+          open
+          onOpenChange={(v) => {
+            if (!v) {
+              setSelected(null);
+              setFocus(null);
+              setDrawerOpen(false);
+            }
+          }}
+          storeId={storeId}
+          portal={site}
+          zone={selectedZone}
+          object={selectedObject}
+          objectType={selectedObject ? typeById[selectedObject.object_type_id] : null}
+          tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
+          unlinkedTasks={unlinkedTasks}
+          canManage={canManage}
+          zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
+          areaLabel={
+            selectedZone
+              ? areaOf(selectedZone, pxPerMeter).sqm != null
+                ? `${areaOf(selectedZone, pxPerMeter).exact ? "" : "≈ "}${formatSqm(areaOf(selectedZone, pxPerMeter).sqm)}`
+                : null
+              : selectedObject && areaOf(selectedObject, pxPerMeter).sqm != null
+                ? formatSqm(areaOf(selectedObject, pxPerMeter).sqm)
+                : null
+          }
+        />
+      )}
+
+
       {plan && pinDialog && (
         <MapPinDialog
           open
