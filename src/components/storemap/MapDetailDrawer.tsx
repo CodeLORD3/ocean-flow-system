@@ -7,7 +7,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { EmptyState } from "@/components/EmptyState";
-import { Camera, CheckCircle2, Info, Link2, Thermometer } from "lucide-react";
+import { Camera, CheckCircle2, Info, Link2, MoreVertical, Thermometer, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { bbox, zonePoints } from "@/lib/mapGeometry";
 import { toast } from "@/hooks/use-toast";
 import { MapComposer } from "@/components/storemap/MapComposer";
@@ -15,7 +21,13 @@ import { StatusRing } from "@/components/storemap/StatusRing";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
 import { dueText, progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { useToggleChecklistItem } from "@/hooks/useChecklist";
-import { useEntityImages, useUploadEntityImage } from "@/hooks/useEntityImages";
+import {
+  useDeleteEntityImage,
+  useEntityImages,
+  useSetImagePosition,
+  useUpdateEntityImage,
+  useUploadEntityImage,
+} from "@/hooks/useEntityImages";
 import { useActivityLogs } from "@/hooks/useActivityLog";
 import { useDeviations } from "@/hooks/useFoodSafety";
 import { useStaff } from "@/hooks/useStaff";
