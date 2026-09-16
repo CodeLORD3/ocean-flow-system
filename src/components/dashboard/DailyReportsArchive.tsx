@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { storeTone } from "@/lib/storeTone";
 import { StatTile, StatTiles } from "@/components/reports/StatTile";
 import { Banknote, Receipt, Trash2 as TrashIcon } from "lucide-react";
 
@@ -412,30 +413,66 @@ export function DailyReportsArchive() {
       {rows.length === 0 ? (
         <div className="rounded-md border border-dashed px-4 py-12 text-center"><FileText className="mx-auto mb-3 h-6 w-6 text-muted-foreground" /><p className="text-sm text-muted-foreground">Inga dagsrapporter ännu.</p></div>
       ) : (
-        <div className="overflow-hidden rounded-md border border-border/80">
-          <div className="hidden grid-cols-[minmax(0,1fr)_150px_130px_100px] gap-4 border-b bg-muted/30 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid">
-            <span>Butik och datum</span><span>Rapportör</span><span className="text-right">Nettoomsättning</span><span className="text-right">Bemanning</span>
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm">
+          <div className="hidden grid-cols-[minmax(0,1fr)_180px_140px_150px] gap-4 border-b bg-muted/20 px-6 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground md:grid">
+            <span>Butiksenhet och datum</span><span>Rapportör</span><span className="text-right">Nettoomsättning</span><span className="text-right">Personalstyrka</span>
           </div>
-          <div className="divide-y divide-border/70">
+          <div className="divide-y divide-border/50">
             {rows.map((report) => {
               const open = openId === report.id;
               const waste = (report.waste_items ?? []).reduce((sum, item) => sum + (item.value_sek ?? 0), 0);
               const wasteKg = (report.waste_items ?? []).reduce((sum, item) => sum + (item.weight_kg ?? 0), 0);
               const reportHours = totalHours(report.staff_entries ?? []);
+              const tone = storeTone(report.store_id);
+              const store = stores.find((s) => s.id === report.store_id);
+              const reporter = nameOf(report.created_by);
+              const noStaff = (report.staff_entries ?? []).length === 0;
               return (
-                <div key={report.id} className={cn("bg-background transition-colors", open && "bg-muted/10")}>
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 px-3 py-3 md:grid-cols-[minmax(0,1fr)_150px_130px_100px_auto] md:items-center md:gap-4 md:px-4">
-                    <button type="button" aria-label={open ? "Dölj detaljer" : "Visa detaljer"} aria-expanded={open} onClick={() => setOpenId(open ? null : report.id)} className="mt-0.5 text-muted-foreground hover:text-foreground">
-                      {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <div key={report.id} className={cn("group border-l-[3px] bg-background transition-colors", tone.border, open ? "bg-muted/20" : "hover:bg-muted/10")}>
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 px-4 py-4 md:grid-cols-[minmax(0,1fr)_180px_140px_150px] md:items-center md:gap-4 md:px-6 md:py-5">
+                    <span className={cn("mt-2 h-2 w-2 flex-shrink-0 rounded-full ring-4", tone.dot, tone.ring)} aria-hidden />
+                    <button type="button" onClick={() => setOpenId(open ? null : report.id)} className="min-w-0 text-left" aria-expanded={open}>
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="truncate text-lg font-bold leading-tight tracking-tight">{storeName(report.store_id)}</span>
+                        {store?.city && <span className={cn("rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", tone.badge)}>{store.city}</span>}
+                        {correctedReportIds.has(report.id) && <Badge variant="outline" className="border-warning/40 px-1.5 py-0 text-[9px] text-warning">Korrigerad</Badge>}
+                      </span>
+                      <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
+                        <span className="font-medium">{formatWeekdayDate(report.report_date)}</span>
+                        {isAdmin && (
+                          <>
+                            <span className="h-1 w-1 rounded-full bg-border" />
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => { e.stopPropagation(); setEditing(report); }}
+                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setEditing(report); } }}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                            >
+                              <Edit3 className="h-3 w-3" /> Ändra
+                            </span>
+                          </>
+                        )}
+                      </span>
                     </button>
-                    <button type="button" onClick={() => setOpenId(open ? null : report.id)} className="min-w-0 text-left">
-                      <span className="block truncate text-sm font-semibold">{storeName(report.store_id)}</span>
-                      <span className="mt-0.5 block flex flex-wrap items-center gap-2 text-xs text-muted-foreground">{formatWeekdayDate(report.report_date)}{correctedReportIds.has(report.id) && <Badge variant="outline" className="border-warning/40 px-1.5 py-0 text-[9px] text-warning">Korrigerad</Badge>}</span>
-                    </button>
-                    <span className="hidden truncate text-xs text-muted-foreground md:block">{nameOf(report.created_by) ?? "Okänd rapportör"}</span>
-                    <span className="col-start-2 row-start-1 text-right font-mono text-sm font-medium tabular-nums md:col-auto md:row-auto">{nf(report.net_sales)} kr</span>
-                    <span className="col-start-2 row-start-2 flex justify-end gap-2 text-xs text-muted-foreground md:col-auto md:row-auto md:justify-end"><Users className="h-3.5 w-3.5" />{(report.staff_entries ?? []).length} · {reportHours.toFixed(1)} h</span>
-                    {isAdmin && <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(report)} className="col-start-2 row-start-3 ml-auto md:col-auto md:row-auto"><Edit3 /> Ändra</Button>}
+                    <span className="hidden truncate text-sm md:block">
+                      {reporter ? <span className="font-medium text-foreground/80">{reporter}</span> : <span className="italic text-muted-foreground/70">Okänd rapportör</span>}
+                    </span>
+                    <span className="col-start-2 row-start-1 text-right font-mono text-lg font-medium tabular-nums md:col-auto md:row-auto">{nf(report.net_sales)} kr</span>
+                    <div className="col-start-2 row-start-2 flex items-center justify-end gap-3 md:col-auto md:row-auto">
+                      <span className={cn("flex items-center gap-2 font-mono text-[13px] tabular-nums", noStaff ? "font-semibold text-tone-brick" : "text-muted-foreground")}>
+                        <Users className="h-3.5 w-3.5" />{(report.staff_entries ?? []).length} <span className="text-border">/</span> {reportHours.toFixed(1)} h
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={open ? "Dölj detaljer" : "Visa detaljer"}
+                        aria-expanded={open}
+                        onClick={() => setOpenId(open ? null : report.id)}
+                        className={cn("flex h-8 w-8 items-center justify-center rounded-full border border-border/70 text-muted-foreground transition-all", tone.hover, tone.icon)}
+                      >
+                        {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
 
                   {open && (
