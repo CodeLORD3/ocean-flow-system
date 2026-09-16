@@ -262,6 +262,17 @@ export default function StoreMap() {
         totalSqm={totalSqm}
       />
 
+      {/* Bilder från butiken — senaste bilderna som en rad man kan bläddra i */}
+      <StorePhotoStrip
+        storeId={storeId}
+        planId={plan?.id ?? null}
+        planImages={planImages}
+        zones={zones}
+        onOpenZone={(id) => setAreaPage({ kind: "zone", id })}
+      />
+
+
+
       {/* Rubrikrad — stor titel, butik under, läge till höger */}
       <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
         <div className="min-w-0">
