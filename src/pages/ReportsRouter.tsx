@@ -18,6 +18,7 @@ function WholesaleReportsPage() {
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [productionOpen, setProductionOpen] = useState(false);
   const [dailyOpen, setDailyOpen] = useState(false);
+  const [stockOpen, setStockOpen] = useState(false);
   const [weeklyOpen, setWeeklyOpen] = useState(false);
   const [monthlyOpen, setMonthlyOpen] = useState(false);
 
