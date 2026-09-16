@@ -173,10 +173,8 @@ export function MapDetailDrawer({
     }
   };
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader className="space-y-3">
+  const head = (
+    <div className="space-y-3">
           <div className="flex items-center gap-3">
             {zone && (
               <span
@@ -187,10 +185,10 @@ export function MapDetailDrawer({
               </span>
             )}
             <div className="min-w-0">
-              <SheetTitle className="flex items-center gap-2 text-xl leading-tight">
+              <h2 className="flex items-center gap-2 text-xl font-semibold leading-tight">
                 {object && <MapObjectIcon icon={objectType?.icon} className="h-4 w-4" />}
                 {label}
-              </SheetTitle>
+              </h2>
               {areaLabel && <p className="text-sm text-muted-foreground tabular-nums">{areaLabel}</p>}
             </div>
           </div>
@@ -213,6 +211,8 @@ export function MapDetailDrawer({
           </div>
         </SheetHeader>
 
+  const body = (
+    <>
         <Tabs value={tab} onValueChange={setTab} className="mt-4">
           <TabsList className="h-9 w-full justify-start gap-1 overflow-x-auto rounded-lg bg-muted p-1">
             <TabsTrigger value="images" className="h-7 rounded-md px-3 text-xs">Bilder</TabsTrigger>
