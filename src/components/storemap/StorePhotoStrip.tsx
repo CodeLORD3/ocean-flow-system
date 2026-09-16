@@ -13,6 +13,7 @@ import {
   type EntityImage,
 } from "@/hooks/useEntityImages";
 import type { MapZone } from "@/hooks/useStoreMap";
+import { dayBadgeClass } from "@/lib/dayColor";
 
 /** "Idag 14:05", "Igår 08:20" eller "12 sep 08:20". */
 function shortWhen(iso: string) {
@@ -84,12 +85,12 @@ export function StorePhotoStrip({
 
   /** Grupperat per dag, nyaste dagen först. */
   const groups = useMemo(() => {
-    const out: { key: string; label: string; items: { img: EntityImage; index: number }[] }[] = [];
+    const out: { key: string; label: string; badge: string; items: { img: EntityImage; index: number }[] }[] = [];
     allImages.forEach((img, index) => {
       const key = new Date(img.created_at).toDateString();
       const last = out[out.length - 1];
       if (last && last.key === key) last.items.push({ img, index });
-      else out.push({ key, label: dayLabel(img.created_at), items: [{ img, index }] });
+      else out.push({ key, label: dayLabel(img.created_at), badge: dayBadgeClass(img.created_at), items: [{ img, index }] });
     });
     return out;
   }, [allImages]);
@@ -200,7 +201,7 @@ export function StorePhotoStrip({
           {groups.map((g) => (
             <div key={g.key}>
               <div className="mb-2 flex items-center gap-2">
-                <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+                <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", g.badge)}>
                   {g.label}
                 </span>
                 <span className="text-[11px] tabular-nums text-muted-foreground">{g.items.length} bilder</span>
