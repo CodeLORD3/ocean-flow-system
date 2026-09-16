@@ -505,7 +505,7 @@ export function DailyReportsArchive() {
                         </section>
                       </div>
                       <div className="mt-5 border-t pt-4"><p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Dagens kommentar</p><p className="mt-1 whitespace-pre-wrap text-sm">{report.comment || <span className="text-muted-foreground">Ingen kommentar.</span>}</p></div>
-                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-[10px] text-muted-foreground"><span>Sparad av {nameOf(report.created_by) ?? "okänd"}</span><span>{new Date(report.updated_at || report.created_at).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" })}</span>{isAdmin && <Button type="button" variant="outline" size="sm" onClick={() => setEditing(report)}><Edit3 /> Ändra rapport</Button>}</div>
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-[10px] text-muted-foreground"><span className="inline-flex items-center gap-2"><StaffAvatar name={nameOf(report.created_by)} imageUrl={imageOfUser(report.created_by)} className="h-7 w-7" />Sparad av {nameOf(report.created_by) ?? "okänd"}</span><span>{new Date(report.updated_at || report.created_at).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" })}</span>{isAdmin && <Button type="button" variant="outline" size="sm" onClick={() => setEditing(report)}><Edit3 /> Ändra rapport</Button>}</div>
                     </div>
                   )}
                 </div>
