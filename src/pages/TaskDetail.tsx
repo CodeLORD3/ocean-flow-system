@@ -227,14 +227,12 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           {task.important_note && (
             <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-700">{task.important_note}</p>
           )}
-          {task.instructions && task.instructions.length > 0 ? (
-            <ol className="list-decimal space-y-2 pl-5 text-sm">
-              {task.instructions.map((step, i) => (
-                <li key={i}>{step}</li>
-              ))}
-            </ol>
+          {guide.goal || guide.materials.length > 0 || guide.steps.length > 0 ? (
+            <TaskGuideView guide={guide} />
           ) : (
-            <p className="text-sm text-muted-foreground">Ingen instruktion finns för den här uppgiften ännu.</p>
+            <p className="text-sm text-muted-foreground">
+              Ingen beskrivning finns ännu. Lägg in mål, varor och steg med bilder under Inställningar.
+            </p>
           )}
           {reference.length > 0 && (
             <div>
@@ -355,37 +353,27 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             />
           </div>
 
-          <div>
-            <label className="text-sm font-medium">Instruktion steg för steg</label>
-            <div className="space-y-2">
-              {steps.map((s, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="w-5 text-right text-xs text-muted-foreground">{i + 1}.</span>
-                  <Input
-                    value={s}
-                    onChange={(e) => setSteps(steps.map((x, j) => (j === i ? e.target.value : x)))}
-                  />
-                  <Button variant="ghost" size="icon" onClick={() => setSteps(steps.filter((_, j) => j !== i))}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              ))}
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setSteps([...steps, ""])}>
-                  Lägg till steg
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    update.mutate({ id: task.id, instructions: steps.map((s) => s.trim()).filter(Boolean) });
-                    toast({ title: "Instruktionen sparad" });
-                  }}
-                >
-                  Spara instruktion
-                </Button>
-              </div>
-            </div>
+          <div className="rounded-lg border p-3">
+            <label className="text-sm font-medium">Arbetsbeskrivning</label>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Beskriv målet, vilka varor som behövs och stegen — med bilder. Går att fylla i eller ändra när som helst.
+              Sparas även på den återkommande uppgiften.
+            </p>
+            <TaskGuideEditor
+              taskId={task.id}
+              value={guide}
+              saving={saveGuide.isPending}
+              onSave={async (g) => {
+                try {
+                  await saveGuide.mutateAsync({ id: task.id, templateItemId: task.template_item_id, guide: g });
+                  toast({ title: "Beskrivningen sparad" });
+                } catch (e: any) {
+                  toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
+                }
+              }}
+            />
           </div>
+
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
