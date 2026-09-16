@@ -525,7 +525,10 @@ export function ImageLightbox({
                   </button>
                 </DialogClose>
 
-                <div className="absolute top-2 left-2 flex max-w-[70%] items-center gap-1.5">
+                <div className="absolute top-2 left-2 flex max-w-[80%] flex-wrap items-center gap-1.5">
+                  <span className="rounded bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white shadow">
+                    {uploadedWhen(current.created_at)}
+                  </span>
                   <span className="rounded bg-background/80 px-2 py-0.5 font-mono tabular-nums text-[11px] text-foreground backdrop-blur">
                     {(index as number) + 1} / {images.length}
                   </span>
