@@ -142,6 +142,7 @@ export default function ScheduleCalendar() {
   const [formType, setFormType] = useState("note");
   const [formSeverity, setFormSeverity] = useState("info");
   const [formDate, setFormDate] = useState("");
+  const [formEndDate, setFormEndDate] = useState("");
   const [formRecurrence, setFormRecurrence] = useState("none");
   const [formRecurrenceEnd, setFormRecurrenceEnd] = useState("");
   const [formAssignee, setFormAssignee] = useState("");
