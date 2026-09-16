@@ -22,6 +22,10 @@ export type EntityImage = {
   caption_edited_by: string | null;
   caption_edited_by_name: string | null;
   caption_edited_at: string | null;
+  /** Exakt plats inom ytan, 0–1. Saknas den hör bilden till hela ytan. */
+  norm_x: number | null;
+  norm_y: number | null;
+  floor_plan_id: string | null;
 };
 
 export type EntityImageComment = {

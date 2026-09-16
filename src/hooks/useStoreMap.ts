@@ -44,6 +44,8 @@ export type MapZone = {
   height: number;
   sort_order: number;
   area_sqm: number | null;
+  /** Polygon i planens koordinater. Saknas den används rektangeln ovan. */
+  points: { x: number; y: number }[] | null;
 };
 
 export type MapObjectType = {
