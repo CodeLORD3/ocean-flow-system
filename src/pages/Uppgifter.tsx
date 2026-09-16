@@ -120,11 +120,12 @@ export default function Uppgifter() {
   const [nTime, setNTime] = useState("");
   const [nMinutes, setNMinutes] = useState("");
   const [nNote, setNNote] = useState("");
+  const [nRecurring, setNRecurring] = useState(false);
 
   const createAdhoc = async () => {
     if (!storeId) return;
     try {
-      await addAdhoc.mutateAsync({
+      const payload = {
         storeId,
         date: day,
         task: nTask,
@@ -134,8 +135,14 @@ export default function Uppgifter() {
         specificTime: nTime || null,
         estimatedMinutes: nMinutes ? Number(nMinutes) : null,
         note: nNote,
-      });
-      toast({ title: "Tillfällig uppgift tillagd", description: "Den gäller bara valt datum." });
+      };
+      if (nRecurring) {
+        await addStandard.mutateAsync(payload);
+        toast({ title: "Standarduppgift tillagd", description: "Den återkommer varje dag." });
+      } else {
+        await addAdhoc.mutateAsync(payload);
+        toast({ title: "Tillfällig uppgift tillagd", description: "Den gäller bara valt datum." });
+      }
       setNewOpen(false);
       setNTask("");
       setNNote("");
