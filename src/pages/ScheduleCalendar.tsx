@@ -539,7 +539,16 @@ export default function ScheduleCalendar() {
             <ChevronRight className="h-3 w-3" />
           </Button>
           <div className="flex-1" />
-          <Button size="sm" onClick={() => openAddPanel(selectedDate || `${year}-${String(monthIdx + 1).padStart(2, "0")}-01`)} className="text-[10px] h-7 gap-1">
+          {rangeBounds && rangeDayCount > 1 ? (
+            <span className="text-[9px] text-primary font-medium mr-1">
+              {format(parseISO(rangeBounds.from), "d MMM", { locale: sv })}–{format(parseISO(rangeBounds.to), "d MMM", { locale: sv })} · {rangeDayCount} dagar
+            </span>
+          ) : (
+            <span className="hidden sm:inline text-[9px] text-muted-foreground mr-1">
+              Dra över flera dagar (eller skift-klicka) för en period
+            </span>
+          )}
+          <Button size="sm" onClick={() => openAddPanel(rangeBounds?.from || selectedDate || `${year}-${String(monthIdx + 1).padStart(2, "0")}-01`, rangeBounds?.to)} className="text-[10px] h-7 gap-1">
             <Plus className="h-3 w-3" /> Lägg till
           </Button>
         </div>
