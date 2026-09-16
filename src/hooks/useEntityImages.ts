@@ -158,6 +158,9 @@ export function useUploadEntityImage() {
           uploaded_by: uid,
           uploaded_by_name: uploaderName,
           image_kind: imageKind ?? null,
+          floor_plan_id: floorPlanId ?? null,
+          norm_x: norm?.x ?? null,
+          norm_y: norm?.y ?? null,
         })
         .select("id")
         .single();
