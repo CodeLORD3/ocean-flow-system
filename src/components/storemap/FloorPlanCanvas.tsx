@@ -234,6 +234,10 @@ export function FloorPlanCanvas({
       const next = vDrag.base.map((p, i) =>
         i === vDrag.index ? { x: snap(p.x + dx), y: snap(p.y + dy) } : p,
       );
+      if (vDrag.index < 0) {
+        setGhostPts((g) => ({ ...g, [vDrag.zoneId]: translatePoints(vDrag.base, snap(dx), snap(dy)) }));
+        return;
+      }
       setGhostPts((g) => ({ ...g, [vDrag.zoneId]: next }));
       return;
     }
@@ -397,7 +401,12 @@ export function FloorPlanCanvas({
                   key={z.id}
                   opacity={dim ? 0.45 : 1}
                   style={{ transition: "opacity 180ms ease" }}
-                  onPointerDown={(e) => startDrag(e, "zone", { id: z.id, ...b }, "move")}
+                  onPointerDown={(e) => {
+                    if (!editMode) return;
+                    e.stopPropagation();
+                    onSelect({ kind: "zone", id: z.id });
+                    setVDrag({ zoneId: z.id, index: -1, base: pts, startX: e.clientX, startY: e.clientY });
+                  }}
                 >
                   <polygon
                     points={toPath(pts)}
