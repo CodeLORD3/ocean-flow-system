@@ -87,7 +87,9 @@ export default function StoreMap() {
   const { data: objects = [] } = useMapObjects(plan?.id ?? null);
   const { data: walls = [] } = useMapWalls(plan?.id ?? null);
   const { data: types = [] } = useMapObjectTypes();
-  const { data: tasks = [] } = useMapTasks(storeId);
+  /** Vald dag — styr uppgifterna och historiken i alla vyer. */
+  const [day, setDay] = useState(todayIso());
+  const { data: tasks = [] } = useMapTasks(storeId, day);
   const { data: deviations = [] } = useDeviations(false);
   const { data: versions = [] } = useFloorPlanVersions(plan?.id ?? null);
   const { data: pins = [] } = useMapPins(plan?.id ?? null);
