@@ -53,38 +53,38 @@ export function TaskRow({
   return (
     <div
       className={cn(
-        "rounded-xl border bg-card transition-colors",
+        "rounded-lg border bg-card transition-colors",
         task.done && "border-emerald-500/40 bg-emerald-500/10",
         photoMissing && !task.done && "border-amber-500/40",
       )}
-      style={{ borderLeft: `4px solid ${task.done ? "hsl(152 60% 42%)" : accent}` }}
+      style={{ borderLeft: `3px solid ${task.done ? "hsl(152 60% 42%)" : accent}` }}
     >
-      <div className="flex items-center gap-3 px-3 py-3 min-h-[56px]">
+      <div className="flex items-center gap-2 px-2 py-1.5 min-h-[40px]">
         <button
           type="button"
           aria-label={task.done ? "Återöppna uppgift" : "Markera som klar"}
           onClick={() => onToggle(!task.done)}
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors",
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition-colors",
             task.done ? "border-emerald-500 bg-emerald-500 text-white" : "border-border hover:bg-muted",
           )}
         >
-          {task.done && <Check className="h-5 w-5" />}
+          {task.done && <Check className="h-3.5 w-3.5" />}
         </button>
 
         <button type="button" onClick={() => setOpen((v) => !v)} className="flex-1 min-w-0 text-left">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {time.label && (
-              <span className="font-mono text-xs tabular-nums text-muted-foreground shrink-0">{time.label}</span>
+              <span className="font-mono text-[11px] tabular-nums text-muted-foreground shrink-0">{time.label}</span>
             )}
-            <span className={cn("truncate text-sm font-medium", task.done && "text-muted-foreground line-through")}>
+            <span className={cn("truncate text-[13px] font-medium", task.done && "text-muted-foreground line-through")}>
               {task.task}
             </span>
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
             {area && (
               <span className="inline-flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full" style={{ background: area.color }} />
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: area.color }} />
                 {area.number}. {area.name}
               </span>
             )}
@@ -111,11 +111,11 @@ export function TaskRow({
               </span>
             )}
             {task.done && (completedByName || task.signature) && (
-              <span className="inline-flex items-center gap-1.5 text-emerald-600">
+              <span className="inline-flex items-center gap-1 text-emerald-600">
                 <StaffAvatar
                   name={completedByName || task.signature}
                   imageUrl={completedByImage}
-                  className="h-5 w-5"
+                  className="h-4 w-4"
                 />
                 Klar · {completedByName || task.signature}
               </span>
@@ -127,9 +127,9 @@ export function TaskRow({
           type="button"
           aria-label={open ? "Stäng detaljer" : "Visa detaljer"}
           onClick={() => setOpen((v) => !v)}
-          className="shrink-0 rounded-md p-2 text-muted-foreground hover:bg-muted"
+          className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-muted"
         >
-          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
         </button>
       </div>
 
