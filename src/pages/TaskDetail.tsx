@@ -199,6 +199,35 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             </label>
           </div>
         </div>
+        {(task.requires_note || task.requires_value) && (
+          <div className="space-y-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-3">
+            <p className="text-sm font-medium">Fyll i innan du bockar av</p>
+            {task.requires_value && (
+              <div className="flex items-center gap-2">
+                <span className="w-32 shrink-0 text-sm text-muted-foreground">{valueLabel(task)}</span>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.1"
+                  defaultValue={task.completion_value ?? ""}
+                  onBlur={(e) =>
+                    update.mutate({ id: task.id, completion_value: e.target.value === "" ? null : Number(e.target.value) })
+                  }
+                />
+              </div>
+            )}
+            {task.requires_note && (
+              <div className="flex items-center gap-2">
+                <span className="w-32 shrink-0 text-sm text-muted-foreground">Kommentar</span>
+                <Input
+                  defaultValue={task.completion_note ?? ""}
+                  onBlur={(e) => update.mutate({ id: task.id, completion_note: e.target.value.trim() || null })}
+                />
+              </div>
+            )}
+            {missing.length > 0 && <p className="text-xs text-amber-700">{missingText(task, missing)}</p>}
+          </div>
+        )}
         {task.done && (
           <div className="flex items-center gap-2 text-xs text-emerald-600">
             {(staffName(task.completed_by_staff_id) || task.signature) && (
