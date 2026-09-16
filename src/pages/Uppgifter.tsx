@@ -381,6 +381,14 @@ export default function Uppgifter() {
                     ))}
                   </SelectContent>
                 </Select>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => deleteStandard(s.id, s.task)}
+                >
+                  <Trash2 className="mr-1 h-4 w-4" /> Ta bort
+                </Button>
               </Card>
             ))
           )}
