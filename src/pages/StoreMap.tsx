@@ -411,6 +411,8 @@ export default function StoreMap() {
               editMode={editMode}
               showBackground={layers.background}
               showGrid={layers.grid || editMode}
+              showObjects={editMode}
+              showPins={editMode || pinMode}
               zoneNumbers={zoneNumbers}
               photoSpots={photoSpots}
               showPhotos={layers.photos}
