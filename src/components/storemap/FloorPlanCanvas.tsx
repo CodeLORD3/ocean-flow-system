@@ -379,34 +379,49 @@ export function FloorPlanCanvas({
               />
             ))}
 
-            {/* Lager 3 — zoner */}
+            {/* Lager 3 — zoner som riktiga polygoner efter planritningen */}
             {zones.map((z) => {
-              const g = geom(z.id, z);
+              const pts = ptsOf(z);
+              const b = bbox(pts);
+              const c = centroid(pts);
               const p = zoneProgress[z.id];
               const isSel = selected?.kind === "zone" && selected.id === z.id;
               const isHover = hover?.id === z.id;
-              const stroke = p ? STATUS_COLOR[p.status] : (z.color ?? "hsl(var(--primary))");
+              const dim = (hover && !isHover) || (selected && !isSel) || (placeZoneId && placeZoneId !== z.id);
+              const identity = z.color ?? "hsl(var(--primary))";
+              const status = p ? STATUS_COLOR[p.status] : identity;
+              const area = areaOf({ width: b.width, height: b.height, area_sqm: z.area_sqm }, pxPerMeter);
+              const num = zoneNumbers[z.id];
               return (
-                <g key={z.id} onPointerDown={(e) => startDrag(e, "zone", g as MapZone, "move")}>
-                  <rect
-                    x={g.x}
-                    y={g.y}
-                    width={g.width}
-                    height={g.height}
-                    rx={8}
-                    fill={z.color ?? "hsl(var(--primary))"}
-                    fillOpacity={isSel ? 0.2 : 0.09}
-                    stroke={isSel ? "hsl(var(--primary))" : stroke}
-                    strokeWidth={isSel || isHover ? 3 : 2}
-                    className="cursor-pointer transition-all"
-                    style={{ filter: isHover ? "drop-shadow(0 3px 8px rgba(0,0,0,0.35))" : undefined }}
+                <g
+                  key={z.id}
+                  opacity={dim ? 0.45 : 1}
+                  style={{ transition: "opacity 180ms ease" }}
+                  onPointerDown={(e) => startDrag(e, "zone", { id: z.id, ...b }, "move")}
+                >
+                  <polygon
+                    points={toPath(pts)}
+                    fill={identity}
+                    fillOpacity={isSel ? 0.5 : isHover ? 0.42 : 0.3}
+                    stroke={isSel || isHover ? identity : status}
+                    strokeWidth={isSel ? 4 : isHover ? 3.5 : 2.5}
+                    strokeLinejoin="round"
+                    className="cursor-pointer"
+                    style={{
+                      transition: "fill-opacity 180ms ease, stroke-width 180ms ease, filter 180ms ease",
+                      filter: isHover || isSel ? "drop-shadow(0 3px 10px rgba(15,35,50,0.28))" : undefined,
+                    }}
                     onPointerEnter={(e) =>
                       setHover({
                         id: z.id,
                         label: z.name,
                         sub: [
-                          p && p.total > 0 ? `${p.done}/${p.total} uppgifter` : "Inga uppgifter idag",
-                          formatSqm(areaOf({ width: g.width, height: g.height, area_sqm: z.area_sqm }, pxPerMeter).sqm),
+                          p && p.total > 0
+                            ? p.done >= p.total
+                              ? "Allt klart ✓"
+                              : `${p.total - p.done} uppgifter kvar`
+                            : "Inga uppgifter idag",
+                          formatSqm(area.sqm),
                         ]
                           .filter(Boolean)
                           .join(" · "),
@@ -421,41 +436,88 @@ export function FloorPlanCanvas({
                       onSelect({ kind: "zone", id: z.id });
                     }}
                   />
-                  <foreignObject x={g.x + 6} y={g.y + 4} width={Math.max(60, g.width - 12)} height={28} style={{ pointerEvents: "none" }}>
-                    <div className="flex items-center gap-1.5 pointer-events-none">
-                      <span className="text-[11px] font-semibold text-foreground truncate">{z.name}</span>
-                      {p && p.total > 0 && (
-                        <span
-                          className="text-[10px] font-semibold tabular-nums px-1 rounded"
-                          style={{ color: STATUS_COLOR[p.status] }}
-                        >
-                          {p.percent}%
-                        </span>
-                      )}
-                      {p && p.openIssues > 0 && (
-                        <span className="text-[10px] font-semibold text-destructive">{p.openIssues} anm.</span>
-                      )}
-                      {(() => {
-                        const a = areaOf({ width: g.width, height: g.height, area_sqm: z.area_sqm }, pxPerMeter);
-                        return a.sqm == null ? null : (
-                          <span className="text-[10px] tabular-nums text-muted-foreground">
-                            {a.exact ? "" : "≈ "}{formatSqm(a.sqm)}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                  </foreignObject>
-                  {editMode && isSel && (
-                    <rect
-                      x={g.x + g.width - 7}
-                      y={g.y + g.height - 7}
-                      width={14}
-                      height={14}
-                      fill="hsl(var(--primary))"
-                      className="cursor-nwse-resize"
-                      onPointerDown={(e) => startDrag(e, "zone", g as MapZone, "resize")}
-                    />
+
+                  {/* Svagt rutnät bara inuti den yta man placerar en bild i */}
+                  {placeZoneId === z.id && plan.grid_size > 0 && (
+                    <g clipPath={`url(#zone-clip-${z.id})`} opacity={0.5} style={{ pointerEvents: "none" }}>
+                      <clipPath id={`zone-clip-${z.id}`}>
+                        <polygon points={toPath(pts)} />
+                      </clipPath>
+                      {Array.from({ length: Math.ceil(b.width / plan.grid_size) + 1 }).map((_, i) => (
+                        <line
+                          key={`pv${i}`}
+                          x1={b.x + i * plan.grid_size}
+                          y1={b.y}
+                          x2={b.x + i * plan.grid_size}
+                          y2={b.y + b.height}
+                          stroke="hsl(var(--foreground))"
+                          strokeWidth={0.5}
+                        />
+                      ))}
+                      {Array.from({ length: Math.ceil(b.height / plan.grid_size) + 1 }).map((_, i) => (
+                        <line
+                          key={`ph${i}`}
+                          x1={b.x}
+                          y1={b.y + i * plan.grid_size}
+                          x2={b.x + b.width}
+                          y2={b.y + i * plan.grid_size}
+                          stroke="hsl(var(--foreground))"
+                          strokeWidth={0.5}
+                        />
+                      ))}
+                    </g>
                   )}
+
+                  {/* Nummerbricka, namn och yta i zonens tyngdpunkt */}
+                  <g style={{ pointerEvents: "none" }}>
+                    {num != null && (
+                      <>
+                        <circle cx={c.x} cy={c.y - 22} r={13} fill={identity} stroke="hsl(var(--card))" strokeWidth={2} />
+                        <text
+                          x={c.x}
+                          y={c.y - 17}
+                          textAnchor="middle"
+                          fontSize={13}
+                          fontWeight={700}
+                          fill="hsl(var(--foreground))"
+                        >
+                          {num}
+                        </text>
+                      </>
+                    )}
+                    <text x={c.x} y={c.y + 4} textAnchor="middle" fontSize={13} fontWeight={600} fill="hsl(var(--foreground))">
+                      {z.name}
+                    </text>
+                    {area.sqm != null && (
+                      <text x={c.x} y={c.y + 20} textAnchor="middle" fontSize={11} fill="hsl(var(--muted-foreground))">
+                        {area.exact ? "" : "≈ "}
+                        {formatSqm(area.sqm)}
+                      </text>
+                    )}
+                    {p && p.total > 0 && (
+                      <circle cx={c.x + 34} cy={c.y - 22} r={5} fill={STATUS_COLOR[p.status]} />
+                    )}
+                  </g>
+
+                  {/* Polygonpunkter: bara i redigeringsläget för vald zon */}
+                  {editMode &&
+                    isSel &&
+                    pts.map((pt, i) => (
+                      <circle
+                        key={`v${i}`}
+                        cx={pt.x}
+                        cy={pt.y}
+                        r={6}
+                        fill="hsl(var(--card))"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2.5}
+                        className="cursor-move"
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          setVDrag({ zoneId: z.id, index: i, base: pts, startX: e.clientX, startY: e.clientY });
+                        }}
+                      />
+                    ))}
                 </g>
               );
             })}
