@@ -46,10 +46,13 @@ export function StorePhotoStrip({
   onOpenZone?: (zoneId: string) => void;
 }) {
   const { data: storeImages = [] } = useEntityImages("store", storeId);
+  const { data: favoriteIds = [] } = useMyImageFavorites();
+  const toggleFavorite = useToggleImageFavorite();
   const upload = useUploadEntityImage();
   const updateImage = useUpdateEntityImage();
   const fileRef = useRef<HTMLInputElement>(null);
   const [index, setIndex] = useState<number | null>(null);
+  const [allOpen, setAllOpen] = useState(false);
 
   const zoneById = useMemo(
     () => Object.fromEntries(zones.map((z, i) => [z.id, { zone: z, nr: i + 1 }])),
