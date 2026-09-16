@@ -1294,6 +1294,7 @@ export type Database = {
           task: string
           time_label: string | null
           updated_at: string
+          work_type: string | null
           zone_id: string | null
         }
         Insert: {
@@ -1311,6 +1312,7 @@ export type Database = {
           task: string
           time_label?: string | null
           updated_at?: string
+          work_type?: string | null
           zone_id?: string | null
         }
         Update: {
@@ -1328,6 +1330,7 @@ export type Database = {
           task?: string
           time_label?: string | null
           updated_at?: string
+          work_type?: string | null
           zone_id?: string | null
         }
         Relationships: [
@@ -1456,6 +1459,7 @@ export type Database = {
           template_id: string
           time_label: string | null
           updated_at: string
+          work_type: string | null
           zone_id: string | null
         }
         Insert: {
@@ -1471,6 +1475,7 @@ export type Database = {
           template_id?: string
           time_label?: string | null
           updated_at?: string
+          work_type?: string | null
           zone_id?: string | null
         }
         Update: {
@@ -1486,6 +1491,7 @@ export type Database = {
           template_id?: string
           time_label?: string | null
           updated_at?: string
+          work_type?: string | null
           zone_id?: string | null
         }
         Relationships: [
@@ -4795,6 +4801,7 @@ export type Database = {
           caption_edited_at: string | null
           caption_edited_by: string | null
           caption_edited_by_name: string | null
+          checklist_item_id: string | null
           created_at: string
           entity_id: string
           entity_type: string
@@ -4816,6 +4823,7 @@ export type Database = {
           caption_edited_at?: string | null
           caption_edited_by?: string | null
           caption_edited_by_name?: string | null
+          checklist_item_id?: string | null
           created_at?: string
           entity_id: string
           entity_type: string
@@ -4837,6 +4845,7 @@ export type Database = {
           caption_edited_at?: string | null
           caption_edited_by?: string | null
           caption_edited_by_name?: string | null
+          checklist_item_id?: string | null
           created_at?: string
           entity_id?: string
           entity_type?: string
@@ -4854,6 +4863,13 @@ export type Database = {
           url?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "entity_images_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "entity_images_floor_plan_id_fkey"
             columns: ["floor_plan_id"]
@@ -18048,6 +18064,7 @@ export type Database = {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: Json
       }
+      guess_work_type: { Args: { _text: string }; Returns: string }
       has_company_access: {
         Args: { _legal_entity_id: string; _user_id: string }
         Returns: boolean

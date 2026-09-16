@@ -5,6 +5,7 @@ import { generateChecklistPdf } from "@/lib/checklistPdf";
 import { SignatureEditor } from "@/components/checklist/SignatureEditor";
 import { SignatureRequestInbox } from "@/components/checklist/SignatureRequestInbox";
 import { ChecklistRestoreDialog } from "@/components/checklist/ChecklistRestoreDialog";
+import { WORK_TYPES, workTypeColor, workTypeLabel, workTypeOf } from "@/lib/workType";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 import { Button } from "@/components/ui/button";
@@ -72,10 +73,10 @@ export function ChecklistTable({
   const [timeDrafts, setTimeDrafts] = useState<Record<string, string>>({});
   const [addSection, setAddSection] = useState<string | null>(null);
   const [pageCommentDraft, setPageCommentDraft] = useState<string | null>(null);
-  const [addDraft, setAddDraft] = useState({ task: "", time: "", category: "" });
+  const [addDraft, setAddDraft] = useState({ task: "", time: "", category: "", workType: "" });
   const [pendingDelete, setPendingDelete] = useState<ChecklistItem | null>(null);
   const [pendingEdit, setPendingEdit] = useState<ChecklistItem | null>(null);
-  const [editDraft, setEditDraft] = useState({ task: "", time: "", category: "" });
+  const [editDraft, setEditDraft] = useState({ task: "", time: "", category: "", workType: "" });
   const { data: pendingRequests = [] } = useSignatureRequests(readOnly ? null : day.id);
   const { staff } = useStaffAuth();
   const isAdmin = ((staff?.portal_access ?? []) as string[]).includes("admin");
@@ -109,7 +110,12 @@ export function ChecklistTable({
 
   const openEdit = (item: ChecklistItem) => {
     setPendingEdit(item);
-    setEditDraft({ task: item.task, time: item.time_label ?? "", category: item.category ?? "" });
+    setEditDraft({
+      task: item.task,
+      time: item.time_label ?? "",
+      category: item.category ?? "",
+      workType: workTypeOf(item),
+    });
   };
 
   const editButton = (item: ChecklistItem, size: "sm" | "md") => (
@@ -143,6 +149,7 @@ export function ChecklistTable({
         task: editDraft.task,
         time: editDraft.time,
         category: editDraft.category,
+        workType: editDraft.workType || undefined,
         persist,
         templateId: day.template_id ?? null,
         storeId: day.store_id,
@@ -231,13 +238,14 @@ export function ChecklistTable({
         task: addDraft.task,
         time: addDraft.time,
         category: addDraft.category,
+        workType: addDraft.workType || undefined,
         templateId: day.template_id ?? null,
         storeId: day.store_id,
         persist: true,
       },
       {
         onSuccess: () => {
-          setAddDraft({ task: "", time: "", category: "" });
+          setAddDraft({ task: "", time: "", category: "", workType: "" });
           toast.success("Uppgiften tillagd — den finns kvar kommande dagar.");
         },
         onError: (e: any) => toast.error(e.message || "Kunde inte lägga till uppgiften."),
@@ -269,7 +277,7 @@ export function ChecklistTable({
 
   const openAdd = (section: string) => {
     setAddSection(section);
-    setAddDraft({ task: "", time: "", category: "" });
+    setAddDraft({ task: "", time: "", category: "", workType: "" });
   };
 
   const handleComplete = () => {
@@ -456,6 +464,17 @@ export function ChecklistTable({
                     onChange={(e) => setAddDraft((d) => ({ ...d, category: e.target.value }))}
                     onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
                   />
+                  <select
+                    value={addDraft.workType}
+                    onChange={(e) => setAddDraft((d) => ({ ...d, workType: e.target.value }))}
+                    className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                    aria-label="Arbetstyp"
+                  >
+                    <option value="">Arbetstyp…</option>
+                    {WORK_TYPES.map((w) => (
+                      <option key={w.key} value={w.key}>{w.label}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" className="flex-1 h-9" disabled={addItem.isPending} onClick={() => submitAdd(row.label)}>
@@ -511,6 +530,15 @@ export function ChecklistTable({
                       />
                     )}
                     {row.item.category && <span>{row.item.category}</span>}
+                    <span
+                      className="rounded-full px-1.5 py-0.5 text-[10px]"
+                      style={{
+                        background: `${workTypeColor(workTypeOf(row.item))}1f`,
+                        color: workTypeColor(workTypeOf(row.item)),
+                      }}
+                    >
+                      {workTypeLabel(workTypeOf(row.item))}
+                    </span>
                     {readOnly
                       ? row.item.signature && (
                           <span className="font-semibold text-foreground">✓ {row.item.signature}</span>
@@ -636,6 +664,17 @@ export function ChecklistTable({
                         onChange={(e) => setAddDraft((d) => ({ ...d, category: e.target.value }))}
                         onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
                       />
+                      <select
+                        value={addDraft.workType}
+                        onChange={(e) => setAddDraft((d) => ({ ...d, workType: e.target.value }))}
+                        className="mt-1 h-7 w-full rounded-md border border-input bg-background px-1 text-xs"
+                        aria-label="Arbetstyp"
+                      >
+                        <option value="">Arbetstyp…</option>
+                        {WORK_TYPES.map((w) => (
+                          <option key={w.key} value={w.key}>{w.label}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-2 py-1.5 border-r border-border">
                       <Input
@@ -923,6 +962,17 @@ export function ChecklistTable({
                 onChange={(e) => setEditDraft((d) => ({ ...d, category: e.target.value }))}
                 onKeyDown={(e) => e.key === "Enter" && saveEdit(true)}
               />
+              <select
+                    value={editDraft.workType}
+                    onChange={(e) => setEditDraft((d) => ({ ...d, workType: e.target.value }))}
+                    className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                    aria-label="Arbetstyp"
+                  >
+                    <option value="">Arbetstyp…</option>
+                    {WORK_TYPES.map((w) => (
+                      <option key={w.key} value={w.key}>{w.label}</option>
+                    ))}
+                  </select>
             </div>
           </div>
           <AlertDialogFooter className="gap-2">
