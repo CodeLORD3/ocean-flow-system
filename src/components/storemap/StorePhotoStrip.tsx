@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
-import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import {
   useEntityImages,
   useMyImageFavorites,
@@ -245,7 +244,7 @@ export function StorePhotoStrip({
       )}
 
       <ImageLightbox
-        images={images}
+        images={allImages}
         index={index}
         onIndexChange={setIndex}
         onClose={() => setIndex(null)}
