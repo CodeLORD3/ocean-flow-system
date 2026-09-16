@@ -99,6 +99,9 @@ export function MapDetailDrawer({
   const toggle = useToggleChecklistItem();
   const link = useLinkTaskToMap();
   const upload = useUploadEntityImage();
+  const deleteImage = useDeleteEntityImage();
+  const updateImage = useUpdateEntityImage();
+  const setPosition = useSetImagePosition();
   const { data: images = [] } = useEntityImages(entityType, entityId || null);
   const { data: logs = [] } = useActivityLogs({ storeId, limit: 300 });
   const { data: deviations = [] } = useDeviations(false);
