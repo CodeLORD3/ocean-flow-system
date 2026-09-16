@@ -273,8 +273,16 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                 <span className={h.done ? "text-emerald-600" : "text-muted-foreground"}>
                   {h.done ? "Klar" : "Inte gjord"}
                 </span>
-                {staffName(h.completed_by_staff_id) && <span>{staffName(h.completed_by_staff_id)}</span>}
-                {!staffName(h.completed_by_staff_id) && h.signature && <span>{h.signature}</span>}
+                {(staffName(h.completed_by_staff_id) || h.signature) && (
+                  <span className="flex items-center gap-2">
+                    <StaffAvatar
+                      name={staffName(h.completed_by_staff_id) ?? h.signature}
+                      imageUrl={staffImage(h.completed_by_staff_id)}
+                      className="h-5 w-5"
+                    />
+                    {staffName(h.completed_by_staff_id) ?? h.signature}
+                  </span>
+                )}
                 {h.images.length > 0 && <span className="text-xs text-muted-foreground">{h.images.length} bilder</span>}
               </Card>
             ))
