@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { EditableText } from "@/components/EditableText";
-import { format, getDaysInMonth, startOfMonth, getDay, isToday, parseISO, isBefore } from "date-fns";
+import { format, getDaysInMonth, startOfMonth, getDay, isToday, parseISO, isBefore, eachDayOfInterval } from "date-fns";
 import { sv } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, X, Trash2, Copy, Check, UserCheck, Repeat, Calendar as CalendarIcon, Users, FileText, CalendarPlus, ListTodo, Pencil } from "lucide-react";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
@@ -104,6 +104,10 @@ export default function ScheduleCalendar() {
   const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  // Intervallmarkering: dra över dagarna eller skift-klicka på slutdagen.
+  const [rangeStart, setRangeStart] = useState<string | null>(null);
+  const [rangeEnd, setRangeEnd] = useState<string | null>(null);
+  const rangeDragging = useRef(false);
 
   const isShop = site === "shop";
   const { events, isLoading, addEvent, updateEvent, deleteEvent } = useScheduleEvents(site, year, isShop ? activeStoreId : null);
@@ -138,6 +142,7 @@ export default function ScheduleCalendar() {
   const [formType, setFormType] = useState("note");
   const [formSeverity, setFormSeverity] = useState("info");
   const [formDate, setFormDate] = useState("");
+  const [formEndDate, setFormEndDate] = useState("");
   const [formRecurrence, setFormRecurrence] = useState("none");
   const [formRecurrenceEnd, setFormRecurrenceEnd] = useState("");
   const [formAssignee, setFormAssignee] = useState("");
@@ -172,13 +177,36 @@ export default function ScheduleCalendar() {
     return protocols.filter(p => p.meeting_date === selectedDate);
   }, [selectedDate, protocols]);
 
-  const openAddPanel = (date?: string) => {
+  // Markerat intervall (normaliserat så det går att dra bakåt också)
+  const rangeBounds = useMemo(() => {
+    if (!rangeStart || !rangeEnd) return null;
+    return rangeStart <= rangeEnd
+      ? { from: rangeStart, to: rangeEnd }
+      : { from: rangeEnd, to: rangeStart };
+  }, [rangeStart, rangeEnd]);
+
+  const isInRange = (dateStr: string) =>
+    !!rangeBounds && dateStr >= rangeBounds.from && dateStr <= rangeBounds.to;
+
+  const rangeDayCount = rangeBounds
+    ? eachDayOfInterval({ start: parseISO(rangeBounds.from), end: parseISO(rangeBounds.to) }).length
+    : 0;
+
+  // Släpper man musen utanför kalendern ska dragningen ändå avslutas.
+  useEffect(() => {
+    const stop = () => { rangeDragging.current = false; };
+    window.addEventListener("mouseup", stop);
+    return () => window.removeEventListener("mouseup", stop);
+  }, []);
+
+  const openAddPanel = (date?: string, endDate?: string) => {
     setFormTitle("");
     setFormDesc("");
     setFormCategory("event");
     setFormType("note");
     setFormSeverity("info");
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
+    setFormEndDate(endDate && endDate !== date ? endDate : "");
     setFormRecurrence("none");
     setFormRecurrenceEnd("");
     setFormAssignee("none");
@@ -192,6 +220,7 @@ export default function ScheduleCalendar() {
     setFormType(isTaskType(evt.event_type) ? "note" : evt.event_type);
     setFormSeverity(evt.severity);
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
+    setFormEndDate("");
     setFormRecurrence(evt.recurrence_type || "none");
     setFormRecurrenceEnd(evt.recurrence_end_date || "");
     setFormAssignee(evt.assigned_to || "none");
@@ -199,20 +228,31 @@ export default function ScheduleCalendar() {
   };
 
   const handleAdd = async () => {
-    if (!formTitle.trim()) return;
+    if (!formTitle.trim() || !formDate) return;
+    // Ett intervall (t.ex. ledighet 1–3) skapas som en post per dag.
+    const dates =
+      formEndDate && formEndDate > formDate
+        ? eachDayOfInterval({ start: parseISO(formDate), end: parseISO(formEndDate) }).map(d =>
+            format(d, "yyyy-MM-dd")
+          )
+        : [formDate];
+    const isRange = dates.length > 1;
     try {
-      await addEvent.mutateAsync({
-        event_date: formDate,
-        title: formTitle,
-        description: formDesc || undefined,
-        event_type: effectiveFormType,
-        severity: formSeverity,
-        portal: site,
-        store_id: site === "shop" ? activeStoreId : null,
-        recurrence_type: formRecurrence,
-        recurrence_end_date: formRecurrenceEnd || null,
-        assigned_to: formCategory === "task" && formAssignee !== "none" ? formAssignee : null,
-      });
+      for (const day of dates) {
+        await addEvent.mutateAsync({
+          event_date: day,
+          title: formTitle,
+          description: formDesc || undefined,
+          event_type: effectiveFormType,
+          severity: formSeverity,
+          portal: site,
+          store_id: site === "shop" ? activeStoreId : null,
+          // Upprepning gäller bara enstaka datum — ett intervall är redan utskrivet dag för dag.
+          recurrence_type: isRange ? "none" : formRecurrence,
+          recurrence_end_date: isRange ? null : formRecurrenceEnd || null,
+          assigned_to: formCategory === "task" && formAssignee !== "none" ? formAssignee : null,
+        });
+      }
       if (effectiveFormType === "meeting" && (isShop ? !!activeStoreId : true)) {
         await createProtocol.mutateAsync({
           store_id: isShop ? activeStoreId : null,
@@ -222,8 +262,18 @@ export default function ScheduleCalendar() {
           notes: formDesc || undefined,
         });
       }
-      toast({ title: effectiveFormType === "meeting" ? "Möte tillagt i kalender & mötesprotokoll" : formCategory === "task" ? "Uppgift tillagd" : "Händelse tillagd" });
+      toast({
+        title: isRange
+          ? `Tillagt ${dates.length} dagar (${format(parseISO(formDate), "d MMM", { locale: sv })}–${format(parseISO(formEndDate), "d MMM", { locale: sv })})`
+          : effectiveFormType === "meeting"
+            ? "Möte tillagt i kalender & mötesprotokoll"
+            : formCategory === "task"
+              ? "Uppgift tillagd"
+              : "Händelse tillagd",
+      });
       setShowAddPanel(false);
+      setRangeStart(null);
+      setRangeEnd(null);
     } catch {
       toast({ title: "Fel", description: "Kunde inte spara", variant: "destructive" });
     }
@@ -489,7 +539,16 @@ export default function ScheduleCalendar() {
             <ChevronRight className="h-3 w-3" />
           </Button>
           <div className="flex-1" />
-          <Button size="sm" onClick={() => openAddPanel(selectedDate || `${year}-${String(monthIdx + 1).padStart(2, "0")}-01`)} className="text-[10px] h-7 gap-1">
+          {rangeBounds && rangeDayCount > 1 ? (
+            <span className="text-[9px] text-primary font-medium mr-1">
+              {format(parseISO(rangeBounds.from), "d MMM", { locale: sv })}–{format(parseISO(rangeBounds.to), "d MMM", { locale: sv })} · {rangeDayCount} dagar
+            </span>
+          ) : (
+            <span className="hidden sm:inline text-[9px] text-muted-foreground mr-1">
+              Dra över flera dagar (eller skift-klicka) för en period
+            </span>
+          )}
+          <Button size="sm" onClick={() => openAddPanel(rangeBounds?.from || selectedDate || `${year}-${String(monthIdx + 1).padStart(2, "0")}-01`, rangeBounds?.to)} className="text-[10px] h-7 gap-1">
             <Plus className="h-3 w-3" /> Lägg till
           </Button>
         </div>
@@ -538,18 +597,62 @@ export default function ScheduleCalendar() {
                       const dayPast = isDatePast(year, monthIdx, cell.day);
                       const isSelected = selectedDate === cell.dateStr;
                       const hasMeeting = meetingDates.has(cell.dateStr);
+                      const inRange = isInRange(cell.dateStr);
+                      const rangeEdge = rangeBounds && (cell.dateStr === rangeBounds.from || cell.dateStr === rangeBounds.to);
 
                       return (
                         <div
                           key={cell.day}
                           className={cn(
-                            "min-h-[80px] overflow-hidden border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors relative",
+                            "min-h-[80px] overflow-hidden border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors relative select-none",
                             dayPast && "bg-muted/20",
                             today && "ring-1 ring-inset ring-primary",
                             isSelected && "ring-2 ring-inset ring-primary bg-primary/5",
+                            inRange && "bg-primary/15",
+                            rangeEdge && "ring-2 ring-inset ring-primary",
                             dropTarget === cell.dateStr && "bg-primary/10 ring-2 ring-inset ring-primary",
                           )}
-                          onClick={() => setSelectedDate(isSelected ? null : cell.dateStr)}
+                          onMouseDown={(e) => {
+                            if (e.button !== 0) return;
+                            const anchor = rangeStart || selectedDate;
+                            if (e.shiftKey && anchor && anchor !== cell.dateStr) {
+                              // Skift-klick: förläng markeringen till den här dagen.
+                              const from = anchor <= cell.dateStr ? anchor : cell.dateStr;
+                              const to = anchor <= cell.dateStr ? cell.dateStr : anchor;
+                              setRangeStart(from);
+                              setRangeEnd(to);
+                              setSelectedDate(null);
+                              openAddPanel(from, to);
+                              return;
+                            }
+                            rangeDragging.current = true;
+                            setRangeStart(cell.dateStr);
+                            setRangeEnd(cell.dateStr);
+                          }}
+                          onMouseEnter={() => {
+                            if (rangeDragging.current) setRangeEnd(cell.dateStr);
+                          }}
+                          onMouseUp={() => {
+                            const wasDragging = rangeDragging.current;
+                            rangeDragging.current = false;
+                            const start = rangeStart;
+                            const end = cell.dateStr;
+                            if (start && start !== end) {
+                              // Intervall valt — öppna formuläret för hela perioden.
+                              const from = start <= end ? start : end;
+                              const to = start <= end ? end : start;
+                              setRangeStart(from);
+                              setRangeEnd(to);
+                              setSelectedDate(null);
+                              openAddPanel(from, to);
+                              return;
+                            }
+                            if (wasDragging) {
+                              setRangeStart(null);
+                              setRangeEnd(null);
+                              setSelectedDate(isSelected ? null : cell.dateStr);
+                            }
+                          }}
                           onDragOver={(e) => { e.preventDefault(); setDropTarget(cell.dateStr); }}
                           onDragLeave={() => setDropTarget(null)}
                           onDrop={(e) => { e.preventDefault(); handleDrop(cell.dateStr); }}
@@ -572,6 +675,7 @@ export default function ScheduleCalendar() {
                               key={evt.id}
                               draggable
                               title={evt.title}
+                              onMouseDown={(e) => e.stopPropagation()}
                               onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.setData("text/plain", evt.id); e.dataTransfer.effectAllowed = "move"; setDraggedEventId(evt.id); }}
                               onDragEnd={() => { setDraggedEventId(null); setDropTarget(null); }}
                               className={cn(
@@ -979,8 +1083,18 @@ export default function ScheduleCalendar() {
         </Select>
       </div>
       <div>
-        <label className="text-[8px] text-muted-foreground font-medium leading-none">DATUM</label>
+        <label className="text-[8px] text-muted-foreground font-medium leading-none">FRÅN DATUM</label>
         <Input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} className="text-[10px] h-6 px-1.5" />
+      </div>
+      <div>
+        <label className="text-[8px] text-muted-foreground font-medium leading-none">TILL DATUM (VALFRITT)</label>
+        <Input
+          type="date"
+          min={formDate || undefined}
+          value={formEndDate}
+          onChange={e => setFormEndDate(e.target.value)}
+          className="text-[10px] h-6 px-1.5"
+        />
       </div>
       <div>
         <label className="text-[8px] text-muted-foreground font-medium leading-none">TITEL</label>
@@ -1086,7 +1200,21 @@ export default function ScheduleCalendar() {
       {/* Inline add panel */}
       <Collapsible open={showAddPanel} onOpenChange={setShowAddPanel}>
         <CollapsibleContent>
-          <div className="border border-border bg-card px-3 py-2 rounded-sm">
+          <div className="border border-border bg-card px-3 py-2 rounded-sm space-y-1.5">
+            {formEndDate && formEndDate > formDate && (
+              <div className="flex items-center gap-1.5 text-[10px] text-primary">
+                <CalendarIcon className="h-3 w-3" />
+                <span className="font-medium">
+                  {format(parseISO(formDate), "d MMM", { locale: sv })}–{format(parseISO(formEndDate), "d MMM yyyy", { locale: sv })}
+                </span>
+                <span className="text-muted-foreground">
+                  · {eachDayOfInterval({ start: parseISO(formDate), end: parseISO(formEndDate) }).length} dagar, en post per dag
+                </span>
+                <Button variant="ghost" size="sm" className="h-5 px-1 text-[9px]" onClick={() => { setFormEndDate(""); setRangeStart(null); setRangeEnd(null); }}>
+                  Rensa
+                </Button>
+              </div>
+            )}
             {renderAddForm()}
           </div>
         </CollapsibleContent>
