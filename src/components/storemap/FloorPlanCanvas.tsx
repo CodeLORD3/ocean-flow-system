@@ -248,8 +248,15 @@ export function FloorPlanCanvas({
   const onBackgroundDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
     touched.current = true;
-    panRef.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    if (e.shiftKey || marqueeModeRef.current) {
+      const pt = planPointRef.current(e);
+      if (pt) {
+        setMarqueeRef.current({ x0: pt.x, y0: pt.y, x1: pt.x, y1: pt.y });
+        return;
+      }
+    }
+    panRef.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
   };
 
   const zoomBy = (factor: number) => {
