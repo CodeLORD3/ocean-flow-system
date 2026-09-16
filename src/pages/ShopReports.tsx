@@ -1061,6 +1061,16 @@ export default function ShopReports() {
         </Card>
       )}
 
+      {/* Butikens egna inventeringsrapporter — skapas när inventeringen skickas in */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Inventeringsrapporter</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <InventoryReportsArchive storeId={activeStoreId} limit={60} />
+        </CardContent>
+      </Card>
+
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
