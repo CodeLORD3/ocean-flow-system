@@ -92,6 +92,8 @@ export function MapDetailDrawer({
   zoneNumber?: number;
   /** Ytans storlek i kvadratmeter, färdigformaterad. */
   areaLabel?: string | null;
+  /** Panelläge: visas som egen kolumn till höger istället för som överlägg. */
+  inline?: boolean;
 }) {
   const entityType = object ? "map_object" : "map_zone";
   const entityId = object?.id ?? zone?.id ?? "";
