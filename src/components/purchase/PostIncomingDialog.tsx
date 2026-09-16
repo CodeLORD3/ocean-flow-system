@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, PackageCheck } from "lucide-react";
 
 import {
@@ -52,6 +52,35 @@ export default function PostIncomingDialog({ open, onOpenChange, report, lines, 
   // Manuella justeringar per rad: { lineId: { batchnr: kg } }
   const [allocations, setAllocations] = useState<Record<string, Record<string, number>>>({});
   const [zeroConfirmed, setZeroConfirmed] = useState<Record<string, boolean>>({});
+  // Frågan ställs alltid: vart ska varorna? Inget förval, så steget inte missas.
+  const [locationId, setLocationId] = useState<string>("");
+
+  useEffect(() => {
+    if (open) setLocationId("");
+  }, [open]);
+
+  const { data: destinations = [] } = useQuery({
+    queryKey: ["posting-destinations"],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("storage_locations")
+        .select("id, name, location_type")
+        .eq("active", true)
+        .in("location_type", ["grossistlager", "inkopslager", "tillverkningslager"]);
+      if (error) throw error;
+      const order = ["grossistlager", "inkopslager", "tillverkningslager"];
+      return (data as any[]).sort(
+        (a, b) => order.indexOf(a.location_type) - order.indexOf(b.location_type),
+      );
+    },
+  });
+
+  const DESTINATION_HINT: Record<string, string> = {
+    grossistlager: "Finns fysiskt hos oss — direkt tillgängligt när ordrar packas.",
+    inkopslager: "Vår vara, men ännu inte hos oss — syns inte vid packning.",
+    tillverkningslager: "Går direkt till produktion för omvandling.",
+  };
 
   const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
 
