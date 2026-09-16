@@ -20,6 +20,7 @@ import {
 } from "@/hooks/useWeeklyReports";
 import { useProducts } from "@/hooks/useProducts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InventoryReportsArchive } from "@/components/reports/InventoryReportsArchive";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
