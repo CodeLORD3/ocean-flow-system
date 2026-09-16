@@ -139,6 +139,7 @@ const financeNav = [
   { title: "Stämpelklockan — guider", url: "/clock-guides", icon: FileText },
   { title: "Webbordrar", url: "/shopify", icon: Globe },
   { title: "Storlekssortering", url: "/size-grades", icon: Ruler },
+  { title: "Produktion — så gör vi", url: "/produktion-recept", icon: CookingPot },
   { title: "Omvandlingsrecept", url: "/transformation-recipes", icon: CookingPot },
   { title: "Fortnox", url: "/fortnox", icon: Plug },
   { title: "Ekonomi", url: "/finance", icon: CreditCard },

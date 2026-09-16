@@ -25,6 +25,7 @@ import PlaceholderPage from "@/pages/PlaceholderPage";
 import Invoices from "@/pages/Invoices";
 import SizeGrades from "@/pages/SizeGrades";
 import TransformationRecipes from "@/pages/TransformationRecipes";
+import ProductionRecipes from "@/pages/ProductionRecipes";
 import PurchaseReporting from "@/pages/PurchaseReporting";
 import PurchaseReconciliation from "@/pages/PurchaseReconciliation";
 import Pricing from "@/pages/Pricing";
@@ -134,6 +135,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/purchase-reconciliation": { component: <PurchaseReconciliation /> },
   "/size-grades": { component: <SizeGrades /> },
   "/transformation-recipes": { component: <TransformationRecipes /> },
+  "/produktion-recept": { component: <ProductionRecipes /> },
   "/receiving": { component: <Receiving /> },
   "/products": { component: <Products /> },
   "/barcodes": { component: <Barcodes /> },

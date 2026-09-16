@@ -28,6 +28,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/purchase-reporting": "Inköpsrapporter",
   "/purchase-reconciliation": "Behovsavstämning",
   "/size-grades": "Storlekssortering",
+  "/produktion-recept": "Produktion",
   "/transformation-recipes": "Omvandlingsrecept",
   "/receiving": "Inleveranser",
   "/products": "Produkter",
