@@ -747,38 +747,68 @@ export default function StoreMap() {
                   </CardContent>
                 </Card>
               </>
+            ) : selectedZone || selectedObject ? (
+              /* Vald yta ligger kvar bredvid kartan — kartan syns hela tiden */
+              <MapDetailDrawer
+                inline
+                open
+                onOpenChange={(v) => {
+                  if (!v) {
+                    setSelected(null);
+                    setFocus(null);
+                    setDrawerOpen(false);
+                  }
+                }}
+                storeId={storeId}
+                portal={site}
+                zone={selectedZone}
+                object={selectedObject}
+                objectType={selectedObject ? typeById[selectedObject.object_type_id] : null}
+                tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
+                unlinkedTasks={unlinkedTasks}
+                canManage={canManage}
+                zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
+                areaLabel={
+                  selectedZone
+                    ? areaOf(selectedZone, pxPerMeter).sqm != null
+                      ? `${areaOf(selectedZone, pxPerMeter).exact ? "" : "≈ "}${formatSqm(areaOf(selectedZone, pxPerMeter).sqm)}`
+                      : null
+                    : selectedObject && areaOf(selectedObject, pxPerMeter).sqm != null
+                      ? formatSqm(areaOf(selectedObject, pxPerMeter).sqm)
+                      : null
+                }
+              />
             ) : (
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-xs">Behöver åtgärd</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1">
-                  {tasks.filter((t) => !t.done).length === 0 ? (
-                    <p className="text-[11px] text-muted-foreground">Allt är klart just nu.</p>
-                  ) : (
-                    tasks
-                      .filter((t) => !t.done)
-                      .slice(0, 12)
-                      .map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => {
-                            const target: Selection = t.map_object_id
-                              ? { kind: "object", id: t.map_object_id }
-                              : t.zone_id
-                                ? { kind: "zone", id: t.zone_id }
-                                : null;
-                            setSelected(target);
-                            setFocus(target);
-                            setDrawerOpen(true);
-                          }}
-                          className="w-full text-left text-[11px] rounded-md border border-border px-2 py-1 hover:bg-muted"
-                        >
-                          <span className="truncate block">{t.task}</span>
-                          <span className="text-[10px] text-muted-foreground">{t.section}</span>
-                        </button>
-                      ))
-                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    Tryck på en yta i kartan för att se bilder, uppgifter och information.
+                  </p>
+                  {tasks
+                    .filter((t) => !t.done)
+                    .slice(0, 12)
+                    .map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => {
+                          const target: Selection = t.map_object_id
+                            ? { kind: "object", id: t.map_object_id }
+                            : t.zone_id
+                              ? { kind: "zone", id: t.zone_id }
+                              : null;
+                          setSelected(target);
+                          setFocus(target);
+                          setDrawerOpen(true);
+                        }}
+                        className="w-full text-left text-[11px] rounded-md border border-border px-2 py-1 hover:bg-muted"
+                      >
+                        <span className="truncate block">{t.task}</span>
+                        <span className="text-[10px] text-muted-foreground">{t.section}</span>
+                      </button>
+                    ))}
                 </CardContent>
               </Card>
             )}
