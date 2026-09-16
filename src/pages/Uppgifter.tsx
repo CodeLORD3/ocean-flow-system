@@ -240,6 +240,7 @@ export default function Uppgifter() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="dag">Dagens uppgifter</TabsTrigger>
+          <TabsTrigger value="kalender">Kalender</TabsTrigger>
           <TabsTrigger value="checklistor">Checklistor</TabsTrigger>
           <TabsTrigger value="sagordu">Så gör du</TabsTrigger>
           <TabsTrigger value="standard">Standarduppgifter</TabsTrigger>
