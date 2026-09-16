@@ -22,6 +22,7 @@ import {
   useDayTasks,
   useDeleteTask,
   useSetTaskDone,
+  useUpdateTask,
   useStandardTasks,
   useTaskCategories,
   useUpdateStandardTask,
@@ -145,6 +146,11 @@ export default function Uppgifter() {
   const [nMinutes, setNMinutes] = useState("");
   const [nNote, setNNote] = useState("");
   const [nRecurring, setNRecurring] = useState(false);
+  const [nReqPhoto, setNReqPhoto] = useState(false);
+  const [nReqNote, setNReqNote] = useState(false);
+  const [nReqValue, setNReqValue] = useState(false);
+  const [nValueLabel, setNValueLabel] = useState("");
+  const updateTask = useUpdateTask();
 
   const createAdhoc = async () => {
     if (!storeId) return;
@@ -160,6 +166,10 @@ export default function Uppgifter() {
         specificTime: nTime || null,
         estimatedMinutes: nMinutes ? Number(nMinutes) : null,
         note: nNote,
+        requiresPhoto: nReqPhoto,
+        requiresNote: nReqNote,
+        requiresValue: nReqValue,
+        valueLabel: nReqValue ? nValueLabel || "Värde" : null,
       };
       if (nRecurring) {
         await addStandard.mutateAsync(payload);
@@ -174,6 +184,10 @@ export default function Uppgifter() {
       setNNote("");
       setNTime("");
       setNMinutes("");
+      setNReqPhoto(false);
+      setNReqNote(false);
+      setNReqValue(false);
+      setNValueLabel("");
       if (newId) switchTab(`/uppgift/${newId}`);
     } catch (e: any) {
       toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
@@ -376,6 +390,7 @@ export default function Uppgifter() {
                         staffList.find((p) => p.id === t.completed_by_staff_id)?.profile_image_url ?? null
                       }
                       onToggle={(done) => setDone.mutate({ id: t.id, done })}
+                      onSaveRequirement={(patch) => updateTask.mutate({ id: t.id, ...patch })}
                       onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
                       onAddPhoto={(file) => addPhoto(t, file)}
                       onOpenArea={() => switchTab("/store-map")}
@@ -689,6 +704,29 @@ export default function Uppgifter() {
                 </span>
               </span>
             </label>
+            <div className="space-y-2 rounded-md border p-3">
+              <p className="text-sm font-medium">Krav för att få bocka av</p>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" className="h-4 w-4" checked={nReqPhoto} onChange={(e) => setNReqPhoto(e.target.checked)} />
+                Bild krävs
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" className="h-4 w-4" checked={nReqNote} onChange={(e) => setNReqNote(e.target.checked)} />
+                Kommentar krävs
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" className="h-4 w-4" checked={nReqValue} onChange={(e) => setNReqValue(e.target.checked)} />
+                Mätvärde krävs
+              </label>
+              {nReqValue && (
+                <Input
+                  placeholder="Vad mäts? T.ex. Temperatur °C"
+                  value={nValueLabel}
+                  onChange={(e) => setNValueLabel(e.target.value)}
+                />
+              )}
+              <p className="text-xs text-muted-foreground">Utan ifyllt krav går uppgiften inte att markera klar.</p>
+            </div>
             <div>
               <label className="text-sm font-medium">Anteckning</label>
               <Textarea value={nNote} onChange={(e) => setNNote(e.target.value)} className="min-h-[60px]" />

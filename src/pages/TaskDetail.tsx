@@ -14,6 +14,7 @@ import { useFloorPlans, useMapZones } from "@/hooks/useStoreMap";
 import { useUploadEntityImage, type EntityImage } from "@/hooks/useEntityImages";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
+import { missingRequirements, missingText, valueLabel } from "@/lib/taskRequirements";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 import { dayBadgeClass } from "@/lib/dayColor";
 import {
@@ -84,6 +85,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   if (!task) return <p className="text-muted-foreground">Uppgiften finns inte längre.</p>;
 
   const time = taskTime(task);
+  const missing = missingRequirements(task, { photoCount: images.length, checkPhoto: true });
   const doneRatio = history.length > 0 ? Math.round((history.filter((h) => h.done).length / history.length) * 100) : null;
 
   const addPhoto = async (file: File) => {
@@ -155,6 +157,8 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           <div className="flex flex-wrap items-center gap-2">
             <Button
               size="lg"
+              disabled={!task.done && missing.length > 0}
+              title={!task.done && missing.length > 0 ? missingText(task, missing) : undefined}
               variant={task.done ? "outline" : "default"}
               className={cn(!task.done && "bg-emerald-600 text-white hover:bg-emerald-700")}
               onClick={async () => {
@@ -195,6 +199,35 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             </label>
           </div>
         </div>
+        {(task.requires_note || task.requires_value) && (
+          <div className="space-y-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-3">
+            <p className="text-sm font-medium">Fyll i innan du bockar av</p>
+            {task.requires_value && (
+              <div className="flex items-center gap-2">
+                <span className="w-32 shrink-0 text-sm text-muted-foreground">{valueLabel(task)}</span>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.1"
+                  defaultValue={task.completion_value ?? ""}
+                  onBlur={(e) =>
+                    update.mutate({ id: task.id, completion_value: e.target.value === "" ? null : Number(e.target.value) })
+                  }
+                />
+              </div>
+            )}
+            {task.requires_note && (
+              <div className="flex items-center gap-2">
+                <span className="w-32 shrink-0 text-sm text-muted-foreground">Kommentar</span>
+                <Input
+                  defaultValue={task.completion_note ?? ""}
+                  onBlur={(e) => update.mutate({ id: task.id, completion_note: e.target.value.trim() || null })}
+                />
+              </div>
+            )}
+            {missing.length > 0 && <p className="text-xs text-amber-700">{missingText(task, missing)}</p>}
+          </div>
+        )}
         {task.done && (
           <div className="flex items-center gap-2 text-xs text-emerald-600">
             {(staffName(task.completed_by_staff_id) || task.signature) && (
@@ -463,15 +496,39 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                 }
               />
             </div>
-            <div className="flex items-end">
-              <label className="inline-flex items-center gap-2 text-sm">
+            <div className="col-span-2 space-y-2 rounded-md border p-3">
+              <p className="text-sm font-medium">Krav för att få bocka av</p>
+              <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={task.requires_photo}
                   onChange={(e) => update.mutate({ id: task.id, requires_photo: e.target.checked })}
                 />
-                Foto krävs för att räknas som klar
+                Bild krävs
               </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={task.requires_note}
+                  onChange={(e) => update.mutate({ id: task.id, requires_note: e.target.checked })}
+                />
+                Kommentar krävs
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={task.requires_value}
+                  onChange={(e) => update.mutate({ id: task.id, requires_value: e.target.checked })}
+                />
+                Mätvärde krävs
+              </label>
+              {task.requires_value && (
+                <Input
+                  placeholder="Vad mäts? T.ex. Temperatur °C"
+                  defaultValue={task.value_label ?? ""}
+                  onBlur={(e) => update.mutate({ id: task.id, value_label: e.target.value.trim() || null })}
+                />
+              )}
             </div>
           </div>
           <div className="border-t pt-4">

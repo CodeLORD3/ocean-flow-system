@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { cn } from "@/lib/utils";
 import { durationText, taskTime } from "@/lib/taskTime";
+import { missingRequirements, missingText, valueLabel } from "@/lib/taskRequirements";
+import { Input } from "@/components/ui/input";
 import { workTypeLabel } from "@/lib/workType";
 import type { TaskRow as Task } from "@/hooks/useTasks";
 
@@ -24,6 +26,10 @@ type Props = {
   onAddPhoto?: (file: File) => void;
   onOpenArea?: (areaId: string) => void;
   onDelete?: () => void;
+  /** Sparar det som krävs för att få bocka av (kommentar/mätvärde). */
+  onSaveRequirement?: (patch: { completion_note?: string | null; completion_value?: number | null }) => void;
+  /** Sätts när antalet bilder är känt — då spärras även bildkravet. */
+  photoCountKnown?: boolean;
 };
 
 /**
@@ -45,12 +51,27 @@ export function TaskRow({
   onAddPhoto,
   onOpenArea,
   onDelete,
+  onSaveRequirement,
+  photoCountKnown,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [noteDraft, setNoteDraft] = useState(task.completion_note ?? "");
+  const [valueDraft, setValueDraft] = useState(
+    task.completion_value === null || task.completion_value === undefined ? "" : String(task.completion_value),
+  );
   const time = taskTime(task);
   const duration = durationText(task.estimated_minutes);
   const accent = area?.color ?? categoryColor ?? "hsl(var(--muted-foreground))";
   const photoMissing = task.requires_photo && photoCount === 0;
+  const missing = missingRequirements(task, { photoCount, checkPhoto: !!photoCountKnown });
+  const blocked = !task.done && missing.length > 0;
+  const tryToggle = (done: boolean) => {
+    if (done && blocked) {
+      setOpen(true);
+      return;
+    }
+    onToggle(done);
+  };
 
   return (
     <div
@@ -65,7 +86,8 @@ export function TaskRow({
         <button
           type="button"
           aria-label={task.done ? "Återöppna uppgift" : "Markera som klar"}
-          onClick={() => onToggle(!task.done)}
+          onClick={() => tryToggle(!task.done)}
+          title={blocked ? missingText(task, missing) : undefined}
           className={cn(
             "flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition-colors",
             task.done ? "border-emerald-500 bg-emerald-500 text-white" : "border-border hover:bg-muted",
@@ -100,6 +122,13 @@ export function TaskRow({
             {assigneeName && (
               <span className="inline-flex items-center gap-1">
                 <StaffAvatar name={assigneeName} imageUrl={assigneeImage} className="h-7 w-7" /> {assigneeName}
+              </span>
+            )}
+            {(task.requires_note || task.requires_value) && (
+              <span className={cn("inline-flex items-center gap-1", blocked && "text-amber-600")}>
+                {task.requires_note && "Kommentar krävs"}
+                {task.requires_note && task.requires_value && " · "}
+                {task.requires_value && `${valueLabel(task)} krävs`}
               </span>
             )}
             {task.requires_photo && (
@@ -166,8 +195,46 @@ export function TaskRow({
             )}
           </div>
 
+          {(task.requires_note || task.requires_value) && onSaveRequirement && (
+            <div className="space-y-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2">
+              {task.requires_value && (
+                <div className="flex items-center gap-2">
+                  <span className="w-28 shrink-0 text-[12px] text-muted-foreground">{valueLabel(task)}</span>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.1"
+                    className="h-8"
+                    value={valueDraft}
+                    onChange={(e) => setValueDraft(e.target.value)}
+                    onBlur={() =>
+                      onSaveRequirement({ completion_value: valueDraft === "" ? null : Number(valueDraft) })
+                    }
+                  />
+                </div>
+              )}
+              {task.requires_note && (
+                <div className="flex items-center gap-2">
+                  <span className="w-28 shrink-0 text-[12px] text-muted-foreground">Kommentar</span>
+                  <Input
+                    className="h-8"
+                    value={noteDraft}
+                    onChange={(e) => setNoteDraft(e.target.value)}
+                    onBlur={() => onSaveRequirement({ completion_note: noteDraft.trim() || null })}
+                  />
+                </div>
+              )}
+              {blocked && <p className="text-[11px] text-amber-700">{missingText(task, missing)}</p>}
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" variant={task.done ? "outline" : "default"} onClick={() => onToggle(!task.done)}>
+            <Button
+              size="sm"
+              variant={task.done ? "outline" : "default"}
+              disabled={blocked}
+              onClick={() => tryToggle(!task.done)}
+            >
               {task.done ? "Återöppna" : "Markera som klar"}
             </Button>
             {onAddPhoto && (

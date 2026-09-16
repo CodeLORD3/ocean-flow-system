@@ -46,6 +46,11 @@ export type TaskRow = {
   instructions: string[] | null;
   important_note: string | null;
   requires_photo: boolean;
+  requires_note: boolean;
+  requires_value: boolean;
+  value_label: string | null;
+  completion_note: string | null;
+  completion_value: number | null;
   template_item_id: string | null;
   time_label: string | null;
   /** Arbetsbeskrivning: mål, varor och steg med bilder. */
@@ -53,7 +58,7 @@ export type TaskRow = {
 };
 
 const TASK_FIELDS =
-  "id, day_id, task, section, note, sort_order, done, done_at, signature, category, category_id, work_type, zone_id, map_object_id, assigned_staff_id, completed_by_staff_id, specific_time, time_from, time_to, daypart, estimated_minutes, instructions, important_note, requires_photo, template_item_id, time_label, guide";
+  "id, day_id, task, section, note, sort_order, done, done_at, signature, category, category_id, work_type, zone_id, map_object_id, assigned_staff_id, completed_by_staff_id, specific_time, time_from, time_to, daypart, estimated_minutes, instructions, important_note, requires_photo, requires_note, requires_value, value_label, completion_note, completion_value, template_item_id, time_label, guide";
 
 function normalize<T = TaskRow>(row: any): T {
   const raw = row.instructions;
@@ -191,6 +196,9 @@ export function useAddAdhocTask() {
       estimatedMinutes?: number | null;
       note?: string | null;
       requiresPhoto?: boolean;
+      requiresNote?: boolean;
+      requiresValue?: boolean;
+      valueLabel?: string | null;
     }) => {
       const task = input.task.trim();
       if (!task) throw new Error("Skriv vad som ska göras.");
@@ -235,6 +243,9 @@ export function useAddAdhocTask() {
           estimated_minutes: input.estimatedMinutes ?? null,
           note: input.note?.trim() || null,
           requires_photo: !!input.requiresPhoto,
+          requires_note: !!input.requiresNote,
+          requires_value: !!input.requiresValue,
+          value_label: input.valueLabel?.trim() || null,
         })
         .select("id")
         .single();
@@ -265,6 +276,9 @@ export function useAddStandardTask() {
       estimatedMinutes?: number | null;
       note?: string | null;
       requiresPhoto?: boolean;
+      requiresNote?: boolean;
+      requiresValue?: boolean;
+      valueLabel?: string | null;
       date?: string;
     }) => {
       const task = input.task.trim();
@@ -299,6 +313,9 @@ export function useAddStandardTask() {
           estimated_minutes: input.estimatedMinutes ?? null,
           important_note: input.note?.trim() || null,
           requires_photo: !!input.requiresPhoto,
+          requires_note: !!input.requiresNote,
+          requires_value: !!input.requiresValue,
+          value_label: input.valueLabel?.trim() || null,
         })
         .select("id")
         .single();
@@ -329,6 +346,9 @@ export function useAddStandardTask() {
           estimated_minutes: input.estimatedMinutes ?? null,
           important_note: input.note?.trim() || null,
           requires_photo: !!input.requiresPhoto,
+          requires_note: !!input.requiresNote,
+          requires_value: !!input.requiresValue,
+          value_label: input.valueLabel?.trim() || null,
         });
       }
       return tpl.id as string;
@@ -488,6 +508,9 @@ export type StandardTask = {
   instructions: string[] | null;
   important_note: string | null;
   requires_photo: boolean;
+  requires_note: boolean;
+  requires_value: boolean;
+  value_label: string | null;
   listName: string;
   weekdays: number[];
 };
