@@ -716,14 +716,11 @@ export function FloorPlanCanvas({
           <svg width={116} height={82} viewBox={`0 0 ${plan.width} ${plan.height}`} className="block">
             <rect x={0} y={0} width={plan.width} height={plan.height} fill="hsl(var(--muted))" />
             {zones.map((z) => (
-              <rect
+              <polygon
                 key={z.id}
-                x={z.x}
-                y={z.y}
-                width={z.width}
-                height={z.height}
+                points={toPath(ptsOf(z))}
                 fill={z.color ?? "hsl(var(--primary))"}
-                fillOpacity={0.25}
+                fillOpacity={0.3}
                 stroke="hsl(var(--border))"
                 strokeWidth={4}
               />
