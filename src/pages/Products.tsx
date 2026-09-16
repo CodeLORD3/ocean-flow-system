@@ -1086,6 +1086,15 @@ export default function Products() {
                 <Layers className="h-3.5 w-3.5" />
               </Button>
             )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              title="Så gör vi produkten — produktionsrecept"
+              onClick={() => switchTab(`/produktion-recept?product=${p.id}`)}
+            >
+              <ChefHat className="h-3.5 w-3.5" />
+            </Button>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(p)}>
               <Edit className="h-3.5 w-3.5" />
             </Button>
