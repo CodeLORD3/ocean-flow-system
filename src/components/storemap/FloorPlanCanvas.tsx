@@ -374,11 +374,14 @@ export function FloorPlanCanvas({
   const geom = (id: string, base: { x: number; y: number; width: number; height: number }) => ghost[id] ?? base;
 
   return (
-    <div className="relative rounded-md border border-border bg-muted/20 overflow-hidden">
+    <div
+      className={`relative rounded-md border bg-muted/20 overflow-hidden ${active ? "border-primary" : "border-border"}`}
+    >
       <div
         ref={wrapRef}
-        className={`h-[56vh] min-h-[320px] max-h-[560px] w-full touch-none ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
+        className={`h-[56vh] min-h-[320px] max-h-[560px] w-full ${active ? "touch-none" : ""} ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
         onClickCapture={pinMode ? placePin : placeZoneId ? placePhoto : undefined}
+        onPointerDownCapture={() => setActive(true)}
         onPointerDown={onBackgroundDown}
         onPointerMove={(e) => {
           onPointerMove(e);
