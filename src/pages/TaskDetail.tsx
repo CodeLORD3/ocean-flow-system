@@ -70,6 +70,8 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
     const s = staffList.find((p) => p.id === id);
     return s ? `${s.first_name} ${s.last_name}` : null;
   };
+  const staffImage = (id: string | null | undefined) =>
+    staffList.find((p) => p.id === id)?.profile_image_url ?? null;
 
   const allImages: EntityImage[] = useMemo(
     () => [...images, ...history.flatMap((h) => h.images)].filter((img, i, arr) => arr.findIndex((x) => x.id === img.id) === i),
