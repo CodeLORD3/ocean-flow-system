@@ -171,6 +171,26 @@ export default function Uppgifter() {
     }
   };
 
+  const deleteTask = async (task: Task) => {
+    if (!window.confirm(`Ta bort uppgiften "${task.task}" från ${day}?`)) return;
+    try {
+      await removeTask.mutateAsync(task.id);
+      toast({ title: "Uppgiften togs bort" });
+    } catch (e: any) {
+      toast({ title: "Kunde inte ta bort", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const deleteStandard = async (id: string, name: string) => {
+    if (!window.confirm(`Ta bort standarduppgiften "${name}"? Den slutar då skapas nya dagar.`)) return;
+    try {
+      await updateStandard.mutateAsync({ id, active: false });
+      toast({ title: "Standarduppgiften togs bort" });
+    } catch (e: any) {
+      toast({ title: "Kunde inte ta bort", description: e.message, variant: "destructive" });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
