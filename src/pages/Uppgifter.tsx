@@ -146,6 +146,7 @@ export default function Uppgifter() {
   const catOf = (t: Task) => categories.find((c) => c.id === t.category_id) ?? null;
 
   const [newOpen, setNewOpen] = useState(false);
+  const [step, setStep] = useState(1);
   const [nTask, setNTask] = useState("");
   const [nZone, setNZone] = useState("none");
   const [nCat, setNCat] = useState("none");
