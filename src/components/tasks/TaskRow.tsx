@@ -54,7 +54,7 @@ export function TaskRow({
     <div
       className={cn(
         "rounded-xl border bg-card transition-colors",
-        task.done && "bg-muted/40",
+        task.done && "border-emerald-500/40 bg-emerald-500/10",
         photoMissing && !task.done && "border-amber-500/40",
       )}
       style={{ borderLeft: `4px solid ${accent}` }}
