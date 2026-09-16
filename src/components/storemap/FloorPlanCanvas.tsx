@@ -274,7 +274,7 @@ export function FloorPlanCanvas({
   const snap = (v: number) => (plan.grid_size > 0 ? Math.round(v / plan.grid_size) * plan.grid_size : Math.round(v));
 
   /* Rutnätet: små rutor (halva planens rutmått) med grövre linje var femte ruta. */
-  const gridId = `grid-${plan.id}`;
+  
   const minor = plan.grid_size > 0 ? plan.grid_size / 2 : 10;
 
   /* Markera ett område med musen och zooma dit — fungerar även inne i en yta. */
