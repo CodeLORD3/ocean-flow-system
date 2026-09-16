@@ -4962,6 +4962,7 @@ export type Database = {
           id: string
           name: string
           published_at: string | null
+          px_per_meter: number | null
           status: string
           store_id: string
           updated_at: string
@@ -4982,6 +4983,7 @@ export type Database = {
           id?: string
           name: string
           published_at?: string | null
+          px_per_meter?: number | null
           status?: string
           store_id: string
           updated_at?: string
@@ -5002,6 +5004,7 @@ export type Database = {
           id?: string
           name?: string
           published_at?: string | null
+          px_per_meter?: number | null
           status?: string
           store_id?: string
           updated_at?: string
@@ -7323,6 +7326,7 @@ export type Database = {
       map_objects: {
         Row: {
           active: boolean
+          area_sqm: number | null
           control_point_id: string | null
           created_at: string
           created_by: string | null
@@ -7342,6 +7346,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          area_sqm?: number | null
           control_point_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -7361,6 +7366,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          area_sqm?: number | null
           control_point_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -7423,6 +7429,97 @@ export type Database = {
           },
         ]
       }
+      map_pins: {
+        Row: {
+          assigned_name: string | null
+          assigned_staff_id: string | null
+          body: string | null
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          done_at: string | null
+          done_by_name: string | null
+          due_date: string | null
+          floor_plan_id: string
+          id: string
+          kind: string
+          map_object_id: string | null
+          status: string
+          store_id: string
+          title: string
+          updated_at: string
+          x: number
+          y: number
+          zone_id: string | null
+        }
+        Insert: {
+          assigned_name?: string | null
+          assigned_staff_id?: string | null
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          done_at?: string | null
+          done_by_name?: string | null
+          due_date?: string | null
+          floor_plan_id: string
+          id?: string
+          kind?: string
+          map_object_id?: string | null
+          status?: string
+          store_id: string
+          title: string
+          updated_at?: string
+          x: number
+          y: number
+          zone_id?: string | null
+        }
+        Update: {
+          assigned_name?: string | null
+          assigned_staff_id?: string | null
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          done_at?: string | null
+          done_by_name?: string | null
+          due_date?: string | null
+          floor_plan_id?: string
+          id?: string
+          kind?: string
+          map_object_id?: string | null
+          status?: string
+          store_id?: string
+          title?: string
+          updated_at?: string
+          x?: number
+          y?: number
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "map_pins_floor_plan_id_fkey"
+            columns: ["floor_plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "map_pins_map_object_id_fkey"
+            columns: ["map_object_id"]
+            isOneToOne: false
+            referencedRelation: "map_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "map_pins_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "map_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       map_settings: {
         Row: {
           center_latitude: number
@@ -7449,6 +7546,7 @@ export type Database = {
       }
       map_zones: {
         Row: {
+          area_sqm: number | null
           color: string | null
           created_at: string
           floor_plan_id: string
@@ -7465,6 +7563,7 @@ export type Database = {
           zone_key: string | null
         }
         Insert: {
+          area_sqm?: number | null
           color?: string | null
           created_at?: string
           floor_plan_id: string
@@ -7481,6 +7580,7 @@ export type Database = {
           zone_key?: string | null
         }
         Update: {
+          area_sqm?: number | null
           color?: string | null
           created_at?: string
           floor_plan_id?: string
