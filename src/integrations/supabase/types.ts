@@ -1284,6 +1284,8 @@ export type Database = {
           category: string | null
           category_id: string | null
           completed_by_staff_id: string | null
+          completion_note: string | null
+          completion_value: number | null
           created_at: string
           day_id: string
           daypart: string | null
@@ -1296,7 +1298,9 @@ export type Database = {
           instructions: Json | null
           map_object_id: string | null
           note: string | null
+          requires_note: boolean
           requires_photo: boolean
+          requires_value: boolean
           section: string
           signature: string | null
           sort_order: number
@@ -1307,6 +1311,7 @@ export type Database = {
           time_label: string | null
           time_to: string | null
           updated_at: string
+          value_label: string | null
           work_type: string | null
           zone_id: string | null
         }
@@ -1315,6 +1320,8 @@ export type Database = {
           category?: string | null
           category_id?: string | null
           completed_by_staff_id?: string | null
+          completion_note?: string | null
+          completion_value?: number | null
           created_at?: string
           day_id: string
           daypart?: string | null
@@ -1327,7 +1334,9 @@ export type Database = {
           instructions?: Json | null
           map_object_id?: string | null
           note?: string | null
+          requires_note?: boolean
           requires_photo?: boolean
+          requires_value?: boolean
           section: string
           signature?: string | null
           sort_order?: number
@@ -1338,6 +1347,7 @@ export type Database = {
           time_label?: string | null
           time_to?: string | null
           updated_at?: string
+          value_label?: string | null
           work_type?: string | null
           zone_id?: string | null
         }
@@ -1346,6 +1356,8 @@ export type Database = {
           category?: string | null
           category_id?: string | null
           completed_by_staff_id?: string | null
+          completion_note?: string | null
+          completion_value?: number | null
           created_at?: string
           day_id?: string
           daypart?: string | null
@@ -1358,7 +1370,9 @@ export type Database = {
           instructions?: Json | null
           map_object_id?: string | null
           note?: string | null
+          requires_note?: boolean
           requires_photo?: boolean
+          requires_value?: boolean
           section?: string
           signature?: string | null
           sort_order?: number
@@ -1369,6 +1383,7 @@ export type Database = {
           time_label?: string | null
           time_to?: string | null
           updated_at?: string
+          value_label?: string | null
           work_type?: string | null
           zone_id?: string | null
         }
@@ -1540,7 +1555,9 @@ export type Database = {
           important_note: string | null
           instructions: Json | null
           map_object_id: string | null
+          requires_note: boolean
           requires_photo: boolean
+          requires_value: boolean
           section: string
           sort_order: number
           specific_time: string | null
@@ -1551,6 +1568,7 @@ export type Database = {
           time_label: string | null
           time_to: string | null
           updated_at: string
+          value_label: string | null
           work_type: string | null
           zone_id: string | null
         }
@@ -1567,7 +1585,9 @@ export type Database = {
           important_note?: string | null
           instructions?: Json | null
           map_object_id?: string | null
+          requires_note?: boolean
           requires_photo?: boolean
+          requires_value?: boolean
           section: string
           sort_order?: number
           specific_time?: string | null
@@ -1578,6 +1598,7 @@ export type Database = {
           time_label?: string | null
           time_to?: string | null
           updated_at?: string
+          value_label?: string | null
           work_type?: string | null
           zone_id?: string | null
         }
@@ -1594,7 +1615,9 @@ export type Database = {
           important_note?: string | null
           instructions?: Json | null
           map_object_id?: string | null
+          requires_note?: boolean
           requires_photo?: boolean
+          requires_value?: boolean
           section?: string
           sort_order?: number
           specific_time?: string | null
@@ -1605,6 +1628,7 @@ export type Database = {
           time_label?: string | null
           time_to?: string | null
           updated_at?: string
+          value_label?: string | null
           work_type?: string | null
           zone_id?: string | null
         }
