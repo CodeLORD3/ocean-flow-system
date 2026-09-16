@@ -122,7 +122,7 @@ export default function StoreMap() {
       floor_plan_id: plan.id,
       zone_id: zone?.id ?? null,
       object_type_id: t.id,
-      name: nextInstanceName(t.name, objects.map((o) => o.name)),
+      name: nextInstanceName(t.name, objects),
       x: (zone?.x ?? 40) + 20,
       y: (zone?.y ?? 40) + 40,
       width: t.default_width,
