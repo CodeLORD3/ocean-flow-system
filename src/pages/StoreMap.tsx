@@ -783,57 +783,59 @@ export default function StoreMap() {
               </Card>
             )}
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs flex items-center gap-1">
-                  <PinIcon className="h-3.5 w-3.5" /> Punkter på kartan
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-1.5">
-                {pins.length === 0 && (
-                  <p className="text-[11px] text-muted-foreground">
-                    Tryck på “Ny punkt” och sedan på platsen i kartan.
-                  </p>
-                )}
-                {pins.slice(0, 20).map((pin) => (
-                  <div key={pin.id} className="rounded-md border border-border p-2 space-y-1">
-                    <div className="flex items-start gap-2">
-                      <button
-                        className="text-left min-w-0 flex-1"
-                        onClick={() => setPinDialog({ point: null, zoneId: pin.zone_id, existing: pin })}
-                      >
-                        <p className={`text-[11px] font-medium truncate ${pin.status === "done" ? "line-through text-muted-foreground" : ""}`}>
-                          {pin.title}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground truncate">
-                          {PIN_KIND_LABEL[pin.kind] ?? pin.kind}
-                          {pin.assigned_name ? ` · ${pin.assigned_name}` : " · ingen ansvarig"}
-                          {pin.due_date ? ` · till ${pin.due_date}` : ""}
-                        </p>
-                      </button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-1 text-[10px]"
-                        onClick={() => completePin.mutate({ id: pin.id, done: pin.status !== "done" })}
-                      >
-                        {pin.status === "done" ? "Öppna" : "Klar"}
-                      </Button>
-                      {canManage && (
+            {(editMode || pins.length > 0) && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs flex items-center gap-1">
+                    <PinIcon className="h-3.5 w-3.5" /> Punkter på kartan
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-1.5">
+                  {pins.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Tryck på “Ny punkt” och sedan på platsen i kartan.
+                    </p>
+                  )}
+                  {pins.slice(0, 20).map((pin) => (
+                    <div key={pin.id} className="rounded-md border border-border p-2 space-y-1">
+                      <div className="flex items-start gap-2">
+                        <button
+                          className="text-left min-w-0 flex-1"
+                          onClick={() => setPinDialog({ point: null, zoneId: pin.zone_id, existing: pin })}
+                        >
+                          <p className={`text-[11px] font-medium truncate ${pin.status === "done" ? "line-through text-muted-foreground" : ""}`}>
+                            {pin.title}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {PIN_KIND_LABEL[pin.kind] ?? pin.kind}
+                            {pin.assigned_name ? ` · ${pin.assigned_name}` : " · ingen ansvarig"}
+                            {pin.due_date ? ` · till ${pin.due_date}` : ""}
+                          </p>
+                        </button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 px-1 text-[10px] text-destructive"
-                          onClick={() => deletePin.mutate(pin.id)}
+                          className="h-6 px-1 text-[10px]"
+                          onClick={() => completePin.mutate({ id: pin.id, done: pin.status !== "done" })}
                         >
-                          <Trash2 className="h-3 w-3" />
+                          {pin.status === "done" ? "Öppna" : "Klar"}
                         </Button>
-                      )}
+                        {canManage && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-1 text-[10px] text-destructive"
+                            onClick={() => deletePin.mutate(pin.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       )}
