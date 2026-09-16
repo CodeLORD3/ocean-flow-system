@@ -63,6 +63,8 @@ export function FloorPlanCanvas({
   onPlacePhoto,
   onPhotoSpotSelect,
   onZonePointsCommit,
+  showObjects = true,
+  showPins = true,
 }: {
   plan: FloorPlan;
   zones: MapZone[];
@@ -101,6 +103,9 @@ export function FloorPlanCanvas({
   onPlacePhoto?: (zoneId: string, norm: { x: number; y: number }) => void;
   onPhotoSpotSelect?: (zoneId: string) => void;
   onZonePointsCommit?: (id: string, points: { x: number; y: number }[]) => void;
+  /** Inventarier ritas bara i redigeringsläget — normalvyn ska vara ren. */
+  showObjects?: boolean;
+  showPins?: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
