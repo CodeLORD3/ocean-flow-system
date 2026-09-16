@@ -112,6 +112,8 @@ export function useUploadEntityImage() {
       caption,
       sortOrder,
       imageKind,
+      floorPlanId,
+      norm,
     }: {
       entityType: string;
       entityId: string;
@@ -120,6 +122,10 @@ export function useUploadEntityImage() {
       sortOrder?: number;
       /** standard | progress | completion | issue | general */
       imageKind?: string;
+      /** Kartans ritning bilden hör till, om bilden placeras på kartan. */
+      floorPlanId?: string | null;
+      /** Exakt plats inom ytan, 0–1 i båda riktningarna. */
+      norm?: { x: number; y: number } | null;
     }) => {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth?.user?.id ?? null;
