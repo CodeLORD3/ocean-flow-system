@@ -1074,8 +1074,18 @@ export default function ScheduleCalendar() {
         </Select>
       </div>
       <div>
-        <label className="text-[8px] text-muted-foreground font-medium leading-none">DATUM</label>
+        <label className="text-[8px] text-muted-foreground font-medium leading-none">FRÅN DATUM</label>
         <Input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} className="text-[10px] h-6 px-1.5" />
+      </div>
+      <div>
+        <label className="text-[8px] text-muted-foreground font-medium leading-none">TILL DATUM (VALFRITT)</label>
+        <Input
+          type="date"
+          min={formDate || undefined}
+          value={formEndDate}
+          onChange={e => setFormEndDate(e.target.value)}
+          className="text-[10px] h-6 px-1.5"
+        />
       </div>
       <div>
         <label className="text-[8px] text-muted-foreground font-medium leading-none">TITEL</label>
