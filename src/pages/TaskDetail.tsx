@@ -344,6 +344,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
 
         <TabsContent value="inst" className="space-y-3">
           <div>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">Steg 1 · Uppgiften</p>
             <label className="text-sm font-medium">Vad ska göras?</label>
             <div className="flex gap-2">
               <Input value={title ?? task.task} onChange={(e) => setTitle(e.target.value)} />
@@ -394,11 +395,9 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           </div>
 
           <div className="rounded-lg border p-3">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">Steg 2 · Så gör du</p>
             <label className="text-sm font-medium">Arbetsbeskrivning</label>
-            <p className="mb-3 text-xs text-muted-foreground">
-              Beskriv målet, vilka varor som behövs och stegen — med bilder. Går att fylla i eller ändra när som helst.
-              Sparas även på den återkommande uppgiften.
-            </p>
+            <p className="mb-3 text-xs text-muted-foreground">Mål, material och ett moment per steg — med bild.</p>
             <TaskGuideEditor
               taskId={task.id}
               value={guide}
@@ -414,7 +413,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             />
           </div>
 
-
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">Steg 3 · Vem & när</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="text-sm font-medium">Ansvarig</label>
