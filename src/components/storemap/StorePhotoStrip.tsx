@@ -28,6 +28,20 @@ function shortWhen(iso: string) {
   return `${d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" })} ${time}`;
 }
 
+/** Gruppnamn per dag: "Idag", "Igår", annars "Tisdag 16 sep". */
+function dayLabel(iso: string) {
+  const d = new Date(iso);
+  const today = new Date();
+  const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (sameDay(d, today)) return "Idag";
+  const yest = new Date(today);
+  yest.setDate(today.getDate() - 1);
+  if (sameDay(d, yest)) return "Igår";
+  const weekday = d.toLocaleDateString("sv-SE", { weekday: "long" });
+  const date = d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)} ${date}`;
+}
+
 /**
  * Bildrad högst upp i Översikt — de senaste bilderna från butiken,
  * både bilder placerade på kartan och bilder på butiken som helhet.
