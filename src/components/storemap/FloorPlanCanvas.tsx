@@ -108,6 +108,11 @@ export function FloorPlanCanvas({
   const [drag, setDrag] = useState<DragState | null>(null);
   const [ghost, setGhost] = useState<Record<string, { x: number; y: number; width: number; height: number }>>({});
   const [hover, setHover] = useState<{ id: string; label: string; sub: string; sx: number; sy: number } | null>(null);
+  /** Dragning av en enskild polygonpunkt i redigeringsläget. */
+  const [vDrag, setVDrag] = useState<{ zoneId: string; index: number; base: Pt[]; startX: number; startY: number } | null>(
+    null,
+  );
+  const [ghostPts, setGhostPts] = useState<Record<string, Pt[]>>({});
 
   const fit = useCallback(() => {
     const el = wrapRef.current;
