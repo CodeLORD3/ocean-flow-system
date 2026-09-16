@@ -258,6 +258,88 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
         </TabsContent>
 
         <TabsContent value="inst" className="space-y-3">
+          <div>
+            <label className="text-sm font-medium">Vad ska göras?</label>
+            <div className="flex gap-2">
+              <Input value={title ?? task.task} onChange={(e) => setTitle(e.target.value)} />
+              <Button
+                variant="outline"
+                disabled={title === null || !title.trim() || title.trim() === task.task}
+                onClick={() => {
+                  update.mutate({ id: task.id, task: title!.trim() });
+                  toast({ title: "Uppgiften sparad" });
+                }}
+              >
+                Spara
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Kategori</label>
+            <Select
+              value={task.category_id ?? "none"}
+              onValueChange={(v) => update.mutate({ id: task.id, category_id: v === "none" ? null : v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Ingen kategori</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Viktigt att veta</label>
+            <Textarea
+              value={important ?? task.important_note ?? ""}
+              onChange={(e) => setImportant(e.target.value)}
+              onBlur={() => {
+                if (important !== null && important !== (task.important_note ?? ""))
+                  update.mutate({ id: task.id, important_note: important.trim() || null });
+              }}
+              className="min-h-[60px]"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Instruktion steg för steg</label>
+            <div className="space-y-2">
+              {steps.map((s, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="w-5 text-right text-xs text-muted-foreground">{i + 1}.</span>
+                  <Input
+                    value={s}
+                    onChange={(e) => setSteps(steps.map((x, j) => (j === i ? e.target.value : x)))}
+                  />
+                  <Button variant="ghost" size="icon" onClick={() => setSteps(steps.filter((_, j) => j !== i))}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setSteps([...steps, ""])}>
+                  Lägg till steg
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    update.mutate({ id: task.id, instructions: steps.map((s) => s.trim()).filter(Boolean) });
+                    toast({ title: "Instruktionen sparad" });
+                  }}
+                >
+                  Spara instruktion
+                </Button>
+              </div>
+            </div>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="text-sm font-medium">Ansvarig</label>
