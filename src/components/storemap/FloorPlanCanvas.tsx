@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Maximize2 } from "lucide-react";
+import { Minus, Plus, Maximize2, SquareDashed } from "lucide-react";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
 import { STATUS_COLOR, type MapProgress } from "@/lib/mapStatus";
 import { areaOf, formatSqm } from "@/lib/mapScale";
