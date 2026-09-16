@@ -747,9 +747,9 @@ function ReportSection({
             <TableHeader>
               <TableRow className="h-7">
                 <TableHead className="py-0.5 px-1.5 text-[11px] min-w-[140px]">Produkt</TableHead>
-                <TableHead className="py-0.5 px-1 text-[11px] text-right w-[50px]">Antal</TableHead>
-                <TableHead className="py-0.5 px-1 text-[11px] w-[42px]">Enhet</TableHead>
-                <TableHead className="py-0.5 px-1 text-[11px] text-right w-[58px]">Pris</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] text-right w-[68px]">Antal</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] w-[64px]">Enhet</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] text-right w-[64px]">Pris</TableHead>
                 <TableHead className="py-0.5 px-1 text-[11px] w-[88px]">Leverantör</TableHead>
                 <TableHead className="py-0.5 px-1 text-[11px] w-[62px]">Status</TableHead>
                 <TableHead className="py-0.5 px-1 text-[11px] w-[86px]">Datum</TableHead>
