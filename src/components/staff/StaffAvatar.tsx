@@ -18,7 +18,7 @@ export function StaffAvatar({
     .map((p) => p[0]?.toUpperCase())
     .join("");
   return (
-    <Avatar className={cn("h-6 w-6 border border-border", className)}>
+    <Avatar className={cn("h-8 w-8 border border-border", className)}>
       {imageUrl && <AvatarImage src={imageUrl} alt={name ?? ""} />}
       <AvatarFallback className="text-[10px] font-semibold">{initials || "?"}</AvatarFallback>
     </Avatar>

@@ -201,6 +201,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
               <StaffAvatar
                 name={staffName(task.completed_by_staff_id) ?? task.signature}
                 imageUrl={staffImage(task.completed_by_staff_id)}
+                className="h-10 w-10"
               />
             )}
             <span>
