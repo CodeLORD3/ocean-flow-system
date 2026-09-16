@@ -234,6 +234,8 @@ export function FloorPlanCanvas({
     const el = wrapRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
+      /* Inte aktiverad: låt sidan skrolla som vanligt. */
+      if (!activeRef.current && !e.ctrlKey) return;
       e.preventDefault();
       wheelRef.current(e);
     };
