@@ -36,6 +36,8 @@ const overviewNav = [
   { title: "Bildflöde", url: "/image-feed", icon: Images },
 
   { title: "Uppgifter", url: "/uppgifter", icon: ListTodo },
+  { title: "Produktion", url: "/produktion-recept", icon: CookingPot },
+  
   
   { title: "Egenkontroll", url: "/food-safety", icon: ClipboardCheck },
   { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
