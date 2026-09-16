@@ -276,7 +276,7 @@ export default function Uppgifter() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Sök uppgift eller person"
+              placeholder="Sök"
               className="h-8 w-[200px] text-xs"
             />
             <Select value={fArea} onValueChange={setFArea}>
