@@ -623,7 +623,7 @@ export function FloorPlanCanvas({
               );
             })}
             {/* Lager 6 — punkter: anteckningar och uppgifter på exakt plats */}
-            {pins.map((pin) => {
+            {(showPins ? pins : []).map((pin) => {
               const done = pin.status === "done";
               const c = done ? "hsl(var(--muted-foreground))" : pin.kind === "note" ? "hsl(var(--primary))" : "hsl(var(--warning, var(--primary)))";
               const r = 9 / Math.max(zoom, 0.5);
