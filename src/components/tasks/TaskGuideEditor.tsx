@@ -161,7 +161,11 @@ export function TaskGuideEditor({
               <div className="flex-1 space-y-2">
                 <Textarea
                   value={s.text}
-                  placeholder="Vad ska göras i det här steget?"
+                  placeholder={
+                    i === 0
+                      ? "Ex: Flytta all vara till kylrum och kontrollera temperaturen."
+                      : "Ex: Skölj disken, rengör med angivet medel och torka av."
+                  }
                   onChange={(e) =>
                     patch({ steps: guide.steps.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)) })
                   }
