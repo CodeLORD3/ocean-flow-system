@@ -215,6 +215,11 @@ export function MapDetailDrawer({
               ))}
             </div>
           </div>
+          {onOpenPage && (
+            <Button size="sm" className="h-8 w-full gap-1 text-xs" onClick={onOpenPage}>
+              Öppna områdets egna sida <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          )}
     </div>
   );
 
