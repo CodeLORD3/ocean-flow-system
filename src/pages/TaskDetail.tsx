@@ -13,6 +13,7 @@ import { useStaff } from "@/hooks/useStaff";
 import { useFloorPlans, useMapZones } from "@/hooks/useStoreMap";
 import { useUploadEntityImage, type EntityImage } from "@/hooks/useEntityImages";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
+import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 import { dayBadgeClass } from "@/lib/dayColor";
 import {
