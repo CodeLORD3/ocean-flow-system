@@ -1403,6 +1403,9 @@ export default function StockCount() {
         </div>
       )}
 
+      {/* Lagret ett valt datum — räknas fram ur lagerrörelserna */}
+      <StockAsOfDate storeId={effectiveStoreId || null} storeName={storeName} />
+
       {/* Tidigare inventeringar — låsta tillfällen + inskickade rapporter, gömda bakom en utfällning */}
       <Card>
         <button
