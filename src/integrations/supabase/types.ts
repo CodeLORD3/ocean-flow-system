@@ -4798,11 +4798,14 @@ export type Database = {
           created_at: string
           entity_id: string
           entity_type: string
+          floor_plan_id: string | null
           focal_point: string
           id: string
           image_kind: string | null
           is_cover: boolean
           is_featured: boolean
+          norm_x: number | null
+          norm_y: number | null
           sort_order: number
           uploaded_by: string | null
           uploaded_by_name: string | null
@@ -4816,11 +4819,14 @@ export type Database = {
           created_at?: string
           entity_id: string
           entity_type: string
+          floor_plan_id?: string | null
           focal_point?: string
           id?: string
           image_kind?: string | null
           is_cover?: boolean
           is_featured?: boolean
+          norm_x?: number | null
+          norm_y?: number | null
           sort_order?: number
           uploaded_by?: string | null
           uploaded_by_name?: string | null
@@ -4834,17 +4840,28 @@ export type Database = {
           created_at?: string
           entity_id?: string
           entity_type?: string
+          floor_plan_id?: string | null
           focal_point?: string
           id?: string
           image_kind?: string | null
           is_cover?: boolean
           is_featured?: boolean
+          norm_x?: number | null
+          norm_y?: number | null
           sort_order?: number
           uploaded_by?: string | null
           uploaded_by_name?: string | null
           url?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "entity_images_floor_plan_id_fkey"
+            columns: ["floor_plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       establishments: {
         Row: {
@@ -4954,6 +4971,7 @@ export type Database = {
           background_url: string | null
           background_x: number
           background_y: number
+          calibration: Json | null
           created_at: string
           created_by: string | null
           floor_label: string | null
@@ -4975,6 +4993,7 @@ export type Database = {
           background_url?: string | null
           background_x?: number
           background_y?: number
+          calibration?: Json | null
           created_at?: string
           created_by?: string | null
           floor_label?: string | null
@@ -4996,6 +5015,7 @@ export type Database = {
           background_url?: string | null
           background_x?: number
           background_y?: number
+          calibration?: Json | null
           created_at?: string
           created_by?: string | null
           floor_label?: string | null
