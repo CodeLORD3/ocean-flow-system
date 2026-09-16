@@ -291,7 +291,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                     <StaffAvatar
                       name={staffName(h.completed_by_staff_id) ?? h.signature}
                       imageUrl={staffImage(h.completed_by_staff_id)}
-                      className="h-5 w-5"
+                      className="h-8 w-8"
                     />
                     {staffName(h.completed_by_staff_id) ?? h.signature}
                   </span>
@@ -393,7 +393,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                          <StaffAvatar
                            name={`${s.first_name} ${s.last_name}`}
                            imageUrl={s.profile_image_url}
-                           className="h-5 w-5"
+                           className="h-8 w-8"
                          />
                          {s.first_name} {s.last_name}
                        </span>
