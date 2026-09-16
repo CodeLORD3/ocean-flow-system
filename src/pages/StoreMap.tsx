@@ -143,6 +143,30 @@ export default function StoreMap() {
   const selectedObject = selected?.kind === "object" ? objects.find((o) => o.id === selected.id) ?? null : null;
   const unlinkedTasks = tasks.filter((t) => !t.zone_id && !t.map_object_id);
 
+  /** Nummerbricka per yta — samma nummer i kartan som i förteckningen under. */
+  const zoneNumbers = useMemo(
+    () => Object.fromEntries(zones.map((z, i) => [z.id, i + 1])) as Record<string, number>,
+    [zones],
+  );
+
+  /**
+   * Bildmarkörer: riktiga uppladdade bilder som fått en exakt plats i en yta.
+   * Ligger flera bilder på nästan samma plats visas de som en markör med antal.
+   */
+  const photoSpots = useMemo(() => {
+    const groups = new Map<string, { id: string; zoneId: string; norm: { x: number; y: number }; count: number; url: string }>();
+    planImages.forEach((img) => {
+      if (img.norm_x == null || img.norm_y == null) return;
+      const zoneId = img.entity_type === "map_zone" ? img.entity_id : null;
+      if (!zoneId || !zones.some((z) => z.id === zoneId)) return;
+      const key = `${zoneId}:${Math.round(img.norm_x * 20)}:${Math.round(img.norm_y * 20)}`;
+      const found = groups.get(key);
+      if (found) found.count += 1;
+      else groups.set(key, { id: img.id, zoneId, norm: { x: img.norm_x, y: img.norm_y }, count: 1, url: img.url });
+    });
+    return [...groups.values()];
+  }, [planImages, zones]);
+
   const addObject = (t: MapObjectType) => {
     if (!plan) return;
     const zone = selectedZone ?? zones[0];
