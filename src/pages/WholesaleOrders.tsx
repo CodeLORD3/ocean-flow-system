@@ -1426,6 +1426,26 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
     return map;
   }, [allStock]);
 
+  // Var finns varan annars? Butiker och andra lager, så packaren ser att den
+  // faktiskt finns någonstans i stället för bara en nolla.
+  const elsewhereByProduct = useMemo(() => {
+    const map = new Map<string, { place: string; qty: number }[]>();
+    for (const s of allStock) {
+      if (s.storage_locations?.location_type === "grossistlager") continue;
+      const qty = Number(s.quantity);
+      if (!(qty > 0.005)) continue;
+      const place =
+        s.storage_locations?.stores?.name || s.storage_locations?.name || "Okänt lager";
+      const list = map.get(s.product_id) || [];
+      const found = list.find((x) => x.place === place);
+      if (found) found.qty += qty;
+      else list.push({ place, qty });
+      map.set(s.product_id, list);
+    }
+    for (const list of map.values()) list.sort((a, b) => b.qty - a.qty);
+    return map;
+  }, [allStock]);
+
 
   const [altDialogLine, setAltDialogLine] = useState<any>(null);
   const [altProductId, setAltProductId] = useState<string>("");
