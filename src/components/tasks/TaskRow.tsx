@@ -109,11 +109,16 @@ export function TaskRow({
         </span>
 
         {/* Kolumn 3: uppgift */}
-        <button type="button" onClick={() => setOpen((v) => !v)} className="min-w-0 flex-1 text-left">
-          <span className={cn("block truncate text-[13px] font-medium", task.done && "text-muted-foreground line-through")}>
+        <button type="button" onClick={() => setOpen((v) => !v)} className="min-w-0 flex-1 py-0.5 text-left">
+          <span
+            className={cn(
+              "block break-words text-[13px] font-medium leading-snug",
+              task.done && "text-muted-foreground line-through",
+            )}
+          >
             {task.task}
           </span>
-          <span className="mt-0.5 block truncate text-[10px] text-muted-foreground sm:hidden">
+          <span className="mt-0.5 block text-[10px] leading-snug text-muted-foreground sm:hidden">
             {[time.label, area && `${area.number}. ${area.name}`, categoryName, assigneeName]
               .filter(Boolean)
               .join(" · ")}
