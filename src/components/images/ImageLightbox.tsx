@@ -32,6 +32,23 @@ type Props = {
   sourceLabelOf?: (image: EntityImage) => string | null | undefined;
 };
 
+/** "Idag 14:05", "Igår 09:12" eller "Tisdag 16 sep 08:20" — när bilden lades ut. */
+function uploadedWhen(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const time = d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+  const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  const today = new Date();
+  if (sameDay(d, today)) return `Idag ${time}`;
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (sameDay(d, yesterday)) return `Igår ${time}`;
+  const weekday = d.toLocaleDateString("sv-SE", { weekday: "long" });
+  const date = d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)} ${date} ${time}`;
+}
+
+
 /** Helskärmsgalleri: pilnavigering (desktop), Instagram-liknande swipe-karusell (mobil) och kommentarschatt. */
 export function ImageLightbox({
   images,
