@@ -1296,8 +1296,10 @@ export type Database = {
           id: string
           important_note: string | null
           instructions: Json | null
+          link_url: string | null
           map_object_id: string | null
           note: string | null
+          recipe_id: string | null
           requires_note: boolean
           requires_photo: boolean
           requires_value: boolean
@@ -1332,8 +1334,10 @@ export type Database = {
           id?: string
           important_note?: string | null
           instructions?: Json | null
+          link_url?: string | null
           map_object_id?: string | null
           note?: string | null
+          recipe_id?: string | null
           requires_note?: boolean
           requires_photo?: boolean
           requires_value?: boolean
@@ -1368,8 +1372,10 @@ export type Database = {
           id?: string
           important_note?: string | null
           instructions?: Json | null
+          link_url?: string | null
           map_object_id?: string | null
           note?: string | null
+          recipe_id?: string | null
           requires_note?: boolean
           requires_photo?: boolean
           requires_value?: boolean
@@ -1435,6 +1441,13 @@ export type Database = {
             columns: ["map_object_id"]
             isOneToOne: false
             referencedRelation: "map_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "production_recipes"
             referencedColumns: ["id"]
           },
           {
@@ -1554,7 +1567,9 @@ export type Database = {
           id: string
           important_note: string | null
           instructions: Json | null
+          link_url: string | null
           map_object_id: string | null
+          recipe_id: string | null
           requires_note: boolean
           requires_photo: boolean
           requires_value: boolean
@@ -1584,7 +1599,9 @@ export type Database = {
           id?: string
           important_note?: string | null
           instructions?: Json | null
+          link_url?: string | null
           map_object_id?: string | null
+          recipe_id?: string | null
           requires_note?: boolean
           requires_photo?: boolean
           requires_value?: boolean
@@ -1614,7 +1631,9 @@ export type Database = {
           id?: string
           important_note?: string | null
           instructions?: Json | null
+          link_url?: string | null
           map_object_id?: string | null
+          recipe_id?: string | null
           requires_note?: boolean
           requires_photo?: boolean
           requires_value?: boolean
@@ -1659,6 +1678,13 @@ export type Database = {
             columns: ["map_object_id"]
             isOneToOne: false
             referencedRelation: "map_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "production_recipes"
             referencedColumns: ["id"]
           },
           {

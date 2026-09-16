@@ -75,12 +75,18 @@ export default function ProductionRecipes() {
   const [uploadTarget, setUploadTarget] = useState<{ kind: "cover" } | { kind: "step"; index: number } | null>(null);
 
   const productParam = params.get("product");
+  const recipeParam = params.get("recept");
 
   useEffect(() => {
     if (!productParam || recipes.length === 0) return;
     const hit = recipes.find((r) => r.product_id === productParam);
     if (hit) setOpenId(hit.id);
   }, [productParam, recipes]);
+
+  useEffect(() => {
+    if (!recipeParam || recipes.length === 0) return;
+    if (recipes.some((r) => r.id === recipeParam)) setOpenId(recipeParam);
+  }, [recipeParam, recipes]);
 
   const productOptions = useMemo(
     () => [...products].sort((a: any, b: any) => a.name.localeCompare(b.name, "sv")),

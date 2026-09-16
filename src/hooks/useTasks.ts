@@ -53,12 +53,14 @@ export type TaskRow = {
   completion_value: number | null;
   template_item_id: string | null;
   time_label: string | null;
+  link_url: string | null;
+  recipe_id: string | null;
   /** Arbetsbeskrivning: mål, varor och steg med bilder. */
   guide: unknown;
 };
 
 const TASK_FIELDS =
-  "id, day_id, task, section, note, sort_order, done, done_at, signature, category, category_id, work_type, zone_id, map_object_id, assigned_staff_id, completed_by_staff_id, specific_time, time_from, time_to, daypart, estimated_minutes, instructions, important_note, requires_photo, requires_note, requires_value, value_label, completion_note, completion_value, template_item_id, time_label, guide";
+  "id, day_id, task, section, note, sort_order, done, done_at, signature, category, category_id, work_type, zone_id, map_object_id, assigned_staff_id, completed_by_staff_id, specific_time, time_from, time_to, daypart, estimated_minutes, instructions, important_note, requires_photo, requires_note, requires_value, value_label, completion_note, completion_value, template_item_id, time_label, link_url, recipe_id, guide";
 
 function normalize<T = TaskRow>(row: any): T {
   const raw = row.instructions;
@@ -199,6 +201,8 @@ export function useAddAdhocTask() {
       requiresNote?: boolean;
       requiresValue?: boolean;
       valueLabel?: string | null;
+      linkUrl?: string | null;
+      recipeId?: string | null;
     }) => {
       const task = input.task.trim();
       if (!task) throw new Error("Skriv vad som ska göras.");
@@ -246,6 +250,8 @@ export function useAddAdhocTask() {
           requires_note: !!input.requiresNote,
           requires_value: !!input.requiresValue,
           value_label: input.valueLabel?.trim() || null,
+          link_url: input.linkUrl || null,
+          recipe_id: input.recipeId || null,
         })
         .select("id")
         .single();
@@ -279,6 +285,8 @@ export function useAddStandardTask() {
       requiresNote?: boolean;
       requiresValue?: boolean;
       valueLabel?: string | null;
+      linkUrl?: string | null;
+      recipeId?: string | null;
       date?: string;
     }) => {
       const task = input.task.trim();
@@ -316,6 +324,8 @@ export function useAddStandardTask() {
           requires_note: !!input.requiresNote,
           requires_value: !!input.requiresValue,
           value_label: input.valueLabel?.trim() || null,
+          link_url: input.linkUrl || null,
+          recipe_id: input.recipeId || null,
         })
         .select("id")
         .single();
@@ -349,6 +359,8 @@ export function useAddStandardTask() {
           requires_note: !!input.requiresNote,
           requires_value: !!input.requiresValue,
           value_label: input.valueLabel?.trim() || null,
+          link_url: input.linkUrl || null,
+          recipe_id: input.recipeId || null,
         });
       }
       return tpl.id as string;

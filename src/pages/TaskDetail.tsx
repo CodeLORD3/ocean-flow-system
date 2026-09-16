@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Camera, Check, Clock, MapPin, Timer, Trash2, User } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Camera, Check, Clock, MapPin, Timer, Trash2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,8 @@ import { TaskIssueDialog } from "@/components/tasks/TaskIssueDialog";
 import { parseGuide } from "@/lib/taskGuide";
 import { DAYPARTS, durationText, taskTime } from "@/lib/taskTime";
 import { workTypeLabel } from "@/lib/workType";
+import { TASK_LINKS, taskTarget } from "@/lib/taskLink";
+import { useProductionRecipes } from "@/hooks/useProductionRecipes";
 
 /** En uppgifts egen sida: allt om just den här uppgiften, samma rad som i listan. */
 export default function TaskDetail({ taskId }: { taskId: string }) {
@@ -59,6 +61,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const [title, setTitle] = useState<string | null>(null);
   const [important, setImportant] = useState<string | null>(null);
   const { data: categories = [] } = useTaskCategories(storeId);
+  const { data: recipes = [] } = useProductionRecipes();
   const saveGuide = useSaveTaskGuide();
   const guide = useMemo(() => parseGuide(task?.guide, task?.instructions ?? null), [task?.guide, task?.instructions]);
 
@@ -98,6 +101,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   if (!task) return <p className="text-muted-foreground">Uppgiften finns inte längre.</p>;
 
   const time = taskTime(task);
+  const target = taskTarget(task, recipes.find((r) => r.id === task.recipe_id)?.name ?? null);
   const missing = missingRequirements(task, { photoCount: images.length, checkPhoto: true });
   const doneRatio = history.length > 0 ? Math.round((history.filter((h) => h.done).length / history.length) * 100) : null;
 
@@ -174,6 +178,11 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {target && (
+              <Button size="lg" variant="outline" onClick={() => switchTab(target.url)}>
+                <ArrowUpRight className="mr-1 h-4 w-4" /> {target.label}
+              </Button>
+            )}
             <Button
               size="lg"
               disabled={!task.done && missing.length > 0}
@@ -521,6 +530,44 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                   {DAYPARTS.map((d) => (
                     <SelectItem key={d.key} value={d.key}>
                       {d.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Leder till</label>
+              <Select
+                value={task.link_url ?? "none"}
+                onValueChange={(v) => update.mutate({ id: task.id, link_url: v === "none" ? null : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Ingen genväg" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Ingen genväg</SelectItem>
+                  {TASK_LINKS.map((l) => (
+                    <SelectItem key={l.url} value={l.url}>
+                      {l.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Recept</label>
+              <Select
+                value={task.recipe_id ?? "none"}
+                onValueChange={(v) => update.mutate({ id: task.id, recipe_id: v === "none" ? null : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Inget recept" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Inget recept</SelectItem>
+                  {recipes.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
