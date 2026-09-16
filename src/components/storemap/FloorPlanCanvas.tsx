@@ -116,6 +116,16 @@ export function FloorPlanCanvas({
     });
   }, [focusBox?.id, focusBox?.x, focusBox?.y, focusBox?.width, focusBox?.height]);
 
+  /* Tillbaka till hela kartan när fokus släpps. */
+  const hadFocus = useRef(false);
+  useEffect(() => {
+    if (focusBox) hadFocus.current = true;
+    else if (hadFocus.current) {
+      hadFocus.current = false;
+      fit();
+    }
+  }, [focusBox, fit]);
+
   /* Zoom mot pekaren, med icke-passiv lyssnare så sidan inte skrollar bakom. */
   const wheelRef = useRef<(e: WheelEvent) => void>(() => {});
   wheelRef.current = (e: WheelEvent) => {
