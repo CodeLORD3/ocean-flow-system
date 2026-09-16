@@ -95,6 +95,7 @@ export default function Uppgifter() {
   const [fCat, setFCat] = useState("all");
   const [fPerson, setFPerson] = useState("all");
   const [fStatus, setFStatus] = useState<"kvar" | "klara" | "allt">("allt");
+  const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
     return tasks.filter((t) => {
