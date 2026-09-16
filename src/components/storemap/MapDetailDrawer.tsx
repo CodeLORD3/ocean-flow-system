@@ -321,11 +321,46 @@ export function MapDetailDrawer({
               {latest.map((i) => (
                 <div key={i.id} className="overflow-hidden rounded-xl border border-border">
                   <img src={i.url} alt={i.caption ?? label} className="h-28 w-full object-cover" />
-                  <div className="px-2 py-1.5">
-                    <p className="truncate text-xs font-medium">{i.caption ?? label}</p>
-                    <p className="truncate text-[10px] text-muted-foreground">
-                      {time(i.created_at)} · {i.uploaded_by_name ?? "—"}
-                    </p>
+                  <div className="flex items-start gap-1 px-2 py-1.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium">{i.caption ?? label}</p>
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        {dayText(i.created_at)} {time(i.created_at)} · {i.uploaded_by_name ?? "—"}
+                      </p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="rounded-md p-1 text-muted-foreground hover:bg-muted" aria-label="Fler val">
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="text-xs">
+                        {i.norm_x != null && (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setPosition.mutate({
+                                id: i.id,
+                                entityType,
+                                entityId,
+                                floorPlanId: i.floor_plan_id ?? "",
+                                norm: null,
+                              })
+                            }
+                          >
+                            Ta bort platsen i kartan
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => updateImage.mutate({ id: i.id, caption: label })}>
+                          Döp om till ytans namn
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => deleteImage.mutate(i.id, { onSuccess: () => toast({ title: "Bilden är borttagen" }) })}
+                        >
+                          Ta bort bilden
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))}
