@@ -72,6 +72,8 @@ export default function StoreMap() {
   const { data: deviations = [] } = useDeviations(false);
   const { data: versions = [] } = useFloorPlanVersions(plan?.id ?? null);
   const { data: pins = [] } = useMapPins(plan?.id ?? null);
+  const { data: planImages = [] } = useFloorPlanImages(plan?.id ?? null);
+  const uploadImage = useUploadEntityImage();
   useMapRealtime(storeId);
 
   const saveZone = useSaveZone();
