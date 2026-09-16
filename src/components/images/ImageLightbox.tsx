@@ -16,6 +16,7 @@ import {
 } from "@/hooks/useEntityImages";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { thumbUrl, THUMB_FULL } from "@/lib/imageThumb";
+import { dayBadgeClass } from "@/lib/dayColor";
 
 type Props = {
   images: EntityImage[];
@@ -526,7 +527,7 @@ export function ImageLightbox({
                 </DialogClose>
 
                 <div className="absolute top-2 left-2 flex max-w-[80%] flex-wrap items-center gap-1.5">
-                  <span className="rounded bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white shadow">
+                  <span className={cn("rounded px-2 py-0.5 text-[11px] font-semibold shadow", dayBadgeClass(current.created_at))}>
                     {uploadedWhen(current.created_at)}
                   </span>
                   <span className="rounded bg-background/80 px-2 py-0.5 font-mono tabular-nums text-[11px] text-foreground backdrop-blur">
@@ -714,7 +715,7 @@ export function ImageLightbox({
                 </DialogClose>
 
                 <div className="absolute top-2 left-2 flex max-w-[70%] flex-wrap items-center gap-1.5">
-                  <span className="rounded bg-emerald-600 px-2 py-1 text-xs font-semibold text-white shadow">
+                  <span className={cn("rounded px-2 py-1 text-xs font-semibold shadow", dayBadgeClass(current.created_at))}>
                     {uploadedWhen(current.created_at)}
                   </span>
                   {sourceLabel && (
