@@ -1409,6 +1409,8 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
   const baseName = (name: string) =>
     (name || "")
       .toLowerCase()
+      // Kvalitetsord räknas som syskon: Premium, Lyx, Basic osv. är samma vara i olika klass
+      .replace(/\s+(premium|lyx|lux|basic|standard|extra|prima)\s*$/i, "")
       .replace(/\s+(xxl|xl|l|m|s|xs|stor|mellan|liten)\s*$/i, "")
       .trim();
 
