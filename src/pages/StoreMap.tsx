@@ -553,30 +553,52 @@ export default function StoreMap() {
 
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-xs">Kvadratmeter per zon</CardTitle>
+                    <CardTitle className="text-xs">Ytor: kvadratmeter och färg</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1.5">
                     <p className="text-[10px] text-muted-foreground">
                       Fyll i den uppmätta ytan. Skalan räknas fram och övriga rutor får uppskattad yta.
                     </p>
                     {zones.map((z) => (
-                      <div key={z.id} className="flex items-center gap-2">
-                        <span className="text-[11px] truncate flex-1">{z.name}</span>
-                        <Input
-                          type="number"
-                          inputMode="decimal"
-                          step="0.1"
-                          min="0"
-                          defaultValue={z.area_sqm ?? ""}
-                          placeholder={formatSqm(areaOf(z, pxPerMeter).sqm)}
-                          onBlur={(e) =>
-                            saveZone.mutate({
-                              id: z.id,
-                              area_sqm: e.target.value === "" ? null : Number(e.target.value.replace(",", ".")),
-                            })
-                          }
-                          className="h-7 w-20 text-xs tabular-nums"
-                        />
+                      <div key={z.id} className="space-y-1 border-b border-border pb-1.5 last:border-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] truncate flex-1">
+                            {zoneNumbers[z.id]}. {z.name}
+                          </span>
+                          <Input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.1"
+                            min="0"
+                            defaultValue={z.area_sqm ?? ""}
+                            placeholder={formatSqm(areaOf(z, pxPerMeter).sqm)}
+                            onBlur={(e) =>
+                              saveZone.mutate({
+                                id: z.id,
+                                area_sqm: e.target.value === "" ? null : Number(e.target.value.replace(",", ".")),
+                              })
+                            }
+                            className="h-7 w-20 text-xs tabular-nums"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {ZONE_PALETTE.map((c) => (
+                            <button
+                              key={c.key}
+                              title={c.name}
+                              onClick={() => saveZone.mutate({ id: z.id, color: c.color })}
+                              className={`h-4 w-4 rounded-full border ${
+                                (z.color ?? "").toLowerCase() === c.color.toLowerCase()
+                                  ? "border-foreground ring-1 ring-foreground"
+                                  : "border-border"
+                              }`}
+                              style={{ background: c.color }}
+                            />
+                          ))}
+                          <span className="ml-auto text-[10px] text-muted-foreground">
+                            {zonePoints(z).length} hörn
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </CardContent>
