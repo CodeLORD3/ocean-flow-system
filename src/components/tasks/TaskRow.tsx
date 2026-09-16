@@ -39,6 +39,7 @@ export function TaskRow({
   onOpenDetail,
   onAddPhoto,
   onOpenArea,
+  onDelete,
 }: Props) {
   const [open, setOpen] = useState(false);
   const time = taskTime(task);
