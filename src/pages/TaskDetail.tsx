@@ -18,6 +18,7 @@ import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 import { dayBadgeClass } from "@/lib/dayColor";
 import {
   useDeleteTask,
+  useSaveTaskGuide,
   useSetTaskDone,
   useTaskHistory,
   useTaskCategories,
@@ -26,6 +27,9 @@ import {
   useTaskReferenceImages,
   useUpdateTask,
 } from "@/hooks/useTasks";
+import { TaskGuideEditor } from "@/components/tasks/TaskGuideEditor";
+import { TaskGuideView } from "@/components/tasks/TaskGuideView";
+import { parseGuide } from "@/lib/taskGuide";
 import { DAYPARTS, durationText, taskTime } from "@/lib/taskTime";
 import { workTypeLabel } from "@/lib/workType";
 
