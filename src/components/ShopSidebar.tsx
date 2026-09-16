@@ -5,6 +5,7 @@ import {
   LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText, SlidersHorizontal, MessageSquare, ClipboardCheck, History, ShieldCheck, ArrowLeftRight, Trash2,
 
   CalendarRange,
+  CookingPot,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -36,6 +37,8 @@ const overviewNav = [
   { title: "Bildflöde", url: "/image-feed", icon: Images },
 
   { title: "Uppgifter", url: "/uppgifter", icon: ListTodo },
+  { title: "Produktion", url: "/produktion-recept", icon: CookingPot },
+  
   
   { title: "Egenkontroll", url: "/food-safety", icon: ClipboardCheck },
   { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
