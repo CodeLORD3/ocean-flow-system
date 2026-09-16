@@ -169,6 +169,19 @@ export function StorePhotoStrip({
         </div>
       )}
 
+      {allOpen && (
+        <div className="mt-3 border-t border-border pt-3">
+          <EntityImageGallery
+            entityType="store"
+            entityId={storeId}
+            title="Alla bilder i butiken"
+            description="Favoriter, kommentarer, utvalda bilder och arkiv per dag."
+            editable
+            catalog
+          />
+        </div>
+      )}
+
       <ImageLightbox
         images={images}
         index={index}
@@ -177,6 +190,8 @@ export function StorePhotoStrip({
         title="Bild från butiken"
         editable
         onSaveCaption={(id, caption) => updateImage.mutate({ id, caption })}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={(id, favorite) => toggleFavorite.mutate({ imageId: id, favorite })}
         sourceLabelOf={(img) => labelOf(img)}
       />
     </div>
