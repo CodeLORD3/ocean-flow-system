@@ -147,14 +147,16 @@ export default function Uppgifter() {
         await addStandard.mutateAsync(payload);
         toast({ title: "Standarduppgift tillagd", description: "Den återkommer varje dag." });
       } else {
-        await addAdhoc.mutateAsync(payload);
+        const id = await addAdhoc.mutateAsync(payload);
         toast({ title: "Tillfällig uppgift tillagd", description: "Den gäller bara valt datum." });
+        newId = id;
       }
       setNewOpen(false);
       setNTask("");
       setNNote("");
       setNTime("");
       setNMinutes("");
+      if (newId) switchTab(`/uppgift/${newId}`);
     } catch (e: any) {
       toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
     }
