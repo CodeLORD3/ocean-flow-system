@@ -69,6 +69,18 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
     return { id: z.id, name: z.name, color: z.color ?? "hsl(var(--primary))", number: i + 1 };
   }, [zones, task?.zone_id]);
 
+  /** Ytorna som kan väljas som plats för redskap i beskrivningen. */
+  const guideZones = useMemo(
+    () =>
+      [...zones]
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((z, i) => ({ id: z.id, name: z.name, number: i + 1 })),
+    [zones],
+  );
+
+  const [issueOpen, setIssueOpen] = useState(false);
+  const [issuePreset, setIssuePreset] = useState<string | null>(null);
+
   const staffName = (id: string | null | undefined) => {
     const s = staffList.find((p) => p.id === id);
     return s ? `${s.first_name} ${s.last_name}` : null;
