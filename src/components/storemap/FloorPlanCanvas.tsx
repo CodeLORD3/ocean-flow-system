@@ -274,7 +274,7 @@ export function FloorPlanCanvas({
   const snap = (v: number) => (plan.grid_size > 0 ? Math.round(v / plan.grid_size) * plan.grid_size : Math.round(v));
 
   /* Rutnätet: små rutor (halva planens rutmått) med grövre linje var femte ruta. */
-  const gridId = `grid-${plan.id}`;
+  
   const minor = plan.grid_size > 0 ? plan.grid_size / 2 : 10;
 
   /* Markera ett område med musen och zooma dit — fungerar även inne i en yta. */
@@ -453,32 +453,6 @@ export function FloorPlanCanvas({
               />
             )}
 
-            {showGrid && minor > 0 && (
-              <>
-                <defs>
-                  <pattern id={gridId} width={minor} height={minor} patternUnits="userSpaceOnUse">
-                    <path
-                      d={`M ${minor} 0 L 0 0 0 ${minor}`}
-                      fill="none"
-                      stroke="hsl(var(--border))"
-                      strokeWidth={0.6 / Math.max(zoom, 0.4)}
-                    />
-                  </pattern>
-                  <pattern id={`${gridId}-major`} width={minor * 5} height={minor * 5} patternUnits="userSpaceOnUse">
-                    <path
-                      d={`M ${minor * 5} 0 L 0 0 0 ${minor * 5}`}
-                      fill="none"
-                      stroke="hsl(var(--border))"
-                      strokeWidth={1.4 / Math.max(zoom, 0.4)}
-                    />
-                  </pattern>
-                </defs>
-                <g opacity={placeZoneId ? 0.5 : 0.32}>
-                  <rect x={0} y={0} width={plan.width} height={plan.height} fill={`url(#${gridId})`} />
-                  <rect x={0} y={0} width={plan.width} height={plan.height} fill={`url(#${gridId}-major)`} />
-                </g>
-              </>
-            )}
 
             {/* Lager 2 — väggar, dörrar, öppningar */}
             {walls.map((w) => (
@@ -566,32 +540,36 @@ export function FloorPlanCanvas({
                     }}
                   />
 
-                  {/* Svagt rutnät bara inuti den yta man placerar en bild i */}
-                  {placeZoneId === z.id && plan.grid_size > 0 && (
-                    <g clipPath={`url(#zone-clip-${z.id})`} opacity={0.5} style={{ pointerEvents: "none" }}>
+                  {/* Rutnät i ytans egen färg, bara inuti ytan */}
+                  {(showGrid || placeZoneId === z.id) && minor > 0 && (
+                    <g
+                      clipPath={`url(#zone-clip-${z.id})`}
+                      opacity={placeZoneId === z.id ? 0.85 : 0.5}
+                      style={{ pointerEvents: "none" }}
+                    >
                       <clipPath id={`zone-clip-${z.id}`}>
                         <polygon points={toPath(pts)} />
                       </clipPath>
-                      {Array.from({ length: Math.ceil(b.width / plan.grid_size) + 1 }).map((_, i) => (
+                      {Array.from({ length: Math.ceil(b.width / minor) + 1 }).map((_, i) => (
                         <line
                           key={`pv${i}`}
-                          x1={b.x + i * plan.grid_size}
+                          x1={b.x + i * minor}
                           y1={b.y}
-                          x2={b.x + i * plan.grid_size}
+                          x2={b.x + i * minor}
                           y2={b.y + b.height}
-                          stroke="hsl(var(--foreground))"
-                          strokeWidth={0.5}
+                          stroke={identity}
+                          strokeWidth={0.6}
                         />
                       ))}
-                      {Array.from({ length: Math.ceil(b.height / plan.grid_size) + 1 }).map((_, i) => (
+                      {Array.from({ length: Math.ceil(b.height / minor) + 1 }).map((_, i) => (
                         <line
                           key={`ph${i}`}
                           x1={b.x}
-                          y1={b.y + i * plan.grid_size}
+                          y1={b.y + i * minor}
                           x2={b.x + b.width}
-                          y2={b.y + i * plan.grid_size}
-                          stroke="hsl(var(--foreground))"
-                          strokeWidth={0.5}
+                          y2={b.y + i * minor}
+                          stroke={identity}
+                          strokeWidth={0.6}
                         />
                       ))}
                     </g>
