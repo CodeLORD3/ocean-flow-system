@@ -327,14 +327,24 @@ export default function Uppgifter() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="dag">Dagens uppgifter</TabsTrigger>
-          <TabsTrigger value="personer">Personer</TabsTrigger>
-          <TabsTrigger value="kalender">Kalender</TabsTrigger>
-          <TabsTrigger value="checklistor">Checklistor</TabsTrigger>
-          <TabsTrigger value="sagordu">Så gör du</TabsTrigger>
-          <TabsTrigger value="standard">Standarduppgifter</TabsTrigger>
-          <TabsTrigger value="schema">Schemaläggning</TabsTrigger>
+        <TabsList className="h-auto flex-wrap gap-1 p-1">
+          {[
+            ["dag", "Dagens uppgifter"],
+            ["personer", "Personer"],
+            ["kalender", "Kalender"],
+            ["checklistor", "Checklistor"],
+            ["sagordu", "Så gör du"],
+            ["standard", "Standarduppgifter"],
+            ["schema", "Schemaläggning"],
+          ].map(([value, label]) => (
+            <TabsTrigger
+              key={value}
+              value={value}
+              className="rounded-md px-3 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:font-semibold"
+            >
+              {label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="dag" className="space-y-4">
