@@ -88,7 +88,8 @@ export function TaskRow({
       )}
       style={{ borderLeft: `3px solid ${task.done ? "hsl(152 60% 42%)" : accent}` }}
     >
-      <div className="flex items-center gap-2 px-2 py-1.5 min-h-[40px]">
+      <div className="flex items-center gap-2 px-2 py-1.5 min-h-[44px]">
+        {/* Kolumn 1: bocka av */}
         <button
           type="button"
           aria-label={task.done ? "Återöppna uppgift" : "Markera som klar"}
@@ -102,64 +103,79 @@ export function TaskRow({
           {task.done && <Check className="h-3.5 w-3.5" />}
         </button>
 
-        <button type="button" onClick={() => setOpen((v) => !v)} className="flex-1 min-w-0 text-left">
-          <div className="flex items-center gap-1.5">
-            {time.label && (
-              <span className="font-mono text-[11px] tabular-nums text-muted-foreground shrink-0">{time.label}</span>
-            )}
-            <span className={cn("truncate text-[13px] font-medium", task.done && "text-muted-foreground line-through")}>
-              {task.task}
-            </span>
-          </div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
-            {area && (
-              <span className="inline-flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full" style={{ background: area.color }} />
-                {area.number}. {area.name}
-              </span>
-            )}
-            {categoryName && <span>{categoryName}</span>}
-            {!categoryName && task.work_type && <span>{workTypeLabel(task.work_type)}</span>}
-            {duration && (
-              <span className="inline-flex items-center gap-1">
-                <Timer className="h-3 w-3" /> {duration}
-              </span>
-            )}
-            {assigneeName && (
-              <span className="inline-flex items-center gap-1">
-                <StaffAvatar name={assigneeName} imageUrl={assigneeImage} className="h-7 w-7" /> {assigneeName}
-              </span>
-            )}
-            {(task.requires_note || task.requires_value) && (
-              <span className={cn("inline-flex items-center gap-1", blocked && "text-amber-600")}>
-                {task.requires_note && "Kommentar krävs"}
-                {task.requires_note && task.requires_value && " · "}
-                {task.requires_value && `${valueLabel(task)} krävs`}
-              </span>
-            )}
-            {task.requires_photo && (
-              <span className={cn("inline-flex items-center gap-1", photoMissing && "text-amber-600")}>
-                <Camera className="h-3 w-3" /> Foto krävs
-              </span>
-            )}
-            {photoCount > 0 && (
-              <span className="inline-flex items-center gap-1">
-                <ImageIcon className="h-3 w-3" /> {photoCount}
-              </span>
-            )}
-            {task.done && (completedByName || task.signature) && (
-              <span className="inline-flex items-center gap-1 text-emerald-600">
-                <StaffAvatar
-                  name={completedByName || task.signature}
-                  imageUrl={completedByImage}
-                  className="h-7 w-7"
-                />
-                Klar · {completedByName || task.signature}
-              </span>
-            )}
-          </div>
+        {/* Kolumn 2: tid */}
+        <span className="hidden w-[46px] shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground sm:block">
+          {time.label || ""}
+        </span>
+
+        {/* Kolumn 3: uppgift */}
+        <button type="button" onClick={() => setOpen((v) => !v)} className="min-w-0 flex-1 text-left">
+          <span className={cn("block truncate text-[13px] font-medium", task.done && "text-muted-foreground line-through")}>
+            {task.task}
+          </span>
+          <span className="mt-0.5 block truncate text-[10px] text-muted-foreground sm:hidden">
+            {[time.label, area && `${area.number}. ${area.name}`, categoryName, assigneeName]
+              .filter(Boolean)
+              .join(" · ")}
+          </span>
         </button>
 
+        {/* Kolumn 4: område */}
+        <span className="hidden w-[150px] shrink-0 items-center gap-1 truncate text-[11px] text-muted-foreground lg:flex">
+          {area && (
+            <>
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: area.color }} />
+              <span className="truncate">
+                {area.number}. {area.name}
+              </span>
+            </>
+          )}
+        </span>
+
+        {/* Kolumn 5: kategori */}
+        <span className="hidden w-[120px] shrink-0 truncate text-[11px] text-muted-foreground lg:block">
+          {categoryName ?? (task.work_type ? workTypeLabel(task.work_type) : "")}
+        </span>
+
+        {/* Kolumn 6: krav och bilder */}
+        <span className="hidden w-[96px] shrink-0 items-center justify-end gap-1.5 text-[10px] text-muted-foreground md:flex">
+          {duration && (
+            <span className="inline-flex items-center gap-0.5">
+              <Timer className="h-3 w-3" /> {duration}
+            </span>
+          )}
+          {task.requires_photo && <Camera className={cn("h-3 w-3", photoMissing && "text-amber-600")} />}
+          {(task.requires_note || task.requires_value) && (
+            <span className={cn(blocked && "text-amber-600")} title={missingText(task, ["note"])}>
+              Krav
+            </span>
+          )}
+          {photoCount > 0 && (
+            <span className="inline-flex items-center gap-0.5">
+              <ImageIcon className="h-3 w-3" /> {photoCount}
+            </span>
+          )}
+        </span>
+
+        {/* Kolumn 7: person — alltid samma plats */}
+        <span className="hidden w-[168px] shrink-0 items-center gap-2 sm:flex">
+          {(() => {
+            const name = task.done ? completedByName || task.signature || assigneeName : assigneeName;
+            const img = task.done ? completedByImage || assigneeImage : assigneeImage;
+            if (!name) return <span className="text-[11px] text-muted-foreground">Ingen tilldelad</span>;
+            return (
+              <>
+                <StaffAvatar name={name} imageUrl={img} className="h-8 w-8 shrink-0" />
+                <span className={cn("truncate text-[11px]", task.done ? "text-emerald-600" : "text-muted-foreground")}>
+                  {task.done ? "Klar · " : ""}
+                  {name}
+                </span>
+              </>
+            );
+          })()}
+        </span>
+
+        {/* Kolumn 8: rulldown */}
         <button
           type="button"
           aria-label={open ? "Stäng detaljer" : "Visa detaljer"}
