@@ -406,29 +406,31 @@ export function FloorPlanCanvas({
               />
             )}
 
-            {showGrid && plan.grid_size > 0 && (
-              <g opacity={placeZoneId ? 0.28 : 0.12}>
-                {Array.from({ length: Math.ceil(plan.width / plan.grid_size) + 1 }).map((_, i) => (
-                  <line
-                    key={`v${i}`}
-                    x1={i * plan.grid_size}
-                    y1={0}
-                    x2={i * plan.grid_size}
-                    y2={plan.height}
-                    stroke="hsl(var(--border))"
-                  />
-                ))}
-                {Array.from({ length: Math.ceil(plan.height / plan.grid_size) + 1 }).map((_, i) => (
-                  <line
-                    key={`h${i}`}
-                    x1={0}
-                    y1={i * plan.grid_size}
-                    x2={plan.width}
-                    y2={i * plan.grid_size}
-                    stroke="hsl(var(--border))"
-                  />
-                ))}
-              </g>
+            {showGrid && minor > 0 && (
+              <>
+                <defs>
+                  <pattern id={gridId} width={minor} height={minor} patternUnits="userSpaceOnUse">
+                    <path
+                      d={`M ${minor} 0 L 0 0 0 ${minor}`}
+                      fill="none"
+                      stroke="hsl(var(--border))"
+                      strokeWidth={0.6 / Math.max(zoom, 0.4)}
+                    />
+                  </pattern>
+                  <pattern id={`${gridId}-major`} width={minor * 5} height={minor * 5} patternUnits="userSpaceOnUse">
+                    <path
+                      d={`M ${minor * 5} 0 L 0 0 0 ${minor * 5}`}
+                      fill="none"
+                      stroke="hsl(var(--border))"
+                      strokeWidth={1.4 / Math.max(zoom, 0.4)}
+                    />
+                  </pattern>
+                </defs>
+                <g opacity={placeZoneId ? 0.5 : 0.32}>
+                  <rect x={0} y={0} width={plan.width} height={plan.height} fill={`url(#${gridId})`} />
+                  <rect x={0} y={0} width={plan.width} height={plan.height} fill={`url(#${gridId}-major)`} />
+                </g>
+              </>
             )}
 
             {/* Lager 2 — väggar, dörrar, öppningar */}
