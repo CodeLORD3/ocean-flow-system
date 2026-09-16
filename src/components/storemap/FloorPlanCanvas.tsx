@@ -808,6 +808,13 @@ export function FloorPlanCanvas({
         </button>
       )}
 
+      {/* Rullhjulet zoomar först när kartan är aktiv — annars skrollar sidan */}
+      {!active && (
+        <div className="pointer-events-none absolute bottom-3 left-3 rounded-full border border-border bg-card/95 px-3 py-1 text-[11px] text-muted-foreground shadow-sm">
+          Klicka på kartan för att zooma
+        </div>
+      )}
+
       {/* Zoomreglage som i ritningsvyn: plus, minus, procent och passa in */}
       <div className="absolute left-3 top-3 flex flex-col items-center gap-0.5 rounded-xl border border-border bg-card/95 p-1 shadow-sm">
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => zoomBy(1.25)} title="Zooma in">
