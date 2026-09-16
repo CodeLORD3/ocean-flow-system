@@ -119,6 +119,22 @@ export function FloorPlanCanvas({
   );
   const [ghostPts, setGhostPts] = useState<Record<string, Pt[]>>({});
 
+  /**
+   * Kartan zoomar först när man klickat i den. Annars skrollar sidan som vanligt
+   * när man rullar över kartan.
+   */
+  const [active, setActive] = useState(false);
+  const activeRef = useRef(false);
+  activeRef.current = active;
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      const el = wrapRef.current;
+      if (el && !el.contains(e.target as Node)) setActive(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, []);
+
   /** Har användaren själv zoomat eller dragit? Då rör vi inte vyn vid omritning. */
   const touched = useRef(false);
 
