@@ -101,6 +101,29 @@ function WholesaleReportsPage() {
         <CardHeader className="p-0">
           <button
             type="button"
+            aria-expanded={stockOpen}
+            onClick={() => setStockOpen(!stockOpen)}
+            className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
+          >
+            {stockOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+            <ClipboardCheck className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium">Inventeringsrapporter (butiker)</CardTitle>
+          </button>
+        </CardHeader>
+        {stockOpen && (
+          <CardContent className="pt-0 px-4 pb-4">
+            <SectionErrorBoundary title="Inventeringsrapporter">
+              <InventoryReportsArchive />
+            </SectionErrorBoundary>
+          </CardContent>
+        )}
+      </Card>
+
+
+      <Card>
+        <CardHeader className="p-0">
+          <button
+            type="button"
             aria-expanded={weeklyOpen}
             onClick={() => setWeeklyOpen(!weeklyOpen)}
             className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
