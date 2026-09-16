@@ -177,6 +177,28 @@ export default function ScheduleCalendar() {
     return protocols.filter(p => p.meeting_date === selectedDate);
   }, [selectedDate, protocols]);
 
+  // Markerat intervall (normaliserat så det går att dra bakåt också)
+  const rangeBounds = useMemo(() => {
+    if (!rangeStart || !rangeEnd) return null;
+    return rangeStart <= rangeEnd
+      ? { from: rangeStart, to: rangeEnd }
+      : { from: rangeEnd, to: rangeStart };
+  }, [rangeStart, rangeEnd]);
+
+  const isInRange = (dateStr: string) =>
+    !!rangeBounds && dateStr >= rangeBounds.from && dateStr <= rangeBounds.to;
+
+  const rangeDayCount = rangeBounds
+    ? eachDayOfInterval({ start: parseISO(rangeBounds.from), end: parseISO(rangeBounds.to) }).length
+    : 0;
+
+  // Släpper man musen utanför kalendern ska dragningen ändå avslutas.
+  useEffect(() => {
+    const stop = () => { rangeDragging.current = false; };
+    window.addEventListener("mouseup", stop);
+    return () => window.removeEventListener("mouseup", stop);
+  }, []);
+
   const openAddPanel = (date?: string, endDate?: string) => {
     setFormTitle("");
     setFormDesc("");
