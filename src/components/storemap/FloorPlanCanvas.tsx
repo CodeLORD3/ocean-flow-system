@@ -119,16 +119,51 @@ export function FloorPlanCanvas({
   );
   const [ghostPts, setGhostPts] = useState<Record<string, Pt[]>>({});
 
+  /** Har användaren själv zoomat eller dragit? Då rör vi inte vyn vid omritning. */
+  const touched = useRef(false);
+
+  /**
+   * Passa in det som faktiskt är intressant: ytorna på kartan. Tom planyta
+   * runt om beskärs bort, så ritningen fyller rutan i stället för att bli liten.
+   */
   const fit = useCallback(() => {
     const el = wrapRef.current;
-    if (!el) return;
-    const z = Math.min(el.clientWidth / plan.width, el.clientHeight / plan.height) * 0.95;
+    if (!el || !el.clientWidth) return;
+    const boxes = zones.map((z) => bbox(zonePoints(z)));
+    let x = 0;
+    let y = 0;
+    let w = plan.width;
+    let h = plan.height;
+    if (boxes.length) {
+      const pad = Math.max(plan.width, plan.height) * 0.05;
+      const x1 = Math.max(0, Math.min(...boxes.map((b) => b.x)) - pad);
+      const y1 = Math.max(0, Math.min(...boxes.map((b) => b.y)) - pad);
+      const x2 = Math.min(plan.width, Math.max(...boxes.map((b) => b.x + b.width)) + pad);
+      const y2 = Math.min(plan.height, Math.max(...boxes.map((b) => b.y + b.height)) + pad);
+      x = x1;
+      y = y1;
+      w = Math.max(1, x2 - x1);
+      h = Math.max(1, y2 - y1);
+    }
+    const z = clamp(Math.min(el.clientWidth / w, el.clientHeight / h) * 0.96, MIN_ZOOM, MAX_ZOOM);
     setZoom(z);
-    setOffset({ x: (el.clientWidth - plan.width * z) / 2, y: (el.clientHeight - plan.height * z) / 2 });
-  }, [plan.width, plan.height]);
+    setOffset({ x: (el.clientWidth - w * z) / 2 - x * z, y: (el.clientHeight - h * z) / 2 - y * z });
+    touched.current = false;
+  }, [plan.width, plan.height, zones]);
 
   useEffect(() => {
     fit();
+  }, [fit]);
+
+  /* Följ rutans storlek: byter man fönsterbredd eller öppnar panelen passas kartan in igen. */
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      if (!touched.current) fit();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [fit]);
 
   /* Fokusläge: zooma mjukt in på den modul man tryckt på. */
