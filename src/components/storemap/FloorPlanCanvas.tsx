@@ -809,6 +809,21 @@ export function FloorPlanCanvas({
                   </g>
                 );
               })}
+            {/* Lager 8 — området man drar ut för att zooma dit */}
+            {marqueeBox && (
+              <rect
+                x={marqueeBox.x}
+                y={marqueeBox.y}
+                width={marqueeBox.width}
+                height={marqueeBox.height}
+                fill="hsl(var(--primary))"
+                fillOpacity={0.12}
+                stroke="hsl(var(--primary))"
+                strokeWidth={1.5 / Math.max(zoom, 0.4)}
+                strokeDasharray={`${6 / Math.max(zoom, 0.4)} ${4 / Math.max(zoom, 0.4)}`}
+                style={{ pointerEvents: "none" }}
+              />
+            )}
           </g>
         </svg>
       </div>
