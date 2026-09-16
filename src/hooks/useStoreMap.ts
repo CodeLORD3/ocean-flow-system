@@ -146,6 +146,18 @@ export function useFloorPlans(storeId?: string | null) {
   });
 }
 
+/** Butiker som faktiskt har en planritning — används för att välja butik automatiskt. */
+export function useStoresWithFloorPlan() {
+  return useQuery({
+    queryKey: ["floor-plan-stores"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("floor_plans").select("store_id");
+      if (error) throw error;
+      return [...new Set((data || []).map((r) => r.store_id as string))];
+    },
+  });
+}
+
 export function useMapZones(floorPlanId?: string | null) {
   return useQuery({
     queryKey: ["map-zones", floorPlanId],

@@ -4,14 +4,14 @@
  * ligger. Status visas separat som prick, kantfärg och bricka.
  */
 export const ZONE_PALETTE = [
-  { key: "isbla", name: "Isblå", color: "#8ec5e8" },
-  { key: "marin", name: "Marin", color: "#7fa6c4" },
-  { key: "turkos", name: "Turkos", color: "#7fd0c8" },
-  { key: "mint", name: "Mint", color: "#a8d8b9" },
-  { key: "sand", name: "Sand", color: "#e3cfa4" },
-  { key: "persika", name: "Persika", color: "#f2b995" },
-  { key: "lavender", name: "Lavender", color: "#bdb4e0" },
-  { key: "rosa", name: "Rosa", color: "#efa8c2" },
+  { key: "rosa", name: "Rosa", color: "#ec4899" },
+  { key: "turkos", name: "Turkos", color: "#14b8a6" },
+  { key: "lila", name: "Lila", color: "#a855f7" },
+  { key: "orange", name: "Orange", color: "#f97316" },
+  { key: "isbla", name: "Isblå", color: "#3b82f6" },
+  { key: "mint", name: "Mint", color: "#22c55e" },
+  { key: "sand", name: "Sand", color: "#eab308" },
+  { key: "korall", name: "Korall", color: "#ef4444" },
 ] as const;
 
 export const DEFAULT_ZONE_COLOR = ZONE_PALETTE[0].color;

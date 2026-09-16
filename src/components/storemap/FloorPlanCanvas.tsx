@@ -481,14 +481,14 @@ export function FloorPlanCanvas({
                   <g style={{ pointerEvents: "none" }}>
                     {num != null && (
                       <>
-                        <circle cx={c.x} cy={c.y - 22} r={13} fill={identity} stroke="hsl(var(--card))" strokeWidth={2} />
+                        <circle cx={c.x} cy={c.y - 22} r={14} fill={identity} stroke="hsl(var(--card))" strokeWidth={2.5} />
                         <text
                           x={c.x}
                           y={c.y - 17}
                           textAnchor="middle"
-                          fontSize={13}
+                          fontSize={14}
                           fontWeight={700}
-                          fill="hsl(var(--foreground))"
+                          fill="#ffffff"
                         >
                           {num}
                         </text>
