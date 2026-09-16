@@ -261,6 +261,12 @@ export function FloorPlanCanvas({
 
   const endPointer = () => {
     panRef.current = null;
+    if (vDrag) {
+      const pts = ghostPts[vDrag.zoneId];
+      if (pts && onZonePointsCommit) onZonePointsCommit(vDrag.zoneId, pts);
+      setVDrag(null);
+      return;
+    }
     if (drag) {
       const g = ghost[drag.id];
       if (g && onCommit) onCommit({ kind: drag.kind, id: drag.id, ...g });
@@ -268,16 +274,36 @@ export function FloorPlanCanvas({
     }
   };
 
+  /** Bildpunkt i planens koordinater ur en pekarhändelse. */
+  const planPoint = (e: React.MouseEvent): Pt | null => {
+    const el = wrapRef.current;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    return { x: (e.clientX - rect.left - offset.x) / zoom, y: (e.clientY - rect.top - offset.y) / zoom };
+  };
+
+  const ptsOf = (z: MapZone) => ghostPts[z.id] ?? zonePoints(z);
+
   /* Nålläge: tryck var som helst på ritningen och punkten hamnar exakt där. */
   const placePin = (e: React.MouseEvent) => {
-    const el = wrapRef.current;
-    if (!el || !pinMode || !onPinPlace) return;
+    if (!pinMode || !onPinPlace) return;
+    const pt = planPoint(e);
+    if (!pt) return;
     e.stopPropagation();
-    const rect = el.getBoundingClientRect();
-    const x = (e.clientX - rect.left - offset.x) / zoom;
-    const y = (e.clientY - rect.top - offset.y) / zoom;
-    const hit = [...zones].reverse().find((z) => x >= z.x && x <= z.x + z.width && y >= z.y && y <= z.y + z.height);
-    onPinPlace({ x: Math.round(x), y: Math.round(y), zoneId: hit?.id ?? null });
+    const hit = [...zones].reverse().find((z) => pointInPolygon(pt, ptsOf(z)));
+    onPinPlace({ x: Math.round(pt.x), y: Math.round(pt.y), zoneId: hit?.id ?? null });
+  };
+
+  /* Placeringsläge: klicket blir en relativ plats (0–1) inom den valda ytan. */
+  const placePhoto = (e: React.MouseEvent) => {
+    const zone = zones.find((z) => z.id === placeZoneId);
+    if (!zone || !onPlacePhoto) return;
+    const pt = planPoint(e);
+    if (!pt) return;
+    const pts = ptsOf(zone);
+    if (!pointInPolygon(pt, pts)) return;
+    e.stopPropagation();
+    onPlacePhoto(zone.id, toNormalized(pt, pts));
   };
 
   const geom = (id: string, base: { x: number; y: number; width: number; height: number }) => ghost[id] ?? base;
@@ -286,8 +312,8 @@ export function FloorPlanCanvas({
     <div className="relative rounded-md border border-border bg-muted/20 overflow-hidden">
       <div
         ref={wrapRef}
-        className={`h-[62vh] min-h-[380px] w-full touch-none ${pinMode ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
-        onClickCapture={pinMode ? placePin : undefined}
+        className={`h-[62vh] min-h-[380px] w-full touch-none ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
+        onClickCapture={pinMode ? placePin : placeZoneId ? placePhoto : undefined}
         onPointerDown={onBackgroundDown}
         onPointerMove={(e) => {
           onPointerMove(e);
