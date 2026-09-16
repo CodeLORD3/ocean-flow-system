@@ -561,6 +561,10 @@ export default function Uppgifter() {
             <div>
               <label className="text-sm font-medium">Vad ska göras?</label>
               <Input value={nTask} onChange={(e) => setNTask(e.target.value)} autoFocus />
+              <p className="mt-1 text-xs text-muted-foreground">
+                När uppgiften är skapad öppnas den, så du kan lägga in mål, varor och steg med bilder. Det går att ändra
+                när som helst.
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
