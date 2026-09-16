@@ -131,6 +131,7 @@ export default function Uppgifter() {
 
   const createAdhoc = async () => {
     if (!storeId) return;
+    let newId: string | null = null;
     try {
       const payload = {
         storeId,
