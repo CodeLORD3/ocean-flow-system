@@ -1290,7 +1290,7 @@ export default function PurchaseReporting() {
           }
 
           // Dokumentdatumet från handlingen styr rapportdatumet.
-          const docDate = doc.document_date || doc.delivery_date || null;
+          const docDate = safeDate(doc.document_date) || safeDate(doc.delivery_date) || null;
           await supabase
             .from("purchase_reports")
             .update({
@@ -1298,8 +1298,8 @@ export default function PurchaseReporting() {
               supplier_name_raw: doc.supplier_name ?? null,
               document_number: doc.document_number ?? null,
               document_type: doc.document_type ?? "foljesedel",
-              document_date: doc.document_date ?? null,
-              delivery_date: doc.delivery_date ?? null,
+              document_date: safeDate(doc.document_date),
+              delivery_date: safeDate(doc.delivery_date),
               total_ex_vat: doc.total_ex_vat ?? null,
               notes: doc.notes ?? null,
               ...(docDate ? { report_date: docDate } : {}),
