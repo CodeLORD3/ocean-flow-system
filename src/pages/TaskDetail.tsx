@@ -14,6 +14,7 @@ import { useFloorPlans, useMapZones } from "@/hooks/useStoreMap";
 import { useUploadEntityImage, type EntityImage } from "@/hooks/useEntityImages";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
+import { missingRequirements, missingText, valueLabel } from "@/lib/taskRequirements";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 import { dayBadgeClass } from "@/lib/dayColor";
 import {
@@ -155,6 +156,8 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           <div className="flex flex-wrap items-center gap-2">
             <Button
               size="lg"
+              disabled={!task.done && missing.length > 0}
+              title={!task.done && missing.length > 0 ? missingText(task, missing) : undefined}
               variant={task.done ? "outline" : "default"}
               className={cn(!task.done && "bg-emerald-600 text-white hover:bg-emerald-700")}
               onClick={async () => {
@@ -463,15 +466,39 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                 }
               />
             </div>
-            <div className="flex items-end">
-              <label className="inline-flex items-center gap-2 text-sm">
+            <div className="col-span-2 space-y-2 rounded-md border p-3">
+              <p className="text-sm font-medium">Krav för att få bocka av</p>
+              <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={task.requires_photo}
                   onChange={(e) => update.mutate({ id: task.id, requires_photo: e.target.checked })}
                 />
-                Foto krävs för att räknas som klar
+                Bild krävs
               </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={task.requires_note}
+                  onChange={(e) => update.mutate({ id: task.id, requires_note: e.target.checked })}
+                />
+                Kommentar krävs
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={task.requires_value}
+                  onChange={(e) => update.mutate({ id: task.id, requires_value: e.target.checked })}
+                />
+                Mätvärde krävs
+              </label>
+              {task.requires_value && (
+                <Input
+                  placeholder="Vad mäts? T.ex. Temperatur °C"
+                  defaultValue={task.value_label ?? ""}
+                  onBlur={(e) => update.mutate({ id: task.id, value_label: e.target.value.trim() || null })}
+                />
+              )}
             </div>
           </div>
           <div className="border-t pt-4">
