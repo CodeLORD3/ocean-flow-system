@@ -337,7 +337,7 @@ export default function StoreMap() {
           }}
         />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+        <div className={`grid gap-4 ${editMode ? "lg:grid-cols-[1fr_340px]" : ""}`}>
           <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
             {/* Kartans egen rad: bara det man behöver, resten ligger i redigeringsläget */}
             <div className="flex flex-wrap items-center gap-3 border-b border-border px-3 py-2">
@@ -526,7 +526,8 @@ export default function StoreMap() {
             </div>
           </div>
 
-          {/* Höger panel */}
+          {/* Höger panel: bara i redigeringsläget, annars ligger kartan i full bredd */}
+          {editMode && (
           <div className="space-y-3">
             {editMode ? (
               <>
@@ -867,8 +868,42 @@ export default function StoreMap() {
               </Card>
             )}
           </div>
+          )}
         </div>
       )}
+
+      {/* Vald yta glider in från höger, kartan ligger kvar i full bredd bakom */}
+      {!editMode && (selectedZone || selectedObject) && (
+        <MapDetailDrawer
+          open
+          onOpenChange={(v) => {
+            if (!v) {
+              setSelected(null);
+              setFocus(null);
+              setDrawerOpen(false);
+            }
+          }}
+          storeId={storeId}
+          portal={site}
+          zone={selectedZone}
+          object={selectedObject}
+          objectType={selectedObject ? typeById[selectedObject.object_type_id] : null}
+          tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
+          unlinkedTasks={unlinkedTasks}
+          canManage={canManage}
+          zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
+          areaLabel={
+            selectedZone
+              ? areaOf(selectedZone, pxPerMeter).sqm != null
+                ? `${areaOf(selectedZone, pxPerMeter).exact ? "" : "≈ "}${formatSqm(areaOf(selectedZone, pxPerMeter).sqm)}`
+                : null
+              : selectedObject && areaOf(selectedObject, pxPerMeter).sqm != null
+                ? formatSqm(areaOf(selectedObject, pxPerMeter).sqm)
+                : null
+          }
+        />
+      )}
+
 
       {plan && pinDialog && (
         <MapPinDialog

@@ -119,6 +119,22 @@ export function FloorPlanCanvas({
   );
   const [ghostPts, setGhostPts] = useState<Record<string, Pt[]>>({});
 
+  /**
+   * Kartan zoomar först när man klickat i den. Annars skrollar sidan som vanligt
+   * när man rullar över kartan.
+   */
+  const [active, setActive] = useState(false);
+  const activeRef = useRef(false);
+  activeRef.current = active;
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      const el = wrapRef.current;
+      if (el && !el.contains(e.target as Node)) setActive(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, []);
+
   /** Har användaren själv zoomat eller dragit? Då rör vi inte vyn vid omritning. */
   const touched = useRef(false);
 
@@ -218,6 +234,8 @@ export function FloorPlanCanvas({
     const el = wrapRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
+      /* Inte aktiverad: låt sidan skrolla som vanligt. */
+      if (!activeRef.current && !e.ctrlKey) return;
       e.preventDefault();
       wheelRef.current(e);
     };
@@ -356,11 +374,14 @@ export function FloorPlanCanvas({
   const geom = (id: string, base: { x: number; y: number; width: number; height: number }) => ghost[id] ?? base;
 
   return (
-    <div className="relative rounded-md border border-border bg-muted/20 overflow-hidden">
+    <div
+      className={`relative rounded-md border bg-muted/20 overflow-hidden ${active ? "border-primary" : "border-border"}`}
+    >
       <div
         ref={wrapRef}
-        className={`h-[56vh] min-h-[320px] max-h-[560px] w-full touch-none ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
+        className={`h-[56vh] min-h-[320px] max-h-[560px] w-full ${active ? "touch-none" : ""} ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
         onClickCapture={pinMode ? placePin : placeZoneId ? placePhoto : undefined}
+        onPointerDownCapture={() => setActive(true)}
         onPointerDown={onBackgroundDown}
         onPointerMove={(e) => {
           onPointerMove(e);
@@ -785,6 +806,13 @@ export function FloorPlanCanvas({
           </svg>
           <span className="block text-[9px] text-muted-foreground pt-0.5">Hela kartan</span>
         </button>
+      )}
+
+      {/* Rullhjulet zoomar först när kartan är aktiv — annars skrollar sidan */}
+      {!active && (
+        <div className="pointer-events-none absolute bottom-3 left-3 rounded-full border border-border bg-card/95 px-3 py-1 text-[11px] text-muted-foreground shadow-sm">
+          Klicka på kartan för att zooma
+        </div>
       )}
 
       {/* Zoomreglage som i ritningsvyn: plus, minus, procent och passa in */}
