@@ -888,6 +888,15 @@ export function FloorPlanCanvas({
           <Minus className="h-4 w-4" />
         </Button>
         <span className="w-9 text-center text-[10px] tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
+        <Button
+          variant={marqueeMode ? "default" : "ghost"}
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => setMarqueeMode((v) => !v)}
+          title="Markera ett område att zooma till (eller håll Shift och dra)"
+        >
+          <SquareDashed className="h-4 w-4" />
+        </Button>
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fit} title="Passa in hela ritningen">
           <Maximize2 className="h-4 w-4" />
         </Button>
