@@ -605,10 +605,15 @@ export default function ScheduleCalendar() {
                           )}
                           onMouseDown={(e) => {
                             if (e.button !== 0) return;
-                            if (e.shiftKey && (rangeStart || selectedDate)) {
+                            const anchor = rangeStart || selectedDate;
+                            if (e.shiftKey && anchor && anchor !== cell.dateStr) {
                               // Skift-klick: förläng markeringen till den här dagen.
-                              setRangeStart(rangeStart || selectedDate);
-                              setRangeEnd(cell.dateStr);
+                              const from = anchor <= cell.dateStr ? anchor : cell.dateStr;
+                              const to = anchor <= cell.dateStr ? cell.dateStr : anchor;
+                              setRangeStart(from);
+                              setRangeEnd(to);
+                              setSelectedDate(null);
+                              openAddPanel(from, to);
                               return;
                             }
                             rangeDragging.current = true;
