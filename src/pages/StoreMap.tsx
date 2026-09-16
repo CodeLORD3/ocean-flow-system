@@ -59,7 +59,10 @@ export default function StoreMap() {
   const canManage = (staff?.portal_access ?? []).includes("admin") || !!staff?.is_platform_admin;
 
   const [pickedStore, setPickedStore] = useState<string | null>(null);
-  const storeId = site === "shop" ? activeStoreId : (pickedStore ?? stores[0]?.id ?? null);
+  const { data: planStores = [] } = useStoresWithFloorPlan();
+  /** Utan eget val visas den första butiken som verkligen har en ritning. */
+  const defaultStore = stores.find((s) => planStores.includes(s.id))?.id ?? stores[0]?.id ?? null;
+  const storeId = site === "shop" ? activeStoreId : (pickedStore ?? defaultStore);
 
   const { data: plans = [], isLoading: plansLoading } = useFloorPlans(storeId);
   const [planId, setPlanId] = useState<string | null>(null);
