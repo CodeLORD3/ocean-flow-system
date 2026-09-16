@@ -49,6 +49,7 @@ export function MapComposer({ target, portal }: { target: ComposerTarget; portal
             store_id: target.storeId,
             entity_type: target.entityType,
             entity_id: target.entityId,
+            performed_by: actor,
             details: { author: actor, label: target.label },
           });
         } else {
@@ -67,6 +68,7 @@ export function MapComposer({ target, portal }: { target: ComposerTarget; portal
             store_id: target.storeId,
             entity_type: target.entityType,
             entity_id: target.entityId,
+            performed_by: actor,
             details: { author: actor, label: target.label },
           });
         }
