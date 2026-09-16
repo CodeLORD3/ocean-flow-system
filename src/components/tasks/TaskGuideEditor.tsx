@@ -144,13 +144,16 @@ export function TaskGuideEditor({
             size="sm"
             onClick={() => patch({ materials: [...guide.materials, { name: "", image: null }] })}
           >
-            <Plus className="mr-1 h-4 w-4" /> Lägg till vara
+            <Plus className="mr-1 h-4 w-4" /> Lägg till rad
           </Button>
         </div>
       </div>
 
       <div>
-        <label className="text-sm font-medium">Steg för steg</label>
+        <label className="text-sm font-medium">Arbetsgång</label>
+        <p className="mb-2 text-xs text-muted-foreground">
+          Ett moment per rad, i den ordning de ska utföras. Börja med verbet och håll det på en rad.
+        </p>
         <div className="space-y-3">
           {guide.steps.map((s, i) => (
             <div key={i} className="flex items-start gap-2">
