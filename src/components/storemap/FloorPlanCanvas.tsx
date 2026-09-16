@@ -45,6 +45,13 @@ export function FloorPlanCanvas({
   onPinSelect,
   focus = null,
   onExitFocus,
+  zoneNumbers = {},
+  photoSpots = [],
+  showPhotos = true,
+  placeZoneId = null,
+  onPlacePhoto,
+  onPhotoSpotSelect,
+  onZonePointsCommit,
 }: {
   plan: FloorPlan;
   zones: MapZone[];
