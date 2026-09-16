@@ -404,8 +404,8 @@ export function FloorPlanCanvas({
               return (
                 <g
                   key={z.id}
-                  opacity={dim ? 0.45 : 1}
-                  style={{ transition: "opacity 180ms ease" }}
+                  opacity={dim ? 0.55 : 1}
+                  style={{ transition: "opacity 200ms ease" }}
                   onPointerDown={(e) => {
                     if (!editMode) return;
                     e.stopPropagation();
@@ -413,17 +413,24 @@ export function FloorPlanCanvas({
                     setVDrag({ zoneId: z.id, index: -1, base: pts, startX: e.clientX, startY: e.clientY });
                   }}
                 >
+                  {/* Vit botten gör zonfärgen pastellig även över ritningen */}
+                  <polygon
+                    points={toPath(pts)}
+                    fill="hsl(var(--card))"
+                    fillOpacity={0.82}
+                    style={{ pointerEvents: "none" }}
+                  />
                   <polygon
                     points={toPath(pts)}
                     fill={identity}
-                    fillOpacity={isSel ? 0.5 : isHover ? 0.42 : 0.3}
-                    stroke={isSel || isHover ? identity : status}
-                    strokeWidth={isSel ? 4 : isHover ? 3.5 : 2.5}
+                    fillOpacity={isSel ? 0.34 : isHover ? 0.3 : 0.2}
+                    stroke={identity}
+                    strokeWidth={isSel ? 3.5 : isHover ? 3 : 2}
                     strokeLinejoin="round"
                     className="cursor-pointer"
                     style={{
-                      transition: "fill-opacity 180ms ease, stroke-width 180ms ease, filter 180ms ease",
-                      filter: isHover || isSel ? "drop-shadow(0 3px 10px rgba(15,35,50,0.28))" : undefined,
+                      transition: "fill-opacity 200ms ease, stroke-width 200ms ease, filter 200ms ease",
+                      filter: isHover || isSel ? `drop-shadow(0 0 10px ${identity})` : undefined,
                     }}
                     onPointerEnter={(e) =>
                       setHover({
