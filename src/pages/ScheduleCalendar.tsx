@@ -666,6 +666,7 @@ export default function ScheduleCalendar() {
                               key={evt.id}
                               draggable
                               title={evt.title}
+                              onMouseDown={(e) => e.stopPropagation()}
                               onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.setData("text/plain", evt.id); e.dataTransfer.effectAllowed = "move"; setDraggedEventId(evt.id); }}
                               onDragEnd={() => { setDraggedEventId(null); setDropTarget(null); }}
                               className={cn(
