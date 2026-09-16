@@ -355,6 +355,19 @@ export default function Uppgifter() {
           )}
         </TabsContent>
 
+        <TabsContent value="kalender" className="space-y-3">
+          <TaskCalendar
+            storeId={storeId}
+            selected={day}
+            onSelect={setDay}
+            onOpenDay={(d) => {
+              setDay(d);
+              setTab("dag");
+            }}
+            areas={areaOf}
+          />
+        </TabsContent>
+
         <TabsContent value="checklistor" className="space-y-3">
           <p className="text-sm text-muted-foreground">
             Butikens checklistor. Varje checklista samlar sina uppgifter och styr vilka dagar de dyker upp.
