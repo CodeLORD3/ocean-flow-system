@@ -435,6 +435,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             <TaskGuideEditor
               taskId={task.id}
               value={guide}
+              zones={guideZones}
               saving={saveGuide.isPending}
               onSave={async (g) => {
                 try {
