@@ -186,6 +186,14 @@ export default function StoreMap() {
     return o?.name ?? "Område";
   })();
 
+  /** Färgen på områdesfliken följer ytans egen färg. */
+  const areaPageColor = (() => {
+    if (!areaPage) return null;
+    if (areaPage.kind === "zone") return zones.find((x) => x.id === areaPage.id)?.color ?? null;
+    const o = objects.find((x) => x.id === areaPage.id);
+    return (o?.zone_id ? zones.find((z) => z.id === o.zone_id)?.color : null) ?? null;
+  })();
+
   /** Öppnar valt områdes egna sida som flik och stänger sidopanelen. */
   const openAreaPage = () => {
     if (!selected) return;
@@ -299,7 +307,21 @@ export default function StoreMap() {
               </TabsTrigger>
             ))}
             {areaPage && (
-              <TabsTrigger value="omrade" className="h-8 max-w-[160px] rounded-lg px-4 text-xs">
+              <TabsTrigger
+                value="omrade"
+                className="h-8 max-w-[180px] gap-2 rounded-lg px-4 text-xs data-[state=active]:text-white"
+                style={
+                  areaPageColor && view === "omrade"
+                    ? { background: areaPageColor, boxShadow: `0 0 0 2px ${areaPageColor}33` }
+                    : undefined
+                }
+              >
+                {areaPageColor && (
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ background: view === "omrade" ? "#fff" : areaPageColor }}
+                  />
+                )}
                 <span className="truncate">{areaPageLabel}</span>
               </TabsTrigger>
             )}
