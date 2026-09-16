@@ -270,7 +270,7 @@ export function FloorPlanCanvas({
                       onSelect({ kind: "zone", id: z.id });
                     }}
                   />
-                  <foreignObject x={g.x + 6} y={g.y + 4} width={Math.max(60, g.width - 12)} height={28}>
+                  <foreignObject x={g.x + 6} y={g.y + 4} width={Math.max(60, g.width - 12)} height={28} style={{ pointerEvents: "none" }}>
                     <div className="flex items-center gap-1.5 pointer-events-none">
                       <span className="text-[11px] font-semibold text-foreground truncate">{z.name}</span>
                       {p && p.total > 0 && (
@@ -329,7 +329,7 @@ export function FloorPlanCanvas({
                       onSelect({ kind: "object", id: o.id });
                     }}
                   />
-                  <foreignObject x={g.x} y={g.y} width={g.width} height={g.height}>
+                  <foreignObject x={g.x} y={g.y} width={g.width} height={g.height} style={{ pointerEvents: "none" }}>
                     <div className="h-full w-full flex flex-col items-center justify-center gap-0.5 pointer-events-none px-0.5">
                       <MapObjectIcon icon={t?.icon} size={Math.min(18, Math.max(11, g.height / 3))} />
                       {g.height > 34 && (
