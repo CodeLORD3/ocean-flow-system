@@ -15,6 +15,7 @@ type Props = {
   categoryName?: string | null;
   categoryColor?: string | null;
   assigneeName?: string | null;
+  assigneeImage?: string | null;
   completedByName?: string | null;
   completedByImage?: string | null;
   photoCount?: number;
