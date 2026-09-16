@@ -602,6 +602,16 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
         onClose={() => setLightbox(null)}
         title={task.task}
       />
+
+      <TaskIssueDialog
+        open={issueOpen}
+        onOpenChange={setIssueOpen}
+        taskId={task.id}
+        taskName={task.task}
+        storeId={storeId}
+        materials={guide.materials.map((m) => m.name).filter(Boolean)}
+        presetName={issuePreset}
+      />
     </div>
   );
 }
