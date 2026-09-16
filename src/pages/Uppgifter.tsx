@@ -40,6 +40,9 @@ import { TaskRow, type TaskRowArea } from "@/components/tasks/TaskRow";
 import { TaskCalendar } from "@/components/tasks/TaskCalendar";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { WORK_TYPES, workTypeLabel } from "@/lib/workType";
+import { TASK_LINKS, taskTarget } from "@/lib/taskLink";
+import { useProductionRecipes } from "@/hooks/useProductionRecipes";
+import ProductionRecipes from "@/pages/ProductionRecipes";
 
 const WEEKDAY_NAMES = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
 
@@ -78,6 +81,7 @@ export default function Uppgifter() {
   const { data: staffList = [] } = useStaff(storeId || undefined);
   const { data: dayData } = useDayTasks(storeId, day);
   const { data: standard = [] } = useStandardTasks(storeId);
+  const { data: recipes = [] } = useProductionRecipes();
   const setDone = useSetTaskDone();
   const addAdhoc = useAddAdhocTask();
   const addStandard = useAddStandardTask();
@@ -135,7 +139,35 @@ export default function Uppgifter() {
     });
   }, [tasks, fArea, fCat, fPerson, fStatus, query, staffList]);
 
-  const groups = useMemo(() => groupByDaypart(filtered), [filtered]);
+  const [groupBy, setGroupBy] = useState<"tid" | "typ">("typ");
+
+  /** Underrubriker per uppgiftstyp — Produktion, Städning, Kontorsarbete först. */
+  const categoryGroups = useMemo(() => {
+    const order = ["Produktion", "Städning", "Kontorsarbete"];
+    const map = new Map<string, { key: string; label: string; tasks: Task[] }>();
+    filtered.forEach((t) => {
+      const cat = categories.find((c) => c.id === t.category_id);
+      const key = cat?.id ?? "ovrigt";
+      const label = cat?.name ?? "Övrigt";
+      const g = map.get(key) ?? { key, label, tasks: [] };
+      g.tasks.push(t);
+      map.set(key, g);
+    });
+    return [...map.values()].sort((a, b) => {
+      const ai = order.indexOf(a.label);
+      const bi = order.indexOf(b.label);
+      if (ai !== bi) return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
+      return a.label.localeCompare(b.label, "sv");
+    });
+  }, [filtered, categories]);
+
+  const groups = useMemo(
+    () => (groupBy === "typ" ? categoryGroups : groupByDaypart(filtered)),
+    [groupBy, categoryGroups, filtered],
+  );
+
+  /** Vart uppgiften leder vidare: recept, dagsrapport, checklista … */
+  const targetOf = (t: Task) => taskTarget(t, recipes.find((r) => r.id === t.recipe_id)?.name ?? null);
   const doneCount = tasks.filter((t) => t.done).length;
   const left = remainingMinutes(tasks);
 
@@ -159,6 +191,8 @@ export default function Uppgifter() {
   const [nReqNote, setNReqNote] = useState(false);
   const [nReqValue, setNReqValue] = useState(false);
   const [nValueLabel, setNValueLabel] = useState("");
+  const [nLink, setNLink] = useState("none");
+  const [nRecipe, setNRecipe] = useState("none");
   const updateTask = useUpdateTask();
 
   const createAdhoc = async () => {
@@ -179,6 +213,8 @@ export default function Uppgifter() {
         requiresNote: nReqNote,
         requiresValue: nReqValue,
         valueLabel: nReqValue ? nValueLabel || "Värde" : null,
+        linkUrl: nLink === "none" ? null : nLink,
+        recipeId: nRecipe === "none" ? null : nRecipe,
       };
       if (nRecurring) {
         await addStandard.mutateAsync(payload);
@@ -198,6 +234,8 @@ export default function Uppgifter() {
       setNReqNote(false);
       setNReqValue(false);
       setNValueLabel("");
+      setNLink("none");
+      setNRecipe("none");
       if (newId) switchTab(`/uppgift/${newId}`);
     } catch (e: any) {
       toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
@@ -340,6 +378,7 @@ export default function Uppgifter() {
             ["dag", "Dagens uppgifter"],
             ["personer", "Personer"],
             ["kalender", "Kalender"],
+            ["produktion", "Produktion"],
             ["checklistor", "Checklistor"],
             ["sagordu", "Så gör du"],
             ["standard", "Standarduppgifter"],
@@ -424,6 +463,18 @@ export default function Uppgifter() {
               </SelectContent>
             </Select>
             <div className="flex overflow-hidden rounded-md border text-xs">
+              {(["typ", "tid"] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setGroupBy(k)}
+                  className={cn("px-3 py-1.5", groupBy === k && "bg-primary text-primary-foreground")}
+                >
+                  {k === "typ" ? "Typ" : "Tid"}
+                </button>
+              ))}
+            </div>
+            <div className="flex overflow-hidden rounded-md border text-xs">
               {(["kvar", "klara", "allt"] as const).map((k) => (
                 <button
                   key={k}
@@ -481,6 +532,11 @@ export default function Uppgifter() {
                         onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
                         onAddPhoto={(file) => addPhoto(t, file)}
                         onOpenArea={(areaId) => openOnMap(t, areaId)}
+                        linkLabel={targetOf(t)?.label ?? null}
+                        onOpenLink={() => {
+                          const target = targetOf(t);
+                          if (target) switchTab(target.url);
+                        }}
                         onDelete={() => deleteTask(t)}
                       />
                     </div>
@@ -536,6 +592,11 @@ export default function Uppgifter() {
                           onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
                           onAddPhoto={(file) => addPhoto(t, file)}
                           onOpenArea={(areaId) => openOnMap(t, areaId)}
+                          linkLabel={targetOf(t)?.label ?? null}
+                          onOpenLink={() => {
+                            const target = targetOf(t);
+                            if (target) switchTab(target.url);
+                          }}
                         />
                       ))}
                     </div>
@@ -585,6 +646,10 @@ export default function Uppgifter() {
             }}
             areas={areaOf}
           />
+        </TabsContent>
+
+        <TabsContent value="produktion">
+          <ProductionRecipes />
         </TabsContent>
 
         <TabsContent value="checklistor" className="space-y-3">
