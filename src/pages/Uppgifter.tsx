@@ -328,6 +328,9 @@ export default function Uppgifter() {
                       categoryColor={catOf(t)?.color ?? null}
                       assigneeName={staffName(t.assigned_staff_id)}
                       completedByName={staffName(t.completed_by_staff_id)}
+                      completedByImage={
+                        staffList.find((p) => p.id === t.completed_by_staff_id)?.profile_image_url ?? null
+                      }
                       onToggle={(done) => setDone.mutate({ id: t.id, done })}
                       onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
                       onAddPhoto={(file) => addPhoto(t, file)}
