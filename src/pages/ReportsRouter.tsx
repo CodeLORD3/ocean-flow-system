@@ -12,6 +12,7 @@ import { useState } from "react";
 import { SectionErrorBoundary } from "@/components/reports/SectionErrorBoundary";
 import { InventoryReportsArchive } from "@/components/reports/InventoryReportsArchive";
 import { ClipboardCheck } from "lucide-react";
+import { ReportsStatsBand } from "@/components/reports/ReportsStatsBand";
 
 function WholesaleReportsPage() {
   useRealtimeReportUpdates();
@@ -32,6 +33,8 @@ function WholesaleReportsPage() {
         <p className="hidden text-xs text-muted-foreground sm:block">Liveuppdaterad</p>
       </div>
 
+      <ReportsStatsBand />
+
       <Card>
         <CardHeader className="p-0">
           <button
@@ -41,7 +44,7 @@ function WholesaleReportsPage() {
             className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
           >
             {purchaseOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-            <FileText className="h-4 w-4 text-primary" />
+            <span className="rounded-md bg-primary/10 text-primary p-1.5"><FileText className="h-4 w-4" /></span>
             <CardTitle className="text-sm font-medium">Inköpsrapporter</CardTitle>
           </button>
         </CardHeader>
@@ -63,7 +66,7 @@ function WholesaleReportsPage() {
             className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
           >
             {productionOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-            <Factory className="h-4 w-4 text-primary" />
+            <span className="rounded-md bg-warning/10 text-warning p-1.5"><Factory className="h-4 w-4" /></span>
             <CardTitle className="text-sm font-medium">Produktionsrapporter</CardTitle>
           </button>
         </CardHeader>
@@ -84,7 +87,7 @@ function WholesaleReportsPage() {
             className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
           >
             {dailyOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-            <Receipt className="h-4 w-4 text-primary" />
+            <span className="rounded-md bg-success/10 text-success p-1.5"><Receipt className="h-4 w-4" /></span>
             <CardTitle className="text-sm font-medium">Dagsrapporter (butiker)</CardTitle>
           </button>
         </CardHeader>
@@ -106,7 +109,7 @@ function WholesaleReportsPage() {
             className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
           >
             {stockOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-            <ClipboardCheck className="h-4 w-4 text-primary" />
+            <span className="rounded-md bg-success/10 text-success p-1.5"><ClipboardCheck className="h-4 w-4" /></span>
             <CardTitle className="text-sm font-medium">Inventeringsrapporter (butiker)</CardTitle>
           </button>
         </CardHeader>
@@ -129,7 +132,7 @@ function WholesaleReportsPage() {
             className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
           >
             {weeklyOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-            <CalendarRange className="h-4 w-4 text-primary" />
+            <span className="rounded-md bg-destructive/10 text-destructive p-1.5"><CalendarRange className="h-4 w-4" /></span>
             <CardTitle className="text-sm font-medium">Veckorapporter</CardTitle>
           </button>
         </CardHeader>
@@ -151,7 +154,7 @@ function WholesaleReportsPage() {
             className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
           >
             {monthlyOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-            <CalendarDays className="h-4 w-4 text-primary" />
+            <span className="rounded-md bg-primary/10 text-primary p-1.5"><CalendarDays className="h-4 w-4" /></span>
             <CardTitle className="text-sm font-medium">Månadsrapporter</CardTitle>
           </button>
         </CardHeader>
@@ -175,7 +178,12 @@ export default function ReportsRouter() {
   }
   
   if (site === "production") {
-    return <ProductionReportsArchive />;
+    return (
+      <div className="space-y-4">
+        <ReportsStatsBand />
+        <ProductionReportsArchive />
+      </div>
+    );
   }
 
   return <ShopReportsPage />;

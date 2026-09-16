@@ -46,6 +46,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { StatTile, StatTiles } from "@/components/reports/StatTile";
+import { Banknote, Receipt, Trash2 as TrashIcon } from "lucide-react";
 
 function useAllDailyReports() {
   return useQuery({
@@ -400,12 +402,12 @@ export function DailyReportsArchive() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Metric label="Rapporter" value={nf(rows.length)} emphasis />
-        <Metric label="Nettoomsättning totalt" value={`${nf(totalNetSales)} kr`} />
-        <Metric label="Kvitton totalt" value={nf(totalReceipts)} />
-        <Metric label="Bemanning" value={`${totalStaffHours.toFixed(1)} h`} />
-      </div>
+      <StatTiles>
+        <StatTile label="Rapporter" value={nf(rows.length)} icon={FileText} tone="navy" />
+        <StatTile label="Nettoomsättning totalt" value={nf(totalNetSales)} unit="kr" icon={Banknote} tone="spruce" />
+        <StatTile label="Kvitton totalt" value={nf(totalReceipts)} icon={Receipt} tone="amber" />
+        <StatTile label="Bemanning" value={totalStaffHours.toFixed(1)} unit="h" icon={Users} tone="brick" />
+      </StatTiles>
 
       {rows.length === 0 ? (
         <div className="rounded-md border border-dashed px-4 py-12 text-center"><FileText className="mx-auto mb-3 h-6 w-6 text-muted-foreground" /><p className="text-sm text-muted-foreground">Inga dagsrapporter ännu.</p></div>
