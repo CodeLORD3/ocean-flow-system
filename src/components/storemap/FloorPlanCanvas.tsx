@@ -367,6 +367,12 @@ export function FloorPlanCanvas({
 
   const endPointer = () => {
     panRef.current = null;
+    if (marquee) {
+      if (marqueeBox) zoomToBox(marqueeBox);
+      setMarquee(null);
+      setMarqueeMode(false);
+      return;
+    }
     if (vDrag) {
       const pts = ghostPts[vDrag.zoneId];
       if (pts && onZonePointsCommit) onZonePointsCommit(vDrag.zoneId, pts);
