@@ -35,6 +35,7 @@ export function TaskRow({
   categoryColor,
   assigneeName,
   completedByName,
+  completedByImage,
   photoCount = 0,
   onToggle,
   onOpenDetail,
