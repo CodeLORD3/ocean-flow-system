@@ -986,6 +986,41 @@ export default function Uppgifter() {
                     <Input type="number" min={0} value={nMinutes} onChange={(e) => setNMinutes(e.target.value)} />
                   </div>
                 </div>
+                <div>
+                  <label className="text-sm font-medium">Leder till (valfritt)</label>
+                  <Select value={nLink} onValueChange={setNLink}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Ingen genväg" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Ingen genväg</SelectItem>
+                      {TASK_LINKS.map((l) => (
+                        <SelectItem key={l.url} value={l.url}>
+                          {l.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    T.ex. dagsrapporten eller stängningschecklistan — då öppnas den direkt från uppgiften.
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Recept (för produktion)</label>
+                  <Select value={nRecipe} onValueChange={setNRecipe}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Inget recept" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Inget recept</SelectItem>
+                      {recipes.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </>
             )}
 
