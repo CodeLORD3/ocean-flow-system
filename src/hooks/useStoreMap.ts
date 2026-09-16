@@ -44,6 +44,8 @@ export type MapZone = {
   height: number;
   sort_order: number;
   area_sqm: number | null;
+  /** Polygon i planens koordinater. Saknas den används rektangeln ovan. */
+  points: { x: number; y: number }[] | null;
 };
 
 export type MapObjectType = {
@@ -154,7 +156,7 @@ export function useMapZones(floorPlanId?: string | null) {
         .eq("floor_plan_id", floorPlanId!)
         .order("sort_order");
       if (error) throw error;
-      return (data || []) as MapZone[];
+      return (data || []) as unknown as MapZone[];
     },
     enabled: !!floorPlanId,
   });

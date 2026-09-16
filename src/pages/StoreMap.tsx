@@ -23,6 +23,9 @@ import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
+import { ZONE_PALETTE } from "@/lib/mapPalette";
+import { bbox, zonePoints } from "@/lib/mapGeometry";
+import { useFloorPlanImages, useUploadEntityImage } from "@/hooks/useEntityImages";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useAllowedStores } from "@/components/StoreSwitcher";
@@ -70,6 +73,8 @@ export default function StoreMap() {
   const { data: deviations = [] } = useDeviations(false);
   const { data: versions = [] } = useFloorPlanVersions(plan?.id ?? null);
   const { data: pins = [] } = useMapPins(plan?.id ?? null);
+  const { data: planImages = [] } = useFloorPlanImages(plan?.id ?? null);
+  const uploadImage = useUploadEntityImage();
   useMapRealtime(storeId);
 
   const saveZone = useSaveZone();
@@ -81,7 +86,9 @@ export default function StoreMap() {
   const deletePin = useDeleteMapPin();
 
   const [mode, setMode] = useState<"drift" | "redigera">("drift");
-  const [layers, setLayers] = useState({ background: true, grid: false, tasks: true, issues: true });
+  const [layers, setLayers] = useState({ background: true, grid: false, tasks: true, issues: true, photos: true });
+  /** Ytan man just nu placerar en bild i, tillsammans med den valda filen. */
+  const [placing, setPlacing] = useState<{ zoneId: string; file: File } | null>(null);
   const [selected, setSelected] = useState<Selection>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pinMode, setPinMode] = useState(false);
@@ -136,6 +143,30 @@ export default function StoreMap() {
   const selectedZone = selected?.kind === "zone" ? zones.find((z) => z.id === selected.id) ?? null : null;
   const selectedObject = selected?.kind === "object" ? objects.find((o) => o.id === selected.id) ?? null : null;
   const unlinkedTasks = tasks.filter((t) => !t.zone_id && !t.map_object_id);
+
+  /** Nummerbricka per yta — samma nummer i kartan som i förteckningen under. */
+  const zoneNumbers = useMemo(
+    () => Object.fromEntries(zones.map((z, i) => [z.id, i + 1])) as Record<string, number>,
+    [zones],
+  );
+
+  /**
+   * Bildmarkörer: riktiga uppladdade bilder som fått en exakt plats i en yta.
+   * Ligger flera bilder på nästan samma plats visas de som en markör med antal.
+   */
+  const photoSpots = useMemo(() => {
+    const groups = new Map<string, { id: string; zoneId: string; norm: { x: number; y: number }; count: number; url: string }>();
+    planImages.forEach((img) => {
+      if (img.norm_x == null || img.norm_y == null) return;
+      const zoneId = img.entity_type === "map_zone" ? img.entity_id : null;
+      if (!zoneId || !zones.some((z) => z.id === zoneId)) return;
+      const key = `${zoneId}:${Math.round(img.norm_x * 20)}:${Math.round(img.norm_y * 20)}`;
+      const found = groups.get(key);
+      if (found) found.count += 1;
+      else groups.set(key, { id: img.id, zoneId, norm: { x: img.norm_x, y: img.norm_y }, count: 1, url: img.url });
+    });
+    return [...groups.values()];
+  }, [planImages, zones]);
 
   const addObject = (t: MapObjectType) => {
     if (!plan) return;
@@ -242,6 +273,7 @@ export default function StoreMap() {
                   ["grid", "Rutnät"],
                   ["tasks", "Uppgifter"],
                   ["issues", "Anmärkningar"],
+                  ["photos", "Bilder"],
                 ] as const
               ).map(([key, label]) => (
                 <div key={key} className="flex items-center gap-1.5">
@@ -297,6 +329,36 @@ export default function StoreMap() {
               editMode={editMode}
               showBackground={layers.background}
               showGrid={layers.grid || editMode}
+              zoneNumbers={zoneNumbers}
+              photoSpots={photoSpots}
+              showPhotos={layers.photos}
+              placeZoneId={placing?.zoneId ?? null}
+              onPlacePhoto={async (zoneId, norm) => {
+                if (!placing) return;
+                const file = placing.file;
+                setPlacing(null);
+                try {
+                  await uploadImage.mutateAsync({
+                    entityType: "map_zone",
+                    entityId: zoneId,
+                    file,
+                    imageKind: "general",
+                    floorPlanId: plan.id,
+                    norm,
+                  });
+                  toast({ title: "Bilden ligger nu på sin plats i kartan" });
+                } catch (e) {
+                  toast({ title: "Kunde inte spara bilden", description: (e as Error).message, variant: "destructive" });
+                }
+              }}
+              onPhotoSpotSelect={(zoneId) => {
+                setSelected({ kind: "zone", id: zoneId });
+                setDrawerOpen(true);
+              }}
+              onZonePointsCommit={(id, points) => {
+                const b = bbox(points);
+                saveZone.mutate({ id, points, x: Math.round(b.x), y: Math.round(b.y), width: Math.round(b.width), height: Math.round(b.height) });
+              }}
               pins={pins}
               pinMode={pinMode}
               pxPerMeter={pxPerMeter}
@@ -312,20 +374,38 @@ export default function StoreMap() {
               }
             />
 
-            {/* Zonöversikt */}
+            {placing && (
+              <p className="rounded-md border border-primary bg-primary/5 px-2 py-1 text-[11px]">
+                Tryck på platsen inne i ytan där bilden är tagen.{" "}
+                <button className="underline" onClick={() => setPlacing(null)}>
+                  Avbryt
+                </button>
+              </p>
+            )}
+
+            {/* Ytförteckning — samma nummer och färg som i kartan */}
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {zones.map((z) => {
                 const p = zoneProgress[z.id];
+                const photos = photoSpots.filter((s) => s.zoneId === z.id).reduce((a, s) => a + s.count, 0);
                 return (
-                  <button
+                  <div
                     key={z.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => {
                       setSelected({ kind: "zone", id: z.id });
                       setFocus({ kind: "zone", id: z.id });
                       setDrawerOpen(true);
                     }}
-                    className="flex items-center gap-2 rounded-md border border-border p-2 text-left hover:bg-muted"
+                    className="flex items-center gap-2 rounded-md border border-border p-2 text-left hover:bg-muted cursor-pointer"
                   >
+                    <span
+                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-bold"
+                      style={{ background: z.color ?? "hsl(var(--primary))" }}
+                    >
+                      {zoneNumbers[z.id]}
+                    </span>
                     <StatusRing percent={p.percent} status={p.status} label={`${p.percent}`} />
                     <div className="min-w-0">
                       <p className="text-xs font-medium truncate">{z.name}</p>
@@ -340,7 +420,24 @@ export default function StoreMap() {
                       </p>
                     </div>
                     <span className="ml-auto h-2 w-2 rounded-full" style={{ background: STATUS_COLOR[p.status] }} />
-                  </button>
+                    <label
+                      className="text-[10px] rounded border border-border px-1.5 py-0.5 cursor-pointer hover:bg-background"
+                      title="Ta eller välj en bild och peka ut var i ytan den hör hemma"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Bild{photos > 0 ? ` ${photos}` : ""}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) setPlacing({ zoneId: z.id, file: f });
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  </div>
                 );
               })}
             </div>
@@ -456,30 +553,52 @@ export default function StoreMap() {
 
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-xs">Kvadratmeter per zon</CardTitle>
+                    <CardTitle className="text-xs">Ytor: kvadratmeter och färg</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1.5">
                     <p className="text-[10px] text-muted-foreground">
                       Fyll i den uppmätta ytan. Skalan räknas fram och övriga rutor får uppskattad yta.
                     </p>
                     {zones.map((z) => (
-                      <div key={z.id} className="flex items-center gap-2">
-                        <span className="text-[11px] truncate flex-1">{z.name}</span>
-                        <Input
-                          type="number"
-                          inputMode="decimal"
-                          step="0.1"
-                          min="0"
-                          defaultValue={z.area_sqm ?? ""}
-                          placeholder={formatSqm(areaOf(z, pxPerMeter).sqm)}
-                          onBlur={(e) =>
-                            saveZone.mutate({
-                              id: z.id,
-                              area_sqm: e.target.value === "" ? null : Number(e.target.value.replace(",", ".")),
-                            })
-                          }
-                          className="h-7 w-20 text-xs tabular-nums"
-                        />
+                      <div key={z.id} className="space-y-1 border-b border-border pb-1.5 last:border-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] truncate flex-1">
+                            {zoneNumbers[z.id]}. {z.name}
+                          </span>
+                          <Input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.1"
+                            min="0"
+                            defaultValue={z.area_sqm ?? ""}
+                            placeholder={formatSqm(areaOf(z, pxPerMeter).sqm)}
+                            onBlur={(e) =>
+                              saveZone.mutate({
+                                id: z.id,
+                                area_sqm: e.target.value === "" ? null : Number(e.target.value.replace(",", ".")),
+                              })
+                            }
+                            className="h-7 w-20 text-xs tabular-nums"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {ZONE_PALETTE.map((c) => (
+                            <button
+                              key={c.key}
+                              title={c.name}
+                              onClick={() => saveZone.mutate({ id: z.id, color: c.color })}
+                              className={`h-4 w-4 rounded-full border ${
+                                (z.color ?? "").toLowerCase() === c.color.toLowerCase()
+                                  ? "border-foreground ring-1 ring-foreground"
+                                  : "border-border"
+                              }`}
+                              style={{ background: c.color }}
+                            />
+                          ))}
+                          <span className="ml-auto text-[10px] text-muted-foreground">
+                            {zonePoints(z).length} hörn
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </CardContent>

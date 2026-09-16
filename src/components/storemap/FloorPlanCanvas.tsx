@@ -4,6 +4,17 @@ import { Minus, Plus, Maximize2 } from "lucide-react";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
 import { STATUS_COLOR, type MapProgress } from "@/lib/mapStatus";
 import { areaOf, formatSqm } from "@/lib/mapScale";
+import {
+  bbox,
+  centroid,
+  fromNormalized,
+  pointInPolygon,
+  toNormalized,
+  toPath,
+  translatePoints,
+  zonePoints,
+  type Pt,
+} from "@/lib/mapGeometry";
 import type { FloorPlan, MapObject, MapObjectType, MapPin, MapWall, MapZone } from "@/hooks/useStoreMap";
 
 export type Selection = { kind: "zone" | "object"; id: string } | null;
@@ -45,6 +56,13 @@ export function FloorPlanCanvas({
   onPinSelect,
   focus = null,
   onExitFocus,
+  zoneNumbers = {},
+  photoSpots = [],
+  showPhotos = true,
+  placeZoneId = null,
+  onPlacePhoto,
+  onPhotoSpotSelect,
+  onZonePointsCommit,
 }: {
   plan: FloorPlan;
   zones: MapZone[];
@@ -73,6 +91,16 @@ export function FloorPlanCanvas({
   onPinSelect?: (pin: MapPin) => void;
   focus?: { kind: "zone" | "object"; id: string } | null;
   onExitFocus?: () => void;
+  /** Nummerbricka per zon, som i legendraden under kartan. */
+  zoneNumbers?: Record<string, number>;
+  /** Bilder som ligger på en exakt plats inom en yta. */
+  photoSpots?: { id: string; zoneId: string; norm: { x: number; y: number }; count: number; url: string }[];
+  showPhotos?: boolean;
+  /** Placeringsläge: rutnätet tänds bara inuti den valda ytan. */
+  placeZoneId?: string | null;
+  onPlacePhoto?: (zoneId: string, norm: { x: number; y: number }) => void;
+  onPhotoSpotSelect?: (zoneId: string) => void;
+  onZonePointsCommit?: (id: string, points: { x: number; y: number }[]) => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -80,6 +108,11 @@ export function FloorPlanCanvas({
   const [drag, setDrag] = useState<DragState | null>(null);
   const [ghost, setGhost] = useState<Record<string, { x: number; y: number; width: number; height: number }>>({});
   const [hover, setHover] = useState<{ id: string; label: string; sub: string; sx: number; sy: number } | null>(null);
+  /** Dragning av en enskild polygonpunkt i redigeringsläget. */
+  const [vDrag, setVDrag] = useState<{ zoneId: string; index: number; base: Pt[]; startX: number; startY: number } | null>(
+    null,
+  );
+  const [ghostPts, setGhostPts] = useState<Record<string, Pt[]>>({});
 
   const fit = useCallback(() => {
     const el = wrapRef.current;
@@ -195,6 +228,19 @@ export function FloorPlanCanvas({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    if (vDrag) {
+      const dx = (e.clientX - vDrag.startX) / zoom;
+      const dy = (e.clientY - vDrag.startY) / zoom;
+      const next = vDrag.base.map((p, i) =>
+        i === vDrag.index ? { x: snap(p.x + dx), y: snap(p.y + dy) } : p,
+      );
+      if (vDrag.index < 0) {
+        setGhostPts((g) => ({ ...g, [vDrag.zoneId]: translatePoints(vDrag.base, snap(dx), snap(dy)) }));
+        return;
+      }
+      setGhostPts((g) => ({ ...g, [vDrag.zoneId]: next }));
+      return;
+    }
     if (panRef.current) {
       setOffset({
         x: panRef.current.ox + (e.clientX - panRef.current.x),
@@ -219,6 +265,12 @@ export function FloorPlanCanvas({
 
   const endPointer = () => {
     panRef.current = null;
+    if (vDrag) {
+      const pts = ghostPts[vDrag.zoneId];
+      if (pts && onZonePointsCommit) onZonePointsCommit(vDrag.zoneId, pts);
+      setVDrag(null);
+      return;
+    }
     if (drag) {
       const g = ghost[drag.id];
       if (g && onCommit) onCommit({ kind: drag.kind, id: drag.id, ...g });
@@ -226,16 +278,36 @@ export function FloorPlanCanvas({
     }
   };
 
+  /** Bildpunkt i planens koordinater ur en pekarhändelse. */
+  const planPoint = (e: React.MouseEvent): Pt | null => {
+    const el = wrapRef.current;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    return { x: (e.clientX - rect.left - offset.x) / zoom, y: (e.clientY - rect.top - offset.y) / zoom };
+  };
+
+  const ptsOf = (z: MapZone) => ghostPts[z.id] ?? zonePoints(z);
+
   /* Nålläge: tryck var som helst på ritningen och punkten hamnar exakt där. */
   const placePin = (e: React.MouseEvent) => {
-    const el = wrapRef.current;
-    if (!el || !pinMode || !onPinPlace) return;
+    if (!pinMode || !onPinPlace) return;
+    const pt = planPoint(e);
+    if (!pt) return;
     e.stopPropagation();
-    const rect = el.getBoundingClientRect();
-    const x = (e.clientX - rect.left - offset.x) / zoom;
-    const y = (e.clientY - rect.top - offset.y) / zoom;
-    const hit = [...zones].reverse().find((z) => x >= z.x && x <= z.x + z.width && y >= z.y && y <= z.y + z.height);
-    onPinPlace({ x: Math.round(x), y: Math.round(y), zoneId: hit?.id ?? null });
+    const hit = [...zones].reverse().find((z) => pointInPolygon(pt, ptsOf(z)));
+    onPinPlace({ x: Math.round(pt.x), y: Math.round(pt.y), zoneId: hit?.id ?? null });
+  };
+
+  /* Placeringsläge: klicket blir en relativ plats (0–1) inom den valda ytan. */
+  const placePhoto = (e: React.MouseEvent) => {
+    const zone = zones.find((z) => z.id === placeZoneId);
+    if (!zone || !onPlacePhoto) return;
+    const pt = planPoint(e);
+    if (!pt) return;
+    const pts = ptsOf(zone);
+    if (!pointInPolygon(pt, pts)) return;
+    e.stopPropagation();
+    onPlacePhoto(zone.id, toNormalized(pt, pts));
   };
 
   const geom = (id: string, base: { x: number; y: number; width: number; height: number }) => ghost[id] ?? base;
@@ -244,8 +316,8 @@ export function FloorPlanCanvas({
     <div className="relative rounded-md border border-border bg-muted/20 overflow-hidden">
       <div
         ref={wrapRef}
-        className={`h-[62vh] min-h-[380px] w-full touch-none ${pinMode ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
-        onClickCapture={pinMode ? placePin : undefined}
+        className={`h-[62vh] min-h-[380px] w-full touch-none ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
+        onClickCapture={pinMode ? placePin : placeZoneId ? placePhoto : undefined}
         onPointerDown={onBackgroundDown}
         onPointerMove={(e) => {
           onPointerMove(e);
@@ -311,34 +383,54 @@ export function FloorPlanCanvas({
               />
             ))}
 
-            {/* Lager 3 — zoner */}
+            {/* Lager 3 — zoner som riktiga polygoner efter planritningen */}
             {zones.map((z) => {
-              const g = geom(z.id, z);
+              const pts = ptsOf(z);
+              const b = bbox(pts);
+              const c = centroid(pts);
               const p = zoneProgress[z.id];
               const isSel = selected?.kind === "zone" && selected.id === z.id;
               const isHover = hover?.id === z.id;
-              const stroke = p ? STATUS_COLOR[p.status] : (z.color ?? "hsl(var(--primary))");
+              const dim = (hover && !isHover) || (selected && !isSel) || (placeZoneId && placeZoneId !== z.id);
+              const identity = z.color ?? "hsl(var(--primary))";
+              const status = p ? STATUS_COLOR[p.status] : identity;
+              const area = areaOf({ width: b.width, height: b.height, area_sqm: z.area_sqm }, pxPerMeter);
+              const num = zoneNumbers[z.id];
               return (
-                <g key={z.id} onPointerDown={(e) => startDrag(e, "zone", g as MapZone, "move")}>
-                  <rect
-                    x={g.x}
-                    y={g.y}
-                    width={g.width}
-                    height={g.height}
-                    rx={8}
-                    fill={z.color ?? "hsl(var(--primary))"}
-                    fillOpacity={isSel ? 0.2 : 0.09}
-                    stroke={isSel ? "hsl(var(--primary))" : stroke}
-                    strokeWidth={isSel || isHover ? 3 : 2}
-                    className="cursor-pointer transition-all"
-                    style={{ filter: isHover ? "drop-shadow(0 3px 8px rgba(0,0,0,0.35))" : undefined }}
+                <g
+                  key={z.id}
+                  opacity={dim ? 0.45 : 1}
+                  style={{ transition: "opacity 180ms ease" }}
+                  onPointerDown={(e) => {
+                    if (!editMode) return;
+                    e.stopPropagation();
+                    onSelect({ kind: "zone", id: z.id });
+                    setVDrag({ zoneId: z.id, index: -1, base: pts, startX: e.clientX, startY: e.clientY });
+                  }}
+                >
+                  <polygon
+                    points={toPath(pts)}
+                    fill={identity}
+                    fillOpacity={isSel ? 0.5 : isHover ? 0.42 : 0.3}
+                    stroke={isSel || isHover ? identity : status}
+                    strokeWidth={isSel ? 4 : isHover ? 3.5 : 2.5}
+                    strokeLinejoin="round"
+                    className="cursor-pointer"
+                    style={{
+                      transition: "fill-opacity 180ms ease, stroke-width 180ms ease, filter 180ms ease",
+                      filter: isHover || isSel ? "drop-shadow(0 3px 10px rgba(15,35,50,0.28))" : undefined,
+                    }}
                     onPointerEnter={(e) =>
                       setHover({
                         id: z.id,
                         label: z.name,
                         sub: [
-                          p && p.total > 0 ? `${p.done}/${p.total} uppgifter` : "Inga uppgifter idag",
-                          formatSqm(areaOf({ width: g.width, height: g.height, area_sqm: z.area_sqm }, pxPerMeter).sqm),
+                          p && p.total > 0
+                            ? p.done >= p.total
+                              ? "Allt klart ✓"
+                              : `${p.total - p.done} uppgifter kvar`
+                            : "Inga uppgifter idag",
+                          formatSqm(area.sqm),
                         ]
                           .filter(Boolean)
                           .join(" · "),
@@ -353,41 +445,88 @@ export function FloorPlanCanvas({
                       onSelect({ kind: "zone", id: z.id });
                     }}
                   />
-                  <foreignObject x={g.x + 6} y={g.y + 4} width={Math.max(60, g.width - 12)} height={28} style={{ pointerEvents: "none" }}>
-                    <div className="flex items-center gap-1.5 pointer-events-none">
-                      <span className="text-[11px] font-semibold text-foreground truncate">{z.name}</span>
-                      {p && p.total > 0 && (
-                        <span
-                          className="text-[10px] font-semibold tabular-nums px-1 rounded"
-                          style={{ color: STATUS_COLOR[p.status] }}
-                        >
-                          {p.percent}%
-                        </span>
-                      )}
-                      {p && p.openIssues > 0 && (
-                        <span className="text-[10px] font-semibold text-destructive">{p.openIssues} anm.</span>
-                      )}
-                      {(() => {
-                        const a = areaOf({ width: g.width, height: g.height, area_sqm: z.area_sqm }, pxPerMeter);
-                        return a.sqm == null ? null : (
-                          <span className="text-[10px] tabular-nums text-muted-foreground">
-                            {a.exact ? "" : "≈ "}{formatSqm(a.sqm)}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                  </foreignObject>
-                  {editMode && isSel && (
-                    <rect
-                      x={g.x + g.width - 7}
-                      y={g.y + g.height - 7}
-                      width={14}
-                      height={14}
-                      fill="hsl(var(--primary))"
-                      className="cursor-nwse-resize"
-                      onPointerDown={(e) => startDrag(e, "zone", g as MapZone, "resize")}
-                    />
+
+                  {/* Svagt rutnät bara inuti den yta man placerar en bild i */}
+                  {placeZoneId === z.id && plan.grid_size > 0 && (
+                    <g clipPath={`url(#zone-clip-${z.id})`} opacity={0.5} style={{ pointerEvents: "none" }}>
+                      <clipPath id={`zone-clip-${z.id}`}>
+                        <polygon points={toPath(pts)} />
+                      </clipPath>
+                      {Array.from({ length: Math.ceil(b.width / plan.grid_size) + 1 }).map((_, i) => (
+                        <line
+                          key={`pv${i}`}
+                          x1={b.x + i * plan.grid_size}
+                          y1={b.y}
+                          x2={b.x + i * plan.grid_size}
+                          y2={b.y + b.height}
+                          stroke="hsl(var(--foreground))"
+                          strokeWidth={0.5}
+                        />
+                      ))}
+                      {Array.from({ length: Math.ceil(b.height / plan.grid_size) + 1 }).map((_, i) => (
+                        <line
+                          key={`ph${i}`}
+                          x1={b.x}
+                          y1={b.y + i * plan.grid_size}
+                          x2={b.x + b.width}
+                          y2={b.y + i * plan.grid_size}
+                          stroke="hsl(var(--foreground))"
+                          strokeWidth={0.5}
+                        />
+                      ))}
+                    </g>
                   )}
+
+                  {/* Nummerbricka, namn och yta i zonens tyngdpunkt */}
+                  <g style={{ pointerEvents: "none" }}>
+                    {num != null && (
+                      <>
+                        <circle cx={c.x} cy={c.y - 22} r={13} fill={identity} stroke="hsl(var(--card))" strokeWidth={2} />
+                        <text
+                          x={c.x}
+                          y={c.y - 17}
+                          textAnchor="middle"
+                          fontSize={13}
+                          fontWeight={700}
+                          fill="hsl(var(--foreground))"
+                        >
+                          {num}
+                        </text>
+                      </>
+                    )}
+                    <text x={c.x} y={c.y + 4} textAnchor="middle" fontSize={13} fontWeight={600} fill="hsl(var(--foreground))">
+                      {z.name}
+                    </text>
+                    {area.sqm != null && (
+                      <text x={c.x} y={c.y + 20} textAnchor="middle" fontSize={11} fill="hsl(var(--muted-foreground))">
+                        {area.exact ? "" : "≈ "}
+                        {formatSqm(area.sqm)}
+                      </text>
+                    )}
+                    {p && p.total > 0 && (
+                      <circle cx={c.x + 34} cy={c.y - 22} r={5} fill={STATUS_COLOR[p.status]} />
+                    )}
+                  </g>
+
+                  {/* Polygonpunkter: bara i redigeringsläget för vald zon */}
+                  {editMode &&
+                    isSel &&
+                    pts.map((pt, i) => (
+                      <circle
+                        key={`v${i}`}
+                        cx={pt.x}
+                        cy={pt.y}
+                        r={6}
+                        fill="hsl(var(--card))"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2.5}
+                        className="cursor-move"
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          setVDrag({ zoneId: z.id, index: i, base: pts, startX: e.clientX, startY: e.clientY });
+                        }}
+                      />
+                    ))}
                 </g>
               );
             })}
@@ -499,6 +638,59 @@ export function FloorPlanCanvas({
                 </g>
               );
             })}
+
+            {/* Lager 7 — bilder på exakt plats: små markörer, aldrig miniatyrer */}
+            {showPhotos &&
+              photoSpots.map((spot) => {
+                const zone = zones.find((z) => z.id === spot.zoneId);
+                if (!zone) return null;
+                const pt = fromNormalized(spot.norm, ptsOf(zone));
+                const r = 9 / Math.max(zoom, 0.5);
+                return (
+                  <g
+                    key={spot.id}
+                    className="cursor-pointer"
+                    onPointerEnter={(e) =>
+                      setHover({
+                        id: spot.id,
+                        label: spot.count > 1 ? `${spot.count} bilder här` : "1 bild här",
+                        sub: zone.name,
+                        sx: e.clientX,
+                        sy: e.clientY,
+                      })
+                    }
+                    onPointerLeave={() => setHover((h) => (h?.id === spot.id ? null : h))}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPhotoSpotSelect?.(zone.id);
+                    }}
+                  >
+                    <rect
+                      x={pt.x - r}
+                      y={pt.y - r}
+                      width={r * 2}
+                      height={r * 2}
+                      rx={r / 2.5}
+                      fill="hsl(var(--card))"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={r / 4.5}
+                    />
+                    <circle cx={pt.x} cy={pt.y} r={r / 2.6} fill="hsl(var(--primary))" />
+                    {spot.count > 1 && (
+                      <text
+                        x={pt.x + r}
+                        y={pt.y - r}
+                        fontSize={r}
+                        fontWeight={700}
+                        fill="hsl(var(--primary))"
+                        style={{ pointerEvents: "none" }}
+                      >
+                        {spot.count}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
           </g>
         </svg>
       </div>
@@ -524,14 +716,11 @@ export function FloorPlanCanvas({
           <svg width={116} height={82} viewBox={`0 0 ${plan.width} ${plan.height}`} className="block">
             <rect x={0} y={0} width={plan.width} height={plan.height} fill="hsl(var(--muted))" />
             {zones.map((z) => (
-              <rect
+              <polygon
                 key={z.id}
-                x={z.x}
-                y={z.y}
-                width={z.width}
-                height={z.height}
+                points={toPath(ptsOf(z))}
                 fill={z.color ?? "hsl(var(--primary))"}
-                fillOpacity={0.25}
+                fillOpacity={0.3}
                 stroke="hsl(var(--border))"
                 strokeWidth={4}
               />
