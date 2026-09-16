@@ -127,9 +127,9 @@ export function TaskRow({
           type="button"
           aria-label={open ? "Stäng detaljer" : "Visa detaljer"}
           onClick={() => setOpen((v) => !v)}
-          className="shrink-0 rounded-md p-2 text-muted-foreground hover:bg-muted"
+          className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-muted"
         >
-          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
         </button>
       </div>
 
