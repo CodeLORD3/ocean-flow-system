@@ -35,7 +35,7 @@ const WEEKDAY_NAMES = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
 
 function Progress({ done, total }: { done: number; total: number }) {
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-  const tone = pct >= 90 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-rose-500";
+  const tone = "bg-emerald-500";
   return (
     <div className="space-y-2">
       <div className="flex items-baseline justify-between">
