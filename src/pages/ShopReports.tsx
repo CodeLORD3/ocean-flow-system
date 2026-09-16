@@ -20,6 +20,7 @@ import {
 } from "@/hooks/useWeeklyReports";
 import { useProducts } from "@/hooks/useProducts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InventoryReportsArchive } from "@/components/reports/InventoryReportsArchive";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -1060,6 +1061,16 @@ export default function ShopReports() {
           </CardContent>
         </Card>
       )}
+
+      {/* Butikens egna inventeringsrapporter — skapas när inventeringen skickas in */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Inventeringsrapporter</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <InventoryReportsArchive storeId={activeStoreId} limit={60} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="p-0">

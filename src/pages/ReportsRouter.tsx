@@ -10,12 +10,15 @@ import { MonthlyReportsSection } from "@/components/reports/MonthlyReports";
 import { useRealtimeReportUpdates } from "@/hooks/useWeeklyStoreReports";
 import { useState } from "react";
 import { SectionErrorBoundary } from "@/components/reports/SectionErrorBoundary";
+import { InventoryReportsArchive } from "@/components/reports/InventoryReportsArchive";
+import { ClipboardCheck } from "lucide-react";
 
 function WholesaleReportsPage() {
   useRealtimeReportUpdates();
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [productionOpen, setProductionOpen] = useState(false);
   const [dailyOpen, setDailyOpen] = useState(false);
+  const [stockOpen, setStockOpen] = useState(false);
   const [weeklyOpen, setWeeklyOpen] = useState(false);
   const [monthlyOpen, setMonthlyOpen] = useState(false);
 
@@ -93,6 +96,29 @@ function WholesaleReportsPage() {
           </CardContent>
         )}
       </Card>
+
+      <Card>
+        <CardHeader className="p-0">
+          <button
+            type="button"
+            aria-expanded={stockOpen}
+            onClick={() => setStockOpen(!stockOpen)}
+            className="flex w-full items-center gap-2 rounded-t-lg px-4 py-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
+          >
+            {stockOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+            <ClipboardCheck className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium">Inventeringsrapporter (butiker)</CardTitle>
+          </button>
+        </CardHeader>
+        {stockOpen && (
+          <CardContent className="pt-0 px-4 pb-4">
+            <SectionErrorBoundary title="Inventeringsrapporter">
+              <InventoryReportsArchive />
+            </SectionErrorBoundary>
+          </CardContent>
+        )}
+      </Card>
+
 
       <Card>
         <CardHeader className="p-0">
