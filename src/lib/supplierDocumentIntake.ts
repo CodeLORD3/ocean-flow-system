@@ -92,7 +92,7 @@ export async function approveDeliveryNote(
     }
   }
 
-  const docDate = doc.document_date || doc.delivery_date || today();
+  const docDate = safeDate(doc.document_date) || safeDate(doc.delivery_date) || today();
   const { data: report, error: reportError } = await supabase
     .from("purchase_reports")
     .insert({
