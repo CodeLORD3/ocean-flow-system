@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { EmptyState } from "@/components/EmptyState";
-import { Camera, CheckCircle2, Info, Link2, MoreVertical, Thermometer, Trash2, X } from "lucide-react";
+import { ArrowRight, Camera, CheckCircle2, Info, Link2, MoreVertical, Thermometer, Trash2, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,6 +77,7 @@ export function MapDetailDrawer({
   zoneNumber,
   areaLabel,
   inline = false,
+  onOpenPage,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -94,6 +95,8 @@ export function MapDetailDrawer({
   areaLabel?: string | null;
   /** Panelläge: visas som egen kolumn till höger istället för som överlägg. */
   inline?: boolean;
+  /** Öppnar områdets egna sida under kartan. */
+  onOpenPage?: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
   const entityId = object?.id ?? zone?.id ?? "";
@@ -109,7 +112,7 @@ export function MapDetailDrawer({
   const { data: logs = [] } = useActivityLogs({ storeId, limit: 300 });
   const { data: deviations = [] } = useDeviations(false);
   const { data: staff = [] } = useStaff(storeId);
-  const [tab, setTab] = useState("images");
+  const [tab, setTab] = useState("summary");
 
   const openIssues = deviations.filter(
     (d) => (d as { source?: string; source_id?: string }).source === entityType && (d as { source_id?: string }).source_id === entityId,
@@ -212,6 +215,11 @@ export function MapDetailDrawer({
               ))}
             </div>
           </div>
+          {onOpenPage && (
+            <Button size="sm" className="h-8 w-full gap-1 text-xs" onClick={onOpenPage}>
+              Öppna områdets egna sida <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          )}
     </div>
   );
 
@@ -220,12 +228,65 @@ export function MapDetailDrawer({
     <>
         <Tabs value={tab} onValueChange={setTab} className="mt-4">
           <TabsList className="h-9 w-full justify-start gap-1 overflow-x-auto rounded-lg bg-muted p-1">
+            <TabsTrigger value="summary" className="h-7 rounded-md px-3 text-xs">Översikt</TabsTrigger>
             <TabsTrigger value="images" className="h-7 rounded-md px-3 text-xs">Bilder</TabsTrigger>
             <TabsTrigger value="tasks" className="h-7 rounded-md px-3 text-xs">Uppgifter</TabsTrigger>
             <TabsTrigger value="overview" className="h-7 rounded-md px-3 text-xs">Info</TabsTrigger>
             <TabsTrigger value="activity" className="h-7 rounded-md px-3 text-xs">Historik</TabsTrigger>
             <TabsTrigger value="standard" className="h-7 rounded-md px-3 text-xs">Standard</TabsTrigger>
           </TabsList>
+
+          {/* Snabb överblick: statistik, senaste bilderna och det som hänt */}
+          <TabsContent value="summary" className="space-y-3 pt-3">
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                [`${progress.done}/${progress.total}`, "Uppgifter klara"],
+                [String(latest.length), "Bilder"],
+                [String(openIssues.length), "Öppna anmärkningar"],
+                [areaLabel ?? "—", "Yta"],
+              ].map(([v, t]) => (
+                <div key={t} className="rounded-lg border border-border p-2">
+                  <p className="text-[10px] text-muted-foreground">{t}</p>
+                  <p className="text-sm font-semibold tabular-nums">{v}</p>
+                </div>
+              ))}
+            </div>
+
+            {latest.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {latest.slice(0, 3).map((i) => (
+                  <img key={i.id} src={i.url} alt={i.caption ?? label} className="h-16 w-full rounded-md object-cover" />
+                ))}
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold text-muted-foreground">Senast gjort här</p>
+              {activity.length === 0 && <p className="text-[11px] text-muted-foreground">Inget har hänt ännu.</p>}
+              {activity.slice(0, 6).map((a, i) => (
+                <div key={i} className="flex items-start justify-between gap-2 text-[11px]">
+                  <span className="min-w-0 truncate">
+                    <span className="font-medium">{a.who}</span> {a.text}
+                  </span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
+                    {dayText(a.at)} {time(a.at)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {tasks.some((t) => !t.done) && (
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold text-muted-foreground">Kvar att göra</p>
+                {tasks
+                  .filter((t) => !t.done)
+                  .slice(0, 5)
+                  .map((t) => (
+                    <p key={t.id} className="truncate text-[11px]">• {t.task}</p>
+                  ))}
+              </div>
+            )}
+          </TabsContent>
 
           <TabsContent value="overview" className="space-y-3 pt-3">
             {object && objectType && (
