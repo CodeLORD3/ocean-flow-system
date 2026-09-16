@@ -420,7 +420,24 @@ export default function StoreMap() {
                       </p>
                     </div>
                     <span className="ml-auto h-2 w-2 rounded-full" style={{ background: STATUS_COLOR[p.status] }} />
-                  </button>
+                    <label
+                      className="text-[10px] rounded border border-border px-1.5 py-0.5 cursor-pointer hover:bg-background"
+                      title="Ta eller välj en bild och peka ut var i ytan den hör hemma"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Bild{photos > 0 ? ` ${photos}` : ""}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) setPlacing({ zoneId: z.id, file: f });
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  </div>
                 );
               })}
             </div>
