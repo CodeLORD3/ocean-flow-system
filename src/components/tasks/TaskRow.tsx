@@ -99,7 +99,7 @@ export function TaskRow({
             )}
             {assigneeName && (
               <span className="inline-flex items-center gap-1">
-                <User className="h-3 w-3" /> {assigneeName}
+                <StaffAvatar name={assigneeName} imageUrl={assigneeImage} className="h-4 w-4" /> {assigneeName}
               </span>
             )}
             {task.requires_photo && (
