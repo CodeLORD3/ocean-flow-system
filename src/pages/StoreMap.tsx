@@ -15,7 +15,21 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "@/hooks/use-toast";
-import { Copy, History, Map as MapIcon, MapPin as PinIcon, Pencil, RotateCw, Save, Trash2, Upload } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarDays,
+  Copy,
+  History,
+  ImageIcon,
+  Map as MapIcon,
+  MapPin as PinIcon,
+  Pencil,
+  RotateCw,
+  Save,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import { todayIso } from "@/hooks/useChecklist";
 import { FloorPlanCanvas, type Selection } from "@/components/storemap/FloorPlanCanvas";
 import { MapDetailDrawer } from "@/components/storemap/MapDetailDrawer";
 import { ObjectLibrary } from "@/components/storemap/ObjectLibrary";
@@ -90,6 +104,7 @@ export default function StoreMap() {
   const deletePin = useDeleteMapPin();
 
   const [mode, setMode] = useState<"drift" | "redigera">("drift");
+  const [view, setView] = useState("karta");
   const [layers, setLayers] = useState({ background: true, grid: false, tasks: true, issues: true, photos: true });
   /** Ytan man just nu placerar en bild i, tillsammans med den valda filen. */
   const [placing, setPlacing] = useState<{ zoneId: string; file: File } | null>(null);
