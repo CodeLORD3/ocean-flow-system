@@ -13,7 +13,7 @@ import { useStaff } from "@/hooks/useStaff";
 import { useFloorPlans, useMapZones } from "@/hooks/useStoreMap";
 import { useUploadEntityImage, type EntityImage } from "@/hooks/useEntityImages";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
-import { thumbUrl } from "@/lib/imageThumb";
+import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 import { dayBadgeClass } from "@/lib/dayColor";
 import {
   useSetTaskDone,
@@ -200,7 +200,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
               <h3 className="mb-2 text-sm font-semibold">Så här ska det se ut</h3>
               <div className="flex flex-wrap gap-2">
                 {reference.map((img) => (
-                  <img key={img.id} src={thumbUrl(img.url)} alt="" className="h-24 w-24 rounded-lg object-cover" />
+                  <img key={img.id} src={thumbUrl(img.url, THUMB_TILE)} alt="" className="h-24 w-24 rounded-lg object-cover" />
                 ))}
               </div>
             </div>
@@ -225,7 +225,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
               {allImages.map((img, i) => (
                 <button key={img.id} type="button" onClick={() => setLightbox(i)} className="overflow-hidden rounded-lg">
-                  <img src={thumbUrl(img.url)} alt="" className="h-24 w-full object-cover" />
+                  <img src={thumbUrl(img.url, THUMB_TILE)} alt="" className="h-24 w-full object-cover" />
                 </button>
               ))}
             </div>
