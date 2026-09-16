@@ -28,7 +28,6 @@ import { useTabs } from "@/contexts/TabsContext";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import { PORTAL_IMAGE_ENTITY_TYPE, portalImageEntityId } from "@/lib/portalImages";
 
-import { ChatPanel } from "@/components/chat/ChatPanel";
 import { ActivityIcon } from "@/components/dashboard/ActivityIcon";
 import { useStoreActivity } from "@/hooks/useStoreActivity";
 import { useState } from "react";
@@ -120,7 +119,6 @@ export default function OrganisationOverview() {
   const { data: suppliers = [] } = useSuppliers();
   const covers = useStoreCoverImages();
   const { data: activity } = useStoreActivity();
-  const [chatFocus, setChatFocus] = useState<{ key: string; nonce: number } | null>(null);
 
   // Storage locations for the active store (shop scope)
   const { data: shopLocations = [] } = useQuery({
@@ -293,7 +291,7 @@ export default function OrganisationOverview() {
           </h1>
           <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
             {isShop
-              ? "Butikens lager, ordrar, bilder och chatt med övriga portaler."
+              ? "Butikens lager, ordrar och bilder."
               : "Samlad vy över alla butiker — försäljning, lager, inköp och beställningar."}
           </p>
         </div>
@@ -323,7 +321,6 @@ export default function OrganisationOverview() {
           />
 
 
-          <ChatPanel compact onOpenFull={() => switchTab("/chat")} />
         </div>
       )}
 
@@ -342,12 +339,6 @@ export default function OrganisationOverview() {
             catalog
           />
 
-          <ChatPanel
-            compact
-            onOpenFull={() => switchTab("/chat")}
-            focusPortalKey={chatFocus?.key ?? null}
-            focusNonce={chatFocus?.nonce}
-          />
 
 
           {stores.length > 0 && (
@@ -385,7 +376,7 @@ export default function OrganisationOverview() {
                             count={act.messages}
                             label={`Nya meddelanden från ${store.name}`}
                             onClick={() =>
-                              setChatFocus({ key: `store:${store.id}`, nonce: Date.now() })
+                              switchTab("/chat")
                             }
                           />
                           <ActivityIcon

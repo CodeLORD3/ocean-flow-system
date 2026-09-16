@@ -7,6 +7,7 @@ import { StoreHero } from "@/components/StoreHero";
 import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
 
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { ChatBubble } from "@/components/chat/ChatBubble";
 
 
 
@@ -56,7 +57,7 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   "/pos-live": { title: "Kassa live", breadcrumb: ["Hem", "Rapporter", "Kassa live"] },
   "/organisation": { title: "Översikt", breadcrumb: ["Hem", "Översikt"] },
   "/checklist": { title: "Checklistor", breadcrumb: ["Hem", "Checklistor"] },
-  "/store-map": { title: "Butikskarta", breadcrumb: ["Hem", "Butikskarta"] },
+  "/store-map": { title: "Översikt", breadcrumb: ["Hem", "Översikt"] },
   "/dagsrapport": { title: "Dagsrapport", breadcrumb: ["Hem", "Rapporter", "Dagsrapport"] },
   "/profile": { title: "Min profil", breadcrumb: ["Hem", "Min profil"] },
   "/shop-orders": { title: "Ordrar", breadcrumb: ["Hem", "Ordrar"] },
@@ -333,6 +334,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </main>
 
           <MobileTabBar />
+
+          {/* Chatten ligger i en flytande bubbla nere till höger */}
+          <ChatBubble />
 
 
           {/* Footer — hidden on mobile to save vertical space */}
