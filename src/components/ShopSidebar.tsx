@@ -36,7 +36,7 @@ const overviewNav = [
   { title: "Bildflöde", url: "/image-feed", icon: Images },
 
   { title: "Uppgifter", url: "/uppgifter", icon: ListTodo },
-  { title: "Checklista", url: "/checklist", icon: ClipboardCheck },
+  
   { title: "Egenkontroll", url: "/food-safety", icon: ClipboardCheck },
   { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
   { title: "Bokningsinställningar", url: "/booking-settings", icon: SlidersHorizontal },
