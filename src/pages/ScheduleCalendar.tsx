@@ -177,13 +177,14 @@ export default function ScheduleCalendar() {
     return protocols.filter(p => p.meeting_date === selectedDate);
   }, [selectedDate, protocols]);
 
-  const openAddPanel = (date?: string) => {
+  const openAddPanel = (date?: string, endDate?: string) => {
     setFormTitle("");
     setFormDesc("");
     setFormCategory("event");
     setFormType("note");
     setFormSeverity("info");
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
+    setFormEndDate(endDate && endDate !== date ? endDate : "");
     setFormRecurrence("none");
     setFormRecurrenceEnd("");
     setFormAssignee("none");
