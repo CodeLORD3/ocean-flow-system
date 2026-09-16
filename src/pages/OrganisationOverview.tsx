@@ -119,7 +119,6 @@ export default function OrganisationOverview() {
   const { data: suppliers = [] } = useSuppliers();
   const covers = useStoreCoverImages();
   const { data: activity } = useStoreActivity();
-  const [chatFocus, setChatFocus] = useState<{ key: string; nonce: number } | null>(null);
 
   // Storage locations for the active store (shop scope)
   const { data: shopLocations = [] } = useQuery({
