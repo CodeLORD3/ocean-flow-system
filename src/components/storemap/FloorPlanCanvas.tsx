@@ -722,7 +722,7 @@ export function FloorPlanCanvas({
       {focusBox && (
         <button
           onClick={() => onExitFocus?.()}
-          className="absolute left-2 top-2 rounded-md border border-border bg-card/95 p-1 shadow-md hover:border-primary"
+          className="absolute bottom-3 right-3 rounded-md border border-border bg-card/95 p-1 shadow-md hover:border-primary"
           title="Tillbaka till hela kartan"
         >
           <svg width={116} height={82} viewBox={`0 0 ${plan.width} ${plan.height}`} className="block">
@@ -752,7 +752,7 @@ export function FloorPlanCanvas({
       )}
 
       {/* Zoomreglage som i ritningsvyn: plus, minus, procent och passa in */}
-      <div className="absolute right-3 top-3 flex flex-col items-center gap-0.5 rounded-xl border border-border bg-card/95 p-1 shadow-sm">
+      <div className="absolute left-3 top-3 flex flex-col items-center gap-0.5 rounded-xl border border-border bg-card/95 p-1 shadow-sm">
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => zoomBy(1.25)} title="Zooma in">
           <Plus className="h-4 w-4" />
         </Button>
