@@ -87,7 +87,7 @@ const overviewNav = [
 const calendarNav = [
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
   { title: "Mötesprotokoll", url: "/meetings", icon: FileText },
-  { title: "Uppgifter", url: "/tasks", icon: ListTodo },
+  { title: "Kalenderuppgifter", url: "/tasks", icon: ListTodo },
 ];
 
 const salesNav = [
@@ -129,6 +129,7 @@ const financeNav = [
   { title: "Dagsrapport", url: "/dagsrapport", icon: FileText },
   { title: "Försvunnet ur lagret", url: "/stock-disappearance", icon: Package },
   { title: "Kassa live", url: "/pos-live", icon: Radio },
+  { title: "Uppgifter", url: "/uppgifter", icon: ListTodo },
   { title: "Checklistor", url: "/checklist", icon: ClipboardCheck },
   { title: "Butikskarta", url: "/store-map", icon: Map },
 

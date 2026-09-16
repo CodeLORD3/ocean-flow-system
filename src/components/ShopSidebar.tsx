@@ -35,6 +35,7 @@ const overviewNav = [
   { title: "Översikt", url: "/store-map", icon: Map },
   { title: "Bildflöde", url: "/image-feed", icon: Images },
 
+  { title: "Uppgifter", url: "/uppgifter", icon: ListTodo },
   { title: "Checklista", url: "/checklist", icon: ClipboardCheck },
   { title: "Egenkontroll", url: "/food-safety", icon: ClipboardCheck },
   { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
@@ -45,7 +46,7 @@ const overviewNav = [
 const calendarNav = [
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
   { title: "Mötesprotokoll", url: "/meetings", icon: FileText },
-  { title: "Uppgifter", url: "/tasks", icon: ListTodo },
+  { title: "Kalenderuppgifter", url: "/tasks", icon: ListTodo },
 ];
 
 const salesNav = [
