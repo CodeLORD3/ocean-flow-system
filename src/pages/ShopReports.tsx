@@ -21,6 +21,7 @@ import {
 import { useProducts } from "@/hooks/useProducts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InventoryReportsArchive } from "@/components/reports/InventoryReportsArchive";
+import { ReportsStatsBand } from "@/components/reports/ReportsStatsBand";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -1033,6 +1034,8 @@ export default function ShopReports() {
           )}
         </Button>
       </div>
+
+      <ReportsStatsBand storeId={activeStoreId} />
 
       {/* Open drafts banner */}
       {otherOpenDrafts.length > 0 && (
