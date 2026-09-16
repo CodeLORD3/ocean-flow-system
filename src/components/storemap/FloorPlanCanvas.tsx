@@ -204,6 +204,7 @@ export function FloorPlanCanvas({
   wheelRef.current = (e: WheelEvent) => {
     const el = wrapRef.current;
     if (!el) return;
+    touched.current = true;
     const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
     const next = clamp(zoom * Math.exp(-dy * 0.0015), MIN_ZOOM, MAX_ZOOM);
     const rect = el.getBoundingClientRect();
@@ -228,6 +229,7 @@ export function FloorPlanCanvas({
   const panRef = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const onBackgroundDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
+    touched.current = true;
     panRef.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
   };
@@ -235,6 +237,7 @@ export function FloorPlanCanvas({
   const zoomBy = (factor: number) => {
     const el = wrapRef.current;
     if (!el) return;
+    touched.current = true;
     const next = clamp(zoom * factor, MIN_ZOOM, MAX_ZOOM);
     const px = el.clientWidth / 2;
     const py = el.clientHeight / 2;
