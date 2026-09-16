@@ -366,6 +366,9 @@ export function DailyReportsArchive() {
   const isAdmin = (currentStaff?.portal_access ?? []).includes("admin");
   const correctedReportIds = useMemo(() => new Set(reportEdits.map((edit) => edit.report_id)), [reportEdits]);
   const storeName = (id: string) => stores.find((store) => store.id === id)?.name ?? "Butik";
+  /** Profilbild för den som skapat rapporten (kopplas via personalens inloggning). */
+  const imageOfUser = (userId?: string | null) =>
+    userId ? staff.find((entry) => (entry as any).user_id === userId)?.profile_image_url ?? null : null;
   const staffName = (id: string) => {
     const person = staff.find((entry) => entry.id === id);
     return person ? `${person.first_name} ${person.last_name}` : "Personal";
