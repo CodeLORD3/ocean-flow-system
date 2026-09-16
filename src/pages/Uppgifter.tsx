@@ -249,6 +249,23 @@ export default function Uppgifter() {
     [staffList],
   );
 
+  /** Uppgiften man kom tillbaka till från kartan markeras en stund. */
+  const [marked, setMarked] = useState<string | null>(null);
+  useEffect(() => {
+    const id = searchParams.get("markera");
+    if (!id) return;
+    setMarked(id);
+    setTab("dag");
+    const t = setTimeout(() => {
+      document.getElementById(`uppgift-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 250);
+    const clear = setTimeout(() => setMarked(null), 8000);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(clear);
+    };
+  }, [searchParams]);
+
   /** Öppnar kartan med ytan markerad och med väg tillbaka till uppgiften. */
   const openOnMap = (t: Task, areaId: string) => {
     switchTab(`/store-map?zone=${areaId}&fromTask=${t.id}&taskName=${encodeURIComponent(t.task)}`);
@@ -415,29 +432,38 @@ export default function Uppgifter() {
                     </span>
                   </div>
                   {g.tasks.map((t) => (
-                    <TaskRow
+                    <div
                       key={t.id}
-                      task={t}
-                      area={t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null}
-                      categoryName={catOf(t)?.name ?? null}
-                      categoryColor={catOf(t)?.color ?? null}
-                      assigneeName={staffName(t.assigned_staff_id)}
-                      assigneeImage={
-                        staffList.find((p) => p.id === t.assigned_staff_id)?.profile_image_url ?? null
+                      id={`uppgift-${t.id}`}
+                      className={
+                        marked === t.id
+                          ? "rounded-lg ring-2 ring-primary ring-offset-2 ring-offset-background transition-shadow"
+                          : undefined
                       }
-                      completedByName={staffName(t.completed_by_staff_id)}
-                      completedByImage={
-                        staffList.find((p) => p.id === t.completed_by_staff_id)?.profile_image_url ?? null
-                      }
-                      onToggle={(done) => setDone.mutate({ id: t.id, done })}
-                      onSaveRequirement={(patch) => updateTask.mutate({ id: t.id, ...patch })}
-                      staffOptions={staffOptions}
-                      onAssign={(staffId) => assign(t, staffId)}
-                      onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
-                      onAddPhoto={(file) => addPhoto(t, file)}
-                      onOpenArea={(areaId) => openOnMap(t, areaId)}
-                      onDelete={() => deleteTask(t)}
-                    />
+                    >
+                      <TaskRow
+                        task={t}
+                        area={t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null}
+                        categoryName={catOf(t)?.name ?? null}
+                        categoryColor={catOf(t)?.color ?? null}
+                        assigneeName={staffName(t.assigned_staff_id)}
+                        assigneeImage={
+                          staffList.find((p) => p.id === t.assigned_staff_id)?.profile_image_url ?? null
+                        }
+                        completedByName={staffName(t.completed_by_staff_id)}
+                        completedByImage={
+                          staffList.find((p) => p.id === t.completed_by_staff_id)?.profile_image_url ?? null
+                        }
+                        onToggle={(done) => setDone.mutate({ id: t.id, done })}
+                        onSaveRequirement={(patch) => updateTask.mutate({ id: t.id, ...patch })}
+                        staffOptions={staffOptions}
+                        onAssign={(staffId) => assign(t, staffId)}
+                        onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
+                        onAddPhoto={(file) => addPhoto(t, file)}
+                        onOpenArea={(areaId) => openOnMap(t, areaId)}
+                        onDelete={() => deleteTask(t)}
+                      />
+                    </div>
                   ))}
                 </div>
               ))}
