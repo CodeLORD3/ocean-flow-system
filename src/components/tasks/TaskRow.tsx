@@ -84,7 +84,7 @@ export function TaskRow({
           <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
             {area && (
               <span className="inline-flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full" style={{ background: area.color }} />
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: area.color }} />
                 {area.number}. {area.name}
               </span>
             )}
