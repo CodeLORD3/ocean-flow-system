@@ -179,6 +179,16 @@ export function TaskRow({
             <Button size="sm" variant="ghost" onClick={onOpenDetail}>
               Mer info →
             </Button>
+            {onDelete && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="ml-auto text-destructive hover:text-destructive"
+                onClick={onDelete}
+              >
+                <Trash2 className="mr-1 h-4 w-4" /> Ta bort
+              </Button>
+            )}
           </div>
         </div>
       )}
