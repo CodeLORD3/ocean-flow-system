@@ -290,7 +290,7 @@ export function useAddStandardTask() {
           sort_order: 900,
           zone_id: input.zoneId ?? null,
           category_id: input.categoryId ?? null,
-          default_staff_id: input.assignedStaffId ?? null,
+          assigned_staff_id: input.assignedStaffId ?? null,
           specific_time: input.specificTime || null,
           time_label: input.specificTime || null,
           daypart: input.daypart || null,
