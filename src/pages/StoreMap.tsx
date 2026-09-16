@@ -784,6 +784,16 @@ export default function StoreMap() {
           tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
           unlinkedTasks={unlinkedTasks}
           canManage={canManage}
+          zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
+          areaLabel={
+            selectedZone
+              ? areaOf(selectedZone, pxPerMeter).sqm != null
+                ? `${areaOf(selectedZone, pxPerMeter).exact ? "" : "≈ "}${formatSqm(areaOf(selectedZone, pxPerMeter).sqm)}`
+                : null
+              : selectedObject && areaOf(selectedObject, pxPerMeter).sqm != null
+                ? formatSqm(areaOf(selectedObject, pxPerMeter).sqm)
+                : null
+          }
         />
       )}
     </div>
