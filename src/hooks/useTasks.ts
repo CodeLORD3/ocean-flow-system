@@ -622,3 +622,109 @@ export function useTaskReferenceImages(templateItemId?: string | null) {
     enabled: !!templateItemId,
   });
 }
+
+/** En rad i uppgiftsregistret: en uppgift oavsett vilken dag den gjordes. */
+export type RegisterTask = {
+  key: string;
+  /** Id till senaste tillfället, om något finns — annars null (bara standard). */
+  itemId: string | null;
+  templateItemId: string | null;
+  task: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  zoneId: string | null;
+  note: string | null;
+  linkUrl: string | null;
+  recipeId: string | null;
+  recurring: boolean;
+  times: number;
+  lastDone: string | null;
+};
+
+/**
+ * Uppgiftsregistret: allt arbete som finns i butiken — standarduppgifter plus
+ * uppgifter som gjorts de senaste månaderna, samlade en gång per uppgift.
+ */
+export function useTaskRegister(storeId?: string | null, days = 180) {
+  return useQuery({
+    queryKey: ["task-register", storeId, days],
+    queryFn: async () => {
+      const from = new Date();
+      from.setDate(from.getDate() - days);
+      const fromIso = from.toISOString().slice(0, 10);
+
+      const [tpl, occ] = await Promise.all([
+        supabase
+          .from("checklist_template_items")
+          .select("id, task, category_id, zone_id, note, link_url, recipe_id, active, store_id")
+          .eq("active", true)
+          .or(`store_id.is.null,store_id.eq.${storeId}`),
+        supabase
+          .from("checklist_items")
+          .select(
+            "id, task, category_id, zone_id, note, link_url, recipe_id, template_item_id, done, done_at, checklist_days!inner(store_id, checklist_date)",
+          )
+          .eq("checklist_days.store_id", storeId!)
+          .gte("checklist_days.checklist_date", fromIso)
+          .order("created_at", { ascending: false })
+          .limit(4000),
+      ]);
+      if (tpl.error) throw tpl.error;
+      if (occ.error) throw occ.error;
+
+      const map = new Map<string, RegisterTask>();
+      const keyOf = (name: string) => name.trim().toLowerCase();
+
+      (tpl.data || []).forEach((r: any) => {
+        map.set(keyOf(r.task), {
+          key: keyOf(r.task),
+          itemId: null,
+          templateItemId: r.id,
+          task: r.task,
+          categoryId: r.category_id,
+          categoryName: null,
+          zoneId: r.zone_id,
+          note: r.note,
+          linkUrl: r.link_url,
+          recipeId: r.recipe_id,
+          recurring: true,
+          times: 0,
+          lastDone: null,
+        });
+      });
+
+      (occ.data || []).forEach((r: any) => {
+        const key = keyOf(r.task);
+        const prev = map.get(key);
+        const done = r.done ? (r.done_at ?? r.checklist_days?.checklist_date ?? null) : null;
+        if (prev) {
+          prev.times += 1;
+          if (!prev.itemId) prev.itemId = r.id;
+          if (done && (!prev.lastDone || done > prev.lastDone)) prev.lastDone = done;
+          if (!prev.categoryId) prev.categoryId = r.category_id;
+          if (!prev.linkUrl) prev.linkUrl = r.link_url;
+          if (!prev.recipeId) prev.recipeId = r.recipe_id;
+          return;
+        }
+        map.set(key, {
+          key,
+          itemId: r.id,
+          templateItemId: r.template_item_id,
+          task: r.task,
+          categoryId: r.category_id,
+          categoryName: null,
+          zoneId: r.zone_id,
+          note: r.note,
+          linkUrl: r.link_url,
+          recipeId: r.recipe_id,
+          recurring: !!r.template_item_id,
+          times: 1,
+          lastDone: done,
+        });
+      });
+
+      return [...map.values()].sort((a, b) => a.task.localeCompare(b.task, "sv"));
+    },
+    enabled: !!storeId,
+  });
+}
