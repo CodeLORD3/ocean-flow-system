@@ -94,9 +94,7 @@ export function TaskGuideEditor({
 
       <div>
         <label className="text-sm font-medium">Utrustning och material</label>
-        <p className="mb-2 text-xs text-muted-foreground">
-          Plockas fram innan momentet startar. Bild på förpackningen gör att rätt medel eller redskap används varje gång.
-        </p>
+        <p className="mb-2 text-xs text-muted-foreground">Plocka fram innan start. Lägg bild på varan.</p>
         <div className="space-y-2">
           {guide.materials.map((m, i) => (
             <div key={i} className="flex items-center gap-2">
