@@ -249,10 +249,10 @@ export function FloorPlanCanvas({
     if (e.button !== 0) return;
     touched.current = true;
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-    if (e.shiftKey || marqueeModeRef.current) {
-      const pt = planPointRef.current(e);
+    if (e.shiftKey || marqueeMode) {
+      const pt = planPoint(e);
       if (pt) {
-        setMarqueeRef.current({ x0: pt.x, y0: pt.y, x1: pt.x, y1: pt.y });
+        setMarquee({ x0: pt.x, y0: pt.y, x1: pt.x, y1: pt.y });
         return;
       }
     }
