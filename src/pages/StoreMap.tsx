@@ -34,6 +34,7 @@ import { FloorPlanCanvas, type Selection } from "@/components/storemap/FloorPlan
 import { MapDetailDrawer } from "@/components/storemap/MapDetailDrawer";
 import { ObjectLibrary } from "@/components/storemap/ObjectLibrary";
 import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog";
+import { MapListViews } from "@/components/storemap/MapListViews";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
@@ -317,6 +318,23 @@ export default function StoreMap() {
         <EmptyState
           title="Ingen ritning ännu"
           description="En administratör lägger upp butikens planritning innan kartan kan användas."
+        />
+      ) : view !== "karta" ? (
+        <MapListViews
+          view={view}
+          zones={zones}
+          objects={objects}
+          tasks={tasks}
+          deviations={deviations as never}
+          images={planImages}
+          versions={versions as never}
+          zoneNumbers={zoneNumbers}
+          onOpenZone={(id) => {
+            setSelected({ kind: "zone", id });
+            setView("karta");
+            setFocus({ kind: "zone", id });
+            setDrawerOpen(true);
+          }}
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
