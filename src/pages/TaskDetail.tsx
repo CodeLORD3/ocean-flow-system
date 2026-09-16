@@ -140,7 +140,13 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
               {area && (
                 <button
                   type="button"
-                  onClick={() => switchTab("/store-map")}
+                  onClick={() =>
+                    switchTab(
+                      task.zone_id
+                        ? `/store-map?zone=${task.zone_id}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`
+                        : "/store-map",
+                    )
+                  }
                   className="inline-flex items-center gap-1 hover:text-foreground"
                 >
                   <MapPin className="h-3 w-3" /> {area.number}. {area.name}

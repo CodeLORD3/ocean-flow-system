@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useTabs } from "@/contexts/TabsContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +30,7 @@ import {
   Save,
   Trash2,
   Upload,
+  ArrowLeft,
 } from "lucide-react";
 import { todayIso } from "@/hooks/useChecklist";
 import { FloorPlanCanvas, type Selection } from "@/components/storemap/FloorPlanCanvas";
@@ -127,6 +130,13 @@ export default function StoreMap() {
     existing: MapPin | null;
   } | null>(null);
 
+  /** Kom man hit från en uppgift? Då markeras ytan och man kan gå direkt tillbaka. */
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { switchTab } = useTabs();
+  const fromZoneId = searchParams.get("zone");
+  const fromTaskId = searchParams.get("fromTask");
+  const fromTaskName = searchParams.get("taskName");
+
   const pxPerMeter = useMemo(() => (plan ? derivePxPerMeter(plan, zones, objects) : null), [plan, zones, objects]);
   const totalSqm = useMemo(
     () => zones.reduce((sum, z) => sum + (areaOf(z, pxPerMeter).sqm ?? 0), 0),
@@ -171,6 +181,22 @@ export default function StoreMap() {
   const selectedZone = selected?.kind === "zone" ? zones.find((z) => z.id === selected.id) ?? null : null;
   const selectedObject = selected?.kind === "object" ? objects.find((o) => o.id === selected.id) ?? null : null;
   const unlinkedTasks = tasks.filter((t) => !t.zone_id && !t.map_object_id);
+
+  /** Öppnar och markerar ytan man kom till från en uppgift. */
+  useEffect(() => {
+    if (!fromZoneId || !zones.some((z) => z.id === fromZoneId)) return;
+    setView("karta");
+    setSelected({ kind: "zone", id: fromZoneId });
+    setFocus({ kind: "zone", id: fromZoneId });
+    setDrawerOpen(true);
+  }, [fromZoneId, zones]);
+
+  const fromZone = fromZoneId ? zones.find((z) => z.id === fromZoneId) ?? null : null;
+
+  const backToTask = () => {
+    setSearchParams({}, { replace: true });
+    switchTab(fromTaskId ? `/uppgifter?markera=${fromTaskId}` : "/uppgifter");
+  };
 
   /** Nummerbricka per yta — samma nummer i kartan som i förteckningen under. */
   const zoneNumbers = useMemo(
@@ -387,6 +413,29 @@ export default function StoreMap() {
         </div>
       </div>
 
+
+      {fromZone && (
+        <div
+          className="flex flex-wrap items-center gap-3 rounded-xl border-2 px-4 py-3"
+          style={{ borderColor: fromZone.color, background: `${fromZone.color}14` }}
+        >
+          <span
+            className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white"
+            style={{ background: fromZone.color }}
+          >
+            {zoneNumbers[fromZone.id] ?? ""}
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">{fromZone.name}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {fromTaskName ? `Yta för: ${fromTaskName}` : "Ytan är markerad på kartan"}
+            </p>
+          </div>
+          <Button size="lg" className="ml-auto gap-2" onClick={backToTask}>
+            <ArrowLeft className="h-4 w-4" /> Tillbaka till uppgiften
+          </Button>
+        </div>
+      )}
 
       {plansLoading ? (
         <p className="text-xs text-muted-foreground">Hämtar ritning…</p>
