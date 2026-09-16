@@ -426,7 +426,7 @@ export function FloorPlanCanvas({
     >
       <div
         ref={wrapRef}
-        className={`h-[56vh] min-h-[320px] max-h-[560px] w-full ${active ? "touch-none" : ""} ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
+        className={`h-[56vh] min-h-[320px] max-h-[560px] w-full ${active || marquee ? "touch-none" : ""} ${pinMode || placeZoneId || marqueeMode ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
         onClickCapture={pinMode ? placePin : placeZoneId ? placePhoto : undefined}
         onPointerDownCapture={() => setActive(true)}
         onPointerDown={onBackgroundDown}
