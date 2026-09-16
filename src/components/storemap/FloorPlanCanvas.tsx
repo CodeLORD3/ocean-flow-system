@@ -80,6 +80,16 @@ export function FloorPlanCanvas({
   onPinSelect?: (pin: MapPin) => void;
   focus?: { kind: "zone" | "object"; id: string } | null;
   onExitFocus?: () => void;
+  /** Nummerbricka per zon, som i legendraden under kartan. */
+  zoneNumbers?: Record<string, number>;
+  /** Bilder som ligger på en exakt plats inom en yta. */
+  photoSpots?: { id: string; zoneId: string; norm: { x: number; y: number }; count: number; url: string }[];
+  showPhotos?: boolean;
+  /** Placeringsläge: rutnätet tänds bara inuti den valda ytan. */
+  placeZoneId?: string | null;
+  onPlacePhoto?: (zoneId: string, norm: { x: number; y: number }) => void;
+  onPhotoSpotSelect?: (zoneId: string) => void;
+  onZonePointsCommit?: (id: string, points: { x: number; y: number }[]) => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
