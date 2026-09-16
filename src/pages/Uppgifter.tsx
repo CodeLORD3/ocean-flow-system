@@ -380,6 +380,10 @@ export default function Uppgifter() {
             </Button>
           </Card>
 
+          <Button variant="outline" size="sm" onClick={() => switchTab("/checklist")}>
+            Öppna dagens checklista
+          </Button>
+
           {checklists.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Inga checklistor ännu.</p>
           ) : (
