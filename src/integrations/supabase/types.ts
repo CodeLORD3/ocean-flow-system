@@ -11073,6 +11073,74 @@ export type Database = {
           },
         ]
       }
+      production_recipes: {
+        Row: {
+          active: boolean
+          allergens: string | null
+          batch_yield: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          ingredients: Json
+          name: string
+          prep_minutes: number | null
+          product_id: string | null
+          shelf_life_days: number | null
+          steps: Json
+          temperature: string | null
+          tips: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          allergens?: string | null
+          batch_yield?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: Json
+          name: string
+          prep_minutes?: number | null
+          product_id?: string | null
+          shelf_life_days?: number | null
+          steps?: Json
+          temperature?: string | null
+          tips?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          allergens?: string | null
+          batch_yield?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: Json
+          name?: string
+          prep_minutes?: number | null
+          product_id?: string | null
+          shelf_life_days?: number | null
+          steps?: Json
+          temperature?: string | null
+          tips?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_recipes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       production_report_lines: {
         Row: {
           created_at: string | null

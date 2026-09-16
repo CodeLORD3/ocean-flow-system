@@ -82,6 +82,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   "/purchase-reconciliation": all(GROSSIST, ADMIN),
   "/size-grades": all(GROSSIST, ADMIN),
   "/transformation-recipes": all(GROSSIST, ADMIN),
+  "/produktion-recept": all(BUTIK, GROSSIST, ADMIN),
   "/purchase-schedule": all(GROSSIST, ADMIN),
   "/suppliers": all(GROSSIST, ADMIN),
   "/pricing": all(GROSSIST, ADMIN),
