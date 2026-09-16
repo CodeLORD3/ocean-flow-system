@@ -24,6 +24,10 @@ type Props = {
   onAddPhoto?: (file: File) => void;
   onOpenArea?: (areaId: string) => void;
   onDelete?: () => void;
+  /** Sparar det som krävs för att få bocka av (kommentar/mätvärde). */
+  onSaveRequirement?: (patch: { completion_note?: string | null; completion_value?: number | null }) => void;
+  /** Sätts när antalet bilder är känt — då spärras även bildkravet. */
+  photoCountKnown?: boolean;
 };
 
 /**
