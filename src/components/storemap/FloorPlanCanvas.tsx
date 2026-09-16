@@ -228,6 +228,15 @@ export function FloorPlanCanvas({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    if (vDrag) {
+      const dx = (e.clientX - vDrag.startX) / zoom;
+      const dy = (e.clientY - vDrag.startY) / zoom;
+      const next = vDrag.base.map((p, i) =>
+        i === vDrag.index ? { x: snap(p.x + dx), y: snap(p.y + dy) } : p,
+      );
+      setGhostPts((g) => ({ ...g, [vDrag.zoneId]: next }));
+      return;
+    }
     if (panRef.current) {
       setOffset({
         x: panRef.current.ox + (e.clientX - panRef.current.x),
