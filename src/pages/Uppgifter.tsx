@@ -380,7 +380,7 @@ export default function Uppgifter() {
             </Button>
           </Card>
 
-          <Button variant="outline" size="sm" onClick={() => navigate("/checklist")}>
+          <Button variant="outline" size="sm" onClick={() => switchTab("/checklist")}>
             Öppna dagens checklista
           </Button>
 
