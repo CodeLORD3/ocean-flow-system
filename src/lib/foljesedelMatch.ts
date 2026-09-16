@@ -326,7 +326,16 @@ export function matchProduct(line: MatchInput, ctx: MatchContext): MatchResult {
   }
 
   // 2. Storleksvariant: art + sorteringssiffra
-  const graded = products.filter((p) => p.size_grade_id);
+  // Presentationsformen (hel/filé/rensad ...) måste stämma innan sortering får
+  // avgöra träffen — en filérad får aldrig bli en hel fisk.
+  const linePresentation =
+    detectPresentation(line.product_name) ?? detectPresentation(line.presentation);
+  const presentationOk = (p: MatchProduct): boolean => {
+    if (!linePresentation) return true;
+    const pp = detectPresentation(p.name);
+    return !pp || pp === linePresentation;
+  };
+  const graded = products.filter((p) => p.size_grade_id && presentationOk(p));
   if (graded.length) {
     const speciesHits = graded
       .map((p) => ({ p, sp: speciesMatch(line, p, aliases) }))
