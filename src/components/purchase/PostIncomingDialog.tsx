@@ -180,12 +180,41 @@ export default function PostIncomingDialog({ open, onOpenChange, report, lines, 
             <PackageCheck className="h-5 w-5" /> Bokför inleverans
           </DialogTitle>
           <DialogDescription>
-            Partier skapas med preliminärt pris från följesedeln och bokförs mot Grossist Flytande.
+            Partier skapas med preliminärt pris från följesedeln. Välj var varorna ska ligga.
           </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh] pr-3">
           <div className="space-y-5">
+            <div className="space-y-2 rounded-md border p-3">
+              <p className="text-sm font-medium">Vart ska varorna?</p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {destinations.map((d: any) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setLocationId(d.id)}
+                    className={`min-h-[64px] rounded-md border p-2 text-left text-sm transition-colors ${
+                      locationId === d.id
+                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                        : "hover:bg-muted/50"
+                    }`}
+                  >
+                    <span className="block font-medium">{d.name}</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {DESTINATION_HINT[d.location_type] ?? ""}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {!locationId && (
+                <p className="text-xs text-muted-foreground">
+                  Välj lager innan du bokför — det styr om varan syns direkt vid packning.
+                </p>
+              )}
+            </div>
+
+
             {zeroPriceLines.length > 0 && (
               <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 space-y-2">
                 <p className="text-sm font-medium text-destructive">
