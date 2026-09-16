@@ -229,9 +229,11 @@ export default function Uppgifter() {
         </div>
       </div>
 
-      <Tabs defaultValue="dag">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="dag">Dagens uppgifter</TabsTrigger>
+          <TabsTrigger value="checklistor">Checklistor</TabsTrigger>
+          <TabsTrigger value="sagordu">Så gör du</TabsTrigger>
           <TabsTrigger value="standard">Standarduppgifter</TabsTrigger>
           <TabsTrigger value="schema">Schemaläggning</TabsTrigger>
         </TabsList>
