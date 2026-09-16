@@ -257,7 +257,7 @@ export default function StoreMap() {
       {/* Viktig statistik högst upp — vilka som arbetar, stämpling, checklistor, avvikelser */}
       <OverviewStatsBar
         storeId={storeId}
-        openTasks={tasks.filter((t) => t.status !== "done").length}
+        openTasks={tasks.filter((t) => !t.done).length}
         openDeviations={Object.values(issuesByEntity).reduce((a, b) => a + b, 0)}
         totalSqm={totalSqm}
       />
