@@ -3,11 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import type { MapTask } from "@/hooks/useStoreMap";
 
-/** Rött under halva, bärnsten på vägen, grönt när allt är klart. */
-function tone(pct: number) {
-  if (pct >= 100) return { text: "text-emerald-600", bar: "bg-emerald-500" };
-  if (pct >= 50) return { text: "text-amber-600", bar: "bg-amber-500" };
-  return { text: "text-red-600", bar: "bg-red-500" };
+/** Alltid grönt — stapeln visar hur mycket som är klart. */
+function tone(_pct: number) {
+  return { text: "text-emerald-600", bar: "bg-emerald-500" };
 }
 
 /**
