@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,7 @@ import { useUploadEntityImage } from "@/hooks/useEntityImages";
 import {
   useAddAdhocTask,
   useDayTasks,
+  useDeleteTask,
   useSetTaskDone,
   useStandardTasks,
   useTaskCategories,
@@ -68,6 +69,7 @@ export default function Uppgifter() {
   const setDone = useSetTaskDone();
   const addAdhoc = useAddAdhocTask();
   const updateStandard = useUpdateStandardTask();
+  const removeTask = useDeleteTask();
   const upload = useUploadEntityImage();
 
   const tasks = dayData?.tasks ?? [];
@@ -166,6 +168,26 @@ export default function Uppgifter() {
       toast({ title: "Bild sparad på uppgiften" });
     } catch (e: any) {
       toast({ title: "Kunde inte spara bilden", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const deleteTask = async (task: Task) => {
+    if (!window.confirm(`Ta bort uppgiften "${task.task}" från ${day}?`)) return;
+    try {
+      await removeTask.mutateAsync(task.id);
+      toast({ title: "Uppgiften togs bort" });
+    } catch (e: any) {
+      toast({ title: "Kunde inte ta bort", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const deleteStandard = async (id: string, name: string) => {
+    if (!window.confirm(`Ta bort standarduppgiften "${name}"? Den slutar då skapas nya dagar.`)) return;
+    try {
+      await updateStandard.mutateAsync({ id, active: false });
+      toast({ title: "Standarduppgiften togs bort" });
+    } catch (e: any) {
+      toast({ title: "Kunde inte ta bort", description: e.message, variant: "destructive" });
     }
   };
 
@@ -301,6 +323,7 @@ export default function Uppgifter() {
                       onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
                       onAddPhoto={(file) => addPhoto(t, file)}
                       onOpenArea={() => switchTab("/store-map")}
+                      onDelete={() => deleteTask(t)}
                     />
                   ))}
                 </div>
@@ -358,6 +381,14 @@ export default function Uppgifter() {
                     ))}
                   </SelectContent>
                 </Select>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => deleteStandard(s.id, s.task)}
+                >
+                  <Trash2 className="mr-1 h-4 w-4" /> Ta bort
+                </Button>
               </Card>
             ))
           )}

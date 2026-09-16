@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Timer, User } from "lucide-react";
+import { Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Timer, Trash2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { durationText, taskTime } from "@/lib/taskTime";
@@ -20,6 +20,7 @@ type Props = {
   onOpenDetail: () => void;
   onAddPhoto?: (file: File) => void;
   onOpenArea?: (areaId: string) => void;
+  onDelete?: () => void;
 };
 
 /**
@@ -38,6 +39,7 @@ export function TaskRow({
   onOpenDetail,
   onAddPhoto,
   onOpenArea,
+  onDelete,
 }: Props) {
   const [open, setOpen] = useState(false);
   const time = taskTime(task);
@@ -177,6 +179,16 @@ export function TaskRow({
             <Button size="sm" variant="ghost" onClick={onOpenDetail}>
               Mer info →
             </Button>
+            {onDelete && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="ml-auto text-destructive hover:text-destructive"
+                onClick={onDelete}
+              >
+                <Trash2 className="mr-1 h-4 w-4" /> Ta bort
+              </Button>
+            )}
           </div>
         </div>
       )}

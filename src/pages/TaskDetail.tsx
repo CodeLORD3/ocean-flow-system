@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, Camera, Check, Clock, MapPin, Timer, User } from "lucide-react";
+import { ArrowLeft, Camera, Check, Clock, MapPin, Timer, Trash2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 import { dayBadgeClass } from "@/lib/dayColor";
 import {
+  useDeleteTask,
   useSetTaskDone,
   useTaskHistory,
   useTaskImages,
@@ -42,6 +43,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const { data: history = [] } = useTaskHistory(storeId, task?.task ?? null);
   const setDone = useSetTaskDone();
   const update = useUpdateTask();
+  const removeTask = useDeleteTask();
   const upload = useUploadEntityImage();
 
   const [note, setNote] = useState<string | null>(null);
@@ -346,6 +348,27 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                 Foto krävs för att räknas som klar
               </label>
             </div>
+          </div>
+          <div className="border-t pt-4">
+            <Button
+              variant="outline"
+              className="text-destructive hover:text-destructive"
+              onClick={async () => {
+                if (!window.confirm(`Ta bort uppgiften "${task.task}"?`)) return;
+                try {
+                  await removeTask.mutateAsync(task.id);
+                  toast({ title: "Uppgiften togs bort" });
+                  switchTab("/uppgifter");
+                } catch (e: any) {
+                  toast({ title: "Kunde inte ta bort", description: e.message, variant: "destructive" });
+                }
+              }}
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Ta bort uppgiften
+            </Button>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Tar bort uppgiften för det här datumet. Återkommande uppgifter tas bort under Standarduppgifter.
+            </p>
           </div>
         </TabsContent>
       </Tabs>
