@@ -116,7 +116,7 @@ export default function StoreMap() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pinMode, setPinMode] = useState(false);
   const [focus, setFocus] = useState<Selection>(null);
-  /** Områdets egna sida ligger under kartan och öppnas från sidopanelen. */
+  /** Områdets egna sida ligger som en egen flik i butikskartan. */
   const [areaPage, setAreaPage] = useState<Selection>(null);
   const [pinDialog, setPinDialog] = useState<{
     point: { x: number; y: number } | null;
@@ -279,6 +279,11 @@ export default function StoreMap() {
                 {label}
               </TabsTrigger>
             ))}
+            {areaPage && (
+              <TabsTrigger value="omrade" className="h-8 max-w-[160px] rounded-lg px-4 text-xs">
+                <span className="truncate">{areaPageLabel}</span>
+              </TabsTrigger>
+            )}
           </TabsList>
         </Tabs>
         <div className="ml-auto flex items-center gap-3">
@@ -322,7 +327,7 @@ export default function StoreMap() {
           title="Ingen ritning ännu"
           description="En administratör lägger upp butikens planritning innan kartan kan användas."
         />
-      ) : areaPage ? (
+      ) : areaPage && view === "omrade" ? (
         (() => {
           const pageZone = areaPage.kind === "zone" ? zones.find((z) => z.id === areaPage.id) ?? null : null;
           const pageObject = areaPage.kind === "object" ? objects.find((o) => o.id === areaPage.id) ?? null : null;
@@ -339,7 +344,10 @@ export default function StoreMap() {
               canManage={canManage}
               zoneNumber={pageZone ? zoneNumbers[pageZone.id] : undefined}
               areaLabel={area?.sqm != null ? `${area.exact ? "" : "≈ "}${formatSqm(area.sqm)}` : null}
-              onBack={() => setAreaPage(null)}
+              onBack={() => {
+                setAreaPage(null);
+                setView("karta");
+              }}
             />
           );
         })()
@@ -792,7 +800,7 @@ export default function StoreMap() {
                 tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
                 unlinkedTasks={unlinkedTasks}
                 canManage={canManage}
-                onOpenPage={() => setAreaPage(selected)}
+                onOpenPage={() => openAreaPage()}
           zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
                 areaLabel={
                   selectedZone
@@ -916,7 +924,7 @@ export default function StoreMap() {
           tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
           unlinkedTasks={unlinkedTasks}
           canManage={canManage}
-          onOpenPage={() => setAreaPage(selected)}
+          onOpenPage={() => openAreaPage()}
           zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
           areaLabel={
             selectedZone
