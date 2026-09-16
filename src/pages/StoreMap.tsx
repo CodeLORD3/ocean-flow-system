@@ -526,7 +526,8 @@ export default function StoreMap() {
             </div>
           </div>
 
-          {/* Höger panel */}
+          {/* Höger panel: bara i redigeringsläget, annars ligger kartan i full bredd */}
+          {editMode && (
           <div className="space-y-3">
             {editMode ? (
               <>
