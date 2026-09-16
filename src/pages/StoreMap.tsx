@@ -175,6 +175,25 @@ export default function StoreMap() {
     [zones],
   );
 
+  /** Fliknamn för områdets egna sida. */
+  const areaPageLabel = (() => {
+    if (!areaPage) return "";
+    if (areaPage.kind === "zone") {
+      const z = zones.find((x) => x.id === areaPage.id);
+      return z ? `${zoneNumbers[z.id] ?? ""} ${z.name}`.trim() : "Område";
+    }
+    const o = objects.find((x) => x.id === areaPage.id);
+    return o?.label ?? "Område";
+  })();
+
+  /** Öppnar valt områdes egna sida som flik och stänger sidopanelen. */
+  const openAreaPage = () => {
+    if (!selected) return;
+    setAreaPage(selected);
+    setSelected(null);
+    setView("omrade");
+  };
+
   /**
    * Bildmarkörer: riktiga uppladdade bilder som fått en exakt plats i en yta.
    * Ligger flera bilder på nästan samma plats visas de som en markör med antal.
