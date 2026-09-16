@@ -1409,6 +1409,8 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
   const baseName = (name: string) =>
     (name || "")
       .toLowerCase()
+      // Förpackningssätt ska inte hindra en lagerträff mellan samma vara.
+      .replace(/\s*\((styck|st|kg)\)\s*$/i, "")
       // Kvalitetsord räknas som syskon: Premium, Lyx, Basic osv. är samma vara i olika klass
       .replace(/\s+(premium|lyx|lux|basic|standard|extra|prima)\s*$/i, "")
       .replace(/\s+(xxl|xl|l|m|s|xs|stor|mellan|liten)\s*$/i, "")
@@ -1651,6 +1653,14 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
                   <td className={`px-2 py-0.5 text-right font-mono ${infiniteStock ? "text-success" : availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
                     {infiniteStock ? <span title="Obegränsat lager (uppstartsläge)">∞</span> : availableStock > 0 ? Number(availableStock.toFixed(1)) : "0"}
+                     {!infiniteStock && matchAlt && (
+                       <div
+                         className="mt-0.5 whitespace-nowrap font-sans text-[10px] font-semibold leading-tight text-warning-foreground"
+                         title={`${matchAlt.name}: ${Number(matchAlt.stock.toFixed(1))} i grossistlagret`}
+                       >
+                         {matchAlt.name} {Number(matchAlt.stock.toFixed(1))}
+                       </div>
+                     )}
                     {!infiniteStock && availableStock < qtyOrdered && (() => {
                       const other = elsewhereByProduct.get(line.product_id) || [];
                       if (!other.length) return null;
