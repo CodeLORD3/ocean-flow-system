@@ -879,6 +879,7 @@ import PostIncomingDialog from "@/components/purchase/PostIncomingDialog";
 import { buildSupplierIndex, lookupSupplier, matchProduct } from "@/lib/foljesedelMatch";
 import { unpostPurchaseReport } from "@/lib/purchaseReportPosting";
 import { edgeErrorMessage } from "@/lib/edgeError";
+import { safeDate } from "@/lib/parsedDates";
 
 /** SHA-256 av filen — grunden för dubblettspärren vid uppladdning. */
 async function sha256Hex(file: File): Promise<string> {
@@ -1290,7 +1291,7 @@ export default function PurchaseReporting() {
           }
 
           // Dokumentdatumet från handlingen styr rapportdatumet.
-          const docDate = doc.document_date || doc.delivery_date || null;
+          const docDate = safeDate(doc.document_date) || safeDate(doc.delivery_date) || null;
           await supabase
             .from("purchase_reports")
             .update({
@@ -1298,8 +1299,8 @@ export default function PurchaseReporting() {
               supplier_name_raw: doc.supplier_name ?? null,
               document_number: doc.document_number ?? null,
               document_type: doc.document_type ?? "foljesedel",
-              document_date: doc.document_date ?? null,
-              delivery_date: doc.delivery_date ?? null,
+              document_date: safeDate(doc.document_date),
+              delivery_date: safeDate(doc.delivery_date),
               total_ex_vat: doc.total_ex_vat ?? null,
               notes: doc.notes ?? null,
               ...(docDate ? { report_date: docDate } : {}),
@@ -1359,10 +1360,10 @@ export default function PurchaseReporting() {
                 latin_name: p.latin_name ?? null,
                 species_fao_code: p.species_fao_code ?? null,
                 lot_numbers: Array.isArray(p.lot_numbers) ? p.lot_numbers.filter(Boolean) : [],
-                best_before: p.best_before ?? null,
+                best_before: safeDate(p.best_before),
                 catch_area: p.catch_area ?? null,
-                catch_date_from: p.catch_date_from ?? null,
-                catch_date_to: p.catch_date_to ?? null,
+                catch_date_from: safeDate(p.catch_date_from),
+                catch_date_to: safeDate(p.catch_date_to),
                 fishing_gear: p.fishing_gear ?? null,
                 fishing_gear_code: p.fishing_gear_code ?? null,
                 vessel_name: p.vessel_name ?? null,

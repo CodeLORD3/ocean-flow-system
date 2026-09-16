@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildSupplierIndex, lookupSupplier, matchProduct } from "@/lib/foljesedelMatch";
 import type { MatchProduct } from "@/lib/foljesedelMatch";
 import type { SizeGrade } from "@/lib/sizeGrades";
+import { safeDate } from "@/lib/parsedDates";
 
 export interface SupplierDocument {
   id: string;
@@ -91,7 +92,7 @@ export async function approveDeliveryNote(
     }
   }
 
-  const docDate = doc.document_date || doc.delivery_date || today();
+  const docDate = safeDate(doc.document_date) || safeDate(doc.delivery_date) || today();
   const { data: report, error: reportError } = await supabase
     .from("purchase_reports")
     .insert({
@@ -104,8 +105,8 @@ export async function approveDeliveryNote(
       supplier_name_raw: (header.supplier_name as string) ?? null,
       document_number: doc.document_number,
       document_type: doc.doc_type,
-      document_date: doc.document_date,
-      delivery_date: doc.delivery_date,
+      document_date: safeDate(doc.document_date),
+      delivery_date: safeDate(doc.delivery_date),
       total_ex_vat: doc.total_ex_vat,
       legal_entity_id: doc.legal_entity_id,
       notes: (header.notes as string) ?? null,
@@ -166,10 +167,10 @@ export async function approveDeliveryNote(
       latin_name: p.latin_name ?? null,
       species_fao_code: p.species_fao_code ?? null,
       lot_numbers: Array.isArray(p.lot_numbers) ? p.lot_numbers.filter(Boolean) : [],
-      best_before: p.best_before ?? null,
+      best_before: safeDate(p.best_before),
       catch_area: p.catch_area ?? null,
-      catch_date_from: p.catch_date_from ?? null,
-      catch_date_to: p.catch_date_to ?? null,
+      catch_date_from: safeDate(p.catch_date_from),
+      catch_date_to: safeDate(p.catch_date_to),
       fishing_gear: p.fishing_gear ?? null,
       fishing_gear_code: p.fishing_gear_code ?? null,
       vessel_name: p.vessel_name ?? null,
