@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useSite } from "@/contexts/SiteContext";
-import { useAllowedStores } from "@/hooks/useAllowedStores";
+import { useAllowedStores } from "@/components/StoreSwitcher";
 import { useStaff } from "@/hooks/useStaff";
 import { useTabs } from "@/contexts/TabsContext";
 import { todayIso } from "@/hooks/useChecklist";
