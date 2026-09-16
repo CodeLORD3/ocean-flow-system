@@ -561,10 +561,7 @@ export default function Uppgifter() {
             <div>
               <label className="text-sm font-medium">Vad ska göras?</label>
               <Input value={nTask} onChange={(e) => setNTask(e.target.value)} autoFocus />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Uppgiften öppnas direkt efter att du sparat, så du kan lägga in godkänt läge, utrustning och arbetsgång
-                med bilder. Kan ändras när som helst.
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">Uppgiften öppnas efteråt för beskrivning och bilder.</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

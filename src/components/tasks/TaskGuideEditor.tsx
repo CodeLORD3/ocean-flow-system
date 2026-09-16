@@ -67,23 +67,12 @@ export function TaskGuideEditor({
 
   return (
     <div className="space-y-5">
-      <div className="rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
-        Fyll i tre delar: <strong className="text-foreground">godkänt läge</strong> (hur disken, kylen eller ytan ska se
-        ut när det är klart), <strong className="text-foreground">utrustning och material</strong> (vad som ska plockas
-        fram innan man börjar) och <strong className="text-foreground">arbetsgång</strong> (momenten i rätt ordning).
-        Skriv kort, ett moment per rad, och lägg en bild där ord inte räcker.
-      </div>
-
       <div>
         <label className="text-sm font-medium">Godkänt läge</label>
-        <p className="mb-2 text-xs text-muted-foreground">
-          Så här ska det se ut vid avslut — och kraven som gäller, t.ex. temperatur, isbädd, datummärkning eller
-          städgrad.
-        </p>
         <Textarea
           value={guide.goal}
           onChange={(e) => patch({ goal: e.target.value })}
-          placeholder="Ex: Fiskdisken tömd och rengjord, ny isbädd jämnt lagd, restvara vakuumpackad och datummärkt, kyl på 0–2 °C."
+          placeholder="Ex: Disken rengjord, ny isbädd, kyl 0–2 °C."
           className="min-h-[70px]"
         />
         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -105,9 +94,7 @@ export function TaskGuideEditor({
 
       <div>
         <label className="text-sm font-medium">Utrustning och material</label>
-        <p className="mb-2 text-xs text-muted-foreground">
-          Plockas fram innan momentet startar. Bild på förpackningen gör att rätt medel eller redskap används varje gång.
-        </p>
+        <p className="mb-2 text-xs text-muted-foreground">Plocka fram innan start. Lägg bild på varan.</p>
         <div className="space-y-2">
           {guide.materials.map((m, i) => (
             <div key={i} className="flex items-center gap-2">
@@ -151,9 +138,7 @@ export function TaskGuideEditor({
 
       <div>
         <label className="text-sm font-medium">Arbetsgång</label>
-        <p className="mb-2 text-xs text-muted-foreground">
-          Ett moment per rad, i den ordning de ska utföras. Börja med verbet och håll det på en rad.
-        </p>
+        <p className="mb-2 text-xs text-muted-foreground">Ett moment per rad, i rätt ordning.</p>
         <div className="space-y-3">
           {guide.steps.map((s, i) => (
             <div key={i} className="flex items-start gap-2">
@@ -161,11 +146,7 @@ export function TaskGuideEditor({
               <div className="flex-1 space-y-2">
                 <Textarea
                   value={s.text}
-                  placeholder={
-                    i === 0
-                      ? "Ex: Flytta all vara till kylrum och kontrollera temperaturen."
-                      : "Ex: Skölj disken, rengör med angivet medel och torka av."
-                  }
+                  placeholder="Ex: Flytta varan till kylrum."
                   onChange={(e) =>
                     patch({ steps: guide.steps.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)) })
                   }
