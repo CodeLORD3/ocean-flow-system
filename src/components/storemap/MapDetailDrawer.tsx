@@ -49,6 +49,8 @@ export function MapDetailDrawer({
   tasks,
   unlinkedTasks,
   canManage,
+  zoneNumber,
+  areaLabel,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -60,6 +62,10 @@ export function MapDetailDrawer({
   tasks: MapTask[];
   unlinkedTasks: MapTask[];
   canManage: boolean;
+  /** Nummerbrickan som ytan har i kartan och i förteckningen. */
+  zoneNumber?: number;
+  /** Ytans storlek i kvadratmeter, färdigformaterad. */
+  areaLabel?: string | null;
 }) {
   const entityType = object ? "map_object" : "map_zone";
   const entityId = object?.id ?? zone?.id ?? "";
@@ -72,7 +78,7 @@ export function MapDetailDrawer({
   const { data: logs = [] } = useActivityLogs({ storeId, limit: 300 });
   const { data: deviations = [] } = useDeviations(false);
   const { data: staff = [] } = useStaff(storeId);
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("images");
 
   const openIssues = deviations.filter(
     (d) => (d as { source?: string; source_id?: string }).source === entityType && (d as { source_id?: string }).source_id === entityId,
