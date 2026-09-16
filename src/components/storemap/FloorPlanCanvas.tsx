@@ -527,35 +527,33 @@ export function FloorPlanCanvas({
                     </g>
                   )}
 
-                  {/* Nummerbricka, namn och yta i zonens tyngdpunkt */}
-                  <g style={{ pointerEvents: "none" }}>
+                  {/*
+                    Nummerbricka, namn och yta i zonens tyngdpunkt. Texten ritas i
+                    skärmstorlek (delat med zoomen) så brickorna alltid är små och
+                    lika stora, oavsett hur mycket man zoomat.
+                  */}
+                  <g
+                    style={{ pointerEvents: "none" }}
+                    transform={`translate(${c.x} ${c.y}) scale(${1 / zoom})`}
+                  >
                     {num != null && (
                       <>
-                        <circle cx={c.x} cy={c.y - 22} r={14} fill={identity} stroke="hsl(var(--card))" strokeWidth={2.5} />
-                        <text
-                          x={c.x}
-                          y={c.y - 17}
-                          textAnchor="middle"
-                          fontSize={14}
-                          fontWeight={700}
-                          fill="#ffffff"
-                        >
+                        <circle cx={0} cy={-14} r={9} fill={identity} stroke="hsl(var(--card))" strokeWidth={2} />
+                        <text x={0} y={-10.5} textAnchor="middle" fontSize={10} fontWeight={700} fill="#ffffff">
                           {num}
                         </text>
                       </>
                     )}
-                    <text x={c.x} y={c.y + 4} textAnchor="middle" fontSize={13} fontWeight={600} fill="hsl(var(--foreground))">
+                    <text x={0} y={4} textAnchor="middle" fontSize={11} fontWeight={600} fill="hsl(var(--foreground))">
                       {z.name}
                     </text>
-                    {area.sqm != null && (
-                      <text x={c.x} y={c.y + 20} textAnchor="middle" fontSize={11} fill="hsl(var(--muted-foreground))">
+                    {area.sqm != null && (isHover || isSel) && (
+                      <text x={0} y={17} textAnchor="middle" fontSize={9.5} fill="hsl(var(--muted-foreground))">
                         {area.exact ? "" : "≈ "}
                         {formatSqm(area.sqm)}
                       </text>
                     )}
-                    {p && p.total > 0 && (
-                      <circle cx={c.x + 34} cy={c.y - 22} r={5} fill={STATUS_COLOR[p.status]} />
-                    )}
+                    {p && p.total > 0 && <circle cx={22} cy={-14} r={4} fill={STATUS_COLOR[p.status]} />}
                   </g>
 
                   {/* Polygonpunkter: bara i redigeringsläget för vald zon */}
