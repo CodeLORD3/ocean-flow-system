@@ -30,6 +30,7 @@ import {
 } from "@/hooks/useTasks";
 import { TaskGuideEditor } from "@/components/tasks/TaskGuideEditor";
 import { TaskGuideView } from "@/components/tasks/TaskGuideView";
+import { TaskIssueDialog } from "@/components/tasks/TaskIssueDialog";
 import { parseGuide } from "@/lib/taskGuide";
 import { DAYPARTS, durationText, taskTime } from "@/lib/taskTime";
 import { workTypeLabel } from "@/lib/workType";
