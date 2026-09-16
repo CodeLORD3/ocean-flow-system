@@ -53,7 +53,7 @@ export type TaskRow = {
 const TASK_FIELDS =
   "id, day_id, task, section, note, sort_order, done, done_at, signature, category, category_id, work_type, zone_id, map_object_id, assigned_staff_id, completed_by_staff_id, specific_time, time_from, time_to, daypart, estimated_minutes, instructions, important_note, requires_photo, template_item_id, time_label";
 
-function normalize(row: any): TaskRow {
+function normalize<T = TaskRow>(row: any): T {
   const raw = row.instructions;
   const steps = Array.isArray(raw)
     ? raw.map((s: unknown) => String(s)).filter((s) => s.trim().length > 0)
