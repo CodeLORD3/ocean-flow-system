@@ -374,20 +374,38 @@ export default function StoreMap() {
               }
             />
 
-            {/* Zonöversikt */}
+            {placing && (
+              <p className="rounded-md border border-primary bg-primary/5 px-2 py-1 text-[11px]">
+                Tryck på platsen inne i ytan där bilden är tagen.{" "}
+                <button className="underline" onClick={() => setPlacing(null)}>
+                  Avbryt
+                </button>
+              </p>
+            )}
+
+            {/* Ytförteckning — samma nummer och färg som i kartan */}
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {zones.map((z) => {
                 const p = zoneProgress[z.id];
+                const photos = photoSpots.filter((s) => s.zoneId === z.id).reduce((a, s) => a + s.count, 0);
                 return (
-                  <button
+                  <div
                     key={z.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => {
                       setSelected({ kind: "zone", id: z.id });
                       setFocus({ kind: "zone", id: z.id });
                       setDrawerOpen(true);
                     }}
-                    className="flex items-center gap-2 rounded-md border border-border p-2 text-left hover:bg-muted"
+                    className="flex items-center gap-2 rounded-md border border-border p-2 text-left hover:bg-muted cursor-pointer"
                   >
+                    <span
+                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-bold"
+                      style={{ background: z.color ?? "hsl(var(--primary))" }}
+                    >
+                      {zoneNumbers[z.id]}
+                    </span>
                     <StatusRing percent={p.percent} status={p.status} label={`${p.percent}`} />
                     <div className="min-w-0">
                       <p className="text-xs font-medium truncate">{z.name}</p>
