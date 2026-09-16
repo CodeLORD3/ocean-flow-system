@@ -777,131 +777,191 @@ export default function Uppgifter() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={newOpen} onOpenChange={setNewOpen}>
-        <DialogContent>
+      <Dialog
+        open={newOpen}
+        onOpenChange={(o) => {
+          setNewOpen(o);
+          if (!o) setStep(1);
+        }}
+      >
+        <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
             <DialogTitle>Ny uppgift</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium">Vad ska göras?</label>
-              <Input value={nTask} onChange={(e) => setNTask(e.target.value)} autoFocus />
-              <p className="mt-1 text-xs text-muted-foreground">Uppgiften öppnas efteråt för beskrivning och bilder.</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium">Område</label>
-                <Select value={nZone} onValueChange={setNZone}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Inget" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Inget område</SelectItem>
-                    {[...areaOf.values()].map((a) => (
-                      <SelectItem key={a!.id} value={a!.id}>
-                        {a!.number}. {a!.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Kategori</label>
-                <Select value={nCat} onValueChange={setNCat}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Ingen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Ingen kategori</SelectItem>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Tid (valfri)</label>
-                <Input type="time" value={nTime} onChange={(e) => setNTime(e.target.value)} />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Beräknad tid (min)</label>
-                <Input type="number" min={0} value={nMinutes} onChange={(e) => setNMinutes(e.target.value)} />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Ansvarig</label>
-              <Select value={nPerson} onValueChange={setNPerson}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Ingen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Ingen tilldelad</SelectItem>
-                  {staffList.map((s) => (
-                     <SelectItem key={s.id} value={s.id}>
-                       <span className="inline-flex items-center gap-2">
-                         <StaffAvatar
-                           name={`${s.first_name} ${s.last_name}`}
-                           imageUrl={s.profile_image_url}
-                           className="h-8 w-8"
-                         />
-                         {s.first_name} {s.last_name}
-                       </span>
-                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <label className="flex items-center gap-2 rounded-md border p-3 text-sm">
-              <input
-                type="checkbox"
-                className="h-4 w-4"
-                checked={nRecurring}
-                onChange={(e) => setNRecurring(e.target.checked)}
-              />
-              <span>
-                Återkommande uppgift
-                <span className="block text-xs text-muted-foreground">
-                  {nRecurring ? "Läggs i butikens standarduppgifter och kommer tillbaka varje dag." : "Gäller bara valt datum."}
+
+          <div className="flex items-center gap-2">
+            {STEPS.map((s, i) => (
+              <div key={s.n} className="flex flex-1 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => (s.n < step || nTask.trim()) && setStep(s.n)}
+                  className={cn(
+                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors",
+                    step === s.n
+                      ? "bg-primary text-primary-foreground"
+                      : step > s.n
+                        ? "bg-emerald-500 text-white"
+                        : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {step > s.n ? <Check className="h-4 w-4" /> : s.n}
+                </button>
+                <span className={cn("hidden text-xs sm:block", step === s.n ? "font-semibold" : "text-muted-foreground")}>
+                  {s.label}
                 </span>
-              </span>
-            </label>
-            <div className="space-y-2 rounded-md border p-3">
-              <p className="text-sm font-medium">Krav för att få bocka av</p>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" className="h-4 w-4" checked={nReqPhoto} onChange={(e) => setNReqPhoto(e.target.checked)} />
-                Bild krävs
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" className="h-4 w-4" checked={nReqNote} onChange={(e) => setNReqNote(e.target.checked)} />
-                Kommentar krävs
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" className="h-4 w-4" checked={nReqValue} onChange={(e) => setNReqValue(e.target.checked)} />
-                Mätvärde krävs
-              </label>
-              {nReqValue && (
-                <Input
-                  placeholder="Vad mäts? T.ex. Temperatur °C"
-                  value={nValueLabel}
-                  onChange={(e) => setNValueLabel(e.target.value)}
-                />
-              )}
-              <p className="text-xs text-muted-foreground">Utan ifyllt krav går uppgiften inte att markera klar.</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Anteckning</label>
-              <Textarea value={nNote} onChange={(e) => setNNote(e.target.value)} className="min-h-[60px]" />
-            </div>
+                {i < STEPS.length - 1 && <span className="h-px flex-1 bg-border" />}
+              </div>
+            ))}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewOpen(false)}>
-              Avbryt
+
+          <div className="min-h-[240px] space-y-3 pt-1">
+            {step === 1 && (
+              <>
+                <div>
+                  <label className="text-sm font-medium">Vad ska göras?</label>
+                  <Input
+                    value={nTask}
+                    onChange={(e) => setNTask(e.target.value)}
+                    placeholder="T.ex. Rengör fiskdisken"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && nTask.trim()) setStep(2);
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Kategori</label>
+                  <Select value={nCat} onValueChange={setNCat}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Ingen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Ingen kategori</SelectItem>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <label className="flex items-center gap-2 rounded-md border p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={nRecurring}
+                    onChange={(e) => setNRecurring(e.target.checked)}
+                  />
+                  <span>
+                    Återkommande uppgift
+                    <span className="block text-xs text-muted-foreground">
+                      {nRecurring ? "Kommer tillbaka varje dag." : "Gäller bara valt datum."}
+                    </span>
+                  </span>
+                </label>
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <div>
+                  <label className="text-sm font-medium">Område</label>
+                  <Select value={nZone} onValueChange={setNZone}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Inget" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Inget område</SelectItem>
+                      {[...areaOf.values()].map((a) => (
+                        <SelectItem key={a!.id} value={a!.id}>
+                          {a!.number}. {a!.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Ansvarig</label>
+                  <Select value={nPerson} onValueChange={setNPerson}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Ingen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Ingen tilldelad</SelectItem>
+                      {staffList.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          <span className="inline-flex items-center gap-2">
+                            <StaffAvatar
+                              name={`${s.first_name} ${s.last_name}`}
+                              imageUrl={s.profile_image_url}
+                              className="h-8 w-8"
+                            />
+                            {s.first_name} {s.last_name}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium">Tid (valfri)</label>
+                    <Input type="time" value={nTime} onChange={(e) => setNTime(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Beräknad tid (min)</label>
+                    <Input type="number" min={0} value={nMinutes} onChange={(e) => setNMinutes(e.target.value)} />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <div className="space-y-2 rounded-md border p-3">
+                  <p className="text-sm font-medium">Krav för att få bocka av</p>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" className="h-4 w-4" checked={nReqPhoto} onChange={(e) => setNReqPhoto(e.target.checked)} />
+                    Bild krävs
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" className="h-4 w-4" checked={nReqNote} onChange={(e) => setNReqNote(e.target.checked)} />
+                    Kommentar krävs
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" className="h-4 w-4" checked={nReqValue} onChange={(e) => setNReqValue(e.target.checked)} />
+                    Mätvärde krävs
+                  </label>
+                  {nReqValue && (
+                    <Input
+                      placeholder="Vad mäts? T.ex. Temperatur °C"
+                      value={nValueLabel}
+                      onChange={(e) => setNValueLabel(e.target.value)}
+                    />
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Anteckning</label>
+                  <Textarea value={nNote} onChange={(e) => setNNote(e.target.value)} className="min-h-[60px]" />
+                </div>
+                <p className="text-xs text-muted-foreground">Uppgiften öppnas efteråt för beskrivning och bilder.</p>
+              </>
+            )}
+          </div>
+
+          <DialogFooter className="sm:justify-between">
+            <Button variant="outline" onClick={() => (step === 1 ? setNewOpen(false) : setStep(step - 1))}>
+              {step === 1 ? "Avbryt" : "Tillbaka"}
             </Button>
-            <Button onClick={createAdhoc} disabled={!nTask.trim() || !storeId}>
-              Lägg till
-            </Button>
+            {step < 3 ? (
+              <Button onClick={() => setStep(step + 1)} disabled={step === 1 && !nTask.trim()}>
+                Nästa
+              </Button>
+            ) : (
+              <Button onClick={createAdhoc} disabled={!nTask.trim() || !storeId}>
+                Skapa uppgift
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
