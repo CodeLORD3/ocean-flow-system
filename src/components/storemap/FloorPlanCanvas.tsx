@@ -566,32 +566,36 @@ export function FloorPlanCanvas({
                     }}
                   />
 
-                  {/* Svagt rutnät bara inuti den yta man placerar en bild i */}
-                  {placeZoneId === z.id && plan.grid_size > 0 && (
-                    <g clipPath={`url(#zone-clip-${z.id})`} opacity={0.5} style={{ pointerEvents: "none" }}>
+                  {/* Rutnät i ytans egen färg, bara inuti ytan */}
+                  {(showGrid || placeZoneId === z.id) && minor > 0 && (
+                    <g
+                      clipPath={`url(#zone-clip-${z.id})`}
+                      opacity={placeZoneId === z.id ? 0.85 : 0.5}
+                      style={{ pointerEvents: "none" }}
+                    >
                       <clipPath id={`zone-clip-${z.id}`}>
                         <polygon points={toPath(pts)} />
                       </clipPath>
-                      {Array.from({ length: Math.ceil(b.width / plan.grid_size) + 1 }).map((_, i) => (
+                      {Array.from({ length: Math.ceil(b.width / minor) + 1 }).map((_, i) => (
                         <line
                           key={`pv${i}`}
-                          x1={b.x + i * plan.grid_size}
+                          x1={b.x + i * minor}
                           y1={b.y}
-                          x2={b.x + i * plan.grid_size}
+                          x2={b.x + i * minor}
                           y2={b.y + b.height}
-                          stroke="hsl(var(--foreground))"
-                          strokeWidth={0.5}
+                          stroke={identity}
+                          strokeWidth={0.6}
                         />
                       ))}
-                      {Array.from({ length: Math.ceil(b.height / plan.grid_size) + 1 }).map((_, i) => (
+                      {Array.from({ length: Math.ceil(b.height / minor) + 1 }).map((_, i) => (
                         <line
                           key={`ph${i}`}
                           x1={b.x}
-                          y1={b.y + i * plan.grid_size}
+                          y1={b.y + i * minor}
                           x2={b.x + b.width}
-                          y2={b.y + i * plan.grid_size}
-                          stroke="hsl(var(--foreground))"
-                          strokeWidth={0.5}
+                          y2={b.y + i * minor}
+                          stroke={identity}
+                          strokeWidth={0.6}
                         />
                       ))}
                     </g>
