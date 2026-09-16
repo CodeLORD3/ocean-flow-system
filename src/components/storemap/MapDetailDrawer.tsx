@@ -95,6 +95,8 @@ export function MapDetailDrawer({
   areaLabel?: string | null;
   /** Panelläge: visas som egen kolumn till höger istället för som överlägg. */
   inline?: boolean;
+  /** Öppnar områdets egna sida under kartan. */
+  onOpenPage?: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
   const entityId = object?.id ?? zone?.id ?? "";
