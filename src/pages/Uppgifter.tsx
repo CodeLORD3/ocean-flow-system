@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,7 @@ export default function Uppgifter() {
   const { site, activeStoreId } = useSite();
   const stores = useAllowedStores();
   const { switchTab } = useTabs();
+  const [searchParams] = useSearchParams();
 
   const [pickedStore, setPickedStore] = useState<string | null>(null);
   const storeId = site === "shop" ? activeStoreId : (pickedStore ?? stores[0]?.id ?? null);
