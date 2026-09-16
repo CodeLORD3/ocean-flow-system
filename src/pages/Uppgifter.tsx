@@ -13,7 +13,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { useAllowedStores } from "@/components/StoreSwitcher";
 import { useStaff } from "@/hooks/useStaff";
 import { useTabs } from "@/contexts/TabsContext";
-import { todayIso } from "@/hooks/useChecklist";
+import { todayIso, useChecklistTemplates, useCreateChecklistTemplate } from "@/hooks/useChecklist";
 import { useFloorPlans, useMapZones } from "@/hooks/useStoreMap";
 import { useUploadEntityImage } from "@/hooks/useEntityImages";
 import {
