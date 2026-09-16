@@ -107,9 +107,23 @@ export default function Uppgifter() {
       if (fPerson !== "all" && (t.assigned_staff_id ?? "none") !== fPerson) return false;
       if (fStatus === "kvar" && t.done) return false;
       if (fStatus === "klara" && !t.done) return false;
+      const q = query.trim().toLowerCase();
+      if (q) {
+        const person = staffList.find((p) => p.id === t.assigned_staff_id);
+        const hay = [
+          t.task,
+          t.note,
+          t.signature,
+          person ? `${person.first_name} ${person.last_name}` : "",
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
       return true;
     });
-  }, [tasks, fArea, fCat, fPerson, fStatus]);
+  }, [tasks, fArea, fCat, fPerson, fStatus, query, staffList]);
 
   const groups = useMemo(() => groupByDaypart(filtered), [filtered]);
   const doneCount = tasks.filter((t) => t.done).length;
