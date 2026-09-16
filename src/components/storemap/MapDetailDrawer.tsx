@@ -7,7 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { EmptyState } from "@/components/EmptyState";
-import { Camera, CheckCircle2, Link2, Thermometer } from "lucide-react";
+import { Camera, CheckCircle2, Info, Link2, Thermometer } from "lucide-react";
+import { bbox, zonePoints } from "@/lib/mapGeometry";
 import { toast } from "@/hooks/use-toast";
 import { MapComposer } from "@/components/storemap/MapComposer";
 import { StatusRing } from "@/components/storemap/StatusRing";
@@ -49,6 +50,8 @@ export function MapDetailDrawer({
   tasks,
   unlinkedTasks,
   canManage,
+  zoneNumber,
+  areaLabel,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -60,6 +63,10 @@ export function MapDetailDrawer({
   tasks: MapTask[];
   unlinkedTasks: MapTask[];
   canManage: boolean;
+  /** Nummerbrickan som ytan har i kartan och i förteckningen. */
+  zoneNumber?: number;
+  /** Ytans storlek i kvadratmeter, färdigformaterad. */
+  areaLabel?: string | null;
 }) {
   const entityType = object ? "map_object" : "map_zone";
   const entityId = object?.id ?? zone?.id ?? "";
@@ -72,7 +79,7 @@ export function MapDetailDrawer({
   const { data: logs = [] } = useActivityLogs({ storeId, limit: 300 });
   const { data: deviations = [] } = useDeviations(false);
   const { data: staff = [] } = useStaff(storeId);
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("images");
 
   const openIssues = deviations.filter(
     (d) => (d as { source?: string; source_id?: string }).source === entityType && (d as { source_id?: string }).source_id === entityId,
@@ -142,11 +149,24 @@ export function MapDetailDrawer({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader className="space-y-2">
-          <SheetTitle className="flex items-center gap-2 text-base">
-            {object && <MapObjectIcon icon={objectType?.icon} className="h-4 w-4" />}
-            {label}
-          </SheetTitle>
+        <SheetHeader className="space-y-3">
+          <div className="flex items-center gap-3">
+            {zone && (
+              <span
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-base font-bold text-white shadow-sm"
+                style={{ background: zone.color ?? "hsl(var(--primary))" }}
+              >
+                {zoneNumber ?? ""}
+              </span>
+            )}
+            <div className="min-w-0">
+              <SheetTitle className="flex items-center gap-2 text-xl leading-tight">
+                {object && <MapObjectIcon icon={objectType?.icon} className="h-4 w-4" />}
+                {label}
+              </SheetTitle>
+              {areaLabel && <p className="text-sm text-muted-foreground tabular-nums">{areaLabel}</p>}
+            </div>
+          </div>
           <div className="flex items-center gap-3">
             <StatusRing percent={progress.percent} status={progress.status} size={40} label={`${progress.percent}%`} />
             <div className="space-y-1">
@@ -166,13 +186,13 @@ export function MapDetailDrawer({
           </div>
         </SheetHeader>
 
-        <Tabs value={tab} onValueChange={setTab} className="mt-3">
-          <TabsList className="h-8 w-full justify-start overflow-x-auto">
-            <TabsTrigger value="overview" className="text-[11px] h-6">Översikt</TabsTrigger>
-            <TabsTrigger value="tasks" className="text-[11px] h-6">Uppgifter</TabsTrigger>
-            <TabsTrigger value="activity" className="text-[11px] h-6">Aktivitet</TabsTrigger>
-            <TabsTrigger value="images" className="text-[11px] h-6">Bilder</TabsTrigger>
-            <TabsTrigger value="standard" className="text-[11px] h-6">Standard</TabsTrigger>
+        <Tabs value={tab} onValueChange={setTab} className="mt-4">
+          <TabsList className="h-9 w-full justify-start gap-1 overflow-x-auto rounded-lg bg-muted p-1">
+            <TabsTrigger value="images" className="h-7 rounded-md px-3 text-xs">Bilder</TabsTrigger>
+            <TabsTrigger value="tasks" className="h-7 rounded-md px-3 text-xs">Uppgifter</TabsTrigger>
+            <TabsTrigger value="overview" className="h-7 rounded-md px-3 text-xs">Info</TabsTrigger>
+            <TabsTrigger value="activity" className="h-7 rounded-md px-3 text-xs">Historik</TabsTrigger>
+            <TabsTrigger value="standard" className="h-7 rounded-md px-3 text-xs">Standard</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-3 pt-3">
@@ -273,28 +293,81 @@ export function MapDetailDrawer({
             ))}
           </TabsContent>
 
-          <TabsContent value="images" className="space-y-2 pt-3">
-            <label className="inline-flex items-center gap-1.5 text-[11px] cursor-pointer rounded-md border border-border px-2 py-1">
-              <Camera className="h-3.5 w-3.5" /> Lägg till bild
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && addImage(e.target.files[0], "completion")}
-              />
-            </label>
-            <div className="grid grid-cols-2 gap-2">
+          <TabsContent value="images" className="space-y-4 pt-4">
+            <div className="flex items-start gap-2 rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
+              <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary/15">
+                <Info className="h-3 w-3 text-primary" />
+              </span>
+              <span>Välj en bild och tryck sedan på platsen i kartan för att lägga den på en exakt plats i butiken.</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold">
+                Bilder på denna yta {latest.length > 0 && <span className="text-muted-foreground">({latest.length})</span>}
+              </p>
+              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted">
+                <Camera className="h-3.5 w-3.5" /> Lägg till bild
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && addImage(e.target.files[0], "completion")}
+                />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               {latest.map((i) => (
-                <div key={i.id} className="space-y-1">
-                  <img src={i.url} alt={i.caption ?? label} className="w-full h-24 object-cover rounded-md" />
-                  <p className="text-[10px] text-muted-foreground truncate">
-                    {i.uploaded_by_name} · {time(i.created_at)}
-                  </p>
+                <div key={i.id} className="overflow-hidden rounded-xl border border-border">
+                  <img src={i.url} alt={i.caption ?? label} className="h-28 w-full object-cover" />
+                  <div className="px-2 py-1.5">
+                    <p className="truncate text-xs font-medium">{i.caption ?? label}</p>
+                    <p className="truncate text-[10px] text-muted-foreground">
+                      {time(i.created_at)} · {i.uploaded_by_name ?? "—"}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
             {latest.length === 0 && <EmptyState title="Inga bilder ännu" description="Ta ett foto för att dokumentera." />}
+
+            {zone && (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">Placering på ytan</p>
+                <div className="rounded-xl border border-border p-3">
+                  <svg viewBox="0 0 100 62" className="h-auto w-full">
+                    {(() => {
+                      const pts = zonePoints(zone);
+                      const b = bbox(pts);
+                      const norm = pts
+                        .map((p) => `${((p.x - b.x) / (b.width || 1)) * 96 + 2},${((p.y - b.y) / (b.height || 1)) * 58 + 2}`)
+                        .join(" ");
+                      return (
+                        <polygon
+                          points={norm}
+                          fill={zone.color ?? "hsl(var(--primary))"}
+                          fillOpacity={0.35}
+                          stroke={zone.color ?? "hsl(var(--primary))"}
+                          strokeWidth={1}
+                        />
+                      );
+                    })()}
+                    {images
+                      .filter((i) => i.norm_x != null && i.norm_y != null)
+                      .map((i) => (
+                        <circle
+                          key={i.id}
+                          cx={(i.norm_x as number) * 96 + 2}
+                          cy={(i.norm_y as number) * 58 + 2}
+                          r={1.8}
+                          fill={zone.color ?? "hsl(var(--primary))"}
+                        />
+                      ))}
+                  </svg>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="standard" className="space-y-2 pt-3">

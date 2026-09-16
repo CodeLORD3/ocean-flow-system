@@ -199,28 +199,34 @@ export default function StoreMap() {
   }
 
   return (
-    <div className="space-y-3">
-      {/* Rubrikrad — status för dagen, samma språk som checklistan */}
-      <div className="flex flex-wrap items-center gap-3">
-        <MapIcon className="h-4 w-4 text-primary" />
-        <h1 className="text-base font-semibold">Butikskarta</h1>
-        {site !== "shop" && stores.length > 0 && (
-          <Select value={storeId} onValueChange={(v) => { setPickedStore(v); setPlanId(null); }}>
-            <SelectTrigger className="h-7 w-48 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {stores.map((s) => (
-                <SelectItem key={s.id} value={s.id} className="text-xs">
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+    <div className="space-y-4">
+      {/* Rubrikrad — stor titel, butik under, läge till höger */}
+      <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+            <MapIcon className="h-5 w-5 text-primary" />
+            Butikskarta
+          </h1>
+          {site !== "shop" && stores.length > 0 ? (
+            <Select value={storeId} onValueChange={(v) => { setPickedStore(v); setPlanId(null); }}>
+              <SelectTrigger className="h-7 border-0 px-0 text-sm text-muted-foreground shadow-none focus:ring-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {stores.map((s) => (
+                  <SelectItem key={s.id} value={s.id} className="text-xs">
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <p className="text-sm text-muted-foreground">{stores.find((s) => s.id === storeId)?.name ?? ""}</p>
+          )}
+        </div>
         {plans.length > 1 && (
           <Select value={plan?.id ?? ""} onValueChange={setPlanId}>
-            <SelectTrigger className="h-7 w-40 text-xs">
+            <SelectTrigger className="h-8 w-40 rounded-full text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -232,8 +238,8 @@ export default function StoreMap() {
             </SelectContent>
           </Select>
         )}
-        <div className="ml-auto flex items-center gap-3">
-          <div className="flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-4">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
             <StatusRing percent={dayProgress.percent} status={dayProgress.status} label={`${dayProgress.percent}%`} />
             <div className="leading-tight">
               <p className="text-[11px] font-medium">{STATUS_LABEL[dayProgress.status]}</p>
@@ -244,9 +250,9 @@ export default function StoreMap() {
           </div>
           {canManage && (
             <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
-              <TabsList className="h-7">
-                <TabsTrigger value="drift" className="text-[11px] h-6">Drift</TabsTrigger>
-                <TabsTrigger value="redigera" className="text-[11px] h-6 gap-1">
+              <TabsList className="h-9 rounded-full bg-muted p-1">
+                <TabsTrigger value="drift" className="h-7 rounded-full px-4 text-xs">Karta</TabsTrigger>
+                <TabsTrigger value="redigera" className="h-7 gap-1 rounded-full px-4 text-xs">
                   <Pencil className="h-3 w-3" /> Redigera
                 </TabsTrigger>
               </TabsList>
@@ -263,10 +269,10 @@ export default function StoreMap() {
           description="En administratör lägger upp butikens planritning innan kartan kan användas."
         />
       ) : (
-        <div className="grid gap-3 lg:grid-cols-[1fr_260px]">
-          <div className="space-y-2 min-w-0">
+        <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+          <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
             {/* Lagerväljare */}
-            <div className="flex flex-wrap items-center gap-3 rounded-md border border-border px-2 py-1.5">
+            <div className="flex flex-wrap items-center gap-3 border-b border-border px-3 py-2">
               {(
                 [
                   ["background", "Ritning"],
@@ -375,7 +381,7 @@ export default function StoreMap() {
             />
 
             {placing && (
-              <p className="rounded-md border border-primary bg-primary/5 px-2 py-1 text-[11px]">
+              <p className="border-t border-primary/40 bg-primary/5 px-3 py-2 text-[11px]">
                 Tryck på platsen inne i ytan där bilden är tagen.{" "}
                 <button className="underline" onClick={() => setPlacing(null)}>
                   Avbryt
@@ -383,11 +389,12 @@ export default function StoreMap() {
               </p>
             )}
 
-            {/* Ytförteckning — samma nummer och färg som i kartan */}
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Ytförteckning — samma nummer och färg som i kartan, en rad under kartan */}
+            <div className="flex gap-1 overflow-x-auto border-t border-border px-3 py-3">
               {zones.map((z) => {
                 const p = zoneProgress[z.id];
                 const photos = photoSpots.filter((s) => s.zoneId === z.id).reduce((a, s) => a + s.count, 0);
+                const sqm = areaOf(z, pxPerMeter);
                 return (
                   <div
                     key={z.id}
@@ -398,30 +405,28 @@ export default function StoreMap() {
                       setFocus({ kind: "zone", id: z.id });
                       setDrawerOpen(true);
                     }}
-                    className="flex items-center gap-2 rounded-md border border-border p-2 text-left hover:bg-muted cursor-pointer"
+                    className="group flex shrink-0 cursor-pointer items-center gap-2.5 rounded-lg px-3 py-1.5 text-left transition-colors hover:bg-muted"
                   >
                     <span
-                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-bold"
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white shadow-sm"
                       style={{ background: z.color ?? "hsl(var(--primary))" }}
                     >
                       {zoneNumbers[z.id]}
                     </span>
-                    <StatusRing percent={p.percent} status={p.status} label={`${p.percent}`} />
                     <div className="min-w-0">
-                      <p className="text-xs font-medium truncate">{z.name}</p>
-                      <p className="text-[10px] text-muted-foreground tabular-nums">
-                        {p.done}/{p.total} klart
-                        {areaOf(z, pxPerMeter).sqm != null && (
-                          <span> · {areaOf(z, pxPerMeter).exact ? "" : "≈ "}{formatSqm(areaOf(z, pxPerMeter).sqm)}</span>
-                        )}
-                        {p.openIssues > 0 && (
-                          <span className="text-destructive"> · {p.openIssues} anm.</span>
-                        )}
+                      <p className="truncate text-sm font-semibold leading-tight">{z.name}</p>
+                      <p className="text-[11px] text-muted-foreground tabular-nums leading-tight">
+                        {sqm.sqm != null ? `${sqm.exact ? "" : "≈ "}${formatSqm(sqm.sqm)}` : `${p.done}/${p.total} klart`}
+                        {p.openIssues > 0 && <span className="text-destructive"> · {p.openIssues} anm.</span>}
                       </p>
                     </div>
-                    <span className="ml-auto h-2 w-2 rounded-full" style={{ background: STATUS_COLOR[p.status] }} />
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ background: STATUS_COLOR[p.status] }}
+                      title={STATUS_LABEL[p.status]}
+                    />
                     <label
-                      className="text-[10px] rounded border border-border px-1.5 py-0.5 cursor-pointer hover:bg-background"
+                      className="cursor-pointer rounded-full border border-border px-2 py-0.5 text-[10px] opacity-0 transition-opacity group-hover:opacity-100"
                       title="Ta eller välj en bild och peka ut var i ytan den hör hemma"
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -779,6 +784,16 @@ export default function StoreMap() {
           tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
           unlinkedTasks={unlinkedTasks}
           canManage={canManage}
+          zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
+          areaLabel={
+            selectedZone
+              ? areaOf(selectedZone, pxPerMeter).sqm != null
+                ? `${areaOf(selectedZone, pxPerMeter).exact ? "" : "≈ "}${formatSqm(areaOf(selectedZone, pxPerMeter).sqm)}`
+                : null
+              : selectedObject && areaOf(selectedObject, pxPerMeter).sqm != null
+                ? formatSqm(areaOf(selectedObject, pxPerMeter).sqm)
+                : null
+          }
         />
       )}
     </div>
