@@ -1409,6 +1409,8 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
   const baseName = (name: string) =>
     (name || "")
       .toLowerCase()
+      // Kvalitetsord räknas som syskon: Premium, Lyx, Basic osv. är samma vara i olika klass
+      .replace(/\s+(premium|lyx|lux|basic|standard|extra|prima)\s*$/i, "")
       .replace(/\s+(xxl|xl|l|m|s|xs|stor|mellan|liten)\s*$/i, "")
       .trim();
 
@@ -1421,6 +1423,26 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
       const pid = s.product_id;
       map.set(pid, (map.get(pid) || 0) + Number(s.quantity));
     }
+    return map;
+  }, [allStock]);
+
+  // Var finns varan annars? Butiker och andra lager, så packaren ser att den
+  // faktiskt finns någonstans i stället för bara en nolla.
+  const elsewhereByProduct = useMemo(() => {
+    const map = new Map<string, { place: string; qty: number }[]>();
+    for (const s of allStock) {
+      if (s.storage_locations?.location_type === "grossistlager") continue;
+      const qty = Number(s.quantity);
+      if (!(qty > 0.005)) continue;
+      const place =
+        s.storage_locations?.stores?.name || s.storage_locations?.name || "Okänt lager";
+      const list = map.get(s.product_id) || [];
+      const found = list.find((x) => x.place === place);
+      if (found) found.qty += qty;
+      else list.push({ place, qty });
+      map.set(s.product_id, list);
+    }
+    for (const list of map.values()) list.sort((a, b) => b.qty - a.qty);
     return map;
   }, [allStock]);
 
@@ -1629,6 +1651,23 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
                   <td className={`px-2 py-0.5 text-right font-mono ${infiniteStock ? "text-success" : availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
                     {infiniteStock ? <span title="Obegränsat lager (uppstartsläge)">∞</span> : availableStock > 0 ? Number(availableStock.toFixed(1)) : "0"}
+                    {!infiniteStock && availableStock < qtyOrdered && (() => {
+                      const other = elsewhereByProduct.get(line.product_id) || [];
+                      if (!other.length) return null;
+                      const label = other
+                        .slice(0, 2)
+                        .map((o) => `${o.place} ${Number(o.qty.toFixed(1))}`)
+                        .join(" · ");
+                      return (
+                        <div
+                          className="mt-0.5 text-[10px] font-sans font-normal leading-tight text-muted-foreground"
+                          title={other.map((o) => `${o.place}: ${Number(o.qty.toFixed(1))}`).join("\n")}
+                        >
+                          Finns i {label}
+                          {other.length > 2 ? ` +${other.length - 2}` : ""}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-2 py-0.5 text-right">
                     {(() => {
