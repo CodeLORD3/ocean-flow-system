@@ -38,7 +38,6 @@ import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog
 import { MapListViews } from "@/components/storemap/MapListViews";
 import { OverviewStatsBar } from "@/components/storemap/OverviewStatsBar";
 import { StorePhotoStrip } from "@/components/storemap/StorePhotoStrip";
-import { OverviewTaskPanel } from "@/components/storemap/OverviewTaskPanel";
 import { OverviewQuickBar } from "@/components/storemap/OverviewQuickBar";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
@@ -267,20 +266,6 @@ export default function StoreMap() {
         openDeviations={Object.values(issuesByEntity).reduce((a, b) => a + b, 0)}
         totalSqm={totalSqm}
       />
-
-      {/* Dagens uppgifter — samma rader som checklistan, färgade per område */}
-      <div id="dagens-uppgifter" className="scroll-mt-4">
-      <OverviewTaskPanel
-        storeId={storeId}
-        planId={plan?.id ?? null}
-        zones={zones}
-        objects={objects}
-        tasks={tasks}
-        day={day}
-        onDayChange={setDay}
-        onOpenZone={(id) => { setAreaPage({ kind: "zone", id }); setView("omrade"); }}
-      />
-      </div>
 
       {/* Bilder från butiken — senaste bilderna som en rad man kan bläddra i */}
       <StorePhotoStrip
