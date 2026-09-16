@@ -153,12 +153,26 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
+              size="lg"
               variant={task.done ? "outline" : "default"}
-              onClick={() => setDone.mutate({ id: task.id, done: !task.done })}
+              className={cn(!task.done && "bg-emerald-600 text-white hover:bg-emerald-700")}
+              onClick={async () => {
+                if (task.done) {
+                  setDone.mutate({ id: task.id, done: false });
+                  return;
+                }
+                try {
+                  await setDone.mutateAsync({ id: task.id, done: true });
+                  toast({ title: "Uppgiften är klar" });
+                  switchTab("/uppgifter");
+                } catch (e: any) {
+                  toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
+                }
+              }}
             >
               {task.done ? "Återöppna" : (
                 <>
-                  <Check className="mr-1 h-4 w-4" /> Markera som klar
+                  <Check className="mr-1 h-5 w-5" /> Klar
                 </>
               )}
             </Button>
