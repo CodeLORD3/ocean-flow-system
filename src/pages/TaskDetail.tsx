@@ -267,12 +267,34 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           {task.important_note && (
             <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-700">{task.important_note}</p>
           )}
-          {guide.goal || guide.materials.length > 0 || guide.steps.length > 0 ? (
-            <TaskGuideView guide={guide} />
+          {guide.goal || guide.materials.length > 0 || guide.steps.length > 0 || guide.putBack ? (
+            <TaskGuideView
+              guide={guide}
+              zones={guideZones}
+              onShowOnMap={(zoneId) =>
+                switchTab(`/store-map?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
+              }
+              onReport={(name) => {
+                setIssuePreset(name ?? null);
+                setIssueOpen(true);
+              }}
+            />
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Ingen beskrivning finns ännu. Lägg in mål, varor och steg med bilder under Inställningar.
-            </p>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Ingen beskrivning finns ännu. Lägg in godkänt läge, redskap med plats på kartan, steg och återställning
+                under Inställningar.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIssuePreset(null);
+                  setIssueOpen(true);
+                }}
+              >
+                Rapportera trasigt eller slut
+              </Button>
+            </div>
           )}
           {reference.length > 0 && (
             <div>
