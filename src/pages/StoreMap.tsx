@@ -337,18 +337,23 @@ export default function StoreMap() {
           }}
         />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+        <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
           <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
-            {/* Lagerväljare */}
+            {/* Kartans egen rad: bara det man behöver, resten ligger i redigeringsläget */}
             <div className="flex flex-wrap items-center gap-3 border-b border-border px-3 py-2">
               {(
-                [
-                  ["background", "Ritning"],
-                  ["grid", "Rutnät"],
-                  ["tasks", "Uppgifter"],
-                  ["issues", "Anmärkningar"],
-                  ["photos", "Bilder"],
-                ] as const
+                editMode
+                  ? ([
+                      ["background", "Ritning"],
+                      ["grid", "Rutnät"],
+                      ["tasks", "Uppgifter"],
+                      ["issues", "Anmärkningar"],
+                      ["photos", "Bilder"],
+                    ] as const)
+                  : ([
+                      ["grid", "Rutnät"],
+                      ["photos", "Bilder"],
+                    ] as const)
               ).map(([key, label]) => (
                 <div key={key} className="flex items-center gap-1.5">
                   <Switch
@@ -362,22 +367,25 @@ export default function StoreMap() {
                   </Label>
                 </div>
               ))}
-              <Button
-                size="sm"
-                variant={pinMode ? "default" : "outline"}
-                className="ml-auto h-7 text-[11px] gap-1"
-                onClick={() => setPinMode((v) => !v)}
-              >
-                <PinIcon className="h-3 w-3" />
-                {pinMode ? "Tryck på kartan…" : "Ny punkt"}
-              </Button>
-              <span className="text-[10px] text-muted-foreground tabular-nums">
+              {canManage && (
+                <Button
+                  size="sm"
+                  variant={pinMode ? "default" : "outline"}
+                  className="ml-auto h-7 text-[11px] gap-1"
+                  onClick={() => setPinMode((v) => !v)}
+                >
+                  <PinIcon className="h-3 w-3" />
+                  {pinMode ? "Tryck på kartan…" : "Ny punkt"}
+                </Button>
+              )}
+              <span className={`text-[10px] text-muted-foreground tabular-nums ${canManage ? "" : "ml-auto"}`}>
                 {pxPerMeter ? `Yta ${formatSqm(totalSqm)}` : "Skala saknas — fyll i kvm på en zon"}
               </span>
               {plan.status === "draft" && (
                 <Badge variant="outline" className="text-[10px]">Utkast — ej publicerad</Badge>
               )}
             </div>
+
 
             <FloorPlanCanvas
               plan={plan}
@@ -403,6 +411,8 @@ export default function StoreMap() {
               editMode={editMode}
               showBackground={layers.background}
               showGrid={layers.grid || editMode}
+              showObjects={editMode}
+              showPins={editMode || pinMode}
               zoneNumbers={zoneNumbers}
               photoSpots={photoSpots}
               showPhotos={layers.photos}
@@ -737,93 +747,125 @@ export default function StoreMap() {
                   </CardContent>
                 </Card>
               </>
+            ) : selectedZone || selectedObject ? (
+              /* Vald yta ligger kvar bredvid kartan — kartan syns hela tiden */
+              <MapDetailDrawer
+                inline
+                open
+                onOpenChange={(v) => {
+                  if (!v) {
+                    setSelected(null);
+                    setFocus(null);
+                    setDrawerOpen(false);
+                  }
+                }}
+                storeId={storeId}
+                portal={site}
+                zone={selectedZone}
+                object={selectedObject}
+                objectType={selectedObject ? typeById[selectedObject.object_type_id] : null}
+                tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
+                unlinkedTasks={unlinkedTasks}
+                canManage={canManage}
+                zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
+                areaLabel={
+                  selectedZone
+                    ? areaOf(selectedZone, pxPerMeter).sqm != null
+                      ? `${areaOf(selectedZone, pxPerMeter).exact ? "" : "≈ "}${formatSqm(areaOf(selectedZone, pxPerMeter).sqm)}`
+                      : null
+                    : selectedObject && areaOf(selectedObject, pxPerMeter).sqm != null
+                      ? formatSqm(areaOf(selectedObject, pxPerMeter).sqm)
+                      : null
+                }
+              />
             ) : (
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-xs">Behöver åtgärd</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1">
-                  {tasks.filter((t) => !t.done).length === 0 ? (
-                    <p className="text-[11px] text-muted-foreground">Allt är klart just nu.</p>
-                  ) : (
-                    tasks
-                      .filter((t) => !t.done)
-                      .slice(0, 12)
-                      .map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => {
-                            const target: Selection = t.map_object_id
-                              ? { kind: "object", id: t.map_object_id }
-                              : t.zone_id
-                                ? { kind: "zone", id: t.zone_id }
-                                : null;
-                            setSelected(target);
-                            setFocus(target);
-                            setDrawerOpen(true);
-                          }}
-                          className="w-full text-left text-[11px] rounded-md border border-border px-2 py-1 hover:bg-muted"
-                        >
-                          <span className="truncate block">{t.task}</span>
-                          <span className="text-[10px] text-muted-foreground">{t.section}</span>
-                        </button>
-                      ))
-                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    Tryck på en yta i kartan för att se bilder, uppgifter och information.
+                  </p>
+                  {tasks
+                    .filter((t) => !t.done)
+                    .slice(0, 12)
+                    .map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => {
+                          const target: Selection = t.map_object_id
+                            ? { kind: "object", id: t.map_object_id }
+                            : t.zone_id
+                              ? { kind: "zone", id: t.zone_id }
+                              : null;
+                          setSelected(target);
+                          setFocus(target);
+                          setDrawerOpen(true);
+                        }}
+                        className="w-full text-left text-[11px] rounded-md border border-border px-2 py-1 hover:bg-muted"
+                      >
+                        <span className="truncate block">{t.task}</span>
+                        <span className="text-[10px] text-muted-foreground">{t.section}</span>
+                      </button>
+                    ))}
                 </CardContent>
               </Card>
             )}
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs flex items-center gap-1">
-                  <PinIcon className="h-3.5 w-3.5" /> Punkter på kartan
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-1.5">
-                {pins.length === 0 && (
-                  <p className="text-[11px] text-muted-foreground">
-                    Tryck på “Ny punkt” och sedan på platsen i kartan.
-                  </p>
-                )}
-                {pins.slice(0, 20).map((pin) => (
-                  <div key={pin.id} className="rounded-md border border-border p-2 space-y-1">
-                    <div className="flex items-start gap-2">
-                      <button
-                        className="text-left min-w-0 flex-1"
-                        onClick={() => setPinDialog({ point: null, zoneId: pin.zone_id, existing: pin })}
-                      >
-                        <p className={`text-[11px] font-medium truncate ${pin.status === "done" ? "line-through text-muted-foreground" : ""}`}>
-                          {pin.title}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground truncate">
-                          {PIN_KIND_LABEL[pin.kind] ?? pin.kind}
-                          {pin.assigned_name ? ` · ${pin.assigned_name}` : " · ingen ansvarig"}
-                          {pin.due_date ? ` · till ${pin.due_date}` : ""}
-                        </p>
-                      </button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-1 text-[10px]"
-                        onClick={() => completePin.mutate({ id: pin.id, done: pin.status !== "done" })}
-                      >
-                        {pin.status === "done" ? "Öppna" : "Klar"}
-                      </Button>
-                      {canManage && (
+            {(editMode || pins.length > 0) && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs flex items-center gap-1">
+                    <PinIcon className="h-3.5 w-3.5" /> Punkter på kartan
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-1.5">
+                  {pins.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Tryck på “Ny punkt” och sedan på platsen i kartan.
+                    </p>
+                  )}
+                  {pins.slice(0, 20).map((pin) => (
+                    <div key={pin.id} className="rounded-md border border-border p-2 space-y-1">
+                      <div className="flex items-start gap-2">
+                        <button
+                          className="text-left min-w-0 flex-1"
+                          onClick={() => setPinDialog({ point: null, zoneId: pin.zone_id, existing: pin })}
+                        >
+                          <p className={`text-[11px] font-medium truncate ${pin.status === "done" ? "line-through text-muted-foreground" : ""}`}>
+                            {pin.title}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {PIN_KIND_LABEL[pin.kind] ?? pin.kind}
+                            {pin.assigned_name ? ` · ${pin.assigned_name}` : " · ingen ansvarig"}
+                            {pin.due_date ? ` · till ${pin.due_date}` : ""}
+                          </p>
+                        </button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 px-1 text-[10px] text-destructive"
-                          onClick={() => deletePin.mutate(pin.id)}
+                          className="h-6 px-1 text-[10px]"
+                          onClick={() => completePin.mutate({ id: pin.id, done: pin.status !== "done" })}
                         >
-                          <Trash2 className="h-3 w-3" />
+                          {pin.status === "done" ? "Öppna" : "Klar"}
                         </Button>
-                      )}
+                        {canManage && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-1 text-[10px] text-destructive"
+                            onClick={() => deletePin.mutate(pin.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       )}
@@ -840,30 +882,6 @@ export default function StoreMap() {
         />
       )}
 
-      {(selectedZone || selectedObject) && (
-        <MapDetailDrawer
-          open={drawerOpen}
-          onOpenChange={setDrawerOpen}
-          storeId={storeId}
-          portal={site}
-          zone={selectedZone}
-          object={selectedObject}
-          objectType={selectedObject ? typeById[selectedObject.object_type_id] : null}
-          tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
-          unlinkedTasks={unlinkedTasks}
-          canManage={canManage}
-          zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
-          areaLabel={
-            selectedZone
-              ? areaOf(selectedZone, pxPerMeter).sqm != null
-                ? `${areaOf(selectedZone, pxPerMeter).exact ? "" : "≈ "}${formatSqm(areaOf(selectedZone, pxPerMeter).sqm)}`
-                : null
-              : selectedObject && areaOf(selectedObject, pxPerMeter).sqm != null
-                ? formatSqm(areaOf(selectedObject, pxPerMeter).sqm)
-                : null
-          }
-        />
-      )}
     </div>
   );
 }

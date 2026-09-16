@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { EmptyState } from "@/components/EmptyState";
-import { Camera, CheckCircle2, Info, Link2, MoreVertical, Thermometer, Trash2 } from "lucide-react";
+import { Camera, CheckCircle2, Info, Link2, MoreVertical, Thermometer, Trash2, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,6 +76,7 @@ export function MapDetailDrawer({
   canManage,
   zoneNumber,
   areaLabel,
+  inline = false,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -91,6 +92,8 @@ export function MapDetailDrawer({
   zoneNumber?: number;
   /** Ytans storlek i kvadratmeter, färdigformaterad. */
   areaLabel?: string | null;
+  /** Panelläge: visas som egen kolumn till höger istället för som överlägg. */
+  inline?: boolean;
 }) {
   const entityType = object ? "map_object" : "map_zone";
   const entityId = object?.id ?? zone?.id ?? "";
@@ -173,10 +176,8 @@ export function MapDetailDrawer({
     }
   };
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader className="space-y-3">
+  const head = (
+    <div className="space-y-3">
           <div className="flex items-center gap-3">
             {zone && (
               <span
@@ -187,10 +188,10 @@ export function MapDetailDrawer({
               </span>
             )}
             <div className="min-w-0">
-              <SheetTitle className="flex items-center gap-2 text-xl leading-tight">
+              <h2 className="flex items-center gap-2 text-xl font-semibold leading-tight">
                 {object && <MapObjectIcon icon={objectType?.icon} className="h-4 w-4" />}
                 {label}
-              </SheetTitle>
+              </h2>
               {areaLabel && <p className="text-sm text-muted-foreground tabular-nums">{areaLabel}</p>}
             </div>
           </div>
@@ -211,8 +212,12 @@ export function MapDetailDrawer({
               ))}
             </div>
           </div>
-        </SheetHeader>
+    </div>
+  );
 
+
+  const body = (
+    <>
         <Tabs value={tab} onValueChange={setTab} className="mt-4">
           <TabsList className="h-9 w-full justify-start gap-1 overflow-x-auto rounded-lg bg-muted p-1">
             <TabsTrigger value="images" className="h-7 rounded-md px-3 text-xs">Bilder</TabsTrigger>
@@ -488,23 +493,49 @@ export function MapDetailDrawer({
           </TabsContent>
         </Tabs>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-[11px]"
-            onClick={() => {
-              const next = tasks.find((t) => !t.done);
-              if (!next) return toast({ title: "Allt är redan klart här" });
-              toggle.mutate({ id: next.id, done: true });
-            }}
-          >
-            ✓ Åtgärd klar
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 text-[11px]" onClick={() => setTab("overview")}>
-            Kommentar
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-[11px]"
+          onClick={() => {
+            const next = tasks.find((t) => !t.done);
+            if (!next) return toast({ title: "Allt är redan klart här" });
+            toggle.mutate({ id: next.id, done: true });
+          }}
+        >
+          ✓ Åtgärd klar
+        </Button>
+        <Button variant="outline" size="sm" className="h-8 text-[11px]" onClick={() => setTab("overview")}>
+          Kommentar
+        </Button>
+      </div>
+    </>
+  );
+
+  /* Panelläge: ligger som egen kolumn till höger, kartan syns hela tiden. */
+  if (inline) {
+    return (
+      <div className="max-h-[78vh] overflow-y-auto rounded-xl border border-border bg-card p-4">
+        <div className="flex justify-end">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onOpenChange(false)} title="Stäng">
+            <X className="h-4 w-4" />
           </Button>
         </div>
+        {head}
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="sr-only">{label}</SheetTitle>
+          {head}
+        </SheetHeader>
+        {body}
       </SheetContent>
     </Sheet>
   );

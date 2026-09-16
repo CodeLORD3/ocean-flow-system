@@ -63,6 +63,8 @@ export function FloorPlanCanvas({
   onPlacePhoto,
   onPhotoSpotSelect,
   onZonePointsCommit,
+  showObjects = true,
+  showPins = true,
 }: {
   plan: FloorPlan;
   zones: MapZone[];
@@ -101,6 +103,9 @@ export function FloorPlanCanvas({
   onPlacePhoto?: (zoneId: string, norm: { x: number; y: number }) => void;
   onPhotoSpotSelect?: (zoneId: string) => void;
   onZonePointsCommit?: (id: string, points: { x: number; y: number }[]) => void;
+  /** Inventarier ritas bara i redigeringsläget — normalvyn ska vara ren. */
+  showObjects?: boolean;
+  showPins?: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -316,7 +321,7 @@ export function FloorPlanCanvas({
     <div className="relative rounded-md border border-border bg-muted/20 overflow-hidden">
       <div
         ref={wrapRef}
-        className={`h-[62vh] min-h-[380px] w-full touch-none ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
+        className={`h-[74vh] min-h-[440px] w-full touch-none ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
         onClickCapture={pinMode ? placePin : placeZoneId ? placePhoto : undefined}
         onPointerDown={onBackgroundDown}
         onPointerMove={(e) => {
@@ -337,13 +342,13 @@ export function FloorPlanCanvas({
                 y={plan.background_y}
                 width={plan.width * plan.background_scale}
                 height={plan.height * plan.background_scale}
-                opacity={plan.background_opacity}
+                opacity={editMode ? plan.background_opacity : Math.min(plan.background_opacity, 0.22)}
                 preserveAspectRatio="xMidYMid meet"
               />
             )}
 
             {showGrid && plan.grid_size > 0 && (
-              <g opacity={0.25}>
+              <g opacity={placeZoneId ? 0.28 : 0.12}>
                 {Array.from({ length: Math.ceil(plan.width / plan.grid_size) + 1 }).map((_, i) => (
                   <line
                     key={`v${i}`}
@@ -399,8 +404,8 @@ export function FloorPlanCanvas({
               return (
                 <g
                   key={z.id}
-                  opacity={dim ? 0.45 : 1}
-                  style={{ transition: "opacity 180ms ease" }}
+                  opacity={dim ? 0.55 : 1}
+                  style={{ transition: "opacity 200ms ease" }}
                   onPointerDown={(e) => {
                     if (!editMode) return;
                     e.stopPropagation();
@@ -408,17 +413,24 @@ export function FloorPlanCanvas({
                     setVDrag({ zoneId: z.id, index: -1, base: pts, startX: e.clientX, startY: e.clientY });
                   }}
                 >
+                  {/* Vit botten gör zonfärgen pastellig även över ritningen */}
+                  <polygon
+                    points={toPath(pts)}
+                    fill="hsl(var(--card))"
+                    fillOpacity={0.82}
+                    style={{ pointerEvents: "none" }}
+                  />
                   <polygon
                     points={toPath(pts)}
                     fill={identity}
-                    fillOpacity={isSel ? 0.5 : isHover ? 0.42 : 0.3}
-                    stroke={isSel || isHover ? identity : status}
-                    strokeWidth={isSel ? 4 : isHover ? 3.5 : 2.5}
+                    fillOpacity={isSel ? 0.34 : isHover ? 0.3 : 0.2}
+                    stroke={identity}
+                    strokeWidth={isSel ? 3.5 : isHover ? 3 : 2}
                     strokeLinejoin="round"
                     className="cursor-pointer"
                     style={{
-                      transition: "fill-opacity 180ms ease, stroke-width 180ms ease, filter 180ms ease",
-                      filter: isHover || isSel ? "drop-shadow(0 3px 10px rgba(15,35,50,0.28))" : undefined,
+                      transition: "fill-opacity 200ms ease, stroke-width 200ms ease, filter 200ms ease",
+                      filter: isHover || isSel ? `drop-shadow(0 0 10px ${identity})` : undefined,
                     }}
                     onPointerEnter={(e) =>
                       setHover({
@@ -531,8 +543,8 @@ export function FloorPlanCanvas({
               );
             })}
 
-            {/* Lager 4 och 5 — inventarier och utrustning */}
-            {objects.map((o) => {
+            {/* Lager 4 och 5 — inventarier, bara i redigeringsläget */}
+            {(showObjects ? objects : []).map((o) => {
               const g = geom(o.id, o);
               const t = types[o.object_type_id];
               const p = objectProgress[o.id];
@@ -611,7 +623,7 @@ export function FloorPlanCanvas({
               );
             })}
             {/* Lager 6 — punkter: anteckningar och uppgifter på exakt plats */}
-            {pins.map((pin) => {
+            {(showPins ? pins : []).map((pin) => {
               const done = pin.status === "done";
               const c = done ? "hsl(var(--muted-foreground))" : pin.kind === "note" ? "hsl(var(--primary))" : "hsl(var(--warning, var(--primary)))";
               const r = 9 / Math.max(zoom, 0.5);
@@ -710,7 +722,7 @@ export function FloorPlanCanvas({
       {focusBox && (
         <button
           onClick={() => onExitFocus?.()}
-          className="absolute left-2 top-2 rounded-md border border-border bg-card/95 p-1 shadow-md hover:border-primary"
+          className="absolute bottom-3 right-3 rounded-md border border-border bg-card/95 p-1 shadow-md hover:border-primary"
           title="Tillbaka till hela kartan"
         >
           <svg width={116} height={82} viewBox={`0 0 ${plan.width} ${plan.height}`} className="block">
@@ -740,7 +752,7 @@ export function FloorPlanCanvas({
       )}
 
       {/* Zoomreglage som i ritningsvyn: plus, minus, procent och passa in */}
-      <div className="absolute right-3 top-3 flex flex-col items-center gap-0.5 rounded-xl border border-border bg-card/95 p-1 shadow-sm">
+      <div className="absolute left-3 top-3 flex flex-col items-center gap-0.5 rounded-xl border border-border bg-card/95 p-1 shadow-sm">
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => zoomBy(1.25)} title="Zooma in">
           <Plus className="h-4 w-4" />
         </Button>
