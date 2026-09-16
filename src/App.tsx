@@ -37,7 +37,17 @@ import PosShift from "@/pos/pages/PosShift";
 import PosRegister from "@/pos/pages/PosRegister";
 import PosPricing from "@/pos/pages/PosPricing";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Minskar antalet tunga databasanrop: samma data hämtas inte om
+      // direkt vid fliksbyte, utan återanvänds i 30 sekunder.
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const ERPGate = () => {
   const { session, staff, loading } = useStaffAuth();

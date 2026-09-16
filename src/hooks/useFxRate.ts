@@ -35,9 +35,9 @@ export function useFxRate(from = "CHF", to = "SEK", enabled = true) {
   return useQuery({
     queryKey: ["fx-rate", from, to],
     enabled: enabled && from.toUpperCase() !== to.toUpperCase(),
-    refetchInterval: 1000,
+    refetchInterval: 300_000,
     refetchIntervalInBackground: false,
-    staleTime: 1000,
+    staleTime: 300_000,
     retry: 1,
     queryFn: () => fetchRate(from.toUpperCase(), to.toUpperCase()),
   });

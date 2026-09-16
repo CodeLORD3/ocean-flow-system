@@ -67,7 +67,9 @@ export function useNotifications() {
       const seen = new Set((reads || []).map((r) => r.notification_id));
       return rows.filter((r) => !seen.has(r.id));
     },
-    refetchInterval: 15000,
+    staleTime: 60_000,
+    refetchInterval: 90_000,
+    refetchIntervalInBackground: false,
   });
 
   // Realtime: både nya notiser och egna läsmarkeringar

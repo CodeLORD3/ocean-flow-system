@@ -28,7 +28,9 @@ export function useHrNotifications() {
       if (error) throw error;
       return (data ?? []) as HrNotification[];
     },
-    refetchInterval: 15000,
+    staleTime: 60_000,
+    refetchInterval: 90_000,
+    refetchIntervalInBackground: false,
   });
 
   const markRead = useMutation({
