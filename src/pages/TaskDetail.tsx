@@ -413,7 +413,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             />
           </div>
 
-
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">Steg 3 · Vem & när</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="text-sm font-medium">Ansvarig</label>
