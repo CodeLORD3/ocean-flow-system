@@ -508,6 +508,9 @@ export type StandardTask = {
   instructions: string[] | null;
   important_note: string | null;
   requires_photo: boolean;
+  requires_note: boolean;
+  requires_value: boolean;
+  value_label: string | null;
   listName: string;
   weekdays: number[];
 };
