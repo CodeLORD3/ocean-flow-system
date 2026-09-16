@@ -57,7 +57,7 @@ export function TaskRow({
         task.done && "border-emerald-500/40 bg-emerald-500/10",
         photoMissing && !task.done && "border-amber-500/40",
       )}
-      style={{ borderLeft: `4px solid ${accent}` }}
+      style={{ borderLeft: `4px solid ${task.done ? "hsl(152 60% 42%)" : accent}` }}
     >
       <div className="flex items-center gap-3 px-3 py-3 min-h-[56px]">
         <button
