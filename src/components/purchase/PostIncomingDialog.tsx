@@ -152,16 +152,17 @@ export default function PostIncomingDialog({ open, onOpenChange, report, lines, 
           .eq("id", lineId);
       }
 
-      const { lotIds } = await postPurchaseReport({ reportId: report.id, plan });
+      const { lotIds } = await postPurchaseReport({ reportId: report.id, plan, locationId });
 
       queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
       queryClient.invalidateQueries({ queryKey: ["purchase-report-lines"] });
       queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["lots"] });
+      const destName = destinations.find((d: any) => d.id === locationId)?.name ?? "lagret";
       toast({
         title: "Inleverans bokförd",
-        description: `${lotIds.length} partier skapades i Grossist Flytande med preliminärt pris.`,
+        description: `${lotIds.length} partier skapades i ${destName} med preliminärt pris.`,
       });
       onOpenChange(false);
     } catch (e: any) {
