@@ -195,9 +195,10 @@ export default function StoreMap() {
   })();
 
   /** Öppnar valt områdes egna sida som flik och stänger sidopanelen. */
-  const openAreaPage = () => {
-    if (!selected) return;
-    setAreaPage(selected);
+  const openAreaPage = (target?: Selection) => {
+    const next = target ?? selected;
+    if (!next) return;
+    setAreaPage(next);
     setSelected(null);
     setView("omrade");
   };
@@ -469,6 +470,7 @@ export default function StoreMap() {
               zoneProgress={zoneProgress}
               objectProgress={objectProgress}
               selected={selected}
+              onOpenArea={(s) => openAreaPage(s)}
               onSelect={(s) => {
                 setSelected(s);
                 if (s && !editMode) {

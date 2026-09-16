@@ -200,7 +200,9 @@ export function MapDetailDrawer({
             {onOpenPage && (
               <Button
                 size="sm"
-                className="ml-auto h-8 shrink-0 gap-1 text-xs text-white hover:opacity-90"
+                autoFocus
+                title="Gå vidare till områdets egna sida (Enter)"
+                className="ml-auto h-8 shrink-0 gap-1 text-xs text-white ring-offset-2 hover:opacity-90 focus-visible:ring-2"
                 style={zone?.color ? { background: zone.color } : undefined}
                 onClick={onOpenPage}
               >
