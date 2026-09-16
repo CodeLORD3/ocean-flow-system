@@ -189,6 +189,7 @@ export default function Uppgifter() {
         newId = id;
       }
       setNewOpen(false);
+      setStep(1);
       setNTask("");
       setNNote("");
       setNTime("");
