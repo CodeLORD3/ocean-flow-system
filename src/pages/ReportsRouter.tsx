@@ -10,6 +10,8 @@ import { MonthlyReportsSection } from "@/components/reports/MonthlyReports";
 import { useRealtimeReportUpdates } from "@/hooks/useWeeklyStoreReports";
 import { useState } from "react";
 import { SectionErrorBoundary } from "@/components/reports/SectionErrorBoundary";
+import { InventoryReportsArchive } from "@/components/reports/InventoryReportsArchive";
+import { ClipboardCheck } from "lucide-react";
 
 function WholesaleReportsPage() {
   useRealtimeReportUpdates();
