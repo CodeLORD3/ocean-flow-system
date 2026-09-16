@@ -85,6 +85,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   if (!task) return <p className="text-muted-foreground">Uppgiften finns inte längre.</p>;
 
   const time = taskTime(task);
+  const missing = missingRequirements(task, { photoCount: images.length, checkPhoto: true });
   const doneRatio = history.length > 0 ? Math.round((history.filter((h) => h.done).length / history.length) * 100) : null;
 
   const addPhoto = async (file: File) => {
