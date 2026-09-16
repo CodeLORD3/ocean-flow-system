@@ -321,7 +321,7 @@ export function FloorPlanCanvas({
     <div className="relative rounded-md border border-border bg-muted/20 overflow-hidden">
       <div
         ref={wrapRef}
-        className={`h-[62vh] min-h-[380px] w-full touch-none ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
+        className={`h-[74vh] min-h-[440px] w-full touch-none ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
         onClickCapture={pinMode ? placePin : placeZoneId ? placePhoto : undefined}
         onPointerDown={onBackgroundDown}
         onPointerMove={(e) => {
@@ -342,13 +342,13 @@ export function FloorPlanCanvas({
                 y={plan.background_y}
                 width={plan.width * plan.background_scale}
                 height={plan.height * plan.background_scale}
-                opacity={plan.background_opacity}
+                opacity={editMode ? plan.background_opacity : Math.min(plan.background_opacity, 0.22)}
                 preserveAspectRatio="xMidYMid meet"
               />
             )}
 
             {showGrid && plan.grid_size > 0 && (
-              <g opacity={0.25}>
+              <g opacity={placeZoneId ? 0.28 : 0.12}>
                 {Array.from({ length: Math.ceil(plan.width / plan.grid_size) + 1 }).map((_, i) => (
                   <line
                     key={`v${i}`}
