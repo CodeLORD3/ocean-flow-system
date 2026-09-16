@@ -1290,6 +1290,7 @@ export type Database = {
           done: boolean
           done_at: string | null
           estimated_minutes: number | null
+          guide: Json | null
           id: string
           important_note: string | null
           instructions: Json | null
@@ -1320,6 +1321,7 @@ export type Database = {
           done?: boolean
           done_at?: string | null
           estimated_minutes?: number | null
+          guide?: Json | null
           id?: string
           important_note?: string | null
           instructions?: Json | null
@@ -1350,6 +1352,7 @@ export type Database = {
           done?: boolean
           done_at?: string | null
           estimated_minutes?: number | null
+          guide?: Json | null
           id?: string
           important_note?: string | null
           instructions?: Json | null
@@ -1532,6 +1535,7 @@ export type Database = {
           created_at: string
           daypart: string | null
           estimated_minutes: number | null
+          guide: Json | null
           id: string
           important_note: string | null
           instructions: Json | null
@@ -1558,6 +1562,7 @@ export type Database = {
           created_at?: string
           daypart?: string | null
           estimated_minutes?: number | null
+          guide?: Json | null
           id?: string
           important_note?: string | null
           instructions?: Json | null
@@ -1584,6 +1589,7 @@ export type Database = {
           created_at?: string
           daypart?: string | null
           estimated_minutes?: number | null
+          guide?: Json | null
           id?: string
           important_note?: string | null
           instructions?: Json | null
