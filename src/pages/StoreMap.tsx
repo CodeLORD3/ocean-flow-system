@@ -23,6 +23,8 @@ import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
+import { ZONE_PALETTE } from "@/lib/mapPalette";
+import { useFloorPlanImages, useUploadEntityImage } from "@/hooks/useEntityImages";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useAllowedStores } from "@/components/StoreSwitcher";
