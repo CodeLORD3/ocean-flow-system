@@ -30,6 +30,7 @@ import {
 import { DAYPARTS, durationText, groupByDaypart, remainingMinutes } from "@/lib/taskTime";
 import { TaskRow, type TaskRowArea } from "@/components/tasks/TaskRow";
 import { TaskCalendar } from "@/components/tasks/TaskCalendar";
+import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { WORK_TYPES, workTypeLabel } from "@/lib/workType";
 
 const WEEKDAY_NAMES = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
