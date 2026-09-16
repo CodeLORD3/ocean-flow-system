@@ -43,6 +43,8 @@ export function FloorPlanCanvas({
   pxPerMeter = null,
   onPinPlace,
   onPinSelect,
+  focus = null,
+  onExitFocus,
 }: {
   plan: FloorPlan;
   zones: MapZone[];
@@ -69,12 +71,15 @@ export function FloorPlanCanvas({
   pxPerMeter?: number | null;
   onPinPlace?: (point: { x: number; y: number; zoneId: string | null }) => void;
   onPinSelect?: (pin: MapPin) => void;
+  focus?: { kind: "zone" | "object"; id: string } | null;
+  onExitFocus?: () => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [drag, setDrag] = useState<DragState | null>(null);
   const [ghost, setGhost] = useState<Record<string, { x: number; y: number; width: number; height: number }>>({});
+  const [hover, setHover] = useState<{ id: string; label: string; sub: string; sx: number; sy: number } | null>(null);
 
   const fit = useCallback(() => {
     const el = wrapRef.current;
@@ -87,6 +92,39 @@ export function FloorPlanCanvas({
   useEffect(() => {
     fit();
   }, [fit]);
+
+  /* Fokusläge: zooma mjukt in på den modul man tryckt på. */
+  const focusBox = focus
+    ? focus.kind === "zone"
+      ? zones.find((z) => z.id === focus.id)
+      : objects.find((o) => o.id === focus.id)
+    : null;
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || !focusBox) return;
+    const pad = 40;
+    const z = clamp(
+      Math.min(el.clientWidth / (focusBox.width + pad * 2), el.clientHeight / (focusBox.height + pad * 2)),
+      MIN_ZOOM,
+      MAX_ZOOM,
+    );
+    setZoom(z);
+    setOffset({
+      x: el.clientWidth / 2 - (focusBox.x + focusBox.width / 2) * z,
+      y: el.clientHeight / 2 - (focusBox.y + focusBox.height / 2) * z,
+    });
+  }, [focusBox?.id, focusBox?.x, focusBox?.y, focusBox?.width, focusBox?.height]);
+
+  /* Tillbaka till hela kartan när fokus släpps. */
+  const hadFocus = useRef(false);
+  useEffect(() => {
+    if (focusBox) hadFocus.current = true;
+    else if (hadFocus.current) {
+      hadFocus.current = false;
+      fit();
+    }
+  }, [focusBox, fit]);
 
   /* Zoom mot pekaren, med icke-passiv lyssnare så sidan inte skrollar bakom. */
   const wheelRef = useRef<(e: WheelEvent) => void>(() => {});
@@ -209,7 +247,10 @@ export function FloorPlanCanvas({
         className={`h-[62vh] min-h-[380px] w-full touch-none ${pinMode ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
         onClickCapture={pinMode ? placePin : undefined}
         onPointerDown={onBackgroundDown}
-        onPointerMove={onPointerMove}
+        onPointerMove={(e) => {
+          onPointerMove(e);
+          if (hover) setHover((h) => (h ? { ...h, sx: e.clientX, sy: e.clientY } : h));
+        }}
         onPointerUp={endPointer}
         onPointerLeave={endPointer}
       >
@@ -275,6 +316,7 @@ export function FloorPlanCanvas({
               const g = geom(z.id, z);
               const p = zoneProgress[z.id];
               const isSel = selected?.kind === "zone" && selected.id === z.id;
+              const isHover = hover?.id === z.id;
               const stroke = p ? STATUS_COLOR[p.status] : (z.color ?? "hsl(var(--primary))");
               return (
                 <g key={z.id} onPointerDown={(e) => startDrag(e, "zone", g as MapZone, "move")}>
@@ -287,10 +329,27 @@ export function FloorPlanCanvas({
                     fill={z.color ?? "hsl(var(--primary))"}
                     fillOpacity={isSel ? 0.2 : 0.09}
                     stroke={isSel ? "hsl(var(--primary))" : stroke}
-                    strokeWidth={isSel ? 3 : 2}
-                    className="cursor-pointer"
+                    strokeWidth={isSel || isHover ? 3 : 2}
+                    className="cursor-pointer transition-all"
+                    style={{ filter: isHover ? "drop-shadow(0 3px 8px rgba(0,0,0,0.35))" : undefined }}
+                    onPointerEnter={(e) =>
+                      setHover({
+                        id: z.id,
+                        label: z.name,
+                        sub: [
+                          p && p.total > 0 ? `${p.done}/${p.total} uppgifter` : "Inga uppgifter idag",
+                          formatSqm(areaOf({ width: g.width, height: g.height, area_sqm: z.area_sqm }, pxPerMeter).sqm),
+                        ]
+                          .filter(Boolean)
+                          .join(" · "),
+                        sx: e.clientX,
+                        sy: e.clientY,
+                      })
+                    }
+                    onPointerLeave={() => setHover((h) => (h?.id === z.id ? null : h))}
                     onClick={(e) => {
                       e.stopPropagation();
+                      setHover(null);
                       onSelect({ kind: "zone", id: z.id });
                     }}
                   />
@@ -339,6 +398,7 @@ export function FloorPlanCanvas({
               const t = types[o.object_type_id];
               const p = objectProgress[o.id];
               const isSel = selected?.kind === "object" && selected.id === o.id;
+              const isHover = hover?.id === o.id;
               const color = p ? STATUS_COLOR[p.status] : (t?.color ?? "hsl(var(--primary))");
               return (
                 <g
@@ -354,10 +414,28 @@ export function FloorPlanCanvas({
                     rx={t?.shape === "point" ? Math.min(g.width, g.height) / 2 : 4}
                     fill="hsl(var(--card))"
                     stroke={color}
-                    strokeWidth={isSel ? 3 : 2}
-                    className="cursor-pointer"
+                    strokeWidth={isSel || isHover ? 3 : 2}
+                    className="cursor-pointer transition-all"
+                    style={{ filter: isHover ? "drop-shadow(0 3px 8px rgba(0,0,0,0.35))" : undefined }}
+                    onPointerEnter={(e) =>
+                      setHover({
+                        id: o.id,
+                        label: o.name,
+                        sub: [
+                          t?.name,
+                          p && p.total > 0 ? `${p.done}/${p.total} uppgifter` : null,
+                          o.area_sqm != null ? formatSqm(Number(o.area_sqm)) : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · "),
+                        sx: e.clientX,
+                        sy: e.clientY,
+                      })
+                    }
+                    onPointerLeave={() => setHover((h) => (h?.id === o.id ? null : h))}
                     onClick={(e) => {
                       e.stopPropagation();
+                      setHover(null);
                       onSelect({ kind: "object", id: o.id });
                     }}
                   />
@@ -424,6 +502,53 @@ export function FloorPlanCanvas({
           </g>
         </svg>
       </div>
+
+      {/* Namnruta vid pekaren */}
+      {hover && (
+        <div
+          className="pointer-events-none fixed z-50 rounded-md border border-border bg-card px-2 py-1 shadow-lg"
+          style={{ left: hover.sx + 12, top: hover.sy + 12 }}
+        >
+          <p className="text-[11px] font-semibold leading-tight">{hover.label}</p>
+          {hover.sub && <p className="text-[10px] text-muted-foreground leading-tight">{hover.sub}</p>}
+        </div>
+      )}
+
+      {/* Hela ritningen i hörnet när man är inne i en modul — tryck för att gå tillbaka */}
+      {focusBox && (
+        <button
+          onClick={() => onExitFocus?.()}
+          className="absolute left-2 top-2 rounded-md border border-border bg-card/95 p-1 shadow-md hover:border-primary"
+          title="Tillbaka till hela kartan"
+        >
+          <svg width={116} height={82} viewBox={`0 0 ${plan.width} ${plan.height}`} className="block">
+            <rect x={0} y={0} width={plan.width} height={plan.height} fill="hsl(var(--muted))" />
+            {zones.map((z) => (
+              <rect
+                key={z.id}
+                x={z.x}
+                y={z.y}
+                width={z.width}
+                height={z.height}
+                fill={z.color ?? "hsl(var(--primary))"}
+                fillOpacity={0.25}
+                stroke="hsl(var(--border))"
+                strokeWidth={4}
+              />
+            ))}
+            <rect
+              x={focusBox.x}
+              y={focusBox.y}
+              width={focusBox.width}
+              height={focusBox.height}
+              fill="none"
+              stroke="hsl(var(--primary))"
+              strokeWidth={10}
+            />
+          </svg>
+          <span className="block text-[9px] text-muted-foreground pt-0.5">Hela kartan</span>
+        </button>
+      )}
 
       <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md border border-border bg-card/95 p-1">
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomBy(1 / 1.25)}>

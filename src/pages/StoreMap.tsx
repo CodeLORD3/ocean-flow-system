@@ -85,6 +85,7 @@ export default function StoreMap() {
   const [selected, setSelected] = useState<Selection>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pinMode, setPinMode] = useState(false);
+  const [focus, setFocus] = useState<Selection>(null);
   const [pinDialog, setPinDialog] = useState<{
     point: { x: number; y: number } | null;
     zoneId: string | null;
@@ -283,7 +284,15 @@ export default function StoreMap() {
               selected={selected}
               onSelect={(s) => {
                 setSelected(s);
-                if (s && !editMode) setDrawerOpen(true);
+                if (s && !editMode) {
+                  setFocus(s);
+                  setDrawerOpen(true);
+                }
+              }}
+              focus={editMode ? null : focus}
+              onExitFocus={() => {
+                setFocus(null);
+                setDrawerOpen(false);
               }}
               editMode={editMode}
               showBackground={layers.background}
@@ -312,6 +321,7 @@ export default function StoreMap() {
                     key={z.id}
                     onClick={() => {
                       setSelected({ kind: "zone", id: z.id });
+                      setFocus({ kind: "zone", id: z.id });
                       setDrawerOpen(true);
                     }}
                     className="flex items-center gap-2 rounded-md border border-border p-2 text-left hover:bg-muted"
@@ -551,8 +561,13 @@ export default function StoreMap() {
                         <button
                           key={t.id}
                           onClick={() => {
-                            if (t.map_object_id) setSelected({ kind: "object", id: t.map_object_id });
-                            else if (t.zone_id) setSelected({ kind: "zone", id: t.zone_id });
+                            const target: Selection = t.map_object_id
+                              ? { kind: "object", id: t.map_object_id }
+                              : t.zone_id
+                                ? { kind: "zone", id: t.zone_id }
+                                : null;
+                            setSelected(target);
+                            setFocus(target);
                             setDrawerOpen(true);
                           }}
                           className="w-full text-left text-[11px] rounded-md border border-border px-2 py-1 hover:bg-muted"
