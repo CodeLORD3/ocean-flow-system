@@ -4,6 +4,17 @@ import { Minus, Plus, Maximize2 } from "lucide-react";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
 import { STATUS_COLOR, type MapProgress } from "@/lib/mapStatus";
 import { areaOf, formatSqm } from "@/lib/mapScale";
+import {
+  bbox,
+  centroid,
+  fromNormalized,
+  pointInPolygon,
+  toNormalized,
+  toPath,
+  translatePoints,
+  zonePoints,
+  type Pt,
+} from "@/lib/mapGeometry";
 import type { FloorPlan, MapObject, MapObjectType, MapPin, MapWall, MapZone } from "@/hooks/useStoreMap";
 
 export type Selection = { kind: "zone" | "object"; id: string } | null;
