@@ -588,18 +588,57 @@ export default function ScheduleCalendar() {
                       const dayPast = isDatePast(year, monthIdx, cell.day);
                       const isSelected = selectedDate === cell.dateStr;
                       const hasMeeting = meetingDates.has(cell.dateStr);
+                      const inRange = isInRange(cell.dateStr);
+                      const rangeEdge = rangeBounds && (cell.dateStr === rangeBounds.from || cell.dateStr === rangeBounds.to);
 
                       return (
                         <div
                           key={cell.day}
                           className={cn(
-                            "min-h-[80px] overflow-hidden border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors relative",
+                            "min-h-[80px] overflow-hidden border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors relative select-none",
                             dayPast && "bg-muted/20",
                             today && "ring-1 ring-inset ring-primary",
                             isSelected && "ring-2 ring-inset ring-primary bg-primary/5",
+                            inRange && "bg-primary/15",
+                            rangeEdge && "ring-2 ring-inset ring-primary",
                             dropTarget === cell.dateStr && "bg-primary/10 ring-2 ring-inset ring-primary",
                           )}
-                          onClick={() => setSelectedDate(isSelected ? null : cell.dateStr)}
+                          onMouseDown={(e) => {
+                            if (e.button !== 0) return;
+                            if (e.shiftKey && (rangeStart || selectedDate)) {
+                              // Skift-klick: förläng markeringen till den här dagen.
+                              setRangeStart(rangeStart || selectedDate);
+                              setRangeEnd(cell.dateStr);
+                              return;
+                            }
+                            rangeDragging.current = true;
+                            setRangeStart(cell.dateStr);
+                            setRangeEnd(cell.dateStr);
+                          }}
+                          onMouseEnter={() => {
+                            if (rangeDragging.current) setRangeEnd(cell.dateStr);
+                          }}
+                          onMouseUp={() => {
+                            const wasDragging = rangeDragging.current;
+                            rangeDragging.current = false;
+                            const start = rangeStart;
+                            const end = cell.dateStr;
+                            if (start && start !== end) {
+                              // Intervall valt — öppna formuläret för hela perioden.
+                              const from = start <= end ? start : end;
+                              const to = start <= end ? end : start;
+                              setRangeStart(from);
+                              setRangeEnd(to);
+                              setSelectedDate(null);
+                              openAddPanel(from, to);
+                              return;
+                            }
+                            if (wasDragging) {
+                              setRangeStart(null);
+                              setRangeEnd(null);
+                              setSelectedDate(isSelected ? null : cell.dateStr);
+                            }
+                          }}
                           onDragOver={(e) => { e.preventDefault(); setDropTarget(cell.dateStr); }}
                           onDragLeave={() => setDropTarget(null)}
                           onDrop={(e) => { e.preventDefault(); handleDrop(cell.dateStr); }}
