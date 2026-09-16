@@ -19,6 +19,7 @@ import {
   useDeleteTask,
   useSetTaskDone,
   useTaskHistory,
+  useTaskCategories,
   useTaskImages,
   useTaskItem,
   useTaskReferenceImages,
