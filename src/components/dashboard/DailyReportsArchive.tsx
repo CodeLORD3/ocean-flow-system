@@ -47,6 +47,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { storeTone } from "@/lib/storeTone";
+import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { StatTile, StatTiles } from "@/components/reports/StatTile";
 import { Banknote, Receipt, Trash2 as TrashIcon } from "lucide-react";
 
@@ -365,6 +366,9 @@ export function DailyReportsArchive() {
   const isAdmin = (currentStaff?.portal_access ?? []).includes("admin");
   const correctedReportIds = useMemo(() => new Set(reportEdits.map((edit) => edit.report_id)), [reportEdits]);
   const storeName = (id: string) => stores.find((store) => store.id === id)?.name ?? "Butik";
+  /** Profilbild för den som skapat rapporten (kopplas via personalens inloggning). */
+  const imageOfUser = (userId?: string | null) =>
+    userId ? staff.find((entry) => (entry as any).user_id === userId)?.profile_image_url ?? null : null;
   const staffName = (id: string) => {
     const person = staff.find((entry) => entry.id === id);
     return person ? `${person.first_name} ${person.last_name}` : "Personal";
@@ -455,8 +459,9 @@ export function DailyReportsArchive() {
                         )}
                       </span>
                     </button>
-                    <span className="hidden truncate text-sm md:block">
-                      {reporter ? <span className="font-medium text-foreground/80">{reporter}</span> : <span className="italic text-muted-foreground/70">Okänd rapportör</span>}
+                    <span className="col-start-2 flex min-w-0 items-center gap-2 text-sm md:col-auto">
+                      <StaffAvatar name={reporter} imageUrl={imageOfUser(report.created_by)} className="h-9 w-9" />
+                      {reporter ? <span className="truncate font-medium text-foreground/80">{reporter}</span> : <span className="truncate italic text-muted-foreground/70">Okänd rapportör</span>}
                     </span>
                     <span className="col-start-2 row-start-1 text-right font-mono text-lg font-medium tabular-nums md:col-auto md:row-auto">{nf(report.net_sales)} kr</span>
                     <div className="col-start-2 row-start-2 flex items-center justify-end gap-3 md:col-auto md:row-auto">
@@ -500,7 +505,7 @@ export function DailyReportsArchive() {
                         </section>
                       </div>
                       <div className="mt-5 border-t pt-4"><p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Dagens kommentar</p><p className="mt-1 whitespace-pre-wrap text-sm">{report.comment || <span className="text-muted-foreground">Ingen kommentar.</span>}</p></div>
-                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-[10px] text-muted-foreground"><span>Sparad av {nameOf(report.created_by) ?? "okänd"}</span><span>{new Date(report.updated_at || report.created_at).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" })}</span>{isAdmin && <Button type="button" variant="outline" size="sm" onClick={() => setEditing(report)}><Edit3 /> Ändra rapport</Button>}</div>
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-[10px] text-muted-foreground"><span className="inline-flex items-center gap-2"><StaffAvatar name={nameOf(report.created_by)} imageUrl={imageOfUser(report.created_by)} className="h-7 w-7" />Sparad av {nameOf(report.created_by) ?? "okänd"}</span><span>{new Date(report.updated_at || report.created_at).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" })}</span>{isAdmin && <Button type="button" variant="outline" size="sm" onClick={() => setEditing(report)}><Edit3 /> Ändra rapport</Button>}</div>
                     </div>
                   )}
                 </div>
