@@ -26,7 +26,7 @@ describe("Butikskartan — status ur riktiga checklisteuppgifter", () => {
     expect(p.done).toBe(1);
     expect(p.total).toBe(2);
     expect(p.percent).toBe(50);
-    expect(p.status).toBe("yellow");
+    expect(p.status).toBe("amber");
   });
 
   it("visar grönt först när allt är klart", () => {
@@ -40,7 +40,7 @@ describe("Butikskartan — status ur riktiga checklisteuppgifter", () => {
   });
 
   it("utan uppgifter finns ingen aktivitet att visa", () => {
-    expect(progressFor([], 0).status).toBe("none");
+    expect(progressFor([], 0).status).toBe("grey");
   });
 
   it("försenad uppgift markeras", () => {
