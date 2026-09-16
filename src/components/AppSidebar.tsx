@@ -1,4 +1,5 @@
 import {
+  Map,
   Images,
   Radio,
 
@@ -129,6 +130,7 @@ const financeNav = [
   { title: "Försvunnet ur lagret", url: "/stock-disappearance", icon: Package },
   { title: "Kassa live", url: "/pos-live", icon: Radio },
   { title: "Checklistor", url: "/checklist", icon: ClipboardCheck },
+  { title: "Butikskarta", url: "/store-map", icon: Map },
 
   { title: "Datakvalitet", url: "/coverage", icon: Shield },
   { title: "Systemstatus", url: "/system-status", icon: Activity },
