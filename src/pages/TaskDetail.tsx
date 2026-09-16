@@ -180,10 +180,22 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           </div>
         </div>
         {task.done && (
-          <p className="text-xs text-emerald-600">
-            Klar {task.done_at ? new Date(task.done_at).toLocaleString("sv-SE") : ""}
-            {staffName(task.completed_by_staff_id) ? ` av ${staffName(task.completed_by_staff_id)}` : task.signature ? ` (${task.signature})` : ""}
-          </p>
+          <div className="flex items-center gap-2 text-xs text-emerald-600">
+            {(staffName(task.completed_by_staff_id) || task.signature) && (
+              <StaffAvatar
+                name={staffName(task.completed_by_staff_id) ?? task.signature}
+                imageUrl={staffImage(task.completed_by_staff_id)}
+              />
+            )}
+            <span>
+              Klar {task.done_at ? new Date(task.done_at).toLocaleString("sv-SE") : ""}
+              {staffName(task.completed_by_staff_id)
+                ? ` av ${staffName(task.completed_by_staff_id)}`
+                : task.signature
+                  ? ` (${task.signature})`
+                  : ""}
+            </span>
+          </div>
         )}
       </Card>
 
