@@ -354,7 +354,7 @@ export default function StoreMap() {
                               object_type_id: selectedObject.object_type_id,
                               name: nextInstanceName(
                                 typeById[selectedObject.object_type_id]?.name ?? selectedObject.name,
-                                objects.map((o) => o.name),
+                                objects,
                               ),
                               x: selectedObject.x + 16,
                               y: selectedObject.y + 16,
@@ -413,7 +413,7 @@ export default function StoreMap() {
                       className="h-7 w-full text-[11px] gap-1"
                       onClick={() =>
                         publish.mutate(
-                          { planId: plan.id, note: "Publicerad från redigeringsläget" },
+                          plan.id,
                           { onSuccess: () => toast({ title: "Kartan är publicerad" }) },
                         )
                       }
@@ -435,7 +435,7 @@ export default function StoreMap() {
                       <div key={v.id} className="text-[11px] flex items-center justify-between">
                         <span>v{v.version}</span>
                         <span className="text-muted-foreground">
-                          {new Date(v.created_at).toLocaleDateString("sv-SE")} · {v.created_by_name ?? "—"}
+                          {new Date(v.created_at).toLocaleDateString("sv-SE")} · {v.published_by_name ?? "—"}
                         </span>
                       </div>
                     ))}
