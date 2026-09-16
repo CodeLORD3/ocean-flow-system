@@ -56,12 +56,9 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [title, setTitle] = useState<string | null>(null);
   const [important, setImportant] = useState<string | null>(null);
-  const [steps, setSteps] = useState<string[]>([]);
   const { data: categories = [] } = useTaskCategories(storeId);
-
-  useEffect(() => {
-    setSteps(task?.instructions ?? []);
-  }, [task?.id, task?.instructions]);
+  const saveGuide = useSaveTaskGuide();
+  const guide = useMemo(() => parseGuide(task?.guide, task?.instructions ?? null), [task?.guide, task?.instructions]);
 
   const area = useMemo(() => {
     const sorted = [...zones].sort((a, b) => a.sort_order - b.sort_order);
