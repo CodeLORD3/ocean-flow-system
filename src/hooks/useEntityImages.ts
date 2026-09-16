@@ -147,6 +147,7 @@ export function useUploadEntityImage() {
           sort_order: sortOrder ?? 0,
           uploaded_by: uid,
           uploaded_by_name: uploaderName,
+          image_kind: imageKind ?? null,
         })
         .select("id")
         .single();
