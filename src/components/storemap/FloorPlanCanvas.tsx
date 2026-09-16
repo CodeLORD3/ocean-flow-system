@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Minus, Plus, Maximize2 } from "lucide-react";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
 import { STATUS_COLOR, type MapProgress } from "@/lib/mapStatus";
-import type { FloorPlan, MapObject, MapObjectType, MapWall, MapZone } from "@/hooks/useStoreMap";
+import { areaOf, formatSqm } from "@/lib/mapScale";
+import type { FloorPlan, MapObject, MapObjectType, MapPin, MapWall, MapZone } from "@/hooks/useStoreMap";
 
 export type Selection = { kind: "zone" | "object"; id: string } | null;
 
@@ -37,6 +38,11 @@ export function FloorPlanCanvas({
   showBackground,
   showGrid,
   onCommit,
+  pins = [],
+  pinMode = false,
+  pxPerMeter = null,
+  onPinPlace,
+  onPinSelect,
 }: {
   plan: FloorPlan;
   zones: MapZone[];
@@ -58,6 +64,11 @@ export function FloorPlanCanvas({
     width: number;
     height: number;
   }) => void;
+  pins?: MapPin[];
+  pinMode?: boolean;
+  pxPerMeter?: number | null;
+  onPinPlace?: (point: { x: number; y: number; zoneId: string | null }) => void;
+  onPinSelect?: (pin: MapPin) => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -177,13 +188,26 @@ export function FloorPlanCanvas({
     }
   };
 
+  /* Nålläge: tryck var som helst på ritningen och punkten hamnar exakt där. */
+  const placePin = (e: React.MouseEvent) => {
+    const el = wrapRef.current;
+    if (!el || !pinMode || !onPinPlace) return;
+    e.stopPropagation();
+    const rect = el.getBoundingClientRect();
+    const x = (e.clientX - rect.left - offset.x) / zoom;
+    const y = (e.clientY - rect.top - offset.y) / zoom;
+    const hit = [...zones].reverse().find((z) => x >= z.x && x <= z.x + z.width && y >= z.y && y <= z.y + z.height);
+    onPinPlace({ x: Math.round(x), y: Math.round(y), zoneId: hit?.id ?? null });
+  };
+
   const geom = (id: string, base: { x: number; y: number; width: number; height: number }) => ghost[id] ?? base;
 
   return (
     <div className="relative rounded-md border border-border bg-muted/20 overflow-hidden">
       <div
         ref={wrapRef}
-        className="h-[62vh] min-h-[380px] w-full touch-none cursor-grab active:cursor-grabbing"
+        className={`h-[62vh] min-h-[380px] w-full touch-none ${pinMode ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
+        onClickCapture={pinMode ? placePin : undefined}
         onPointerDown={onBackgroundDown}
         onPointerMove={onPointerMove}
         onPointerUp={endPointer}
@@ -284,6 +308,14 @@ export function FloorPlanCanvas({
                       {p && p.openIssues > 0 && (
                         <span className="text-[10px] font-semibold text-destructive">{p.openIssues} anm.</span>
                       )}
+                      {(() => {
+                        const a = areaOf({ width: g.width, height: g.height, area_sqm: z.area_sqm }, pxPerMeter);
+                        return a.sqm == null ? null : (
+                          <span className="text-[10px] tabular-nums text-muted-foreground">
+                            {a.exact ? "" : "≈ "}{formatSqm(a.sqm)}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </foreignObject>
                   {editMode && isSel && (
@@ -337,6 +369,11 @@ export function FloorPlanCanvas({
                           {o.name}
                         </span>
                       )}
+                      {g.height > 52 && o.area_sqm != null && (
+                        <span className="text-[8px] leading-tight text-muted-foreground tabular-nums">
+                          {formatSqm(Number(o.area_sqm))}
+                        </span>
+                      )}
                     </div>
                   </foreignObject>
                   {p && p.status === "red" && (
@@ -353,6 +390,34 @@ export function FloorPlanCanvas({
                       onPointerDown={(e) => startDrag(e, "object", g as MapObject, "resize")}
                     />
                   )}
+                </g>
+              );
+            })}
+            {/* Lager 6 — punkter: anteckningar och uppgifter på exakt plats */}
+            {pins.map((pin) => {
+              const done = pin.status === "done";
+              const c = done ? "hsl(var(--muted-foreground))" : pin.kind === "note" ? "hsl(var(--primary))" : "hsl(var(--warning, var(--primary)))";
+              const r = 9 / Math.max(zoom, 0.5);
+              return (
+                <g
+                  key={pin.id}
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPinSelect?.(pin);
+                  }}
+                >
+                  <circle cx={pin.x} cy={pin.y} r={r} fill={c} fillOpacity={done ? 0.45 : 0.95} stroke="hsl(var(--card))" strokeWidth={r / 4} />
+                  <text
+                    x={pin.x}
+                    y={pin.y + r / 3}
+                    textAnchor="middle"
+                    fontSize={r}
+                    fill="hsl(var(--card))"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    {done ? "\u2713" : "!"}
+                  </text>
                 </g>
               );
             })}

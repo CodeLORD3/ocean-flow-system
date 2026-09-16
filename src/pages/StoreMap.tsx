@@ -15,12 +15,14 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "@/hooks/use-toast";
-import { Copy, History, Map as MapIcon, Pencil, RotateCw, Save, Trash2, Upload } from "lucide-react";
+import { Copy, History, Map as MapIcon, MapPin as PinIcon, Pencil, RotateCw, Save, Trash2, Upload } from "lucide-react";
 import { FloorPlanCanvas, type Selection } from "@/components/storemap/FloorPlanCanvas";
 import { MapDetailDrawer } from "@/components/storemap/MapDetailDrawer";
 import { ObjectLibrary } from "@/components/storemap/ObjectLibrary";
+import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
+import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useAllowedStores } from "@/components/StoreSwitcher";
@@ -31,7 +33,10 @@ import {
   useFloorPlanVersions,
   useFloorPlans,
   useMapObjectTypes,
+  useCompleteMapPin,
+  useDeleteMapPin,
   useMapObjects,
+  useMapPins,
   useMapRealtime,
   useMapTasks,
   useMapWalls,
@@ -41,6 +46,7 @@ import {
   useSaveMapObject,
   useSaveZone,
   type MapObjectType,
+  type MapPin,
 } from "@/hooks/useStoreMap";
 
 export default function StoreMap() {
@@ -63,6 +69,7 @@ export default function StoreMap() {
   const { data: tasks = [] } = useMapTasks(storeId);
   const { data: deviations = [] } = useDeviations(false);
   const { data: versions = [] } = useFloorPlanVersions(plan?.id ?? null);
+  const { data: pins = [] } = useMapPins(plan?.id ?? null);
   useMapRealtime(storeId);
 
   const saveZone = useSaveZone();
@@ -70,11 +77,25 @@ export default function StoreMap() {
   const deleteObject = useDeleteMapObject();
   const savePlan = useSaveFloorPlan();
   const publish = usePublishFloorPlan();
+  const completePin = useCompleteMapPin();
+  const deletePin = useDeleteMapPin();
 
   const [mode, setMode] = useState<"drift" | "redigera">("drift");
   const [layers, setLayers] = useState({ background: true, grid: false, tasks: true, issues: true });
   const [selected, setSelected] = useState<Selection>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [pinMode, setPinMode] = useState(false);
+  const [pinDialog, setPinDialog] = useState<{
+    point: { x: number; y: number } | null;
+    zoneId: string | null;
+    existing: MapPin | null;
+  } | null>(null);
+
+  const pxPerMeter = useMemo(() => (plan ? derivePxPerMeter(plan, zones, objects) : null), [plan, zones, objects]);
+  const totalSqm = useMemo(
+    () => zones.reduce((sum, z) => sum + (areaOf(z, pxPerMeter).sqm ?? 0), 0),
+    [zones, pxPerMeter],
+  );
 
   const typeById = useMemo(() => Object.fromEntries(types.map((t) => [t.id, t])) as Record<string, MapObjectType>, [types]);
   const editMode = mode === "redigera" && canManage;
@@ -234,8 +255,20 @@ export default function StoreMap() {
                   </Label>
                 </div>
               ))}
+              <Button
+                size="sm"
+                variant={pinMode ? "default" : "outline"}
+                className="ml-auto h-7 text-[11px] gap-1"
+                onClick={() => setPinMode((v) => !v)}
+              >
+                <PinIcon className="h-3 w-3" />
+                {pinMode ? "Tryck på kartan…" : "Ny punkt"}
+              </Button>
+              <span className="text-[10px] text-muted-foreground tabular-nums">
+                {pxPerMeter ? `Yta ${formatSqm(totalSqm)}` : "Skala saknas — fyll i kvm på en zon"}
+              </span>
               {plan.status === "draft" && (
-                <Badge variant="outline" className="ml-auto text-[10px]">Utkast — ej publicerad</Badge>
+                <Badge variant="outline" className="text-[10px]">Utkast — ej publicerad</Badge>
               )}
             </div>
 
@@ -255,6 +288,14 @@ export default function StoreMap() {
               editMode={editMode}
               showBackground={layers.background}
               showGrid={layers.grid || editMode}
+              pins={pins}
+              pinMode={pinMode}
+              pxPerMeter={pxPerMeter}
+              onPinPlace={({ x, y, zoneId }) => {
+                setPinDialog({ point: { x, y }, zoneId, existing: null });
+                setPinMode(false);
+              }}
+              onPinSelect={(pin) => setPinDialog({ point: null, zoneId: pin.zone_id, existing: pin })}
               onCommit={({ kind, id, x, y, width, height }) =>
                 kind === "zone"
                   ? saveZone.mutate({ id, x, y, width, height })
@@ -280,6 +321,9 @@ export default function StoreMap() {
                       <p className="text-xs font-medium truncate">{z.name}</p>
                       <p className="text-[10px] text-muted-foreground tabular-nums">
                         {p.done}/{p.total} klart
+                        {areaOf(z, pxPerMeter).sqm != null && (
+                          <span> · {areaOf(z, pxPerMeter).exact ? "" : "≈ "}{formatSqm(areaOf(z, pxPerMeter).sqm)}</span>
+                        )}
                         {p.openIssues > 0 && (
                           <span className="text-destructive"> · {p.openIssues} anm.</span>
                         )}
@@ -332,6 +376,24 @@ export default function StoreMap() {
                           ))}
                         </SelectContent>
                       </Select>
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Yta i kvadratmeter</Label>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.1"
+                          min="0"
+                          defaultValue={selectedObject.area_sqm ?? ""}
+                          placeholder={formatSqm(areaOf(selectedObject, pxPerMeter).sqm)}
+                          onBlur={(e) =>
+                            saveObject.mutate({
+                              id: selectedObject.id,
+                              area_sqm: e.target.value === "" ? null : Number(e.target.value.replace(",", ".")),
+                            })
+                          }
+                          className="h-7 text-xs"
+                        />
+                      </div>
                       <div className="grid grid-cols-3 gap-1">
                         <Button
                           variant="outline"
@@ -381,6 +443,37 @@ export default function StoreMap() {
                     </CardContent>
                   </Card>
                 )}
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs">Kvadratmeter per zon</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-1.5">
+                    <p className="text-[10px] text-muted-foreground">
+                      Fyll i den uppmätta ytan. Skalan räknas fram och övriga rutor får uppskattad yta.
+                    </p>
+                    {zones.map((z) => (
+                      <div key={z.id} className="flex items-center gap-2">
+                        <span className="text-[11px] truncate flex-1">{z.name}</span>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.1"
+                          min="0"
+                          defaultValue={z.area_sqm ?? ""}
+                          placeholder={formatSqm(areaOf(z, pxPerMeter).sqm)}
+                          onBlur={(e) =>
+                            saveZone.mutate({
+                              id: z.id,
+                              area_sqm: e.target.value === "" ? null : Number(e.target.value.replace(",", ".")),
+                            })
+                          }
+                          className="h-7 w-20 text-xs tabular-nums"
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
 
                 <Card>
                   <CardHeader className="pb-2">
@@ -472,8 +565,72 @@ export default function StoreMap() {
                 </CardContent>
               </Card>
             )}
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs flex items-center gap-1">
+                  <PinIcon className="h-3.5 w-3.5" /> Punkter på kartan
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1.5">
+                {pins.length === 0 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Tryck på “Ny punkt” och sedan på platsen i kartan.
+                  </p>
+                )}
+                {pins.slice(0, 20).map((pin) => (
+                  <div key={pin.id} className="rounded-md border border-border p-2 space-y-1">
+                    <div className="flex items-start gap-2">
+                      <button
+                        className="text-left min-w-0 flex-1"
+                        onClick={() => setPinDialog({ point: null, zoneId: pin.zone_id, existing: pin })}
+                      >
+                        <p className={`text-[11px] font-medium truncate ${pin.status === "done" ? "line-through text-muted-foreground" : ""}`}>
+                          {pin.title}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {PIN_KIND_LABEL[pin.kind] ?? pin.kind}
+                          {pin.assigned_name ? ` · ${pin.assigned_name}` : " · ingen ansvarig"}
+                          {pin.due_date ? ` · till ${pin.due_date}` : ""}
+                        </p>
+                      </button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-1 text-[10px]"
+                        onClick={() => completePin.mutate({ id: pin.id, done: pin.status !== "done" })}
+                      >
+                        {pin.status === "done" ? "Öppna" : "Klar"}
+                      </Button>
+                      {canManage && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-1 text-[10px] text-destructive"
+                          onClick={() => deletePin.mutate(pin.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           </div>
         </div>
+      )}
+
+      {plan && pinDialog && (
+        <MapPinDialog
+          open
+          onOpenChange={(v) => !v && setPinDialog(null)}
+          storeId={storeId}
+          planId={plan.id}
+          point={pinDialog.point}
+          zoneId={pinDialog.zoneId}
+          existing={pinDialog.existing}
+        />
       )}
 
       {(selectedZone || selectedObject) && (

@@ -28,6 +28,7 @@ export type FloorPlan = {
   grid_size: number;
   status: string;
   published_at: string | null;
+  px_per_meter: number | null;
 };
 
 export type MapZone = {
@@ -42,6 +43,7 @@ export type MapZone = {
   width: number;
   height: number;
   sort_order: number;
+  area_sqm: number | null;
 };
 
 export type MapObjectType = {
@@ -73,6 +75,29 @@ export type MapObject = {
   rotation: number;
   note: string | null;
   control_point_id: string | null;
+  area_sqm: number | null;
+};
+
+/** Punkt på kartan: anteckning eller uppgift lagd på en person. */
+export type MapPin = {
+  id: string;
+  floor_plan_id: string;
+  store_id: string;
+  zone_id: string | null;
+  map_object_id: string | null;
+  x: number;
+  y: number;
+  kind: string;
+  title: string;
+  body: string | null;
+  assigned_staff_id: string | null;
+  assigned_name: string | null;
+  due_date: string | null;
+  status: string;
+  created_by_name: string | null;
+  done_at: string | null;
+  done_by_name: string | null;
+  created_at: string;
 };
 
 export type MapWall = {
@@ -450,4 +475,93 @@ export function nextInstanceName(typeName: string, existing: MapObject[]) {
   const taken = new Set(existing.map((o) => o.name.toLowerCase()));
   while (taken.has(`${prefix} ${String(n).padStart(2, "0")}`.toLowerCase())) n += 1;
   return `${prefix} ${String(n).padStart(2, "0")}`;
+}
+
+/* ---------------- Punkter: anteckning eller uppgift på exakt plats ---------------- */
+
+export function useMapPins(floorPlanId?: string | null) {
+  return useQuery({
+    queryKey: ["map-pins", floorPlanId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("map_pins")
+        .select("*")
+        .eq("floor_plan_id", floorPlanId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as MapPin[];
+    },
+    enabled: !!floorPlanId,
+  });
+}
+
+export function useSaveMapPin() {
+  const qc = useQueryClient();
+  const { staff } = useStaffAuth();
+  return useMutation({
+    mutationFn: async (input: Partial<MapPin>) => {
+      const actor = staff ? `${staff.first_name} ${staff.last_name}` : null;
+      if (input.id) {
+        const { id, ...patch } = input;
+        const { error } = await supabase.from("map_pins").update(patch).eq("id", id);
+        if (error) throw error;
+        return id;
+      }
+      const { data, error } = await supabase
+        .from("map_pins")
+        .insert({
+          floor_plan_id: input.floor_plan_id!,
+          store_id: input.store_id!,
+          zone_id: input.zone_id ?? null,
+          map_object_id: input.map_object_id ?? null,
+          x: input.x ?? 0,
+          y: input.y ?? 0,
+          kind: input.kind ?? "note",
+          title: input.title || "Anteckning",
+          body: input.body ?? null,
+          assigned_staff_id: input.assigned_staff_id ?? null,
+          assigned_name: input.assigned_name ?? null,
+          due_date: input.due_date ?? null,
+          status: input.status ?? "open",
+          created_by_name: actor,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id as string;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["map-pins"] }),
+  });
+}
+
+/** Markerar punkten klar, eller öppnar den igen. */
+export function useCompleteMapPin() {
+  const qc = useQueryClient();
+  const { staff } = useStaffAuth();
+  return useMutation({
+    mutationFn: async ({ id, done }: { id: string; done: boolean }) => {
+      const actor = staff ? `${staff.first_name} ${staff.last_name}` : null;
+      const { error } = await supabase
+        .from("map_pins")
+        .update(
+          done
+            ? { status: "done", done_at: new Date().toISOString(), done_by_name: actor }
+            : { status: "open", done_at: null, done_by_name: null },
+        )
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["map-pins"] }),
+  });
+}
+
+export function useDeleteMapPin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("map_pins").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["map-pins"] }),
+  });
 }
