@@ -321,6 +321,27 @@ export default function StoreMap() {
           title="Ingen ritning ännu"
           description="En administratör lägger upp butikens planritning innan kartan kan användas."
         />
+      ) : areaPage ? (
+        (() => {
+          const pageZone = areaPage.kind === "zone" ? zones.find((z) => z.id === areaPage.id) ?? null : null;
+          const pageObject = areaPage.kind === "object" ? objects.find((o) => o.id === areaPage.id) ?? null : null;
+          const target = pageObject ?? pageZone;
+          const area = target ? areaOf(target, pxPerMeter) : null;
+          return (
+            <ZoneAreaPage
+              storeId={storeId}
+              portal={site}
+              zone={pageZone}
+              object={pageObject}
+              objectType={pageObject ? typeById[pageObject.object_type_id] : null}
+              tasks={pageObject ? tasksForObject(pageObject.id) : pageZone ? tasksForZone(pageZone.id) : []}
+              canManage={canManage}
+              zoneNumber={pageZone ? zoneNumbers[pageZone.id] : undefined}
+              areaLabel={area?.sqm != null ? `${area.exact ? "" : "≈ "}${formatSqm(area.sqm)}` : null}
+              onBack={() => setAreaPage(null)}
+            />
+          );
+        })()
       ) : view !== "karta" ? (
         <MapListViews
           view={view}
