@@ -1,11 +1,19 @@
 /**
  * Arbetsbeskrivning för en uppgift: målet ("så här ska det se ut"),
- * vad man behöver (varor och redskap med bild) och steg för steg med bild.
+ * vad man behöver (varor och redskap med bild och plats på butikskartan)
+ * och steg för steg med bild, samt hur sakerna ställs tillbaka.
  * Sparas i kolumnen guide på checklist_items och checklist_template_items.
  */
 
 export type GuideStep = { text: string; image?: string | null };
-export type GuideMaterial = { name: string; image?: string | null };
+export type GuideMaterial = {
+  name: string;
+  image?: string | null;
+  /** Ytan på butikskartan där saken finns. */
+  zoneId?: string | null;
+  /** Plats i klartext, t.ex. "hyllan över vasken". */
+  place?: string;
+};
 
 export type TaskGuide = {
   /** Vad målet är, i löpande text. */
@@ -16,12 +24,27 @@ export type TaskGuide = {
   materials: GuideMaterial[];
   /** Steg för steg, med bild per steg. */
   steps: GuideStep[];
+  /** Hur sakerna ställs tillbaka när arbetet är klart. */
+  putBack: string;
+  /** Bilder som visar rätt läge när sakerna är tillbaka. */
+  putBackImages: string[];
 };
 
-export const EMPTY_GUIDE: TaskGuide = { goal: "", goalImages: [], materials: [], steps: [] };
+export const EMPTY_GUIDE: TaskGuide = {
+  goal: "",
+  goalImages: [],
+  materials: [],
+  steps: [],
+  putBack: "",
+  putBackImages: [],
+};
 
 function str(v: unknown) {
   return typeof v === "string" ? v : "";
+}
+
+function urls(v: unknown) {
+  return Array.isArray(v) ? (v as unknown[]).map((u) => str(u)).filter(Boolean) : [];
 }
 
 /** Läser guide-kolumnen tolerant, och faller tillbaka på gamla textsteg. */
@@ -41,17 +64,25 @@ export function parseGuide(raw: unknown, fallbackSteps?: string[] | null): TaskG
     ? (o.materials as unknown[])
         .map((m) =>
           typeof m === "string"
-            ? { name: m, image: null }
-            : { name: str((m as any)?.name), image: str((m as any)?.image) || null },
+            ? { name: m, image: null, zoneId: null, place: "" }
+            : {
+                name: str((m as any)?.name),
+                image: str((m as any)?.image) || null,
+                zoneId: str((m as any)?.zoneId) || null,
+                place: str((m as any)?.place),
+              },
         )
         .filter((m) => m.name.trim().length > 0 || m.image)
     : [];
 
-  const goalImages = Array.isArray(o.goalImages)
-    ? (o.goalImages as unknown[]).map((u) => str(u)).filter(Boolean)
-    : [];
-
-  return { goal: str(o.goal), goalImages, materials, steps };
+  return {
+    goal: str(o.goal),
+    goalImages: urls(o.goalImages),
+    materials,
+    steps,
+    putBack: str(o.putBack),
+    putBackImages: urls(o.putBackImages),
+  };
 }
 
 /** Tomt räknas som ingen beskrivning alls, så vi sparar null i stället. */
@@ -59,6 +90,8 @@ export function guideIsEmpty(g: TaskGuide) {
   return (
     !g.goal.trim() &&
     g.goalImages.length === 0 &&
+    !g.putBack.trim() &&
+    g.putBackImages.length === 0 &&
     g.materials.every((m) => !m.name.trim() && !m.image) &&
     g.steps.every((s) => !s.text.trim() && !s.image)
   );
@@ -69,8 +102,17 @@ export function cleanGuide(g: TaskGuide): TaskGuide | null {
   const cleaned: TaskGuide = {
     goal: g.goal.trim(),
     goalImages: g.goalImages.filter(Boolean),
-    materials: g.materials.filter((m) => m.name.trim() || m.image).map((m) => ({ name: m.name.trim(), image: m.image ?? null })),
+    materials: g.materials
+      .filter((m) => m.name.trim() || m.image)
+      .map((m) => ({
+        name: m.name.trim(),
+        image: m.image ?? null,
+        zoneId: m.zoneId ?? null,
+        place: (m.place ?? "").trim(),
+      })),
     steps: g.steps.filter((s) => s.text.trim() || s.image).map((s) => ({ text: s.text.trim(), image: s.image ?? null })),
+    putBack: g.putBack.trim(),
+    putBackImages: g.putBackImages.filter(Boolean),
   };
   return guideIsEmpty(cleaned) ? null : cleaned;
 }

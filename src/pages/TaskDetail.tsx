@@ -30,6 +30,7 @@ import {
 } from "@/hooks/useTasks";
 import { TaskGuideEditor } from "@/components/tasks/TaskGuideEditor";
 import { TaskGuideView } from "@/components/tasks/TaskGuideView";
+import { TaskIssueDialog } from "@/components/tasks/TaskIssueDialog";
 import { parseGuide } from "@/lib/taskGuide";
 import { DAYPARTS, durationText, taskTime } from "@/lib/taskTime";
 import { workTypeLabel } from "@/lib/workType";
@@ -68,6 +69,18 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
     const z = sorted[i];
     return { id: z.id, name: z.name, color: z.color ?? "hsl(var(--primary))", number: i + 1 };
   }, [zones, task?.zone_id]);
+
+  /** Ytorna som kan väljas som plats för redskap i beskrivningen. */
+  const guideZones = useMemo(
+    () =>
+      [...zones]
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((z, i) => ({ id: z.id, name: z.name, number: i + 1 })),
+    [zones],
+  );
+
+  const [issueOpen, setIssueOpen] = useState(false);
+  const [issuePreset, setIssuePreset] = useState<string | null>(null);
 
   const staffName = (id: string | null | undefined) => {
     const s = staffList.find((p) => p.id === id);
@@ -267,12 +280,34 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           {task.important_note && (
             <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-700">{task.important_note}</p>
           )}
-          {guide.goal || guide.materials.length > 0 || guide.steps.length > 0 ? (
-            <TaskGuideView guide={guide} />
+          {guide.goal || guide.materials.length > 0 || guide.steps.length > 0 || guide.putBack ? (
+            <TaskGuideView
+              guide={guide}
+              zones={guideZones}
+              onShowOnMap={(zoneId) =>
+                switchTab(`/store-map?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
+              }
+              onReport={(name) => {
+                setIssuePreset(name ?? null);
+                setIssueOpen(true);
+              }}
+            />
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Ingen beskrivning finns ännu. Lägg in mål, varor och steg med bilder under Inställningar.
-            </p>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Ingen beskrivning finns ännu. Lägg in godkänt läge, redskap med plats på kartan, steg och återställning
+                under Inställningar.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIssuePreset(null);
+                  setIssueOpen(true);
+                }}
+              >
+                Rapportera trasigt eller slut
+              </Button>
+            </div>
           )}
           {reference.length > 0 && (
             <div>
@@ -401,6 +436,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             <TaskGuideEditor
               taskId={task.id}
               value={guide}
+              zones={guideZones}
               saving={saveGuide.isPending}
               onSave={async (g) => {
                 try {
@@ -566,6 +602,16 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
         onIndexChange={setLightbox}
         onClose={() => setLightbox(null)}
         title={task.task}
+      />
+
+      <TaskIssueDialog
+        open={issueOpen}
+        onOpenChange={setIssueOpen}
+        taskId={task.id}
+        taskName={task.task}
+        storeId={storeId}
+        materials={guide.materials.map((m) => m.name).filter(Boolean)}
+        presetName={issuePreset}
       />
     </div>
   );
