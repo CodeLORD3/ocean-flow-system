@@ -395,11 +395,9 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           </div>
 
           <div className="rounded-lg border p-3">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">Steg 2 · Så gör du</p>
             <label className="text-sm font-medium">Arbetsbeskrivning</label>
-            <p className="mb-3 text-xs text-muted-foreground">
-              Beskriv målet, vilka varor som behövs och stegen — med bilder. Går att fylla i eller ändra när som helst.
-              Sparas även på den återkommande uppgiften.
-            </p>
+            <p className="mb-3 text-xs text-muted-foreground">Mål, material och ett moment per steg — med bild.</p>
             <TaskGuideEditor
               taskId={task.id}
               value={guide}
