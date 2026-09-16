@@ -25,6 +25,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   "/image-feed": all(BUTIK, GROSSIST, ADMIN),
 
   "/checklist": all(BUTIK, GROSSIST, ADMIN),
+  "/uppgifter": all(BUTIK, GROSSIST, ADMIN),
   "/store-map": all(BUTIK, GROSSIST, ADMIN),
   "/schedule": all(BUTIK, GROSSIST, ADMIN),
   "/meetings": all(BUTIK, GROSSIST, ADMIN),
@@ -131,7 +132,12 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
 /** Får den aktiva portalen öppna rutten? */
 export function canAccessRoute(site: SiteMode, path: string): boolean {
   // Kundkortet ligger under Kundbeställningar och ärver dess behörighet.
-  const key = path.startsWith("/customer-orders/") ? "/customer-orders" : path;
+  // Uppgiftens egen sida ärver behörigheten från uppgiftslistan.
+  const key = path.startsWith("/customer-orders/")
+    ? "/customer-orders"
+    : path.startsWith("/uppgift/")
+      ? "/uppgifter"
+      : path;
   const allowed = ROUTE_ACCESS[key];
   if (!allowed) return site === "wholesale";
   return allowed.includes(site);

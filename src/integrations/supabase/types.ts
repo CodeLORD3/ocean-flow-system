@@ -1280,60 +1280,131 @@ export type Database = {
       }
       checklist_items: {
         Row: {
+          assigned_staff_id: string | null
           category: string | null
+          category_id: string | null
+          completed_by_staff_id: string | null
           created_at: string
           day_id: string
+          daypart: string | null
           done: boolean
           done_at: string | null
+          estimated_minutes: number | null
           id: string
+          important_note: string | null
+          instructions: Json | null
           map_object_id: string | null
           note: string | null
+          requires_photo: boolean
           section: string
           signature: string | null
           sort_order: number
+          specific_time: string | null
           task: string
+          template_item_id: string | null
+          time_from: string | null
           time_label: string | null
+          time_to: string | null
           updated_at: string
           work_type: string | null
           zone_id: string | null
         }
         Insert: {
+          assigned_staff_id?: string | null
           category?: string | null
+          category_id?: string | null
+          completed_by_staff_id?: string | null
           created_at?: string
           day_id: string
+          daypart?: string | null
           done?: boolean
           done_at?: string | null
+          estimated_minutes?: number | null
           id?: string
+          important_note?: string | null
+          instructions?: Json | null
           map_object_id?: string | null
           note?: string | null
+          requires_photo?: boolean
           section: string
           signature?: string | null
           sort_order?: number
+          specific_time?: string | null
           task: string
+          template_item_id?: string | null
+          time_from?: string | null
           time_label?: string | null
+          time_to?: string | null
           updated_at?: string
           work_type?: string | null
           zone_id?: string | null
         }
         Update: {
+          assigned_staff_id?: string | null
           category?: string | null
+          category_id?: string | null
+          completed_by_staff_id?: string | null
           created_at?: string
           day_id?: string
+          daypart?: string | null
           done?: boolean
           done_at?: string | null
+          estimated_minutes?: number | null
           id?: string
+          important_note?: string | null
+          instructions?: Json | null
           map_object_id?: string | null
           note?: string | null
+          requires_photo?: boolean
           section?: string
           signature?: string | null
           sort_order?: number
+          specific_time?: string | null
           task?: string
+          template_item_id?: string | null
+          time_from?: string | null
           time_label?: string | null
+          time_to?: string | null
           updated_at?: string
           work_type?: string | null
           zone_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "checklist_items_assigned_staff_id_fkey"
+            columns: ["assigned_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_assigned_staff_id_fkey"
+            columns: ["assigned_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "task_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_completed_by_staff_id_fkey"
+            columns: ["completed_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_completed_by_staff_id_fkey"
+            columns: ["completed_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "checklist_items_day_id_fkey"
             columns: ["day_id"]
@@ -1346,6 +1417,13 @@ export type Database = {
             columns: ["map_object_id"]
             isOneToOne: false
             referencedRelation: "map_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_template_items"
             referencedColumns: ["id"]
           },
           {
@@ -1448,53 +1526,104 @@ export type Database = {
       checklist_template_items: {
         Row: {
           active: boolean
+          assigned_staff_id: string | null
           category: string | null
+          category_id: string | null
           created_at: string
+          daypart: string | null
+          estimated_minutes: number | null
           id: string
+          important_note: string | null
+          instructions: Json | null
           map_object_id: string | null
+          requires_photo: boolean
           section: string
           sort_order: number
+          specific_time: string | null
           store_id: string | null
           task: string
           template_id: string
+          time_from: string | null
           time_label: string | null
+          time_to: string | null
           updated_at: string
           work_type: string | null
           zone_id: string | null
         }
         Insert: {
           active?: boolean
+          assigned_staff_id?: string | null
           category?: string | null
+          category_id?: string | null
           created_at?: string
+          daypart?: string | null
+          estimated_minutes?: number | null
           id?: string
+          important_note?: string | null
+          instructions?: Json | null
           map_object_id?: string | null
+          requires_photo?: boolean
           section: string
           sort_order?: number
+          specific_time?: string | null
           store_id?: string | null
           task: string
           template_id?: string
+          time_from?: string | null
           time_label?: string | null
+          time_to?: string | null
           updated_at?: string
           work_type?: string | null
           zone_id?: string | null
         }
         Update: {
           active?: boolean
+          assigned_staff_id?: string | null
           category?: string | null
+          category_id?: string | null
           created_at?: string
+          daypart?: string | null
+          estimated_minutes?: number | null
           id?: string
+          important_note?: string | null
+          instructions?: Json | null
           map_object_id?: string | null
+          requires_photo?: boolean
           section?: string
           sort_order?: number
+          specific_time?: string | null
           store_id?: string | null
           task?: string
           template_id?: string
+          time_from?: string | null
           time_label?: string | null
+          time_to?: string | null
           updated_at?: string
           work_type?: string | null
           zone_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "checklist_template_items_assigned_staff_id_fkey"
+            columns: ["assigned_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_assigned_staff_id_fkey"
+            columns: ["assigned_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "task_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "checklist_template_items_map_object_id_fkey"
             columns: ["map_object_id"]
@@ -15212,6 +15341,57 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      task_categories: {
+        Row: {
+          active: boolean
+          color: string
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          sort_order: number
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_categories_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "task_categories_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tax_tables: {
         Row: {
