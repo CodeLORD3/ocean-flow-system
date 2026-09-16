@@ -1,11 +1,14 @@
 import { useMemo, useRef, useState } from "react";
-import { Camera, ImageIcon, Loader2 } from "lucide-react";
+import { Camera, ChevronDown, ImageIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
+import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import {
   useEntityImages,
+  useMyImageFavorites,
+  useToggleImageFavorite,
   useUpdateEntityImage,
   useUploadEntityImage,
   type EntityImage,
