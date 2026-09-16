@@ -198,6 +198,7 @@ export default function ScheduleCalendar() {
     setFormType(isTaskType(evt.event_type) ? "note" : evt.event_type);
     setFormSeverity(evt.severity);
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
+    setFormEndDate("");
     setFormRecurrence(evt.recurrence_type || "none");
     setFormRecurrenceEnd(evt.recurrence_end_date || "");
     setFormAssignee(evt.assigned_to || "none");
