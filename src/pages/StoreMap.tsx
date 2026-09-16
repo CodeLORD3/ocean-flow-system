@@ -37,6 +37,7 @@ import { ObjectLibrary } from "@/components/storemap/ObjectLibrary";
 import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog";
 import { MapListViews } from "@/components/storemap/MapListViews";
 import { OverviewStatsBar } from "@/components/storemap/OverviewStatsBar";
+import { StorePhotoStrip } from "@/components/storemap/StorePhotoStrip";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
@@ -261,6 +262,17 @@ export default function StoreMap() {
         openDeviations={Object.values(issuesByEntity).reduce((a, b) => a + b, 0)}
         totalSqm={totalSqm}
       />
+
+      {/* Bilder från butiken — senaste bilderna som en rad man kan bläddra i */}
+      <StorePhotoStrip
+        storeId={storeId}
+        planId={plan?.id ?? null}
+        planImages={planImages}
+        zones={zones}
+        onOpenZone={(id) => setAreaPage({ kind: "zone", id })}
+      />
+
+
 
       {/* Rubrikrad — stor titel, butik under, läge till höger */}
       <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
