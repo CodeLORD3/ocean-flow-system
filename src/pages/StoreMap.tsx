@@ -337,18 +337,23 @@ export default function StoreMap() {
           }}
         />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+        <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
           <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
-            {/* Lagerväljare */}
+            {/* Kartans egen rad: bara det man behöver, resten ligger i redigeringsläget */}
             <div className="flex flex-wrap items-center gap-3 border-b border-border px-3 py-2">
               {(
-                [
-                  ["background", "Ritning"],
-                  ["grid", "Rutnät"],
-                  ["tasks", "Uppgifter"],
-                  ["issues", "Anmärkningar"],
-                  ["photos", "Bilder"],
-                ] as const
+                editMode
+                  ? ([
+                      ["background", "Ritning"],
+                      ["grid", "Rutnät"],
+                      ["tasks", "Uppgifter"],
+                      ["issues", "Anmärkningar"],
+                      ["photos", "Bilder"],
+                    ] as const)
+                  : ([
+                      ["grid", "Rutnät"],
+                      ["photos", "Bilder"],
+                    ] as const)
               ).map(([key, label]) => (
                 <div key={key} className="flex items-center gap-1.5">
                   <Switch
@@ -362,22 +367,25 @@ export default function StoreMap() {
                   </Label>
                 </div>
               ))}
-              <Button
-                size="sm"
-                variant={pinMode ? "default" : "outline"}
-                className="ml-auto h-7 text-[11px] gap-1"
-                onClick={() => setPinMode((v) => !v)}
-              >
-                <PinIcon className="h-3 w-3" />
-                {pinMode ? "Tryck på kartan…" : "Ny punkt"}
-              </Button>
-              <span className="text-[10px] text-muted-foreground tabular-nums">
+              {canManage && (
+                <Button
+                  size="sm"
+                  variant={pinMode ? "default" : "outline"}
+                  className="ml-auto h-7 text-[11px] gap-1"
+                  onClick={() => setPinMode((v) => !v)}
+                >
+                  <PinIcon className="h-3 w-3" />
+                  {pinMode ? "Tryck på kartan…" : "Ny punkt"}
+                </Button>
+              )}
+              <span className={`text-[10px] text-muted-foreground tabular-nums ${canManage ? "" : "ml-auto"}`}>
                 {pxPerMeter ? `Yta ${formatSqm(totalSqm)}` : "Skala saknas — fyll i kvm på en zon"}
               </span>
               {plan.status === "draft" && (
                 <Badge variant="outline" className="text-[10px]">Utkast — ej publicerad</Badge>
               )}
             </div>
+
 
             <FloorPlanCanvas
               plan={plan}
