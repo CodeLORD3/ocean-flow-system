@@ -181,7 +181,9 @@ function PortalInner() {
       return count || 0;
     },
     enabled: !!user?.id,
-    refetchInterval: 15000,
+    staleTime: 60_000,
+    refetchInterval: 90_000,
+    refetchIntervalInBackground: false,
   });
 
   useEffect(() => {
