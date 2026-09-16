@@ -308,8 +308,8 @@ function EditableRow({
       <TableRow data-line-id={line.id} className="h-8 opacity-75">
         <TableCell className="py-0.5 px-1.5 text-[11px] min-w-[140px]">{line.product_name}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] text-right w-[50px]">{line.quantity}</TableCell>
-        <TableCell className="py-0.5 px-1 text-[11px] w-[42px]">{line.unit || "kg"}</TableCell>
-        <TableCell className="py-0.5 px-1 text-[11px] text-right w-[58px]">{(line.unit_price ?? 0).toLocaleString("sv-SE")}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] w-[64px] whitespace-nowrap">{line.unit || "kg"}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] text-right w-[64px] tabular-nums">{(line.unit_price ?? 0).toLocaleString("sv-SE")}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] w-[88px] truncate">{line.supplier_name || "—"}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] w-[62px]">{line.status}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] w-[86px]">{line.purchase_date || "—"}</TableCell>
@@ -393,7 +393,7 @@ function EditableRow({
         )}
       </TableCell>
 
-      <TableCell className="py-0.5 px-1 w-[50px]">
+      <TableCell className="py-0.5 px-1 w-[68px]">
         <Input
           ref={qtyInputRef}
           type="number"
@@ -401,12 +401,12 @@ function EditableRow({
           defaultValue={line.quantity}
           onFocus={(e) => e.target.select()}
           onChange={(e) => commitField("quantity", parseFloat(e.target.value) || 0)}
-          className="h-6 text-[11px] w-12 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right"
+          className="h-6 w-full text-[11px] border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right tabular-nums"
         />
       </TableCell>
-      <TableCell className="py-0.5 px-1 w-[42px]">
+      <TableCell className="py-0.5 px-1 w-[64px]">
         <Select defaultValue={line.unit || "kg"} onValueChange={(v) => onSave({ unit: v })}>
-          <SelectTrigger className="h-6 w-10 text-[11px] border-transparent bg-transparent hover:border-input"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-6 w-full min-w-[56px] px-1.5 text-[11px] border-transparent bg-transparent hover:border-input [&>span]:truncate"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="kg">kg</SelectItem>
             <SelectItem value="st">st</SelectItem>
