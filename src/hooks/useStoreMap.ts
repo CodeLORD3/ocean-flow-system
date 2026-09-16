@@ -156,7 +156,7 @@ export function useMapZones(floorPlanId?: string | null) {
         .eq("floor_plan_id", floorPlanId!)
         .order("sort_order");
       if (error) throw error;
-      return (data || []) as MapZone[];
+      return (data || []) as unknown as MapZone[];
     },
     enabled: !!floorPlanId,
   });
