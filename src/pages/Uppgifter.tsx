@@ -249,6 +249,11 @@ export default function Uppgifter() {
     [staffList],
   );
 
+  /** Öppnar kartan med ytan markerad och med väg tillbaka till uppgiften. */
+  const openOnMap = (t: Task, areaId: string) => {
+    switchTab(`/store-map?zone=${areaId}&fromTask=${t.id}&taskName=${encodeURIComponent(t.task)}`);
+  };
+
   const assign = (t: Task, staffId: string | null) => {
     updateTask.mutate(
       { id: t.id, assigned_staff_id: staffId },
@@ -430,7 +435,7 @@ export default function Uppgifter() {
                       onAssign={(staffId) => assign(t, staffId)}
                       onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
                       onAddPhoto={(file) => addPhoto(t, file)}
-                      onOpenArea={() => switchTab("/store-map")}
+                      onOpenArea={(areaId) => openOnMap(t, areaId)}
                       onDelete={() => deleteTask(t)}
                     />
                   ))}
@@ -484,7 +489,7 @@ export default function Uppgifter() {
                           onAssign={(staffId) => assign(t, staffId)}
                           onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
                           onAddPhoto={(file) => addPhoto(t, file)}
-                          onOpenArea={() => switchTab("/store-map")}
+                          onOpenArea={(areaId) => openOnMap(t, areaId)}
                         />
                       ))}
                     </div>
@@ -513,7 +518,7 @@ export default function Uppgifter() {
                         onAssign={(staffId) => assign(t, staffId)}
                         onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
                         onAddPhoto={(file) => addPhoto(t, file)}
-                        onOpenArea={() => switchTab("/store-map")}
+                        onOpenArea={(areaId) => openOnMap(t, areaId)}
                       />
                     ))}
                   </div>
