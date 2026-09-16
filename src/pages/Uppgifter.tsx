@@ -95,6 +95,7 @@ export default function Uppgifter() {
   const [fCat, setFCat] = useState("all");
   const [fPerson, setFPerson] = useState("all");
   const [fStatus, setFStatus] = useState<"kvar" | "klara" | "allt">("allt");
+  const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
     return tasks.filter((t) => {
@@ -106,9 +107,23 @@ export default function Uppgifter() {
       if (fPerson !== "all" && (t.assigned_staff_id ?? "none") !== fPerson) return false;
       if (fStatus === "kvar" && t.done) return false;
       if (fStatus === "klara" && !t.done) return false;
+      const q = query.trim().toLowerCase();
+      if (q) {
+        const person = staffList.find((p) => p.id === t.assigned_staff_id);
+        const hay = [
+          t.task,
+          t.note,
+          t.signature,
+          person ? `${person.first_name} ${person.last_name}` : "",
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
       return true;
     });
-  }, [tasks, fArea, fCat, fPerson, fStatus]);
+  }, [tasks, fArea, fCat, fPerson, fStatus, query, staffList]);
 
   const groups = useMemo(() => groupByDaypart(filtered), [filtered]);
   const doneCount = tasks.filter((t) => t.done).length;
@@ -257,6 +272,12 @@ export default function Uppgifter() {
           </Card>
 
           <div className="flex flex-wrap gap-2">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Sök uppgift eller person"
+              className="h-8 w-[200px] text-xs"
+            />
             <Select value={fArea} onValueChange={setFArea}>
               <SelectTrigger className="h-8 w-[160px] text-xs">
                 <SelectValue placeholder="Område" />
