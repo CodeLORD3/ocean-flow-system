@@ -197,6 +197,16 @@ export function MapDetailDrawer({
               </h2>
               {areaLabel && <p className="text-sm text-muted-foreground tabular-nums">{areaLabel}</p>}
             </div>
+            {onOpenPage && (
+              <Button
+                size="sm"
+                className="ml-auto h-8 shrink-0 gap-1 text-xs text-white hover:opacity-90"
+                style={zone?.color ? { background: zone.color } : undefined}
+                onClick={onOpenPage}
+              >
+                Gå vidare <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <StatusRing percent={progress.percent} status={progress.status} size={40} label={`${progress.percent}%`} />
@@ -215,11 +225,6 @@ export function MapDetailDrawer({
               ))}
             </div>
           </div>
-          {onOpenPage && (
-            <Button size="sm" className="h-8 w-full gap-1 text-xs" onClick={onOpenPage}>
-              Öppna områdets egna sida <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          )}
     </div>
   );
 
