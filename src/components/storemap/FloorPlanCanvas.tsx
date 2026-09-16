@@ -739,18 +739,17 @@ export function FloorPlanCanvas({
         </button>
       )}
 
-      <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md border border-border bg-card/95 p-1">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomBy(1 / 1.25)}>
-          <Minus className="h-3.5 w-3.5" />
+      {/* Zoomreglage som i ritningsvyn: plus, minus, procent och passa in */}
+      <div className="absolute right-3 top-3 flex flex-col items-center gap-0.5 rounded-xl border border-border bg-card/95 p-1 shadow-sm">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => zoomBy(1.25)} title="Zooma in">
+          <Plus className="h-4 w-4" />
         </Button>
-        <span className="text-[10px] tabular-nums w-9 text-center text-muted-foreground">
-          {Math.round(zoom * 100)}%
-        </span>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomBy(1.25)}>
-          <Plus className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => zoomBy(1 / 1.25)} title="Zooma ut">
+          <Minus className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={fit}>
-          <Maximize2 className="h-3.5 w-3.5" />
+        <span className="w-9 text-center text-[10px] tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fit} title="Passa in hela ritningen">
+          <Maximize2 className="h-4 w-4" />
         </Button>
       </div>
     </div>

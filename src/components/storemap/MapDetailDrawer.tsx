@@ -430,6 +430,19 @@ export function MapDetailDrawer({
                 </div>
               </div>
             )}
+
+            {latest.length > 0 && canManage && (
+              <Button
+                variant="outline"
+                className="w-full gap-2 border-destructive/50 text-destructive hover:bg-destructive/5"
+                onClick={() => {
+                  latest.forEach((i) => deleteImage.mutate(i.id));
+                  toast({ title: `${latest.length} bilder togs bort från ${label}` });
+                }}
+              >
+                <Trash2 className="h-4 w-4" /> Ta bort alla bilder från denna yta
+              </Button>
+            )}
           </TabsContent>
 
           <TabsContent value="standard" className="space-y-2 pt-3">
