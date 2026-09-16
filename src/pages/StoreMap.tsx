@@ -272,6 +272,7 @@ export default function StoreMap() {
                   ["grid", "Rutnät"],
                   ["tasks", "Uppgifter"],
                   ["issues", "Anmärkningar"],
+                  ["photos", "Bilder"],
                 ] as const
               ).map(([key, label]) => (
                 <div key={key} className="flex items-center gap-1.5">
@@ -327,6 +328,33 @@ export default function StoreMap() {
               editMode={editMode}
               showBackground={layers.background}
               showGrid={layers.grid || editMode}
+              zoneNumbers={zoneNumbers}
+              photoSpots={photoSpots}
+              showPhotos={layers.photos}
+              placeZoneId={placing?.zoneId ?? null}
+              onPlacePhoto={async (zoneId, norm) => {
+                if (!placing) return;
+                const file = placing.file;
+                setPlacing(null);
+                try {
+                  await uploadImage.mutateAsync({
+                    entityType: "map_zone",
+                    entityId: zoneId,
+                    file,
+                    imageKind: "general",
+                    floorPlanId: plan.id,
+                    norm,
+                  });
+                  toast({ title: "Bilden ligger nu på sin plats i kartan" });
+                } catch (e) {
+                  toast({ title: "Kunde inte spara bilden", description: (e as Error).message, variant: "destructive" });
+                }
+              }}
+              onPhotoSpotSelect={(zoneId) => {
+                setSelected({ kind: "zone", id: zoneId });
+                setDrawerOpen(true);
+              }}
+              onZonePointsCommit={(id, points) => saveZone.mutate({ id, points })}
               pins={pins}
               pinMode={pinMode}
               pxPerMeter={pxPerMeter}
