@@ -274,6 +274,12 @@ export function buildPostingPlan(
 export async function postPurchaseReport(params: {
   reportId: string;
   plan: PostingPlan;
+  /**
+   * Vart varorna ska bokföras. Frågan ställs alltid vid inleverans:
+   * inköpslager = vår men inte hos oss ännu, grossistlager = direkt packbart.
+   * Utan val faller den tillbaka på inköpslagret.
+   */
+  locationId?: string | null;
 }): Promise<{ lotIds: string[] }> {
   const { reportId, plan } = params;
   if (plan.blockers.length) {
@@ -302,8 +308,8 @@ export async function postPurchaseReport(params: {
 
   const { data, error } = await (supabase as any).rpc("post_purchase_report", {
     p_report_id: reportId,
-    // Inköp landar i INKÖPSLAGRET — varan är vår, men ännu inte hos oss.
-    p_location_id: await inkopslagerId(await grossistStoreId()),
+    // Vald destination, annars inköpslagret (vår vara, ännu inte hos oss).
+    p_location_id: params.locationId || (await inkopslagerId(await grossistStoreId())),
     p_lots: payload,
   });
   if (error) {
