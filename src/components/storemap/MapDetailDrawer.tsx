@@ -236,6 +236,58 @@ export function MapDetailDrawer({
             <TabsTrigger value="standard" className="h-7 rounded-md px-3 text-xs">Standard</TabsTrigger>
           </TabsList>
 
+          {/* Snabb överblick: statistik, senaste bilderna och det som hänt */}
+          <TabsContent value="summary" className="space-y-3 pt-3">
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                [`${progress.done}/${progress.total}`, "Uppgifter klara"],
+                [String(latest.length), "Bilder"],
+                [String(openIssues.length), "Öppna anmärkningar"],
+                [areaLabel ?? "—", "Yta"],
+              ].map(([v, t]) => (
+                <div key={t} className="rounded-lg border border-border p-2">
+                  <p className="text-[10px] text-muted-foreground">{t}</p>
+                  <p className="text-sm font-semibold tabular-nums">{v}</p>
+                </div>
+              ))}
+            </div>
+
+            {latest.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {latest.slice(0, 3).map((i) => (
+                  <img key={i.id} src={i.url} alt={i.caption ?? label} className="h-16 w-full rounded-md object-cover" />
+                ))}
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold text-muted-foreground">Senast gjort här</p>
+              {activity.length === 0 && <p className="text-[11px] text-muted-foreground">Inget har hänt ännu.</p>}
+              {activity.slice(0, 6).map((a, i) => (
+                <div key={i} className="flex items-start justify-between gap-2 text-[11px]">
+                  <span className="min-w-0 truncate">
+                    <span className="font-medium">{a.who}</span> {a.text}
+                  </span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
+                    {dayText(a.at)} {time(a.at)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {tasks.some((t) => !t.done) && (
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold text-muted-foreground">Kvar att göra</p>
+                {tasks
+                  .filter((t) => !t.done)
+                  .slice(0, 5)
+                  .map((t) => (
+                    <p key={t.id} className="truncate text-[11px]">• {t.task}</p>
+                  ))}
+              </div>
+            )}
+          </TabsContent>
+
           <TabsContent value="overview" className="space-y-3 pt-3">
             {object && objectType && (
               <div className="grid grid-cols-2 gap-2 text-[11px]">
