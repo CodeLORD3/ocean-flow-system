@@ -111,11 +111,11 @@ export function TaskRow({
               </span>
             )}
             {task.done && (completedByName || task.signature) && (
-              <span className="inline-flex items-center gap-1.5 text-emerald-600">
+              <span className="inline-flex items-center gap-1 text-emerald-600">
                 <StaffAvatar
                   name={completedByName || task.signature}
                   imageUrl={completedByImage}
-                  className="h-5 w-5"
+                  className="h-4 w-4"
                 />
                 Klar · {completedByName || task.signature}
               </span>
