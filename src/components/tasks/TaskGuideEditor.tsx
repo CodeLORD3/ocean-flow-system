@@ -138,9 +138,7 @@ export function TaskGuideEditor({
 
       <div>
         <label className="text-sm font-medium">Arbetsgång</label>
-        <p className="mb-2 text-xs text-muted-foreground">
-          Ett moment per rad, i den ordning de ska utföras. Börja med verbet och håll det på en rad.
-        </p>
+        <p className="mb-2 text-xs text-muted-foreground">Ett moment per rad, i rätt ordning.</p>
         <div className="space-y-3">
           {guide.steps.map((s, i) => (
             <div key={i} className="flex items-start gap-2">
