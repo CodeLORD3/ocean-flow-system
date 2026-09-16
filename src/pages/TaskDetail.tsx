@@ -43,6 +43,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const { data: history = [] } = useTaskHistory(storeId, task?.task ?? null);
   const setDone = useSetTaskDone();
   const update = useUpdateTask();
+  const removeTask = useDeleteTask();
   const upload = useUploadEntityImage();
 
   const [note, setNote] = useState<string | null>(null);
