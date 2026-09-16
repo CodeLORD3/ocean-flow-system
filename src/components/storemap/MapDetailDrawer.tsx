@@ -228,6 +228,7 @@ export function MapDetailDrawer({
     <>
         <Tabs value={tab} onValueChange={setTab} className="mt-4">
           <TabsList className="h-9 w-full justify-start gap-1 overflow-x-auto rounded-lg bg-muted p-1">
+            <TabsTrigger value="summary" className="h-7 rounded-md px-3 text-xs">Översikt</TabsTrigger>
             <TabsTrigger value="images" className="h-7 rounded-md px-3 text-xs">Bilder</TabsTrigger>
             <TabsTrigger value="tasks" className="h-7 rounded-md px-3 text-xs">Uppgifter</TabsTrigger>
             <TabsTrigger value="overview" className="h-7 rounded-md px-3 text-xs">Info</TabsTrigger>
