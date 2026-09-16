@@ -67,12 +67,23 @@ export function TaskGuideEditor({
 
   return (
     <div className="space-y-5">
+      <div className="rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+        Fyll i tre delar: <strong className="text-foreground">godkänt läge</strong> (hur disken, kylen eller ytan ska se
+        ut när det är klart), <strong className="text-foreground">utrustning och material</strong> (vad som ska plockas
+        fram innan man börjar) och <strong className="text-foreground">arbetsgång</strong> (momenten i rätt ordning).
+        Skriv kort, ett moment per rad, och lägg en bild där ord inte räcker.
+      </div>
+
       <div>
-        <label className="text-sm font-medium">Målet — så här ska det se ut</label>
+        <label className="text-sm font-medium">Godkänt läge</label>
+        <p className="mb-2 text-xs text-muted-foreground">
+          Så här ska det se ut vid avslut — och kraven som gäller, t.ex. temperatur, isbädd, datummärkning eller
+          städgrad.
+        </p>
         <Textarea
           value={guide.goal}
           onChange={(e) => patch({ goal: e.target.value })}
-          placeholder="Beskriv hur det ska se ut när uppgiften är klar."
+          placeholder="Ex: Fiskdisken tömd och rengjord, ny isbädd jämnt lagd, restvara vakuumpackad och datummärkt, kyl på 0–2 °C."
           className="min-h-[70px]"
         />
         <div className="mt-2 flex flex-wrap items-center gap-2">
