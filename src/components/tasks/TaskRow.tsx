@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { durationText, taskTime } from "@/lib/taskTime";
 import { missingRequirements, missingText, valueLabel } from "@/lib/taskRequirements";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { workTypeLabel } from "@/lib/workType";
 import type { TaskRow as Task } from "@/hooks/useTasks";
 
@@ -30,6 +31,9 @@ type Props = {
   onSaveRequirement?: (patch: { completion_note?: string | null; completion_value?: number | null }) => void;
   /** Sätts när antalet bilder är känt — då spärras även bildkravet. */
   photoCountKnown?: boolean;
+  /** Personer som kan få uppgiften. Visas som snabb tilldelning i rulldownen. */
+  staffOptions?: { id: string; name: string; imageUrl?: string | null }[];
+  onAssign?: (staffId: string | null) => void;
 };
 
 /**
@@ -53,6 +57,8 @@ export function TaskRow({
   onDelete,
   onSaveRequirement,
   photoCountKnown,
+  staffOptions,
+  onAssign,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState(task.completion_note ?? "");
@@ -225,6 +231,31 @@ export function TaskRow({
                 </div>
               )}
               {blocked && <p className="text-[11px] text-amber-700">{missingText(task, missing)}</p>}
+            </div>
+          )}
+
+          {staffOptions && onAssign && (
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] text-muted-foreground">Tilldelad</span>
+              <Select
+                value={task.assigned_staff_id ?? "none"}
+                onValueChange={(v) => onAssign(v === "none" ? null : v)}
+              >
+                <SelectTrigger className="h-8 w-[220px]">
+                  <SelectValue placeholder="Ingen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Ingen tilldelad</SelectItem>
+                  {staffOptions.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <span className="inline-flex items-center gap-2">
+                        <StaffAvatar name={p.name} imageUrl={p.imageUrl} className="h-7 w-7" />
+                        {p.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 

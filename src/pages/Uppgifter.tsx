@@ -239,6 +239,40 @@ export default function Uppgifter() {
     }
   };
 
+  const staffOptions = useMemo(
+    () =>
+      staffList.map((p) => ({
+        id: p.id,
+        name: `${p.first_name} ${p.last_name}`,
+        imageUrl: p.profile_image_url ?? null,
+      })),
+    [staffList],
+  );
+
+  const assign = (t: Task, staffId: string | null) => {
+    updateTask.mutate(
+      { id: t.id, assigned_staff_id: staffId },
+      {
+        onSuccess: () =>
+          toast({
+            title: staffId ? `Tilldelad ${staffName(staffId)}` : "Tilldelning borttagen",
+            description: t.task,
+          }),
+        onError: (e: any) => toast({ title: "Kunde inte tilldela", description: e.message, variant: "destructive" }),
+      },
+    );
+  };
+
+  /** Uppgifterna grupperade per person för valt datum. */
+  const perPerson = useMemo(() => {
+    const groups = staffOptions
+      .map((p) => ({ ...p, tasks: tasks.filter((t) => t.assigned_staff_id === p.id) }))
+      .filter((g) => g.tasks.length > 0)
+      .sort((a, b) => a.name.localeCompare(b.name, "sv"));
+    const unassigned = tasks.filter((t) => !t.assigned_staff_id);
+    return { groups, unassigned };
+  }, [staffOptions, tasks]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -271,6 +305,7 @@ export default function Uppgifter() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="dag">Dagens uppgifter</TabsTrigger>
+          <TabsTrigger value="personer">Personer</TabsTrigger>
           <TabsTrigger value="kalender">Kalender</TabsTrigger>
           <TabsTrigger value="checklistor">Checklistor</TabsTrigger>
           <TabsTrigger value="sagordu">Så gör du</TabsTrigger>
@@ -391,6 +426,8 @@ export default function Uppgifter() {
                       }
                       onToggle={(done) => setDone.mutate({ id: t.id, done })}
                       onSaveRequirement={(patch) => updateTask.mutate({ id: t.id, ...patch })}
+                      staffOptions={staffOptions}
+                      onAssign={(staffId) => assign(t, staffId)}
                       onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
                       onAddPhoto={(file) => addPhoto(t, file)}
                       onOpenArea={() => switchTab("/store-map")}
@@ -400,6 +437,89 @@ export default function Uppgifter() {
                 </div>
               ))}
             </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="personer" className="space-y-3">
+          {perPerson.groups.length === 0 && perPerson.unassigned.length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">Inga uppgifter för valt datum.</p>
+          ) : (
+            <>
+              {perPerson.groups.map((g) => {
+                const done = g.tasks.filter((t) => t.done).length;
+                return (
+                  <Card key={g.id} className="p-4">
+                    <div className="flex items-center gap-3">
+                      <StaffAvatar name={g.name} imageUrl={g.imageUrl} className="h-12 w-12" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold">{g.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {done}/{g.tasks.length} klara · {durationText(remainingMinutes(g.tasks)) || "ingen tid kvar"}
+                        </p>
+                      </div>
+                      <div className="hidden h-2 w-40 overflow-hidden rounded-full bg-muted md:block">
+                        <div
+                          className="h-full rounded-full bg-emerald-500 transition-all"
+                          style={{ width: `${g.tasks.length ? (done / g.tasks.length) * 100 : 0}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {g.tasks.map((t) => (
+                        <TaskRow
+                          key={t.id}
+                          task={t}
+                          area={t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null}
+                          categoryName={catOf(t)?.name ?? null}
+                          categoryColor={catOf(t)?.color ?? null}
+                          assigneeName={g.name}
+                          assigneeImage={g.imageUrl}
+                          completedByName={staffName(t.completed_by_staff_id)}
+                          completedByImage={
+                            staffList.find((p) => p.id === t.completed_by_staff_id)?.profile_image_url ?? null
+                          }
+                          onToggle={(done2) => setDone.mutate({ id: t.id, done: done2 })}
+                          onSaveRequirement={(patch) => updateTask.mutate({ id: t.id, ...patch })}
+                          staffOptions={staffOptions}
+                          onAssign={(staffId) => assign(t, staffId)}
+                          onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
+                          onAddPhoto={(file) => addPhoto(t, file)}
+                          onOpenArea={() => switchTab("/store-map")}
+                        />
+                      ))}
+                    </div>
+                  </Card>
+                );
+              })}
+              {perPerson.unassigned.length > 0 && (
+                <Card className="p-4">
+                  <p className="font-semibold">Ej tilldelade ({perPerson.unassigned.length})</p>
+                  <p className="text-xs text-muted-foreground">Öppna en uppgift och välj vem som gör den.</p>
+                  <div className="mt-3 space-y-2">
+                    {perPerson.unassigned.map((t) => (
+                      <TaskRow
+                        key={t.id}
+                        task={t}
+                        area={t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null}
+                        categoryName={catOf(t)?.name ?? null}
+                        categoryColor={catOf(t)?.color ?? null}
+                        completedByName={staffName(t.completed_by_staff_id)}
+                        completedByImage={
+                          staffList.find((p) => p.id === t.completed_by_staff_id)?.profile_image_url ?? null
+                        }
+                        onToggle={(done2) => setDone.mutate({ id: t.id, done: done2 })}
+                        onSaveRequirement={(patch) => updateTask.mutate({ id: t.id, ...patch })}
+                        staffOptions={staffOptions}
+                        onAssign={(staffId) => assign(t, staffId)}
+                        onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
+                        onAddPhoto={(file) => addPhoto(t, file)}
+                        onOpenArea={() => switchTab("/store-map")}
+                      />
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </>
           )}
         </TabsContent>
 
