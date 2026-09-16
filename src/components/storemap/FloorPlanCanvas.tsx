@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Maximize2 } from "lucide-react";
+import { Minus, Plus, Maximize2, SquareDashed } from "lucide-react";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
 import { STATUS_COLOR, type MapProgress } from "@/lib/mapStatus";
 import { areaOf, formatSqm } from "@/lib/mapScale";
@@ -248,8 +248,15 @@ export function FloorPlanCanvas({
   const onBackgroundDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
     touched.current = true;
-    panRef.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    if (e.shiftKey || marqueeMode) {
+      const pt = planPoint(e);
+      if (pt) {
+        setMarquee({ x0: pt.x, y0: pt.y, x1: pt.x, y1: pt.y });
+        return;
+      }
+    }
+    panRef.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
   };
 
   const zoomBy = (factor: number) => {
@@ -265,6 +272,35 @@ export function FloorPlanCanvas({
   };
 
   const snap = (v: number) => (plan.grid_size > 0 ? Math.round(v / plan.grid_size) * plan.grid_size : Math.round(v));
+
+  /* Rutnätet: små rutor (halva planens rutmått) med grövre linje var femte ruta. */
+  const gridId = `grid-${plan.id}`;
+  const minor = plan.grid_size > 0 ? plan.grid_size / 2 : 10;
+
+  /* Markera ett område med musen och zooma dit — fungerar även inne i en yta. */
+  const [marquee, setMarquee] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const [marqueeMode, setMarqueeMode] = useState(false);
+
+  const zoomToBox = (box: { x: number; y: number; width: number; height: number }) => {
+    const el = wrapRef.current;
+    if (!el || box.width < 4 || box.height < 4) return;
+    touched.current = true;
+    const z = clamp(Math.min(el.clientWidth / box.width, el.clientHeight / box.height) * 0.95, MIN_ZOOM, MAX_ZOOM);
+    setZoom(z);
+    setOffset({
+      x: el.clientWidth / 2 - (box.x + box.width / 2) * z,
+      y: el.clientHeight / 2 - (box.y + box.height / 2) * z,
+    });
+  };
+
+  const marqueeBox = marquee
+    ? {
+        x: Math.min(marquee.x0, marquee.x1),
+        y: Math.min(marquee.y0, marquee.y1),
+        width: Math.abs(marquee.x1 - marquee.x0),
+        height: Math.abs(marquee.y1 - marquee.y0),
+      }
+    : null;
 
   const startDrag = (
     e: React.PointerEvent,
@@ -289,6 +325,11 @@ export function FloorPlanCanvas({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    if (marquee) {
+      const pt = planPoint(e);
+      if (pt) setMarquee((m) => (m ? { ...m, x1: pt.x, y1: pt.y } : m));
+      return;
+    }
     if (vDrag) {
       const dx = (e.clientX - vDrag.startX) / zoom;
       const dy = (e.clientY - vDrag.startY) / zoom;
@@ -326,6 +367,12 @@ export function FloorPlanCanvas({
 
   const endPointer = () => {
     panRef.current = null;
+    if (marquee) {
+      if (marqueeBox) zoomToBox(marqueeBox);
+      setMarquee(null);
+      setMarqueeMode(false);
+      return;
+    }
     if (vDrag) {
       const pts = ghostPts[vDrag.zoneId];
       if (pts && onZonePointsCommit) onZonePointsCommit(vDrag.zoneId, pts);
@@ -379,7 +426,7 @@ export function FloorPlanCanvas({
     >
       <div
         ref={wrapRef}
-        className={`h-[56vh] min-h-[320px] max-h-[560px] w-full ${active ? "touch-none" : ""} ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
+        className={`h-[56vh] min-h-[320px] max-h-[560px] w-full ${active || marquee ? "touch-none" : ""} ${pinMode || placeZoneId || marqueeMode ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
         onClickCapture={pinMode ? placePin : placeZoneId ? placePhoto : undefined}
         onPointerDownCapture={() => setActive(true)}
         onPointerDown={onBackgroundDown}
@@ -406,29 +453,31 @@ export function FloorPlanCanvas({
               />
             )}
 
-            {showGrid && plan.grid_size > 0 && (
-              <g opacity={placeZoneId ? 0.28 : 0.12}>
-                {Array.from({ length: Math.ceil(plan.width / plan.grid_size) + 1 }).map((_, i) => (
-                  <line
-                    key={`v${i}`}
-                    x1={i * plan.grid_size}
-                    y1={0}
-                    x2={i * plan.grid_size}
-                    y2={plan.height}
-                    stroke="hsl(var(--border))"
-                  />
-                ))}
-                {Array.from({ length: Math.ceil(plan.height / plan.grid_size) + 1 }).map((_, i) => (
-                  <line
-                    key={`h${i}`}
-                    x1={0}
-                    y1={i * plan.grid_size}
-                    x2={plan.width}
-                    y2={i * plan.grid_size}
-                    stroke="hsl(var(--border))"
-                  />
-                ))}
-              </g>
+            {showGrid && minor > 0 && (
+              <>
+                <defs>
+                  <pattern id={gridId} width={minor} height={minor} patternUnits="userSpaceOnUse">
+                    <path
+                      d={`M ${minor} 0 L 0 0 0 ${minor}`}
+                      fill="none"
+                      stroke="hsl(var(--border))"
+                      strokeWidth={0.6 / Math.max(zoom, 0.4)}
+                    />
+                  </pattern>
+                  <pattern id={`${gridId}-major`} width={minor * 5} height={minor * 5} patternUnits="userSpaceOnUse">
+                    <path
+                      d={`M ${minor * 5} 0 L 0 0 0 ${minor * 5}`}
+                      fill="none"
+                      stroke="hsl(var(--border))"
+                      strokeWidth={1.4 / Math.max(zoom, 0.4)}
+                    />
+                  </pattern>
+                </defs>
+                <g opacity={placeZoneId ? 0.5 : 0.32}>
+                  <rect x={0} y={0} width={plan.width} height={plan.height} fill={`url(#${gridId})`} />
+                  <rect x={0} y={0} width={plan.width} height={plan.height} fill={`url(#${gridId}-major)`} />
+                </g>
+              </>
             )}
 
             {/* Lager 2 — väggar, dörrar, öppningar */}
@@ -760,6 +809,21 @@ export function FloorPlanCanvas({
                   </g>
                 );
               })}
+            {/* Lager 8 — området man drar ut för att zooma dit */}
+            {marqueeBox && (
+              <rect
+                x={marqueeBox.x}
+                y={marqueeBox.y}
+                width={marqueeBox.width}
+                height={marqueeBox.height}
+                fill="hsl(var(--primary))"
+                fillOpacity={0.12}
+                stroke="hsl(var(--primary))"
+                strokeWidth={1.5 / Math.max(zoom, 0.4)}
+                strokeDasharray={`${6 / Math.max(zoom, 0.4)} ${4 / Math.max(zoom, 0.4)}`}
+                style={{ pointerEvents: "none" }}
+              />
+            )}
           </g>
         </svg>
       </div>
@@ -824,6 +888,15 @@ export function FloorPlanCanvas({
           <Minus className="h-4 w-4" />
         </Button>
         <span className="w-9 text-center text-[10px] tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
+        <Button
+          variant={marqueeMode ? "default" : "ghost"}
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => setMarqueeMode((v) => !v)}
+          title="Markera ett område att zooma till (eller håll Shift och dra)"
+        >
+          <SquareDashed className="h-4 w-4" />
+        </Button>
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fit} title="Passa in hela ritningen">
           <Maximize2 className="h-4 w-4" />
         </Button>
