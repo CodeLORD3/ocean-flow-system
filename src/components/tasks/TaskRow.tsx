@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Timer, User } from "lucide-react";
+import { Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Timer, Trash2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { durationText, taskTime } from "@/lib/taskTime";
