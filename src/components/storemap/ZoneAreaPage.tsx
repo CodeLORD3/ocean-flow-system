@@ -99,7 +99,10 @@ export function ZoneAreaPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
+      <div
+        className="flex flex-wrap items-center gap-3 rounded-xl border p-3"
+        style={{ borderColor: `${color}55`, background: `${color}14`, borderLeft: `6px solid ${color}` }}
+      >
         <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={onBack}>
           <ArrowLeft className="h-3.5 w-3.5" /> Tillbaka till kartan
         </Button>
