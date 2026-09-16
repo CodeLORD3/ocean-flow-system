@@ -269,10 +269,10 @@ export default function StoreMap() {
           description="En administratör lägger upp butikens planritning innan kartan kan användas."
         />
       ) : (
-        <div className="grid gap-3 lg:grid-cols-[1fr_260px]">
-          <div className="space-y-2 min-w-0">
+        <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+          <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
             {/* Lagerväljare */}
-            <div className="flex flex-wrap items-center gap-3 rounded-md border border-border px-2 py-1.5">
+            <div className="flex flex-wrap items-center gap-3 border-b border-border px-3 py-2">
               {(
                 [
                   ["background", "Ritning"],
