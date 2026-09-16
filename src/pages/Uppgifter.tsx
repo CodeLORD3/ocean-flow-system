@@ -85,6 +85,11 @@ export default function Uppgifter() {
     return map;
   }, [zones]);
 
+  const [tab, setTab] = useState("dag");
+  const { data: checklists = [] } = useChecklistTemplates(storeId);
+  const createChecklist = useCreateChecklistTemplate();
+  const [newListName, setNewListName] = useState("");
+
   const [fArea, setFArea] = useState("all");
   const [fCat, setFCat] = useState("all");
   const [fPerson, setFPerson] = useState("all");
