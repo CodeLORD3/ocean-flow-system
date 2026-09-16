@@ -242,20 +242,48 @@ export default function StoreMap() {
             </SelectContent>
           </Select>
         )}
-        <div className="ml-auto flex items-center gap-4">
+        {/* Vyväljare — samma fem vyer för hela butiken */}
+        <Tabs value={view} onValueChange={setView}>
+          <TabsList className="h-10 rounded-xl bg-muted p-1">
+            {(
+              [
+                ["karta", "Karta"],
+                ["uppgifter", "Uppgifter"],
+                ["bilder", "Bilder"],
+                ["avvikelser", "Avvikelser"],
+                ["historik", "Historik"],
+              ] as const
+            ).map(([key, label]) => (
+              <TabsTrigger key={key} value={key} className="h-8 rounded-lg px-4 text-xs">
+                {label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+        <div className="ml-auto flex items-center gap-3">
+          {/* Dagväljare — styr vilka uppgifter och vilken historik som visas */}
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5">
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <input
+              type="date"
+              value={day}
+              onChange={(e) => setDay(e.target.value || todayIso())}
+              className="bg-transparent text-xs outline-none tabular-nums"
+            />
+          </div>
           <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
             <StatusRing percent={dayProgress.percent} status={dayProgress.status} label={`${dayProgress.percent}%`} />
             <div className="leading-tight">
               <p className="text-[11px] font-medium">{STATUS_LABEL[dayProgress.status]}</p>
               <p className="text-[10px] text-muted-foreground tabular-nums">
-                {dayProgress.done}/{dayProgress.total} uppgifter idag
+                {dayProgress.done}/{dayProgress.total} uppgifter
               </p>
             </div>
           </div>
           {canManage && (
             <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
               <TabsList className="h-9 rounded-full bg-muted p-1">
-                <TabsTrigger value="drift" className="h-7 rounded-full px-4 text-xs">Karta</TabsTrigger>
+                <TabsTrigger value="drift" className="h-7 rounded-full px-4 text-xs">Visa</TabsTrigger>
                 <TabsTrigger value="redigera" className="h-7 gap-1 rounded-full px-4 text-xs">
                   <Pencil className="h-3 w-3" /> Redigera
                 </TabsTrigger>
@@ -264,6 +292,7 @@ export default function StoreMap() {
           )}
         </div>
       </div>
+
 
       {plansLoading ? (
         <p className="text-xs text-muted-foreground">Hämtar ritning…</p>
