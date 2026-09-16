@@ -792,7 +792,8 @@ export default function StoreMap() {
                 tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
                 unlinkedTasks={unlinkedTasks}
                 canManage={canManage}
-                zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
+                onOpenPage={() => setAreaPage(selected)}
+          zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
                 areaLabel={
                   selectedZone
                     ? areaOf(selectedZone, pxPerMeter).sqm != null
@@ -915,6 +916,7 @@ export default function StoreMap() {
           tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
           unlinkedTasks={unlinkedTasks}
           canManage={canManage}
+          onOpenPage={() => setAreaPage(selected)}
           zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
           areaLabel={
             selectedZone
