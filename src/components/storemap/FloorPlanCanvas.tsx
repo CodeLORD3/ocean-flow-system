@@ -638,6 +638,59 @@ export function FloorPlanCanvas({
                 </g>
               );
             })}
+
+            {/* Lager 7 — bilder på exakt plats: små markörer, aldrig miniatyrer */}
+            {showPhotos &&
+              photoSpots.map((spot) => {
+                const zone = zones.find((z) => z.id === spot.zoneId);
+                if (!zone) return null;
+                const pt = fromNormalized(spot.norm, ptsOf(zone));
+                const r = 9 / Math.max(zoom, 0.5);
+                return (
+                  <g
+                    key={spot.id}
+                    className="cursor-pointer"
+                    onPointerEnter={(e) =>
+                      setHover({
+                        id: spot.id,
+                        label: spot.count > 1 ? `${spot.count} bilder här` : "1 bild här",
+                        sub: zone.name,
+                        sx: e.clientX,
+                        sy: e.clientY,
+                      })
+                    }
+                    onPointerLeave={() => setHover((h) => (h?.id === spot.id ? null : h))}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPhotoSpotSelect?.(zone.id);
+                    }}
+                  >
+                    <rect
+                      x={pt.x - r}
+                      y={pt.y - r}
+                      width={r * 2}
+                      height={r * 2}
+                      rx={r / 2.5}
+                      fill="hsl(var(--card))"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={r / 4.5}
+                    />
+                    <circle cx={pt.x} cy={pt.y} r={r / 2.6} fill="hsl(var(--primary))" />
+                    {spot.count > 1 && (
+                      <text
+                        x={pt.x + r}
+                        y={pt.y - r}
+                        fontSize={r}
+                        fontWeight={700}
+                        fill="hsl(var(--primary))"
+                        style={{ pointerEvents: "none" }}
+                      >
+                        {spot.count}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
           </g>
         </svg>
       </div>
