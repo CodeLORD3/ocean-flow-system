@@ -323,6 +323,7 @@ export default function Uppgifter() {
                       onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
                       onAddPhoto={(file) => addPhoto(t, file)}
                       onOpenArea={() => switchTab("/store-map")}
+                      onDelete={() => deleteTask(t)}
                     />
                   ))}
                 </div>
