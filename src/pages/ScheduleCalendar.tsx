@@ -1191,7 +1191,21 @@ export default function ScheduleCalendar() {
       {/* Inline add panel */}
       <Collapsible open={showAddPanel} onOpenChange={setShowAddPanel}>
         <CollapsibleContent>
-          <div className="border border-border bg-card px-3 py-2 rounded-sm">
+          <div className="border border-border bg-card px-3 py-2 rounded-sm space-y-1.5">
+            {formEndDate && formEndDate > formDate && (
+              <div className="flex items-center gap-1.5 text-[10px] text-primary">
+                <CalendarIcon className="h-3 w-3" />
+                <span className="font-medium">
+                  {format(parseISO(formDate), "d MMM", { locale: sv })}–{format(parseISO(formEndDate), "d MMM yyyy", { locale: sv })}
+                </span>
+                <span className="text-muted-foreground">
+                  · {eachDayOfInterval({ start: parseISO(formDate), end: parseISO(formEndDate) }).length} dagar, en post per dag
+                </span>
+                <Button variant="ghost" size="sm" className="h-5 px-1 text-[9px]" onClick={() => { setFormEndDate(""); setRangeStart(null); setRangeEnd(null); }}>
+                  Rensa
+                </Button>
+              </div>
+            )}
             {renderAddForm()}
           </div>
         </CollapsibleContent>
