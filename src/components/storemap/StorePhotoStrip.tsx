@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
-import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import {
   useEntityImages,
   useMyImageFavorites,
@@ -26,6 +25,20 @@ function shortWhen(iso: string) {
   yest.setDate(today.getDate() - 1);
   if (sameDay(d, yest)) return `Igår ${time}`;
   return `${d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" })} ${time}`;
+}
+
+/** Gruppnamn per dag: "Idag", "Igår", annars "Tisdag 16 sep". */
+function dayLabel(iso: string) {
+  const d = new Date(iso);
+  const today = new Date();
+  const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (sameDay(d, today)) return "Idag";
+  const yest = new Date(today);
+  yest.setDate(today.getDate() - 1);
+  if (sameDay(d, yest)) return "Igår";
+  const weekday = d.toLocaleDateString("sv-SE", { weekday: "long" });
+  const date = d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)} ${date}`;
 }
 
 /**
@@ -59,14 +72,27 @@ export function StorePhotoStrip({
     [zones]
   );
 
-  const images = useMemo(() => {
-    const all = [...planImages, ...storeImages];
+  /** Alla bilder, nyast först. */
+  const allImages = useMemo(() => {
     const seen = new Set<string>();
-    return all
+    return [...planImages, ...storeImages]
       .filter((i) => (seen.has(i.id) ? false : (seen.add(i.id), true)))
-      .sort((a, b) => b.created_at.localeCompare(a.created_at))
-      .slice(0, 24);
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
   }, [planImages, storeImages]);
+
+  const images = useMemo(() => allImages.slice(0, 24), [allImages]);
+
+  /** Grupperat per dag, nyaste dagen först. */
+  const groups = useMemo(() => {
+    const out: { key: string; label: string; items: { img: EntityImage; index: number }[] }[] = [];
+    allImages.forEach((img, index) => {
+      const key = new Date(img.created_at).toDateString();
+      const last = out[out.length - 1];
+      if (last && last.key === key) last.items.push({ img, index });
+      else out.push({ key, label: dayLabel(img.created_at), items: [{ img, index }] });
+    });
+    return out;
+  }, [allImages]);
 
   const labelOf = (img: EntityImage) => {
     const z = zoneById[img.entity_id];
@@ -170,20 +196,55 @@ export function StorePhotoStrip({
       )}
 
       {allOpen && (
-        <div className="mt-3 border-t border-border pt-3">
-          <EntityImageGallery
-            entityType="store"
-            entityId={storeId}
-            title="Alla bilder i butiken"
-            description="Favoriter, kommentarer, utvalda bilder och arkiv per dag."
-            editable
-            catalog
-          />
+        <div className="mt-3 space-y-4 border-t border-border pt-3">
+          {groups.map((g) => (
+            <div key={g.key}>
+              <div className="mb-2 flex items-center gap-2">
+                <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+                  {g.label}
+                </span>
+                <span className="text-[11px] tabular-nums text-muted-foreground">{g.items.length} bilder</span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                {g.items.map(({ img, index: i }) => {
+                  const color = colorOf(img);
+                  const zoneId = zoneById[img.entity_id] ? img.entity_id : null;
+                  return (
+                    <button
+                      key={img.id}
+                      type="button"
+                      onClick={() => setIndex(i)}
+                      onDoubleClick={() => zoneId && onOpenZone?.(zoneId)}
+                      className="group relative aspect-[4/3] overflow-hidden rounded-lg border border-border bg-muted text-left transition hover:shadow-md"
+                      title={img.caption ?? labelOf(img)}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.caption ?? labelOf(img)}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 pb-1.5 pt-4">
+                        <p className="flex items-center gap-1 truncate text-[10px] font-medium text-white">
+                          {color && (
+                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                          )}
+                          {labelOf(img)}
+                        </p>
+                        <p className="truncate text-[9px] text-white/75">{shortWhen(img.created_at)}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
       <ImageLightbox
-        images={images}
+        images={allImages}
         index={index}
         onIndexChange={setIndex}
         onClose={() => setIndex(null)}
