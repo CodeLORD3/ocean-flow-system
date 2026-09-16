@@ -351,6 +351,104 @@ export default function Uppgifter() {
           )}
         </TabsContent>
 
+        <TabsContent value="checklistor" className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Butikens checklistor. Varje checklista samlar sina uppgifter och styr vilka dagar de dyker upp.
+          </p>
+
+          <Card className="flex flex-wrap items-center gap-2 p-3">
+            <Input
+              placeholder="Namn på ny checklista"
+              value={newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+              className="h-9 w-[260px]"
+            />
+            <Button
+              size="sm"
+              disabled={!newListName.trim() || createChecklist.isPending}
+              onClick={async () => {
+                try {
+                  await createChecklist.mutateAsync({ name: newListName, storeId });
+                  setNewListName("");
+                  toast({ title: "Checklistan är skapad" });
+                } catch (e: any) {
+                  toast({ title: "Kunde inte skapa", description: e.message, variant: "destructive" });
+                }
+              }}
+            >
+              <Plus className="mr-1 h-4 w-4" /> Ny checklista
+            </Button>
+          </Card>
+
+          {checklists.length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">Inga checklistor ännu.</p>
+          ) : (
+            checklists.map((c) => {
+              const items = standard.filter((s) => s.listName === c.name);
+              const wd = c.weekdays ?? [];
+              return (
+                <Card key={c.id} className="space-y-2 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold">{c.name}</div>
+                      <div className="mt-0.5 text-[11px] text-muted-foreground">
+                        {items.length} uppgifter ·{" "}
+                        {wd.length === 0 ? "Alla dagar" : wd.map((d) => WEEKDAY_NAMES[(d + 6) % 7]).join(" ")}
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => setTab("dag")}>
+                      Visa dagens uppgifter
+                    </Button>
+                  </div>
+                  {items.length > 0 && (
+                    <ul className="space-y-1 text-[13px] text-muted-foreground">
+                      {items.slice(0, 8).map((s) => (
+                        <li key={s.id} className="truncate">
+                          • {s.task}
+                        </li>
+                      ))}
+                      {items.length > 8 && <li className="text-[11px]">+ {items.length - 8} fler</li>}
+                    </ul>
+                  )}
+                </Card>
+              );
+            })
+          )}
+        </TabsContent>
+
+        <TabsContent value="sagordu" className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Så gör du: steg för steg för varje uppgift. Öppna en uppgift för att ändra stegen.
+          </p>
+          {standard.filter((s) => (s.instructions ?? []).length > 0 || s.important_note).length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              Ingen uppgift har steg ännu. Lägg till dem under uppgiftens inställningar.
+            </p>
+          ) : (
+            standard
+              .filter((s) => (s.instructions ?? []).length > 0 || s.important_note)
+              .map((s) => (
+                <Card key={s.id} className="space-y-2 p-4">
+                  <div className="text-sm font-semibold">{s.task}</div>
+                  <div className="text-[11px] text-muted-foreground">{s.listName}</div>
+                  {s.important_note && (
+                    <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[13px] text-amber-700">
+                      {s.important_note}
+                    </p>
+                  )}
+                  {(s.instructions ?? []).length > 0 && (
+                    <ol className="list-decimal space-y-1 pl-5 text-[13px] text-muted-foreground">
+                      {(s.instructions ?? []).map((step, i) => (
+                        <li key={i}>{step}</li>
+                      ))}
+                    </ol>
+                  )}
+                  {s.requires_photo && <p className="text-[11px] text-muted-foreground">Kräver bild</p>}
+                </Card>
+              ))
+          )}
+        </TabsContent>
+
         <TabsContent value="standard" className="space-y-2">
           <p className="text-sm text-muted-foreground">
             Uppgifter som återkommer. Ändringar här gäller kommande dagar — dagens lista påverkas inte.
