@@ -85,7 +85,9 @@ export default function StoreMap() {
   const deletePin = useDeleteMapPin();
 
   const [mode, setMode] = useState<"drift" | "redigera">("drift");
-  const [layers, setLayers] = useState({ background: true, grid: false, tasks: true, issues: true });
+  const [layers, setLayers] = useState({ background: true, grid: false, tasks: true, issues: true, photos: true });
+  /** Ytan man just nu placerar en bild i, tillsammans med den valda filen. */
+  const [placing, setPlacing] = useState<{ zoneId: string; file: File } | null>(null);
   const [selected, setSelected] = useState<Selection>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pinMode, setPinMode] = useState(false);
