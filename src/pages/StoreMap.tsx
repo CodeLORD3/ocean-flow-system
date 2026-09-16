@@ -39,6 +39,7 @@ import { MapListViews } from "@/components/storemap/MapListViews";
 import { OverviewStatsBar } from "@/components/storemap/OverviewStatsBar";
 import { StorePhotoStrip } from "@/components/storemap/StorePhotoStrip";
 import { OverviewTaskPanel } from "@/components/storemap/OverviewTaskPanel";
+import { OverviewQuickBar } from "@/components/storemap/OverviewQuickBar";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
@@ -256,6 +257,9 @@ export default function StoreMap() {
 
   return (
     <div className="space-y-4">
+      {/* Stora knappar och dagens stapel högst upp */}
+      <OverviewQuickBar tasks={tasks} />
+
       {/* Viktig statistik högst upp — vilka som arbetar, stämpling, checklistor, avvikelser */}
       <OverviewStatsBar
         storeId={storeId}
