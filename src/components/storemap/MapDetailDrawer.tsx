@@ -148,11 +148,24 @@ export function MapDetailDrawer({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader className="space-y-2">
-          <SheetTitle className="flex items-center gap-2 text-base">
-            {object && <MapObjectIcon icon={objectType?.icon} className="h-4 w-4" />}
-            {label}
-          </SheetTitle>
+        <SheetHeader className="space-y-3">
+          <div className="flex items-center gap-3">
+            {zone && (
+              <span
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-base font-bold text-white shadow-sm"
+                style={{ background: zone.color ?? "hsl(var(--primary))" }}
+              >
+                {zoneNumber ?? ""}
+              </span>
+            )}
+            <div className="min-w-0">
+              <SheetTitle className="flex items-center gap-2 text-xl leading-tight">
+                {object && <MapObjectIcon icon={objectType?.icon} className="h-4 w-4" />}
+                {label}
+              </SheetTitle>
+              {areaLabel && <p className="text-sm text-muted-foreground tabular-nums">{areaLabel}</p>}
+            </div>
+          </div>
           <div className="flex items-center gap-3">
             <StatusRing percent={progress.percent} status={progress.status} size={40} label={`${progress.percent}%`} />
             <div className="space-y-1">
@@ -172,13 +185,13 @@ export function MapDetailDrawer({
           </div>
         </SheetHeader>
 
-        <Tabs value={tab} onValueChange={setTab} className="mt-3">
-          <TabsList className="h-8 w-full justify-start overflow-x-auto">
-            <TabsTrigger value="overview" className="text-[11px] h-6">Översikt</TabsTrigger>
-            <TabsTrigger value="tasks" className="text-[11px] h-6">Uppgifter</TabsTrigger>
-            <TabsTrigger value="activity" className="text-[11px] h-6">Aktivitet</TabsTrigger>
-            <TabsTrigger value="images" className="text-[11px] h-6">Bilder</TabsTrigger>
-            <TabsTrigger value="standard" className="text-[11px] h-6">Standard</TabsTrigger>
+        <Tabs value={tab} onValueChange={setTab} className="mt-4">
+          <TabsList className="h-9 w-full justify-start gap-1 overflow-x-auto rounded-lg bg-muted p-1">
+            <TabsTrigger value="images" className="h-7 rounded-md px-3 text-xs">Bilder</TabsTrigger>
+            <TabsTrigger value="tasks" className="h-7 rounded-md px-3 text-xs">Uppgifter</TabsTrigger>
+            <TabsTrigger value="overview" className="h-7 rounded-md px-3 text-xs">Info</TabsTrigger>
+            <TabsTrigger value="activity" className="h-7 rounded-md px-3 text-xs">Historik</TabsTrigger>
+            <TabsTrigger value="standard" className="h-7 rounded-md px-3 text-xs">Standard</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-3 pt-3">
