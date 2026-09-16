@@ -433,51 +433,42 @@ export function DailyReportsArchive() {
               const noStaff = (report.staff_entries ?? []).length === 0;
               return (
                 <div key={report.id} className={cn("group border-l-[3px] bg-background transition-colors", tone.border, open ? "bg-muted/20" : "hover:bg-muted/10")}>
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 px-4 py-4 md:grid-cols-[minmax(0,1fr)_180px_140px_150px] md:items-center md:gap-4 md:px-6 md:py-5">
-                    <span className={cn("mt-2 h-2 w-2 flex-shrink-0 rounded-full ring-4", tone.dot, tone.ring)} aria-hidden />
-                    <button type="button" onClick={() => setOpenId(open ? null : report.id)} className="min-w-0 text-left" aria-expanded={open}>
-                      <span className="flex flex-wrap items-center gap-2">
-                        <span className="truncate text-lg font-bold leading-tight tracking-tight">{storeName(report.store_id)}</span>
-                        {store?.city && <span className={cn("rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", tone.badge)}>{store.city}</span>}
-                        {correctedReportIds.has(report.id) && <Badge variant="outline" className="border-warning/40 px-1.5 py-0 text-[9px] text-warning">Korrigerad</Badge>}
-                      </span>
-                      <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
-                        <span className="font-medium">{formatWeekdayDate(report.report_date)}</span>
-                        {isAdmin && (
-                          <>
-                            <span className="h-1 w-1 rounded-full bg-border" />
-                            <span
-                              role="button"
-                              tabIndex={0}
-                              onClick={(e) => { e.stopPropagation(); setEditing(report); }}
-                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setEditing(report); } }}
-                              className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                            >
-                              <Edit3 className="h-3 w-3" /> Ändra
-                            </span>
-                          </>
-                        )}
-                      </span>
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-3 py-2 md:grid-cols-[auto_minmax(0,1fr)_170px_110px_110px_auto] md:gap-x-4 md:px-4">
+                    <span className={cn("h-2 w-2 flex-shrink-0 rounded-full ring-2", tone.dot, tone.ring)} aria-hidden />
+                    <button type="button" onClick={() => setOpenId(open ? null : report.id)} className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-left" aria-expanded={open}>
+                      <span className="truncate text-[15px] font-semibold leading-tight">{storeName(report.store_id)}</span>
+                      {store?.city && <span className={cn("rounded px-1.5 py-0 text-[9px] font-bold uppercase tracking-wider", tone.badge)}>{store.city}</span>}
+                      {correctedReportIds.has(report.id) && <Badge variant="outline" className="border-warning/40 px-1 py-0 text-[9px] text-warning">Korrigerad</Badge>}
+                      <span className="text-xs text-muted-foreground">{formatWeekdayDate(report.report_date)}</span>
+                      {isAdmin && (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => { e.stopPropagation(); setEditing(report); }}
+                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setEditing(report); } }}
+                          className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                        >
+                          <Edit3 className="h-3 w-3" /> Ändra
+                        </span>
+                      )}
                     </button>
-                    <span className="col-start-2 flex min-w-0 items-center gap-2 text-sm md:col-auto">
-                      <StaffAvatar name={reporter} imageUrl={imageOfUser(report.created_by)} className="h-9 w-9" />
-                      {reporter ? <span className="truncate font-medium text-foreground/80">{reporter}</span> : <span className="truncate italic text-muted-foreground/70">Okänd rapportör</span>}
+                    <span className="col-start-2 row-start-2 flex min-w-0 items-center gap-2 text-xs md:col-auto md:row-auto md:text-[13px]">
+                      <StaffAvatar name={reporter} imageUrl={imageOfUser(report.created_by)} className="h-7 w-7" />
+                      {reporter ? <span className="truncate font-medium text-foreground/80">{reporter}</span> : <span className="truncate italic text-muted-foreground/70">Okänd</span>}
                     </span>
-                    <span className="col-start-2 row-start-1 text-right font-mono text-lg font-medium tabular-nums md:col-auto md:row-auto">{nf(report.net_sales)} kr</span>
-                    <div className="col-start-2 row-start-2 flex items-center justify-end gap-3 md:col-auto md:row-auto">
-                      <span className={cn("flex items-center gap-2 font-mono text-[13px] tabular-nums", noStaff ? "font-semibold text-tone-brick" : "text-muted-foreground")}>
-                        <Users className="h-3.5 w-3.5" />{(report.staff_entries ?? []).length} <span className="text-border">/</span> {reportHours.toFixed(1)} h
-                      </span>
-                      <button
-                        type="button"
-                        aria-label={open ? "Dölj detaljer" : "Visa detaljer"}
-                        aria-expanded={open}
-                        onClick={() => setOpenId(open ? null : report.id)}
-                        className={cn("flex h-8 w-8 items-center justify-center rounded-full border border-border/70 text-muted-foreground transition-all", tone.hover, tone.icon)}
-                      >
-                        {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                      </button>
-                    </div>
+                    <span className="col-start-3 row-start-1 text-right font-mono text-[15px] font-medium tabular-nums md:col-auto md:row-auto">{nf(report.net_sales)} kr</span>
+                    <span className={cn("col-start-3 row-start-2 flex items-center justify-end gap-1.5 font-mono text-xs tabular-nums md:col-auto md:row-auto", noStaff ? "font-semibold text-tone-brick" : "text-muted-foreground")}>
+                      <Users className="h-3.5 w-3.5" />{(report.staff_entries ?? []).length} <span className="text-border">/</span> {reportHours.toFixed(1)} h
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={open ? "Dölj detaljer" : "Visa detaljer"}
+                      aria-expanded={open}
+                      onClick={() => setOpenId(open ? null : report.id)}
+                      className={cn("hidden h-7 w-7 items-center justify-center rounded-full border border-border/70 text-muted-foreground transition-all md:flex", tone.hover, tone.icon)}
+                    >
+                      {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    </button>
                   </div>
 
                   {open && (
