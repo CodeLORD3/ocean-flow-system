@@ -24,6 +24,7 @@ import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
 import { ZONE_PALETTE } from "@/lib/mapPalette";
+import { bbox, zonePoints } from "@/lib/mapGeometry";
 import { useFloorPlanImages, useUploadEntityImage } from "@/hooks/useEntityImages";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
@@ -354,7 +355,10 @@ export default function StoreMap() {
                 setSelected({ kind: "zone", id: zoneId });
                 setDrawerOpen(true);
               }}
-              onZonePointsCommit={(id, points) => saveZone.mutate({ id, points })}
+              onZonePointsCommit={(id, points) => {
+                const b = bbox(points);
+                saveZone.mutate({ id, points, x: Math.round(b.x), y: Math.round(b.y), width: Math.round(b.width), height: Math.round(b.height) });
+              }}
               pins={pins}
               pinMode={pinMode}
               pxPerMeter={pxPerMeter}
