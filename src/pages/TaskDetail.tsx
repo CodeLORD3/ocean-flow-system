@@ -13,6 +13,7 @@ import { useStaff } from "@/hooks/useStaff";
 import { useFloorPlans, useMapZones } from "@/hooks/useStoreMap";
 import { useUploadEntityImage, type EntityImage } from "@/hooks/useEntityImages";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
+import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 import { dayBadgeClass } from "@/lib/dayColor";
 import {
@@ -70,6 +71,8 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
     const s = staffList.find((p) => p.id === id);
     return s ? `${s.first_name} ${s.last_name}` : null;
   };
+  const staffImage = (id: string | null | undefined) =>
+    staffList.find((p) => p.id === id)?.profile_image_url ?? null;
 
   const allImages: EntityImage[] = useMemo(
     () => [...images, ...history.flatMap((h) => h.images)].filter((img, i, arr) => arr.findIndex((x) => x.id === img.id) === i),
@@ -178,10 +181,22 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           </div>
         </div>
         {task.done && (
-          <p className="text-xs text-emerald-600">
-            Klar {task.done_at ? new Date(task.done_at).toLocaleString("sv-SE") : ""}
-            {staffName(task.completed_by_staff_id) ? ` av ${staffName(task.completed_by_staff_id)}` : task.signature ? ` (${task.signature})` : ""}
-          </p>
+          <div className="flex items-center gap-2 text-xs text-emerald-600">
+            {(staffName(task.completed_by_staff_id) || task.signature) && (
+              <StaffAvatar
+                name={staffName(task.completed_by_staff_id) ?? task.signature}
+                imageUrl={staffImage(task.completed_by_staff_id)}
+              />
+            )}
+            <span>
+              Klar {task.done_at ? new Date(task.done_at).toLocaleString("sv-SE") : ""}
+              {staffName(task.completed_by_staff_id)
+                ? ` av ${staffName(task.completed_by_staff_id)}`
+                : task.signature
+                  ? ` (${task.signature})`
+                  : ""}
+            </span>
+          </div>
         )}
       </Card>
 
@@ -258,8 +273,16 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                 <span className={h.done ? "text-emerald-600" : "text-muted-foreground"}>
                   {h.done ? "Klar" : "Inte gjord"}
                 </span>
-                {staffName(h.completed_by_staff_id) && <span>{staffName(h.completed_by_staff_id)}</span>}
-                {!staffName(h.completed_by_staff_id) && h.signature && <span>{h.signature}</span>}
+                {(staffName(h.completed_by_staff_id) || h.signature) && (
+                  <span className="flex items-center gap-2">
+                    <StaffAvatar
+                      name={staffName(h.completed_by_staff_id) ?? h.signature}
+                      imageUrl={staffImage(h.completed_by_staff_id)}
+                      className="h-5 w-5"
+                    />
+                    {staffName(h.completed_by_staff_id) ?? h.signature}
+                  </span>
+                )}
                 {h.images.length > 0 && <span className="text-xs text-muted-foreground">{h.images.length} bilder</span>}
               </Card>
             ))

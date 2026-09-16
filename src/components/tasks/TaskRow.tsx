@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Timer, Trash2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { cn } from "@/lib/utils";
 import { durationText, taskTime } from "@/lib/taskTime";
 import { workTypeLabel } from "@/lib/workType";
@@ -15,6 +16,7 @@ type Props = {
   categoryColor?: string | null;
   assigneeName?: string | null;
   completedByName?: string | null;
+  completedByImage?: string | null;
   photoCount?: number;
   onToggle: (done: boolean) => void;
   onOpenDetail: () => void;
@@ -34,6 +36,7 @@ export function TaskRow({
   categoryColor,
   assigneeName,
   completedByName,
+  completedByImage,
   photoCount = 0,
   onToggle,
   onOpenDetail,
@@ -108,7 +111,14 @@ export function TaskRow({
               </span>
             )}
             {task.done && (completedByName || task.signature) && (
-              <span className="text-emerald-600">Klar · {completedByName || task.signature}</span>
+              <span className="inline-flex items-center gap-1.5 text-emerald-600">
+                <StaffAvatar
+                  name={completedByName || task.signature}
+                  imageUrl={completedByImage}
+                  className="h-5 w-5"
+                />
+                Klar · {completedByName || task.signature}
+              </span>
             )}
           </div>
         </button>
