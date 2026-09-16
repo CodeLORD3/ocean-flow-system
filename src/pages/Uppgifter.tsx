@@ -29,6 +29,7 @@ import {
 } from "@/hooks/useTasks";
 import { DAYPARTS, durationText, groupByDaypart, remainingMinutes } from "@/lib/taskTime";
 import { TaskRow, type TaskRowArea } from "@/components/tasks/TaskRow";
+import { TaskCalendar } from "@/components/tasks/TaskCalendar";
 import { WORK_TYPES, workTypeLabel } from "@/lib/workType";
 
 const WEEKDAY_NAMES = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
@@ -240,6 +241,7 @@ export default function Uppgifter() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="dag">Dagens uppgifter</TabsTrigger>
+          <TabsTrigger value="kalender">Kalender</TabsTrigger>
           <TabsTrigger value="checklistor">Checklistor</TabsTrigger>
           <TabsTrigger value="sagordu">Så gör du</TabsTrigger>
           <TabsTrigger value="standard">Standarduppgifter</TabsTrigger>
@@ -352,6 +354,19 @@ export default function Uppgifter() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="kalender" className="space-y-3">
+          <TaskCalendar
+            storeId={storeId}
+            selected={day}
+            onSelect={setDay}
+            onOpenDay={(d) => {
+              setDay(d);
+              setTab("dag");
+            }}
+            areas={areaOf}
+          />
         </TabsContent>
 
         <TabsContent value="checklistor" className="space-y-3">
