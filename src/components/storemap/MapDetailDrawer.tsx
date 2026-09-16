@@ -36,6 +36,18 @@ import { useLinkTaskToMap, type MapObject, type MapObjectType, type MapTask, typ
 const time = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }) : "";
 
+/** Idag, Igår eller datum — samma språk som resten av systemet. */
+const dayText = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const today = new Date();
+  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  const yesterday = new Date(today.getTime() - 86400000);
+  if (same(d, today)) return "Idag";
+  if (same(d, yesterday)) return "Igår";
+  return d.toLocaleDateString("sv-SE");
+};
+
 function ActorAvatar({ name, url }: { name: string; url?: string | null }) {
   const initials = name
     .split(/\s+/)
