@@ -18,6 +18,7 @@ import { useFloorPlans, useMapZones } from "@/hooks/useStoreMap";
 import { useUploadEntityImage } from "@/hooks/useEntityImages";
 import {
   useAddAdhocTask,
+  useAddStandardTask,
   useDayTasks,
   useDeleteTask,
   useSetTaskDone,
@@ -68,6 +69,7 @@ export default function Uppgifter() {
   const { data: standard = [] } = useStandardTasks(storeId);
   const setDone = useSetTaskDone();
   const addAdhoc = useAddAdhocTask();
+  const addStandard = useAddStandardTask();
   const updateStandard = useUpdateStandardTask();
   const removeTask = useDeleteTask();
   const upload = useUploadEntityImage();
@@ -120,11 +122,12 @@ export default function Uppgifter() {
   const [nTime, setNTime] = useState("");
   const [nMinutes, setNMinutes] = useState("");
   const [nNote, setNNote] = useState("");
+  const [nRecurring, setNRecurring] = useState(false);
 
   const createAdhoc = async () => {
     if (!storeId) return;
     try {
-      await addAdhoc.mutateAsync({
+      const payload = {
         storeId,
         date: day,
         task: nTask,
@@ -134,8 +137,14 @@ export default function Uppgifter() {
         specificTime: nTime || null,
         estimatedMinutes: nMinutes ? Number(nMinutes) : null,
         note: nNote,
-      });
-      toast({ title: "Tillfällig uppgift tillagd", description: "Den gäller bara valt datum." });
+      };
+      if (nRecurring) {
+        await addStandard.mutateAsync(payload);
+        toast({ title: "Standarduppgift tillagd", description: "Den återkommer varje dag." });
+      } else {
+        await addAdhoc.mutateAsync(payload);
+        toast({ title: "Tillfällig uppgift tillagd", description: "Den gäller bara valt datum." });
+      }
       setNewOpen(false);
       setNTask("");
       setNNote("");
@@ -215,7 +224,7 @@ export default function Uppgifter() {
           )}
           <Input type="date" value={day} onChange={(e) => setDay(e.target.value)} className="h-9 w-[150px]" />
           <Button size="sm" onClick={() => setNewOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" /> Tillfällig uppgift
+            <Plus className="mr-1 h-4 w-4" /> Ny uppgift
           </Button>
         </div>
       </div>
@@ -431,7 +440,7 @@ export default function Uppgifter() {
       <Dialog open={newOpen} onOpenChange={setNewOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tillfällig uppgift</DialogTitle>
+            <DialogTitle>Ny uppgift</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
@@ -496,6 +505,20 @@ export default function Uppgifter() {
                 </SelectContent>
               </Select>
             </div>
+            <label className="flex items-center gap-2 rounded-md border p-3 text-sm">
+              <input
+                type="checkbox"
+                className="h-4 w-4"
+                checked={nRecurring}
+                onChange={(e) => setNRecurring(e.target.checked)}
+              />
+              <span>
+                Återkommande uppgift
+                <span className="block text-xs text-muted-foreground">
+                  {nRecurring ? "Läggs i butikens standarduppgifter och kommer tillbaka varje dag." : "Gäller bara valt datum."}
+                </span>
+              </span>
+            </label>
             <div>
               <label className="text-sm font-medium">Anteckning</label>
               <Textarea value={nNote} onChange={(e) => setNNote(e.target.value)} className="min-h-[60px]" />

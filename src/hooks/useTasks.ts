@@ -247,6 +247,99 @@ export function useAddAdhocTask() {
   });
 }
 
+/** Standarduppgift: läggs i butikens mall och återkommer varje dag den genereras. */
+export function useAddStandardTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      storeId: string;
+      task: string;
+      section?: string | null;
+      zoneId?: string | null;
+      categoryId?: string | null;
+      assignedStaffId?: string | null;
+      specificTime?: string | null;
+      daypart?: string | null;
+      estimatedMinutes?: number | null;
+      note?: string | null;
+      requiresPhoto?: boolean;
+      date?: string;
+    }) => {
+      const task = input.task.trim();
+      if (!task) throw new Error("Skriv vad som ska göras.");
+      const section = input.section?.trim() || "Övrigt";
+
+      // Använd butikens aktuella mall om den finns, annars standardlistan.
+      const { data: day } = await supabase
+        .from("checklist_days")
+        .select("id, template_id")
+        .eq("store_id", input.storeId)
+        .order("checklist_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const templateId = (day as any)?.template_id || DEFAULT_CHECKLIST_TEMPLATE_ID;
+
+      const { data: tpl, error } = await supabase
+        .from("checklist_template_items")
+        .insert({
+          template_id: templateId,
+          store_id: input.storeId,
+          section,
+          task,
+          active: true,
+          sort_order: 900,
+          zone_id: input.zoneId ?? null,
+          category_id: input.categoryId ?? null,
+          assigned_staff_id: input.assignedStaffId ?? null,
+          specific_time: input.specificTime || null,
+          time_label: input.specificTime || null,
+          daypart: input.daypart || null,
+          estimated_minutes: input.estimatedMinutes ?? null,
+          important_note: input.note?.trim() || null,
+          requires_photo: !!input.requiresPhoto,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+
+      // Lägg även in den i dagens lista så den syns direkt.
+      const iso = input.date || todayIso();
+      const { data: today } = await supabase
+        .from("checklist_days")
+        .select("id")
+        .eq("store_id", input.storeId)
+        .eq("checklist_date", iso)
+        .limit(1)
+        .maybeSingle();
+      if (today) {
+        await supabase.from("checklist_items").insert({
+          day_id: (today as any).id,
+          section,
+          task,
+          sort_order: 900,
+          template_item_id: tpl.id,
+          zone_id: input.zoneId ?? null,
+          category_id: input.categoryId ?? null,
+          assigned_staff_id: input.assignedStaffId ?? null,
+          specific_time: input.specificTime || null,
+          time_label: input.specificTime || null,
+          daypart: input.daypart || null,
+          estimated_minutes: input.estimatedMinutes ?? null,
+          important_note: input.note?.trim() || null,
+          requires_photo: !!input.requiresPhoto,
+        });
+      }
+      return tpl.id as string;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["day-tasks"] });
+      qc.invalidateQueries({ queryKey: ["standard-tasks"] });
+      qc.invalidateQueries({ queryKey: ["map-tasks"] });
+      qc.invalidateQueries({ queryKey: ["checklist-day"] });
+    },
+  });
+}
+
 export function useDeleteTask() {
   const qc = useQueryClient();
   return useMutation({
