@@ -177,6 +177,56 @@ export function useUploadEntityImage() {
 }
 
 
+/** Alla bilder som är placerade på en ritning — används för markörerna på kartan. */
+export function useFloorPlanImages(planId?: string | null) {
+  return useQuery({
+    queryKey: ["floor-plan-images", planId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entity_images")
+        .select("*")
+        .eq("floor_plan_id", planId!)
+        .not("norm_x", "is", null)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as unknown as EntityImage[];
+    },
+    enabled: !!planId,
+  });
+}
+
+/** Flyttar en redan uppladdad bild till en exakt plats inom ytan. */
+export function useSetImagePosition() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      floorPlanId,
+      norm,
+    }: {
+      id: string;
+      entityType: string;
+      entityId: string;
+      floorPlanId: string;
+      norm: { x: number; y: number } | null;
+    }) => {
+      const { error } = await supabase
+        .from("entity_images")
+        .update({
+          floor_plan_id: norm ? floorPlanId : null,
+          norm_x: norm?.x ?? null,
+          norm_y: norm?.y ?? null,
+        } as never)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["entity-images", vars.entityType, vars.entityId] });
+      qc.invalidateQueries({ queryKey: ["floor-plan-images", vars.floorPlanId] });
+    },
+  });
+}
+
 export function useUpdateEntityImage() {
   const qc = useQueryClient();
   return useMutation({
