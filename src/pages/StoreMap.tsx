@@ -199,28 +199,34 @@ export default function StoreMap() {
   }
 
   return (
-    <div className="space-y-3">
-      {/* Rubrikrad — status för dagen, samma språk som checklistan */}
-      <div className="flex flex-wrap items-center gap-3">
-        <MapIcon className="h-4 w-4 text-primary" />
-        <h1 className="text-base font-semibold">Butikskarta</h1>
-        {site !== "shop" && stores.length > 0 && (
-          <Select value={storeId} onValueChange={(v) => { setPickedStore(v); setPlanId(null); }}>
-            <SelectTrigger className="h-7 w-48 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {stores.map((s) => (
-                <SelectItem key={s.id} value={s.id} className="text-xs">
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+    <div className="space-y-4">
+      {/* Rubrikrad — stor titel, butik under, läge till höger */}
+      <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+            <MapIcon className="h-5 w-5 text-primary" />
+            Butikskarta
+          </h1>
+          {site !== "shop" && stores.length > 0 ? (
+            <Select value={storeId} onValueChange={(v) => { setPickedStore(v); setPlanId(null); }}>
+              <SelectTrigger className="h-7 border-0 px-0 text-sm text-muted-foreground shadow-none focus:ring-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {stores.map((s) => (
+                  <SelectItem key={s.id} value={s.id} className="text-xs">
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <p className="text-sm text-muted-foreground">{stores.find((s) => s.id === storeId)?.name ?? ""}</p>
+          )}
+        </div>
         {plans.length > 1 && (
           <Select value={plan?.id ?? ""} onValueChange={setPlanId}>
-            <SelectTrigger className="h-7 w-40 text-xs">
+            <SelectTrigger className="h-8 w-40 rounded-full text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -232,8 +238,8 @@ export default function StoreMap() {
             </SelectContent>
           </Select>
         )}
-        <div className="ml-auto flex items-center gap-3">
-          <div className="flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-4">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
             <StatusRing percent={dayProgress.percent} status={dayProgress.status} label={`${dayProgress.percent}%`} />
             <div className="leading-tight">
               <p className="text-[11px] font-medium">{STATUS_LABEL[dayProgress.status]}</p>
@@ -244,9 +250,9 @@ export default function StoreMap() {
           </div>
           {canManage && (
             <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
-              <TabsList className="h-7">
-                <TabsTrigger value="drift" className="text-[11px] h-6">Drift</TabsTrigger>
-                <TabsTrigger value="redigera" className="text-[11px] h-6 gap-1">
+              <TabsList className="h-9 rounded-full bg-muted p-1">
+                <TabsTrigger value="drift" className="h-7 rounded-full px-4 text-xs">Karta</TabsTrigger>
+                <TabsTrigger value="redigera" className="h-7 gap-1 rounded-full px-4 text-xs">
                   <Pencil className="h-3 w-3" /> Redigera
                 </TabsTrigger>
               </TabsList>
