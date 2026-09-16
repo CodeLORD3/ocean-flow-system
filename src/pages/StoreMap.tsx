@@ -115,6 +115,8 @@ export default function StoreMap() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pinMode, setPinMode] = useState(false);
   const [focus, setFocus] = useState<Selection>(null);
+  /** Områdets egna sida ligger under kartan och öppnas från sidopanelen. */
+  const [areaPage, setAreaPage] = useState<Selection>(null);
   const [pinDialog, setPinDialog] = useState<{
     point: { x: number; y: number } | null;
     zoneId: string | null;
