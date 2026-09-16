@@ -47,6 +47,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { storeTone } from "@/lib/storeTone";
+import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { StatTile, StatTiles } from "@/components/reports/StatTile";
 import { Banknote, Receipt, Trash2 as TrashIcon } from "lucide-react";
 
