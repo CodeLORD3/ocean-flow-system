@@ -36,6 +36,7 @@ export function TaskRow({
   categoryName,
   categoryColor,
   assigneeName,
+  assigneeImage,
   completedByName,
   completedByImage,
   photoCount = 0,
