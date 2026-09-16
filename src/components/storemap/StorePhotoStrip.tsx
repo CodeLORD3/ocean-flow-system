@@ -1,11 +1,14 @@
 import { useMemo, useRef, useState } from "react";
-import { Camera, ImageIcon, Loader2 } from "lucide-react";
+import { Camera, ChevronDown, ImageIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
+import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import {
   useEntityImages,
+  useMyImageFavorites,
+  useToggleImageFavorite,
   useUpdateEntityImage,
   useUploadEntityImage,
   type EntityImage,
@@ -43,10 +46,13 @@ export function StorePhotoStrip({
   onOpenZone?: (zoneId: string) => void;
 }) {
   const { data: storeImages = [] } = useEntityImages("store", storeId);
+  const { data: favoriteIds = [] } = useMyImageFavorites();
+  const toggleFavorite = useToggleImageFavorite();
   const upload = useUploadEntityImage();
   const updateImage = useUpdateEntityImage();
   const fileRef = useRef<HTMLInputElement>(null);
   const [index, setIndex] = useState<number | null>(null);
+  const [allOpen, setAllOpen] = useState(false);
 
   const zoneById = useMemo(
     () => Object.fromEntries(zones.map((z, i) => [z.id, { zone: z, nr: i + 1 }])),
@@ -90,16 +96,27 @@ export function StorePhotoStrip({
           <ImageIcon className="h-3.5 w-3.5" /> Senaste bilderna från butiken
           {images.length > 0 && <span className="tabular-nums">· {images.length}</span>}
         </p>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 gap-1.5 rounded-full px-2.5 text-xs"
-          onClick={() => fileRef.current?.click()}
-          disabled={upload.isPending}
-        >
-          {upload.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
-          Ny bild
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 gap-1 rounded-full px-2.5 text-xs"
+            onClick={() => setAllOpen((v) => !v)}
+          >
+            Alla bilder
+            <ChevronDown className={cn("h-3.5 w-3.5 transition", allOpen && "rotate-180")} />
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1.5 rounded-full px-2.5 text-xs"
+            onClick={() => fileRef.current?.click()}
+            disabled={upload.isPending}
+          >
+            {upload.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+            Ny bild
+          </Button>
+        </div>
         <input
           ref={fileRef}
           type="file"
@@ -152,6 +169,19 @@ export function StorePhotoStrip({
         </div>
       )}
 
+      {allOpen && (
+        <div className="mt-3 border-t border-border pt-3">
+          <EntityImageGallery
+            entityType="store"
+            entityId={storeId}
+            title="Alla bilder i butiken"
+            description="Favoriter, kommentarer, utvalda bilder och arkiv per dag."
+            editable
+            catalog
+          />
+        </div>
+      )}
+
       <ImageLightbox
         images={images}
         index={index}
@@ -160,6 +190,8 @@ export function StorePhotoStrip({
         title="Bild från butiken"
         editable
         onSaveCaption={(id, caption) => updateImage.mutate({ id, caption })}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={(id, favorite) => toggleFavorite.mutate({ imageId: id, favorite })}
         sourceLabelOf={(img) => labelOf(img)}
       />
     </div>
