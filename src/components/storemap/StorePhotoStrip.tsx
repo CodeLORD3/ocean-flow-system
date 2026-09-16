@@ -59,14 +59,27 @@ export function StorePhotoStrip({
     [zones]
   );
 
-  const images = useMemo(() => {
-    const all = [...planImages, ...storeImages];
+  /** Alla bilder, nyast först. */
+  const allImages = useMemo(() => {
     const seen = new Set<string>();
-    return all
+    return [...planImages, ...storeImages]
       .filter((i) => (seen.has(i.id) ? false : (seen.add(i.id), true)))
-      .sort((a, b) => b.created_at.localeCompare(a.created_at))
-      .slice(0, 24);
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
   }, [planImages, storeImages]);
+
+  const images = useMemo(() => allImages.slice(0, 24), [allImages]);
+
+  /** Grupperat per dag, nyaste dagen först. */
+  const groups = useMemo(() => {
+    const out: { key: string; label: string; items: { img: EntityImage; index: number }[] }[] = [];
+    allImages.forEach((img, index) => {
+      const key = new Date(img.created_at).toDateString();
+      const last = out[out.length - 1];
+      if (last && last.key === key) last.items.push({ img, index });
+      else out.push({ key, label: dayLabel(img.created_at), items: [{ img, index }] });
+    });
+    return out;
+  }, [allImages]);
 
   const labelOf = (img: EntityImage) => {
     const z = zoneById[img.entity_id];
