@@ -44,6 +44,7 @@ import {
   useMapTasks,
   useMapWalls,
   useMapZones,
+  useStoresWithFloorPlan,
   usePublishFloorPlan,
   useSaveFloorPlan,
   useSaveMapObject,
