@@ -183,7 +183,7 @@ export default function StoreMap() {
       return z ? `${zoneNumbers[z.id] ?? ""} ${z.name}`.trim() : "Område";
     }
     const o = objects.find((x) => x.id === areaPage.id);
-    return o?.label ?? "Område";
+    return o?.name ?? "Område";
   })();
 
   /** Öppnar valt områdes egna sida som flik och stänger sidopanelen. */
