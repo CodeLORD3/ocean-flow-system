@@ -83,42 +83,45 @@ export function TaskRegister({
 
   return (
     <div className="space-y-4">
-      <Card className="flex flex-wrap items-center gap-2 p-3">
-        <div className="relative min-w-[220px] flex-1">
-          <Search className="pointer-events-none absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Card className="flex flex-col gap-2 p-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="relative w-full sm:min-w-[220px] sm:flex-1">
+          <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Sök uppgift"
-            className="pl-8"
+            className="h-11 pl-8 sm:h-10"
           />
         </div>
-        <Select value={cat} onValueChange={setCat}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alla överkategorier</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
-              </SelectItem>
-            ))}
-            <SelectItem value="ovrigt">Övrigt</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
-          <SelectTrigger className="w-[170px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="namn">Namn A–Ö</SelectItem>
-            <SelectItem value="oftast">Görs oftast</SelectItem>
-            <SelectItem value="senast">Senast gjord</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={cat} onValueChange={setCat}>
+            <SelectTrigger className="h-11 flex-1 text-sm sm:h-10 sm:w-[200px] sm:flex-none">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alla överkategorier</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+              <SelectItem value="ovrigt">Övrigt</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
+            <SelectTrigger className="h-11 flex-1 text-sm sm:h-10 sm:w-[170px] sm:flex-none">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="namn">Namn A–Ö</SelectItem>
+              <SelectItem value="oftast">Görs oftast</SelectItem>
+              <SelectItem value="senast">Senast gjord</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <span className="text-xs text-muted-foreground">{filtered.length} uppgifter</span>
       </Card>
+
 
       {isLoading && <p className="text-sm text-muted-foreground">Hämtar registret …</p>}
       {!isLoading && groups.length === 0 && (
@@ -150,63 +153,71 @@ export function TaskRegister({
                       recipes.find((x) => x.id === r.recipeId)?.name ?? null,
                     );
                     return (
-                      <div key={r.key} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm">
+                      <div
+                        key={r.key}
+                        className="flex flex-col gap-2 px-3 py-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:py-2"
+                      >
                         <button
                           type="button"
                           onClick={() => r.itemId && onOpenTask(r.itemId)}
                           disabled={!r.itemId}
                           className={cn(
-                            "min-w-[180px] flex-1 text-left font-medium break-words",
+                            "w-full text-left font-medium break-words sm:min-w-[180px] sm:flex-1",
                             r.itemId ? "hover:underline" : "cursor-default",
                           )}
                         >
                           {r.task}
                         </button>
 
-                        {area && (
-                          <span
-                            className="rounded-full px-2 py-0.5 text-xs"
-                            style={{ background: `${area.color}22`, color: area.color }}
-                          >
-                            {area.number}. {area.name}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {area && (
+                            <span
+                              className="rounded-full px-2 py-0.5 text-xs"
+                              style={{ background: `${area.color}22`, color: area.color }}
+                            >
+                              {area.number}. {area.name}
+                            </span>
+                          )}
+                          {r.recurring && (
+                            <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
+                              <Repeat className="h-3 w-3" /> Återkommande
+                            </span>
+                          )}
+                          <span className="text-xs text-muted-foreground sm:w-[150px] sm:text-right">
+                            {whenText(r.lastDone)}
                           </span>
-                        )}
-                        {r.recurring && (
-                          <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
-                            <Repeat className="h-3 w-3" /> Återkommande
+                          <span className="font-mono text-xs tabular-nums text-muted-foreground sm:w-[70px] sm:text-right">
+                            {r.times} ggr
                           </span>
-                        )}
-                        <span className="w-[150px] text-right text-xs text-muted-foreground">
-                          {whenText(r.lastDone)}
-                        </span>
-                        <span className="w-[70px] text-right font-mono text-xs tabular-nums text-muted-foreground">
-                          {r.times} ggr
-                        </span>
+                        </div>
 
-                        <Select value={r.categoryId ?? "none"} onValueChange={(v) => setCategory(r, v)}>
-                          <SelectTrigger className="h-8 w-[170px] text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Övrigt</SelectItem>
-                            {categories.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Select value={r.categoryId ?? "none"} onValueChange={(v) => setCategory(r, v)}>
+                            <SelectTrigger className="h-10 w-full text-xs sm:h-8 sm:w-[170px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Övrigt</SelectItem>
+                              {categories.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>
+                                  {c.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
 
-                        {target && (
-                          <button
-                            type="button"
-                            onClick={() => onNavigate(target.url)}
-                            className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/20"
-                          >
-                            <ArrowUpRight className="h-3 w-3" /> {target.label}
-                          </button>
-                        )}
+                          {target && (
+                            <button
+                              type="button"
+                              onClick={() => onNavigate(target.url)}
+                              className="inline-flex min-h-9 items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20 sm:min-h-0 sm:px-2 sm:py-0.5"
+                            >
+                              <ArrowUpRight className="h-3 w-3" /> {target.label}
+                            </button>
+                          )}
+                        </div>
                       </div>
+
                     );
                   })}
                 </div>
