@@ -739,6 +739,18 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     return list;
   }, [filtered, sortBy]);
 
+  /** Pappren samlas under sitt datum — varje datum går att fälla ihop. */
+  const dateGroups = useMemo(() => {
+    const map = new Map<string, ImportantPaper[]>();
+    for (const p of sorted) {
+      const key = p.paper_date ?? "utan-datum";
+      const list = map.get(key);
+      if (list) list.push(p);
+      else map.set(key, [p]);
+    }
+    return [...map.entries()];
+  }, [sorted]);
+
   const cards = useMemo(() => {
     const map = new Map<string, string>();
     for (const p of papers) {
