@@ -36,6 +36,23 @@ function whenLabel(iso: string) {
   return `${d.toLocaleDateString("sv-SE", { day: "numeric", month: "short", year: "numeric" })} ${time}`;
 }
 
+/** "Lax 120.50" per rad → poster för bokföringsunderlaget. */
+function parseItems(text: string) {
+  return text
+    .split("\n")
+    .map((row) => row.trim())
+    .filter(Boolean)
+    .map((row) => {
+      const m = row.match(/^(.*?)[\s:]+(-?[\d\s]+(?:[.,]\d{1,2})?)$/);
+      if (!m) return { name: row, amount: null as number | null };
+      const amount = Number(m[2].replace(/\s/g, "").replace(",", "."));
+      return {
+        name: m[1].trim() || row,
+        amount: Number.isFinite(amount) ? amount : null,
+      };
+    });
+}
+
 /** Ekonomi → Viktiga papper: kvitton, följesedlar, fakturor, brev och anteckningar. */
 export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const { data: papers = [], isLoading } = useImportantPapers(storeId);
@@ -43,6 +60,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const del = useDeleteImportantPaper();
 
   const [typeFilter, setTypeFilter] = useState<"alla" | PaperType>("alla");
+  const [payFilter, setPayFilter] = useState("alla");
+  const [accountFilter, setAccountFilter] = useState("alla");
+  const [sortBy, setSortBy] = useState("senast");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<ImportantPaper | null>(null);
@@ -59,6 +79,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     description: "",
     title: "",
     paymentMethod: "" as "" | "kort" | "kontant",
+    cardBrand: "",
+    cardLast4: "",
+    cardHolder: "",
+    expenseAccount: "",
+    expenseCategory: "",
+    itemsText: "",
   });
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -77,7 +103,13 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     | "documentNumber"
     | "description"
     | "title"
-    | "paymentMethod";
+    | "paymentMethod"
+    | "cardBrand"
+    | "cardLast4"
+    | "cardHolder"
+    | "expenseAccount"
+    | "expenseCategory"
+    | "itemsText";
 
   /** Ändrar ett fält och släcker markeringen, eftersom värdet nu är kontrollerat. */
   function setField(key: FormKey, value: string) {
@@ -137,6 +169,16 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       if (["CHF", "SEK", "EUR"].includes(str(p.currency).toUpperCase()))
         patch.currency = str(p.currency).toUpperCase();
       if (["kort", "kontant"].includes(str(p.payment_method))) patch.paymentMethod = str(p.payment_method);
+      if (str(p.card_brand)) patch.cardBrand = str(p.card_brand);
+      if (/^\d{4}$/.test(str(p.card_last4))) patch.cardLast4 = str(p.card_last4);
+      if (str(p.card_holder)) patch.cardHolder = str(p.card_holder);
+      if (str(p.expense_category)) patch.expenseCategory = str(p.expense_category);
+      if (Array.isArray(p.line_items) && p.line_items.length) {
+        patch.itemsText = (p.line_items as any[])
+          .map((l) => [str(l?.name), l?.amount != null ? String(l.amount) : ""].filter(Boolean).join(" "))
+          .filter(Boolean)
+          .join("\n");
+      }
       if (str(p.title)) patch.title = str(p.title);
       if (str(p.description)) patch.description = str(p.description);
 
@@ -170,6 +212,10 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     const q = search.trim().toLowerCase();
     return papers.filter((p) => {
       if (typeFilter !== "alla" && p.paper_type !== typeFilter) return false;
+      if (payFilter === "kontant" && p.payment_method !== "kontant") return false;
+      if (payFilter === "kort" && p.payment_method !== "kort") return false;
+      if (payFilter.startsWith("kort:") && p.card_last4 !== payFilter.slice(5)) return false;
+      if (accountFilter !== "alla" && (p.expense_account ?? "") !== accountFilter) return false;
       if (!q) return true;
       const hay = [
         p.title,
@@ -177,6 +223,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         p.description,
         p.document_number,
         p.payment_method,
+        p.card_brand,
+        p.card_last4,
+        p.card_holder,
+        p.expense_account,
+        p.expense_category,
+        ...(p.line_items ?? []).map((l) => l.name),
         p.paper_date,
         p.created_by_name,
         paperTypeInfo(p.paper_type).singular,
@@ -188,7 +240,31 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [papers, typeFilter, search]);
+  }, [papers, typeFilter, search, payFilter, accountFilter]);
+
+  const sorted = useMemo(() => {
+    const list = [...filtered];
+    if (sortBy === "belopp") list.sort((a, b) => (b.net_amount ?? 0) - (a.net_amount ?? 0));
+    else if (sortBy === "datum") list.sort((a, b) => (b.paper_date ?? "").localeCompare(a.paper_date ?? ""));
+    else if (sortBy === "foretag")
+      list.sort((a, b) => (a.company_name ?? "").localeCompare(b.company_name ?? "", "sv"));
+    else if (sortBy === "konto")
+      list.sort((a, b) => (a.expense_account ?? "zzz").localeCompare(b.expense_account ?? "zzz", "sv"));
+    return list;
+  }, [filtered, sortBy]);
+
+  const cards = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of papers) {
+      if (p.card_last4) map.set(p.card_last4, [p.card_brand, `••${p.card_last4}`].filter(Boolean).join(" "));
+    }
+    return [...map.entries()];
+  }, [papers]);
+
+  const accounts = useMemo(
+    () => [...new Set(papers.map((p) => p.expense_account).filter(Boolean))].sort() as string[],
+    [papers],
+  );
 
   function openNew(type?: PaperType) {
     setEdit(null);
@@ -206,6 +282,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       description: "",
       title: "",
       paymentMethod: "",
+      cardBrand: "",
+      cardLast4: "",
+      cardHolder: "",
+      expenseAccount: "",
+      expenseCategory: "",
+      itemsText: "",
     });
     setOpen(true);
   }
@@ -226,6 +308,14 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       description: p.description ?? "",
       title: p.title ?? "",
       paymentMethod: (p.payment_method as "kort" | "kontant" | null) ?? "",
+      cardBrand: p.card_brand ?? "",
+      cardLast4: p.card_last4 ?? "",
+      cardHolder: p.card_holder ?? "",
+      expenseAccount: p.expense_account ?? "",
+      expenseCategory: p.expense_category ?? "",
+      itemsText: (p.line_items ?? [])
+        .map((l) => [l.name, l.amount != null ? String(l.amount) : ""].filter(Boolean).join(" "))
+        .join("\n"),
     });
     setOpen(true);
   }
@@ -251,6 +341,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         documentNumber: form.documentNumber,
         description: form.description,
         paymentMethod: form.paymentMethod || null,
+        cardBrand: form.cardBrand,
+        cardLast4: form.cardLast4,
+        cardHolder: form.cardHolder,
+        expenseAccount: form.expenseAccount,
+        expenseCategory: form.expenseCategory,
+        lineItems: parseItems(form.itemsText),
         file,
       });
       toast.success(edit ? "Pappret uppdaterat" : "Pappret sparat");
@@ -319,17 +415,67 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             );
           })}
         </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
+          <Select value={payFilter} onValueChange={setPayFilter}>
+            <SelectTrigger className="h-9 w-full sm:w-48">
+              <SelectValue placeholder="Betalsätt" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="alla">Alla betalsätt</SelectItem>
+              <SelectItem value="kontant">Kontant</SelectItem>
+              <SelectItem value="kort">Kort (alla)</SelectItem>
+              {cards.map(([last4, label]) => (
+                <SelectItem key={last4} value={`kort:${last4}`}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={accountFilter} onValueChange={setAccountFilter}>
+            <SelectTrigger className="h-9 w-full sm:w-44">
+              <SelectValue placeholder="Konto" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="alla">Alla konton</SelectItem>
+              {accounts.map((a) => (
+                <SelectItem key={a} value={a}>
+                  Konto {a}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="h-9 w-full sm:w-44">
+              <SelectValue placeholder="Sortera" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="senast">Senast inlagt</SelectItem>
+              <SelectItem value="datum">Datum på pappret</SelectItem>
+              <SelectItem value="belopp">Högsta belopp</SelectItem>
+              <SelectItem value="foretag">Företag A–Ö</SelectItem>
+              <SelectItem value="konto">Konto</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {sorted.length} papper ·{" "}
+            {nf.format(sorted.reduce((sum, p) => sum + (p.net_amount ?? 0), 0))} netto
+          </span>
+        </div>
       </Card>
 
       {isLoading ? (
         <p className="py-6 text-center text-sm text-muted-foreground">Hämtar papper …</p>
-      ) : filtered.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
           Inga papper här ännu — lägg in ett kvitto, en följesedel, en faktura, ett brev eller en anteckning.
         </p>
       ) : (
         <div className="space-y-1.5">
-          {filtered.map((p) => {
+          {sorted.map((p) => {
             const info = paperTypeInfo(p.paper_type);
             return (
               <div
@@ -350,12 +496,19 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     {[
                       p.paper_date,
                       p.payment_method === "kort"
-                        ? "Kort"
+                        ? [p.card_brand ?? "Kort", p.card_last4 ? `••${p.card_last4}` : null]
+                            .filter(Boolean)
+                            .join(" ")
                         : p.payment_method === "kontant"
                           ? "Kontant"
                           : null,
+                      p.expense_account ? `Konto ${p.expense_account}` : p.expense_category,
                       p.document_number,
-                      p.description,
+                      p.description ||
+                        (p.line_items ?? [])
+                          .slice(0, 3)
+                          .map((l) => l.name)
+                          .join(", "),
                     ]
                       .filter(Boolean)
                       .join(" · ") || "Ingen beskrivning"}
@@ -440,8 +593,43 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     </Button>
                   ))}
                 </div>
+
+                {form.paymentMethod === "kort" && (
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-xs">Korttyp{litLabel("cardBrand")}</Label>
+                      <Input
+                        value={form.cardBrand}
+                        onChange={(e) => setField("cardBrand", e.target.value)}
+                        placeholder="Visa, Twint …"
+                        className={cn("h-10", lit("cardBrand"))}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Sista 4 siffror{litLabel("cardLast4")}</Label>
+                      <Input
+                        inputMode="numeric"
+                        maxLength={4}
+                        value={form.cardLast4}
+                        onChange={(e) => setField("cardLast4", e.target.value.replace(/\D/g, "").slice(0, 4))}
+                        placeholder="4321"
+                        className={cn("h-10 font-mono tabular-nums", lit("cardLast4"))}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Kortet tillhör{litLabel("cardHolder")}</Label>
+                      <Input
+                        value={form.cardHolder}
+                        onChange={(e) => setField("cardHolder", e.target.value)}
+                        placeholder="Namn"
+                        className={cn("h-10", lit("cardHolder"))}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+
 
             <div className="grid grid-cols-2 gap-2">
               <div>
@@ -520,6 +708,38 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   className={cn("h-10 font-mono tabular-nums", lit("grossAmount"))}
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Bokföringskonto{litLabel("expenseAccount")}</Label>
+                <Input
+                  value={form.expenseAccount}
+                  onChange={(e) => setField("expenseAccount", e.target.value)}
+                  placeholder="t.ex. 4010"
+                  className={cn("h-10 font-mono tabular-nums", lit("expenseAccount"))}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Kostnadsslag{litLabel("expenseCategory")}</Label>
+                <Input
+                  value={form.expenseCategory}
+                  onChange={(e) => setField("expenseCategory", e.target.value)}
+                  placeholder="Livsmedel, Frakt …"
+                  className={cn("h-10", lit("expenseCategory"))}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs">Vad köptes?{litLabel("itemsText")}</Label>
+              <Textarea
+                value={form.itemsText}
+                onChange={(e) => setField("itemsText", e.target.value)}
+                placeholder={"En vara per rad, belopp sist\nCitroner 12.50\nDiskmedel 8.90"}
+                rows={4}
+                className={cn("font-mono text-sm", lit("itemsText"))}
+              />
             </div>
 
             <div>

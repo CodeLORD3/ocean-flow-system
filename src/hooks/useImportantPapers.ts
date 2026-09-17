@@ -16,6 +16,12 @@ export function paperTypeInfo(value: string | null | undefined) {
   return PAPER_TYPES.find((t) => t.value === value) ?? PAPER_TYPES[0];
 }
 
+export interface PaperLineItem {
+  name: string;
+  quantity?: number | null;
+  amount?: number | null;
+}
+
 export interface ImportantPaper {
   id: string;
   store_id: string | null;
@@ -30,6 +36,16 @@ export interface ImportantPaper {
   document_number: string | null;
   /** Betalsätt, används främst för kvitton: "kort" eller "kontant". */
   payment_method: string | null;
+  /** Korttyp, t.ex. Visa, Mastercard, Twint. */
+  card_brand: string | null;
+  /** Kortets fyra sista siffror. */
+  card_last4: string | null;
+  card_holder: string | null;
+  /** Bokföringskonto, t.ex. 4010. */
+  expense_account: string | null;
+  expense_category: string | null;
+  /** Köpta varor: [{ name, quantity, amount }] — underlag för bokföringen. */
+  line_items: PaperLineItem[];
   description: string | null;
   tags: string[];
   file_url: string | null;
@@ -51,7 +67,7 @@ export function useImportantPapers(storeId?: string | null) {
       if (storeId) q = q.or(`store_id.is.null,store_id.eq.${storeId}`);
       const { data, error } = await q;
       if (error) throw error;
-      const rows = (data ?? []) as ImportantPaper[];
+      const rows = (data ?? []) as unknown as ImportantPaper[];
 
       const staffIds = [...new Set(rows.map((r) => r.created_by_staff_id).filter(Boolean))] as string[];
       let byStaff: Record<string, { name: string; image: string | null }> = {};
@@ -69,6 +85,7 @@ export function useImportantPapers(storeId?: string | null) {
       }
       return rows.map((r) => ({
         ...r,
+        line_items: Array.isArray(r.line_items) ? r.line_items : [],
         created_by_name: r.created_by_staff_id ? byStaff[r.created_by_staff_id]?.name ?? null : null,
         created_by_image: r.created_by_staff_id ? byStaff[r.created_by_staff_id]?.image ?? null : null,
       }));
@@ -88,6 +105,12 @@ export interface PaperInput {
   currency?: string;
   documentNumber?: string | null;
   paymentMethod?: "kort" | "kontant" | null;
+  cardBrand?: string | null;
+  cardLast4?: string | null;
+  cardHolder?: string | null;
+  expenseAccount?: string | null;
+  expenseCategory?: string | null;
+  lineItems?: PaperLineItem[];
   description?: string | null;
   tags?: string[];
   file?: File | null;
@@ -128,6 +151,12 @@ export function useSaveImportantPaper() {
         currency: input.currency || "CHF",
         document_number: input.documentNumber?.trim() || null,
         payment_method: input.paymentMethod ?? null,
+        card_brand: input.cardBrand?.trim() || null,
+        card_last4: /^\d{4}$/.test((input.cardLast4 ?? "").trim()) ? input.cardLast4!.trim() : null,
+        card_holder: input.cardHolder?.trim() || null,
+        expense_account: input.expenseAccount?.trim() || null,
+        expense_category: input.expenseCategory?.trim() || null,
+        line_items: (input.lineItems ?? []).filter((l) => l.name?.trim()),
         description: input.description?.trim() || null,
         tags: input.tags ?? [],
       };
