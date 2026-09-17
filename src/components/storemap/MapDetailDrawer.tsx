@@ -80,6 +80,7 @@ export function MapDetailDrawer({
   inline = false,
   onOpenPage,
   onEditZone,
+  onEditZoneShape,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
