@@ -200,8 +200,15 @@ export function useMailIntakeActions() {
 
   const ignoreMessage = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("mail_intake_messages").update({ status: "ignorerad" }).eq("id", id);
+      // Vi läser tillbaka raden: utan träff har behörigheten stoppat ändringen
+      // och då ska det bli ett tydligt fel i stället för att mejlet ligger kvar.
+      const { data, error } = await supabase
+        .from("mail_intake_messages")
+        .update({ status: "ignorerad" })
+        .eq("id", id)
+        .select("id");
       if (error) throw error;
+      if (!data?.length) throw new Error("Mejlet kunde inte ignoreras — du saknar behörighet.");
     },
     onSuccess: invalidate,
   });
