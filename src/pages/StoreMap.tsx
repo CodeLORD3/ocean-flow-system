@@ -46,7 +46,7 @@ import { OverviewQuickBar } from "@/components/storemap/OverviewQuickBar";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
-import { ZONE_PALETTE } from "@/lib/mapPalette";
+import { ZONE_PALETTE, nextZoneColor } from "@/lib/mapPalette";
 import { bbox, zonePoints } from "@/lib/mapGeometry";
 import {
   useEntityImages,
