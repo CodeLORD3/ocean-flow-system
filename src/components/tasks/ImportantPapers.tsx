@@ -1831,6 +1831,45 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             </div>
 
             <div>
+              <Label className="text-xs">Vilken bank står på kortet?</Label>
+              <Input
+                value={cardForm.bank}
+                onChange={(e) => {
+                  setCardAutoFilled((s) => {
+                    const n = new Set(s);
+                    n.delete("bank");
+                    return n;
+                  });
+                  setCardForm((f) => ({ ...f, bank: e.target.value }));
+                }}
+                placeholder="PostFinance, UBS, SEB …"
+                className={`h-10 ${cardAutoFilled.has("bank") ? "border-amber-400 bg-amber-50" : ""}`}
+              />
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {["PostFinance", "UBS", "Raiffeisen", "ZKB", "Migros Bank", "SEB", "Swedbank", "Handelsbanken", "Nordea"].map(
+                  (b) => (
+                    <Button
+                      key={b}
+                      type="button"
+                      variant={cardForm.bank === b ? "default" : "outline"}
+                      className="h-7 px-2 text-[11px]"
+                      onClick={() => {
+                        setCardAutoFilled((s) => {
+                          const n = new Set(s);
+                          n.delete("bank");
+                          return n;
+                        });
+                        setCardForm((f) => ({ ...f, bank: f.bank === b ? "" : b }));
+                      }}
+                    >
+                      {b}
+                    </Button>
+                  ),
+                )}
+              </div>
+            </div>
+
+            <div>
               <Label className="text-xs">Vem äger kortet?</Label>
               <PersonSelect
                 value={cardForm.staffId}
