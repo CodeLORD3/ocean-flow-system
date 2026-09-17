@@ -1137,26 +1137,37 @@ export default function ShopOrders() {
               />
             </div>
 
-            <div className="flex flex-wrap justify-end gap-2 pt-2">
-              <Button variant="outline" size="sm" onClick={() => setCreatingOrder(false)}>Avbryt</Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 border-warning/40 text-warning hover:bg-warning/10"
-                title="Spara som öppen beställning — stannar hos butiken tills ni skickar den"
-                onClick={() => handleCreateOrder(true)}
-                disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0}
-              >
-                <Users className="h-3.5 w-3.5" /> Öppen order
-              </Button>
-              <Button
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setConfirmSendOpen(true)}
-                disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !desiredDeliveryDate}
-              >
-                <ShoppingCart className="h-3.5 w-3.5" /> Skicka beställning
-              </Button>
+            <div className="sticky bottom-0 z-20 -mx-4 border-t border-border bg-card px-4 py-3 space-y-2 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:pt-2">
+              <p className="text-xs text-muted-foreground sm:hidden">
+                {orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkter klara — lägg till fler innan du skickar.
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+                <Button
+                  className="h-12 w-full gap-2 text-base sm:hidden"
+                  onClick={() => setConfirmSendOpen(true)}
+                  disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !desiredDeliveryDate}
+                >
+                  <ShoppingCart className="h-5 w-5" /> Skicka beställning
+                </Button>
+                <Button variant="outline" className="h-11 sm:h-8 sm:text-xs" onClick={() => setCreatingOrder(false)}>Avbryt</Button>
+                <Button
+                  variant="outline"
+                  className="h-11 gap-1.5 border-warning/40 text-warning hover:bg-warning/10 sm:h-8 sm:text-xs"
+                  title="Spara som öppen beställning — stannar hos butiken tills ni skickar den"
+                  onClick={() => handleCreateOrder(true)}
+                  disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0}
+                >
+                  <Users className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> Öppen order
+                </Button>
+                <Button
+                  size="sm"
+                  className="hidden gap-1.5 sm:inline-flex"
+                  onClick={() => setConfirmSendOpen(true)}
+                  disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !desiredDeliveryDate}
+                >
+                  <ShoppingCart className="h-3.5 w-3.5" /> Skicka beställning
+                </Button>
+              </div>
             </div>
 
             {/* Confirmation dialog */}
