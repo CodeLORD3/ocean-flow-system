@@ -62,6 +62,103 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   });
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [reading, setReading] = useState(false);
+  // Fält som lästes av från pappret — de lyser tills någon rättar dem.
+  const [autoFilled, setAutoFilled] = useState<Set<string>>(new Set());
+
+  type FormKey =
+    | "paperType"
+    | "companyName"
+    | "paperDate"
+    | "netAmount"
+    | "vatAmount"
+    | "grossAmount"
+    | "currency"
+    | "documentNumber"
+    | "description"
+    | "title"
+    | "paymentMethod";
+
+  /** Ändrar ett fält och släcker markeringen, eftersom värdet nu är kontrollerat. */
+  function setField(key: FormKey, value: string) {
+    setForm((f) => ({ ...f, [key]: value }) as typeof f);
+    setAutoFilled((prev) => {
+      if (!prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+  }
+
+  const lit = (key: FormKey) =>
+    autoFilled.has(key) ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-400" : "";
+
+  const litLabel = (key: FormKey) =>
+    autoFilled.has(key) ? (
+      <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+        <Sparkles className="h-2.5 w-2.5" /> avläst
+      </span>
+    ) : null;
+
+  function toDataUrl(f: File) {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Kunde inte läsa filen"));
+      reader.readAsDataURL(f);
+    });
+  }
+
+  /** Läser av pappret och fyller i fälten automatiskt, som i inköpsrapporteringen. */
+  async function readPaper(f: File) {
+    setReading(true);
+    try {
+      const dataUrl = await toDataUrl(f);
+      const { data, error } = await supabase.functions.invoke("parse-viktigt-papper", {
+        body: { dataUrl, fileName: f.name },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const p = (data?.paper ?? {}) as Record<string, unknown>;
+
+      const str = (v: unknown) => (v == null ? "" : String(v).trim());
+      const money = (v: unknown) =>
+        typeof v === "number" && Number.isFinite(v) ? String(v) : "";
+
+      const patch: Partial<Record<FormKey, string>> = {};
+      const validType = PAPER_TYPES.some((t) => t.value === str(p.paper_type));
+      if (validType) patch.paperType = str(p.paper_type);
+      if (str(p.company_name)) patch.companyName = str(p.company_name);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str(p.paper_date))) patch.paperDate = str(p.paper_date);
+      if (str(p.document_number)) patch.documentNumber = str(p.document_number);
+      if (money(p.net_amount)) patch.netAmount = money(p.net_amount);
+      if (money(p.vat_amount)) patch.vatAmount = money(p.vat_amount);
+      if (money(p.gross_amount)) patch.grossAmount = money(p.gross_amount);
+      if (["CHF", "SEK", "EUR"].includes(str(p.currency).toUpperCase()))
+        patch.currency = str(p.currency).toUpperCase();
+      if (["kort", "kontant"].includes(str(p.payment_method))) patch.paymentMethod = str(p.payment_method);
+      if (str(p.title)) patch.title = str(p.title);
+      if (str(p.description)) patch.description = str(p.description);
+
+      const keys = Object.keys(patch) as FormKey[];
+      if (keys.length === 0) {
+        toast.info("Hittade ingen information på pappret — fyll i själv");
+        return;
+      }
+      setForm((prev) => ({ ...prev, ...patch }) as typeof prev);
+      setAutoFilled(new Set(keys));
+      toast.success(`${keys.length} fält avlästa — kontrollera de gröna fälten`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunde inte läsa av pappret");
+    } finally {
+      setReading(false);
+    }
+  }
+
+  function pickFile(f: File | null) {
+    setFile(f);
+    if (f) void readPaper(f);
+  }
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
