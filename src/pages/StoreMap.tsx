@@ -338,6 +338,17 @@ export default function StoreMap() {
     );
   };
 
+  /** Öppnar kartan i redigeringsläge så man kan flytta och ändra storlek på ett befintligt område. */
+  const editZoneShape = (id: string) => {
+    setMode("redigera");
+    setView("karta");
+    setSelected({ kind: "zone", id });
+    setFocus({ kind: "zone", id });
+    setDrawerOpen(false);
+    setShapeZoneId(id);
+    setSheetZoneId(null);
+  };
+
   const addObject = (t: MapObjectType) => {
     if (!plan) return;
     const zone = selectedZone ?? zones[0];
