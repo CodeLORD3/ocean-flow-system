@@ -326,6 +326,7 @@ export function TotalOrderedView({
             unit,
             total: 0,
             packed: 0,
+            closed: 0,
             value: 0,
             category: cat,
             productId: null,
@@ -336,12 +337,14 @@ export function TotalOrderedView({
         row.imageUrl = row.imageUrl ?? l.products?.image_url ?? null;
         row.total += qty;
         row.packed += packedQty;
+        row.closed += closedQty;
         row.value += lineValue;
 
         const existing = row.orders.find((x) => x.orderNumber === o.order_number);
         if (existing) {
           existing.quantity += qty;
           existing.packed += packedQty;
+          existing.closed += closedQty;
         } else
           row.orders.push({
             orderId: o.id,
@@ -350,7 +353,9 @@ export function TotalOrderedView({
             storeName: o.stores?.name ?? "",
             quantity: qty,
             packed: packedQty,
+            closed: closedQty,
             orderType: o.order_type ?? "",
+
             wantedDate: o.wanted_date,
           });
         group.rows.set(rowKey, row);
