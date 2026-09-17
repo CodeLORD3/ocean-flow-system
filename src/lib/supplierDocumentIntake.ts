@@ -11,6 +11,7 @@ import { buildSupplierIndex, lookupSupplier, matchProduct } from "@/lib/foljesed
 import type { MatchProduct } from "@/lib/foljesedelMatch";
 import type { SizeGrade } from "@/lib/sizeGrades";
 import { safeDate } from "@/lib/parsedDates";
+import { cleanLotNumbers, sellerCodeFrom } from "@/lib/lotNumbers";
 
 export interface SupplierDocument {
   id: string;
@@ -166,14 +167,20 @@ export async function approveDeliveryNote(
         Math.abs(lineTotal - unitPrice * qty) > Math.max(1, lineTotal * 0.02),
       latin_name: p.latin_name ?? null,
       species_fao_code: p.species_fao_code ?? null,
-      lot_numbers: Array.isArray(p.lot_numbers) ? p.lot_numbers.filter(Boolean) : [],
+      // Kvalitetsklass och säljarkod ("Kategori A ToCa") är inget partinummer —
+      // säljarkoden sparas som båt/säljare i stället.
+      lot_numbers: cleanLotNumbers(p.lot_numbers),
       best_before: safeDate(p.best_before),
       catch_area: p.catch_area ?? null,
       catch_date_from: safeDate(p.catch_date_from),
       catch_date_to: safeDate(p.catch_date_to),
       fishing_gear: p.fishing_gear ?? null,
       fishing_gear_code: p.fishing_gear_code ?? null,
-      vessel_name: p.vessel_name ?? null,
+      vessel_name:
+        p.vessel_name ??
+        (Array.isArray(p.lot_numbers)
+          ? p.lot_numbers.map((v: unknown) => sellerCodeFrom(String(v ?? ""))).find(Boolean) ?? null
+          : null),
       vessel_reg: p.vessel_reg ?? null,
       vessel_nation: p.vessel_nation ?? null,
       presentation: p.presentation ?? null,
