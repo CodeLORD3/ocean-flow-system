@@ -78,7 +78,11 @@ export function useImportantPapers(storeId?: string | null) {
       if (error) throw error;
       const rows = (data ?? []) as unknown as ImportantPaper[];
 
-      const staffIds = [...new Set(rows.map((r) => r.created_by_staff_id).filter(Boolean))] as string[];
+      const staffIds = [
+        ...new Set(
+          rows.flatMap((r) => [r.created_by_staff_id, r.paid_by_staff_id]).filter(Boolean),
+        ),
+      ] as string[];
       let byStaff: Record<string, { name: string; image: string | null }> = {};
       if (staffIds.length) {
         const { data: staff } = await supabase
