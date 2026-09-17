@@ -110,6 +110,8 @@ type OrderLink = {
   quantity: number;
   /** Packad mängd i just den beställningen. */
   packed: number;
+  /** Beställd mängd på rader som packats klart. */
+  closed: number;
   orderType: string;
   wantedDate: string;
 };
@@ -121,6 +123,9 @@ type ProductRow = {
   total: number;
   /** Packad mängd summerad över alla beställningar på raden. */
   packed: number;
+  /** Beställd mängd på färdigpackade rader — räknas inte som kvar att packa. */
+  closed: number;
+
   /** Summerat radvärde (kr) när priser finns på raderna. */
   value: number;
   category: string;
