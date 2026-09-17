@@ -33,6 +33,7 @@ import BivalvePanel from "@/components/inventory/BivalvePanel";
 import LotPricePanel from "@/components/inventory/LotPricePanel";
 import LotHistoryView from "@/components/inventory/LotHistoryView";
 import LotChainGraph from "@/components/inventory/LotChainGraph";
+import AuctionLotNumberField from "@/components/inventory/AuctionLotNumberField";
 import ProductNetworkGraph from "@/components/inventory/ProductNetworkGraph";
 import { gapBetween, sinceNow, stampSv } from "@/lib/dwell";
 import { movementLabel } from "@/hooks/useStockMovements";
@@ -827,6 +828,9 @@ export default function LotTraceabilityView({
                     {lot.suppliers?.name ? ` · ${lot.suppliers.name}` : ""}
                     {lot.best_before ? ` · bäst före ${lot.best_before}` : ""}
                   </p>
+                  <div className="mt-1">
+                    <AuctionLotNumberField lotId={lot.id} value={(lot as any).supplier_lot_id} readOnly={!!storeId} />
+                  </div>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     <Badge variant="secondary" className="text-[10px]">
                       {lot.status}
