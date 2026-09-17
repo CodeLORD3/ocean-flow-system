@@ -478,7 +478,8 @@ export function TotalOrderedView({
           .map((r) => {
             const stock = lookup(r, extras.stockById, extras.stockByName);
             const onOrder = lookup(r, extras.orderedById, extras.orderedByName);
-            const remaining = Math.max(r.total - r.packed, 0);
+            const remaining = remainingOf(r.total, r.packed, r.closed);
+
             return {
               ...r,
               stock,
