@@ -858,12 +858,28 @@ export default function StoreMap() {
                     <p className="text-[10px] text-muted-foreground">
                       Fyll i den uppmätta ytan. Skalan räknas fram och övriga rutor får uppskattad yta.
                     </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 w-full text-[11px] gap-1"
+                      onClick={() => addZone()}
+                      disabled={saveZone.isPending}
+                    >
+                      <Plus className="h-3 w-3" /> Nytt område
+                    </Button>
                     {zones.map((z) => (
                       <div key={z.id} className="space-y-1 border-b border-border pb-1.5 last:border-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] truncate flex-1">
-                            {zoneNumbers[z.id]}. {z.name}
-                          </span>
+                          <span className="text-[11px] tabular-nums text-muted-foreground">{zoneNumbers[z.id]}.</span>
+                          <Input
+                            defaultValue={z.name}
+                            onBlur={(e) =>
+                              e.target.value.trim() &&
+                              e.target.value !== z.name &&
+                              saveZone.mutate({ id: z.id, name: e.target.value.trim() })
+                            }
+                            className="h-7 flex-1 text-xs"
+                          />
                           <Input
                             type="number"
                             inputMode="decimal"
