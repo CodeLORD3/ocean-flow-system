@@ -2093,7 +2093,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 </Select>
               </div>
             </div>
+            </>
             )}
+
 
             {form.paperType !== "kort" && (
             <>
@@ -2105,16 +2107,6 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   onChange={(e) => setField("documentNumber", e.target.value)}
                   placeholder="Kvitto- eller fakturanummer"
                   className={cn("h-10", lit("documentNumber"))}
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Bruttobelopp{litLabel("grossAmount")}</Label>
-                <Input
-                  inputMode="decimal"
-                  value={form.grossAmount}
-                  onChange={(e) => setField("grossAmount", e.target.value)}
-                  placeholder="0.00"
-                  className={cn("h-10 font-mono tabular-nums", lit("grossAmount"))}
                 />
               </div>
             </div>
