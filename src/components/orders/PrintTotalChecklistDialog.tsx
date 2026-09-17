@@ -46,6 +46,8 @@ function mergeGroups(groups: TotalChecklistGroup[]): TotalChecklistGroup {
       if (cur) {
         cur.total += r.total;
         cur.packed = Number(cur.packed || 0) + Number(r.packed || 0);
+        cur.closed = Number(cur.closed || 0) + Number(r.closed || 0);
+
         // Lager summeras inte per period — samma saldo gäller hela listan.
         cur.stock = cur.stock ?? r.stock;
         cur.onOrder =
