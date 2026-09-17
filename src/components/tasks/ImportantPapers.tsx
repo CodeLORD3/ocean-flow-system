@@ -79,6 +79,7 @@ const FIELD_LABELS: Record<string, string> = {
   netAmount: "Nettobelopp",
   vatAmount: "Moms",
   grossAmount: "Bruttobelopp",
+  vatRate: "Moms %",
   currency: "Valuta",
   documentNumber: "Dokumentnummer",
   description: "Beskrivning",
