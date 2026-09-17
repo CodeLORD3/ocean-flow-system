@@ -176,7 +176,11 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     staffId: "",
     cardKind: "foretag" as "foretag" | "privat",
   });
-
+  // Foto av kortet: fälten läses av på samma sätt som på ett papper.
+  const cardCamRef = useRef<HTMLInputElement>(null);
+  const cardLibRef = useRef<HTMLInputElement>(null);
+  const [cardReading, setCardReading] = useState(false);
+  const [cardAutoFilled, setCardAutoFilled] = useState<Set<string>>(new Set());
 
   type FormKey =
     | "paperType"
@@ -391,6 +395,43 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     });
     setCompare(null);
     toast.success(`${rows.length} fält uppdaterade — kontrollera de gula fälten`);
+  }
+
+  /** Läser av ett foto av kortet och fyller kortformuläret. */
+  async function readCardPhoto(file: File | null | undefined) {
+    if (!file) return;
+    setCardReading(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(new Error("Kunde inte läsa filen"));
+        r.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke("parse-viktigt-papper", {
+        body: { dataUrl, fileName: file.name, kind: "card" },
+      });
+      if (error) throw error;
+      const card = (data as { paper?: Record<string, unknown> } | null)?.paper ?? {};
+      const brand = typeof card.card_brand === "string" ? card.card_brand : "";
+      const last4 = typeof card.card_last4 === "string" ? card.card_last4.replace(/\D/g, "").slice(-4) : "";
+      const holder = typeof card.card_holder === "string" ? card.card_holder : "";
+      const found = new Set<string>();
+      setCardForm((f) => {
+        const next = { ...f };
+        if (brand) { next.cardBrand = brand; found.add("cardBrand"); }
+        if (last4.length === 4) { next.cardLast4 = last4; found.add("cardLast4"); }
+        if (holder) { next.cardHolder = holder; found.add("cardHolder"); }
+        return next;
+      });
+      setCardAutoFilled(found);
+      if (found.size === 0) toast.info("Hittade inget på kortet — skriv in själv");
+      else toast.success("Kortet avläst — kontrollera de gula fälten");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte läsa kortet");
+    } finally {
+      setCardReading(false);
+    }
   }
 
   /**
@@ -1382,14 +1423,70 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
           </DialogHeader>
 
           <div className="space-y-3">
+            <input
+              ref={cardCamRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                void readCardPhoto(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            <input
+              ref={cardLibRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                void readCardPhoto(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                className="h-14 justify-center text-sm font-semibold"
+                disabled={cardReading}
+                onClick={() => cardCamRef.current?.click()}
+              >
+                {cardReading ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  <Camera className="mr-2 h-5 w-5" />
+                )}
+                Ta foto på kortet
+              </Button>
+              <Button
+                variant="outline"
+                className="h-14 justify-center text-sm font-semibold"
+                disabled={cardReading}
+                onClick={() => cardLibRef.current?.click()}
+              >
+                <ImagePlus className="mr-2 h-5 w-5" /> Välj bild
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {cardReading
+                ? "Läser av kortet …"
+                : "Fotot används bara för att läsa av korttyp, de fyra sista siffrorna och namnet. Hela kortnumret sparas aldrig."}
+            </p>
+
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Korttyp</Label>
                 <Input
                   value={cardForm.cardBrand}
-                  onChange={(e) => setCardForm((f) => ({ ...f, cardBrand: e.target.value }))}
+                  onChange={(e) => {
+                    setCardAutoFilled((s) => {
+                      const n = new Set(s);
+                      n.delete("cardBrand");
+                      return n;
+                    });
+                    setCardForm((f) => ({ ...f, cardBrand: e.target.value }));
+                  }}
                   placeholder="Visa, Twint …"
-                  className="h-10"
+                  className={`h-10 ${cardAutoFilled.has("cardBrand") ? "border-amber-400 bg-amber-50" : ""}`}
                 />
               </div>
               <div>
@@ -1398,11 +1495,16 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   inputMode="numeric"
                   maxLength={4}
                   value={cardForm.cardLast4}
-                  onChange={(e) =>
-                    setCardForm((f) => ({ ...f, cardLast4: e.target.value.replace(/\D/g, "").slice(0, 4) }))
-                  }
+                  onChange={(e) => {
+                    setCardAutoFilled((s) => {
+                      const n = new Set(s);
+                      n.delete("cardLast4");
+                      return n;
+                    });
+                    setCardForm((f) => ({ ...f, cardLast4: e.target.value.replace(/\D/g, "").slice(0, 4) }));
+                  }}
                   placeholder="4321"
-                  className="h-10 font-mono tabular-nums"
+                  className={`h-10 font-mono tabular-nums ${cardAutoFilled.has("cardLast4") ? "border-amber-400 bg-amber-50" : ""}`}
                 />
               </div>
             </div>
@@ -1426,9 +1528,16 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               </Select>
               <Input
                 value={cardForm.cardHolder}
-                onChange={(e) => setCardForm((f) => ({ ...f, cardHolder: e.target.value }))}
+                onChange={(e) => {
+                  setCardAutoFilled((s) => {
+                    const n = new Set(s);
+                    n.delete("cardHolder");
+                    return n;
+                  });
+                  setCardForm((f) => ({ ...f, cardHolder: e.target.value }));
+                }}
                 placeholder="Eller skriv namnet på kortet"
-                className="mt-2 h-10"
+                className={`mt-2 h-10 ${cardAutoFilled.has("cardHolder") ? "border-amber-400 bg-amber-50" : ""}`}
               />
             </div>
 
