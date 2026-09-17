@@ -394,9 +394,13 @@ export function StorePhotoStrip({
                 <span className="text-[11px] tabular-nums text-muted-foreground">{g.items.length} bilder</span>
                 <span className="h-px flex-1 bg-border" />
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-                {g.items.map(({ img, index: i }) => card(img, i, "aspect-[4/3]"))}
-              </div>
+              {layout === "lista" ? (
+                <div className="space-y-1.5">{g.items.map(({ img, index: i }) => row(img, i))}</div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {g.items.map(({ img, index: i }) => card(img, i, "aspect-[4/3]"))}
+                </div>
+              )}
             </div>
           ))}
         </div>
