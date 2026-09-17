@@ -105,6 +105,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       documentNumber: "",
       description: "",
       title: "",
+      paymentMethod: "",
     });
     setOpen(true);
   }
