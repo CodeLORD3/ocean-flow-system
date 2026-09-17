@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import {
   Camera,
   Check,
@@ -8,6 +9,9 @@ import {
   FileText,
   ImagePlus,
   Maximize2,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
   Loader2,
   Paperclip,
   Plus,
@@ -1191,31 +1195,84 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 {previewIsPdf ? (
                   <iframe src={preview} title="Pappret" className="h-[40vh] w-full lg:h-[72vh]" />
                 ) : (
-                  <img
-                    src={preview}
-                    alt="Fotot på pappret"
-                    className={cn(
-                      "w-full cursor-zoom-in bg-white object-contain",
-                      previewBig ? "max-h-[80vh]" : "max-h-[34vh] lg:max-h-[72vh]",
+                  <TransformWrapper
+                    minScale={1}
+                    maxScale={8}
+                    doubleClick={{ mode: "toggle", step: 2 }}
+                    wheel={{ step: 0.15 }}
+                  >
+                    {({ zoomIn, zoomOut, resetTransform }) => (
+                      <div className="relative">
+                        <TransformComponent
+                          wrapperClass={cn(
+                            "w-full bg-white",
+                            previewBig ? "max-h-[80vh]" : "max-h-[34vh] lg:max-h-[72vh]",
+                          )}
+                          contentClass="w-full"
+                        >
+                          <img src={preview} alt="Fotot på pappret" className="w-full object-contain" />
+                        </TransformComponent>
+                        <div className="absolute right-1.5 top-1.5 flex flex-col gap-1 rounded-lg bg-background/90 p-1 shadow">
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            title="Zooma in"
+                            onClick={() => zoomIn(0.4)}
+                          >
+                            <ZoomIn className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            title="Zooma ut"
+                            onClick={() => zoomOut(0.4)}
+                          >
+                            <ZoomOut className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            title="Återställ"
+                            onClick={() => resetTransform()}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     )}
-                    onClick={() => setPreviewBig((v) => !v)}
-                  />
+                  </TransformWrapper>
                 )}
               </div>
               <div className="mt-1 flex items-center justify-between">
                 <p className="text-[11px] text-muted-foreground">
-                  Tryck på bilden för att visa den större
+                  Zooma med knapparna, rullhjulet eller nyp på mobilen — dra för att flytta
                 </p>
-                {(file || edit?.file_url) && (
+                <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-7 px-2 text-xs"
-                    onClick={() => (edit?.file_url ? void openFile(edit.file_url) : window.open(preview, "_blank"))}
+                    onClick={() => setPreviewBig((v) => !v)}
                   >
-                    <Maximize2 className="mr-1 h-3.5 w-3.5" /> Öppna
+                    {previewBig ? "Mindre ruta" : "Större ruta"}
                   </Button>
-                )}
+                  {(file || edit?.file_url) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => (edit?.file_url ? void openFile(edit.file_url) : window.open(preview, "_blank"))}
+                    >
+                      <Maximize2 className="mr-1 h-3.5 w-3.5" /> Öppna
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           ) : edit?.file_url ? (
