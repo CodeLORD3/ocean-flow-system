@@ -116,6 +116,20 @@ function parseItems(text: string) {
     });
 }
 
+/** Banker/kortutgivare vi ser oftast — snabbval i kortregistret. */
+const BANK_CHOICES = [
+  "PostFinance",
+  "UBS",
+  "Raiffeisen",
+  "ZKB",
+  "Migros Bank",
+  "Sparkasse",
+  "SEB",
+  "Swedbank",
+  "Handelsbanken",
+  "Nordea",
+];
+
 /** Ekonomi → Viktiga papper: kvitton, följesedlar, fakturor, brev och anteckningar. */
 /** Väljer person med sökfält och profilbild — listan kan vara lång. */
 function PersonSelect({
@@ -1258,43 +1272,84 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                         {paymentCards.map((c) => {
                           const on = activeCard?.id === c.id;
                           return (
-                            <button
+                            <div
                               key={c.id}
-                              type="button"
-                              onClick={() => pickCard(c)}
                               className={cn(
-                                "flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-sm transition",
+                                "rounded-lg border transition",
                                 on
                                   ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-400"
-                                  : "border-border bg-card hover:bg-muted",
+                                  : "border-border bg-card",
                               )}
                             >
-                              <StaffAvatar
-                                name={c.staff_name ?? c.card_holder}
-                                imageUrl={c.staff_image}
-                                className="h-8 w-8"
-                              />
-                              <span className="min-w-0 flex-1">
-                                <span className="block truncate font-medium">
-                                  {c.staff_name || c.card_holder || c.label || "Kort"}
+                              <button
+                                type="button"
+                                onClick={() => pickCard(c)}
+                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-muted/60"
+                              >
+                                <StaffAvatar
+                                  name={c.staff_name ?? c.card_holder}
+                                  imageUrl={c.staff_image}
+                                  className="h-8 w-8"
+                                />
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate font-semibold">
+                                    {c.bank ? (
+                                      <>
+                                        {c.bank}
+                                        <span className="font-normal text-muted-foreground">
+                                          {" · "}
+                                          {c.card_brand || "Kort"} · ••{c.card_last4}
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        {c.card_brand || "Kort"} · ••{c.card_last4}
+                                      </>
+                                    )}
+                                  </span>
+                                  <span className="block truncate text-[11px] text-muted-foreground">
+                                    {c.staff_name || c.card_holder || c.label || "Ingen ägare angiven"}
+                                  </span>
                                 </span>
-                                <span className="block truncate text-[11px] text-muted-foreground">
-                                  {[c.bank, c.card_brand || "Kort", `••${c.card_last4}`]
-                                    .filter(Boolean)
-                                    .join(" · ")}
-                                </span>
-                              </span>
-                              {c.card_kind === "privat" ? (
-                                <span className="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
-                                  Privat → utlägg
-                                </span>
-                              ) : (
-                                <span className="shrink-0 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
-                                  Företagskort
-                                </span>
+                                {c.card_kind === "privat" ? (
+                                  <span className="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+                                    Privat → utlägg
+                                  </span>
+                                ) : (
+                                  <span className="shrink-0 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
+                                    Företagskort
+                                  </span>
+                                )}
+                                {on && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
+                              </button>
+                              {!c.bank && (
+                                <div className="flex flex-wrap items-center gap-1 border-t border-dashed px-2.5 py-1.5">
+                                  <span className="text-[11px] text-muted-foreground">Vilken bank?</span>
+                                  {BANK_CHOICES.map((b) => (
+                                    <button
+                                      key={b}
+                                      type="button"
+                                      className="rounded-full border px-2 py-0.5 text-[11px] font-medium hover:bg-muted"
+                                      onClick={() =>
+                                        saveCard.mutate({
+                                          id: c.id,
+                                          staffId: c.staff_id,
+                                          cardBrand: c.card_brand,
+                                          bank: b,
+                                          cardLast4: c.card_last4,
+                                          cardHolder: c.card_holder,
+                                          label: c.label,
+                                          cardKind: c.card_kind,
+                                          storeId: c.store_id,
+                                        })
+                                      }
+                                    >
+                                      {b}
+                                    </button>
+                                  ))}
+                                </div>
                               )}
-                              {on && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
-                            </button>
+                            </div>
                           );
                         })}
                         <Button
@@ -1862,7 +1917,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 className={`h-10 ${cardAutoFilled.has("bank") ? "border-amber-400 bg-amber-50" : ""}`}
               />
               <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {["PostFinance", "UBS", "Raiffeisen", "ZKB", "Migros Bank", "SEB", "Swedbank", "Handelsbanken", "Nordea"].map(
+                {BANK_CHOICES.map(
                   (b) => (
                     <Button
                       key={b}
