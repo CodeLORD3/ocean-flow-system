@@ -386,6 +386,35 @@ export function useArchiveCustomerOrder() {
   });
 }
 
+/**
+ * Flyttar en eller flera beställningar till ett annat önskat datum.
+ * Används av dra-och-släpp i dagslistan och av datumväljaren för markerade rader.
+ */
+export function useMoveCustomerOrders() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, date }: { ids: string[]; date: string }) => {
+      if (ids.length === 0) return;
+      const { data: auth } = await supabase.auth.getUser();
+      const { error } = await db.from("customer_orders").update({ wanted_date: date }).in("id", ids);
+      if (error) throw error;
+      for (const id of ids) {
+        await logOrderEvent({
+          orderId: id,
+          eventType: "flyttad",
+          description: `Beställningen flyttades till ${date}`,
+          newValue: { wanted_date: date },
+          performedBy: auth?.user?.id ?? null,
+        });
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customer_orders"] });
+      qc.invalidateQueries({ queryKey: ["customer_order_events"] });
+    },
+  });
+}
+
 export function useUpdateCustomerOrder() {
   const qc = useQueryClient();
   return useMutation({

@@ -24,7 +24,9 @@ import {
   useApproveCustomerOrder,
   useCustomerOrderCounts,
   useCustomerOrderTabCounts,
+  useMoveCustomerOrders,
 } from "@/hooks/useCustomerOrders";
+import { toast } from "sonner";
 import {
   CustomerOrder,
   ORDER_STATUS_LABELS,
@@ -210,6 +212,33 @@ export default function CustomerOrders() {
   const toggleMark = (id: string, next: boolean) =>
     setMarked((cur) => (next ? [...new Set([...cur, id])] : cur.filter((x) => x !== id)));
 
+  /* Dra-och-släpp: flytta en order — eller alla markerade — till en annan dag. */
+  const moveOrders = useMoveCustomerOrders();
+  const [dragIds, setDragIds] = useState<string[]>([]);
+  const [dragOverDay, setDragOverDay] = useState<string | null>(null);
+
+  const startDrag = (id: string) =>
+    setDragIds(marked.length > 0 && marked.includes(id) ? marked : [id]);
+
+  const moveTo = (date: string, ids: string[]) => {
+    const list = ids.filter(Boolean);
+    if (list.length === 0) return;
+    moveOrders.mutate(
+      { ids: list, date },
+      {
+        onSuccess: () => {
+          toast.success(
+            list.length === 1
+              ? `Beställningen flyttades till ${dayLabel(date)}`
+              : `${list.length} beställningar flyttades till ${dayLabel(date)}`,
+          );
+          setMarked([]);
+        },
+        onError: (e: any) => toast.error(e?.message ?? "Kunde inte flytta beställningen"),
+      },
+    );
+  };
+
   const isArchiveView = tab === "arkiverade";
   const archiveOrders = useArchiveCustomerOrder();
   const approveOrders = useApproveCustomerOrder();
@@ -343,6 +372,20 @@ export default function CustomerOrders() {
               </>
             )}
           </Button>
+        )}
+        {/* Flytta markerade till ett annat datum — fungerar även på mobil där man inte kan dra. */}
+        {canEdit && marked.length > 0 && (
+          <div className="flex items-center gap-2 rounded-sm border border-grid-line bg-card px-3 py-1.5">
+            <span className="whitespace-nowrap text-xs font-semibold">
+              Flytta {marked.length} till
+            </span>
+            <Input
+              type="date"
+              className="h-10 w-[9.5rem] text-sm"
+              disabled={moveOrders.isPending}
+              onChange={(e) => e.target.value && moveTo(e.target.value, marked)}
+            />
+          </div>
         )}
         {/* Bulkutskrift: markera alla (eller några) och skriv ut packlistan i ett svep. */}
         {panel === "orders" && viewOrders.length > 0 && (
@@ -702,30 +745,62 @@ export default function CustomerOrders() {
                     </div>
 
                     {w.days.map(([day, list]) => (
-                      <div key={day}>
+                      <div
+                        key={day}
+                        onDragOver={(e) => {
+                          if (!canEdit || dragIds.length === 0) return;
+                          e.preventDefault();
+                          setDragOverDay(day);
+                        }}
+                        onDragLeave={() => setDragOverDay((d) => (d === day ? null : d))}
+                        onDrop={(e) => {
+                          if (!canEdit || dragIds.length === 0) return;
+                          e.preventDefault();
+                          const ids = dragIds;
+                          setDragIds([]);
+                          setDragOverDay(null);
+                          moveTo(day, ids);
+                        }}
+                        className={dragOverDay === day ? "ring-2 ring-inset ring-primary" : ""}
+                      >
                         <div className="flex items-center gap-2 border-x border-b border-grid-line bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                           <span className="truncate">{dayLabel(day)}</span>
                           <span className="shrink-0 font-mono tabular-nums">
                             {list.length} order
                           </span>
+                          {dragOverDay === day && dragIds.length > 0 && (
+                            <span className="ml-auto shrink-0 rounded-sm bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                              Släpp här — flytta {dragIds.length}
+                            </span>
+                          )}
                         </div>
 
                         {list.map((o) => (
-                          <CustomerOrderRow
+                          <div
                             key={o.id}
-                            order={o}
-                            canEdit={canEdit}
-                            readOnly={rowReadOnly(o)}
-                            open={openRows.includes(o.id)}
-                            onToggle={toggleRow}
-                            selected={marked.includes(o.id)}
-                            onSelect={toggleMark}
-                            photoCount={photoCounts?.[o.id] ?? 0}
-                            orderCount={
-                              o.customer_id ? customerOrderCounts?.[o.customer_id] ?? 0 : 0
-                            }
-                            highlightProduct={focus?.orderId === o.id ? focus.product : null}
-                          />
+                            draggable={canEdit && !rowReadOnly(o)}
+                            onDragStart={() => startDrag(o.id)}
+                            onDragEnd={() => {
+                              setDragIds([]);
+                              setDragOverDay(null);
+                            }}
+                            className={dragIds.includes(o.id) ? "opacity-50" : ""}
+                          >
+                            <CustomerOrderRow
+                              order={o}
+                              canEdit={canEdit}
+                              readOnly={rowReadOnly(o)}
+                              open={openRows.includes(o.id)}
+                              onToggle={toggleRow}
+                              selected={marked.includes(o.id)}
+                              onSelect={toggleMark}
+                              photoCount={photoCounts?.[o.id] ?? 0}
+                              orderCount={
+                                o.customer_id ? customerOrderCounts?.[o.customer_id] ?? 0 : 0
+                              }
+                              highlightProduct={focus?.orderId === o.id ? focus.product : null}
+                            />
+                          </div>
                         ))}
                       </div>
                     ))}
