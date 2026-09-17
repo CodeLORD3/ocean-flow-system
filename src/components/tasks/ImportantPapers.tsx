@@ -146,47 +146,51 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     });
   }
 
-  /** Läser av pappret och fyller i fälten automatiskt, som i inköpsrapporteringen. */
+  /** Läser av ett papper och returnerar bara det som syns på bilden. */
+  async function parsePaper(f: File): Promise<Partial<Record<FormKey, string>>> {
+    const dataUrl = await toDataUrl(f);
+    const { data, error } = await supabase.functions.invoke("parse-viktigt-papper", {
+      body: { dataUrl, fileName: f.name },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    const p = (data?.paper ?? {}) as Record<string, unknown>;
+
+    const str = (v: unknown) => (v == null ? "" : String(v).trim());
+    const money = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? String(v) : "");
+
+    const patch: Partial<Record<FormKey, string>> = {};
+    const validType = PAPER_TYPES.some((t) => t.value === str(p.paper_type));
+    if (validType) patch.paperType = str(p.paper_type);
+    if (str(p.company_name)) patch.companyName = str(p.company_name);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str(p.paper_date))) patch.paperDate = str(p.paper_date);
+    if (str(p.document_number)) patch.documentNumber = str(p.document_number);
+    if (money(p.net_amount)) patch.netAmount = money(p.net_amount);
+    if (money(p.vat_amount)) patch.vatAmount = money(p.vat_amount);
+    if (money(p.gross_amount)) patch.grossAmount = money(p.gross_amount);
+    if (["CHF", "SEK", "EUR"].includes(str(p.currency).toUpperCase()))
+      patch.currency = str(p.currency).toUpperCase();
+    if (["kort", "kontant"].includes(str(p.payment_method))) patch.paymentMethod = str(p.payment_method);
+    if (str(p.card_brand)) patch.cardBrand = str(p.card_brand);
+    if (/^\d{4}$/.test(str(p.card_last4))) patch.cardLast4 = str(p.card_last4);
+    if (str(p.card_holder)) patch.cardHolder = str(p.card_holder);
+    if (str(p.expense_category)) patch.expenseCategory = str(p.expense_category);
+    if (Array.isArray(p.line_items) && p.line_items.length) {
+      patch.itemsText = (p.line_items as any[])
+        .map((l) => [str(l?.name), l?.amount != null ? String(l.amount) : ""].filter(Boolean).join(" "))
+        .filter(Boolean)
+        .join("\n");
+    }
+    if (str(p.title)) patch.title = str(p.title);
+    if (str(p.description)) patch.description = str(p.description);
+    return patch;
+  }
+
+  /** Läser av pappret i formuläret och fyller i fälten automatiskt. */
   async function readPaper(f: File) {
     setReading(true);
     try {
-      const dataUrl = await toDataUrl(f);
-      const { data, error } = await supabase.functions.invoke("parse-viktigt-papper", {
-        body: { dataUrl, fileName: f.name },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      const p = (data?.paper ?? {}) as Record<string, unknown>;
-
-      const str = (v: unknown) => (v == null ? "" : String(v).trim());
-      const money = (v: unknown) =>
-        typeof v === "number" && Number.isFinite(v) ? String(v) : "";
-
-      const patch: Partial<Record<FormKey, string>> = {};
-      const validType = PAPER_TYPES.some((t) => t.value === str(p.paper_type));
-      if (validType) patch.paperType = str(p.paper_type);
-      if (str(p.company_name)) patch.companyName = str(p.company_name);
-      if (/^\d{4}-\d{2}-\d{2}$/.test(str(p.paper_date))) patch.paperDate = str(p.paper_date);
-      if (str(p.document_number)) patch.documentNumber = str(p.document_number);
-      if (money(p.net_amount)) patch.netAmount = money(p.net_amount);
-      if (money(p.vat_amount)) patch.vatAmount = money(p.vat_amount);
-      if (money(p.gross_amount)) patch.grossAmount = money(p.gross_amount);
-      if (["CHF", "SEK", "EUR"].includes(str(p.currency).toUpperCase()))
-        patch.currency = str(p.currency).toUpperCase();
-      if (["kort", "kontant"].includes(str(p.payment_method))) patch.paymentMethod = str(p.payment_method);
-      if (str(p.card_brand)) patch.cardBrand = str(p.card_brand);
-      if (/^\d{4}$/.test(str(p.card_last4))) patch.cardLast4 = str(p.card_last4);
-      if (str(p.card_holder)) patch.cardHolder = str(p.card_holder);
-      if (str(p.expense_category)) patch.expenseCategory = str(p.expense_category);
-      if (Array.isArray(p.line_items) && p.line_items.length) {
-        patch.itemsText = (p.line_items as any[])
-          .map((l) => [str(l?.name), l?.amount != null ? String(l.amount) : ""].filter(Boolean).join(" "))
-          .filter(Boolean)
-          .join("\n");
-      }
-      if (str(p.title)) patch.title = str(p.title);
-      if (str(p.description)) patch.description = str(p.description);
-
+      const patch = await parsePaper(f);
       const keys = Object.keys(patch) as FormKey[];
       if (keys.length === 0) {
         toast.info("Hittade ingen information på pappret — fyll i själv");
@@ -202,10 +206,68 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     }
   }
 
+  /**
+   * Mobilflödet: bilderna läggs in först och sparas direkt, ett papper per bild.
+   * Det som kan läsas av fylls i automatiskt — resten finredigeras senare.
+   */
+  async function addPhotos(files: File[]) {
+    if (!files.length) return;
+    setQueue({ done: 0, total: files.length });
+    let ok = 0;
+    let firstId: string | null = null;
+    for (const f of files) {
+      let patch: Partial<Record<FormKey, string>> = {};
+      try {
+        patch = await parsePaper(f);
+      } catch {
+        // Kunde inte läsas av — pappret sparas ändå med bilden.
+      }
+      try {
+        const id = await save.mutateAsync({
+          storeId: storeId ?? null,
+          paperType: (patch.paperType as PaperType) ?? "kvitto",
+          title: patch.title ?? "",
+          companyName: patch.companyName ?? "",
+          paperDate: patch.paperDate ?? new Date().toISOString().slice(0, 10),
+          netAmount: num(patch.netAmount ?? ""),
+          vatAmount: num(patch.vatAmount ?? ""),
+          grossAmount: num(patch.grossAmount ?? ""),
+          currency: patch.currency ?? "CHF",
+          documentNumber: patch.documentNumber ?? "",
+          description: patch.description ?? "",
+          paymentMethod: (patch.paymentMethod as "kort" | "kontant") || null,
+          cardBrand: patch.cardBrand ?? "",
+          cardLast4: patch.cardLast4 ?? "",
+          cardHolder: patch.cardHolder ?? "",
+          expenseAccount: "",
+          expenseCategory: patch.expenseCategory ?? "",
+          lineItems: parseItems(patch.itemsText ?? ""),
+          file: f,
+        });
+        ok += 1;
+        if (!firstId) firstId = id;
+      } catch (e: any) {
+        toast.error(e?.message ?? "Kunde inte spara bilden");
+      }
+      setQueue((q) => (q ? { ...q, done: q.done + 1 } : q));
+    }
+    setQueue(null);
+    if (ok) {
+      toast.success(
+        ok === 1 ? "Bilden sparad — fyll i eller rätta informationen" : `${ok} bilder sparade — fyll i informationen`,
+      );
+      setNeedsOnly(true);
+    }
+  }
+
   function pickFile(f: File | null) {
     setFile(f);
     if (f) void readPaper(f);
   }
+
+  /** Papper som behöver kompletteras innan de duger som bokföringsunderlag. */
+  const needsCheck = (p: ImportantPaper) => !p.company_name || p.net_amount == null;
+
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
