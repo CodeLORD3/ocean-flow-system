@@ -533,10 +533,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       const brand = typeof card.card_brand === "string" ? card.card_brand : "";
       const last4 = typeof card.card_last4 === "string" ? card.card_last4.replace(/\D/g, "").slice(-4) : "";
       const holder = typeof card.card_holder === "string" ? card.card_holder : "";
+      const bank = typeof card.company_name === "string" ? card.company_name : "";
       const found = new Set<string>();
       setCardForm((f) => {
         const next = { ...f };
         if (brand) { next.cardBrand = brand; found.add("cardBrand"); }
+        if (bank) { next.bank = bank; found.add("bank"); }
         if (last4.length === 4) { next.cardLast4 = last4; found.add("cardLast4"); }
         if (holder) { next.cardHolder = holder; found.add("cardHolder"); }
         const owner = staffIdFromName(holder);
