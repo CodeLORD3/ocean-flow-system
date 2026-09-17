@@ -452,10 +452,62 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               className="h-9 pl-8"
             />
           </div>
-          <Button size="sm" onClick={() => openNew()}>
-            <Plus className="mr-1 h-4 w-4" /> Nytt papper
+          <Button size="sm" variant="outline" onClick={() => openNew()}>
+            <Plus className="mr-1 h-4 w-4" /> Skriv in själv
           </Button>
         </div>
+
+        {/* Steg 1: bilden in. Steg 2: informationen — går att göra senare eller på datorn. */}
+        <input
+          ref={camRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            void addPhotos([...(e.target.files ?? [])]);
+            e.target.value = "";
+          }}
+        />
+        <input
+          ref={libRef}
+          type="file"
+          accept="image/*,application/pdf"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            void addPhotos([...(e.target.files ?? [])]);
+            e.target.value = "";
+          }}
+        />
+        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button
+            className="h-16 justify-center text-base font-semibold"
+            disabled={!!queue}
+            onClick={() => camRef.current?.click()}
+          >
+            <Camera className="mr-2 h-6 w-6" /> Ta foto på pappret
+          </Button>
+          <Button
+            variant="outline"
+            className="h-16 justify-center text-base font-semibold"
+            disabled={!!queue}
+            onClick={() => libRef.current?.click()}
+          >
+            <ImagePlus className="mr-2 h-6 w-6" /> Välj bilder i telefonen
+          </Button>
+        </div>
+        <p className="mb-3 text-xs text-muted-foreground">
+          {queue ? (
+            <span className="flex items-center gap-1.5 font-medium text-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Sparar bild {queue.done + 1} av {queue.total} …
+            </span>
+          ) : (
+            "Ta flera bilder på en gång — informationen läses av automatiskt och kan finredigeras senare eller på datorn."
+          )}
+        </p>
+
 
         <div className="-mx-1 flex flex-wrap gap-1.5 px-1">
           <button
