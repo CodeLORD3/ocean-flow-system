@@ -81,16 +81,26 @@ const typeLabel = (t?: string | null) =>
 /** Härledd packstatus: allt packat, delvis packat eller inget packat. */
 type PackState = "packad" | "delvis" | "opackad";
 
-const packState = (total: number, packed: number): PackState => {
-  if (total > 0 && packed >= total - 0.005) return "packad";
-  return packed > 0.005 ? "delvis" : "opackad";
+/**
+ * En rad som packats klart är färdig även om den packade mängden blev mindre än
+ * den beställda — resten levereras inte och ska inte ligga kvar som "kvar att packa".
+ * `closed` är beställd mängd på rader med packstatus "packad".
+ */
+const packState = (total: number, packed: number, closed = 0): PackState => {
+  if (total > 0 && (packed >= total - 0.005 || closed >= total - 0.005)) return "packad";
+  return packed > 0.005 || closed > 0.005 ? "delvis" : "opackad";
 };
+
+/** Kvar att packa: färdigpackade rader räknas bort helt. */
+const remainingOf = (total: number, packed: number, closed = 0) =>
+  Math.max(total - Math.max(packed, closed), 0);
 
 const PACK_LABEL: Record<PackState, string> = {
   packad: "Packad",
   delvis: "Delvis packad",
   opackad: "Ej packad",
 };
+
 
 type OrderLink = {
   orderId: string;
