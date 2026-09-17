@@ -7,6 +7,9 @@ export interface TotalChecklistRow {
   total: number;
   /** Redan packad mängd, för kolumnen Kvar. */
   packed?: number;
+  /** Beställd mängd på rader som packats klart — räknas inte som kvar. */
+  closed?: number;
+
   /** Butikens lagersaldo, om kolumnen är påslagen. */
   stock?: number | null;
   /** Utestående grossistorder, om kolumnen är påslagen. */
