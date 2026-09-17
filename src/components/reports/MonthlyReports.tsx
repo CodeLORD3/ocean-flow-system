@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useStores } from "@/hooks/useStores";
+import { currencyLabel } from "@/lib/reportCurrency";
 import { useMonthlyRegionReports, useMonthlyStoreReports, type MonthlyRegionReport, type MonthlyStoreReport } from "@/hooks/useMonthlyReports";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -35,7 +36,7 @@ function StatusBadge({ status, corrected }: { status: string; corrected?: boolea
   return <Badge variant="outline" className={cn("text-[10px]", done ? "border-success/40 text-success" : "border-warning/40 text-warning")}>{done ? "Klar" : "Preliminär"}</Badge>;
 }
 
-function Metrics({ row }: { row: MonthlyStoreReport | MonthlyRegionReport }) {
+function Metrics({ row, cur = "kr" }: { row: MonthlyStoreReport | MonthlyRegionReport; cur?: string }) {
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-5">
       <div><p className="text-[10px] text-muted-foreground">Nettoomsättning</p><p className="font-mono text-sm tabular-nums">{money(row.total_sales_sek, cur)}</p></div>
@@ -154,7 +155,7 @@ export function MonthlyReportsSection() {
         const status = headline?.status ?? (monthStores.length > 0 && monthStores.every((row) => row.status === "klar") ? "klar" : "preliminar");
         const corrected = headline?.corrected ?? monthStores.some((row) => row.corrected);
         const open = openMonth === month.key;
-        return <div key={month.key}><button type="button" onClick={() => setOpenMonth(open ? null : month.key)} className="flex w-full items-start gap-2 px-3 py-3 text-left transition-colors hover:bg-muted/40">{open ? <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />}<span className="min-w-0 flex-1"><span className="block text-sm font-medium capitalize">{monthLabel(month.month_start)}</span><span className="mt-0.5 block text-xs text-muted-foreground">{storeFilter ? storeName(storeFilter) : REGION_LABELS[groupFilter ?? "SE_TOTAL"] ?? "Sverige totalt"}</span></span><span className="flex shrink-0 flex-col items-end gap-1"><span className="font-mono text-sm tabular-nums">{money(total)}</span><StatusBadge status={status} corrected={corrected} /></span></button>
+        return <div key={month.key}><button type="button" onClick={() => setOpenMonth(open ? null : month.key)} className="flex w-full items-start gap-2 px-3 py-3 text-left transition-colors hover:bg-muted/40">{open ? <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />}<span className="min-w-0 flex-1"><span className="block text-sm font-medium capitalize">{monthLabel(month.month_start)}</span><span className="mt-0.5 block text-xs text-muted-foreground">{storeFilter ? storeName(storeFilter) : REGION_LABELS[groupFilter ?? "SE_TOTAL"] ?? "Sverige totalt"}</span></span><span className="flex shrink-0 flex-col items-end gap-1"><span className="font-mono text-sm tabular-nums">{money(total, storeFilter ? curOf(storeFilter) : groupFilter === "schweiz" ? "CHF" : "kr")}</span><StatusBadge status={status} corrected={corrected} /></span></button>
           {open && <div className="space-y-3 bg-muted/20 px-3 pb-4 pt-2">{monthRegions.map((row) => <div key={row.group_key} className="rounded-md border bg-background p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{row.group_label}</span><StatusBadge status={row.status} corrected={row.corrected} /></div>{row.missing_stores?.length ? <p className="mb-2 text-[10px] text-muted-foreground">Saknar månadsrapport: {row.missing_stores.join(", ")}</p> : null}<Metrics row={row} cur={row.group_key === "schweiz" ? "CHF" : "kr"} /></div>)}
             {monthStores.length > 0 && <div><p className="mb-1.5 text-[11px] text-muted-foreground">Butiksnivå</p><div className="divide-y rounded-md border bg-background">{monthStores.map((row) => <div key={row.store_id} className="p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{storeName(row.store_id)}</span><StatusBadge status={row.status} corrected={row.corrected} /></div><Metrics row={row} cur={curOf(row.store_id)} />{open && storeFilter && <StoreWeekDays storeId={row.store_id} weekStart={month.month_start} weekEnd={month.month_end} />}</div>)}</div></div>}
           </div>}
