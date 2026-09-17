@@ -203,12 +203,15 @@ export function useSaveImportantPaper() {
           .maybeSingle();
         let cardId = (existing as { id?: string } | null)?.id ?? null;
         if (input.paperType === "kort") {
+          // På ett kortpapper är företagsnamnet banken/kortutgivaren.
+          const bank = (row.company_name as string | null) ?? null;
           if (cardId) {
             await supabase
               .from("payment_cards")
               .update({
                 card_brand: (row.card_brand as string | null) ?? null,
                 card_holder: (row.card_holder as string | null) ?? null,
+                bank,
                 store_id: input.storeId ?? null,
                 staff_id: input.paidByStaffId ?? null,
                 card_kind: input.isExpenseClaim ? "privat" : "foretag",
@@ -221,6 +224,7 @@ export function useSaveImportantPaper() {
                 card_last4: last4,
                 card_brand: (row.card_brand as string | null) ?? null,
                 card_holder: (row.card_holder as string | null) ?? null,
+                bank,
                 store_id: input.storeId ?? null,
                 staff_id: input.paidByStaffId ?? null,
                 card_kind: input.isExpenseClaim ? "privat" : "foretag",
