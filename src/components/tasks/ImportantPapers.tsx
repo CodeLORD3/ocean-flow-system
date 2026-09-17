@@ -193,6 +193,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   function openNew(type?: PaperType) {
     setEdit(null);
     setFile(null);
+    setAutoFilled(new Set());
     setForm({
       paperType: type ?? (typeFilter === "alla" ? "kvitto" : typeFilter),
       companyName: "",
@@ -212,6 +213,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   function openEdit(p: ImportantPaper) {
     setEdit(p);
     setFile(null);
+    setAutoFilled(new Set());
     setForm({
       paperType: p.paper_type as PaperType,
       companyName: p.company_name ?? "",
@@ -399,12 +401,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
 
           <div className="space-y-3">
             <div>
-              <Label className="text-xs">Vad är det för papper?</Label>
+              <Label className="text-xs">Vad är det för papper?{litLabel("paperType")}</Label>
               <Select
                 value={form.paperType}
-                onValueChange={(v) => setForm({ ...form, paperType: v as PaperType })}
+                onValueChange={(v) => setField("paperType", v)}
               >
-                <SelectTrigger className="h-10">
+                <SelectTrigger className={cn("h-10", lit("paperType"))}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -419,7 +421,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
 
             {form.paperType === "kvitto" && (
               <div>
-                <Label className="text-xs">Betalades med</Label>
+                <Label className="text-xs">Betalades med{litLabel("paymentMethod")}</Label>
                 <div className="mt-1 grid grid-cols-2 gap-2">
                   {[
                     ["kort", "Kort"],
@@ -429,13 +431,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                       key={value}
                       type="button"
                       variant={form.paymentMethod === value ? "default" : "outline"}
-                      className="h-11 text-sm font-semibold"
+                      className={cn("h-11 text-sm font-semibold", form.paymentMethod === value && lit("paymentMethod"))}
                       onClick={() =>
-                        setForm({
-                          ...form,
-                          paymentMethod:
-                            form.paymentMethod === value ? "" : (value as "kort" | "kontant"),
-                        })
+                        setField("paymentMethod", form.paymentMethod === value ? "" : value)
                       }
                     >
                       {label}
@@ -447,50 +445,50 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs">Företag</Label>
+                <Label className="text-xs">Företag{litLabel("companyName")}</Label>
                 <Input
                   value={form.companyName}
-                  onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                  onChange={(e) => setField("companyName", e.target.value)}
                   placeholder="t.ex. Migros"
-                  className="h-10"
+                  className={cn("h-10", lit("companyName"))}
                 />
               </div>
               <div>
-                <Label className="text-xs">Datum på pappret</Label>
+                <Label className="text-xs">Datum på pappret{litLabel("paperDate")}</Label>
                 <Input
                   type="date"
                   value={form.paperDate}
-                  onChange={(e) => setForm({ ...form, paperDate: e.target.value })}
-                  className="h-10"
+                  onChange={(e) => setField("paperDate", e.target.value)}
+                  className={cn("h-10", lit("paperDate"))}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <Label className="text-xs">Nettobelopp</Label>
+                <Label className="text-xs">Nettobelopp{litLabel("netAmount")}</Label>
                 <Input
                   inputMode="decimal"
                   value={form.netAmount}
-                  onChange={(e) => setForm({ ...form, netAmount: e.target.value })}
+                  onChange={(e) => setField("netAmount", e.target.value)}
                   placeholder="0.00"
-                  className="h-10 font-mono tabular-nums"
+                  className={cn("h-10 font-mono tabular-nums", lit("netAmount"))}
                 />
               </div>
               <div>
-                <Label className="text-xs">Moms</Label>
+                <Label className="text-xs">Moms{litLabel("vatAmount")}</Label>
                 <Input
                   inputMode="decimal"
                   value={form.vatAmount}
-                  onChange={(e) => setForm({ ...form, vatAmount: e.target.value })}
+                  onChange={(e) => setField("vatAmount", e.target.value)}
                   placeholder="0.00"
-                  className="h-10 font-mono tabular-nums"
+                  className={cn("h-10 font-mono tabular-nums", lit("vatAmount"))}
                 />
               </div>
               <div>
-                <Label className="text-xs">Valuta</Label>
-                <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
-                  <SelectTrigger className="h-10">
+                <Label className="text-xs">Valuta{litLabel("currency")}</Label>
+                <Select value={form.currency} onValueChange={(v) => setField("currency", v)}>
+                  <SelectTrigger className={cn("h-10", lit("currency"))}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -504,33 +502,34 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs">Nummer på pappret</Label>
+                <Label className="text-xs">Nummer på pappret{litLabel("documentNumber")}</Label>
                 <Input
                   value={form.documentNumber}
-                  onChange={(e) => setForm({ ...form, documentNumber: e.target.value })}
+                  onChange={(e) => setField("documentNumber", e.target.value)}
                   placeholder="Kvitto- eller fakturanummer"
-                  className="h-10"
+                  className={cn("h-10", lit("documentNumber"))}
                 />
               </div>
               <div>
-                <Label className="text-xs">Bruttobelopp</Label>
+                <Label className="text-xs">Bruttobelopp{litLabel("grossAmount")}</Label>
                 <Input
                   inputMode="decimal"
                   value={form.grossAmount}
-                  onChange={(e) => setForm({ ...form, grossAmount: e.target.value })}
+                  onChange={(e) => setField("grossAmount", e.target.value)}
                   placeholder="0.00"
-                  className="h-10 font-mono tabular-nums"
+                  className={cn("h-10 font-mono tabular-nums", lit("grossAmount"))}
                 />
               </div>
             </div>
 
             <div>
-              <Label className="text-xs">Vad innehåller pappret?</Label>
+              <Label className="text-xs">Vad innehåller pappret?{litLabel("description")}</Label>
               <Textarea
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) => setField("description", e.target.value)}
                 placeholder="Kort och sökbart, t.ex. Blommor till disken"
                 rows={2}
+                className={cn(lit("description"))}
               />
             </div>
 
@@ -541,7 +540,10 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 type="file"
                 accept="image/*,application/pdf"
                 className="hidden"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  pickFile(e.target.files?.[0] ?? null);
+                  e.target.value = "";
+                }}
               />
               <div className="flex items-center gap-2">
                 <Button variant="outline" className="h-10" onClick={() => fileRef.current?.click()}>
