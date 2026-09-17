@@ -134,6 +134,17 @@ export function EntityImageGallery({
   const setFeatured = useSetFeaturedImages();
   const toggleFavorite = useToggleImageFavorite();
 
+  /** Grupper: dagsgrupper med beskrivning och egna grupper med valda bilder. */
+  const { data: groups = [] } = useImageGroups(entityType, entityId);
+  const createGroup = useCreateImageGroup();
+  const addToGroup = useAddImagesToGroup();
+  const updateGroup = useUpdateImageGroup();
+  const deleteGroup = useDeleteImageGroup();
+  const saveDayDesc = useSaveDayDescription();
+  const manualGroups = groups.filter((g) => g.kind !== "day");
+  const dayGroups = groups.filter((g) => g.kind === "day");
+  const activeGroup = view.mode === "group" ? groups.find((g) => g.id === view.id) : undefined;
+
   /** Dagens datumnyckel — uppdateras automatiskt när dygnet slår över. */
   const [todayKey, setTodayKey] = useState(() => dayKey(new Date().toISOString()));
   useEffect(() => {
