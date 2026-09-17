@@ -291,15 +291,21 @@ export function EntityImageGallery({
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     try {
+      const newIds: string[] = [];
       for (let i = 0; i < files.length; i++) {
-        await upload.mutateAsync({
+        const id = await upload.mutateAsync({
           entityType,
           entityId,
           file: files[i],
           sortOrder: images.length + i,
         });
+        if (id) newIds.push(id);
       }
       toast({ title: "Bild uppladdad", description: `${files.length} bild(er) sparade.` });
+      if (newIds.length) {
+        setNames({});
+        setNameIds(newIds);
+      }
       if (catalog) selectDay(dayKey(new Date().toISOString()));
     } catch (e: any) {
       toast({ title: "Kunde inte ladda upp", description: e.message, variant: "destructive" });
