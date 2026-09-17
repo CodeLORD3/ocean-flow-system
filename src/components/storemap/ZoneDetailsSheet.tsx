@@ -55,7 +55,13 @@ export default function ZoneDetailsSheet({ zone, open, isNew, saving, onClose, o
   useEffect(() => {
     if (!zone || !open) return;
     setName(isNew && zone.name.startsWith("Nytt område") ? "" : zone.name);
-    setKind(zone.zone_kind ?? "");
+    setKinds(
+      (zone.zone_kind ?? "")
+        .split(",")
+        .map((k) => k.trim())
+        .filter(Boolean),
+    );
+    setNewKind("");
     setSqm(zone.area_sqm != null ? String(zone.area_sqm) : "");
     setColor(zone.color ?? ZONE_PALETTE[0].color);
     setDescription(zone.description ?? "");
