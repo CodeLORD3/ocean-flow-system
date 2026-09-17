@@ -660,6 +660,27 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     if (money(p.net_amount)) patch.netAmount = money(p.net_amount);
     if (money(p.vat_amount)) patch.vatAmount = money(p.vat_amount);
     if (money(p.gross_amount)) patch.grossAmount = money(p.gross_amount);
+    // Fyller i det som saknas av netto/moms/brutto och räknar fram momssatsen.
+    {
+      const pn = (s?: string) => (s ? Number(s) : null);
+      let net = pn(patch.netAmount);
+      let vat = pn(patch.vatAmount);
+      let gross = pn(patch.grossAmount);
+      const r2 = (v: number) => String(Math.round(v * 100) / 100);
+      if (net == null && vat != null && gross != null) {
+        net = gross - vat;
+        patch.netAmount = r2(net);
+      }
+      if (vat == null && net != null && gross != null) {
+        vat = gross - net;
+        patch.vatAmount = r2(vat);
+      }
+      if (gross == null && net != null && vat != null) {
+        gross = net + vat;
+        patch.grossAmount = r2(gross);
+      }
+      if (net && vat != null) patch.vatRate = String(Math.round((vat / net) * 1000) / 10);
+    }
     if (["CHF", "SEK", "DKK", "NOK", "EUR", "GBP", "USD"].includes(str(p.currency).toUpperCase()))
       patch.currency = str(p.currency).toUpperCase();
     if (["kort", "kontant"].includes(str(p.payment_method))) patch.paymentMethod = str(p.payment_method);
