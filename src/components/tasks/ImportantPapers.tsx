@@ -1199,6 +1199,29 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
           </span>
         </div>
 
+        {sorted.length < papers.length && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2">
+            <span className="text-xs text-muted-foreground">
+              {papers.length - sorted.length} papper visas inte just nu på grund av filtren.
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+              onClick={() => {
+                setNeedsOnly(false);
+                setPayFilter("alla");
+                setAccountFilter("alla");
+                setTypeFilter("alla");
+                setSearch("");
+              }}
+            >
+              Visa alla papper
+            </Button>
+          </div>
+        )}
+
+
         {dupGroups.length > 0 && (
           <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2">
             <span className="text-xs font-semibold text-amber-800">
