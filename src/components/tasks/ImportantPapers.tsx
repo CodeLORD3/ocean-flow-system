@@ -1486,7 +1486,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     setCardForm((f) => ({ ...f, cardBrand: e.target.value }));
                   }}
                   placeholder="Visa, Twint …"
-                  className="h-10"
+                  className={`h-10 ${cardAutoFilled.has("cardBrand") ? "border-amber-400 bg-amber-50" : ""}`}
                 />
               </div>
               <div>
@@ -1495,11 +1495,16 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   inputMode="numeric"
                   maxLength={4}
                   value={cardForm.cardLast4}
-                  onChange={(e) =>
-                    setCardForm((f) => ({ ...f, cardLast4: e.target.value.replace(/\D/g, "").slice(0, 4) }))
-                  }
+                  onChange={(e) => {
+                    setCardAutoFilled((s) => {
+                      const n = new Set(s);
+                      n.delete("cardLast4");
+                      return n;
+                    });
+                    setCardForm((f) => ({ ...f, cardLast4: e.target.value.replace(/\D/g, "").slice(0, 4) }));
+                  }}
                   placeholder="4321"
-                  className="h-10 font-mono tabular-nums"
+                  className={`h-10 font-mono tabular-nums ${cardAutoFilled.has("cardLast4") ? "border-amber-400 bg-amber-50" : ""}`}
                 />
               </div>
             </div>
