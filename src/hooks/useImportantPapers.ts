@@ -53,10 +53,19 @@ export interface ImportantPaper {
   file_mime: string | null;
   created_by: string | null;
   created_by_staff_id: string | null;
+  /** Registrerat kort som användes. */
+  card_id: string | null;
+  /** Personen som betalade (hämtas från kortet). */
+  paid_by_staff_id: string | null;
+  /** Privat kort → utlägg som ska ersättas. */
+  is_expense_claim: boolean;
   created_at: string;
   /** Fylls i av hooken: namn och profilbild på den som lade in pappret. */
   created_by_name?: string | null;
   created_by_image?: string | null;
+  /** Fylls i av hooken: namn och profilbild på den som betalade. */
+  paid_by_name?: string | null;
+  paid_by_image?: string | null;
 }
 
 export function useImportantPapers(storeId?: string | null) {
