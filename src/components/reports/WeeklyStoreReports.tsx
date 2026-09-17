@@ -21,6 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ChevronDown, ChevronRight, AlertTriangle, LockKeyhole, Printer, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { currencyLabel } from "@/lib/reportCurrency";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -28,7 +29,7 @@ const num = (v: unknown): number | null => {
   const n = typeof v === "number" ? v : v == null || v === "" ? NaN : Number(v);
   return Number.isFinite(n) ? n : null;
 };
-const money = (v: unknown) => { const n = num(v); return n == null ? "—" : `${int.format(n)} kr`; };
+const money = (v: unknown, cur = "kr") => { const n = num(v); return n == null ? "—" : `${int.format(n)} ${cur}`; };
 const intFmt = (v: unknown) => { const n = num(v); return n == null ? "—" : int.format(n); };
 const decFmt = (v: unknown) => { const n = num(v); return n == null ? "—" : dec.format(n); };
 const REGION_LABELS: Record<string, string> = { vast: "Göteborg", stockholm: "Stockholm", schweiz: "Schweiz", SE_TOTAL: "Sverige totalt" };
@@ -67,16 +68,16 @@ function StatusBadge({ status, drift, corrected }: { status: string; drift?: boo
   );
 }
 
-function Metrics({ row, comparison }: { row: WeeklyStoreReport | WeeklyRegionReport; comparison?: WeeklyRegionReport }) {
+function Metrics({ row, comparison, cur = "kr" }: { row: WeeklyStoreReport | WeeklyRegionReport; comparison?: WeeklyRegionReport; cur?: string }) {
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-5">
       <div>
         <p className="text-[10px] text-muted-foreground">Nettoomsättning</p>
-        <p className="font-mono text-sm tabular-nums">{money(row.total_sales_sek)}</p>
+        <p className="font-mono text-sm tabular-nums">{money(row.total_sales_sek, cur)}</p>
       </div>
       <div>
         <p className="text-[10px] text-muted-foreground">Netto snitt/dag</p>
-        <p className="font-mono text-sm tabular-nums">{money(row.avg_sales_per_day_sek)}</p>
+        <p className="font-mono text-sm tabular-nums">{money(row.avg_sales_per_day_sek, cur)}</p>
       </div>
       <div>
         <p className="text-[10px] text-muted-foreground">Timmar</p>
@@ -99,7 +100,7 @@ function Metrics({ row, comparison }: { row: WeeklyStoreReport | WeeklyRegionRep
             <p className="text-sm text-muted-foreground">—</p>
           ) : (
             <p className={cn("font-mono text-sm tabular-nums", comparison.diff_kr >= 0 ? "text-success" : "text-destructive")}>
-              {comparison.diff_kr >= 0 ? "+" : ""}{money(comparison.diff_kr)}
+              {comparison.diff_kr >= 0 ? "+" : ""}{money(comparison.diff_kr, cur)}
               {comparison.diff_procent != null && ` · ${comparison.diff_procent >= 0 ? "+" : ""}${decFmt(comparison.diff_procent)}%`}
             </p>
           )}
@@ -149,6 +150,8 @@ export function WeeklyStoreReportsSection() {
     latestWeekForExport?.week_end,
   );
 
+  /** Butikens valuta — Zollikon och Morges redovisas i CHF. */
+  const curOf = (id: string) => currencyLabel(stores.find((s) => s.id === id)?.currency);
   const storeName = (id: string) => stores.find((s) => s.id === id)?.name ?? "Butik";
   const isClosed = (storeId: string, year: number, week: number) =>
     (closures.data ?? []).some((c) => c.store_id === storeId && c.iso_year === year && c.iso_week === week);
@@ -376,7 +379,7 @@ export function WeeklyStoreReportsSection() {
                           Saknar låst veckorapport: {row.missing_stores.join(", ")}
                         </p>
                       ) : null}
-                      <Metrics row={row} comparison={row} />
+                      <Metrics row={row} comparison={row} cur={row.group_key === "schweiz" ? "CHF" : "kr"} />
                     </div>
                   ))}
 
@@ -412,7 +415,7 @@ export function WeeklyStoreReportsSection() {
                                   </Button>
                                 </div>
                               </div>
-                              <Metrics row={row} />
+                              <Metrics row={row} cur={curOf(row.store_id)} />
                               {row.drift_after_lock && row.drift_note && (
                                 <p className="mt-2 text-[10px] text-destructive">{row.drift_note}</p>
                               )}

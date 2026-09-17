@@ -47,6 +47,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { storeTone } from "@/lib/storeTone";
+import { currencyLabel } from "@/lib/reportCurrency";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { StatTile, StatTiles } from "@/components/reports/StatTile";
 import { Banknote, Receipt, Trash2 as TrashIcon } from "lucide-react";
@@ -379,7 +380,19 @@ export function DailyReportsArchive() {
     [reports, storeFilter],
   );
   /* Listan visar nettoomsättning — det är talet som följs upp per dag. */
-  const totalNetSales = useMemo(() => rows.reduce((sum, report) => sum + (report.net_sales ?? 0), 0), [rows]);
+  /** Summeras per valuta så svenska kronor och franc aldrig blandas. */
+  const netByCurrency = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const report of rows) {
+      const cur = currencyLabel(report.currency ?? stores.find((s) => s.id === report.store_id)?.currency);
+      m.set(cur, (m.get(cur) ?? 0) + (report.net_sales ?? 0));
+    }
+    return [...m.entries()];
+  }, [rows, stores]);
+  const netTotalLabel =
+    netByCurrency.length === 0
+      ? "—"
+      : netByCurrency.map(([cur, sum]) => `${nf(sum)} ${cur}`).join(" + ");
   const totalReceipts = useMemo(() => rows.reduce((sum, report) => sum + (report.receipt_count ?? 0), 0), [rows]);
   const totalStaffHours = useMemo(() => rows.reduce((sum, report) => sum + totalHours(report.staff_entries ?? []), 0), [rows]);
 
@@ -409,7 +422,7 @@ export function DailyReportsArchive() {
 
       <StatTiles>
         <StatTile label="Rapporter" value={nf(rows.length)} icon={FileText} tone="navy" />
-        <StatTile label="Nettoomsättning totalt" value={nf(totalNetSales)} unit="kr" icon={Banknote} tone="spruce" />
+        <StatTile label="Nettoomsättning totalt" value={netTotalLabel} icon={Banknote} tone="spruce" />
         <StatTile label="Kvitton totalt" value={nf(totalReceipts)} icon={Receipt} tone="amber" />
         <StatTile label="Bemanning" value={totalStaffHours.toFixed(1)} unit="h" icon={Users} tone="brick" />
       </StatTiles>
@@ -430,6 +443,8 @@ export function DailyReportsArchive() {
               const tone = storeTone(report.store_id);
               const store = stores.find((s) => s.id === report.store_id);
               const reporter = nameOf(report.created_by);
+              /* Zollikon och Morges rapporterar i CHF — valutan skrivs vid varje belopp. */
+              const cur = currencyLabel(report.currency ?? store?.currency);
               const noStaff = (report.staff_entries ?? []).length === 0;
               return (
                 <div key={report.id} className={cn("group border-l-[3px] bg-background transition-colors", tone.border, open ? "bg-muted/20" : "hover:bg-muted/10")}>
@@ -456,7 +471,7 @@ export function DailyReportsArchive() {
                       <StaffAvatar name={reporter} imageUrl={imageOfUser(report.created_by)} className="h-7 w-7" />
                       {reporter ? <span className="truncate font-medium text-foreground/80">{reporter}</span> : <span className="truncate italic text-muted-foreground/70">Okänd</span>}
                     </span>
-                    <span className="col-start-3 row-start-1 text-right font-mono text-[15px] font-medium tabular-nums md:col-auto md:row-auto">{nf(report.net_sales)} kr</span>
+                    <span className="col-start-3 row-start-1 text-right font-mono text-[15px] font-medium tabular-nums md:col-auto md:row-auto">{nf(report.net_sales)} {cur}</span>
                     <span className={cn("col-start-3 row-start-2 flex items-center justify-end gap-1.5 font-mono text-xs tabular-nums md:col-auto md:row-auto", noStaff ? "font-semibold text-tone-brick" : "text-muted-foreground")}>
                       <Users className="h-3.5 w-3.5" />{(report.staff_entries ?? []).length} <span className="text-border">/</span> {reportHours.toFixed(1)} h
                     </span>
@@ -477,11 +492,11 @@ export function DailyReportsArchive() {
                         {correctedReportIds.has(report.id) && <Badge variant="outline" className="border-warning/40 text-warning">Korrigerad efter inskick</Badge>}
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                        <Metric label="Nettoomsättning" value={`${nf(report.net_sales)} kr`} emphasis />
-                        <Metric label="Brutto" value={`${nf(report.gross_sales)} kr`} />
+                        <Metric label="Nettoomsättning" value={`${nf(report.net_sales)} {cur}`} emphasis />
+                        <Metric label="Brutto" value={`${nf(report.gross_sales)} ${cur}`} />
                         <Metric label="Kvitton" value={nf(report.receipt_count)} />
-                        <Metric label="Snittköp" value={report.receipt_count ? `${((report.net_sales ?? 0) / report.receipt_count).toFixed(2)} kr` : "—"} />
-                        <Metric label="Största köp" value={`${nf(report.largest_sale)} kr`} />
+                        <Metric label="Snittköp" value={report.receipt_count ? `${((report.net_sales ?? 0) / report.receipt_count).toFixed(2)} ${cur}` : "—"} />
+                        <Metric label="Största köp" value={`${nf(report.largest_sale)} ${cur}`} />
                       </div>
 
                       <div className="mt-5 grid gap-5 lg:grid-cols-2">
@@ -491,8 +506,8 @@ export function DailyReportsArchive() {
                           {report.staff_notes && <p className="mt-2 whitespace-pre-wrap text-xs text-muted-foreground">{report.staff_notes}</p>}
                         </section>
                         <section>
-                          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Svinn · {nf(wasteKg)} kg · {nf(waste)} kr</p>
-                          {(report.waste_items ?? []).length === 0 ? <p className="text-xs text-muted-foreground">Inget svinn rapporterat.</p> : <div className="divide-y rounded-md border bg-background">{report.waste_items.map((item, index) => <div key={`${item.item}-${index}`} className="flex flex-wrap items-center gap-3 px-3 py-2 text-xs"><span className="font-medium">{item.item || "—"}</span><span className="font-mono tabular-nums text-muted-foreground">{item.weight_kg ?? "—"} kg</span><span className="font-mono tabular-nums text-muted-foreground">{nf(item.value_sek)} kr</span>{item.reason && <span className="text-muted-foreground">{item.reason}</span>}</div>)}</div>}
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Svinn · {nf(wasteKg)} kg · {nf(waste)} {cur}</p>
+                          {(report.waste_items ?? []).length === 0 ? <p className="text-xs text-muted-foreground">Inget svinn rapporterat.</p> : <div className="divide-y rounded-md border bg-background">{report.waste_items.map((item, index) => <div key={`${item.item}-${index}`} className="flex flex-wrap items-center gap-3 px-3 py-2 text-xs"><span className="font-medium">{item.item || "—"}</span><span className="font-mono tabular-nums text-muted-foreground">{item.weight_kg ?? "—"} kg</span><span className="font-mono tabular-nums text-muted-foreground">{nf(item.value_sek)} {cur}</span>{item.reason && <span className="text-muted-foreground">{item.reason}</span>}</div>)}</div>}
                         </section>
                       </div>
                       <div className="mt-5 border-t pt-4"><p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Dagens kommentar</p><p className="mt-1 whitespace-pre-wrap text-sm">{report.comment || <span className="text-muted-foreground">Ingen kommentar.</span>}</p></div>

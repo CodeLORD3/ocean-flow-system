@@ -16,6 +16,8 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useSite } from "@/contexts/SiteContext";
+import { useStores } from "@/hooks/useStores";
+import { currencyLabel as curLabel, defaultVatFor } from "@/lib/reportCurrency";
 import { useTabs } from "@/contexts/TabsContext";
 import { useStaff } from "@/hooks/useStaff";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
@@ -85,6 +87,12 @@ export default function DailyReport() {
   // Kassan (egna kassor + externa Nimpos-kassor) är grunden för rapporten.
   usePosRealtime(true);
   const { data: pos } = usePosDaySummary(activeStoreId, date);
+  // Butikens valuta styr både momssats och hur beloppen skrivs i rapporten.
+  const { data: stores = [] } = useStores();
+  const store = stores.find((s) => s.id === activeStoreId);
+  const currency = (store?.currency || "SEK").toUpperCase();
+  const defaultVat = defaultVatFor(currency);
+  const currencyLabel = curLabel(currency);
 
 
   const [gross, setGross] = useState("");
@@ -96,10 +104,12 @@ export default function DailyReport() {
   const [waste, setWaste] = useState<WasteItem[]>([]);
   const [wasteRaw, setWasteRaw] = useState<Record<string, string>>({});
   const [comment, setComment] = useState("");
-  const [vatPct, setVatPct] = useState("12");
+  const [vatPct, setVatPct] = useState("6");
   const [hydrated, setHydrated] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  /** True så snart momssatsen är ändrad för hand eller läst ur ett utkast. */
+  const vatTouched = useRef(false);
 
   // Nollställ formuläret när butik eller datum byts — inget följer med mellan butiker.
   const scopeKey = `${activeStoreId ?? ""}|${date}`;
@@ -133,7 +143,7 @@ export default function DailyReport() {
       if (typeof d.receipts === "string") setReceipts(d.receipts);
       if (typeof d.largest === "string") setLargest(d.largest);
       if (typeof d.comment === "string") setComment(d.comment);
-      if (typeof d.vatPct === "string") setVatPct(d.vatPct);
+      if (typeof d.vatPct === "string") { setVatPct(d.vatPct); vatTouched.current = true; }
       if (d.staffRows && typeof d.staffRows === "object") setStaffRows(d.staffRows);
       if (Array.isArray(d.extraIds)) setExtraIds(d.extraIds);
       if (Array.isArray(d.waste)) setWaste(d.waste);
@@ -262,6 +272,12 @@ export default function DailyReport() {
     setHydrated(true);
   }, [existing, isLoading, hydrated]);
 
+  // Momssatsen följer butiken: 2,6 % i Schweiz, 6 % i Sverige.
+  useEffect(() => {
+    if (vatTouched.current) return;
+    setVatPct(String(defaultVat).replace(".", ","));
+  }, [defaultVat]);
+
   // Förifyll instämplingstider som grund där inget är ifyllt
   useEffect(() => {
     if (!hydrated || shiftByStaff.size === 0) return;
@@ -383,6 +399,8 @@ export default function DailyReport() {
       await save.mutateAsync({
         ...(existing?.id ? { id: existing.id } : {}),
         store_id: activeStoreId,
+        currency,
+        vat_rate: vatRate,
         report_date: date,
         gross_sales: num(gross),
         net_sales: num(net),
@@ -467,7 +485,7 @@ export default function DailyReport() {
             </CardHeader>
             <CardContent className="flex flex-col gap-3 max-w-md">
               <div className="space-y-1">
-                <Label className="text-xs">Bruttoförsäljning (kr) *</Label>
+                <Label className="text-xs">Bruttoförsäljning ({currencyLabel}) *</Label>
                 <Input
                   className={cn("h-11 text-base font-mono tabular-nums", errCls(missing.gross))}
                   inputMode="decimal"
@@ -478,7 +496,7 @@ export default function DailyReport() {
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Nettoförsäljning (kr) *</Label>
+                <Label className="text-xs">Nettoförsäljning ({currencyLabel}) *</Label>
                 <Input
                   className={cn("h-11 text-base font-mono tabular-nums", errCls(missing.net))}
                   inputMode="decimal"
@@ -498,7 +516,7 @@ export default function DailyReport() {
                   inputMode="decimal"
                   autoComplete="off"
                   value={vatPct}
-                  onChange={(e) => setVatPct(decText(e.target.value))}
+                  onChange={(e) => { vatTouched.current = true; setVatPct(decText(e.target.value)); }}
                 />
               </div>
               <div className="space-y-1">
@@ -513,7 +531,7 @@ export default function DailyReport() {
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Snittköp (kr)</Label>
+                <Label className="text-xs">Snittköp ({currencyLabel})</Label>
                 <Input
                   readOnly
                   tabIndex={-1}
@@ -522,7 +540,7 @@ export default function DailyReport() {
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Största försäljning (kr) *</Label>
+                <Label className="text-xs">Största försäljning ({currencyLabel}) *</Label>
                 <Input
                   className={cn("h-11 text-base font-mono tabular-nums", errCls(missing.largest))}
                   inputMode="decimal"
@@ -667,7 +685,7 @@ export default function DailyReport() {
                     <tr className="text-left text-xs text-muted-foreground">
                       <th className="py-1 pr-2 font-medium">Vara</th>
                       <th className="py-1 pr-2 font-medium">Vikt (kg)</th>
-                      <th className="py-1 pr-2 font-medium">Värde (kr)</th>
+                      <th className="py-1 pr-2 font-medium">Värde ({currencyLabel})</th>
                       <th className="py-1 pr-2 font-medium">Anledning</th>
                       <th className="py-1" />
                     </tr>
@@ -774,7 +792,7 @@ export default function DailyReport() {
                   </p>
                 </div>
                 <div className="rounded-md border border-border bg-muted/30 px-3 py-2">
-                  <p className="text-[11px] text-muted-foreground">Totalt värde (kr)</p>
+                  <p className="text-[11px] text-muted-foreground">Totalt värde ({currencyLabel})</p>
                   <p className="font-mono tabular-nums text-lg text-foreground">
                     {wasteValue.toLocaleString("sv-SE", { maximumFractionDigits: 2 })}
                   </p>

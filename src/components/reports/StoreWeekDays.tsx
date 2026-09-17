@@ -3,6 +3,8 @@ import { useDailyReportsRange } from "@/hooks/useDailyReportsRange";
 import { weekDayList, dayRowsFrom } from "@/lib/weeklyReportDays";
 import { useStoreWeather } from "@/hooks/useStoreWeather";
 import { WeatherCell } from "./WeatherCell";
+import { useStores } from "@/hooks/useStores";
+import { currencyLabel } from "@/lib/reportCurrency";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -25,6 +27,9 @@ export function StoreWeekDays({
 }) {
   const { data, isLoading, error } = useDailyReportsRange(storeId, weekStart, weekEnd);
   const weather = useStoreWeather(storeId, weekStart, weekEnd);
+  /* Schweiziska butiker visar CHF, svenska kr. */
+  const { data: stores = [] } = useStores();
+  const cur = currencyLabel(stores.find((s) => s.id === storeId)?.currency);
 
   if (isLoading) {
     return (
@@ -45,8 +50,8 @@ export function StoreWeekDays({
         <thead className="bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground">
           <tr>
             <th className="px-2 py-1.5 text-left font-medium">Dag</th>
-            <th className="px-2 py-1.5 text-right font-medium">Brutto</th>
-            <th className="px-2 py-1.5 text-right font-medium">Nettoomsättning</th>
+            <th className="px-2 py-1.5 text-right font-medium">Brutto ({cur})</th>
+            <th className="px-2 py-1.5 text-right font-medium">Nettoomsättning ({cur})</th>
             <th className="w-[11rem] px-2 py-1.5 text-left font-medium">Väder</th>
             <th className="px-2 py-1.5 text-right font-medium">Kvitton</th>
             <th className="px-2 py-1.5 text-right font-medium">Timmar</th>
@@ -61,10 +66,10 @@ export function StoreWeekDays({
                 <span className="text-muted-foreground">{String(d.date ?? "").slice(5)}</span>
               </td>
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">
-                {num(d.gross_sales) == null ? "—" : `${intFmt(d.gross_sales)} kr`}
+                {num(d.gross_sales) == null ? "—" : `${intFmt(d.gross_sales)} ${cur}`}
               </td>
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">
-                {num(d.net_sales) == null ? "—" : `${intFmt(d.net_sales)} kr`}
+                {num(d.net_sales) == null ? "—" : `${intFmt(d.net_sales)} ${cur}`}
               </td>
               <td className="w-[11rem] px-2 py-1.5">
                 <WeatherCell day={weather.data?.get(d.date)} loading={weather.isLoading} />
