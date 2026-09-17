@@ -9,6 +9,8 @@ import { FileUp, Loader2, ExternalLink, RefreshCw } from "lucide-react";
 import { fortnoxDraftCreatedText, fortnoxJobStatusLabel } from "@/lib/fortnoxStatus";
 import { FortnoxCancelDraftButton } from "./FortnoxCancelDraftButton";
 import { isExportStore, shopOrderLinesMissingBatch } from "@/lib/exportPicking";
+import { ShopOrderBatchRepairDialog } from "./ShopOrderBatchRepairDialog";
+
 
 /**
  * Skickar en butiksorder (Ålsten, Zollikon m.fl.) till Fortnox som fakturautkast.
