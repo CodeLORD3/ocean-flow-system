@@ -1304,6 +1304,74 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         </DialogContent>
       </Dialog>
 
+      {/* Ny avläsning av bilden: nya siffror mot de som står nu, du väljer vilka som gäller. */}
+      <Dialog open={!!compare} onOpenChange={(o) => !o && setCompare(null)}>
+        <DialogContent className="max-h-[90vh] w-[95vw] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Ny avläsning av bilden</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            Bocka i det du vill ta in. Inget ändras förrän du väljer, och pappret sparas först när du
+            trycker Spara.
+          </p>
+          <div className="space-y-1.5">
+            {(compare ?? []).map((r) => {
+              const same = r.current.trim() === r.next.trim();
+              const picked = pickedCompare.has(r.key);
+              return (
+                <button
+                  key={r.key}
+                  type="button"
+                  onClick={() =>
+                    setPickedCompare((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(r.key)) next.delete(r.key);
+                      else next.add(r.key);
+                      return next;
+                    })
+                  }
+                  className={cn(
+                    "flex w-full items-start gap-2 rounded-md border p-2 text-left text-xs transition",
+                    picked ? "border-amber-500 bg-amber-50" : "border-border bg-card hover:bg-muted",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                      picked ? "border-amber-600 bg-amber-500 text-white" : "border-muted-foreground/40",
+                    )}
+                  >
+                    {picked && <Check className="h-3 w-3" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">{r.label}</span>
+                    <span className="mt-0.5 flex flex-wrap items-center gap-1.5 font-mono tabular-nums">
+                      <span className="text-muted-foreground line-through">{r.current || "—"}</span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className={same ? "text-muted-foreground" : "font-semibold text-emerald-700"}>
+                        {r.next}
+                      </span>
+                      {same && <span className="font-sans text-[10px] text-muted-foreground">samma som nu</span>}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setCompare(null)}>
+              Behåll som det är
+            </Button>
+            <Button
+              onClick={() => applyCompare((compare ?? []).filter((r) => pickedCompare.has(r.key)))}
+              disabled={pickedCompare.size === 0}
+            >
+              Använd valda värden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Kortregistret: när kortet är inlagt vet systemet vem som betalat. */}
       <Dialog open={cardOpen} onOpenChange={setCardOpen}>
         <DialogContent className="max-h-[90vh] w-[95vw] overflow-y-auto sm:max-w-md">
