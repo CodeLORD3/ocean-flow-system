@@ -128,6 +128,7 @@ Rules:
 - Report DELIVERED quantity in quantity, never ordered quantity.
 - Copy latin names and batch numbers exactly as printed, including misspellings.
 - lot_numbers: ONLY the real parti-/batch-/klubbslagsnummer, which always contains digits. Quality class and seller/vessel short codes printed on the line (e.g. "Kategori A ToCa", "Kat B JaAn") are NOT lot numbers — put the class in grade and the seller/vessel code in vessel_name, and leave lot_numbers empty if no real number is printed.
+- Göteborgs Fiskauktion (GFA) prints the traceability number as a number, a dot and a longer number, e.g. "10012.6194994". Always capture that exact string in lot_numbers when it appears on the line, keeping the dot and all digits.
 - Dates as YYYY-MM-DD.
 - Use null for anything not printed on the document. Never guess.`,
           },
