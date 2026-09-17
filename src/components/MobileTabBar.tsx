@@ -4,6 +4,7 @@ import {
   ShoppingCart,
   ClipboardList,
   MessageSquare,
+  Receipt,
   Menu,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
