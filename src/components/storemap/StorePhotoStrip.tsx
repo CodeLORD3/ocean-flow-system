@@ -377,9 +377,11 @@ export function StorePhotoStrip({
         <p className="rounded-lg border border-dashed border-border py-6 text-center text-xs text-muted-foreground">
           Inga bilder här — ta en bild på en uppgift eller en yta i butiken så hamnar den här.
         </p>
+      ) : layout === "lista" ? (
+        <div className="space-y-1.5">{images.map((img, i) => row(img, i))}</div>
       ) : (
-        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {images.map((img, i) => card(img, i, "h-28 w-40 shrink-0"))}
+        <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
+          {images.map((img, i) => card(img, i, "h-48 w-64 shrink-0 sm:h-56 sm:w-80"))}
         </div>
       )}
 
