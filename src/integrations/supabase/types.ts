@@ -5939,7 +5939,9 @@ export type Database = {
           card_holder: string | null
           card_id: string | null
           card_last4: string | null
+          company_logo_url: string | null
           company_name: string | null
+          company_website: string | null
           created_at: string
           created_by: string | null
           created_by_staff_id: string | null
@@ -5971,7 +5973,9 @@ export type Database = {
           card_holder?: string | null
           card_id?: string | null
           card_last4?: string | null
+          company_logo_url?: string | null
           company_name?: string | null
+          company_website?: string | null
           created_at?: string
           created_by?: string | null
           created_by_staff_id?: string | null
@@ -6003,7 +6007,9 @@ export type Database = {
           card_holder?: string | null
           card_id?: string | null
           card_last4?: string | null
+          company_logo_url?: string | null
           company_name?: string | null
+          company_website?: string | null
           created_at?: string
           created_by?: string | null
           created_by_staff_id?: string | null
