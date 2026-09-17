@@ -5933,6 +5933,104 @@ export type Database = {
         }
         Relationships: []
       }
+      important_papers: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          created_by: string | null
+          created_by_staff_id: string | null
+          currency: string
+          description: string | null
+          document_number: string | null
+          file_mime: string | null
+          file_name: string | null
+          file_url: string | null
+          gross_amount: number | null
+          id: string
+          net_amount: number | null
+          paper_date: string | null
+          paper_type: string
+          store_id: string | null
+          tags: string[]
+          title: string | null
+          updated_at: string
+          vat_amount: number | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_staff_id?: string | null
+          currency?: string
+          description?: string | null
+          document_number?: string | null
+          file_mime?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          gross_amount?: number | null
+          id?: string
+          net_amount?: number | null
+          paper_date?: string | null
+          paper_type?: string
+          store_id?: string | null
+          tags?: string[]
+          title?: string | null
+          updated_at?: string
+          vat_amount?: number | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_staff_id?: string | null
+          currency?: string
+          description?: string | null
+          document_number?: string | null
+          file_mime?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          gross_amount?: number | null
+          id?: string
+          net_amount?: number | null
+          paper_date?: string | null
+          paper_type?: string
+          store_id?: string | null
+          tags?: string[]
+          title?: string | null
+          updated_at?: string
+          vat_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "important_papers_created_by_staff_id_fkey"
+            columns: ["created_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "important_papers_created_by_staff_id_fkey"
+            columns: ["created_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "important_papers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "important_papers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incoming_deliveries: {
         Row: {
           created_at: string | null
