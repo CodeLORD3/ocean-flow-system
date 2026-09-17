@@ -587,7 +587,13 @@ function LotNumberEditor({
       {lots.length > 0 ? (
         <>
           {lots.map((n) => (
-            <span key={n} className="font-mono tabular-nums text-foreground">{n}</span>
+            <span
+              key={n}
+              className={`font-mono tabular-nums ${isAuctionLotNumber(n) ? "text-emerald-600" : "text-foreground"}`}
+              title={isAuctionLotNumber(n) ? "Spårbarhetsnummer från fiskauktionen" : "Partinummer"}
+            >
+              {n}
+            </span>
           ))}
           {!locked && (
             <Button
