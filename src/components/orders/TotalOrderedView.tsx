@@ -304,6 +304,9 @@ export function TotalOrderedView({
           l.pack_status === "packad"
             ? Number(l.quantity_packed ?? qty) || qty
             : Number(l.quantity_packed ?? 0) || 0;
+        // Rader som packats klart är avslutade även om mindre än beställt packades.
+        const closedQty = l.pack_status === "packad" ? qty : 0;
+
         const cat = (l.products?.category || "").trim() || OTHER_CATEGORY;
         cats.add(cat);
         if (category !== "all" && normalizeCategoryKey(cat) !== normalizeCategoryKey(category)) continue;
