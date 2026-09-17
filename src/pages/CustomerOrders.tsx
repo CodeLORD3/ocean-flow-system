@@ -217,8 +217,11 @@ export default function CustomerOrders() {
   const [dragIds, setDragIds] = useState<string[]>([]);
   const [dragOverDay, setDragOverDay] = useState<string | null>(null);
 
-  const startDrag = (id: string) =>
-    setDragIds(marked.length > 0 && marked.includes(id) ? marked : [id]);
+  /** Bara markerade rader kan dras. Alla markerade följer med. */
+  const startDrag = (id: string) => {
+    if (!marked.includes(id)) return;
+    setDragIds(marked);
+  };
 
   const moveTo = (date: string, ids: string[]) => {
     const list = ids.filter(Boolean);
