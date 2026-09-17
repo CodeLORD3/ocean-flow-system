@@ -131,6 +131,7 @@ export default function StoreMap() {
   const saveZone = useSaveZone();
   const saveObject = useSaveMapObject();
   const deleteObject = useDeleteMapObject();
+  const deleteZone = useDeleteZone();
   const savePlan = useSaveFloorPlan();
   const publish = usePublishFloorPlan();
   const completePin = useCompleteMapPin();
