@@ -1414,6 +1414,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     staffList={staffList}
                     className={cn(kortOwnerAuto && "border-amber-500 bg-amber-50 ring-1 ring-amber-400")}
                   />
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Är det någon utanför personallistan? Lämna valet tomt och skriv namnet i "Namnet på kortet".
+                  </p>
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   <Button
