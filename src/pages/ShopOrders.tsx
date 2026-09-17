@@ -52,6 +52,7 @@ import {
   normalizePriority,
 } from "@/components/orders/linePriority";
 import { useCustomerCommitted } from "@/hooks/useCustomerCommitted";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type OrderLine = {
   product_id: string;
