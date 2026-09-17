@@ -48,7 +48,7 @@ export default function ZoneDetailsSheet({ zone, open, isNew, saving, onClose, o
   const [name, setName] = useState("");
   const [kind, setKind] = useState<string>("");
   const [sqm, setSqm] = useState("");
-  const [color, setColor] = useState(ZONE_PALETTE[0].color);
+  const [color, setColor] = useState<string>(ZONE_PALETTE[0].color);
   const [description, setDescription] = useState("");
 
   useEffect(() => {
