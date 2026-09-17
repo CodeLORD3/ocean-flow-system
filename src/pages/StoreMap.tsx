@@ -1107,6 +1107,7 @@ export default function StoreMap() {
                 unlinkedTasks={unlinkedTasks}
                 canManage={canManage}
                 onOpenPage={() => openAreaPage()}
+                onEditZone={selectedZone ? () => setSheetZoneId(selectedZone.id) : undefined}
           zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
                 areaLabel={
                   selectedZone
@@ -1231,6 +1232,7 @@ export default function StoreMap() {
           unlinkedTasks={unlinkedTasks}
           canManage={canManage}
           onOpenPage={() => openAreaPage()}
+                onEditZone={selectedZone ? () => setSheetZoneId(selectedZone.id) : undefined}
           zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
           areaLabel={
             selectedZone
