@@ -130,6 +130,101 @@ function weekNumber(d: Date) {
 }
 
 /** "Torsdag 17 september 2026 · 17/9 · vecka 38" — tydligt både i ord och siffror. */
+/** Nyckel som fångar papper som troligen är samma dokument två gånger. */
+export function duplicateKey(p: ImportantPaper): string | null {
+  const norm = (s?: string | null) => (s ?? "").toLowerCase().replace(/[^a-z0-9åäöéü]/g, "");
+  const company = norm(p.company_name);
+  const nr = norm(p.document_number);
+  if (company && nr) return `nr:${company}|${nr}`;
+  if (p.paper_date && p.net_amount != null) return `sum:${company}|${p.paper_date}|${p.net_amount.toFixed(2)}`;
+  return null;
+}
+
+/** Ett papper i jämförvyn — visar bilden och de fält man dömer dubbletten på. */
+function CompareCard({
+  paper,
+  onOpen,
+  onDelete,
+}: {
+  paper: ImportantPaper;
+  onOpen: () => void;
+  onDelete: () => void;
+}) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    if (!paper.file_url) {
+      setUrl(null);
+      return;
+    }
+    void resolveStorageUrl(paper.file_url).then((u) => {
+      if (alive) setUrl(u);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [paper.file_url]);
+
+  const info = paperTypeInfo(paper.paper_type);
+  const isPdf = (paper.file_url ?? "").toLowerCase().endsWith(".pdf");
+
+  return (
+    <div className="flex min-w-0 flex-col gap-2 rounded-lg border border-border bg-card p-2">
+      <div className="flex items-center gap-2">
+        <span
+          className="rounded px-1.5 py-0.5 text-[10px] font-semibold text-white"
+          style={{ background: info.color }}
+        >
+          {info.singular}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-xs font-semibold">
+          {paper.company_name || paper.title || "Utan företag"}
+        </span>
+      </div>
+
+      <div className="flex h-44 items-center justify-center overflow-hidden rounded border border-border bg-muted/40">
+        {url && !isPdf ? (
+          <img src={url} alt="Pappret" className="max-h-full max-w-full object-contain" />
+        ) : url ? (
+          <a href={url} target="_blank" rel="noreferrer" className="text-xs underline">
+            Öppna PDF
+          </a>
+        ) : (
+          <span className="text-xs text-muted-foreground">Ingen bild</span>
+        )}
+      </div>
+
+      <dl className="space-y-0.5 text-[11px]">
+        {[
+          ["Datum", paper.paper_date ?? "—"],
+          ["Netto", paper.net_amount != null ? `${nf.format(paper.net_amount)} ${paper.currency}` : "—"],
+          ["Brutto", paper.gross_amount != null ? `${nf.format(paper.gross_amount)} ${paper.currency}` : "—"],
+          ["Dokumentnr", paper.document_number || "—"],
+          ["Betalsätt", paper.payment_method === "kort" ? [paper.card_brand, paper.card_last4 ? `••${paper.card_last4}` : null].filter(Boolean).join(" ") || "Kort" : paper.payment_method === "kontant" ? "Kontant" : "—"],
+          ["Konto", paper.expense_account || "—"],
+          ["Inlagt", whenLabel(paper.created_at)],
+          ["Inlagt av", paper.created_by_name ?? "Okänd"],
+        ].map(([label, value]) => (
+          <div key={label as string} className="flex gap-2">
+            <dt className="w-20 shrink-0 text-muted-foreground">{label}</dt>
+            <dd className="min-w-0 flex-1 break-words font-medium tabular-nums">{value as string}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="mt-auto flex gap-2">
+        <Button size="sm" variant="outline" className="h-8 flex-1 text-xs" onClick={onOpen}>
+          Öppna
+        </Button>
+        <Button size="sm" variant="destructive" className="h-8 flex-1 text-xs" onClick={onDelete}>
+          <Trash2 className="mr-1 h-3.5 w-3.5" /> Ta bort
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function longDayLabel(iso: string) {
   const d = new Date(`${iso}T00:00:00`);
   if (Number.isNaN(d.getTime())) return iso;
