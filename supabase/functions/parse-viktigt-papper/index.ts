@@ -49,7 +49,8 @@ Allt annat lämnas tomt.`
               : `Du läser papper i en svensk/schweizisk fiskbutik: kvitton, följesedlar, fakturor, brev och anteckningar.
 
 Fyll bara i det som faktiskt står på pappret. Gissa aldrig.
-- paper_type: kvitto | foljesedel | faktura | brev | anteckning
+- paper_type: kvitto | foljesedel | faktura | brev | anteckning | kort
+- kort = bilden är ett betalkort (bankkort/kreditkort), inte ett papper. Fyll då bara i card_brand, card_last4 (bara fyra sista siffrorna, aldrig hela numret), card_holder och company_name (banken).
 - company_name: företaget som utfärdat pappret
 - company_website: företagets webbadress om den står på pappret, bara domänen (t.ex. "coop.ch")
 - paper_date: datum på pappret, YYYY-MM-DD
