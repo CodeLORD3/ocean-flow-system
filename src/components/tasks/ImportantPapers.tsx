@@ -37,8 +37,12 @@ import {
 import {
   cardLabel,
   matchCard,
-  usedummy as _unused,
+  usePaymentCards,
+  useRemovePaymentCard,
+  useSavePaymentCard,
+  type PaymentCard,
 } from "@/hooks/usePaymentCards";
+import { useStaff } from "@/hooks/useStaff";
 
 const nf = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
