@@ -133,10 +133,12 @@ export function InventoryReportsArchive({ storeId, limit = 100 }: Props) {
                 </span>
               </span>
               <Badge
-                variant={done ? "secondary" : "outline"}
-                className="ml-1 shrink-0 text-[10px]"
+                variant="outline"
+                className={`ml-1 shrink-0 text-[10px] ${
+                  done ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-700" : ""
+                }`}
               >
-                {done ? "Inskickad" : "Utkast"}
+                {done ? "Klar" : "Utkast"}
               </Badge>
             </button>
 
