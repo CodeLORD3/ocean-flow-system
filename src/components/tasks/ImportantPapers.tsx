@@ -161,7 +161,18 @@ function PersonSelect({
           </SelectItem>
         ))}
         {hits.length === 0 && (
-          <p className="px-3 py-2 text-xs text-muted-foreground">Ingen person matchar sökningen</p>
+          <p className="px-3 py-2 text-xs text-muted-foreground">
+            Ingen person matchar sökningen — skriv namnet fritt i fältet under i stället
+          </p>
+        )}
+        {value && (
+          <button
+            type="button"
+            className="w-full px-3 py-2 text-left text-xs text-muted-foreground hover:bg-muted"
+            onClick={() => onChange("")}
+          >
+            Ta bort personvalet
+          </button>
         )}
       </SelectContent>
     </Select>
