@@ -410,6 +410,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     setEdit(null);
     setFile(null);
     setAutoFilled(new Set());
+    setChecked(new Set());
     setForm({
       paperType: type ?? (typeFilter === "alla" ? "kvitto" : typeFilter),
       companyName: "",
@@ -428,6 +429,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       expenseAccount: "",
       expenseCategory: "",
       itemsText: "",
+      cardId: "",
     });
     setOpen(true);
   }
@@ -436,6 +438,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     setEdit(p);
     setFile(null);
     setAutoFilled(new Set());
+    setChecked(new Set());
     setForm({
       paperType: p.paper_type as PaperType,
       companyName: p.company_name ?? "",
@@ -456,6 +459,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       itemsText: (p.line_items ?? [])
         .map((l) => [l.name, l.amount != null ? String(l.amount) : ""].filter(Boolean).join(" "))
         .join("\n"),
+      cardId: p.card_id ?? "",
     });
     setOpen(true);
   }
