@@ -343,10 +343,16 @@ export function EntityImageGallery({
       {shown.map((img) => {
         const isFav = favoriteIds.includes(img.id);
         return (
-          <Card key={img.id} className="overflow-hidden group relative">
+          <Card
+            key={img.id}
+            className={cn(
+              "overflow-hidden group relative",
+              pickMode && picked.includes(img.id) && "ring-2 ring-primary",
+            )}
+          >
             <button
               type="button"
-              onClick={() => setLightboxId(img.id)}
+              onClick={() => (pickMode ? togglePicked(img.id) : setLightboxId(img.id))}
               className="relative block w-full aspect-video bg-muted overflow-hidden"
             >
               <img
@@ -360,6 +366,18 @@ export function EntityImageGallery({
               <span className="absolute bottom-1 left-1 rounded bg-background/85 px-1.5 py-0.5 font-mono tabular-nums text-[10px] text-foreground backdrop-blur pointer-events-none sm:text-[9px]">
                 {uploadedLabel(img.created_at)}
               </span>
+              {pickMode && (
+                <span
+                  className={cn(
+                    "absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border-2 bg-background/90",
+                    picked.includes(img.id)
+                      ? "border-primary text-primary"
+                      : "border-border text-transparent",
+                  )}
+                >
+                  <Check className="h-3.5 w-3.5" />
+                </span>
+              )}
             </button>
 
             {img.is_cover && (
