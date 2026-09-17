@@ -84,6 +84,7 @@ import TaskDetail from "@/pages/TaskDetail";
 import StoreMap from "@/pages/StoreMap";
 import Manual from "@/pages/Manual";
 import DailyReport from "@/pages/DailyReport";
+import ImportantPapersPage from "@/pages/ImportantPapersPage";
 import Production from "@/pages/Production";
 import DataCoverage from "@/pages/DataCoverage";
 import SystemStatus from "@/pages/SystemStatus";
@@ -193,6 +194,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
 
   "/manual": { component: <Manual /> },
   "/dagsrapport": { component: <DailyReport /> },
+  "/viktiga-papper": { component: <ImportantPapersPage /> },
   "/production": { component: <ProductionRouter /> },
   "/coverage": { component: <DataCoverage /> },
   "/system-status": { component: <SystemStatus /> },
