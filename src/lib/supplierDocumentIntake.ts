@@ -11,6 +11,7 @@ import { buildSupplierIndex, lookupSupplier, matchProduct } from "@/lib/foljesed
 import type { MatchProduct } from "@/lib/foljesedelMatch";
 import type { SizeGrade } from "@/lib/sizeGrades";
 import { safeDate } from "@/lib/parsedDates";
+import { cleanLotNumbers, sellerCodeFrom } from "@/lib/lotNumbers";
 
 export interface SupplierDocument {
   id: string;
