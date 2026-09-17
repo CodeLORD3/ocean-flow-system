@@ -41,6 +41,22 @@ export function getStoreCurrency(
   ) {
     return "CHF";
   }
+  if (
+    s.includes("öresund") ||
+    s.includes("oresund") ||
+    s.includes("köpenhamn") ||
+    s.includes("kopenhamn") ||
+    s.includes("københav") ||
+    s.includes("copenhagen") ||
+    s.includes("kastrup") ||
+    s.includes("danmark") ||
+    s.includes("denmark")
+  ) {
+    return "DKK";
+  }
+  if (s.includes("norge") || s.includes("norway") || s.includes("oslo")) {
+    return "NOK";
+  }
   return "SEK";
 }
 
