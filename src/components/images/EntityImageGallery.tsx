@@ -319,6 +319,8 @@ export function EntityImageGallery({
       :
     catalog && view.mode === "favorites"
       ? "Inga favoriter ännu — tryck på hjärtat på en bild."
+      : catalog && view.mode === "group"
+        ? "Gruppen är tom — markera bilder och samla dem här."
       : catalog && view.mode === "day"
         ? "Inga bilder detta datum."
         : catalog && view.mode === "featured"
