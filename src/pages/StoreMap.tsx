@@ -496,7 +496,7 @@ export default function StoreMap() {
           objects={objects}
           tasks={tasks}
           deviations={deviations as never}
-          images={planImages}
+          images={allImages}
           versions={versions as never}
           zoneNumbers={zoneNumbers}
           onOpenZone={(id) => {
