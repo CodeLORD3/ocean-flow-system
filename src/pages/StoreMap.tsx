@@ -31,6 +31,7 @@ import {
   Trash2,
   Upload,
   ArrowLeft,
+  Plus,
 } from "lucide-react";
 import { todayIso } from "@/hooks/useChecklist";
 import { FloorPlanCanvas, type Selection } from "@/components/storemap/FloorPlanCanvas";
