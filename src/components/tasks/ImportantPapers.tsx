@@ -246,7 +246,18 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     {p.company_name || p.title || "Utan företag"}
                   </span>
                   <span className="block truncate text-[11px] text-muted-foreground">
-                    {[p.paper_date, p.document_number, p.description].filter(Boolean).join(" · ") || "Ingen beskrivning"}
+                    {[
+                      p.paper_date,
+                      p.payment_method === "kort"
+                        ? "Kort"
+                        : p.payment_method === "kontant"
+                          ? "Kontant"
+                          : null,
+                      p.document_number,
+                      p.description,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "Ingen beskrivning"}
                   </span>
                 </button>
                 <span className="shrink-0 text-right text-sm font-semibold tabular-nums">
