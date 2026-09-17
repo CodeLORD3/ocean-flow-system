@@ -1,10 +1,11 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Camera,
   Check,
   CreditCard,
   FileText,
   ImagePlus,
+  Maximize2,
   Loader2,
   Paperclip,
   Plus,
@@ -157,6 +158,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const [kortPrivat, setKortPrivat] = useState(false);
   // Gult = personen hittades av avläsningen och är inte kontrollerad än.
   const [kortOwnerAuto, setKortOwnerAuto] = useState(false);
+  // Bilden visas vid sidan om fälten så det är lätt att fylla i rätt.
+  const [preview, setPreview] = useState<string | null>(null);
+  const [previewBig, setPreviewBig] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const camRef = useRef<HTMLInputElement>(null);
@@ -205,6 +209,30 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     }
     return bestHits >= 2 || (bestHits === 1 && words.length === 1) ? best : "";
   }
+
+  useEffect(() => {
+    if (!open) {
+      setPreview(null);
+      return;
+    }
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreview(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    if (edit?.file_url) {
+      let alive = true;
+      void resolveStorageUrl(edit.file_url).then((u) => {
+        if (alive) setPreview(u ?? null);
+      });
+      return () => {
+        alive = false;
+      };
+    }
+    setPreview(null);
+  }, [open, file, edit?.file_url]);
+
+  const previewIsPdf = (file?.type ?? edit?.file_mime ?? "").includes("pdf");
 
   type FormKey =
     | "paperType"
@@ -995,17 +1023,51 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] w-[95vw] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[92vh] w-[97vw] overflow-y-auto sm:max-w-lg lg:max-w-5xl">
           <DialogHeader>
             <DialogTitle>{edit ? "Ändra papper" : "Nytt papper"}</DialogTitle>
           </DialogHeader>
 
-          {edit?.file_url && (
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          {/* Bilden: överst på mobilen, vid sidan om på datorn. */}
+          {preview ? (
+            <div className="order-first lg:sticky lg:top-0 lg:self-start">
+              <div className="overflow-hidden rounded-lg border border-border bg-muted/40">
+                {previewIsPdf ? (
+                  <iframe src={preview} title="Pappret" className="h-[40vh] w-full lg:h-[72vh]" />
+                ) : (
+                  <img
+                    src={preview}
+                    alt="Fotot på pappret"
+                    className={cn(
+                      "w-full cursor-zoom-in bg-white object-contain",
+                      previewBig ? "max-h-[80vh]" : "max-h-[34vh] lg:max-h-[72vh]",
+                    )}
+                    onClick={() => setPreviewBig((v) => !v)}
+                  />
+                )}
+              </div>
+              <div className="mt-1 flex items-center justify-between">
+                <p className="text-[11px] text-muted-foreground">
+                  Tryck på bilden för att visa den större
+                </p>
+                {(file || edit?.file_url) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => (edit?.file_url ? void openFile(edit.file_url) : window.open(preview, "_blank"))}
+                  >
+                    <Maximize2 className="mr-1 h-3.5 w-3.5" /> Öppna
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : edit?.file_url ? (
             <Button variant="outline" className="h-11 justify-start" onClick={() => openFile(edit.file_url!)}>
               <Paperclip className="mr-2 h-4 w-4" /> Visa bilden på pappret
             </Button>
-          )}
-
+          ) : null}
 
           <div className="space-y-3">
             <div>
@@ -1476,6 +1538,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   : "Fälten fylls i automatiskt från fotot. Gult = avläst och inte kontrollerat, grönt = du har skrivit in eller rättat det."}
               </p>
             </div>
+          </div>
           </div>
 
           <DialogFooter>
