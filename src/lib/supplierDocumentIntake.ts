@@ -167,7 +167,9 @@ export async function approveDeliveryNote(
         Math.abs(lineTotal - unitPrice * qty) > Math.max(1, lineTotal * 0.02),
       latin_name: p.latin_name ?? null,
       species_fao_code: p.species_fao_code ?? null,
-      lot_numbers: Array.isArray(p.lot_numbers) ? p.lot_numbers.filter(Boolean) : [],
+      // Kvalitetsklass och säljarkod ("Kategori A ToCa") är inget partinummer —
+      // säljarkoden sparas som båt/säljare i stället.
+      lot_numbers: cleanLotNumbers(p.lot_numbers),
       best_before: safeDate(p.best_before),
       catch_area: p.catch_area ?? null,
       catch_date_from: safeDate(p.catch_date_from),
