@@ -157,8 +157,11 @@ export async function moveStockToTransport(orderId: string) {
       const sourceId = (stock as any).location_id as string;
       const cost = Number((stock as any).avg_cost) || null;
 
-      // Plocka parti för parti (FIFO på bäst före) så partiet följer med flytten.
-      const lots = await lotBalancesAtLocation(line.product_id, sourceId);
+      // Butiksleverans i Sverige: äldsta bäst före först (FEFO).
+      // Export till Schweiz: färskaste partiet först.
+      const lots = exportOrder
+        ? (await freshestLotsAtLocation(line.product_id, sourceId)).filter((l) => l.lotId)
+        : await lotBalancesAtLocation(line.product_id, sourceId);
       const picks: { lotId: string | null; qty: number }[] = [];
       let fromThisSource = Math.min(remaining, available);
       for (const lot of lots) {
@@ -168,8 +171,15 @@ export async function moveStockToTransport(orderId: string) {
         picks.push({ lotId: lot.lotId, qty: take });
         fromThisSource -= take;
       }
-      // Saldo utan partihistorik: flytta ändå, utan parti.
-      if (fromThisSource > 0) picks.push({ lotId: null, qty: fromThisSource });
+      // Saldo utan partihistorik: flyttas bara i Sverige. En exportrad utan
+      // parti går inte att spåra på fakturan och stoppas i stället.
+      if (fromThisSource > 0) {
+        if (exportOrder) {
+          await throwMissingLot([{ productId: line.product_id as string, missing: fromThisSource }]);
+        }
+        picks.push({ lotId: null, qty: fromThisSource });
+      }
+
 
       for (const pick of picks) {
         await transferStock({
