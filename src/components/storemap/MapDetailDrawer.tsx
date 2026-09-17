@@ -261,10 +261,19 @@ export function MapDetailDrawer({
           {zone?.description && (
             <p className="whitespace-pre-line rounded-lg bg-muted/60 px-3 py-2 text-sm">{zone.description}</p>
           )}
-          {zone && canManage && onEditZone && (
-            <Button variant="outline" className="h-10 w-full gap-2 text-sm font-semibold" onClick={onEditZone}>
-              <Pencil className="h-4 w-4" /> Redigera området
-            </Button>
+          {zone && canManage && (onEditZone || onEditZoneShape) && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {onEditZone && (
+                <Button variant="outline" className="h-10 w-full gap-2 text-sm font-semibold" onClick={onEditZone}>
+                  <Pencil className="h-4 w-4" /> Redigera området
+                </Button>
+              )}
+              {onEditZoneShape && (
+                <Button variant="outline" className="h-10 w-full gap-2 text-sm font-semibold" onClick={onEditZoneShape}>
+                  <Pencil className="h-4 w-4" /> Ändra form på kartan
+                </Button>
+              )}
+            </div>
           )}
           <div className="flex items-center gap-3">
             <StatusRing percent={progress.percent} status={progress.status} size={40} label={`${progress.percent}%`} />
