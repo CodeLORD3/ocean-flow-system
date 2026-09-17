@@ -176,7 +176,11 @@ export async function approveDeliveryNote(
       catch_date_to: safeDate(p.catch_date_to),
       fishing_gear: p.fishing_gear ?? null,
       fishing_gear_code: p.fishing_gear_code ?? null,
-      vessel_name: p.vessel_name ?? null,
+      vessel_name:
+        p.vessel_name ??
+        (Array.isArray(p.lot_numbers)
+          ? p.lot_numbers.map((v: unknown) => sellerCodeFrom(String(v ?? ""))).find(Boolean) ?? null
+          : null),
       vessel_reg: p.vessel_reg ?? null,
       vessel_nation: p.vessel_nation ?? null,
       presentation: p.presentation ?? null,
