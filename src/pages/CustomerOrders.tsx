@@ -217,8 +217,11 @@ export default function CustomerOrders() {
   const [dragIds, setDragIds] = useState<string[]>([]);
   const [dragOverDay, setDragOverDay] = useState<string | null>(null);
 
-  const startDrag = (id: string) =>
-    setDragIds(marked.length > 0 && marked.includes(id) ? marked : [id]);
+  /** Bara markerade rader kan dras. Alla markerade följer med. */
+  const startDrag = (id: string) => {
+    if (!marked.includes(id)) return;
+    setDragIds(marked);
+  };
 
   const moveTo = (date: string, ids: string[]) => {
     const list = ids.filter(Boolean);
@@ -778,8 +781,20 @@ export default function CustomerOrders() {
                         {list.map((o) => (
                           <div
                             key={o.id}
-                            draggable={canEdit && !rowReadOnly(o)}
-                            onDragStart={() => startDrag(o.id)}
+                            draggable={canEdit && !rowReadOnly(o) && marked.includes(o.id)}
+                            onDragStart={(e) => {
+                              // Bara markerade beställningar kan dras — alla markerade följer med.
+                              if (!marked.includes(o.id)) {
+                                e.preventDefault();
+                                return;
+                              }
+                              startDrag(o.id);
+                            }}
+                            title={
+                              marked.includes(o.id)
+                                ? "Dra för att flytta markerade beställningar"
+                                : "Markera beställningen först för att kunna dra den"
+                            }
                             onDragEnd={() => {
                               setDragIds([]);
                               setDragOverDay(null);
