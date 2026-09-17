@@ -85,6 +85,12 @@ export default function DailyReport() {
   // Kassan (egna kassor + externa Nimpos-kassor) är grunden för rapporten.
   usePosRealtime(true);
   const { data: pos } = usePosDaySummary(activeStoreId, date);
+  // Butikens valuta styr både momssats och hur beloppen skrivs i rapporten.
+  const { data: stores = [] } = useStores();
+  const store = stores.find((s) => s.id === activeStoreId);
+  const currency = (store?.currency || "SEK").toUpperCase();
+  const defaultVat = defaultVatFor(currency);
+  const currencyLabel = currency === "SEK" ? "kr" : currency;
 
 
   const [gross, setGross] = useState("");
