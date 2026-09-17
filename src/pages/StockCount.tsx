@@ -313,6 +313,8 @@ export default function StockCount() {
   });
   const [openReportId, setOpenReportId] = useState<string | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(true);
+  /** Visar de räknade varorna i en färdig (låst) inventering. */
+  const [showLockedLines, setShowLockedLines] = useState(true);
   // Raden i inventeringslistan är kompakt; redigering öppnas först vid klick.
   const [editKey, setEditKey] = useState<string | null>(null);
   const reportLinesQuery = useQuery({
