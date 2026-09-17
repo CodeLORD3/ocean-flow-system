@@ -133,6 +133,65 @@ export default function PostIncomingDialog({ open, onOpenChange, report, lines, 
     }));
   };
 
+  // Rader som inte kan räknas om till lagerenhet — visas med direkt åtgärd så
+  // ingen vikt behöver gissas: fyll i styck-/lådvikt eller rätta radens enhet.
+  const unresolvedLines = useMemo(
+    () =>
+      effectiveLines
+        .map((l) => ({ line: l, res: quantityToStockUnit(l, productById.get(l.product_id ?? "")) }))
+        .filter(({ res }) => res.qty === null && (res.reason ?? "").includes("vikt")),
+    [effectiveLines, productById],
+  );
+
+  const [weightInputs, setWeightInputs] = useState<Record<string, string>>({});
+  const [fixing, setFixing] = useState<string | null>(null);
+
+  const refreshAfterFix = () => {
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+    queryClient.invalidateQueries({ queryKey: ["products_active"] });
+    queryClient.invalidateQueries({ queryKey: ["purchase-report-lines"] });
+  };
+
+  const saveWeight = async (productId: string, field: "weight_per_piece" | "nominal_weight_kg") => {
+    const raw = weightInputs[productId] ?? "";
+    const value = Number(raw.replace(",", "."));
+    if (!Number.isFinite(value) || value <= 0) {
+      toast({ title: "Ange en vikt större än noll", variant: "destructive" });
+      return;
+    }
+    setFixing(productId);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .update({ [field]: value } as any)
+        .eq("id", productId);
+      if (error) throw error;
+      refreshAfterFix();
+      toast({ title: "Vikten sparad på produkten" });
+    } catch (e: any) {
+      toast({ title: "Kunde inte spara vikten", description: e.message, variant: "destructive" });
+    } finally {
+      setFixing(null);
+    }
+  };
+
+  const setLineUnit = async (lineId: string, unit: string) => {
+    setFixing(lineId);
+    try {
+      const { error } = await supabase
+        .from("purchase_report_lines")
+        .update({ unit } as any)
+        .eq("id", lineId);
+      if (error) throw error;
+      refreshAfterFix();
+      toast({ title: `Raden räknas nu i ${unit}` });
+    } catch (e: any) {
+      toast({ title: "Kunde inte ändra enheten", description: e.message, variant: "destructive" });
+    } finally {
+      setFixing(null);
+    }
+  };
+
   const handlePost = async () => {
     if (!report) return;
     setSaving(true);
