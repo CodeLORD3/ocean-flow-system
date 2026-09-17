@@ -54,10 +54,12 @@ export function ShopOrderFortnoxButton({ orderId }: { orderId: string }) {
       const missing = await shopOrderLinesMissingBatch(orderId);
       if (missing.length) {
         setSending(false);
+        setRepairOpen(true);
         return toast.error(
-          `Kan inte faktureras: parti saknas på ${missing.map((m) => m.productName).join(", ")}. Koppla parti på leveransen först.`,
+          `Parti saknas på ${missing.map((m) => m.productName).join(", ")}. Koppla parti innan fakturan skickas.`,
         );
       }
+
     }
     const { data, error } = await supabase.functions.invoke("fortnox-send-shop-invoice", {
       body: { order_id: orderId },
