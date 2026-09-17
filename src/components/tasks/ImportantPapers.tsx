@@ -365,6 +365,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         toast.info("Avläsningen hittade ingen information på bilden");
         return;
       }
+      // Det som skiljer sig från nuvarande värde är förvalt.
+      setPickedCompare(new Set(rows.filter((r) => r.current.trim() !== r.next.trim()).map((r) => r.key)));
       setCompare(rows);
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte läsa av bilden igen");
