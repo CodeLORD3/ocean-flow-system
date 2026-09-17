@@ -102,7 +102,11 @@ export function InventoryReportsArchive({ storeId, limit = 100 }: Props) {
             <button
               type="button"
               onClick={() => setOpenId(open ? null : r.id)}
-              className="flex w-full items-center gap-2 px-2 py-1.5 text-left hover:bg-muted/40"
+              className={`flex w-full items-center gap-2 px-2 py-1.5 text-left ${
+                done
+                  ? "bg-emerald-50/70 hover:bg-emerald-100 dark:bg-emerald-500/10"
+                  : "hover:bg-muted/40"
+              }`}
             >
               {open ? (
                 <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
