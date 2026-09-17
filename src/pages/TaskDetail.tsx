@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowUpRight, Camera, Check, Clock, MapPin, Timer, Trash2, User } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  Camera,
+  Check,
+  Clock,
+  Image as ImageIcon,
+  MapPin,
+  Search,
+  Timer,
+  Trash2,
+  User,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
