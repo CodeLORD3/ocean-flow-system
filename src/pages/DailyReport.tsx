@@ -480,7 +480,20 @@ export default function DailyReport() {
                   enterKeyHint="next"
                   autoComplete="off"
                   value={net}
-                  onChange={(e) => setNet(e.target.value)}
+                  onChange={(e) => onNetChange(e.target.value)}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Brutto och netto räknas ut åt varandra med {vatPct || "0"} % moms.
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Moms (%)</Label>
+                <Input
+                  className="h-11 w-28 text-base font-mono tabular-nums"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  value={vatPct}
+                  onChange={(e) => setVatPct(decText(e.target.value))}
                 />
               </div>
               <div className="space-y-1">
