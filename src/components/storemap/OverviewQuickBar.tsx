@@ -83,26 +83,54 @@ export function OverviewQuickBar({
     <div className="space-y-3">
       {/* Dagsrapport och inventeringsrapport ligger allra högst upp i Översikt */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => navigate("/dagsrapport")}
-          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-5 text-left shadow-sm ring-1 ring-primary/30 transition hover:bg-muted"
-        >
-          <FileText className="h-7 w-7 shrink-0 text-primary" />
+        <button type="button" onClick={() => navigate("/dagsrapport")} className={boxClass(dailyDone)}>
+          {dailyDone ? (
+            <Check className="h-7 w-7 shrink-0 text-emerald-600" />
+          ) : (
+            <FileText className="h-7 w-7 shrink-0 text-primary" />
+          )}
           <span className="min-w-0">
-            <span className="block font-heading text-lg font-semibold leading-tight">Dagsrapport</span>
-            <span className="block text-xs text-muted-foreground">Dagens siffror för butiken</span>
+            <span
+              className={cn(
+                "block font-heading text-lg font-semibold leading-tight",
+                dailyDone && "text-emerald-700 dark:text-emerald-300",
+              )}
+            >
+              Dagsrapport
+            </span>
+            <span
+              className={cn(
+                "block text-xs",
+                dailyDone ? "text-emerald-700/80 dark:text-emerald-300/80" : "text-muted-foreground",
+              )}
+            >
+              {dailyDone ? "Klar för idag" : "Dagens siffror för butiken"}
+            </span>
           </span>
         </button>
-        <button
-          type="button"
-          onClick={() => navigate("/inventory")}
-          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-5 text-left shadow-sm ring-1 ring-primary/30 transition hover:bg-muted"
-        >
-          <ClipboardCheck className="h-7 w-7 shrink-0 text-primary" />
+        <button type="button" onClick={() => navigate("/inventory")} className={boxClass(countDone)}>
+          {countDone ? (
+            <Check className="h-7 w-7 shrink-0 text-emerald-600" />
+          ) : (
+            <ClipboardCheck className="h-7 w-7 shrink-0 text-primary" />
+          )}
           <span className="min-w-0">
-            <span className="block font-heading text-lg font-semibold leading-tight">Inventeringsrapport</span>
-            <span className="block text-xs text-muted-foreground">Räkna av lagret</span>
+            <span
+              className={cn(
+                "block font-heading text-lg font-semibold leading-tight",
+                countDone && "text-emerald-700 dark:text-emerald-300",
+              )}
+            >
+              Inventeringsrapport
+            </span>
+            <span
+              className={cn(
+                "block text-xs",
+                countDone ? "text-emerald-700/80 dark:text-emerald-300/80" : "text-muted-foreground",
+              )}
+            >
+              {countDone ? "Klar för idag" : "Räkna av lagret"}
+            </span>
           </span>
         </button>
       </div>
