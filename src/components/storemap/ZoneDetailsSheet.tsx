@@ -91,19 +91,53 @@ export default function ZoneDetailsSheet({ zone, open, isNew, saving, onClose, o
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label className="text-xs font-semibold">2. Vad används området till</Label>
-            <Select value={kind || "none"} onValueChange={(v) => setKind(v === "none" ? "" : v)}>
-              <SelectTrigger className="h-11 text-sm">
-                <SelectValue placeholder="Välj typ" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Ingen typ</SelectItem>
-                {ZONE_KINDS.map((k) => (
-                  <SelectItem key={k} value={k}>{k}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <p className="text-[11px] text-muted-foreground">Välj flera om området används till mer än en sak.</p>
+            <div className="flex flex-wrap gap-2">
+              {allKinds.map((k) => {
+                const on = kinds.includes(k);
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggleKind(k)}
+                    className={`flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition ${
+                      on
+                        ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                        : "border-border bg-background text-foreground"
+                    }`}
+                  >
+                    {on && <Check className="h-3.5 w-3.5" />}
+                    {k}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Input
+                value={newKind}
+                onChange={(e) => setNewKind(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addNewKind();
+                  }
+                }}
+                placeholder="Lägg till egen användning"
+                className="h-11 text-sm"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 shrink-0"
+                disabled={!newKind.trim()}
+                onClick={addNewKind}
+              >
+                <Plus className="mr-1 h-4 w-4" /> Lägg till
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-1.5">
