@@ -358,6 +358,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       if (typeFilter !== "alla" && p.paper_type !== typeFilter) return false;
       if (needsOnly && !needsCheck(p)) return false;
       if (payFilter === "kontant" && p.payment_method !== "kontant") return false;
+      if (payFilter === "utlagg" && !p.is_expense_claim) return false;
       if (payFilter === "kort" && p.payment_method !== "kort") return false;
       if (payFilter.startsWith("kort:") && p.card_last4 !== payFilter.slice(5)) return false;
       if (accountFilter !== "alla" && (p.expense_account ?? "") !== accountFilter) return false;
@@ -642,6 +643,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             <SelectContent>
               <SelectItem value="alla">Alla betalsätt</SelectItem>
               <SelectItem value="kontant">Kontant</SelectItem>
+              <SelectItem value="utlagg">Utlägg (privat kort)</SelectItem>
               <SelectItem value="kort">Kort (alla)</SelectItem>
               {cards.map(([last4, label]) => (
                 <SelectItem key={last4} value={`kort:${last4}`}>
@@ -706,6 +708,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 >
                   {info.singular}
                 </span>
+                {p.is_expense_claim && (
+                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                    <StaffAvatar name={p.paid_by_name} imageUrl={p.paid_by_image} className="h-5 w-5" />
+                    Utlägg {p.paid_by_name ?? ""}
+                  </span>
+                )}
                 {needsCheck(p) && (
                   <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
                     Fyll i
