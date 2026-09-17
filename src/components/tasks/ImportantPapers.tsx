@@ -345,6 +345,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     netAmount: "",
     vatAmount: "",
     grossAmount: "",
+    vatRate: "",
     currency: "CHF",
     documentNumber: "",
     description: "",
@@ -450,6 +451,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     | "netAmount"
     | "vatAmount"
     | "grossAmount"
+    | "vatRate"
     | "currency"
     | "documentNumber"
     | "description"
