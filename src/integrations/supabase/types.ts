@@ -5935,6 +5935,9 @@ export type Database = {
       }
       important_papers: {
         Row: {
+          card_brand: string | null
+          card_holder: string | null
+          card_last4: string | null
           company_name: string | null
           created_at: string
           created_by: string | null
@@ -5942,11 +5945,14 @@ export type Database = {
           currency: string
           description: string | null
           document_number: string | null
+          expense_account: string | null
+          expense_category: string | null
           file_mime: string | null
           file_name: string | null
           file_url: string | null
           gross_amount: number | null
           id: string
+          line_items: Json
           net_amount: number | null
           paper_date: string | null
           paper_type: string
@@ -5958,6 +5964,9 @@ export type Database = {
           vat_amount: number | null
         }
         Insert: {
+          card_brand?: string | null
+          card_holder?: string | null
+          card_last4?: string | null
           company_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -5965,11 +5974,14 @@ export type Database = {
           currency?: string
           description?: string | null
           document_number?: string | null
+          expense_account?: string | null
+          expense_category?: string | null
           file_mime?: string | null
           file_name?: string | null
           file_url?: string | null
           gross_amount?: number | null
           id?: string
+          line_items?: Json
           net_amount?: number | null
           paper_date?: string | null
           paper_type?: string
@@ -5981,6 +5993,9 @@ export type Database = {
           vat_amount?: number | null
         }
         Update: {
+          card_brand?: string | null
+          card_holder?: string | null
+          card_last4?: string | null
           company_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -5988,11 +6003,14 @@ export type Database = {
           currency?: string
           description?: string | null
           document_number?: string | null
+          expense_account?: string | null
+          expense_category?: string | null
           file_mime?: string | null
           file_name?: string | null
           file_url?: string | null
           gross_amount?: number | null
           id?: string
+          line_items?: Json
           net_amount?: number | null
           paper_date?: string | null
           paper_type?: string
