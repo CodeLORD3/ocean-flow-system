@@ -938,6 +938,10 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       netAmount: p.net_amount != null ? String(p.net_amount) : "",
       vatAmount: p.vat_amount != null ? String(p.vat_amount) : "",
       grossAmount: p.gross_amount != null ? String(p.gross_amount) : "",
+      vatRate:
+        p.net_amount && p.vat_amount != null
+          ? String(Math.round((p.vat_amount / p.net_amount) * 1000) / 10)
+          : "",
       currency: p.currency ?? "CHF",
       documentNumber: p.document_number ?? "",
       description: p.description ?? "",
