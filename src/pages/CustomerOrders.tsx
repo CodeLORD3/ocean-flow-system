@@ -212,6 +212,33 @@ export default function CustomerOrders() {
   const toggleMark = (id: string, next: boolean) =>
     setMarked((cur) => (next ? [...new Set([...cur, id])] : cur.filter((x) => x !== id)));
 
+  /* Dra-och-släpp: flytta en order — eller alla markerade — till en annan dag. */
+  const moveOrders = useMoveCustomerOrders();
+  const [dragIds, setDragIds] = useState<string[]>([]);
+  const [dragOverDay, setDragOverDay] = useState<string | null>(null);
+
+  const startDrag = (id: string) =>
+    setDragIds(marked.length > 0 && marked.includes(id) ? marked : [id]);
+
+  const moveTo = (date: string, ids: string[]) => {
+    const list = ids.filter(Boolean);
+    if (list.length === 0) return;
+    moveOrders.mutate(
+      { ids: list, date },
+      {
+        onSuccess: () => {
+          toast.success(
+            list.length === 1
+              ? `Beställningen flyttades till ${dayLabel(date)}`
+              : `${list.length} beställningar flyttades till ${dayLabel(date)}`,
+          );
+          setMarked([]);
+        },
+        onError: (e: any) => toast.error(e?.message ?? "Kunde inte flytta beställningen"),
+      },
+    );
+  };
+
   const isArchiveView = tab === "arkiverade";
   const archiveOrders = useArchiveCustomerOrder();
   const approveOrders = useApproveCustomerOrder();
