@@ -62,6 +62,28 @@ import { useStaff } from "@/hooks/useStaff";
 
 const nf = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/** Fältnamn på svenska, används när en ny avläsning jämförs med det som står nu. */
+const FIELD_LABELS: Record<string, string> = {
+  paperType: "Typ av papper",
+  companyName: "Företag",
+  companyWebsite: "Webbadress",
+  paperDate: "Datum",
+  netAmount: "Nettobelopp",
+  vatAmount: "Moms",
+  grossAmount: "Bruttobelopp",
+  currency: "Valuta",
+  documentNumber: "Dokumentnummer",
+  description: "Beskrivning",
+  title: "Rubrik",
+  paymentMethod: "Betalsätt",
+  cardBrand: "Korttyp",
+  cardLast4: "Kortets sista fyra",
+  cardHolder: "Kortinnehavare",
+  expenseAccount: "Bokföringskonto",
+  expenseCategory: "Kostnadsslag",
+  itemsText: "Köpta varor",
+};
+
 function whenLabel(iso: string) {
   const d = new Date(iso);
   const time = d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
