@@ -26,6 +26,7 @@ import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { cn } from "@/lib/utils";
 import { resolveStorageUrl } from "@/lib/signedStorage";
 import { cleanDomain, companyLogoUrl } from "@/lib/companyLogo";
+import { accountLabel, accountsFor, suggestAccount } from "@/lib/expenseAccounts";
 import {
   PAPER_TYPES,
   paperTypeInfo,
@@ -259,6 +260,18 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     }
     if (str(p.title)) patch.title = str(p.title);
     if (str(p.description)) patch.description = str(p.description);
+
+    // Föreslår bokföringskonto: diesel och bensin hamnar på drivmedelskontot.
+    const hit = suggestAccount(
+      [patch.companyName, patch.title, patch.description, patch.expenseCategory, patch.itemsText]
+        .filter(Boolean)
+        .join(" "),
+      patch.currency ?? "CHF",
+    );
+    if (hit) {
+      patch.expenseAccount = hit.code;
+      if (!patch.expenseCategory) patch.expenseCategory = hit.label;
+    }
     return patch;
   }
 
@@ -322,7 +335,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
           cardId: known?.id ?? null,
           paidByStaffId: known?.staff_id ?? null,
           isExpenseClaim: known?.card_kind === "privat",
-          expenseAccount: "",
+          expenseAccount: patch.expenseAccount ?? "",
           expenseCategory: patch.expenseCategory ?? "",
           lineItems: parseItems(patch.itemsText ?? ""),
           file: f,
@@ -753,7 +766,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                         : p.payment_method === "kontant"
                           ? "Kontant"
                           : null,
-                      p.expense_account ? `Konto ${p.expense_account}` : p.expense_category,
+                      p.expense_account ? accountLabel(p.expense_account, p.currency) : p.expense_category,
                       p.document_number,
                       p.description ||
                         (p.line_items ?? [])
@@ -1059,12 +1072,26 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Bokföringskonto{litLabel("expenseAccount")}</Label>
-                <Input
-                  value={form.expenseAccount}
-                  onChange={(e) => setField("expenseAccount", e.target.value)}
-                  placeholder="t.ex. 4010"
-                  className={cn("h-10 font-mono tabular-nums", lit("expenseAccount"))}
-                />
+                <Select
+                  value={form.expenseAccount || "inget"}
+                  onValueChange={(v) => setField("expenseAccount", v === "inget" ? "" : v)}
+                >
+                  <SelectTrigger className={cn("h-10", lit("expenseAccount"))}>
+                    <SelectValue placeholder="Välj konto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inget">Inget konto valt</SelectItem>
+                    {accountsFor(form.currency).map((a) => (
+                      <SelectItem key={a.code} value={a.code}>
+                        {`${a.code} — ${a.label}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {form.currency === "SEK" ? "Svenska konton (BAS)" : "Schweiziska konton (KMU)"}
+                  {form.expenseAccount ? ` · ${accountLabel(form.expenseAccount, form.currency)}` : ""}
+                </p>
               </div>
               <div>
                 <Label className="text-xs">Kostnadsslag{litLabel("expenseCategory")}</Label>
