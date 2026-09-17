@@ -687,10 +687,17 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] w-[95vw] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{edit ? "Ändra papper" : "Nytt papper"}</DialogTitle>
           </DialogHeader>
+
+          {edit?.file_url && (
+            <Button variant="outline" className="h-11 justify-start" onClick={() => openFile(edit.file_url!)}>
+              <Paperclip className="mr-2 h-4 w-4" /> Visa bilden på pappret
+            </Button>
+          )}
+
 
           <div className="space-y-3">
             <div>
