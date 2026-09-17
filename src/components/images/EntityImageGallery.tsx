@@ -120,6 +120,7 @@ export function EntityImageGallery({
   const [lastDay, setLastDay] = useState(() => dayKey(new Date().toISOString()));
   const selectDay = (key: string) => {
     setLastDay(key);
+    setDayDesc(null);
     setView({ mode: "day", key });
   };
 
