@@ -62,6 +62,28 @@ import { useStaff } from "@/hooks/useStaff";
 
 const nf = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/** Fältnamn på svenska, används när en ny avläsning jämförs med det som står nu. */
+const FIELD_LABELS: Record<string, string> = {
+  paperType: "Typ av papper",
+  companyName: "Företag",
+  companyWebsite: "Webbadress",
+  paperDate: "Datum",
+  netAmount: "Nettobelopp",
+  vatAmount: "Moms",
+  grossAmount: "Bruttobelopp",
+  currency: "Valuta",
+  documentNumber: "Dokumentnummer",
+  description: "Beskrivning",
+  title: "Rubrik",
+  paymentMethod: "Betalsätt",
+  cardBrand: "Korttyp",
+  cardLast4: "Kortets sista fyra",
+  cardHolder: "Kortinnehavare",
+  expenseAccount: "Bokföringskonto",
+  expenseCategory: "Kostnadsslag",
+  itemsText: "Köpta varor",
+};
+
 function whenLabel(iso: string) {
   const d = new Date(iso);
   const time = d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
@@ -135,6 +157,11 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const camRef = useRef<HTMLInputElement>(null);
   const libRef = useRef<HTMLInputElement>(null);
   const [reading, setReading] = useState(false);
+  // Ny avläsning av det sparade fotot: visar nytt värde mot det som står nu.
+  const [compare, setCompare] = useState<
+    { key: FormKey; label: string; current: string; next: string }[] | null
+  >(null);
+  const [pickedCompare, setPickedCompare] = useState<Set<string>>(new Set());
   const [queue, setQueue] = useState<{ done: number; total: number } | null>(null);
   const [needsOnly, setNeedsOnly] = useState(false);
   // Gult = avläst från pappret och inte kontrollerat än.
@@ -307,6 +334,63 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     } finally {
       setReading(false);
     }
+  }
+
+  /**
+   * Läser av det sparade fotot igen och visar vad avläsningen ger jämfört med
+   * det som står i pappret nu. Ingenting ändras förrän man väljer nya värden.
+   */
+  async function rereadSaved() {
+    if (!edit?.file_url) return;
+    setReading(true);
+    try {
+      const signed = await resolveStorageUrl(edit.file_url);
+      if (!signed) throw new Error("Kunde inte hämta bilden");
+      const res = await fetch(signed);
+      if (!res.ok) throw new Error("Kunde inte hämta bilden");
+      const blob = await res.blob();
+      const f = new File([blob], edit.file_name ?? "papper", {
+        type: edit.file_mime ?? blob.type ?? "image/jpeg",
+      });
+      const patch = await parsePaper(f);
+      const rows = (Object.keys(patch) as FormKey[])
+        .map((key) => ({
+          key,
+          label: FIELD_LABELS[key] ?? key,
+          current: String((form as Record<string, string>)[key] ?? ""),
+          next: patch[key] ?? "",
+        }))
+        .filter((r) => r.next.trim() !== "");
+      if (rows.length === 0) {
+        toast.info("Avläsningen hittade ingen information på bilden");
+        return;
+      }
+      // Det som skiljer sig från nuvarande värde är förvalt.
+      setPickedCompare(new Set(rows.filter((r) => r.current.trim() !== r.next.trim()).map((r) => r.key)));
+      setCompare(rows);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunde inte läsa av bilden igen");
+    } finally {
+      setReading(false);
+    }
+  }
+
+  /** Lägger in valda värden från den nya avläsningen. Gult = kontrollera dem. */
+  function applyCompare(rows: { key: FormKey; next: string }[]) {
+    if (!rows.length) return;
+    setForm((prev) => {
+      const next = { ...prev } as Record<string, string>;
+      for (const r of rows) next[r.key] = r.next;
+      return next as typeof prev;
+    });
+    setAutoFilled(new Set(rows.map((r) => r.key)));
+    setChecked((prev) => {
+      const next = new Set(prev);
+      for (const r of rows) next.delete(r.key);
+      return next;
+    });
+    setCompare(null);
+    toast.success(`${rows.length} fält uppdaterade — kontrollera de gula fälten`);
   }
 
   /**
@@ -1183,6 +1267,21 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     Läs av igen
                   </Button>
                 )}
+                {!file && edit?.file_url && (
+                  <>
+                    <Button variant="outline" className="h-10" disabled={reading} onClick={() => void rereadSaved()}>
+                      {reading ? (
+                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Wand2 className="mr-1 h-4 w-4" />
+                      )}
+                      Läs av bilden igen
+                    </Button>
+                    <Button variant="ghost" className="h-10" onClick={() => void openFile(edit.file_url!)}>
+                      Visa bilden
+                    </Button>
+                  </>
+                )}
                 <span className="truncate text-xs text-muted-foreground">
                   {file?.name ?? edit?.file_name ?? "Ingen fil"}
                 </span>
@@ -1202,6 +1301,74 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             <Button onClick={submit} disabled={save.isPending}>
               {save.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
               Spara
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Ny avläsning av bilden: nya siffror mot de som står nu, du väljer vilka som gäller. */}
+      <Dialog open={!!compare} onOpenChange={(o) => !o && setCompare(null)}>
+        <DialogContent className="max-h-[90vh] w-[95vw] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Ny avläsning av bilden</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            Bocka i det du vill ta in. Inget ändras förrän du väljer, och pappret sparas först när du
+            trycker Spara.
+          </p>
+          <div className="space-y-1.5">
+            {(compare ?? []).map((r) => {
+              const same = r.current.trim() === r.next.trim();
+              const picked = pickedCompare.has(r.key);
+              return (
+                <button
+                  key={r.key}
+                  type="button"
+                  onClick={() =>
+                    setPickedCompare((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(r.key)) next.delete(r.key);
+                      else next.add(r.key);
+                      return next;
+                    })
+                  }
+                  className={cn(
+                    "flex w-full items-start gap-2 rounded-md border p-2 text-left text-xs transition",
+                    picked ? "border-amber-500 bg-amber-50" : "border-border bg-card hover:bg-muted",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                      picked ? "border-amber-600 bg-amber-500 text-white" : "border-muted-foreground/40",
+                    )}
+                  >
+                    {picked && <Check className="h-3 w-3" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">{r.label}</span>
+                    <span className="mt-0.5 flex flex-wrap items-center gap-1.5 font-mono tabular-nums">
+                      <span className="text-muted-foreground line-through">{r.current || "—"}</span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className={same ? "text-muted-foreground" : "font-semibold text-emerald-700"}>
+                        {r.next}
+                      </span>
+                      {same && <span className="font-sans text-[10px] text-muted-foreground">samma som nu</span>}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setCompare(null)}>
+              Behåll som det är
+            </Button>
+            <Button
+              onClick={() => applyCompare((compare ?? []).filter((r) => pickedCompare.has(r.key)))}
+              disabled={pickedCompare.size === 0}
+            >
+              Använd valda värden
             </Button>
           </DialogFooter>
         </DialogContent>
