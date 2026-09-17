@@ -149,6 +149,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         currency: form.currency,
         documentNumber: form.documentNumber,
         description: form.description,
+        paymentMethod: form.paymentMethod || null,
         file,
       });
       toast.success(edit ? "Pappret uppdaterat" : "Pappret sparat");
