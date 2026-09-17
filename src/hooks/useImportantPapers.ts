@@ -87,6 +87,7 @@ export interface PaperInput {
   grossAmount?: number | null;
   currency?: string;
   documentNumber?: string | null;
+  paymentMethod?: "kort" | "kontant" | null;
   description?: string | null;
   tags?: string[];
   file?: File | null;
