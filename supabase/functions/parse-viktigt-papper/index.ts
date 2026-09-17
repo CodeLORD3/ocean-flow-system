@@ -39,6 +39,7 @@ serve(async (req) => {
 Fyll bara i det som faktiskt står på pappret. Gissa aldrig.
 - paper_type: kvitto | foljesedel | faktura | brev | anteckning
 - company_name: företaget som utfärdat pappret
+- company_website: företagets webbadress om den står på pappret, bara domänen (t.ex. "coop.ch")
 - paper_date: datum på pappret, YYYY-MM-DD
 - document_number: kvitto-, följesedels- eller fakturanummer
 - net_amount / vat_amount / gross_amount: belopp som siffror utan valuta
@@ -71,6 +72,7 @@ Fyll bara i det som faktiskt står på pappret. Gissa aldrig.
                 properties: {
                   paper_type: { type: ["string", "null"] },
                   company_name: { type: ["string", "null"] },
+                  company_website: { type: ["string", "null"] },
                   paper_date: { type: ["string", "null"] },
                   document_number: { type: ["string", "null"] },
                   net_amount: { type: ["number", "null"] },

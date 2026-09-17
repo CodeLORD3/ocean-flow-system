@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { cn } from "@/lib/utils";
 import { resolveStorageUrl } from "@/lib/signedStorage";
+import { cleanDomain, companyLogoUrl } from "@/lib/companyLogo";
 import {
   PAPER_TYPES,
   paperTypeInfo,
@@ -96,6 +97,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const [form, setForm] = useState({
     paperType: "kvitto" as PaperType,
     companyName: "",
+    companyWebsite: "",
     paperDate: new Date().toISOString().slice(0, 10),
     netAmount: "",
     vatAmount: "",
@@ -137,6 +139,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   type FormKey =
     | "paperType"
     | "companyName"
+    | "companyWebsite"
     | "paperDate"
     | "netAmount"
     | "vatAmount"
@@ -235,6 +238,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     const validType = PAPER_TYPES.some((t) => t.value === str(p.paper_type));
     if (validType) patch.paperType = str(p.paper_type);
     if (str(p.company_name)) patch.companyName = str(p.company_name);
+    if (cleanDomain(str(p.company_website))) patch.companyWebsite = cleanDomain(str(p.company_website))!;
     if (/^\d{4}-\d{2}-\d{2}$/.test(str(p.paper_date))) patch.paperDate = str(p.paper_date);
     if (str(p.document_number)) patch.documentNumber = str(p.document_number);
     if (money(p.net_amount)) patch.netAmount = money(p.net_amount);
@@ -302,6 +306,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
           paperType: (patch.paperType as PaperType) ?? "kvitto",
           title: patch.title ?? "",
           companyName: patch.companyName ?? "",
+          companyWebsite: patch.companyWebsite ?? "",
+          companyLogoUrl: companyLogoUrl(patch.companyWebsite ?? ""),
           paperDate: patch.paperDate ?? new Date().toISOString().slice(0, 10),
           netAmount: num(patch.netAmount ?? ""),
           vatAmount: num(patch.vatAmount ?? ""),
@@ -420,6 +426,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     setForm({
       paperType: type ?? (typeFilter === "alla" ? "kvitto" : typeFilter),
       companyName: "",
+      companyWebsite: "",
       paperDate: new Date().toISOString().slice(0, 10),
       netAmount: "",
       vatAmount: "",
@@ -448,6 +455,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     setForm({
       paperType: p.paper_type as PaperType,
       companyName: p.company_name ?? "",
+      companyWebsite: p.company_website ?? "",
       paperDate: p.paper_date ?? "",
       netAmount: p.net_amount != null ? String(p.net_amount) : "",
       vatAmount: p.vat_amount != null ? String(p.vat_amount) : "",
@@ -483,6 +491,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         paperType: form.paperType,
         title: form.title,
         companyName: form.companyName,
+        companyWebsite: form.companyWebsite,
+        companyLogoUrl: companyLogoUrl(form.companyWebsite),
         paperDate: form.paperDate || null,
         netAmount: num(form.netAmount),
         vatAmount: num(form.vatAmount),
@@ -720,7 +730,16 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   </span>
                 )}
 
-                <button type="button" onClick={() => openEdit(p)} className="min-w-0 flex-1 text-left">
+                <button type="button" onClick={() => openEdit(p)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                  {p.company_logo_url || companyLogoUrl(p.company_website) ? (
+                    <img
+                      src={p.company_logo_url || companyLogoUrl(p.company_website)!}
+                      alt={`Logotyp för ${p.company_name ?? "företaget"}`}
+                      className="h-8 w-8 shrink-0 rounded-md border border-border bg-white object-contain p-0.5"
+                      loading="lazy"
+                    />
+                  ) : null}
+                  <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">
                     {p.company_name || p.title || "Utan företag"}
                   </span>
@@ -744,6 +763,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     ]
                       .filter(Boolean)
                       .join(" · ") || "Ingen beskrivning"}
+                  </span>
                   </span>
                 </button>
                 <span className="shrink-0 text-right text-sm font-semibold tabular-nums">
@@ -950,6 +970,22 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   placeholder="t.ex. Migros"
                   className={cn("h-10", lit("companyName"))}
                 />
+                <div className="mt-2 flex items-center gap-2">
+                  {companyLogoUrl(form.companyWebsite) ? (
+                    <img
+                      src={companyLogoUrl(form.companyWebsite)!}
+                      alt={`Logotyp för ${form.companyName || "företaget"}`}
+                      className="h-9 w-9 shrink-0 rounded-md border border-border bg-white object-contain p-0.5"
+                      loading="lazy"
+                    />
+                  ) : null}
+                  <Input
+                    value={form.companyWebsite}
+                    onChange={(e) => setField("companyWebsite", e.target.value)}
+                    placeholder="Webbadress, t.ex. migros.ch — ger logotypen"
+                    className={cn("h-10", lit("companyWebsite"))}
+                  />
+                </div>
               </div>
               <div>
                 <Label className="text-xs">Datum på pappret{litLabel("paperDate")}</Label>
