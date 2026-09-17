@@ -1045,7 +1045,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="senast">Senast inlagt</SelectItem>
-              <SelectItem value="datum">Datum på pappret</SelectItem>
+              <SelectItem value="datum">Datum på pappret (nyast först)</SelectItem>
+              <SelectItem value="datum-aldst">Datum på pappret (äldst först)</SelectItem>
+              <SelectItem value="vecka">Vecka och veckodag</SelectItem>
               <SelectItem value="belopp">Högsta belopp</SelectItem>
               <SelectItem value="foretag">Företag A–Ö</SelectItem>
               <SelectItem value="konto">Konto</SelectItem>
