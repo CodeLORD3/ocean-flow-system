@@ -36,6 +36,23 @@ function whenLabel(iso: string) {
   return `${d.toLocaleDateString("sv-SE", { day: "numeric", month: "short", year: "numeric" })} ${time}`;
 }
 
+/** "Lax 120.50" per rad → poster för bokföringsunderlaget. */
+function parseItems(text: string) {
+  return text
+    .split("\n")
+    .map((row) => row.trim())
+    .filter(Boolean)
+    .map((row) => {
+      const m = row.match(/^(.*?)[\s:]+(-?[\d\s]+(?:[.,]\d{1,2})?)$/);
+      if (!m) return { name: row, amount: null as number | null };
+      const amount = Number(m[2].replace(/\s/g, "").replace(",", "."));
+      return {
+        name: m[1].trim() || row,
+        amount: Number.isFinite(amount) ? amount : null,
+      };
+    });
+}
+
 /** Ekonomi → Viktiga papper: kvitton, följesedlar, fakturor, brev och anteckningar. */
 export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const { data: papers = [], isLoading } = useImportantPapers(storeId);
@@ -43,6 +60,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const del = useDeleteImportantPaper();
 
   const [typeFilter, setTypeFilter] = useState<"alla" | PaperType>("alla");
+  const [payFilter, setPayFilter] = useState("alla");
+  const [accountFilter, setAccountFilter] = useState("alla");
+  const [sortBy, setSortBy] = useState("senast");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<ImportantPaper | null>(null);
@@ -192,6 +212,10 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     const q = search.trim().toLowerCase();
     return papers.filter((p) => {
       if (typeFilter !== "alla" && p.paper_type !== typeFilter) return false;
+      if (payFilter === "kontant" && p.payment_method !== "kontant") return false;
+      if (payFilter === "kort" && p.payment_method !== "kort") return false;
+      if (payFilter.startsWith("kort:") && p.card_last4 !== payFilter.slice(5)) return false;
+      if (accountFilter !== "alla" && (p.expense_account ?? "") !== accountFilter) return false;
       if (!q) return true;
       const hay = [
         p.title,
@@ -199,6 +223,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         p.description,
         p.document_number,
         p.payment_method,
+        p.card_brand,
+        p.card_last4,
+        p.card_holder,
+        p.expense_account,
+        p.expense_category,
+        ...(p.line_items ?? []).map((l) => l.name),
         p.paper_date,
         p.created_by_name,
         paperTypeInfo(p.paper_type).singular,
@@ -210,7 +240,31 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [papers, typeFilter, search]);
+  }, [papers, typeFilter, search, payFilter, accountFilter]);
+
+  const sorted = useMemo(() => {
+    const list = [...filtered];
+    if (sortBy === "belopp") list.sort((a, b) => (b.net_amount ?? 0) - (a.net_amount ?? 0));
+    else if (sortBy === "datum") list.sort((a, b) => (b.paper_date ?? "").localeCompare(a.paper_date ?? ""));
+    else if (sortBy === "foretag")
+      list.sort((a, b) => (a.company_name ?? "").localeCompare(b.company_name ?? "", "sv"));
+    else if (sortBy === "konto")
+      list.sort((a, b) => (a.expense_account ?? "zzz").localeCompare(b.expense_account ?? "zzz", "sv"));
+    return list;
+  }, [filtered, sortBy]);
+
+  const cards = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of papers) {
+      if (p.card_last4) map.set(p.card_last4, [p.card_brand, `••${p.card_last4}`].filter(Boolean).join(" "));
+    }
+    return [...map.entries()];
+  }, [papers]);
+
+  const accounts = useMemo(
+    () => [...new Set(papers.map((p) => p.expense_account).filter(Boolean))].sort() as string[],
+    [papers],
+  );
 
   function openNew(type?: PaperType) {
     setEdit(null);
@@ -365,13 +419,13 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
 
       {isLoading ? (
         <p className="py-6 text-center text-sm text-muted-foreground">Hämtar papper …</p>
-      ) : filtered.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
           Inga papper här ännu — lägg in ett kvitto, en följesedel, en faktura, ett brev eller en anteckning.
         </p>
       ) : (
         <div className="space-y-1.5">
-          {filtered.map((p) => {
+          {sorted.map((p) => {
             const info = paperTypeInfo(p.paper_type);
             return (
               <div
