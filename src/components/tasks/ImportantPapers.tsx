@@ -1198,7 +1198,26 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             {nf.format(sorted.reduce((sum, p) => sum + (p.net_amount ?? 0), 0))} netto
           </span>
         </div>
+
+        {dupGroups.length > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2">
+            <span className="text-xs font-semibold text-amber-800">
+              {dupGroups.length === 1
+                ? "1 papper ser ut att ligga inne flera gånger"
+                : `${dupGroups.length} papper ser ut att ligga inne flera gånger`}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 border-amber-400 text-xs text-amber-900"
+              onClick={() => setCompareKey(dupGroups[0][0])}
+            >
+              Jämför sida vid sida
+            </Button>
+          </div>
+        )}
       </Card>
+
 
       {isLoading ? (
         <p className="py-6 text-center text-sm text-muted-foreground">Hämtar papper …</p>
