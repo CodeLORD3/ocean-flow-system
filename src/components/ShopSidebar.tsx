@@ -77,6 +77,8 @@ const helpNav = [
 const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
   { title: "Dagsrapport", url: "/dagsrapport", icon: FileText },
+  { title: "Viktiga papper", url: "/uppgifter?flik=ekonomi", icon: FileText },
+
 ];
 
 

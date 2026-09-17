@@ -131,7 +131,9 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
 };
 
 /** Får den aktiva portalen öppna rutten? */
-export function canAccessRoute(site: SiteMode, path: string): boolean {
+export function canAccessRoute(site: SiteMode, pathWithQuery: string): boolean {
+  // Menylänkar kan ha frågesträng (t.ex. förvald flik) — behörigheten gäller sidan.
+  const path = pathWithQuery.split("?")[0];
   // Kundkortet ligger under Kundbeställningar och ärver dess behörighet.
   // Uppgiftens egen sida ärver behörigheten från uppgiftslistan.
   const key = path.startsWith("/customer-orders/")
