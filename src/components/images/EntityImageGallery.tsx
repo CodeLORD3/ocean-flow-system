@@ -903,6 +903,27 @@ export function EntityImageGallery({
                   )
 
                 : null}
+              {manualGroups.length > 0 && (
+                <>
+                  <div className="my-1 border-t" />
+                  <p className="px-2 pb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Grupper
+                  </p>
+                  {manualGroups.map((g) =>
+                    catalogButton(
+                      view.mode === "group" && view.id === g.id,
+                      g.id,
+                      g.name || "Grupp",
+                      g.imageIds.length,
+                      <Folder className="h-3 w-3" />,
+                      () => {
+                        setDayDesc(null);
+                        setView({ mode: "group", id: g.id });
+                      }
+                    )
+                  )}
+                </>
+              )}
               <div className="my-1 border-t" />
               {dates.slice(0, dateLimit).map(([key, count]) =>
                 catalogButton(
