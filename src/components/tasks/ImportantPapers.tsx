@@ -155,6 +155,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   // Gäller när pappret är ett kort: vem äger kortet och är det privat (utlägg)?
   const [kortOwner, setKortOwner] = useState("");
   const [kortPrivat, setKortPrivat] = useState(false);
+  // Gult = personen hittades av avläsningen och är inte kontrollerad än.
+  const [kortOwnerAuto, setKortOwnerAuto] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const camRef = useRef<HTMLInputElement>(null);
@@ -184,6 +186,25 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const cardLibRef = useRef<HTMLInputElement>(null);
   const [cardReading, setCardReading] = useState(false);
   const [cardAutoFilled, setCardAutoFilled] = useState<Set<string>>(new Set());
+
+  /** Hittar personen i personallistan utifrån namnet som står på kortet. */
+  function staffIdFromName(name: string): string {
+    const clean = (v: string) => v.toLowerCase().replace(/[^a-zà-ÿ ]/gi, " ").split(" ").filter(Boolean);
+    const words = clean(name);
+    if (words.length === 0) return "";
+    let best = "";
+    let bestHits = 0;
+    for (const s of staffList) {
+      const staffWords = clean(`${s.first_name ?? ""} ${s.last_name ?? ""}`);
+      if (staffWords.length === 0) continue;
+      const hits = staffWords.filter((w) => words.includes(w)).length;
+      if (hits > bestHits) {
+        bestHits = hits;
+        best = s.id;
+      }
+    }
+    return bestHits >= 2 || (bestHits === 1 && words.length === 1) ? best : "";
+  }
 
   type FormKey =
     | "paperType"
@@ -335,6 +356,11 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       }
       setForm((prev) => ({ ...prev, ...patch }) as typeof prev);
       setAutoFilled(new Set(keys));
+      const owner = staffIdFromName(patch.cardHolder ?? "");
+      if (owner) {
+        setKortOwner(owner);
+        setKortOwnerAuto(true);
+      }
       toast.success(`${keys.length} fält avlästa — kontrollera de gula fälten`);
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte läsa av pappret");
@@ -425,6 +451,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         if (brand) { next.cardBrand = brand; found.add("cardBrand"); }
         if (last4.length === 4) { next.cardLast4 = last4; found.add("cardLast4"); }
         if (holder) { next.cardHolder = holder; found.add("cardHolder"); }
+        const owner = staffIdFromName(holder);
+        if (owner) { next.staffId = owner; found.add("staffId"); }
         return next;
       });
       setCardAutoFilled(found);
@@ -578,6 +606,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     setFile(null);
     setAutoFilled(new Set());
     setChecked(new Set());
+    setKortOwner("");
+    setKortPrivat(false);
+    setKortOwnerAuto(false);
     setForm({
       paperType: type ?? (typeFilter === "alla" ? "kvitto" : typeFilter),
       companyName: "",
@@ -607,6 +638,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     setFile(null);
     setKortOwner(p.paid_by_staff_id ?? "");
     setKortPrivat(!!p.is_expense_claim);
+    setKortOwnerAuto(false);
     setAutoFilled(new Set());
     setChecked(new Set());
     setForm({
@@ -1155,9 +1187,27 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   </div>
                 </div>
                 <div className="mt-2">
-                  <Label className="text-xs">Vem äger kortet?</Label>
-                  <Select value={kortOwner} onValueChange={setKortOwner}>
-                    <SelectTrigger className="h-10">
+                  <Label className="text-xs">
+                    Vem äger kortet?
+                    {kortOwnerAuto ? (
+                      <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                        <Sparkles className="h-2.5 w-2.5" /> avläst — kontrollera
+                      </span>
+                    ) : null}
+                  </Label>
+                  <Select
+                    value={kortOwner}
+                    onValueChange={(v) => {
+                      setKortOwnerAuto(false);
+                      setKortOwner(v);
+                    }}
+                  >
+                    <SelectTrigger
+                      className={cn(
+                        "h-10",
+                        kortOwnerAuto && "border-amber-500 bg-amber-50 ring-1 ring-amber-400",
+                      )}
+                    >
                       <SelectValue placeholder="Välj person" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1594,9 +1644,18 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               <Label className="text-xs">Vem äger kortet?</Label>
               <Select
                 value={cardForm.staffId}
-                onValueChange={(v) => setCardForm((f) => ({ ...f, staffId: v }))}
+                onValueChange={(v) => {
+                  setCardAutoFilled((st) => {
+                    const n = new Set(st);
+                    n.delete("staffId");
+                    return n;
+                  });
+                  setCardForm((f) => ({ ...f, staffId: v }));
+                }}
               >
-                <SelectTrigger className="h-10">
+                <SelectTrigger
+                  className={`h-10 ${cardAutoFilled.has("staffId") ? "border-amber-400 bg-amber-50" : ""}`}
+                >
                   <SelectValue placeholder="Välj person" />
                 </SelectTrigger>
                 <SelectContent>
