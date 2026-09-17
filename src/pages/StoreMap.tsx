@@ -61,6 +61,7 @@ import { useDeviations } from "@/hooks/useFoodSafety";
 import {
   nextInstanceName,
   useDeleteMapObject,
+  useDeleteZone,
   useFloorPlanVersions,
   useFloorPlans,
   useMapObjectTypes,
