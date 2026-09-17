@@ -225,7 +225,21 @@ export function EntityImageGallery({
   /** Aktivt datum i katalogen — styr dagsvyn. */
   const activeDay = view.mode === "day" ? view.key : lastDay;
 
+  /** Sökningen går igenom alla bilder, oavsett vilket filter som är valt. */
+  const searchHits: EntityImage[] = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    return images.filter((i) =>
+      [i.caption, i.uploaded_by_name, dayLabel(dayKey(i.created_at)), dayKey(i.created_at)]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [images, search]);
+
   const shown: EntityImage[] = useMemo(() => {
+    if (search.trim()) return searchHits;
     if (!catalog) return previewImages;
     if (view.mode === "favorites") return favorites;
     if (view.mode === "featured") return previewImages;
