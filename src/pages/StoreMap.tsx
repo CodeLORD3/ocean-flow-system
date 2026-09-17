@@ -32,6 +32,7 @@ import {
   Upload,
   ArrowLeft,
   Plus,
+  Check,
 } from "lucide-react";
 import { todayIso } from "@/hooks/useChecklist";
 import { FloorPlanCanvas, type Selection } from "@/components/storemap/FloorPlanCanvas";
@@ -46,6 +47,7 @@ import { OverviewQuickBar } from "@/components/storemap/OverviewQuickBar";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
+import ZoneDetailsSheet from "@/components/storemap/ZoneDetailsSheet";
 import { ZONE_PALETTE, nextZoneColor } from "@/lib/mapPalette";
 import { bbox, zonePoints } from "@/lib/mapGeometry";
 import {
@@ -1233,6 +1235,15 @@ export default function StoreMap() {
         />
       )}
 
+
+      <ZoneDetailsSheet
+        zone={sheetZoneId ? zones.find((z) => z.id === sheetZoneId) ?? null : null}
+        open={!!sheetZoneId}
+        isNew={!!sheetZoneId && sheetZoneId === draftZoneId}
+        saving={saveZone.isPending}
+        onClose={() => setSheetZoneId(null)}
+        onSave={saveZoneDetails}
+      />
 
       {plan && pinDialog && (
         <MapPinDialog
