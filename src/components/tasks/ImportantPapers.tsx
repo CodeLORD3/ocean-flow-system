@@ -2013,15 +2013,25 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             </div>
 
             {form.paperType !== "kort" && (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <div>
                 <Label className="text-xs">Nettobelopp{litLabel("netAmount")}</Label>
                 <Input
                   inputMode="decimal"
                   value={form.netAmount}
-                  onChange={(e) => setField("netAmount", e.target.value)}
+                  onChange={(e) => setAmountField("netAmount", e.target.value)}
                   placeholder="0.00"
                   className={cn("h-10 font-mono tabular-nums", lit("netAmount"))}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Moms %{litLabel("vatRate")}</Label>
+                <Input
+                  inputMode="decimal"
+                  value={form.vatRate}
+                  onChange={(e) => setAmountField("vatRate", e.target.value)}
+                  placeholder="t.ex. 2.6"
+                  className={cn("h-10 font-mono tabular-nums", lit("vatRate"))}
                 />
               </div>
               <div>
@@ -2029,11 +2039,41 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 <Input
                   inputMode="decimal"
                   value={form.vatAmount}
-                  onChange={(e) => setField("vatAmount", e.target.value)}
+                  onChange={(e) => setAmountField("vatAmount", e.target.value)}
                   placeholder="0.00"
                   className={cn("h-10 font-mono tabular-nums", lit("vatAmount"))}
                 />
               </div>
+              <div>
+                <Label className="text-xs">Bruttobelopp{litLabel("grossAmount")}</Label>
+                <Input
+                  inputMode="decimal"
+                  value={form.grossAmount}
+                  onChange={(e) => setAmountField("grossAmount", e.target.value)}
+                  placeholder="0.00"
+                  className={cn("h-10 font-mono tabular-nums", lit("grossAmount"))}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span>Vanlig moms:</span>
+              {(VAT_SUGGESTIONS[form.currency] ?? [6, 12, 25]).map((r) => (
+                <Button
+                  key={r}
+                  type="button"
+                  size="sm"
+                  variant={form.vatRate === String(r) ? "default" : "outline"}
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setAmountField("vatRate", String(r))}
+                >
+                  {String(r).replace(".", ",")} %
+                </Button>
+              ))}
+              <span className="ml-auto">{vatSanity(form)}</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Valuta{litLabel("currency")}</Label>
                 <Select value={form.currency} onValueChange={(v) => setField("currency", v)}>
