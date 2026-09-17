@@ -18,6 +18,8 @@ export function ShopOrderFortnoxButton({ orderId }: { orderId: string }) {
   const qc = useQueryClient();
   const [sending, setSending] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [repairOpen, setRepairOpen] = useState(false);
+
 
   const job = useQuery({
     queryKey: ["fortnox_invoice_job", orderId],
