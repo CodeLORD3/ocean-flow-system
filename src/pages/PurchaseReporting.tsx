@@ -892,7 +892,25 @@ function ReportSection({
               <span className="text-[10px] text-muted-foreground tabular-nums">
                 {lines.filter((l) => plausibleLots(l as any).length > 0).length} av {lines.length} rader
               </span>
+              {!isLocked && lines.some((l) => plausibleLots(l as any).length === 0) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-[10px]"
+                  onClick={() => {
+                    const docDate = (report as any).document_date ?? report.report_date;
+                    lines.forEach((l) => {
+                      if (plausibleLots(l as any).length > 0) return;
+                      const s = suggestLotNumber(l as any, docDate);
+                      if (s) onUpdateLine(l.id, { lot_numbers: [s] } as any);
+                    });
+                  }}
+                >
+                  Fyll i alla saknade
+                </Button>
+              )}
             </div>
+
             <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
               {lines.map((l) => (
                 <LotNumberEditor
