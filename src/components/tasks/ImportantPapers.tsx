@@ -130,6 +130,101 @@ function weekNumber(d: Date) {
 }
 
 /** "Torsdag 17 september 2026 · 17/9 · vecka 38" — tydligt både i ord och siffror. */
+/** Nyckel som fångar papper som troligen är samma dokument två gånger. */
+export function duplicateKey(p: ImportantPaper): string | null {
+  const norm = (s?: string | null) => (s ?? "").toLowerCase().replace(/[^a-z0-9åäöéü]/g, "");
+  const company = norm(p.company_name);
+  const nr = norm(p.document_number);
+  if (company && nr) return `nr:${company}|${nr}`;
+  if (p.paper_date && p.net_amount != null) return `sum:${company}|${p.paper_date}|${p.net_amount.toFixed(2)}`;
+  return null;
+}
+
+/** Ett papper i jämförvyn — visar bilden och de fält man dömer dubbletten på. */
+function CompareCard({
+  paper,
+  onOpen,
+  onDelete,
+}: {
+  paper: ImportantPaper;
+  onOpen: () => void;
+  onDelete: () => void;
+}) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    if (!paper.file_url) {
+      setUrl(null);
+      return;
+    }
+    void resolveStorageUrl(paper.file_url).then((u) => {
+      if (alive) setUrl(u);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [paper.file_url]);
+
+  const info = paperTypeInfo(paper.paper_type);
+  const isPdf = (paper.file_url ?? "").toLowerCase().endsWith(".pdf");
+
+  return (
+    <div className="flex min-w-0 flex-col gap-2 rounded-lg border border-border bg-card p-2">
+      <div className="flex items-center gap-2">
+        <span
+          className="rounded px-1.5 py-0.5 text-[10px] font-semibold text-white"
+          style={{ background: info.color }}
+        >
+          {info.singular}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-xs font-semibold">
+          {paper.company_name || paper.title || "Utan företag"}
+        </span>
+      </div>
+
+      <div className="flex h-44 items-center justify-center overflow-hidden rounded border border-border bg-muted/40">
+        {url && !isPdf ? (
+          <img src={url} alt="Pappret" className="max-h-full max-w-full object-contain" />
+        ) : url ? (
+          <a href={url} target="_blank" rel="noreferrer" className="text-xs underline">
+            Öppna PDF
+          </a>
+        ) : (
+          <span className="text-xs text-muted-foreground">Ingen bild</span>
+        )}
+      </div>
+
+      <dl className="space-y-0.5 text-[11px]">
+        {[
+          ["Datum", paper.paper_date ?? "—"],
+          ["Netto", paper.net_amount != null ? `${nf.format(paper.net_amount)} ${paper.currency}` : "—"],
+          ["Brutto", paper.gross_amount != null ? `${nf.format(paper.gross_amount)} ${paper.currency}` : "—"],
+          ["Dokumentnr", paper.document_number || "—"],
+          ["Betalsätt", paper.payment_method === "kort" ? [paper.card_brand, paper.card_last4 ? `••${paper.card_last4}` : null].filter(Boolean).join(" ") || "Kort" : paper.payment_method === "kontant" ? "Kontant" : "—"],
+          ["Konto", paper.expense_account || "—"],
+          ["Inlagt", whenLabel(paper.created_at)],
+          ["Inlagt av", paper.created_by_name ?? "Okänd"],
+        ].map(([label, value]) => (
+          <div key={label as string} className="flex gap-2">
+            <dt className="w-20 shrink-0 text-muted-foreground">{label}</dt>
+            <dd className="min-w-0 flex-1 break-words font-medium tabular-nums">{value as string}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="mt-auto flex gap-2">
+        <Button size="sm" variant="outline" className="h-8 flex-1 text-xs" onClick={onOpen}>
+          Öppna
+        </Button>
+        <Button size="sm" variant="destructive" className="h-8 flex-1 text-xs" onClick={onDelete}>
+          <Trash2 className="mr-1 h-3.5 w-3.5" /> Ta bort
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function longDayLabel(iso: string) {
   const d = new Date(`${iso}T00:00:00`);
   if (Number.isNaN(d.getTime())) return iso;
@@ -683,6 +778,32 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   /** Papper som behöver kompletteras innan de duger som bokföringsunderlag. */
   const needsCheck = (p: ImportantPaper) => !p.company_name || p.net_amount == null;
 
+  /**
+   * Möjliga dubbletter: samma företag + dokumentnummer, eller samma företag,
+   * datum och belopp. Pappren varnas men tas aldrig bort automatiskt.
+   */
+  const dupGroups = useMemo(() => {
+    const map = new Map<string, ImportantPaper[]>();
+    for (const p of papers) {
+      const key = duplicateKey(p);
+      if (!key) continue;
+      const list = map.get(key);
+      if (list) list.push(p);
+      else map.set(key, [p]);
+    }
+    return [...map.entries()].filter(([, g]) => g.length > 1);
+  }, [papers]);
+
+  const dupKeyById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const [key, group] of dupGroups) for (const p of group) m.set(p.id, key);
+    return m;
+  }, [dupGroups]);
+
+  const [compareKey, setCompareKey] = useState<string | null>(null);
+  const compareGroup = dupGroups.find(([k]) => k === compareKey)?.[1] ?? [];
+
+
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -1077,7 +1198,26 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             {nf.format(sorted.reduce((sum, p) => sum + (p.net_amount ?? 0), 0))} netto
           </span>
         </div>
+
+        {dupGroups.length > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2">
+            <span className="text-xs font-semibold text-amber-800">
+              {dupGroups.length === 1
+                ? "1 papper ser ut att ligga inne flera gånger"
+                : `${dupGroups.length} papper ser ut att ligga inne flera gånger`}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 border-amber-400 text-xs text-amber-900"
+              onClick={() => setCompareKey(dupGroups[0][0])}
+            >
+              Jämför sida vid sida
+            </Button>
+          </div>
+        )}
       </Card>
+
 
       {isLoading ? (
         <p className="py-6 text-center text-sm text-muted-foreground">Hämtar papper …</p>
@@ -1142,6 +1282,17 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                               Fyll i
                             </span>
                           )}
+                          {dupKeyById.has(p.id) && (
+                            <button
+                              type="button"
+                              onClick={() => setCompareKey(dupKeyById.get(p.id)!)}
+                              className="shrink-0 rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 hover:bg-rose-200"
+                              title="Jämför med det andra pappret"
+                            >
+                              Dubblett?
+                            </button>
+                          )}
+
 
                           <button
                             type="button"
@@ -1227,6 +1378,61 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
           })}
         </div>
       )}
+
+      <Dialog open={!!compareKey} onOpenChange={(o) => !o && setCompareKey(null)}>
+        <DialogContent className="max-h-[92vh] w-[97vw] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-base">Jämför möjliga dubbletter</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            De här pappren har samma företag och belopp eller samma dokumentnummer. Jämför bilderna
+            och ta bort det du inte vill behålla — inget tas bort automatiskt.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {compareGroup.map((p) => (
+              <CompareCard
+                key={p.id}
+                paper={p}
+                onOpen={() => {
+                  setCompareKey(null);
+                  openEdit(p);
+                }}
+                onDelete={() => {
+                  if (!confirm("Ta bort det här pappret?")) return;
+                  del.mutate(p.id);
+                  if (compareGroup.length <= 2) setCompareKey(null);
+                }}
+              />
+            ))}
+          </div>
+          {dupGroups.length > 1 && (
+            <div className="flex flex-wrap gap-1.5 border-t border-border pt-2">
+              <span className="w-full text-[11px] font-semibold text-muted-foreground">
+                Andra möjliga dubbletter
+              </span>
+              {dupGroups.map(([key, group]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setCompareKey(key)}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-[11px] font-medium",
+                    key === compareKey ? "border-transparent bg-primary text-primary-foreground" : "bg-card",
+                  )}
+                >
+                  {group[0].company_name || group[0].title || "Utan företag"} ·{" "}
+                  {group[0].paper_date ?? "utan datum"} ({group.length})
+                </button>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompareKey(null)}>
+              Stäng
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[92vh] w-[97vw] overflow-y-auto sm:max-w-lg lg:max-w-5xl">
