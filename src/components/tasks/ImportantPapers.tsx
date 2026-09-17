@@ -761,6 +761,23 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     if (next) openEdit(next);
   }
 
+  /** Piltangenterna byter papper, men inte när du skriver i ett fält. */
+  useEffect(() => {
+    if (!open || !edit) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el?.isContentEditable) return;
+      e.preventDefault();
+      goRelative(e.key === "ArrowLeft" ? -1 : 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+
 
   const num = (v: string) => {
     const n = Number(v.replace(",", "."));
