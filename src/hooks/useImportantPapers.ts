@@ -8,6 +8,7 @@ export const PAPER_TYPES = [
   { value: "faktura", label: "Fakturor", singular: "Faktura", color: "#f59e0b" },
   { value: "brev", label: "Brev", singular: "Brev", color: "#7c3aed" },
   { value: "anteckning", label: "Anteckningar", singular: "Anteckning", color: "#64748b" },
+  { value: "kort", label: "Kort", singular: "Kort", color: "#0f766e" },
 ] as const;
 
 export type PaperType = (typeof PAPER_TYPES)[number]["value"];
@@ -191,6 +192,50 @@ export function useSaveImportantPaper() {
       };
       if (fileUrl) Object.assign(row, { file_url: fileUrl, file_name: fileName, file_mime: fileMime });
 
+      // Ett foto av ett kort läggs in i kortregistret, så att köp kan matchas mot kortet.
+      const last4 = row.card_last4 as string | null;
+      if (last4) {
+        const { data: existing } = await supabase
+          .from("payment_cards")
+          .select("id")
+          .eq("card_last4", last4)
+          .eq("active", true)
+          .maybeSingle();
+        let cardId = (existing as { id?: string } | null)?.id ?? null;
+        if (input.paperType === "kort") {
+          if (cardId) {
+            await supabase
+              .from("payment_cards")
+              .update({
+                card_brand: (row.card_brand as string | null) ?? null,
+                card_holder: (row.card_holder as string | null) ?? null,
+                store_id: input.storeId ?? null,
+                staff_id: input.paidByStaffId ?? null,
+                card_kind: input.isExpenseClaim ? "privat" : "foretag",
+              })
+              .eq("id", cardId);
+          } else {
+            const { data: created, error: cardErr } = await supabase
+              .from("payment_cards")
+              .insert({
+                card_last4: last4,
+                card_brand: (row.card_brand as string | null) ?? null,
+                card_holder: (row.card_holder as string | null) ?? null,
+                store_id: input.storeId ?? null,
+                staff_id: input.paidByStaffId ?? null,
+                card_kind: input.isExpenseClaim ? "privat" : "foretag",
+              })
+              .select("id")
+              .single();
+            if (cardErr) throw cardErr;
+            cardId = created.id as string;
+          }
+          row.payment_method = null;
+        }
+        // Kortköp kopplas alltid till kortet med samma fyra sista siffror.
+        if (cardId && !row.card_id) row.card_id = cardId;
+      }
+
       if (input.id) {
         const { error } = await supabase.from("important_papers").update(row).eq("id", input.id);
         if (error) throw error;
@@ -204,7 +249,10 @@ export function useSaveImportantPaper() {
       if (error) throw error;
       return data.id as string;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["important-papers"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["important-papers"] });
+      qc.invalidateQueries({ queryKey: ["payment-cards"] });
+    },
   });
 }
 
