@@ -86,6 +86,7 @@ export function EntityImageGallery({
 }: Props) {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const [lightboxId, setLightboxId] = useState<string | null>(null);
   const [selectOpen, setSelectOpen] = useState(false);
   const [selection, setSelection] = useState<string[]>([]);
