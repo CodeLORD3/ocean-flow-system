@@ -550,7 +550,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     if (money(p.net_amount)) patch.netAmount = money(p.net_amount);
     if (money(p.vat_amount)) patch.vatAmount = money(p.vat_amount);
     if (money(p.gross_amount)) patch.grossAmount = money(p.gross_amount);
-    if (["CHF", "SEK", "EUR"].includes(str(p.currency).toUpperCase()))
+    if (["CHF", "SEK", "DKK", "NOK", "EUR", "GBP", "USD"].includes(str(p.currency).toUpperCase()))
       patch.currency = str(p.currency).toUpperCase();
     if (["kort", "kontant"].includes(str(p.payment_method))) patch.paymentMethod = str(p.payment_method);
     if (str(p.card_brand)) patch.cardBrand = str(p.card_brand);
@@ -1960,9 +1960,13 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CHF">CHF</SelectItem>
-                    <SelectItem value="SEK">SEK</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="CHF">CHF – schweizerfranc</SelectItem>
+                    <SelectItem value="SEK">SEK – svenska kronor</SelectItem>
+                    <SelectItem value="DKK">DKK – danska kronor</SelectItem>
+                    <SelectItem value="NOK">NOK – norska kronor</SelectItem>
+                    <SelectItem value="EUR">EUR – euro</SelectItem>
+                    <SelectItem value="GBP">GBP – pund</SelectItem>
+                    <SelectItem value="USD">USD – dollar</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
