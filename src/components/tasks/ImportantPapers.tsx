@@ -2041,7 +2041,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                       (staff ? `${staff.first_name ?? ""} ${staff.last_name ?? ""}`.trim() : ""),
                     cardKind: cardForm.cardKind,
                   });
-                  toast.success("Kortet är inlagt");
+                  toast.success(editingCardId ? "Kortet är uppdaterat" : "Kortet är inlagt");
+                  setEditingCardId(null);
                   setCardOpen(false);
                 } catch (e: any) {
                   toast.error(e?.message ?? "Kunde inte spara kortet");
