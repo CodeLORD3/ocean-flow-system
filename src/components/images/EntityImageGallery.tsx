@@ -109,6 +109,13 @@ export function EntityImageGallery({
   const [dateLimit, setDateLimit] = useState(DATE_PAGE);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [catalogCollapsed, setCatalogCollapsed] = useState(false);
+  /** Markeringsläge för att samla bilder i en grupp. */
+  const [pickMode, setPickMode] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [groupDialog, setGroupDialog] = useState(false);
+  const [groupName, setGroupName] = useState("");
+  const [groupDesc, setGroupDesc] = useState("");
+  const [dayDesc, setDayDesc] = useState<string | null>(null);
 
   const [lastDay, setLastDay] = useState(() => dayKey(new Date().toISOString()));
   const selectDay = (key: string) => {
