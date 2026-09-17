@@ -354,14 +354,20 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         toast.info("Hittade ingen information på pappret — fyll i själv");
         return;
       }
+      if (patch.paperType === "kort") {
+        for (const k of ["netAmount", "vatAmount", "grossAmount", "documentNumber", "description", "itemsText", "expenseAccount", "expenseCategory", "paymentMethod"] as FormKey[]) {
+          delete patch[k];
+        }
+      }
+      const shown = Object.keys(patch) as FormKey[];
       setForm((prev) => ({ ...prev, ...patch }) as typeof prev);
-      setAutoFilled(new Set(keys));
+      setAutoFilled(new Set(shown));
       const owner = staffIdFromName(patch.cardHolder ?? "");
       if (owner) {
         setKortOwner(owner);
         setKortOwnerAuto(true);
       }
-      toast.success(`${keys.length} fält avlästa — kontrollera de gula fälten`);
+      toast.success(`${shown.length} fält avlästa — kontrollera de gula fälten`);
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte läsa av pappret");
     } finally {
@@ -1250,7 +1256,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 <Input
                   value={form.companyName}
                   onChange={(e) => setField("companyName", e.target.value)}
-                  placeholder="t.ex. Migros"
+                  placeholder="Företagets namn"
                   className={cn("h-10", lit("companyName"))}
                 />
                 <div className="mt-2 flex items-center gap-2">
@@ -1265,7 +1271,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   <Input
                     value={form.companyWebsite}
                     onChange={(e) => setField("companyWebsite", e.target.value)}
-                    placeholder="Webbadress, t.ex. migros.ch — ger logotypen"
+                    placeholder="Webbadress — ger logotypen"
                     className={cn("h-10", lit("companyWebsite"))}
                   />
                 </div>
@@ -1281,6 +1287,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               </div>
             </div>
 
+            {form.paperType !== "kort" && (
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <Label className="text-xs">Nettobelopp{litLabel("netAmount")}</Label>
@@ -1316,7 +1323,10 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 </Select>
               </div>
             </div>
+            )}
 
+            {form.paperType !== "kort" && (
+            <>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Nummer på pappret{litLabel("documentNumber")}</Label>
@@ -1380,7 +1390,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 <Input
                   value={form.expenseCategory}
                   onChange={(e) => setField("expenseCategory", e.target.value)}
-                  placeholder="Livsmedel, Frakt …"
+                  placeholder="Kostnadsslag"
                   className={cn("h-10", lit("expenseCategory"))}
                 />
               </div>
@@ -1391,7 +1401,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               <Textarea
                 value={form.itemsText}
                 onChange={(e) => setField("itemsText", e.target.value)}
-                placeholder={"En vara per rad, belopp sist\nCitroner 12.50\nDiskmedel 8.90"}
+                placeholder="En vara per rad, belopp sist"
                 rows={4}
                 className={cn("font-mono text-sm", lit("itemsText"))}
               />
@@ -1402,11 +1412,13 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               <Textarea
                 value={form.description}
                 onChange={(e) => setField("description", e.target.value)}
-                placeholder="Kort och sökbart, t.ex. Blommor till disken"
+                placeholder="Kort och sökbart"
                 rows={2}
                 className={cn(lit("description"))}
               />
             </div>
+            </>
+            )}
 
             <div>
               <Label className="text-xs">Foto eller fil</Label>
