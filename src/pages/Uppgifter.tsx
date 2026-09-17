@@ -381,6 +381,7 @@ export default function Uppgifter() {
             ["personer", "Personer"],
             ["kalender", "Kalender"],
             ["produktion", "Produktion"],
+            ["ekonomi", "Ekonomi"],
             ["checklistor", "Checklistor"],
             ["sagordu", "Så gör du"],
             ["standard", "Standarduppgifter"],
