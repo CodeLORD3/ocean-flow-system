@@ -1379,6 +1379,61 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         </div>
       )}
 
+      <Dialog open={!!compareKey} onOpenChange={(o) => !o && setCompareKey(null)}>
+        <DialogContent className="max-h-[92vh] w-[97vw] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-base">Jämför möjliga dubbletter</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            De här pappren har samma företag och belopp eller samma dokumentnummer. Jämför bilderna
+            och ta bort det du inte vill behålla — inget tas bort automatiskt.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {compareGroup.map((p) => (
+              <CompareCard
+                key={p.id}
+                paper={p}
+                onOpen={() => {
+                  setCompareKey(null);
+                  openEdit(p);
+                }}
+                onDelete={() => {
+                  if (!confirm("Ta bort det här pappret?")) return;
+                  del.mutate(p.id);
+                  if (compareGroup.length <= 2) setCompareKey(null);
+                }}
+              />
+            ))}
+          </div>
+          {dupGroups.length > 1 && (
+            <div className="flex flex-wrap gap-1.5 border-t border-border pt-2">
+              <span className="w-full text-[11px] font-semibold text-muted-foreground">
+                Andra möjliga dubbletter
+              </span>
+              {dupGroups.map(([key, group]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setCompareKey(key)}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-[11px] font-medium",
+                    key === compareKey ? "border-transparent bg-primary text-primary-foreground" : "bg-card",
+                  )}
+                >
+                  {group[0].company_name || group[0].title || "Utan företag"} ·{" "}
+                  {group[0].paper_date ?? "utan datum"} ({group.length})
+                </button>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompareKey(null)}>
+              Stäng
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[92vh] w-[97vw] overflow-y-auto sm:max-w-lg lg:max-w-5xl">
           <DialogHeader className="sticky top-0 z-20 -mx-6 -mt-6 border-b border-border bg-background px-6 pb-2 pt-4">
