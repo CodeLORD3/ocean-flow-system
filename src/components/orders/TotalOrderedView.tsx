@@ -542,8 +542,9 @@ export function TotalOrderedView({
           r.unit,
           qtyText(r.total, r.unit),
           qtyText(r.packed, r.unit),
-          qtyText(Math.max(r.total - r.packed, 0), r.unit),
-          PACK_LABEL[packState(r.total, r.packed)],
+          qtyText(remainingOf(r.total, r.packed, r.closed), r.unit),
+          PACK_LABEL[packState(r.total, r.packed, r.closed)],
+
           extraText(r.stock, r.unit),
           extraText(r.onOrder, r.unit),
           extraText(r.combined, r.unit),
