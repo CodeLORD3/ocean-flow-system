@@ -2013,6 +2013,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             </div>
 
             {form.paperType !== "kort" && (
+            <>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <div>
                 <Label className="text-xs">Nettobelopp{litLabel("netAmount")}</Label>
