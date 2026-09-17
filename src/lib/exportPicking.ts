@@ -127,15 +127,16 @@ export async function shopOrderLinesMissingBatch(
   );
   if (!relevant.length) return [];
 
-  const { data: batches } = await supabase.rpc("order_line_batches", {
-    _reference_type: "shop_order",
-    _reference_id: orderId,
-  });
+  const { data: moves } = await supabase
+    .from("stock_movements")
+    .select("product_id, lot_id")
+    .eq("reference_type", "shop_order")
+    .eq("reference_id", orderId)
+    .not("lot_id", "is", null);
   const withBatch = new Set(
-    ((batches as any[]) || [])
-      .filter((b) => (b.batches ?? "").trim().length > 0)
-      .map((b) => b.product_id as string),
+    ((moves as any[]) || []).map((m) => m.product_id as string).filter(Boolean),
   );
+
 
   const missing = new Map<string, string>();
   for (const line of relevant as any[]) {
