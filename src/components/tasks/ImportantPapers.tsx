@@ -78,6 +78,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         p.company_name,
         p.description,
         p.document_number,
+        p.payment_method,
         p.paper_date,
         p.created_by_name,
         paperTypeInfo(p.paper_type).singular,
