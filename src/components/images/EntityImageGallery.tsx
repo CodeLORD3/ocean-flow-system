@@ -694,7 +694,134 @@ export function EntityImageGallery({
             <span className="hidden sm:inline">Redigera vilka bilder som visas</span>
           </Button>
         )}
+        {editable && images.length > 0 && (
+          <Button
+            variant={pickMode ? "default" : "outline"}
+            size="sm"
+            className="h-9 shrink-0 gap-1.5 px-3 text-xs sm:h-7"
+            onClick={() => {
+              setPickMode((v) => !v);
+              setPicked([]);
+            }}
+          >
+            <FolderPlus className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+            {pickMode ? "Avbryt val" : "Samla i grupp"}
+          </Button>
+        )}
+        {pickMode && (
+          <Button
+            size="sm"
+            className="h-9 shrink-0 gap-1.5 px-3 text-xs sm:h-7"
+            disabled={!picked.length}
+            onClick={() => setGroupDialog(true)}
+          >
+            <Check className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+            Spara grupp ({picked.length})
+          </Button>
+        )}
       </div>
+
+      {/* Beskrivning för dagen eller gruppen man tittar på */}
+      {catalog && editable && view.mode === "day" && (
+        <Card className="space-y-1.5 p-2.5">
+          <div className="flex items-center gap-2">
+            <span className={cn("rounded px-2 py-0.5 text-[11px] font-semibold", dayBadgeClass(`${view.key}T12:00:00`))}>
+              {dayLabel(view.key)}
+            </span>
+            <span className="text-[11px] text-muted-foreground">Beskriv dagens bilder</span>
+          </div>
+          <Textarea
+            value={dayDesc ?? dayGroups.find((g) => g.day_key === view.key)?.description ?? ""}
+            onChange={(e) => setDayDesc(e.target.value)}
+            placeholder="T.ex. Ombyggnad av disken"
+            className="min-h-[52px] text-xs"
+          />
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              disabled={dayDesc === null || saveDayDesc.isPending}
+              onClick={async () => {
+                const key = view.mode === "day" ? view.key : "";
+                try {
+                  await saveDayDesc.mutateAsync({
+                    entityType,
+                    entityId,
+                    dayKey: key,
+                    description: dayDesc ?? "",
+                    name: dayLabel(key),
+                  });
+                  setDayDesc(null);
+                  toast({ title: "Beskrivningen sparad" });
+                } catch (e: any) {
+                  toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
+                }
+              }}
+            >
+              Spara beskrivning
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {catalog && activeGroup && (
+        <Card className="space-y-1.5 p-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-1.5 text-sm font-semibold">
+              <Folder className="h-3.5 w-3.5 text-muted-foreground" />
+              {activeGroup.name}
+            </span>
+            {editable && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-destructive"
+                onClick={async () => {
+                  await deleteGroup.mutateAsync({ id: activeGroup.id, entityType, entityId });
+                  setView({ mode: "featured" });
+                  toast({ title: "Gruppen borttagen — bilderna ligger kvar" });
+                }}
+              >
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                Ta bort grupp
+              </Button>
+            )}
+          </div>
+          {editable ? (
+            <>
+              <Textarea
+                value={dayDesc ?? activeGroup.description ?? ""}
+                onChange={(e) => setDayDesc(e.target.value)}
+                placeholder="Beskriv gruppen"
+                className="min-h-[52px] text-xs"
+              />
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  disabled={dayDesc === null || updateGroup.isPending}
+                  onClick={async () => {
+                    await updateGroup.mutateAsync({
+                      id: activeGroup.id,
+                      description: dayDesc ?? "",
+                      entityType,
+                      entityId,
+                    });
+                    setDayDesc(null);
+                    toast({ title: "Beskrivningen sparad" });
+                  }}
+                >
+                  Spara beskrivning
+                </Button>
+              </div>
+            </>
+          ) : (
+            activeGroup.description && <p className="text-xs text-muted-foreground">{activeGroup.description}</p>
+          )}
+        </Card>
+      )}
 
       {/* Saknas utvalda bilder för idag? Påminn personalen om stjärnan. */}
       {editable && previewCount && !isLoading && featured.length === 0 && todayImageCount > 0 && (
