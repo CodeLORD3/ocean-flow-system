@@ -161,7 +161,18 @@ function PersonSelect({
           </SelectItem>
         ))}
         {hits.length === 0 && (
-          <p className="px-3 py-2 text-xs text-muted-foreground">Ingen person matchar sökningen</p>
+          <p className="px-3 py-2 text-xs text-muted-foreground">
+            Ingen person matchar sökningen — skriv namnet fritt i fältet under i stället
+          </p>
+        )}
+        {value && (
+          <button
+            type="button"
+            className="w-full px-3 py-2 text-left text-xs text-muted-foreground hover:bg-muted"
+            onClick={() => onChange("")}
+          >
+            Ta bort personvalet
+          </button>
         )}
       </SelectContent>
     </Select>
@@ -1403,6 +1414,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     staffList={staffList}
                     className={cn(kortOwnerAuto && "border-amber-500 bg-amber-50 ring-1 ring-amber-400")}
                   />
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Är det någon utanför personallistan? Lämna valet tomt och skriv namnet i "Namnet på kortet".
+                  </p>
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   <Button
@@ -1886,18 +1900,22 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 staffList={staffList}
                 className={cardAutoFilled.has("staffId") ? "border-amber-400 bg-amber-50" : ""}
               />
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                Tillhör kortet någon som inte finns i personallistan? Lämna valet tomt och skriv namnet här under.
+              </p>
               <Input
                 value={cardForm.cardHolder}
                 onChange={(e) => {
                   setCardAutoFilled((s) => {
                     const n = new Set(s);
                     n.delete("cardHolder");
+                    n.delete("staffId");
                     return n;
                   });
                   setCardForm((f) => ({ ...f, cardHolder: e.target.value }));
                 }}
-                placeholder="Eller skriv namnet på kortet"
-                className={`mt-2 h-10 ${cardAutoFilled.has("cardHolder") ? "border-amber-400 bg-amber-50" : ""}`}
+                placeholder="Skriv namnet fritt, t.ex. bolaget eller en extern person"
+                className={`mt-1.5 h-10 ${cardAutoFilled.has("cardHolder") ? "border-amber-400 bg-amber-50" : ""}`}
               />
             </div>
 
