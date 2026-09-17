@@ -889,26 +889,15 @@ function ReportSection({
               </span>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-              {lines.map((l) => {
-                const lots = plausibleLots(l as any);
-                const raw = ((l as any).lot_numbers ?? []).filter(Boolean) as string[];
-                return (
-                  <div key={l.id} className="flex items-center gap-1.5 text-[11px] min-w-0">
-                    <span className="truncate flex-1 text-muted-foreground">{l.product_name}</span>
-                    {lots.length > 0 ? (
-                      lots.map((n) => (
-                        <span key={n} className="font-mono tabular-nums text-foreground">{n}</span>
-                      ))
-                    ) : raw.length > 0 ? (
-                      <span className="font-mono tabular-nums text-amber-600" title="Inläst värde ser inte ut som ett partinummer">
-                        {raw.join(", ")}?
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground/60">saknas</span>
-                    )}
-                  </div>
-                );
-              })}
+              {lines.map((l) => (
+                <LotNumberEditor
+                  key={l.id}
+                  line={l as any}
+                  documentDate={report.document_date}
+                  locked={isLocked}
+                  onSave={(numbers) => onUpdateLine(l.id, { lot_numbers: numbers } as any)}
+                />
+              ))}
             </div>
           </div>
 
