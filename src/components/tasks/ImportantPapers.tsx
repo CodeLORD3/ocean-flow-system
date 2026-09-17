@@ -703,6 +703,38 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Bokföringskonto{litLabel("expenseAccount")}</Label>
+                <Input
+                  value={form.expenseAccount}
+                  onChange={(e) => setField("expenseAccount", e.target.value)}
+                  placeholder="t.ex. 4010"
+                  className={cn("h-10 font-mono tabular-nums", lit("expenseAccount"))}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Kostnadsslag{litLabel("expenseCategory")}</Label>
+                <Input
+                  value={form.expenseCategory}
+                  onChange={(e) => setField("expenseCategory", e.target.value)}
+                  placeholder="Livsmedel, Frakt …"
+                  className={cn("h-10", lit("expenseCategory"))}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs">Vad köptes?{litLabel("itemsText")}</Label>
+              <Textarea
+                value={form.itemsText}
+                onChange={(e) => setField("itemsText", e.target.value)}
+                placeholder={"En vara per rad, belopp sist\nCitroner 12.50\nDiskmedel 8.90"}
+                rows={4}
+                className={cn("font-mono text-sm", lit("itemsText"))}
+              />
+            </div>
+
             <div>
               <Label className="text-xs">Vad innehåller pappret?{litLabel("description")}</Label>
               <Textarea
