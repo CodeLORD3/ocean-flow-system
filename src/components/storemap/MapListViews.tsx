@@ -88,7 +88,7 @@ export function MapListViews({
         </CardHeader>
         <CardContent>
           {images.length === 0 ? (
-            <EmptyState title="Inga bilder ännu" description="Välj en yta i kartan och lägg till en bild på en exakt plats." />
+            <EmptyState title="Inga bilder ännu" description="Ta ett foto på en yta eller lägg till bilder från biblioteket." />
           ) : (
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {images.map((i) => (
