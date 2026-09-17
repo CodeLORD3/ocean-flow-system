@@ -115,6 +115,57 @@ function parseItems(text: string) {
 }
 
 /** Ekonomi → Viktiga papper: kvitton, följesedlar, fakturor, brev och anteckningar. */
+/** Väljer person med sökfält och profilbild — listan kan vara lång. */
+function PersonSelect({
+  value,
+  onChange,
+  staffList,
+  className,
+}: {
+  value: string;
+  onChange: (id: string) => void;
+  staffList: { id: string; first_name?: string | null; last_name?: string | null; profile_image_url?: string | null }[];
+  className?: string;
+}) {
+  const [q, setQ] = useState("");
+  const name = (s: { first_name?: string | null; last_name?: string | null }) =>
+    `${s.first_name ?? ""} ${s.last_name ?? ""}`.trim();
+  const hits = staffList.filter((s) => name(s).toLowerCase().includes(q.trim().toLowerCase()));
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className={cn("h-10", className)}>
+        <SelectValue placeholder="Välj person" />
+      </SelectTrigger>
+      <SelectContent>
+        <div className="sticky top-0 z-10 bg-popover p-1.5">
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
+              placeholder="Sök person"
+              className="h-9 pl-8"
+            />
+          </div>
+        </div>
+        {hits.map((s) => (
+          <SelectItem key={s.id} value={s.id}>
+            <span className="flex items-center gap-2">
+              <StaffAvatar name={name(s)} imageUrl={s.profile_image_url ?? null} className="h-7 w-7" />
+              {name(s)}
+            </span>
+          </SelectItem>
+        ))}
+        {hits.length === 0 && (
+          <p className="px-3 py-2 text-xs text-muted-foreground">Ingen person matchar sökningen</p>
+        )}
+      </SelectContent>
+    </Select>
+  );
+}
+
 export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const { data: papers = [], isLoading } = useImportantPapers(storeId);
   const save = useSaveImportantPaper();
@@ -1263,29 +1314,15 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                       </span>
                     ) : null}
                   </Label>
-                  <Select
+                  <PersonSelect
                     value={kortOwner}
-                    onValueChange={(v) => {
+                    onChange={(v) => {
                       setKortOwnerAuto(false);
                       setKortOwner(v);
                     }}
-                  >
-                    <SelectTrigger
-                      className={cn(
-                        "h-10",
-                        kortOwnerAuto && "border-amber-500 bg-amber-50 ring-1 ring-amber-400",
-                      )}
-                    >
-                      <SelectValue placeholder="Välj person" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {staffList.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {`${s.first_name ?? ""} ${s.last_name ?? ""}`.trim()}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    staffList={staffList}
+                    className={cn(kortOwnerAuto && "border-amber-500 bg-amber-50 ring-1 ring-amber-400")}
+                  />
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   <Button
@@ -1717,9 +1754,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
 
             <div>
               <Label className="text-xs">Vem äger kortet?</Label>
-              <Select
+              <PersonSelect
                 value={cardForm.staffId}
-                onValueChange={(v) => {
+                onChange={(v) => {
                   setCardAutoFilled((st) => {
                     const n = new Set(st);
                     n.delete("staffId");
@@ -1727,20 +1764,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   });
                   setCardForm((f) => ({ ...f, staffId: v }));
                 }}
-              >
-                <SelectTrigger
-                  className={`h-10 ${cardAutoFilled.has("staffId") ? "border-amber-400 bg-amber-50" : ""}`}
-                >
-                  <SelectValue placeholder="Välj person" />
-                </SelectTrigger>
-                <SelectContent>
-                  {staffList.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {`${s.first_name ?? ""} ${s.last_name ?? ""}`.trim()}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                staffList={staffList}
+                className={cardAutoFilled.has("staffId") ? "border-amber-400 bg-amber-50" : ""}
+              />
               <Input
                 value={cardForm.cardHolder}
                 onChange={(e) => {
