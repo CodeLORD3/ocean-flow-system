@@ -1917,7 +1917,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 className={`h-10 ${cardAutoFilled.has("bank") ? "border-amber-400 bg-amber-50" : ""}`}
               />
               <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {["PostFinance", "UBS", "Raiffeisen", "ZKB", "Migros Bank", "SEB", "Swedbank", "Handelsbanken", "Nordea"].map(
+                {BANK_CHOICES.map(
                   (b) => (
                     <Button
                       key={b}
