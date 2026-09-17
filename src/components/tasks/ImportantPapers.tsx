@@ -93,6 +93,39 @@ const FIELD_LABELS: Record<string, string> = {
   itemsText: "Köpta varor",
 };
 
+/** Vanliga momssatser per valuta — snabbval i formuläret. */
+const VAT_SUGGESTIONS: Record<string, number[]> = {
+  CHF: [2.6, 8.1],
+  SEK: [6, 12, 25],
+  DKK: [25],
+  NOK: [15, 25],
+  EUR: [7, 19],
+  GBP: [0, 20],
+  USD: [0],
+};
+
+/** Kort text som visar om momsen ser rimlig ut jämfört med landets satser. */
+function vatSanity(f: { netAmount: string; vatAmount: string; grossAmount: string; vatRate: string; currency: string }) {
+  const n = (s: string) => {
+    const v = Number(String(s).replace(",", ".").replace(/\s/g, ""));
+    return Number.isFinite(v) && String(s).trim() !== "" ? v : null;
+  };
+  const net = n(f.netAmount);
+  const vat = n(f.vatAmount);
+  const gross = n(f.grossAmount);
+  const rate = n(f.vatRate);
+  if (net != null && vat != null && gross != null && Math.abs(net + vat - gross) > 0.05) {
+    return "Netto + moms stämmer inte med brutto";
+  }
+  if (rate == null) return "";
+  const known = VAT_SUGGESTIONS[f.currency] ?? [6, 12, 25];
+  const ok = known.some((k) => Math.abs(k - rate) < 0.15);
+  return ok
+    ? `${String(rate).replace(".", ",")} % — vanlig sats`
+    : `${String(rate).replace(".", ",")} % — ovanlig sats, kontrollera`;
+}
+
+
 function whenLabel(iso: string) {
   const d = new Date(iso);
   const time = d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
