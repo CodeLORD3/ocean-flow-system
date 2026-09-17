@@ -1127,7 +1127,7 @@ export function TotalOrderedView({
                               </div>
                               <div className="divide-y divide-border/40">
                                 {visible.map((o) => {
-                                  const os = packState(o.quantity, o.packed);
+                                  const os = packState(o.quantity, o.packed, o.closed);
                                   return (
                                   <button
                                     type="button"
