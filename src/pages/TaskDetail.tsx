@@ -214,17 +214,37 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                 type="file"
                 accept="image/*"
                 capture="environment"
+                multiple
                 className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) addPhoto(f);
+                onChange={async (e) => {
+                  const files = Array.from(e.target.files ?? []);
                   e.currentTarget.value = "";
+                  for (const f of files) await addPhoto(f);
                 }}
               />
               <span className="inline-flex h-10 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted">
                 <Camera className="h-4 w-4" /> Ta bild
               </span>
             </label>
+            <label className="inline-flex">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={async (e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  e.currentTarget.value = "";
+                  for (const f of files) await addPhoto(f);
+                }}
+              />
+              <span className="inline-flex h-10 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted">
+                <ImageIcon className="h-4 w-4" /> Bibliotek
+              </span>
+            </label>
+            <Button variant="outline" size="lg" onClick={() => setArchiveOpen(true)}>
+              <Search className="mr-1 h-4 w-4" /> Sök i arkiv
+            </Button>
           </div>
         </div>
         {(task.requires_note || task.requires_value) && (
