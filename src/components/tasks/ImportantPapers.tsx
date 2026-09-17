@@ -88,9 +88,14 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   });
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const camRef = useRef<HTMLInputElement>(null);
+  const libRef = useRef<HTMLInputElement>(null);
   const [reading, setReading] = useState(false);
+  const [queue, setQueue] = useState<{ done: number; total: number } | null>(null);
+  const [needsOnly, setNeedsOnly] = useState(false);
   // Fält som lästes av från pappret — de lyser tills någon rättar dem.
   const [autoFilled, setAutoFilled] = useState<Set<string>>(new Set());
+
 
   type FormKey =
     | "paperType"
