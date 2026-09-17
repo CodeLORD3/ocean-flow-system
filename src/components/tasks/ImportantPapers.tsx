@@ -1093,7 +1093,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               <p className="mt-1 text-[11px] text-muted-foreground">
                 {reading
                   ? "Läser av pappret …"
-                  : "Fälten fylls i automatiskt från fotot — kontrollera de gröna fälten."}
+                  : "Fälten fylls i automatiskt från fotot. Gult = avläst och inte kontrollerat, grönt = du har skrivit in eller rättat det."}
               </p>
             </div>
           </div>
@@ -1105,6 +1105,147 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             <Button onClick={submit} disabled={save.isPending}>
               {save.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
               Spara
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Kortregistret: när kortet är inlagt vet systemet vem som betalat. */}
+      <Dialog open={cardOpen} onOpenChange={setCardOpen}>
+        <DialogContent className="max-h-[90vh] w-[95vw] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Lägg till ett kort</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Korttyp</Label>
+                <Input
+                  value={cardForm.cardBrand}
+                  onChange={(e) => setCardForm((f) => ({ ...f, cardBrand: e.target.value }))}
+                  placeholder="Visa, Twint …"
+                  className="h-10"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Sista 4 siffror</Label>
+                <Input
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={cardForm.cardLast4}
+                  onChange={(e) =>
+                    setCardForm((f) => ({ ...f, cardLast4: e.target.value.replace(/\D/g, "").slice(0, 4) }))
+                  }
+                  placeholder="4321"
+                  className="h-10 font-mono tabular-nums"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs">Vem äger kortet?</Label>
+              <Select
+                value={cardForm.staffId}
+                onValueChange={(v) => setCardForm((f) => ({ ...f, staffId: v }))}
+              >
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Välj person" />
+                </SelectTrigger>
+                <SelectContent>
+                  {staffList.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {`${s.first_name ?? ""} ${s.last_name ?? ""}`.trim()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                value={cardForm.cardHolder}
+                onChange={(e) => setCardForm((f) => ({ ...f, cardHolder: e.target.value }))}
+                placeholder="Eller skriv namnet på kortet"
+                className="mt-2 h-10"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs">Vad är det för kort?</Label>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                {[
+                  ["foretag", "Företagskort"],
+                  ["privat", "Privat kort — utlägg"],
+                ].map(([value, label]) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    variant={cardForm.cardKind === value ? "default" : "outline"}
+                    className="h-11 text-sm font-semibold"
+                    onClick={() => setCardForm((f) => ({ ...f, cardKind: value as "foretag" | "privat" }))}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Privat kort betyder att personen lagt ut egna pengar och ska få dem tillbaka.
+              </p>
+            </div>
+
+            {paymentCards.length > 0 && (
+              <div className="border-t border-border pt-2">
+                <p className="mb-1 text-xs font-semibold">Kort som finns inlagda</p>
+                <div className="space-y-1">
+                  {paymentCards.map((c) => (
+                    <div key={c.id} className="flex items-center gap-2 text-xs">
+                      <StaffAvatar
+                        name={c.staff_name ?? c.card_holder}
+                        imageUrl={c.staff_image}
+                        className="h-7 w-7"
+                      />
+                      <span className="min-w-0 flex-1 truncate">{cardLabel(c)}</span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-destructive"
+                        onClick={() => removeCard.mutate(c.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCardOpen(false)}>
+              Avbryt
+            </Button>
+            <Button
+              disabled={!/^\d{4}$/.test(cardForm.cardLast4) || saveCard.isPending}
+              onClick={async () => {
+                try {
+                  const staff = staffList.find((s) => s.id === cardForm.staffId);
+                  await saveCard.mutateAsync({
+                    storeId: storeId ?? null,
+                    staffId: cardForm.staffId || null,
+                    cardBrand: cardForm.cardBrand,
+                    cardLast4: cardForm.cardLast4,
+                    cardHolder:
+                      cardForm.cardHolder ||
+                      (staff ? `${staff.first_name ?? ""} ${staff.last_name ?? ""}`.trim() : ""),
+                    cardKind: cardForm.cardKind,
+                  });
+                  toast.success("Kortet är inlagt");
+                  setCardOpen(false);
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Kunde inte spara kortet");
+                }
+              }}
+            >
+              {saveCard.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+              Spara kortet
             </Button>
           </DialogFooter>
         </DialogContent>
