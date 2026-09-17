@@ -420,6 +420,11 @@ export default function DailyReport() {
         comment: comment.trim() || null,
         created_by: me ? `${me.first_name} ${me.last_name}` : null,
       });
+      try {
+        localStorage.removeItem(draftKey);
+      } catch {
+        /* ignoreras */
+      }
       toast.success("Dagsrapport sparad");
       switchTab("/organisation");
     } catch (e: any) {
