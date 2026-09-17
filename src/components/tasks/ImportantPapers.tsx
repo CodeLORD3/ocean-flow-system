@@ -152,6 +152,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     itemsText: "",
     cardId: "",
   });
+  // Gäller när pappret är ett kort: vem äger kortet och är det privat (utlägg)?
+  const [kortOwner, setKortOwner] = useState("");
+  const [kortPrivat, setKortPrivat] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const camRef = useRef<HTMLInputElement>(null);
