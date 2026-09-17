@@ -397,6 +397,43 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     toast.success(`${rows.length} fält uppdaterade — kontrollera de gula fälten`);
   }
 
+  /** Läser av ett foto av kortet och fyller kortformuläret. */
+  async function readCardPhoto(file: File | null | undefined) {
+    if (!file) return;
+    setCardReading(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(new Error("Kunde inte läsa filen"));
+        r.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke("parse-viktigt-papper", {
+        body: { dataUrl, fileName: file.name, kind: "card" },
+      });
+      if (error) throw error;
+      const card = (data as { paper?: Record<string, unknown> } | null)?.paper ?? {};
+      const brand = typeof card.card_brand === "string" ? card.card_brand : "";
+      const last4 = typeof card.card_last4 === "string" ? card.card_last4.replace(/\D/g, "").slice(-4) : "";
+      const holder = typeof card.card_holder === "string" ? card.card_holder : "";
+      const found = new Set<string>();
+      setCardForm((f) => {
+        const next = { ...f };
+        if (brand) { next.cardBrand = brand; found.add("cardBrand"); }
+        if (last4.length === 4) { next.cardLast4 = last4; found.add("cardLast4"); }
+        if (holder) { next.cardHolder = holder; found.add("cardHolder"); }
+        return next;
+      });
+      setCardAutoFilled(found);
+      if (found.size === 0) toast.info("Hittade inget på kortet — skriv in själv");
+      else toast.success("Kortet avläst — kontrollera de gula fälten");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte läsa kortet");
+    } finally {
+      setCardReading(false);
+    }
+  }
+
   /**
    * Mobilflödet: bilderna läggs in först och sparas direkt, ett papper per bild.
    * Det som kan läsas av fylls i automatiskt — resten finredigeras senare.
