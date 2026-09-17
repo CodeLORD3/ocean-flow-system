@@ -28,6 +28,8 @@ export interface ImportantPaper {
   gross_amount: number | null;
   currency: string;
   document_number: string | null;
+  /** Betalsätt, används främst för kvitton: "kort" eller "kontant". */
+  payment_method: string | null;
   description: string | null;
   tags: string[];
   file_url: string | null;
