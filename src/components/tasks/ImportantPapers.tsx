@@ -310,6 +310,61 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   }
 
   /**
+   * Läser av det sparade fotot igen och visar vad avläsningen ger jämfört med
+   * det som står i pappret nu. Ingenting ändras förrän man väljer nya värden.
+   */
+  async function rereadSaved() {
+    if (!edit?.file_url) return;
+    setReading(true);
+    try {
+      const signed = await resolveStorageUrl(edit.file_url);
+      if (!signed) throw new Error("Kunde inte hämta bilden");
+      const res = await fetch(signed);
+      if (!res.ok) throw new Error("Kunde inte hämta bilden");
+      const blob = await res.blob();
+      const f = new File([blob], edit.file_name ?? "papper", {
+        type: edit.file_mime ?? blob.type ?? "image/jpeg",
+      });
+      const patch = await parsePaper(f);
+      const rows = (Object.keys(patch) as FormKey[])
+        .map((key) => ({
+          key,
+          label: FIELD_LABELS[key] ?? key,
+          current: String((form as Record<string, string>)[key] ?? ""),
+          next: patch[key] ?? "",
+        }))
+        .filter((r) => r.next.trim() !== "");
+      if (rows.length === 0) {
+        toast.info("Avläsningen hittade ingen information på bilden");
+        return;
+      }
+      setCompare(rows);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunde inte läsa av bilden igen");
+    } finally {
+      setReading(false);
+    }
+  }
+
+  /** Lägger in valda värden från den nya avläsningen. Gult = kontrollera dem. */
+  function applyCompare(rows: { key: FormKey; next: string }[]) {
+    if (!rows.length) return;
+    setForm((prev) => {
+      const next = { ...prev } as Record<string, string>;
+      for (const r of rows) next[r.key] = r.next;
+      return next as typeof prev;
+    });
+    setAutoFilled(new Set(rows.map((r) => r.key)));
+    setChecked((prev) => {
+      const next = new Set(prev);
+      for (const r of rows) next.delete(r.key);
+      return next;
+    });
+    setCompare(null);
+    toast.success(`${rows.length} fält uppdaterade — kontrollera de gula fälten`);
+  }
+
+  /**
    * Mobilflödet: bilderna läggs in först och sparas direkt, ett papper per bild.
    * Det som kan läsas av fylls i automatiskt — resten finredigeras senare.
    */
