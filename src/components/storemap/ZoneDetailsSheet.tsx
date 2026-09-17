@@ -210,7 +210,7 @@ export default function ZoneDetailsSheet({ zone, open, isNew, saving, onClose, o
             onClick={() =>
               onSave({
                 name: name.trim(),
-                zone_kind: kind || null,
+                zone_kind: kinds.length ? kinds.join(", ") : null,
                 area_sqm: sqm.trim() === "" ? null : Number(sqm.replace(",", ".")),
                 color,
                 description: description.trim() || null,
