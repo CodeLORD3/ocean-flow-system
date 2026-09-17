@@ -124,6 +124,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       documentNumber: p.document_number ?? "",
       description: p.description ?? "",
       title: p.title ?? "",
+      paymentMethod: (p.payment_method as "kort" | "kontant" | null) ?? "",
     });
     setOpen(true);
   }
