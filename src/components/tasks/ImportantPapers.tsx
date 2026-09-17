@@ -180,7 +180,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const [typeFilter, setTypeFilter] = useState<"alla" | PaperType>("alla");
   const [payFilter, setPayFilter] = useState("alla");
   const [accountFilter, setAccountFilter] = useState("alla");
-  const [sortBy, setSortBy] = useState("senast");
+  const [sortBy, setSortBy] = useState("datum");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<ImportantPaper | null>(null);
@@ -754,6 +754,14 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     setOpen(true);
   }
 
+  /** Bläddra mellan papperna i samma ordning som listan visar dem. */
+  const editIndex = edit ? sorted.findIndex((p) => p.id === edit.id) : -1;
+  function goRelative(delta: number) {
+    const next = sorted[editIndex + delta];
+    if (next) openEdit(next);
+  }
+
+
   const num = (v: string) => {
     const n = Number(v.replace(",", "."));
     return v.trim() === "" || Number.isNaN(n) ? null : n;
@@ -1077,8 +1085,55 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[92vh] w-[97vw] overflow-y-auto sm:max-w-lg lg:max-w-5xl">
-          <DialogHeader>
-            <DialogTitle>{edit ? "Ändra papper" : "Nytt papper"}</DialogTitle>
+          <DialogHeader className="sticky top-0 z-20 -mx-6 -mt-6 border-b border-border bg-background px-6 pb-2 pt-4">
+            <div className="flex items-center gap-2">
+              {edit && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    disabled={editIndex <= 0}
+                    onClick={() => goRelative(-1)}
+                    title="Föregående papper"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    disabled={editIndex < 0 || editIndex >= sorted.length - 1}
+                    onClick={() => goRelative(1)}
+                    title="Nästa papper"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+              <div className="min-w-0 flex-1">
+                <DialogTitle className="truncate text-base">
+                  {form.paperDate
+                    ? new Date(form.paperDate).toLocaleDateString("sv-SE", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : edit
+                      ? "Papper utan datum"
+                      : "Nytt papper"}
+                </DialogTitle>
+                <p className="truncate text-xs text-muted-foreground">
+                  {[form.companyName, edit ? "Ändra papper" : "Nytt papper"].filter(Boolean).join(" · ")}
+                  {editIndex >= 0 ? ` · ${editIndex + 1} av ${sorted.length}` : ""}
+                </p>
+              </div>
+              <Button onClick={submit} disabled={save.isPending} className="h-9 shrink-0">
+                {save.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+                Spara
+              </Button>
+            </div>
           </DialogHeader>
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
