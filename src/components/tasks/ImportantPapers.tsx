@@ -21,12 +21,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { cn } from "@/lib/utils";
 import { resolveStorageUrl } from "@/lib/signedStorage";
 import { cleanDomain, companyLogoUrl } from "@/lib/companyLogo";
-import { accountLabel, accountsFor, suggestAccount } from "@/lib/expenseAccounts";
+import {
+  accountLabel,
+  accountsFor,
+  allAccountGroups,
+  counterpartAccount,
+  suggestAccount,
+} from "@/lib/expenseAccounts";
 import {
   PAPER_TYPES,
   paperTypeInfo,
@@ -1081,16 +1095,28 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="inget">Inget konto valt</SelectItem>
-                    {accountsFor(form.currency).map((a) => (
-                      <SelectItem key={a.code} value={a.code}>
-                        {`${a.code} — ${a.label}`}
-                      </SelectItem>
+                    {allAccountGroups(form.currency).map((g) => (
+                      <SelectGroup key={g.country}>
+                        <SelectLabel>{g.label}</SelectLabel>
+                        {g.accounts.map((a) => (
+                          <SelectItem key={`${g.country}-${a.code}`} value={a.code}>
+                            {`${a.code} — ${a.label}`}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     ))}
                   </SelectContent>
                 </Select>
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                  {form.currency === "SEK" ? "Svenska konton (BAS)" : "Schweiziska konton (KMU)"}
-                  {form.expenseAccount ? ` · ${accountLabel(form.expenseAccount, form.currency)}` : ""}
+                  {form.expenseAccount
+                    ? `${accountLabel(form.expenseAccount, form.currency)}${
+                        counterpartAccount(form.expenseAccount)
+                          ? ` · motsvarar ${counterpartAccount(form.expenseAccount)!.code} ${
+                              counterpartAccount(form.expenseAccount)!.label
+                            }`
+                          : ""
+                      }`
+                    : "Både svenska (BAS) och schweiziska (KMU) konton kan väljas"}
                 </p>
               </div>
               <div>
