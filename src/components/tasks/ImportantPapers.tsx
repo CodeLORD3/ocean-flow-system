@@ -722,7 +722,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         return;
       }
       if (patch.paperType === "kort") {
-        for (const k of ["netAmount", "vatAmount", "grossAmount", "documentNumber", "description", "itemsText", "expenseAccount", "expenseCategory", "paymentMethod"] as FormKey[]) {
+        for (const k of ["netAmount", "vatAmount", "grossAmount", "vatRate", "documentNumber", "description", "itemsText", "expenseAccount", "expenseCategory", "paymentMethod"] as FormKey[]) {
           delete patch[k];
         }
       }
