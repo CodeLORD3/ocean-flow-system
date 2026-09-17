@@ -731,30 +731,62 @@ export default function CustomerOrders() {
                     </div>
 
                     {w.days.map(([day, list]) => (
-                      <div key={day}>
+                      <div
+                        key={day}
+                        onDragOver={(e) => {
+                          if (!canEdit || dragIds.length === 0) return;
+                          e.preventDefault();
+                          setDragOverDay(day);
+                        }}
+                        onDragLeave={() => setDragOverDay((d) => (d === day ? null : d))}
+                        onDrop={(e) => {
+                          if (!canEdit || dragIds.length === 0) return;
+                          e.preventDefault();
+                          const ids = dragIds;
+                          setDragIds([]);
+                          setDragOverDay(null);
+                          moveTo(day, ids);
+                        }}
+                        className={dragOverDay === day ? "ring-2 ring-inset ring-primary" : ""}
+                      >
                         <div className="flex items-center gap-2 border-x border-b border-grid-line bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                           <span className="truncate">{dayLabel(day)}</span>
                           <span className="shrink-0 font-mono tabular-nums">
                             {list.length} order
                           </span>
+                          {dragOverDay === day && dragIds.length > 0 && (
+                            <span className="ml-auto shrink-0 rounded-sm bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                              Släpp här — flytta {dragIds.length}
+                            </span>
+                          )}
                         </div>
 
                         {list.map((o) => (
-                          <CustomerOrderRow
+                          <div
                             key={o.id}
-                            order={o}
-                            canEdit={canEdit}
-                            readOnly={rowReadOnly(o)}
-                            open={openRows.includes(o.id)}
-                            onToggle={toggleRow}
-                            selected={marked.includes(o.id)}
-                            onSelect={toggleMark}
-                            photoCount={photoCounts?.[o.id] ?? 0}
-                            orderCount={
-                              o.customer_id ? customerOrderCounts?.[o.customer_id] ?? 0 : 0
-                            }
-                            highlightProduct={focus?.orderId === o.id ? focus.product : null}
-                          />
+                            draggable={canEdit && !rowReadOnly(o)}
+                            onDragStart={() => startDrag(o.id)}
+                            onDragEnd={() => {
+                              setDragIds([]);
+                              setDragOverDay(null);
+                            }}
+                            className={dragIds.includes(o.id) ? "opacity-50" : ""}
+                          >
+                            <CustomerOrderRow
+                              order={o}
+                              canEdit={canEdit}
+                              readOnly={rowReadOnly(o)}
+                              open={openRows.includes(o.id)}
+                              onToggle={toggleRow}
+                              selected={marked.includes(o.id)}
+                              onSelect={toggleMark}
+                              photoCount={photoCounts?.[o.id] ?? 0}
+                              orderCount={
+                                o.customer_id ? customerOrderCounts?.[o.customer_id] ?? 0 : 0
+                              }
+                              highlightProduct={focus?.orderId === o.id ? focus.product : null}
+                            />
+                          </div>
                         ))}
                       </div>
                     ))}
