@@ -362,6 +362,61 @@ export default function PostIncomingDialog({ open, onOpenChange, report, lines, 
               </div>
             )}
 
+            {unresolvedLines.length > 0 && (
+              <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/5 p-3">
+                <p className="text-sm font-medium text-destructive">Åtgärda vikten</p>
+                {unresolvedLines.map(({ line, res }) => {
+                  const product = productById.get(line.product_id ?? "");
+                  const productUnit = (product?.unit ?? "kg").toLowerCase();
+                  const boxCase = (res.reason ?? "").includes("låd");
+                  const field = boxCase ? "nominal_weight_kg" : "weight_per_piece";
+                  const pid = line.product_id ?? "";
+                  return (
+                    <div key={line.id} className="space-y-2 rounded-md border bg-background p-3">
+                      <div className="text-sm font-medium">{line.product_name}</div>
+                      <p className="text-xs text-muted-foreground">
+                        {Number(line.quantity ?? 0)} {line.unit ?? productUnit} på följesedeln —{" "}
+                        {res.reason}
+                      </p>
+                      <div className="flex flex-wrap items-end gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs">
+                            {boxCase ? "Vikt per låda (kg)" : "Styckvikt (kg per styck)"}
+                          </Label>
+                          <Input
+                            className="h-12 w-40 tabular-nums"
+                            inputMode="decimal"
+                            placeholder={boxCase ? "10" : "0,5"}
+                            value={weightInputs[pid] ?? ""}
+                            onChange={(e) =>
+                              setWeightInputs((prev) => ({ ...prev, [pid]: e.target.value }))
+                            }
+                          />
+                        </div>
+                        <Button
+                          className="min-h-[48px]"
+                          disabled={!pid || fixing === pid}
+                          onClick={() => saveWeight(pid, field)}
+                        >
+                          Spara vikten
+                        </Button>
+                        {productUnit === "kg" && (line.unit ?? "").toLowerCase() !== "kg" && (
+                          <Button
+                            variant="outline"
+                            className="min-h-[48px]"
+                            disabled={fixing === line.id}
+                            onClick={() => setLineUnit(line.id, "kg")}
+                          >
+                            Raden är i kilo
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {plan.blockers.length > 0 && (
               <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 space-y-1">
                 <p className="text-sm font-medium text-destructive">Hinder som måste åtgärdas</p>
