@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ZONE_PALETTE } from "@/lib/mapPalette";
 import type { MapZone } from "@/hooks/useStoreMap";
-import { Check } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 
 /** Vanliga områdestyper i en fiskbutik — håller listan kort och begriplig. */
 export const ZONE_KINDS = [
