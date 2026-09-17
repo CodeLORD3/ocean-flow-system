@@ -496,12 +496,19 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     {[
                       p.paper_date,
                       p.payment_method === "kort"
-                        ? "Kort"
+                        ? [p.card_brand ?? "Kort", p.card_last4 ? `••${p.card_last4}` : null]
+                            .filter(Boolean)
+                            .join(" ")
                         : p.payment_method === "kontant"
                           ? "Kontant"
                           : null,
+                      p.expense_account ? `Konto ${p.expense_account}` : p.expense_category,
                       p.document_number,
-                      p.description,
+                      p.description ||
+                        (p.line_items ?? [])
+                          .slice(0, 3)
+                          .map((l) => l.name)
+                          .join(", "),
                     ]
                       .filter(Boolean)
                       .join(" · ") || "Ingen beskrivning"}
