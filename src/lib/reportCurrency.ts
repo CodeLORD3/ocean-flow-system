@@ -1,8 +1,20 @@
 /**
  * Valuta och momssats per butik i rapporterna.
- * Schweiz (Zollikon, Morges) rapporterar i CHF med 2,6 % moms på livsmedel,
- * svenska butiker i kronor med 6 % moms.
+ * Butiksraden bär valutan (SEK, CHF, DKK, NOK, EUR ...). Momssatsen nedan är
+ * standardsatsen på livsmedel i respektive land och kan alltid ändras i
+ * rapporten.
  */
+
+/** Standardmoms på livsmedel per valuta. */
+const FOOD_VAT: Record<string, number> = {
+  SEK: 6,
+  CHF: 2.6,
+  DKK: 25,
+  NOK: 15,
+  EUR: 7,
+  GBP: 0,
+  USD: 0,
+};
 
 /** Kort etikett som skrivs efter beloppet: "kr" i Sverige, annars valutakoden. */
 export function currencyLabel(currency?: string | null): string {
@@ -12,7 +24,8 @@ export function currencyLabel(currency?: string | null): string {
 
 /** Butikens momssats utifrån valutan. */
 export function defaultVatFor(currency?: string | null): number {
-  return (currency || "SEK").toUpperCase() === "CHF" ? 2.6 : 6;
+  const c = (currency || "SEK").toUpperCase();
+  return FOOD_VAT[c] ?? 6;
 }
 
 /** Belopp med butikens valuta, t.ex. "12 500 CHF". */
