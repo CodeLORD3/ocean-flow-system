@@ -69,6 +69,18 @@ export default function ZoneDetailsSheet({ zone, open, isNew, saving, onClose, o
 
   const canSave = name.trim().length > 0 && !saving;
 
+  const allKinds = [...ZONE_KINDS, ...kinds.filter((k) => !ZONE_KINDS.includes(k as never))];
+
+  const toggleKind = (k: string) =>
+    setKinds((prev) => (prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k]));
+
+  const addNewKind = () => {
+    const v = newKind.trim();
+    if (!v) return;
+    setKinds((prev) => (prev.some((x) => x.toLowerCase() === v.toLowerCase()) ? prev : [...prev, v]));
+    setNewKind("");
+  };
+
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent side="right" className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-md">
