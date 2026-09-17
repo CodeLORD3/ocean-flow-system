@@ -459,6 +459,8 @@ export function TotalOrderedView({
           total: 0,
           packed: 0,
           closed: 0,
+          value: 0,
+
 
           category: cat,
           productId: l.productId,
