@@ -730,7 +730,16 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   </span>
                 )}
 
-                <button type="button" onClick={() => openEdit(p)} className="min-w-0 flex-1 text-left">
+                <button type="button" onClick={() => openEdit(p)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                  {p.company_logo_url || companyLogoUrl(p.company_website) ? (
+                    <img
+                      src={p.company_logo_url || companyLogoUrl(p.company_website)!}
+                      alt={`Logotyp för ${p.company_name ?? "företaget"}`}
+                      className="h-8 w-8 shrink-0 rounded-md border border-border bg-white object-contain p-0.5"
+                      loading="lazy"
+                    />
+                  ) : null}
+                  <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">
                     {p.company_name || p.title || "Utan företag"}
                   </span>
@@ -960,6 +969,22 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   placeholder="t.ex. Migros"
                   className={cn("h-10", lit("companyName"))}
                 />
+                <div className="mt-2 flex items-center gap-2">
+                  {companyLogoUrl(form.companyWebsite) ? (
+                    <img
+                      src={companyLogoUrl(form.companyWebsite)!}
+                      alt={`Logotyp för ${form.companyName || "företaget"}`}
+                      className="h-9 w-9 shrink-0 rounded-md border border-border bg-white object-contain p-0.5"
+                      loading="lazy"
+                    />
+                  ) : null}
+                  <Input
+                    value={form.companyWebsite}
+                    onChange={(e) => setField("companyWebsite", e.target.value)}
+                    placeholder="Webbadress, t.ex. migros.ch — ger logotypen"
+                    className={cn("h-10", lit("companyWebsite"))}
+                  />
+                </div>
               </div>
               <div>
                 <Label className="text-xs">Datum på pappret{litLabel("paperDate")}</Label>
