@@ -575,7 +575,7 @@ function LotNumberEditor({
   const save = (text: string) => {
     const numbers = text
       .split(/[,\s]+/)
-      .map((n) => n.trim())
+      .map((n) => extractAuctionLotNumber(n) ?? n.trim())
       .filter(Boolean);
     if (!numbers.length) return;
     onSave(numbers);
