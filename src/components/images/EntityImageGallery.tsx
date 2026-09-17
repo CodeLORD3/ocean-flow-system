@@ -1246,6 +1246,60 @@ export function EntityImageGallery({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Namnge nyss uppladdade bilder — gör dem sökbara direkt */}
+      <Dialog open={nameIds.length > 0} onOpenChange={(v) => !v && setNameIds([])}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Namnge bilderna</DialogTitle>
+            <DialogDescription className="text-xs">
+              Ett kort namn gör bilden lätt att söka fram senare, t.ex. "Disken efter städning".
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {nameIds.map((id, idx) => {
+              const img = images.find((i) => i.id === id);
+              return (
+                <div key={id} className="flex items-center gap-2">
+                  {img && (
+                    <img
+                      src={thumbUrl(img.url, THUMB_TILE)}
+                      alt=""
+                      className="h-12 w-12 shrink-0 rounded-md object-cover"
+                    />
+                  )}
+                  <Input
+                    autoFocus={idx === 0}
+                    value={names[id] ?? ""}
+                    onChange={(e) => setNames((p) => ({ ...p, [id]: e.target.value }))}
+                    placeholder="Namn på bilden"
+                    className="h-10 text-sm"
+                  />
+                </div>
+              );
+            })}
+            <div className="flex gap-2">
+              <Button
+                className="h-11 flex-1 text-sm font-semibold"
+                onClick={() => {
+                  nameIds.forEach((id) => {
+                    const n = (names[id] ?? "").trim();
+                    if (n) updateImage.mutate({ id, caption: n });
+                  });
+                  setNameIds([]);
+                  setNames({});
+                  toast({ title: "Namnen är sparade" });
+                }}
+              >
+                Spara namn
+              </Button>
+              <Button variant="outline" className="h-11 text-sm" onClick={() => setNameIds([])}>
+                Hoppa över
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
