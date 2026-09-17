@@ -225,7 +225,11 @@ export function MapDetailDrawer({
               </h2>
               {areaLabel && <p className="text-sm text-muted-foreground tabular-nums">{areaLabel}</p>}
               {zone?.zone_kind && (
-                <Badge variant="outline" className="mt-1 text-[10px]">{zone.zone_kind}</Badge>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {zone.zone_kind.split(",").map((k) => k.trim()).filter(Boolean).map((k) => (
+                    <Badge key={k} variant="outline" className="text-[10px]">{k}</Badge>
+                  ))}
+                </div>
               )}
             </div>
             {onOpenPage && (

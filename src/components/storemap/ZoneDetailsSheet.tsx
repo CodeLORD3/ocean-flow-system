@@ -4,10 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { ZONE_PALETTE } from "@/lib/mapPalette";
 import type { MapZone } from "@/hooks/useStoreMap";
-import { Check } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 
 /** Vanliga områdestyper i en fiskbutik — håller listan kort och begriplig. */
 export const ZONE_KINDS = [
@@ -46,7 +46,8 @@ type Props = {
  */
 export default function ZoneDetailsSheet({ zone, open, isNew, saving, onClose, onSave }: Props) {
   const [name, setName] = useState("");
-  const [kind, setKind] = useState<string>("");
+  const [kinds, setKinds] = useState<string[]>([]);
+  const [newKind, setNewKind] = useState("");
   const [sqm, setSqm] = useState("");
   const [color, setColor] = useState<string>(ZONE_PALETTE[0].color);
   const [description, setDescription] = useState("");
@@ -54,13 +55,31 @@ export default function ZoneDetailsSheet({ zone, open, isNew, saving, onClose, o
   useEffect(() => {
     if (!zone || !open) return;
     setName(isNew && zone.name.startsWith("Nytt område") ? "" : zone.name);
-    setKind(zone.zone_kind ?? "");
+    setKinds(
+      (zone.zone_kind ?? "")
+        .split(",")
+        .map((k) => k.trim())
+        .filter(Boolean),
+    );
+    setNewKind("");
     setSqm(zone.area_sqm != null ? String(zone.area_sqm) : "");
     setColor(zone.color ?? ZONE_PALETTE[0].color);
     setDescription(zone.description ?? "");
   }, [zone?.id, open]);
 
   const canSave = name.trim().length > 0 && !saving;
+
+  const allKinds = [...ZONE_KINDS, ...kinds.filter((k) => !ZONE_KINDS.includes(k as never))];
+
+  const toggleKind = (k: string) =>
+    setKinds((prev) => (prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k]));
+
+  const addNewKind = () => {
+    const v = newKind.trim();
+    if (!v) return;
+    setKinds((prev) => (prev.some((x) => x.toLowerCase() === v.toLowerCase()) ? prev : [...prev, v]));
+    setNewKind("");
+  };
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
@@ -84,19 +103,53 @@ export default function ZoneDetailsSheet({ zone, open, isNew, saving, onClose, o
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label className="text-xs font-semibold">2. Vad används området till</Label>
-            <Select value={kind || "none"} onValueChange={(v) => setKind(v === "none" ? "" : v)}>
-              <SelectTrigger className="h-11 text-sm">
-                <SelectValue placeholder="Välj typ" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Ingen typ</SelectItem>
-                {ZONE_KINDS.map((k) => (
-                  <SelectItem key={k} value={k}>{k}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <p className="text-[11px] text-muted-foreground">Välj flera om området används till mer än en sak.</p>
+            <div className="flex flex-wrap gap-2">
+              {allKinds.map((k) => {
+                const on = kinds.includes(k);
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggleKind(k)}
+                    className={`flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition ${
+                      on
+                        ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                        : "border-border bg-background text-foreground"
+                    }`}
+                  >
+                    {on && <Check className="h-3.5 w-3.5" />}
+                    {k}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Input
+                value={newKind}
+                onChange={(e) => setNewKind(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addNewKind();
+                  }
+                }}
+                placeholder="Lägg till egen användning"
+                className="h-11 text-sm"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 shrink-0"
+                disabled={!newKind.trim()}
+                onClick={addNewKind}
+              >
+                <Plus className="mr-1 h-4 w-4" /> Lägg till
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-1.5">
@@ -157,7 +210,7 @@ export default function ZoneDetailsSheet({ zone, open, isNew, saving, onClose, o
             onClick={() =>
               onSave({
                 name: name.trim(),
-                zone_kind: kind || null,
+                zone_kind: kinds.length ? kinds.join(", ") : null,
                 area_sqm: sqm.trim() === "" ? null : Number(sqm.replace(",", ".")),
                 color,
                 description: description.trim() || null,
