@@ -40,7 +40,18 @@ import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { cn } from "@/lib/utils";
 import { focalStyle, focalPercent, focalLabel } from "@/lib/imageFocal";
 import { dayKey, dayLabel, initialsOf } from "@/lib/imageMeta";
+import { dayBadgeClass } from "@/lib/dayColor";
 import { thumbUrl, THUMB_TILE, THUMB_CARD } from "@/lib/imageThumb";
+import {
+  useImageGroups,
+  useCreateImageGroup,
+  useAddImagesToGroup,
+  useUpdateImageGroup,
+  useDeleteImageGroup,
+  useSaveDayDescription,
+} from "@/hooks/useImageGroups";
+import { FolderPlus, Folder } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 /** Datum + tid då bilden laddades upp, t.ex. "03-08 10:24". */
 function uploadedLabel(iso: string) {
@@ -53,7 +64,11 @@ function uploadedLabel(iso: string) {
   );
 }
 
-type View = { mode: "featured" } | { mode: "favorites" } | { mode: "day"; key: string };
+type View =
+  | { mode: "featured" }
+  | { mode: "favorites" }
+  | { mode: "day"; key: string }
+  | { mode: "group"; id: string };
 
 type Props = {
   entityType: string;
