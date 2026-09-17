@@ -764,6 +764,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                       .filter(Boolean)
                       .join(" · ") || "Ingen beskrivning"}
                   </span>
+                  </span>
                 </button>
                 <span className="shrink-0 text-right text-sm font-semibold tabular-nums">
                   {p.net_amount != null ? `${nf.format(p.net_amount)} ${p.currency}` : "—"}
