@@ -5852,6 +5852,87 @@ export type Database = {
         }
         Relationships: []
       }
+      image_group_items: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          image_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          image_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          image_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_group_items_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "image_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_group_items_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "entity_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      image_groups: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          day_key: string | null
+          description: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          kind: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          day_key?: string | null
+          description?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          kind?: string
+          name?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          day_key?: string | null
+          description?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          kind?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       incoming_deliveries: {
         Row: {
           created_at: string | null
