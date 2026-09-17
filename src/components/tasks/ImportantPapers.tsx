@@ -924,7 +924,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Sök företag, belopp, innehåll"
+              placeholder="Sök"
               className="h-9 pl-8"
             />
           </div>
