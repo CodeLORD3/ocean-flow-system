@@ -612,9 +612,10 @@ export default function ShopOrders() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="font-heading text-base">Ny beställning till grossist</CardTitle>
-                <CardDescription className="text-xs">
-                  Sök och lägg till produkter från produktbanken. Ange önskat antal och skicka beställningen.
+                <CardTitle className="font-heading text-base sm:text-base">Ny beställning till grossist</CardTitle>
+                <CardDescription className="text-xs sm:text-xs">
+                  Sök produkt, skriv antal — och fortsätt söka nästa produkt. Allt du lägger till hamnar i
+                  <strong className="text-foreground"> samma beställning</strong>. Skicka först när allt är med.
                 </CardDescription>
               </div>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCreatingOrder(false)}>
