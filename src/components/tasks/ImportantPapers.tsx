@@ -1473,6 +1473,29 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-teal-900">
                   <CreditCard className="h-4 w-4" /> Det här kortet läggs in i kortregistret
                 </p>
+                <div className="mb-2">
+                  <Label className="text-xs">Vilken bank står på kortet?{litLabel("companyName")}</Label>
+                  <Input
+                    value={form.companyName}
+                    onChange={(e) => setField("companyName", e.target.value)}
+                    placeholder="PostFinance, SEB …"
+                    className={cn("h-10", lit("companyName"))}
+                  />
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {BANK_CHOICES.map((b) => (
+                      <Button
+                        key={b}
+                        type="button"
+                        size="sm"
+                        variant={form.companyName === b ? "default" : "outline"}
+                        className="h-7 px-2 text-xs"
+                        onClick={() => setField("companyName", form.companyName === b ? "" : b)}
+                      >
+                        {b}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <Label className="text-xs">Korttyp{litLabel("cardBrand")}</Label>
