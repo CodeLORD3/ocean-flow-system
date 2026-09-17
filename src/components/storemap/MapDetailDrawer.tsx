@@ -437,16 +437,37 @@ export function MapDetailDrawer({
               <p className="text-sm font-semibold">
                 Bilder på denna yta {latest.length > 0 && <span className="text-muted-foreground">({latest.length})</span>}
               </p>
-              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted">
-                <Camera className="h-3.5 w-3.5" /> Lägg till bild
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="hidden"
-                  onChange={(e) => e.target.files?.[0] && addImage(e.target.files[0], "completion")}
-                />
-              </label>
+              <div className="flex items-center gap-1.5">
+                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted">
+                  <Camera className="h-3.5 w-3.5" /> Ta foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    multiple
+                    className="hidden"
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files ?? []);
+                      e.currentTarget.value = "";
+                      for (const f of files) await addImage(f, "completion");
+                    }}
+                  />
+                </label>
+                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted">
+                  <ImageIcon className="h-3.5 w-3.5" /> Från bibliotek
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files ?? []);
+                      e.currentTarget.value = "";
+                      for (const f of files) await addImage(f, "completion");
+                    }}
+                  />
+                </label>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
