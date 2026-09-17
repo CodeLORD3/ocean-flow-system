@@ -586,8 +586,43 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     </Button>
                   ))}
                 </div>
+
+                {form.paymentMethod === "kort" && (
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-xs">Korttyp{litLabel("cardBrand")}</Label>
+                      <Input
+                        value={form.cardBrand}
+                        onChange={(e) => setField("cardBrand", e.target.value)}
+                        placeholder="Visa, Twint …"
+                        className={cn("h-10", lit("cardBrand"))}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Sista 4 siffror{litLabel("cardLast4")}</Label>
+                      <Input
+                        inputMode="numeric"
+                        maxLength={4}
+                        value={form.cardLast4}
+                        onChange={(e) => setField("cardLast4", e.target.value.replace(/\D/g, "").slice(0, 4))}
+                        placeholder="4321"
+                        className={cn("h-10 font-mono tabular-nums", lit("cardLast4"))}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Kortet tillhör{litLabel("cardHolder")}</Label>
+                      <Input
+                        value={form.cardHolder}
+                        onChange={(e) => setField("cardHolder", e.target.value)}
+                        placeholder="Namn"
+                        className={cn("h-10", lit("cardHolder"))}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+
 
             <div className="grid grid-cols-2 gap-2">
               <div>
