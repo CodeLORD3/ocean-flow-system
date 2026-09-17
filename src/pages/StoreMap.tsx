@@ -297,10 +297,35 @@ export default function StoreMap() {
           setMode("redigera");
           setView("karta");
           setSelected({ kind: "zone", id: id as string });
-          toast({ title: "Området är skapat", description: "Ge det ett namn och dra det på plats i kartan." });
+          setDraftZoneId(id as string);
+          setSheetZoneId(null);
         },
         onError: (e) =>
           toast({ title: "Kunde inte skapa området", description: (e as Error).message, variant: "destructive" }),
+      },
+    );
+  };
+
+  /** Sparar uppgifterna från sidopanelen på området. */
+  const saveZoneDetails = (values: {
+    name: string;
+    zone_kind: string | null;
+    area_sqm: number | null;
+    color: string;
+    description: string | null;
+  }) => {
+    const id = sheetZoneId;
+    if (!id) return;
+    saveZone.mutate(
+      { id, ...values },
+      {
+        onSuccess: () => {
+          setSheetZoneId(null);
+          setDraftZoneId(null);
+          toast({ title: "Området är sparat", description: values.name });
+        },
+        onError: (e) =>
+          toast({ title: "Kunde inte spara området", description: (e as Error).message, variant: "destructive" }),
       },
     );
   };
