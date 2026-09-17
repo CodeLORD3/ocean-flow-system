@@ -215,6 +215,37 @@ export function StorePhotoStrip({
     );
   };
 
+  /** Listrad med namn, plats, tid och fotograf. */
+  const row = (img: EntityImage, i: number) => {
+    const color = colorOf(img);
+    return (
+      <button
+        key={img.id}
+        type="button"
+        onClick={() => setIndex(i)}
+        className="flex w-full items-center gap-3 rounded-lg border border-border bg-card px-2 py-2 text-left transition hover:bg-muted"
+      >
+        <img
+          src={img.url}
+          alt={img.caption ?? labelOf(img)}
+          loading="lazy"
+          className="h-12 w-16 shrink-0 rounded-md object-cover"
+        />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium">{img.caption || "Utan namn"}</span>
+          <span className="flex items-center gap-1.5 truncate text-[11px] text-muted-foreground">
+            {color && <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />}
+            {labelOf(img)}
+          </span>
+        </span>
+        <span className="shrink-0 text-right text-[11px] text-muted-foreground">
+          <span className="block tabular-nums">{shortWhen(img.created_at)}</span>
+          {img.uploaded_by_name && <span className="block truncate">{img.uploaded_by_name}</span>}
+        </span>
+      </button>
+    );
+  };
+
   return (
     <div className="rounded-xl border border-border bg-card p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
