@@ -41,6 +41,12 @@ export function cleanLotNumbers(values: unknown): string[] {
   for (const v of list) {
     const text = String(v ?? "").trim();
     if (!text) continue;
+    // Auktionsnumret gäller före allt annat, även om det står mitt i en text.
+    const auction = extractAuctionLotNumber(text);
+    if (auction) {
+      if (!out.includes(auction)) out.push(auction);
+      continue;
+    }
     if (NOISE.test(text)) continue; // kvalitetsklass + säljarkod, inte parti
     if (!/\d/.test(text)) continue; // partinummer utan siffra finns inte
     if (!out.includes(text)) out.push(text);
