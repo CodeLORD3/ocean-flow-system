@@ -9,6 +9,8 @@ import { FileUp, Loader2, ExternalLink, RefreshCw } from "lucide-react";
 import { fortnoxDraftCreatedText, fortnoxJobStatusLabel } from "@/lib/fortnoxStatus";
 import { FortnoxCancelDraftButton } from "./FortnoxCancelDraftButton";
 import { isExportStore, shopOrderLinesMissingBatch } from "@/lib/exportPicking";
+import { ShopOrderBatchRepairDialog } from "./ShopOrderBatchRepairDialog";
+
 
 /**
  * Skickar en butiksorder (Ålsten, Zollikon m.fl.) till Fortnox som fakturautkast.
@@ -18,6 +20,8 @@ export function ShopOrderFortnoxButton({ orderId }: { orderId: string }) {
   const qc = useQueryClient();
   const [sending, setSending] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [repairOpen, setRepairOpen] = useState(false);
+
 
   const job = useQuery({
     queryKey: ["fortnox_invoice_job", orderId],
@@ -52,10 +56,12 @@ export function ShopOrderFortnoxButton({ orderId }: { orderId: string }) {
       const missing = await shopOrderLinesMissingBatch(orderId);
       if (missing.length) {
         setSending(false);
+        setRepairOpen(true);
         return toast.error(
-          `Kan inte faktureras: parti saknas på ${missing.map((m) => m.productName).join(", ")}. Koppla parti på leveransen först.`,
+          `Parti saknas på ${missing.map((m) => m.productName).join(", ")}. Koppla parti innan fakturan skickas.`,
         );
       }
+
     }
     const { data, error } = await supabase.functions.invoke("fortnox-send-shop-invoice", {
       body: { order_id: orderId },
@@ -126,9 +132,19 @@ export function ShopOrderFortnoxButton({ orderId }: { orderId: string }) {
         {sending ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <FileUp className="mr-1 h-3.5 w-3.5" />}
         Skicka till Fortnox
       </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 text-[11px]"
+        onClick={() => setRepairOpen(true)}
+      >
+        Koppla parti
+      </Button>
       {job.data?.status === "failed" && job.data?.last_error && (
         <span className="text-[11px] text-destructive">{job.data.last_error}</span>
       )}
+      <ShopOrderBatchRepairDialog orderId={orderId} open={repairOpen} onOpenChange={setRepairOpen} />
     </div>
   );
+
 }
