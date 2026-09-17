@@ -19,6 +19,7 @@ import { toast } from "@/hooks/use-toast";
 import { MapComposer } from "@/components/storemap/MapComposer";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
+import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { dueText, progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { useToggleChecklistItem } from "@/hooks/useChecklist";
 import {
@@ -113,6 +114,7 @@ export function MapDetailDrawer({
   const { data: deviations = [] } = useDeviations(false);
   const { data: staff = [] } = useStaff(storeId);
   const [tab, setTab] = useState("summary");
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const openIssues = deviations.filter(
     (d) => (d as { source?: string; source_id?: string }).source === entityType && (d as { source_id?: string }).source_id === entityId,
@@ -294,8 +296,15 @@ export function MapDetailDrawer({
 
             {latest.length > 0 && (
               <div className="grid grid-cols-3 gap-2">
-                {latest.slice(0, 3).map((i) => (
-                  <img key={i.id} src={i.url} alt={i.caption ?? label} className="h-16 w-full rounded-md object-cover" />
+                 {latest.slice(0, 3).map((i, imageIndex) => (
+                   <button
+                     key={i.id}
+                     type="button"
+                     onClick={() => setLightboxIndex(imageIndex)}
+                     aria-label={`Öppna bild ${imageIndex + 1} av ${latest.length}`}
+                   >
+                     <img src={i.url} alt={i.caption ?? label} className="h-16 w-full rounded-md object-cover" />
+                   </button>
                 ))}
               </div>
             )}
@@ -472,9 +481,16 @@ export function MapDetailDrawer({
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {latest.map((i) => (
+               {latest.map((i, imageIndex) => (
                 <div key={i.id} className="overflow-hidden rounded-xl border border-border">
-                  <img src={i.url} alt={i.caption ?? label} className="h-28 w-full object-cover" />
+                   <button
+                     type="button"
+                     className="block w-full"
+                     onClick={() => setLightboxIndex(imageIndex)}
+                     aria-label={`Öppna bild ${imageIndex + 1} av ${latest.length}`}
+                   >
+                     <img src={i.url} alt={i.caption ?? label} className="h-28 w-full object-cover" />
+                   </button>
                   <div className="flex items-start gap-1 px-2 py-1.5">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-medium">{i.caption ?? label}</p>
@@ -520,6 +536,13 @@ export function MapDetailDrawer({
               ))}
             </div>
             {latest.length === 0 && <EmptyState title="Inga bilder ännu" description="Ta ett foto för att dokumentera." />}
+             <ImageLightbox
+               images={latest}
+               index={lightboxIndex}
+               onIndexChange={setLightboxIndex}
+               onClose={() => setLightboxIndex(null)}
+               title={label || "Bilder"}
+             />
 
             {zone && (
               <div className="space-y-2">

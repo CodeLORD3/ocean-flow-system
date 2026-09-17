@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { AlertTriangle, CheckCircle2, History, ImageIcon, ListChecks } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/EmptyState";
+import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { STATUS_COLOR } from "@/lib/mapStatus";
 import type { EntityImage } from "@/hooks/useEntityImages";
 import type { MapObject, MapTask, MapZone } from "@/hooks/useStoreMap";
@@ -33,6 +35,7 @@ export function MapListViews({
   zoneNumbers: Record<string, number>;
   onOpenZone: (zoneId: string) => void;
 }) {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const zoneName = (id?: string | null) => zones.find((z) => z.id === id)?.name ?? "Utan yta";
   const zoneColor = (id?: string | null) => zones.find((z) => z.id === id)?.color ?? "hsl(var(--primary))";
 
@@ -91,13 +94,13 @@ export function MapListViews({
             <EmptyState title="Inga bilder ännu" description="Ta ett foto på en yta eller lägg till bilder från biblioteket." />
           ) : (
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {images.map((i) => (
+               {images.map((i, imageIndex) => (
                 <button
                   key={i.id}
-                  onClick={() => {
-                    if (zones.some((z) => z.id === i.entity_id)) onOpenZone(i.entity_id);
-                  }}
+                   type="button"
+                   onClick={() => setLightboxIndex(imageIndex)}
                   className="overflow-hidden rounded-xl border border-border text-left hover:border-primary"
+                   aria-label={`Öppna bild ${imageIndex + 1} av ${images.length}`}
                 >
                   <img src={i.url} alt={i.caption ?? zoneName(i.entity_id)} className="h-28 w-full object-cover" />
                   <div className="px-2 py-1.5">
@@ -110,6 +113,14 @@ export function MapListViews({
               ))}
             </div>
           )}
+           <ImageLightbox
+             images={images}
+             index={lightboxIndex}
+             onIndexChange={setLightboxIndex}
+             onClose={() => setLightboxIndex(null)}
+             title="Bilder i butiken"
+             sourceLabelOf={(image) => zoneName(image.entity_id)}
+           />
         </CardContent>
       </Card>
     );
