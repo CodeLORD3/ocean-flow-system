@@ -116,6 +116,20 @@ function parseItems(text: string) {
     });
 }
 
+/** Banker/kortutgivare vi ser oftast — snabbval i kortregistret. */
+const BANK_CHOICES = [
+  "PostFinance",
+  "UBS",
+  "Raiffeisen",
+  "ZKB",
+  "Migros Bank",
+  "Sparkasse",
+  "SEB",
+  "Swedbank",
+  "Handelsbanken",
+  "Nordea",
+];
+
 /** Ekonomi → Viktiga papper: kvitton, följesedlar, fakturor, brev och anteckningar. */
 /** Väljer person med sökfält och profilbild — listan kan vara lång. */
 function PersonSelect({
