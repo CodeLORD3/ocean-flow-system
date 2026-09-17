@@ -5950,6 +5950,7 @@ export type Database = {
           net_amount: number | null
           paper_date: string | null
           paper_type: string
+          payment_method: string | null
           store_id: string | null
           tags: string[]
           title: string | null
@@ -5972,6 +5973,7 @@ export type Database = {
           net_amount?: number | null
           paper_date?: string | null
           paper_type?: string
+          payment_method?: string | null
           store_id?: string | null
           tags?: string[]
           title?: string | null
@@ -5994,6 +5996,7 @@ export type Database = {
           net_amount?: number | null
           paper_date?: string | null
           paper_type?: string
+          payment_method?: string | null
           store_id?: string | null
           tags?: string[]
           title?: string | null
