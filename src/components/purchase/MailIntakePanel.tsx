@@ -61,8 +61,9 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
   const { data: products = [] } = useProducts();
   const { data: suppliers = [] } = useSuppliers();
   const { data: sizeGrades = [] } = useSizeGrades();
-  const { runIntake, runFortnoxIntake, saveSender, removeSender, ignoreMessage, setDocumentSupplier, invalidate } =
+  const { runIntake, runFortnoxIntake, saveSender, removeSender, ignoreMessage, setDocumentSupplier, releaseDuplicate, invalidate } =
     useMailIntakeActions();
+
 
   const [busyId, setBusyId] = useState<string | null>(null);
   const [approveError, setApproveError] = useState<string | null>(null);
@@ -450,9 +451,45 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                         ? `Redan registrerad${d.document_number ? ` (nr ${d.document_number})` : ""} — läggs inte upp igen`
                         : d.parse_error}
                     </p>
+                    {d.status === "dubblett" && (d as any).duplicate_of && (
+                      <p className="text-[11px] text-muted-foreground">
+                        Systemet tolkade den som samma som{" "}
+                        {documents.find((x) => x.id === (d as any).duplicate_of)?.file_name ?? "ett tidigare dokument"}
+                        {(d as any).document_date ? ` · dokumentdatum ${(d as any).document_date}` : ""}
+                      </p>
+                    )}
                   </div>
+                  {d.status === "dubblett" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 shrink-0 text-xs"
+                      disabled={releaseDuplicate.isPending}
+                      onClick={() =>
+                        releaseDuplicate.mutate(
+                          {
+                            id: d.id,
+                            document_date: (d as any).document_date ?? null,
+                            file_name: d.file_name,
+                          },
+                          {
+                            onSuccess: () =>
+                              toast({
+                                title: "Skickad till attest",
+                                description: "Dokumentet väntar nu på attest i kön.",
+                              }),
+                            onError: (e: any) =>
+                              toast({ title: "Kunde inte släppa", description: e.message, variant: "destructive" }),
+                          },
+                        )
+                      }
+                    >
+                      Är ingen dubblett — skicka till attest
+                    </Button>
+                  )}
                 </div>
               ))}
+
             </div>
           </ScrollArea>
         </TabsContent>

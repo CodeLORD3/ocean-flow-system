@@ -483,19 +483,27 @@ Deno.serve(async (req) => {
               }
             }
 
-            // Dubblettspärr på dokumentnummer + leverantör.
+            // Dubblettspärr: kräver samma leverantör, samma typ OCH samma
+            // dokumentdatum. Ett kort löpnummer (t.ex. "10") återkommer på
+            // varje följesedel från vissa leverantörer och får inte ensamt
+            // stoppa dokumentet från attest.
+            const docDate = (header.document_date as string) || null;
             let duplicateOf: string | null = null;
-            if (documentNumber && docSupplierId) {
-              const { data: prev } = await supabase
+            if (docSupplierId && docDate) {
+              let q = supabase
                 .from("supplier_documents")
                 .select("id")
                 .eq("supplier_id", docSupplierId)
                 .eq("doc_type", docType)
-                .ilike("document_number", documentNumber)
-                .neq("id", doc.id)
-                .maybeSingle();
-              duplicateOf = prev?.id ?? null;
+                .eq("document_date", docDate)
+                .neq("id", doc.id);
+              if (documentNumber && !/^\d{1,4}$/.test(documentNumber.trim())) {
+                q = q.ilike("document_number", documentNumber);
+              }
+              const { data: prev } = await q.limit(1);
+              duplicateOf = prev?.[0]?.id ?? null;
             }
+
 
             await supabase
               .from("supplier_documents")
