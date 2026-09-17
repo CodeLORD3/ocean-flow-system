@@ -254,6 +254,29 @@ export function StorePhotoStrip({
           {allImages.length > 0 && <span className="tabular-nums">· {allImages.length}</span>}
         </p>
         <div className="flex items-center gap-1.5">
+          {/* Välj mellan stora bilder och lista med namn */}
+          <div className="flex items-center rounded-full border border-border p-0.5">
+            <Button
+              size="icon"
+              variant={layout === "bilder" ? "default" : "ghost"}
+              className="h-7 w-7 rounded-full"
+              aria-label="Visa som bilder"
+              aria-pressed={layout === "bilder"}
+              onClick={() => setLayout("bilder")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant={layout === "lista" ? "default" : "ghost"}
+              className="h-7 w-7 rounded-full"
+              aria-label="Visa som lista med namn"
+              aria-pressed={layout === "lista"}
+              onClick={() => setLayout("lista")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
           <Button
             size="sm"
             variant="ghost"
