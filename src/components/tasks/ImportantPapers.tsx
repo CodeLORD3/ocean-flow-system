@@ -656,9 +656,10 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         cardBrand: form.cardBrand,
         cardLast4: form.cardLast4,
         cardHolder: form.cardHolder,
-        cardId: activeCard?.id ?? null,
-        paidByStaffId: activeCard?.staff_id ?? null,
-        isExpenseClaim: activeCard?.card_kind === "privat",
+        cardId: form.paperType === "kort" ? null : activeCard?.id ?? null,
+        paidByStaffId: form.paperType === "kort" ? kortOwner || null : activeCard?.staff_id ?? null,
+        isExpenseClaim:
+          form.paperType === "kort" ? kortPrivat : activeCard?.card_kind === "privat",
         expenseAccount: form.expenseAccount,
         expenseCategory: form.expenseCategory,
         lineItems: parseItems(form.itemsText),
