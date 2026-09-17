@@ -130,9 +130,19 @@ export function ShopOrderFortnoxButton({ orderId }: { orderId: string }) {
         {sending ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <FileUp className="mr-1 h-3.5 w-3.5" />}
         Skicka till Fortnox
       </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 text-[11px]"
+        onClick={() => setRepairOpen(true)}
+      >
+        Koppla parti
+      </Button>
       {job.data?.status === "failed" && job.data?.last_error && (
         <span className="text-[11px] text-destructive">{job.data.last_error}</span>
       )}
+      <ShopOrderBatchRepairDialog orderId={orderId} open={repairOpen} onOpenChange={setRepairOpen} />
     </div>
   );
+
 }
