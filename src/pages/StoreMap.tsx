@@ -964,6 +964,15 @@ export default function StoreMap() {
                             }
                             className="h-7 w-20 text-xs tabular-nums"
                           />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-[10px] gap-1"
+                            title="Beskriv området"
+                            onClick={() => setSheetZoneId(z.id)}
+                          >
+                            <Pencil className="h-3 w-3" /> Info
+                          </Button>
                         </div>
                         <div className="flex items-center gap-1">
                           {ZONE_PALETTE.map((c) => (
