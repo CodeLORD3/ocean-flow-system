@@ -135,7 +135,8 @@ export default function PortalChooser() {
   const enterStore = (id: string, name: string) => {
     setSite("shop");
     setActiveStore(id, name);
-    navigate("/organisation", { replace: true });
+    // Butiksportalen startar alltid i den nya Översikten (butikskartan)
+    navigate("/store-map", { replace: true });
   };
 
   const enterPortal = (key: PortalKey) => {
