@@ -608,6 +608,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 >
                   {info.singular}
                 </span>
+                {needsCheck(p) && (
+                  <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                    Fyll i
+                  </span>
+                )}
+
                 <button type="button" onClick={() => openEdit(p)} className="min-w-0 flex-1 text-left">
                   <span className="block truncate text-sm font-medium">
                     {p.company_name || p.title || "Utan företag"}
