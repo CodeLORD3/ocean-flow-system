@@ -602,7 +602,7 @@ function LotNumberEditor({
         </>
       ) : locked ? (
         <span className="text-muted-foreground/60">
-          {raw.length > 0 ? `${raw.join(", ")}?` : "saknas"}
+          {raw.length > 0 ? `${raw.join(", ")}?` : "saknas — lås upp för att fylla i"}
         </span>
       ) : (
         <>
@@ -637,6 +637,7 @@ function LotNumberEditor({
     </div>
   );
 }
+
 
 /** Valutastämpel som sparas historiskt på inköpet när leverantören fakturerar i annan valuta. */
 type PurchaseFx = {
