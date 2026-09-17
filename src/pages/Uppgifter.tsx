@@ -666,6 +666,10 @@ export default function Uppgifter() {
           <ProductionRecipes />
         </TabsContent>
 
+        <TabsContent value="ekonomi" className="space-y-3">
+          <ImportantPapers storeId={storeId} />
+        </TabsContent>
+
         <TabsContent value="checklistor" className="space-y-3">
           <p className="text-sm text-muted-foreground">
             Butikens checklistor. Varje checklista samlar sina uppgifter och styr vilka dagar de dyker upp.
