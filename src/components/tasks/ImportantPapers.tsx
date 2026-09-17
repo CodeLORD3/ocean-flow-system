@@ -153,7 +153,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     | "expenseCategory"
     | "itemsText";
 
-  /** Ändrar ett fält och släcker markeringen, eftersom värdet nu är kontrollerat. */
+  /** Ändrar ett fält: gul markering släcks och fältet blir grönt = kontrollerat. */
   function setField(key: FormKey, value: string) {
     setForm((f) => ({ ...f, [key]: value }) as typeof f);
     setAutoFilled((prev) => {
@@ -162,17 +162,52 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       next.delete(key);
       return next;
     });
+    setChecked((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
   }
 
   const lit = (key: FormKey) =>
-    autoFilled.has(key) ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-400" : "";
+    autoFilled.has(key)
+      ? "border-amber-500 bg-amber-50 ring-1 ring-amber-400"
+      : checked.has(key)
+        ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-400"
+        : "";
 
   const litLabel = (key: FormKey) =>
     autoFilled.has(key) ? (
+      <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+        <Sparkles className="h-2.5 w-2.5" /> avläst — kontrollera
+      </span>
+    ) : checked.has(key) ? (
       <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
-        <Sparkles className="h-2.5 w-2.5" /> avläst
+        <Check className="h-2.5 w-2.5" /> klart
       </span>
     ) : null;
+
+  /** Kortet som matchar de fyra sista siffrorna — ger vem som betalat och om det är utlägg. */
+  const activeCard: PaymentCard | null =
+    paymentCards.find((c) => c.id === form.cardId) ?? matchCard(paymentCards, form.cardLast4);
+
+  /** Väljer ett registrerat kort och fyller i korttyp, siffror och ägare. */
+  function useCard(c: PaymentCard) {
+    setForm((f) => ({
+      ...f,
+      cardId: c.id,
+      paymentMethod: "kort",
+      cardBrand: c.card_brand ?? f.cardBrand,
+      cardLast4: c.card_last4,
+      cardHolder: c.staff_name || c.card_holder || f.cardHolder,
+    }));
+    setAutoFilled((prev) => {
+      const next = new Set(prev);
+      for (const k of ["cardBrand", "cardLast4", "cardHolder", "paymentMethod"]) next.delete(k);
+      return next;
+    });
+    setChecked((prev) => {
+      const next = new Set(prev);
+      for (const k of ["cardBrand", "cardLast4", "cardHolder", "paymentMethod"]) next.add(k);
+      return next;
+    });
+  }
 
   function toDataUrl(f: File) {
     return new Promise<string>((resolve, reject) => {
