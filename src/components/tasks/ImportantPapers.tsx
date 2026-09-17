@@ -1,5 +1,18 @@
 import { useMemo, useRef, useState } from "react";
-import { Camera, FileText, ImagePlus, Loader2, Paperclip, Plus, Search, Sparkles, Trash2, Wand2 } from "lucide-react";
+import {
+  Camera,
+  Check,
+  CreditCard,
+  FileText,
+  ImagePlus,
+  Loader2,
+  Paperclip,
+  Plus,
+  Search,
+  Sparkles,
+  Trash2,
+  Wand2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +34,15 @@ import {
   type ImportantPaper,
   type PaperType,
 } from "@/hooks/useImportantPapers";
+import {
+  cardLabel,
+  matchCard,
+  usePaymentCards,
+  useRemovePaymentCard,
+  useSavePaymentCard,
+  type PaymentCard,
+} from "@/hooks/usePaymentCards";
+import { useStaff } from "@/hooks/useStaff";
 
 const nf = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -58,6 +80,10 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const { data: papers = [], isLoading } = useImportantPapers(storeId);
   const save = useSaveImportantPaper();
   const del = useDeleteImportantPaper();
+  const { data: paymentCards = [] } = usePaymentCards();
+  const saveCard = useSavePaymentCard();
+  const removeCard = useRemovePaymentCard();
+  const { data: staffList = [] } = useStaff(storeId ?? undefined);
 
   const [typeFilter, setTypeFilter] = useState<"alla" | PaperType>("alla");
   const [payFilter, setPayFilter] = useState("alla");
@@ -85,6 +111,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     expenseAccount: "",
     expenseCategory: "",
     itemsText: "",
+    cardId: "",
   });
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -93,8 +120,18 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const [reading, setReading] = useState(false);
   const [queue, setQueue] = useState<{ done: number; total: number } | null>(null);
   const [needsOnly, setNeedsOnly] = useState(false);
-  // Fält som lästes av från pappret — de lyser tills någon rättar dem.
+  // Gult = avläst från pappret och inte kontrollerat än.
   const [autoFilled, setAutoFilled] = useState<Set<string>>(new Set());
+  // Grönt = någon har skrivit in eller rättat värdet själv.
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [cardOpen, setCardOpen] = useState(false);
+  const [cardForm, setCardForm] = useState({
+    cardBrand: "",
+    cardLast4: "",
+    cardHolder: "",
+    staffId: "",
+    cardKind: "foretag" as "foretag" | "privat",
+  });
 
 
   type FormKey =
@@ -116,7 +153,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     | "expenseCategory"
     | "itemsText";
 
-  /** Ändrar ett fält och släcker markeringen, eftersom värdet nu är kontrollerat. */
+  /** Ändrar ett fält: gul markering släcks och fältet blir grönt = kontrollerat. */
   function setField(key: FormKey, value: string) {
     setForm((f) => ({ ...f, [key]: value }) as typeof f);
     setAutoFilled((prev) => {
@@ -125,17 +162,52 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       next.delete(key);
       return next;
     });
+    setChecked((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
   }
 
   const lit = (key: FormKey) =>
-    autoFilled.has(key) ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-400" : "";
+    autoFilled.has(key)
+      ? "border-amber-500 bg-amber-50 ring-1 ring-amber-400"
+      : checked.has(key)
+        ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-400"
+        : "";
 
   const litLabel = (key: FormKey) =>
     autoFilled.has(key) ? (
+      <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+        <Sparkles className="h-2.5 w-2.5" /> avläst — kontrollera
+      </span>
+    ) : checked.has(key) ? (
       <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
-        <Sparkles className="h-2.5 w-2.5" /> avläst
+        <Check className="h-2.5 w-2.5" /> klart
       </span>
     ) : null;
+
+  /** Kortet som matchar de fyra sista siffrorna — ger vem som betalat och om det är utlägg. */
+  const activeCard: PaymentCard | null =
+    paymentCards.find((c) => c.id === form.cardId) ?? matchCard(paymentCards, form.cardLast4);
+
+  /** Väljer ett registrerat kort och fyller i korttyp, siffror och ägare. */
+  function pickCard(c: PaymentCard) {
+    setForm((f) => ({
+      ...f,
+      cardId: c.id,
+      paymentMethod: "kort",
+      cardBrand: c.card_brand ?? f.cardBrand,
+      cardLast4: c.card_last4,
+      cardHolder: c.staff_name || c.card_holder || f.cardHolder,
+    }));
+    setAutoFilled((prev) => {
+      const next = new Set(prev);
+      for (const k of ["cardBrand", "cardLast4", "cardHolder", "paymentMethod"]) next.delete(k);
+      return next;
+    });
+    setChecked((prev) => {
+      const next = new Set(prev);
+      for (const k of ["cardBrand", "cardLast4", "cardHolder", "paymentMethod"]) next.add(k);
+      return next;
+    });
+  }
 
   function toDataUrl(f: File) {
     return new Promise<string>((resolve, reject) => {
@@ -198,7 +270,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       }
       setForm((prev) => ({ ...prev, ...patch }) as typeof prev);
       setAutoFilled(new Set(keys));
-      toast.success(`${keys.length} fält avlästa — kontrollera de gröna fälten`);
+      toast.success(`${keys.length} fält avlästa — kontrollera de gula fälten`);
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte läsa av pappret");
     } finally {
@@ -222,6 +294,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       } catch {
         // Kunde inte läsas av — pappret sparas ändå med bilden.
       }
+      // Känner igen kortet på de fyra sista siffrorna → vem som betalat, och utlägg om det är ett privat kort.
+      const known = matchCard(paymentCards, patch.cardLast4 ?? "");
       try {
         const id = await save.mutateAsync({
           storeId: storeId ?? null,
@@ -236,9 +310,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
           documentNumber: patch.documentNumber ?? "",
           description: patch.description ?? "",
           paymentMethod: (patch.paymentMethod as "kort" | "kontant") || null,
-          cardBrand: patch.cardBrand ?? "",
+          cardBrand: patch.cardBrand ?? known?.card_brand ?? "",
           cardLast4: patch.cardLast4 ?? "",
-          cardHolder: patch.cardHolder ?? "",
+          cardHolder: patch.cardHolder ?? known?.staff_name ?? known?.card_holder ?? "",
+          cardId: known?.id ?? null,
+          paidByStaffId: known?.staff_id ?? null,
+          isExpenseClaim: known?.card_kind === "privat",
           expenseAccount: "",
           expenseCategory: patch.expenseCategory ?? "",
           lineItems: parseItems(patch.itemsText ?? ""),
@@ -281,6 +358,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       if (typeFilter !== "alla" && p.paper_type !== typeFilter) return false;
       if (needsOnly && !needsCheck(p)) return false;
       if (payFilter === "kontant" && p.payment_method !== "kontant") return false;
+      if (payFilter === "utlagg" && !p.is_expense_claim) return false;
       if (payFilter === "kort" && p.payment_method !== "kort") return false;
       if (payFilter.startsWith("kort:") && p.card_last4 !== payFilter.slice(5)) return false;
       if (accountFilter !== "alla" && (p.expense_account ?? "") !== accountFilter) return false;
@@ -338,6 +416,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     setEdit(null);
     setFile(null);
     setAutoFilled(new Set());
+    setChecked(new Set());
     setForm({
       paperType: type ?? (typeFilter === "alla" ? "kvitto" : typeFilter),
       companyName: "",
@@ -356,6 +435,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       expenseAccount: "",
       expenseCategory: "",
       itemsText: "",
+      cardId: "",
     });
     setOpen(true);
   }
@@ -364,6 +444,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     setEdit(p);
     setFile(null);
     setAutoFilled(new Set());
+    setChecked(new Set());
     setForm({
       paperType: p.paper_type as PaperType,
       companyName: p.company_name ?? "",
@@ -384,6 +465,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       itemsText: (p.line_items ?? [])
         .map((l) => [l.name, l.amount != null ? String(l.amount) : ""].filter(Boolean).join(" "))
         .join("\n"),
+      cardId: p.card_id ?? "",
     });
     setOpen(true);
   }
@@ -412,6 +494,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         cardBrand: form.cardBrand,
         cardLast4: form.cardLast4,
         cardHolder: form.cardHolder,
+        cardId: activeCard?.id ?? null,
+        paidByStaffId: activeCard?.staff_id ?? null,
+        isExpenseClaim: activeCard?.card_kind === "privat",
         expenseAccount: form.expenseAccount,
         expenseCategory: form.expenseCategory,
         lineItems: parseItems(form.itemsText),
@@ -558,6 +643,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             <SelectContent>
               <SelectItem value="alla">Alla betalsätt</SelectItem>
               <SelectItem value="kontant">Kontant</SelectItem>
+              <SelectItem value="utlagg">Utlägg (privat kort)</SelectItem>
               <SelectItem value="kort">Kort (alla)</SelectItem>
               {cards.map(([last4, label]) => (
                 <SelectItem key={last4} value={`kort:${last4}`}>
@@ -622,6 +708,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 >
                   {info.singular}
                 </span>
+                {p.is_expense_claim && (
+                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                    <StaffAvatar name={p.paid_by_name} imageUrl={p.paid_by_image} className="h-5 w-5" />
+                    Utlägg {p.paid_by_name ?? ""}
+                  </span>
+                )}
                 {needsCheck(p) && (
                   <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
                     Fyll i
@@ -742,7 +834,77 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 </div>
 
                 {form.paymentMethod === "kort" && (
-                  <div className="mt-2 grid grid-cols-3 gap-2">
+                  <>
+                    <div className="mt-2">
+                      <Label className="text-xs">Vilket kort?</Label>
+                      <div className="mt-1 grid gap-1.5">
+                        {paymentCards.map((c) => {
+                          const on = activeCard?.id === c.id;
+                          return (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => pickCard(c)}
+                              className={cn(
+                                "flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-sm transition",
+                                on
+                                  ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-400"
+                                  : "border-border bg-card hover:bg-muted",
+                              )}
+                            >
+                              <StaffAvatar
+                                name={c.staff_name ?? c.card_holder}
+                                imageUrl={c.staff_image}
+                                className="h-8 w-8"
+                              />
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate font-medium">
+                                  {c.staff_name || c.card_holder || c.label || "Kort"}
+                                </span>
+                                <span className="block truncate text-[11px] text-muted-foreground">
+                                  {[c.card_brand || "Kort", `••${c.card_last4}`].join(" ")}
+                                </span>
+                              </span>
+                              {c.card_kind === "privat" ? (
+                                <span className="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+                                  Privat → utlägg
+                                </span>
+                              ) : (
+                                <span className="shrink-0 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
+                                  Företagskort
+                                </span>
+                              )}
+                              {on && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
+                            </button>
+                          );
+                        })}
+                        <Button
+                          variant="outline"
+                          className="h-10 justify-start"
+                          onClick={() => {
+                            setCardForm({
+                              cardBrand: form.cardBrand,
+                              cardLast4: form.cardLast4,
+                              cardHolder: form.cardHolder,
+                              staffId: "",
+                              cardKind: "foretag",
+                            });
+                            setCardOpen(true);
+                          }}
+                        >
+                          <CreditCard className="mr-2 h-4 w-4" /> Lägg till ett kort
+                        </Button>
+                      </div>
+                      {activeCard && (
+                        <p className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2 py-1.5 text-xs font-medium text-emerald-800">
+                          <Check className="h-3.5 w-3.5" />
+                          {activeCard.card_kind === "privat"
+                            ? `${activeCard.staff_name || activeCard.card_holder || "Personen"} har betalat privat — bokförs som utlägg`
+                            : `Betalat med företagskortet ${cardLabel(activeCard)}`}
+                        </p>
+                      )}
+                    </div>
+                    <div className="mt-2 grid grid-cols-3 gap-2">
                     <div>
                       <Label className="text-xs">Korttyp{litLabel("cardBrand")}</Label>
                       <Input
@@ -772,7 +934,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                         className={cn("h-10", lit("cardHolder"))}
                       />
                     </div>
-                  </div>
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -938,7 +1101,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               <p className="mt-1 text-[11px] text-muted-foreground">
                 {reading
                   ? "Läser av pappret …"
-                  : "Fälten fylls i automatiskt från fotot — kontrollera de gröna fälten."}
+                  : "Fälten fylls i automatiskt från fotot. Gult = avläst och inte kontrollerat, grönt = du har skrivit in eller rättat det."}
               </p>
             </div>
           </div>
@@ -950,6 +1113,147 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             <Button onClick={submit} disabled={save.isPending}>
               {save.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
               Spara
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Kortregistret: när kortet är inlagt vet systemet vem som betalat. */}
+      <Dialog open={cardOpen} onOpenChange={setCardOpen}>
+        <DialogContent className="max-h-[90vh] w-[95vw] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Lägg till ett kort</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Korttyp</Label>
+                <Input
+                  value={cardForm.cardBrand}
+                  onChange={(e) => setCardForm((f) => ({ ...f, cardBrand: e.target.value }))}
+                  placeholder="Visa, Twint …"
+                  className="h-10"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Sista 4 siffror</Label>
+                <Input
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={cardForm.cardLast4}
+                  onChange={(e) =>
+                    setCardForm((f) => ({ ...f, cardLast4: e.target.value.replace(/\D/g, "").slice(0, 4) }))
+                  }
+                  placeholder="4321"
+                  className="h-10 font-mono tabular-nums"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs">Vem äger kortet?</Label>
+              <Select
+                value={cardForm.staffId}
+                onValueChange={(v) => setCardForm((f) => ({ ...f, staffId: v }))}
+              >
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Välj person" />
+                </SelectTrigger>
+                <SelectContent>
+                  {staffList.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {`${s.first_name ?? ""} ${s.last_name ?? ""}`.trim()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                value={cardForm.cardHolder}
+                onChange={(e) => setCardForm((f) => ({ ...f, cardHolder: e.target.value }))}
+                placeholder="Eller skriv namnet på kortet"
+                className="mt-2 h-10"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs">Vad är det för kort?</Label>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                {[
+                  ["foretag", "Företagskort"],
+                  ["privat", "Privat kort — utlägg"],
+                ].map(([value, label]) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    variant={cardForm.cardKind === value ? "default" : "outline"}
+                    className="h-11 text-sm font-semibold"
+                    onClick={() => setCardForm((f) => ({ ...f, cardKind: value as "foretag" | "privat" }))}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Privat kort betyder att personen lagt ut egna pengar och ska få dem tillbaka.
+              </p>
+            </div>
+
+            {paymentCards.length > 0 && (
+              <div className="border-t border-border pt-2">
+                <p className="mb-1 text-xs font-semibold">Kort som finns inlagda</p>
+                <div className="space-y-1">
+                  {paymentCards.map((c) => (
+                    <div key={c.id} className="flex items-center gap-2 text-xs">
+                      <StaffAvatar
+                        name={c.staff_name ?? c.card_holder}
+                        imageUrl={c.staff_image}
+                        className="h-7 w-7"
+                      />
+                      <span className="min-w-0 flex-1 truncate">{cardLabel(c)}</span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-destructive"
+                        onClick={() => removeCard.mutate(c.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCardOpen(false)}>
+              Avbryt
+            </Button>
+            <Button
+              disabled={!/^\d{4}$/.test(cardForm.cardLast4) || saveCard.isPending}
+              onClick={async () => {
+                try {
+                  const staff = staffList.find((s) => s.id === cardForm.staffId);
+                  await saveCard.mutateAsync({
+                    storeId: storeId ?? null,
+                    staffId: cardForm.staffId || null,
+                    cardBrand: cardForm.cardBrand,
+                    cardLast4: cardForm.cardLast4,
+                    cardHolder:
+                      cardForm.cardHolder ||
+                      (staff ? `${staff.first_name ?? ""} ${staff.last_name ?? ""}`.trim() : ""),
+                    cardKind: cardForm.cardKind,
+                  });
+                  toast.success("Kortet är inlagt");
+                  setCardOpen(false);
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Kunde inte spara kortet");
+                }
+              }}
+            >
+              {saveCard.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+              Spara kortet
             </Button>
           </DialogFooter>
         </DialogContent>

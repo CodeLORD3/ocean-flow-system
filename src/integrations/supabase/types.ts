@@ -5937,6 +5937,7 @@ export type Database = {
         Row: {
           card_brand: string | null
           card_holder: string | null
+          card_id: string | null
           card_last4: string | null
           company_name: string | null
           created_at: string
@@ -5952,8 +5953,10 @@ export type Database = {
           file_url: string | null
           gross_amount: number | null
           id: string
+          is_expense_claim: boolean
           line_items: Json
           net_amount: number | null
+          paid_by_staff_id: string | null
           paper_date: string | null
           paper_type: string
           payment_method: string | null
@@ -5966,6 +5969,7 @@ export type Database = {
         Insert: {
           card_brand?: string | null
           card_holder?: string | null
+          card_id?: string | null
           card_last4?: string | null
           company_name?: string | null
           created_at?: string
@@ -5981,8 +5985,10 @@ export type Database = {
           file_url?: string | null
           gross_amount?: number | null
           id?: string
+          is_expense_claim?: boolean
           line_items?: Json
           net_amount?: number | null
+          paid_by_staff_id?: string | null
           paper_date?: string | null
           paper_type?: string
           payment_method?: string | null
@@ -5995,6 +6001,7 @@ export type Database = {
         Update: {
           card_brand?: string | null
           card_holder?: string | null
+          card_id?: string | null
           card_last4?: string | null
           company_name?: string | null
           created_at?: string
@@ -6010,8 +6017,10 @@ export type Database = {
           file_url?: string | null
           gross_amount?: number | null
           id?: string
+          is_expense_claim?: boolean
           line_items?: Json
           net_amount?: number | null
+          paid_by_staff_id?: string | null
           paper_date?: string | null
           paper_type?: string
           payment_method?: string | null
@@ -6023,6 +6032,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "important_papers_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "payment_cards"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "important_papers_created_by_staff_id_fkey"
             columns: ["created_by_staff_id"]
             isOneToOne: false
@@ -6032,6 +6048,20 @@ export type Database = {
           {
             foreignKeyName: "important_papers_created_by_staff_id_fkey"
             columns: ["created_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "important_papers_paid_by_staff_id_fkey"
+            columns: ["paid_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "important_papers_paid_by_staff_id_fkey"
+            columns: ["paid_by_staff_id"]
             isOneToOne: false
             referencedRelation: "staff_access"
             referencedColumns: ["id"]
@@ -8764,6 +8794,77 @@ export type Database = {
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_cards: {
+        Row: {
+          active: boolean
+          card_brand: string | null
+          card_holder: string | null
+          card_kind: string
+          card_last4: string
+          created_at: string
+          id: string
+          label: string | null
+          staff_id: string | null
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          card_brand?: string | null
+          card_holder?: string | null
+          card_kind?: string
+          card_last4: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          staff_id?: string | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          card_brand?: string | null
+          card_holder?: string | null
+          card_kind?: string
+          card_last4?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          staff_id?: string | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_cards_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_cards_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_cards_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "payment_cards_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]

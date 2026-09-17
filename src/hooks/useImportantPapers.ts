@@ -53,10 +53,19 @@ export interface ImportantPaper {
   file_mime: string | null;
   created_by: string | null;
   created_by_staff_id: string | null;
+  /** Registrerat kort som användes. */
+  card_id: string | null;
+  /** Personen som betalade (hämtas från kortet). */
+  paid_by_staff_id: string | null;
+  /** Privat kort → utlägg som ska ersättas. */
+  is_expense_claim: boolean;
   created_at: string;
   /** Fylls i av hooken: namn och profilbild på den som lade in pappret. */
   created_by_name?: string | null;
   created_by_image?: string | null;
+  /** Fylls i av hooken: namn och profilbild på den som betalade. */
+  paid_by_name?: string | null;
+  paid_by_image?: string | null;
 }
 
 export function useImportantPapers(storeId?: string | null) {
@@ -69,7 +78,11 @@ export function useImportantPapers(storeId?: string | null) {
       if (error) throw error;
       const rows = (data ?? []) as unknown as ImportantPaper[];
 
-      const staffIds = [...new Set(rows.map((r) => r.created_by_staff_id).filter(Boolean))] as string[];
+      const staffIds = [
+        ...new Set(
+          rows.flatMap((r) => [r.created_by_staff_id, r.paid_by_staff_id]).filter(Boolean),
+        ),
+      ] as string[];
       let byStaff: Record<string, { name: string; image: string | null }> = {};
       if (staffIds.length) {
         const { data: staff } = await supabase
@@ -88,6 +101,8 @@ export function useImportantPapers(storeId?: string | null) {
         line_items: Array.isArray(r.line_items) ? r.line_items : [],
         created_by_name: r.created_by_staff_id ? byStaff[r.created_by_staff_id]?.name ?? null : null,
         created_by_image: r.created_by_staff_id ? byStaff[r.created_by_staff_id]?.image ?? null : null,
+        paid_by_name: r.paid_by_staff_id ? byStaff[r.paid_by_staff_id]?.name ?? null : null,
+        paid_by_image: r.paid_by_staff_id ? byStaff[r.paid_by_staff_id]?.image ?? null : null,
       }));
     },
   });
@@ -108,6 +123,9 @@ export interface PaperInput {
   cardBrand?: string | null;
   cardLast4?: string | null;
   cardHolder?: string | null;
+  cardId?: string | null;
+  paidByStaffId?: string | null;
+  isExpenseClaim?: boolean;
   expenseAccount?: string | null;
   expenseCategory?: string | null;
   lineItems?: PaperLineItem[];
@@ -154,6 +172,9 @@ export function useSaveImportantPaper() {
         card_brand: input.cardBrand?.trim() || null,
         card_last4: /^\d{4}$/.test((input.cardLast4 ?? "").trim()) ? input.cardLast4!.trim() : null,
         card_holder: input.cardHolder?.trim() || null,
+        card_id: input.cardId ?? null,
+        paid_by_staff_id: input.paidByStaffId ?? null,
+        is_expense_claim: input.isExpenseClaim ?? false,
         expense_account: input.expenseAccount?.trim() || null,
         expense_category: input.expenseCategory?.trim() || null,
         line_items: (input.lineItems ?? []).filter((l) => l.name?.trim()),
