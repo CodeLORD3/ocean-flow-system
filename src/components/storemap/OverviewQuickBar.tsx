@@ -27,7 +27,33 @@ export function OverviewQuickBar({ tasks }: { tasks: MapTask[] }) {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Dagsrapport och inventeringsrapport ligger allra högst upp i Översikt */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => navigate("/dagsrapport")}
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-5 text-left shadow-sm ring-1 ring-primary/30 transition hover:bg-muted"
+        >
+          <FileText className="h-7 w-7 shrink-0 text-primary" />
+          <span className="min-w-0">
+            <span className="block font-heading text-lg font-semibold leading-tight">Dagsrapport</span>
+            <span className="block text-xs text-muted-foreground">Dagens siffror för butiken</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate("/inventory")}
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-5 text-left shadow-sm ring-1 ring-primary/30 transition hover:bg-muted"
+        >
+          <ClipboardCheck className="h-7 w-7 shrink-0 text-primary" />
+          <span className="min-w-0">
+            <span className="block font-heading text-lg font-semibold leading-tight">Inventeringsrapport</span>
+            <span className="block text-xs text-muted-foreground">Räkna av lagret</span>
+          </span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button
           type="button"
           onClick={openTasks}
@@ -50,28 +76,6 @@ export function OverviewQuickBar({ tasks }: { tasks: MapTask[] }) {
           <span className="min-w-0">
             <span className="block font-heading text-lg font-semibold leading-tight">Stämpla in</span>
             <span className="block text-xs text-muted-foreground">Stämpelklockan för butiken</span>
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate("/dagsrapport")}
-          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-5 text-left shadow-sm transition hover:bg-muted"
-        >
-          <FileText className="h-7 w-7 shrink-0 text-primary" />
-          <span className="min-w-0">
-            <span className="block font-heading text-lg font-semibold leading-tight">Dagsrapport</span>
-            <span className="block text-xs text-muted-foreground">Dagens siffror för butiken</span>
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate("/inventory")}
-          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-5 text-left shadow-sm transition hover:bg-muted"
-        >
-          <ClipboardCheck className="h-7 w-7 shrink-0 text-primary" />
-          <span className="min-w-0">
-            <span className="block font-heading text-lg font-semibold leading-tight">Inventeringsrapport</span>
-            <span className="block text-xs text-muted-foreground">Räkna av lagret</span>
           </span>
         </button>
       </div>
