@@ -154,6 +154,8 @@ export default function StoreMap() {
   const [draftZoneId, setDraftZoneId] = useState<string | null>(null);
   /** Området vars sidopanel med all information är öppen. */
   const [sheetZoneId, setSheetZoneId] = useState<string | null>(null);
+  /** Befintligt område som just nu ritas om i kartan. */
+  const [shapeZoneId, setShapeZoneId] = useState<string | null>(null);
   const [pinDialog, setPinDialog] = useState<{
     point: { x: number; y: number } | null;
     zoneId: string | null;
