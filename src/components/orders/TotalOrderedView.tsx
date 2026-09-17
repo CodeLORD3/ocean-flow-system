@@ -558,7 +558,7 @@ export function TotalOrderedView({
             .map(
               (o) =>
                 `${o.orderNumber} ${o.customer} (${qtyText(o.quantity, r.unit)} ${r.unit}, ${
-                  PACK_LABEL[packState(o.quantity, o.packed)]
+                  PACK_LABEL[packState(o.quantity, o.packed, o.closed)]
                 })`,
             )
             .join(" | "),
