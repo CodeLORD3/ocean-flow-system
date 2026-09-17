@@ -408,7 +408,11 @@ export default function StoreMap() {
                 ["historik", "Historik"],
               ] as const
             ).map(([key, label]) => (
-              <TabsTrigger key={key} value={key} className="h-8 rounded-lg px-4 text-xs">
+              <TabsTrigger
+                key={key}
+                value={key}
+                className="h-8 rounded-lg px-4 text-xs font-medium text-muted-foreground transition-colors data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+              >
                 {label}
               </TabsTrigger>
             ))}
