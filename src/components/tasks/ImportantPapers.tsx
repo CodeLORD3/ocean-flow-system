@@ -415,6 +415,56 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             );
           })}
         </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
+          <Select value={payFilter} onValueChange={setPayFilter}>
+            <SelectTrigger className="h-9 w-full sm:w-48">
+              <SelectValue placeholder="Betalsätt" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="alla">Alla betalsätt</SelectItem>
+              <SelectItem value="kontant">Kontant</SelectItem>
+              <SelectItem value="kort">Kort (alla)</SelectItem>
+              {cards.map(([last4, label]) => (
+                <SelectItem key={last4} value={`kort:${last4}`}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={accountFilter} onValueChange={setAccountFilter}>
+            <SelectTrigger className="h-9 w-full sm:w-44">
+              <SelectValue placeholder="Konto" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="alla">Alla konton</SelectItem>
+              {accounts.map((a) => (
+                <SelectItem key={a} value={a}>
+                  Konto {a}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="h-9 w-full sm:w-44">
+              <SelectValue placeholder="Sortera" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="senast">Senast inlagt</SelectItem>
+              <SelectItem value="datum">Datum på pappret</SelectItem>
+              <SelectItem value="belopp">Högsta belopp</SelectItem>
+              <SelectItem value="foretag">Företag A–Ö</SelectItem>
+              <SelectItem value="konto">Konto</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {sorted.length} papper ·{" "}
+            {nf.format(sorted.reduce((sum, p) => sum + (p.net_amount ?? 0), 0))} netto
+          </span>
+        </div>
       </Card>
 
       {isLoading ? (
