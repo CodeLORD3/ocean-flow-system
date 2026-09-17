@@ -57,6 +57,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     documentNumber: "",
     description: "",
     title: "",
+    paymentMethod: "" as "" | "kort" | "kontant",
   });
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
