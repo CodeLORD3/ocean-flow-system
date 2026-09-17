@@ -14,6 +14,8 @@ import {
   CalendarDays,
   MessageSquare,
   ListFilter,
+  Search,
+  Pencil,
 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -116,6 +118,14 @@ export function EntityImageGallery({
   const [groupName, setGroupName] = useState("");
   const [groupDesc, setGroupDesc] = useState("");
   const [dayDesc, setDayDesc] = useState<string | null>(null);
+  /** Fritextsökning på bildnamn, person och datum. */
+  const [search, setSearch] = useState("");
+  /** Nyss uppladdade bilder som ska namnges. */
+  const [nameIds, setNameIds] = useState<string[]>([]);
+  const [names, setNames] = useState<Record<string, string>>({});
+  /** Bild som döps om direkt i rutnätet. */
+  const [renameId, setRenameId] = useState<string | null>(null);
+  const [renameText, setRenameText] = useState("");
 
   const [lastDay, setLastDay] = useState(() => dayKey(new Date().toISOString()));
   const selectDay = (key: string) => {
@@ -217,7 +227,21 @@ export function EntityImageGallery({
   /** Aktivt datum i katalogen — styr dagsvyn. */
   const activeDay = view.mode === "day" ? view.key : lastDay;
 
+  /** Sökningen går igenom alla bilder, oavsett vilket filter som är valt. */
+  const searchHits: EntityImage[] = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    return images.filter((i) =>
+      [i.caption, i.uploaded_by_name, dayLabel(dayKey(i.created_at)), dayKey(i.created_at)]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [images, search]);
+
   const shown: EntityImage[] = useMemo(() => {
+    if (search.trim()) return searchHits;
     if (!catalog) return previewImages;
     if (view.mode === "favorites") return favorites;
     if (view.mode === "featured") return previewImages;
@@ -227,7 +251,7 @@ export function EntityImageGallery({
       return g.imageIds.map((id) => images.find((i) => i.id === id)).filter(Boolean) as EntityImage[];
     }
     return images.filter((i) => dayKey(i.created_at) === view.key);
-  }, [catalog, view, images, favorites, previewImages, groups]);
+  }, [catalog, view, images, favorites, previewImages, groups, search, searchHits]);
 
   /** I helskärmsläge bläddrar man genom hela den utvalda poolen, inte bara de synliga. */
   const lightboxImages: EntityImage[] =
@@ -269,15 +293,21 @@ export function EntityImageGallery({
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     try {
+      const newIds: string[] = [];
       for (let i = 0; i < files.length; i++) {
-        await upload.mutateAsync({
+        const id = await upload.mutateAsync({
           entityType,
           entityId,
           file: files[i],
           sortOrder: images.length + i,
         });
+        if (id) newIds.push(id);
       }
       toast({ title: "Bild uppladdad", description: `${files.length} bild(er) sparade.` });
+      if (newIds.length) {
+        setNames({});
+        setNameIds(newIds);
+      }
       if (catalog) selectDay(dayKey(new Date().toISOString()));
     } catch (e: any) {
       toast({ title: "Kunde inte ladda upp", description: e.message, variant: "destructive" });
@@ -558,6 +588,54 @@ export function EntityImageGallery({
               )}
             </div>
 
+            {/* Namn på bilden — gör den lätt att hitta med sökningen */}
+            <div className="border-t border-border px-2 py-1.5">
+              {renameId === img.id ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    autoFocus
+                    value={renameText}
+                    onChange={(e) => setRenameText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        updateImage.mutate({ id: img.id, caption: renameText.trim() || null });
+                        setRenameId(null);
+                      }
+                      if (e.key === "Escape") setRenameId(null);
+                    }}
+                    placeholder="Namn på bilden"
+                    className="h-8 text-xs"
+                  />
+                  <Button
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    aria-label="Spara namn"
+                    onClick={() => {
+                      updateImage.mutate({ id: img.id, caption: renameText.trim() || null });
+                      setRenameId(null);
+                    }}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={!editable}
+                  onClick={() => {
+                    setRenameText(img.caption ?? "");
+                    setRenameId(img.id);
+                  }}
+                  className="flex w-full items-center gap-1 text-left text-[11px]"
+                >
+                  <span className={cn("min-w-0 truncate", img.caption ? "font-medium" : "text-muted-foreground")}>
+                    {img.caption || (editable ? "Namnge bilden" : "Utan namn")}
+                  </span>
+                  {editable && <Pencil className="ml-auto h-3 w-3 shrink-0 text-muted-foreground" />}
+                </button>
+              )}
+            </div>
+
           </Card>
         );
       })}
@@ -660,13 +738,32 @@ export function EntityImageGallery({
         )}
 
         {images.length > 0 && (
+          <div className="relative w-40 shrink-0 sm:w-52">
+            <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Sök bild"
+              className="h-9 pl-7 text-xs sm:h-7"
+            />
+          </div>
+        )}
+
+        {search.trim() ? (
+          <Badge
+            variant="secondary"
+            className="h-9 shrink-0 rounded-md px-3 font-mono tabular-nums text-[11px] sm:h-6 sm:px-2 sm:text-[10px]"
+          >
+            {searchHits.length} träff{searchHits.length === 1 ? "" : "ar"}
+          </Badge>
+        ) : images.length > 0 ? (
           <Badge
             variant="secondary"
             className="h-9 shrink-0 rounded-md px-3 font-mono tabular-nums text-[11px] sm:h-6 sm:px-2 sm:text-[10px]"
           >
             {images.length} {images.length === 1 ? "bild" : "bilder"}
           </Badge>
-        )}
+        ) : null}
         {favorites.length > 0 && (
           <Badge
             variant="outline"
@@ -1146,6 +1243,60 @@ export function EntityImageGallery({
                 ))}
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Namnge nyss uppladdade bilder — gör dem sökbara direkt */}
+      <Dialog open={nameIds.length > 0} onOpenChange={(v) => !v && setNameIds([])}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Namnge bilderna</DialogTitle>
+            <DialogDescription className="text-xs">
+              Ett kort namn gör bilden lätt att söka fram senare, t.ex. "Disken efter städning".
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {nameIds.map((id, idx) => {
+              const img = images.find((i) => i.id === id);
+              return (
+                <div key={id} className="flex items-center gap-2">
+                  {img && (
+                    <img
+                      src={thumbUrl(img.url, THUMB_TILE)}
+                      alt=""
+                      className="h-12 w-12 shrink-0 rounded-md object-cover"
+                    />
+                  )}
+                  <Input
+                    autoFocus={idx === 0}
+                    value={names[id] ?? ""}
+                    onChange={(e) => setNames((p) => ({ ...p, [id]: e.target.value }))}
+                    placeholder="Namn på bilden"
+                    className="h-10 text-sm"
+                  />
+                </div>
+              );
+            })}
+            <div className="flex gap-2">
+              <Button
+                className="h-11 flex-1 text-sm font-semibold"
+                onClick={() => {
+                  nameIds.forEach((id) => {
+                    const n = (names[id] ?? "").trim();
+                    if (n) updateImage.mutate({ id, caption: n });
+                  });
+                  setNameIds([]);
+                  setNames({});
+                  toast({ title: "Namnen är sparade" });
+                }}
+              >
+                Spara namn
+              </Button>
+              <Button variant="outline" className="h-11 text-sm" onClick={() => setNameIds([])}>
+                Hoppa över
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
