@@ -79,6 +79,7 @@ const FIELD_LABELS: Record<string, string> = {
   netAmount: "Nettobelopp",
   vatAmount: "Moms",
   grossAmount: "Bruttobelopp",
+  vatRate: "Moms %",
   currency: "Valuta",
   documentNumber: "Dokumentnummer",
   description: "Beskrivning",
@@ -91,6 +92,39 @@ const FIELD_LABELS: Record<string, string> = {
   expenseCategory: "Kostnadsslag",
   itemsText: "Köpta varor",
 };
+
+/** Vanliga momssatser per valuta — snabbval i formuläret. */
+const VAT_SUGGESTIONS: Record<string, number[]> = {
+  CHF: [2.6, 8.1],
+  SEK: [6, 12, 25],
+  DKK: [25],
+  NOK: [15, 25],
+  EUR: [7, 19],
+  GBP: [0, 20],
+  USD: [0],
+};
+
+/** Kort text som visar om momsen ser rimlig ut jämfört med landets satser. */
+function vatSanity(f: { netAmount: string; vatAmount: string; grossAmount: string; vatRate: string; currency: string }) {
+  const n = (s: string) => {
+    const v = Number(String(s).replace(",", ".").replace(/\s/g, ""));
+    return Number.isFinite(v) && String(s).trim() !== "" ? v : null;
+  };
+  const net = n(f.netAmount);
+  const vat = n(f.vatAmount);
+  const gross = n(f.grossAmount);
+  const rate = n(f.vatRate);
+  if (net != null && vat != null && gross != null && Math.abs(net + vat - gross) > 0.05) {
+    return "Netto + moms stämmer inte med brutto";
+  }
+  if (rate == null) return "";
+  const known = VAT_SUGGESTIONS[f.currency] ?? [6, 12, 25];
+  const ok = known.some((k) => Math.abs(k - rate) < 0.15);
+  return ok
+    ? `${String(rate).replace(".", ",")} % — vanlig sats`
+    : `${String(rate).replace(".", ",")} % — ovanlig sats, kontrollera`;
+}
+
 
 function whenLabel(iso: string) {
   const d = new Date(iso);
@@ -345,6 +379,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     netAmount: "",
     vatAmount: "",
     grossAmount: "",
+    vatRate: "",
     currency: "CHF",
     documentNumber: "",
     description: "",
@@ -450,6 +485,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     | "netAmount"
     | "vatAmount"
     | "grossAmount"
+    | "vatRate"
     | "currency"
     | "documentNumber"
     | "description"
@@ -473,6 +509,80 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     });
     setChecked((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
   }
+
+  /**
+   * Netto, moms, brutto och moms% hänger ihop. När du skriver in två av dem
+   * räknas de övriga ut automatiskt — skriver du brutto och moms% får du netto,
+   * skriver du netto och moms får du brutto och procenten.
+   */
+  function setAmountField(key: "netAmount" | "vatAmount" | "grossAmount" | "vatRate", value: string) {
+    const dec = (s: string) => {
+      const n = Number(String(s).replace(",", ".").replace(/\s/g, ""));
+      return Number.isFinite(n) && String(s).trim() !== "" ? n : null;
+    };
+    const r2 = (n: number) => String(Math.round(n * 100) / 100);
+    const r1 = (n: number) => String(Math.round(n * 10) / 10);
+
+    setForm((f) => {
+      const next = { ...f, [key]: value } as typeof f;
+      const net = key === "netAmount" ? dec(value) : dec(next.netAmount);
+      const vat = key === "vatAmount" ? dec(value) : dec(next.vatAmount);
+      const gross = key === "grossAmount" ? dec(value) : dec(next.grossAmount);
+      const rate = key === "vatRate" ? dec(value) : dec(next.vatRate);
+
+      if (key === "netAmount" && net != null) {
+        if (rate != null) {
+          next.vatAmount = r2((net * rate) / 100);
+          next.grossAmount = r2(net * (1 + rate / 100));
+        } else if (gross != null && gross >= net) {
+          next.vatAmount = r2(gross - net);
+          if (net > 0) next.vatRate = r1(((gross - net) / net) * 100);
+        } else if (vat != null) {
+          next.grossAmount = r2(net + vat);
+          if (net > 0) next.vatRate = r1((vat / net) * 100);
+        }
+      } else if (key === "grossAmount" && gross != null) {
+        if (rate != null) {
+          const n = gross / (1 + rate / 100);
+          next.netAmount = r2(n);
+          next.vatAmount = r2(gross - n);
+        } else if (net != null && gross >= net) {
+          next.vatAmount = r2(gross - net);
+          if (net > 0) next.vatRate = r1(((gross - net) / net) * 100);
+        } else if (vat != null) {
+          next.netAmount = r2(gross - vat);
+          if (gross - vat > 0) next.vatRate = r1((vat / (gross - vat)) * 100);
+        }
+      } else if (key === "vatAmount" && vat != null) {
+        if (net != null) {
+          next.grossAmount = r2(net + vat);
+          if (net > 0) next.vatRate = r1((vat / net) * 100);
+        } else if (gross != null) {
+          next.netAmount = r2(gross - vat);
+          if (gross - vat > 0) next.vatRate = r1((vat / (gross - vat)) * 100);
+        }
+      } else if (key === "vatRate" && rate != null) {
+        if (gross != null) {
+          const n = gross / (1 + rate / 100);
+          next.netAmount = r2(n);
+          next.vatAmount = r2(gross - n);
+        } else if (net != null) {
+          next.vatAmount = r2((net * rate) / 100);
+          next.grossAmount = r2(net * (1 + rate / 100));
+        }
+      }
+      return next;
+    });
+
+    setAutoFilled((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Set(prev);
+      for (const k of ["netAmount", "vatAmount", "grossAmount", "vatRate"] as FormKey[]) next.delete(k);
+      return next;
+    });
+    setChecked((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
+  }
+
 
   const lit = (key: FormKey) =>
     autoFilled.has(key)
@@ -550,6 +660,27 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     if (money(p.net_amount)) patch.netAmount = money(p.net_amount);
     if (money(p.vat_amount)) patch.vatAmount = money(p.vat_amount);
     if (money(p.gross_amount)) patch.grossAmount = money(p.gross_amount);
+    // Fyller i det som saknas av netto/moms/brutto och räknar fram momssatsen.
+    {
+      const pn = (s?: string) => (s ? Number(s) : null);
+      let net = pn(patch.netAmount);
+      let vat = pn(patch.vatAmount);
+      let gross = pn(patch.grossAmount);
+      const r2 = (v: number) => String(Math.round(v * 100) / 100);
+      if (net == null && vat != null && gross != null) {
+        net = gross - vat;
+        patch.netAmount = r2(net);
+      }
+      if (vat == null && net != null && gross != null) {
+        vat = gross - net;
+        patch.vatAmount = r2(vat);
+      }
+      if (gross == null && net != null && vat != null) {
+        gross = net + vat;
+        patch.grossAmount = r2(gross);
+      }
+      if (net && vat != null) patch.vatRate = String(Math.round((vat / net) * 1000) / 10);
+    }
     if (["CHF", "SEK", "DKK", "NOK", "EUR", "GBP", "USD"].includes(str(p.currency).toUpperCase()))
       patch.currency = str(p.currency).toUpperCase();
     if (["kort", "kontant"].includes(str(p.payment_method))) patch.paymentMethod = str(p.payment_method);
@@ -591,7 +722,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         return;
       }
       if (patch.paperType === "kort") {
-        for (const k of ["netAmount", "vatAmount", "grossAmount", "documentNumber", "description", "itemsText", "expenseAccount", "expenseCategory", "paymentMethod"] as FormKey[]) {
+        for (const k of ["netAmount", "vatAmount", "grossAmount", "vatRate", "documentNumber", "description", "itemsText", "expenseAccount", "expenseCategory", "paymentMethod"] as FormKey[]) {
           delete patch[k];
         }
       }
@@ -903,6 +1034,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       netAmount: "",
       vatAmount: "",
       grossAmount: "",
+      vatRate: "",
       currency: "CHF",
       documentNumber: "",
       description: "",
@@ -935,6 +1067,10 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       netAmount: p.net_amount != null ? String(p.net_amount) : "",
       vatAmount: p.vat_amount != null ? String(p.vat_amount) : "",
       grossAmount: p.gross_amount != null ? String(p.gross_amount) : "",
+      vatRate:
+        p.net_amount && p.vat_amount != null
+          ? String(Math.round((p.vat_amount / p.net_amount) * 1000) / 10)
+          : "",
       currency: p.currency ?? "CHF",
       documentNumber: p.document_number ?? "",
       description: p.description ?? "",
@@ -1932,15 +2068,26 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             </div>
 
             {form.paperType !== "kort" && (
-            <div className="grid grid-cols-3 gap-2">
+            <>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <div>
                 <Label className="text-xs">Nettobelopp{litLabel("netAmount")}</Label>
                 <Input
                   inputMode="decimal"
                   value={form.netAmount}
-                  onChange={(e) => setField("netAmount", e.target.value)}
+                  onChange={(e) => setAmountField("netAmount", e.target.value)}
                   placeholder="0.00"
                   className={cn("h-10 font-mono tabular-nums", lit("netAmount"))}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Moms %{litLabel("vatRate")}</Label>
+                <Input
+                  inputMode="decimal"
+                  value={form.vatRate}
+                  onChange={(e) => setAmountField("vatRate", e.target.value)}
+                  placeholder="t.ex. 2.6"
+                  className={cn("h-10 font-mono tabular-nums", lit("vatRate"))}
                 />
               </div>
               <div>
@@ -1948,11 +2095,41 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 <Input
                   inputMode="decimal"
                   value={form.vatAmount}
-                  onChange={(e) => setField("vatAmount", e.target.value)}
+                  onChange={(e) => setAmountField("vatAmount", e.target.value)}
                   placeholder="0.00"
                   className={cn("h-10 font-mono tabular-nums", lit("vatAmount"))}
                 />
               </div>
+              <div>
+                <Label className="text-xs">Bruttobelopp{litLabel("grossAmount")}</Label>
+                <Input
+                  inputMode="decimal"
+                  value={form.grossAmount}
+                  onChange={(e) => setAmountField("grossAmount", e.target.value)}
+                  placeholder="0.00"
+                  className={cn("h-10 font-mono tabular-nums", lit("grossAmount"))}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span>Vanlig moms:</span>
+              {(VAT_SUGGESTIONS[form.currency] ?? [6, 12, 25]).map((r) => (
+                <Button
+                  key={r}
+                  type="button"
+                  size="sm"
+                  variant={form.vatRate === String(r) ? "default" : "outline"}
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setAmountField("vatRate", String(r))}
+                >
+                  {String(r).replace(".", ",")} %
+                </Button>
+              ))}
+              <span className="ml-auto">{vatSanity(form)}</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Valuta{litLabel("currency")}</Label>
                 <Select value={form.currency} onValueChange={(v) => setField("currency", v)}>
@@ -1971,7 +2148,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 </Select>
               </div>
             </div>
+            </>
             )}
+
 
             {form.paperType !== "kort" && (
             <>
@@ -1983,16 +2162,6 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   onChange={(e) => setField("documentNumber", e.target.value)}
                   placeholder="Kvitto- eller fakturanummer"
                   className={cn("h-10", lit("documentNumber"))}
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Bruttobelopp{litLabel("grossAmount")}</Label>
-                <Input
-                  inputMode="decimal"
-                  value={form.grossAmount}
-                  onChange={(e) => setField("grossAmount", e.target.value)}
-                  placeholder="0.00"
-                  className={cn("h-10 font-mono tabular-nums", lit("grossAmount"))}
                 />
               </div>
             </div>
