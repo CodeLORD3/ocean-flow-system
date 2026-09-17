@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
 import { currencyLabel as curLabel, defaultVatFor } from "@/lib/reportCurrency";
+import { getStoreCurrency } from "@/lib/currency";
 import { useTabs } from "@/contexts/TabsContext";
 import { useStaff } from "@/hooks/useStaff";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
@@ -90,7 +91,7 @@ export default function DailyReport() {
   // Butikens valuta styr både momssats och hur beloppen skrivs i rapporten.
   const { data: stores = [] } = useStores();
   const store = stores.find((s) => s.id === activeStoreId);
-  const currency = (store?.currency || "SEK").toUpperCase();
+  const currency = getStoreCurrency(store as any).toUpperCase();
   const defaultVat = defaultVatFor(currency);
   const currencyLabel = curLabel(currency);
 
