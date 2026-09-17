@@ -1964,6 +1964,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     storeId: storeId ?? null,
                     staffId: cardForm.staffId || null,
                     cardBrand: cardForm.cardBrand,
+                    bank: cardForm.bank,
                     cardLast4: cardForm.cardLast4,
                     cardHolder:
                       cardForm.cardHolder ||
