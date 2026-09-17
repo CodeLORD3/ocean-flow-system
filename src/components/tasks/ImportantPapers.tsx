@@ -1897,18 +1897,22 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 staffList={staffList}
                 className={cardAutoFilled.has("staffId") ? "border-amber-400 bg-amber-50" : ""}
               />
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                Tillhör kortet någon som inte finns i personallistan? Lämna valet tomt och skriv namnet här under.
+              </p>
               <Input
                 value={cardForm.cardHolder}
                 onChange={(e) => {
                   setCardAutoFilled((s) => {
                     const n = new Set(s);
                     n.delete("cardHolder");
+                    n.delete("staffId");
                     return n;
                   });
                   setCardForm((f) => ({ ...f, cardHolder: e.target.value }));
                 }}
-                placeholder="Eller skriv namnet på kortet"
-                className={`mt-2 h-10 ${cardAutoFilled.has("cardHolder") ? "border-amber-400 bg-amber-50" : ""}`}
+                placeholder="Skriv namnet fritt, t.ex. bolaget eller en extern person"
+                className={`mt-1.5 h-10 ${cardAutoFilled.has("cardHolder") ? "border-amber-400 bg-amber-50" : ""}`}
               />
             </div>
 
