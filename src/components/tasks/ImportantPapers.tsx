@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { FileText, Loader2, Paperclip, Plus, Search, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { Camera, FileText, ImagePlus, Loader2, Paperclip, Plus, Search, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -88,9 +88,14 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   });
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const camRef = useRef<HTMLInputElement>(null);
+  const libRef = useRef<HTMLInputElement>(null);
   const [reading, setReading] = useState(false);
+  const [queue, setQueue] = useState<{ done: number; total: number } | null>(null);
+  const [needsOnly, setNeedsOnly] = useState(false);
   // Fält som lästes av från pappret — de lyser tills någon rättar dem.
   const [autoFilled, setAutoFilled] = useState<Set<string>>(new Set());
+
 
   type FormKey =
     | "paperType"
@@ -141,47 +146,51 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     });
   }
 
-  /** Läser av pappret och fyller i fälten automatiskt, som i inköpsrapporteringen. */
+  /** Läser av ett papper och returnerar bara det som syns på bilden. */
+  async function parsePaper(f: File): Promise<Partial<Record<FormKey, string>>> {
+    const dataUrl = await toDataUrl(f);
+    const { data, error } = await supabase.functions.invoke("parse-viktigt-papper", {
+      body: { dataUrl, fileName: f.name },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    const p = (data?.paper ?? {}) as Record<string, unknown>;
+
+    const str = (v: unknown) => (v == null ? "" : String(v).trim());
+    const money = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? String(v) : "");
+
+    const patch: Partial<Record<FormKey, string>> = {};
+    const validType = PAPER_TYPES.some((t) => t.value === str(p.paper_type));
+    if (validType) patch.paperType = str(p.paper_type);
+    if (str(p.company_name)) patch.companyName = str(p.company_name);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str(p.paper_date))) patch.paperDate = str(p.paper_date);
+    if (str(p.document_number)) patch.documentNumber = str(p.document_number);
+    if (money(p.net_amount)) patch.netAmount = money(p.net_amount);
+    if (money(p.vat_amount)) patch.vatAmount = money(p.vat_amount);
+    if (money(p.gross_amount)) patch.grossAmount = money(p.gross_amount);
+    if (["CHF", "SEK", "EUR"].includes(str(p.currency).toUpperCase()))
+      patch.currency = str(p.currency).toUpperCase();
+    if (["kort", "kontant"].includes(str(p.payment_method))) patch.paymentMethod = str(p.payment_method);
+    if (str(p.card_brand)) patch.cardBrand = str(p.card_brand);
+    if (/^\d{4}$/.test(str(p.card_last4))) patch.cardLast4 = str(p.card_last4);
+    if (str(p.card_holder)) patch.cardHolder = str(p.card_holder);
+    if (str(p.expense_category)) patch.expenseCategory = str(p.expense_category);
+    if (Array.isArray(p.line_items) && p.line_items.length) {
+      patch.itemsText = (p.line_items as any[])
+        .map((l) => [str(l?.name), l?.amount != null ? String(l.amount) : ""].filter(Boolean).join(" "))
+        .filter(Boolean)
+        .join("\n");
+    }
+    if (str(p.title)) patch.title = str(p.title);
+    if (str(p.description)) patch.description = str(p.description);
+    return patch;
+  }
+
+  /** Läser av pappret i formuläret och fyller i fälten automatiskt. */
   async function readPaper(f: File) {
     setReading(true);
     try {
-      const dataUrl = await toDataUrl(f);
-      const { data, error } = await supabase.functions.invoke("parse-viktigt-papper", {
-        body: { dataUrl, fileName: f.name },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      const p = (data?.paper ?? {}) as Record<string, unknown>;
-
-      const str = (v: unknown) => (v == null ? "" : String(v).trim());
-      const money = (v: unknown) =>
-        typeof v === "number" && Number.isFinite(v) ? String(v) : "";
-
-      const patch: Partial<Record<FormKey, string>> = {};
-      const validType = PAPER_TYPES.some((t) => t.value === str(p.paper_type));
-      if (validType) patch.paperType = str(p.paper_type);
-      if (str(p.company_name)) patch.companyName = str(p.company_name);
-      if (/^\d{4}-\d{2}-\d{2}$/.test(str(p.paper_date))) patch.paperDate = str(p.paper_date);
-      if (str(p.document_number)) patch.documentNumber = str(p.document_number);
-      if (money(p.net_amount)) patch.netAmount = money(p.net_amount);
-      if (money(p.vat_amount)) patch.vatAmount = money(p.vat_amount);
-      if (money(p.gross_amount)) patch.grossAmount = money(p.gross_amount);
-      if (["CHF", "SEK", "EUR"].includes(str(p.currency).toUpperCase()))
-        patch.currency = str(p.currency).toUpperCase();
-      if (["kort", "kontant"].includes(str(p.payment_method))) patch.paymentMethod = str(p.payment_method);
-      if (str(p.card_brand)) patch.cardBrand = str(p.card_brand);
-      if (/^\d{4}$/.test(str(p.card_last4))) patch.cardLast4 = str(p.card_last4);
-      if (str(p.card_holder)) patch.cardHolder = str(p.card_holder);
-      if (str(p.expense_category)) patch.expenseCategory = str(p.expense_category);
-      if (Array.isArray(p.line_items) && p.line_items.length) {
-        patch.itemsText = (p.line_items as any[])
-          .map((l) => [str(l?.name), l?.amount != null ? String(l.amount) : ""].filter(Boolean).join(" "))
-          .filter(Boolean)
-          .join("\n");
-      }
-      if (str(p.title)) patch.title = str(p.title);
-      if (str(p.description)) patch.description = str(p.description);
-
+      const patch = await parsePaper(f);
       const keys = Object.keys(patch) as FormKey[];
       if (keys.length === 0) {
         toast.info("Hittade ingen information på pappret — fyll i själv");
@@ -197,10 +206,68 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     }
   }
 
+  /**
+   * Mobilflödet: bilderna läggs in först och sparas direkt, ett papper per bild.
+   * Det som kan läsas av fylls i automatiskt — resten finredigeras senare.
+   */
+  async function addPhotos(files: File[]) {
+    if (!files.length) return;
+    setQueue({ done: 0, total: files.length });
+    let ok = 0;
+    let firstId: string | null = null;
+    for (const f of files) {
+      let patch: Partial<Record<FormKey, string>> = {};
+      try {
+        patch = await parsePaper(f);
+      } catch {
+        // Kunde inte läsas av — pappret sparas ändå med bilden.
+      }
+      try {
+        const id = await save.mutateAsync({
+          storeId: storeId ?? null,
+          paperType: (patch.paperType as PaperType) ?? "kvitto",
+          title: patch.title ?? "",
+          companyName: patch.companyName ?? "",
+          paperDate: patch.paperDate ?? new Date().toISOString().slice(0, 10),
+          netAmount: num(patch.netAmount ?? ""),
+          vatAmount: num(patch.vatAmount ?? ""),
+          grossAmount: num(patch.grossAmount ?? ""),
+          currency: patch.currency ?? "CHF",
+          documentNumber: patch.documentNumber ?? "",
+          description: patch.description ?? "",
+          paymentMethod: (patch.paymentMethod as "kort" | "kontant") || null,
+          cardBrand: patch.cardBrand ?? "",
+          cardLast4: patch.cardLast4 ?? "",
+          cardHolder: patch.cardHolder ?? "",
+          expenseAccount: "",
+          expenseCategory: patch.expenseCategory ?? "",
+          lineItems: parseItems(patch.itemsText ?? ""),
+          file: f,
+        });
+        ok += 1;
+        if (!firstId) firstId = id;
+      } catch (e: any) {
+        toast.error(e?.message ?? "Kunde inte spara bilden");
+      }
+      setQueue((q) => (q ? { ...q, done: q.done + 1 } : q));
+    }
+    setQueue(null);
+    if (ok) {
+      toast.success(
+        ok === 1 ? "Bilden sparad — fyll i eller rätta informationen" : `${ok} bilder sparade — fyll i informationen`,
+      );
+      setNeedsOnly(true);
+    }
+  }
+
   function pickFile(f: File | null) {
     setFile(f);
     if (f) void readPaper(f);
   }
+
+  /** Papper som behöver kompletteras innan de duger som bokföringsunderlag. */
+  const needsCheck = (p: ImportantPaper) => !p.company_name || p.net_amount == null;
+
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -212,6 +279,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     const q = search.trim().toLowerCase();
     return papers.filter((p) => {
       if (typeFilter !== "alla" && p.paper_type !== typeFilter) return false;
+      if (needsOnly && !needsCheck(p)) return false;
       if (payFilter === "kontant" && p.payment_method !== "kontant") return false;
       if (payFilter === "kort" && p.payment_method !== "kort") return false;
       if (payFilter.startsWith("kort:") && p.card_last4 !== payFilter.slice(5)) return false;
@@ -385,10 +453,62 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               className="h-9 pl-8"
             />
           </div>
-          <Button size="sm" onClick={() => openNew()}>
-            <Plus className="mr-1 h-4 w-4" /> Nytt papper
+          <Button size="sm" variant="outline" onClick={() => openNew()}>
+            <Plus className="mr-1 h-4 w-4" /> Skriv in själv
           </Button>
         </div>
+
+        {/* Steg 1: bilden in. Steg 2: informationen — går att göra senare eller på datorn. */}
+        <input
+          ref={camRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            void addPhotos([...(e.target.files ?? [])]);
+            e.target.value = "";
+          }}
+        />
+        <input
+          ref={libRef}
+          type="file"
+          accept="image/*,application/pdf"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            void addPhotos([...(e.target.files ?? [])]);
+            e.target.value = "";
+          }}
+        />
+        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button
+            className="h-16 justify-center text-base font-semibold"
+            disabled={!!queue}
+            onClick={() => camRef.current?.click()}
+          >
+            <Camera className="mr-2 h-6 w-6" /> Ta foto på pappret
+          </Button>
+          <Button
+            variant="outline"
+            className="h-16 justify-center text-base font-semibold"
+            disabled={!!queue}
+            onClick={() => libRef.current?.click()}
+          >
+            <ImagePlus className="mr-2 h-6 w-6" /> Välj bilder i telefonen
+          </Button>
+        </div>
+        <p className="mb-3 text-xs text-muted-foreground">
+          {queue ? (
+            <span className="flex items-center gap-1.5 font-medium text-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Sparar bild {queue.done + 1} av {queue.total} …
+            </span>
+          ) : (
+            "Ta flera bilder på en gång — informationen läses av automatiskt och kan finredigeras senare eller på datorn."
+          )}
+        </p>
+
 
         <div className="-mx-1 flex flex-wrap gap-1.5 px-1">
           <button
@@ -417,6 +537,20 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
+          <button
+            type="button"
+            onClick={() => setNeedsOnly((v) => !v)}
+            className={cn(
+              "rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+              needsOnly
+                ? "border-transparent bg-amber-500 text-white shadow-sm"
+                : "border-amber-300 bg-card text-amber-700 hover:bg-amber-50",
+            )}
+          >
+            Behöver fyllas i{" "}
+            <span className="tabular-nums opacity-70">{papers.filter(needsCheck).length}</span>
+          </button>
+
           <Select value={payFilter} onValueChange={setPayFilter}>
             <SelectTrigger className="h-9 w-full sm:w-48">
               <SelectValue placeholder="Betalsätt" />
@@ -488,6 +622,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 >
                   {info.singular}
                 </span>
+                {needsCheck(p) && (
+                  <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                    Fyll i
+                  </span>
+                )}
+
                 <button type="button" onClick={() => openEdit(p)} className="min-w-0 flex-1 text-left">
                   <span className="block truncate text-sm font-medium">
                     {p.company_name || p.title || "Utan företag"}
@@ -547,10 +687,17 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] w-[95vw] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{edit ? "Ändra papper" : "Nytt papper"}</DialogTitle>
           </DialogHeader>
+
+          {edit?.file_url && (
+            <Button variant="outline" className="h-11 justify-start" onClick={() => openFile(edit.file_url!)}>
+              <Paperclip className="mr-2 h-4 w-4" /> Visa bilden på pappret
+            </Button>
+          )}
+
 
           <div className="space-y-3">
             <div>
