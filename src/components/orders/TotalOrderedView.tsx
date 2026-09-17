@@ -966,8 +966,9 @@ export function TotalOrderedView({
                     const visible = expanded ? r.orders : r.orders.slice(0, 5);
                     const newCategory = i === 0 || g.rows[i - 1].category !== r.category;
                     const catRows = g.rows.filter((x) => x.category === r.category);
-                    const state = packState(r.total, r.packed);
-                    const remaining = Math.max(r.total - r.packed, 0);
+                    const state = packState(r.total, r.packed, r.closed);
+                    const remaining = remainingOf(r.total, r.packed, r.closed);
+
                     // Grönt när allt är packat, gult när bara en del av raden är packad.
                     const rowTone =
                       state === "packad"
