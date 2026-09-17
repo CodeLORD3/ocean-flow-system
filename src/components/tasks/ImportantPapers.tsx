@@ -1116,6 +1116,81 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               </div>
             )}
 
+            {form.paperType === "kort" && (
+              <div className="rounded-lg border border-teal-300 bg-teal-50/60 p-2.5">
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-teal-900">
+                  <CreditCard className="h-4 w-4" /> Det här kortet läggs in i kortregistret
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <Label className="text-xs">Korttyp{litLabel("cardBrand")}</Label>
+                    <Input
+                      value={form.cardBrand}
+                      onChange={(e) => setField("cardBrand", e.target.value)}
+                      placeholder="Visa, Twint …"
+                      className={cn("h-10", lit("cardBrand"))}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Sista 4 siffror{litLabel("cardLast4")}</Label>
+                    <Input
+                      inputMode="numeric"
+                      maxLength={4}
+                      value={form.cardLast4}
+                      onChange={(e) => setField("cardLast4", e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="4321"
+                      className={cn("h-10 font-mono tabular-nums", lit("cardLast4"))}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Namnet på kortet{litLabel("cardHolder")}</Label>
+                    <Input
+                      value={form.cardHolder}
+                      onChange={(e) => setField("cardHolder", e.target.value)}
+                      placeholder="Namn"
+                      className={cn("h-10", lit("cardHolder"))}
+                    />
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <Label className="text-xs">Vem äger kortet?</Label>
+                  <Select value={kortOwner} onValueChange={setKortOwner}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Välj person" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {staffList.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {`${s.first_name ?? ""} ${s.last_name ?? ""}`.trim()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant={kortPrivat ? "outline" : "default"}
+                    className="h-11 text-sm font-semibold"
+                    onClick={() => setKortPrivat(false)}
+                  >
+                    Företagskort
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={kortPrivat ? "default" : "outline"}
+                    className="h-11 text-sm font-semibold"
+                    onClick={() => setKortPrivat(true)}
+                  >
+                    Privat kort → utlägg
+                  </Button>
+                </div>
+                <p className="mt-2 text-[11px] text-teal-900">
+                  Kvitton med samma fyra sista siffror kopplas automatiskt till kortet, så du kan
+                  sortera på kort, kontant och kortnummer.
+                </p>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-2">
               <div>
