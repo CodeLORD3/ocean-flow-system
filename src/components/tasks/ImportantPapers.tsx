@@ -233,6 +233,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const [cardOpen, setCardOpen] = useState(false);
   const [cardForm, setCardForm] = useState({
     cardBrand: "",
+    bank: "",
     cardLast4: "",
     cardHolder: "",
     staffId: "",
