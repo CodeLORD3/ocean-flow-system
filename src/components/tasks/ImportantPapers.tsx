@@ -1282,6 +1282,17 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                               Fyll i
                             </span>
                           )}
+                          {dupKeyById.has(p.id) && (
+                            <button
+                              type="button"
+                              onClick={() => setCompareKey(dupKeyById.get(p.id)!)}
+                              className="shrink-0 rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 hover:bg-rose-200"
+                              title="Jämför med det andra pappret"
+                            >
+                              Dubblett?
+                            </button>
+                          )}
+
 
                           <button
                             type="button"
