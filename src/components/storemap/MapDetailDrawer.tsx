@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { EmptyState } from "@/components/EmptyState";
-import { ArrowRight, Camera, CheckCircle2, Image as ImageIcon, Info, Link2, MoreVertical, Thermometer, Trash2, X } from "lucide-react";
+import { ArrowRight, Camera, CheckCircle2, Image as ImageIcon, Info, Link2, MoreVertical, Pencil, Thermometer, Trash2, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,6 +79,7 @@ export function MapDetailDrawer({
   areaLabel,
   inline = false,
   onOpenPage,
+  onEditZone,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -98,6 +99,8 @@ export function MapDetailDrawer({
   inline?: boolean;
   /** Öppnar områdets egna sida under kartan. */
   onOpenPage?: () => void;
+  /** Öppnar panelen där området beskrivs och redigeras. */
+  onEditZone?: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
   const entityId = object?.id ?? zone?.id ?? "";
@@ -221,6 +224,9 @@ export function MapDetailDrawer({
                 {label}
               </h2>
               {areaLabel && <p className="text-sm text-muted-foreground tabular-nums">{areaLabel}</p>}
+              {zone?.zone_kind && (
+                <Badge variant="outline" className="mt-1 text-[10px]">{zone.zone_kind}</Badge>
+              )}
             </div>
             {onOpenPage && (
               <Button
@@ -245,6 +251,14 @@ export function MapDetailDrawer({
               </Button>
             )}
           </div>
+          {zone?.description && (
+            <p className="whitespace-pre-line rounded-lg bg-muted/60 px-3 py-2 text-sm">{zone.description}</p>
+          )}
+          {zone && canManage && onEditZone && (
+            <Button variant="outline" className="h-10 w-full gap-2 text-sm font-semibold" onClick={onEditZone}>
+              <Pencil className="h-4 w-4" /> Redigera området
+            </Button>
+          )}
           <div className="flex items-center gap-3">
             <StatusRing percent={progress.percent} status={progress.status} size={40} label={`${progress.percent}%`} />
             <div className="space-y-1">
