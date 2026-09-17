@@ -299,6 +299,12 @@ export default function Uppgifter() {
     [staffList],
   );
 
+  /** Menylänkar kan förvälja flik, t.ex. ?flik=ekonomi för Viktiga papper. */
+  useEffect(() => {
+    const flik = searchParams.get("flik");
+    if (flik) setTab(flik);
+  }, [searchParams]);
+
   /** Uppgiften man kom tillbaka till från kartan markeras en stund. */
   const [marked, setMarked] = useState<string | null>(null);
   useEffect(() => {
