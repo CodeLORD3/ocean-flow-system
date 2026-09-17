@@ -52,6 +52,7 @@ import {
   normalizePriority,
 } from "@/components/orders/linePriority";
 import { useCustomerCommitted } from "@/hooks/useCustomerCommitted";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type OrderLine = {
   product_id: string;
@@ -350,6 +351,7 @@ export default function ShopOrders() {
     setTimeout(() => noteRef.current?.focus(), 60);
   };
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
+  const isMobile = useIsMobile();
   /** Kundbeställda mängder i butiken — underlag för "måste med"-förslag. */
   const { data: customerCommitted = new Map() } = useCustomerCommitted(activeStoreId);
   const [productSearch, setProductSearch] = useState("");
@@ -610,9 +612,10 @@ export default function ShopOrders() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="font-heading text-base">Ny beställning till grossist</CardTitle>
-                <CardDescription className="text-xs">
-                  Sök och lägg till produkter från produktbanken. Ange önskat antal och skicka beställningen.
+                <CardTitle className="font-heading text-base sm:text-base">Ny beställning till grossist</CardTitle>
+                <CardDescription className="text-xs sm:text-xs">
+                  Sök produkt, skriv antal — och fortsätt söka nästa produkt. Allt du lägger till hamnar i
+                  <strong className="text-foreground"> samma beställning</strong>. Skicka först när allt är med.
                 </CardDescription>
               </div>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCreatingOrder(false)}>
@@ -622,9 +625,11 @@ export default function ShopOrders() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Copy last order + Product search */}
-            <div className="flex items-end gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sticky top-0 z-20 bg-card pb-2 sm:static sm:bg-transparent sm:pb-0">
               <div className="relative flex-1">
-                <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
+                <Label className="text-sm font-semibold mb-1.5 block sm:text-xs sm:font-medium">
+                  1. Lägg till produkter <span className="font-normal text-muted-foreground">(en åt gången — de samlas i samma beställning)</span>
+                </Label>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <Input
@@ -647,7 +652,7 @@ export default function ShopOrders() {
                         if (pick) addProduct(pick);
                       }
                     }}
-                    className="pl-8 h-8 text-xs"
+                    className="pl-9 h-12 text-base sm:pl-8 sm:h-8 sm:text-xs"
                   />
                 </div>
                 {filteredProducts.length > 0 && (
@@ -732,9 +737,159 @@ export default function ShopOrders() {
             {orderLines.length > 0 && (
               <div className="space-y-2">
                 <Separator />
-                <div className="text-xs font-medium text-muted-foreground">
-                  {orderLines.length} produkt{orderLines.length > 1 ? "er" : ""} tillagda
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-sm font-semibold text-foreground sm:text-xs sm:font-medium sm:text-muted-foreground">
+                    2. I beställningen: {orderLines.length} produkt{orderLines.length > 1 ? "er" : ""}
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="h-10 gap-1.5 text-sm sm:hidden"
+                    onClick={() => {
+                      searchInputRef.current?.focus();
+                      searchInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }}
+                  >
+                    <Plus className="h-4 w-4" /> Fler produkter
+                  </Button>
                 </div>
+                {isMobile ? (
+                  <div className="space-y-3">
+                    {groupedOrderLines.map(([cat, items]) => (
+                      <div key={cat} className="space-y-2">
+                        <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{cat}</div>
+                        {items.map(({ line, idx }) => {
+                          const tp = tierPrices?.get(line.product_id);
+                          const unitPrice = tp ? Number(tp.price) : 0;
+                          const cur = tp?.currency || activeStore?.currency || "SEK";
+                          const qty = Number(String(line.quantity).replace(",", ".")) || 0;
+                          const committed = customerCommitted.get(line.product_id);
+                          const setQty = (v: number) => updateLine(idx, v <= 0 ? "" : String(Number(v.toFixed(1))));
+                          return (
+                            <div key={line.product_id} className="rounded-xl border border-border bg-background p-3 space-y-3">
+                              <div className="flex items-start gap-2">
+                                <ProductThumb src={line.image_url} alt={line.product_name} static className="w-14 h-10" />
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-base font-semibold leading-snug text-foreground break-words">{line.product_name}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {line.unit}
+                                    {unitPrice > 0 && ` · ${unitPrice.toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur}`}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-10 w-10 text-destructive"
+                                  aria-label={`Ta bort ${line.product_name}`}
+                                  onClick={() => removeLine(idx)}
+                                >
+                                  <X className="h-5 w-5" />
+                                </Button>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-muted-foreground w-14">Antal</span>
+                                <Button
+                                  variant="outline"
+                                  className="h-12 w-12 text-xl font-bold shrink-0"
+                                  aria-label="Minska antal"
+                                  onClick={() => setQty(qty - 1)}
+                                >
+                                  –
+                                </Button>
+                                <Input
+                                  ref={el => { qtyRefs.current[line.product_id] = el; }}
+                                  type="number"
+                                  inputMode="decimal"
+                                  enterKeyHint="next"
+                                  step="0.1"
+                                  value={line.quantity}
+                                  onChange={e => updateLine(idx, e.target.value)}
+                                  onFocus={e => e.currentTarget.select()}
+                                  onKeyDown={e => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      searchInputRef.current?.focus();
+                                    }
+                                  }}
+                                  className="h-12 flex-1 text-center text-lg font-semibold"
+                                  placeholder="0"
+                                />
+                                <Button
+                                  variant="outline"
+                                  className="h-12 w-12 text-xl font-bold shrink-0"
+                                  aria-label="Öka antal"
+                                  onClick={() => setQty(qty + 1)}
+                                >
+                                  +
+                                </Button>
+                                <span className="text-sm text-muted-foreground w-8">{line.unit}</span>
+                              </div>
+                              {unitPrice > 0 && qty > 0 && (
+                                <p className="text-right text-xs font-mono tabular-nums text-muted-foreground">
+                                  {(unitPrice * qty).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} {cur}
+                                </p>
+                              )}
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {PRIORITY_ORDER.map((p) => {
+                                  const meta = PRIORITY_META[p];
+                                  const Icon = meta.icon;
+                                  const active = line.priority === p;
+                                  return (
+                                    <button
+                                      key={p}
+                                      type="button"
+                                      onClick={() => setLinePriority(idx, p)}
+                                      aria-pressed={active}
+                                      className={cn(
+                                        "flex h-10 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold",
+                                        active ? meta.chip : "border-border/60 text-muted-foreground",
+                                      )}
+                                    >
+                                      <Icon className="h-4 w-4" />
+                                      {meta.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              {line.priority === "must" && (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Input
+                                    type="number"
+                                    inputMode="decimal"
+                                    step="0.1"
+                                    value={line.priorityQty}
+                                    onChange={(e) => setLineField(idx, "priorityQty", e.target.value)}
+                                    onFocus={(e) => e.currentTarget.select()}
+                                    className="h-11 w-24 text-right text-base"
+                                    placeholder={line.unit}
+                                  />
+                                  <span className="text-xs text-muted-foreground">{line.unit} till kund</span>
+                                  <Input
+                                    value={line.priorityNote}
+                                    onChange={(e) => setLineField(idx, "priorityNote", e.target.value)}
+                                    className="h-11 w-full text-base"
+                                    placeholder="Kund / hämtdag"
+                                  />
+                                </div>
+                              )}
+                              {committed && committed.quantity > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setLinePriority(idx, "must");
+                                    setLineField(idx, "priorityQty", String(committed.quantity));
+                                  }}
+                                  className="text-left text-xs text-destructive underline-offset-2 hover:underline"
+                                >
+                                  {committed.quantity.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {committed.unit} kundbeställt
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
@@ -919,6 +1074,7 @@ export default function ShopOrders() {
 
                   </table>
                 </div>
+                )}
               </div>
             )}
 
@@ -981,41 +1137,67 @@ export default function ShopOrders() {
               />
             </div>
 
-            <div className="flex flex-wrap justify-end gap-2 pt-2">
-              <Button variant="outline" size="sm" onClick={() => setCreatingOrder(false)}>Avbryt</Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 border-warning/40 text-warning hover:bg-warning/10"
-                title="Spara som öppen beställning — stannar hos butiken tills ni skickar den"
-                onClick={() => handleCreateOrder(true)}
-                disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0}
-              >
-                <Users className="h-3.5 w-3.5" /> Öppen order
-              </Button>
-              <Button
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setConfirmSendOpen(true)}
-                disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !desiredDeliveryDate}
-              >
-                <ShoppingCart className="h-3.5 w-3.5" /> Skicka beställning
-              </Button>
+            <div className="sticky bottom-0 z-20 -mx-4 border-t border-border bg-card px-4 py-3 space-y-2 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:pt-2">
+              <p className="text-xs text-muted-foreground sm:hidden">
+                {orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkter klara — lägg till fler innan du skickar.
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+                <Button
+                  className="h-12 w-full gap-2 text-base sm:hidden"
+                  onClick={() => setConfirmSendOpen(true)}
+                  disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !desiredDeliveryDate}
+                >
+                  <ShoppingCart className="h-5 w-5" /> Skicka beställning
+                </Button>
+                <Button variant="outline" className="h-11 sm:h-8 sm:text-xs" onClick={() => setCreatingOrder(false)}>Avbryt</Button>
+                <Button
+                  variant="outline"
+                  className="h-11 gap-1.5 border-warning/40 text-warning hover:bg-warning/10 sm:h-8 sm:text-xs"
+                  title="Spara som öppen beställning — stannar hos butiken tills ni skickar den"
+                  onClick={() => handleCreateOrder(true)}
+                  disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0}
+                >
+                  <Users className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> Öppen order
+                </Button>
+                <Button
+                  size="sm"
+                  className="hidden gap-1.5 sm:inline-flex"
+                  onClick={() => setConfirmSendOpen(true)}
+                  disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !desiredDeliveryDate}
+                >
+                  <ShoppingCart className="h-3.5 w-3.5" /> Skicka beställning
+                </Button>
+              </div>
             </div>
 
             {/* Confirmation dialog */}
             <Dialog open={confirmSendOpen} onOpenChange={setConfirmSendOpen}>
               <DialogContent className="max-w-sm">
                 <DialogHeader>
-                  <DialogTitle className="font-heading">Bekräfta beställning</DialogTitle>
+                  <DialogTitle className="font-heading">Kontrollera beställningen</DialogTitle>
                   <DialogDescription className="text-xs">
-                    Är du säker på att du vill skicka beställningen med {orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkt(er)? Ordern kan inte ändras efter att den skickats.
+                    {orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkter, leverans{" "}
+                    {desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : "–"}. Ordern kan inte ändras efter att den skickats.
                   </DialogDescription>
                 </DialogHeader>
-                <DialogFooter>
-                  <Button variant="outline" size="sm" onClick={() => setConfirmSendOpen(false)}>Avbryt</Button>
-                  <Button size="sm" className="gap-1.5" onClick={() => { setConfirmSendOpen(false); handleCreateOrder(); }}>
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Ja, skicka
+                <div className="max-h-64 overflow-y-auto rounded-md border border-border divide-y divide-border/60">
+                  {orderLines
+                    .filter(l => l.quantity && Number(l.quantity) > 0)
+                    .map(l => (
+                      <div key={l.product_id} className="flex items-center justify-between gap-2 px-3 py-2">
+                        <span className="text-sm text-foreground break-words">{l.product_name}</span>
+                        <span className="text-sm font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
+                          {l.quantity} {l.unit}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+                <DialogFooter className="flex-col gap-2 sm:flex-row">
+                  <Button variant="outline" className="h-11 w-full sm:h-8 sm:w-auto sm:text-xs" onClick={() => setConfirmSendOpen(false)}>
+                    Nej, lägg till mer
+                  </Button>
+                  <Button className="h-12 w-full gap-1.5 text-base sm:h-8 sm:w-auto sm:text-xs" onClick={() => { setConfirmSendOpen(false); handleCreateOrder(); }}>
+                    <CheckCircle2 className="h-5 w-5 sm:h-3.5 sm:w-3.5" /> Ja, skicka
                   </Button>
                 </DialogFooter>
               </DialogContent>
