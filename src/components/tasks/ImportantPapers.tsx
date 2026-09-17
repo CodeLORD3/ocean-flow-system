@@ -1528,9 +1528,16 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               </Select>
               <Input
                 value={cardForm.cardHolder}
-                onChange={(e) => setCardForm((f) => ({ ...f, cardHolder: e.target.value }))}
+                onChange={(e) => {
+                  setCardAutoFilled((s) => {
+                    const n = new Set(s);
+                    n.delete("cardHolder");
+                    return n;
+                  });
+                  setCardForm((f) => ({ ...f, cardHolder: e.target.value }));
+                }}
                 placeholder="Eller skriv namnet på kortet"
-                className="mt-2 h-10"
+                className={`mt-2 h-10 ${cardAutoFilled.has("cardHolder") ? "border-amber-400 bg-amber-50" : ""}`}
               />
             </div>
 
