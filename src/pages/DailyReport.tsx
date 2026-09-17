@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
+import { currencyLabel as curLabel, defaultVatFor } from "@/lib/reportCurrency";
 import { useTabs } from "@/contexts/TabsContext";
 import { useStaff } from "@/hooks/useStaff";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
