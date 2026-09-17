@@ -1073,9 +1073,19 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         </p>
       ) : (
         <div className="space-y-1.5">
-          {sorted.map((p) => {
+          {sorted.map((p, i) => {
             const info = paperTypeInfo(p.paper_type);
+            // I veckoläget grupperas pappren under veckodag, datum och veckonummer.
+            const prev = i > 0 ? sorted[i - 1] : null;
+            const header =
+              sortBy === "vecka" && p.paper_date && p.paper_date !== prev?.paper_date
+                ? longDayLabel(p.paper_date)
+                : null;
             return (
+              <div key={`grupp-${p.id}`}>
+              {header && (
+                <p className="mb-1 mt-3 text-xs font-semibold text-foreground first:mt-0">{header}</p>
+              )}
               <div
                 key={p.id}
                 className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-3 py-2"
