@@ -188,5 +188,46 @@ export function useMailIntakeActions() {
     onSuccess: invalidate,
   });
 
-  return { runIntake, runFortnoxIntake, saveSender, removeSender, ignoreMessage, setDocumentSupplier, invalidate };
+  /**
+   * Släpper ett dokument som felaktigt stoppats som dubblett tillbaka till
+   * attestkorgen. Dokumentdatumet blir dokumentnummer så att spärren fungerar
+   * framåt, och handlingen loggas i historiken.
+   */
+  const releaseDuplicate = useMutation({
+    mutationFn: async (doc: { id: string; document_date?: string | null; file_name?: string | null }) => {
+      const { error } = await supabase
+        .from("supplier_documents")
+        .update({
+          status: "utkast",
+          duplicate_of: null,
+          document_number: doc.document_date ?? null,
+          reject_reason: null,
+        })
+        .eq("id", doc.id);
+      if (error) throw error;
+      const { data: auth } = await supabase.auth.getUser();
+      await supabase.from("activity_logs").insert({
+        portal: "erp",
+        action_type: "dubblett_slappt",
+        entity_type: "supplier_document",
+        entity_id: doc.id,
+        description: `Släppte ${doc.file_name ?? "dokument"} från dubblettspärren till attest`,
+        performed_by: auth?.user?.id ?? null,
+        details: { document_date: doc.document_date ?? null },
+      } as any);
+    },
+    onSuccess: invalidate,
+  });
+
+  return {
+    runIntake,
+    runFortnoxIntake,
+    saveSender,
+    removeSender,
+    ignoreMessage,
+    setDocumentSupplier,
+    releaseDuplicate,
+    invalidate,
+  };
 }
+
