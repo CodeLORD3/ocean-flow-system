@@ -153,63 +153,71 @@ export function TaskRegister({
                       recipes.find((x) => x.id === r.recipeId)?.name ?? null,
                     );
                     return (
-                      <div key={r.key} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm">
+                      <div
+                        key={r.key}
+                        className="flex flex-col gap-2 px-3 py-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:py-2"
+                      >
                         <button
                           type="button"
                           onClick={() => r.itemId && onOpenTask(r.itemId)}
                           disabled={!r.itemId}
                           className={cn(
-                            "min-w-[180px] flex-1 text-left font-medium break-words",
+                            "w-full text-left font-medium break-words sm:min-w-[180px] sm:flex-1",
                             r.itemId ? "hover:underline" : "cursor-default",
                           )}
                         >
                           {r.task}
                         </button>
 
-                        {area && (
-                          <span
-                            className="rounded-full px-2 py-0.5 text-xs"
-                            style={{ background: `${area.color}22`, color: area.color }}
-                          >
-                            {area.number}. {area.name}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {area && (
+                            <span
+                              className="rounded-full px-2 py-0.5 text-xs"
+                              style={{ background: `${area.color}22`, color: area.color }}
+                            >
+                              {area.number}. {area.name}
+                            </span>
+                          )}
+                          {r.recurring && (
+                            <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
+                              <Repeat className="h-3 w-3" /> Återkommande
+                            </span>
+                          )}
+                          <span className="text-xs text-muted-foreground sm:w-[150px] sm:text-right">
+                            {whenText(r.lastDone)}
                           </span>
-                        )}
-                        {r.recurring && (
-                          <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
-                            <Repeat className="h-3 w-3" /> Återkommande
+                          <span className="font-mono text-xs tabular-nums text-muted-foreground sm:w-[70px] sm:text-right">
+                            {r.times} ggr
                           </span>
-                        )}
-                        <span className="w-[150px] text-right text-xs text-muted-foreground">
-                          {whenText(r.lastDone)}
-                        </span>
-                        <span className="w-[70px] text-right font-mono text-xs tabular-nums text-muted-foreground">
-                          {r.times} ggr
-                        </span>
+                        </div>
 
-                        <Select value={r.categoryId ?? "none"} onValueChange={(v) => setCategory(r, v)}>
-                          <SelectTrigger className="h-8 w-[170px] text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Övrigt</SelectItem>
-                            {categories.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Select value={r.categoryId ?? "none"} onValueChange={(v) => setCategory(r, v)}>
+                            <SelectTrigger className="h-10 w-full text-xs sm:h-8 sm:w-[170px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Övrigt</SelectItem>
+                              {categories.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>
+                                  {c.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
 
-                        {target && (
-                          <button
-                            type="button"
-                            onClick={() => onNavigate(target.url)}
-                            className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/20"
-                          >
-                            <ArrowUpRight className="h-3 w-3" /> {target.label}
-                          </button>
-                        )}
+                          {target && (
+                            <button
+                              type="button"
+                              onClick={() => onNavigate(target.url)}
+                              className="inline-flex min-h-9 items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20 sm:min-h-0 sm:px-2 sm:py-0.5"
+                            >
+                              <ArrowUpRight className="h-3 w-3" /> {target.label}
+                            </button>
+                          )}
+                        </div>
                       </div>
+
                     );
                   })}
                 </div>
