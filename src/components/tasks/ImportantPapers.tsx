@@ -3,6 +3,7 @@ import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import {
   Camera,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CreditCard,
