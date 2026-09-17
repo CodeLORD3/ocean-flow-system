@@ -537,6 +537,20 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
+          <button
+            type="button"
+            onClick={() => setNeedsOnly((v) => !v)}
+            className={cn(
+              "rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+              needsOnly
+                ? "border-transparent bg-amber-500 text-white shadow-sm"
+                : "border-amber-300 bg-card text-amber-700 hover:bg-amber-50",
+            )}
+          >
+            Behöver fyllas i{" "}
+            <span className="tabular-nums opacity-70">{papers.filter(needsCheck).length}</span>
+          </button>
+
           <Select value={payFilter} onValueChange={setPayFilter}>
             <SelectTrigger className="h-9 w-full sm:w-48">
               <SelectValue placeholder="Betalsätt" />
