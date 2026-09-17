@@ -94,7 +94,9 @@ export function MapListViews({
               {images.map((i) => (
                 <button
                   key={i.id}
-                  onClick={() => onOpenZone(i.entity_id)}
+                  onClick={() => {
+                    if (zones.some((z) => z.id === i.entity_id)) onOpenZone(i.entity_id);
+                  }}
                   className="overflow-hidden rounded-xl border border-border text-left hover:border-primary"
                 >
                   <img src={i.url} alt={i.caption ?? zoneName(i.entity_id)} className="h-28 w-full object-cover" />
