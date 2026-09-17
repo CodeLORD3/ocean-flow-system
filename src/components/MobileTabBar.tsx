@@ -4,6 +4,7 @@ import {
   ShoppingCart,
   ClipboardList,
   MessageSquare,
+  Receipt,
   Menu,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
@@ -20,6 +21,7 @@ const SHOP: Item[] = [
   { title: "Lager", url: "/inventory", icon: Package },
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
   { title: "Kundorder", url: "/customer-orders", icon: ClipboardList },
+  { title: "Ekonomi", url: "/uppgifter?flik=ekonomi", icon: Receipt },
 ];
 
 const PRODUCTION: Item[] = [
@@ -47,7 +49,7 @@ export function MobileTabBar() {
   const location = useLocation();
 
   const base = site === "shop" ? SHOP : site === "production" ? PRODUCTION : ADMIN;
-  const items = base.filter((i) => canAccessRoute(site, i.url)).slice(0, 4);
+  const items = base.filter((i) => canAccessRoute(site, i.url)).slice(0, 5);
 
   return (
     <nav
@@ -55,9 +57,9 @@ export function MobileTabBar() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       aria-label="Snabbmeny"
     >
-      <div className="grid grid-cols-5">
+      <div className="grid" style={{ gridTemplateColumns: `repeat(${items.length + 1}, minmax(0, 1fr))` }}>
         {items.map((item) => {
-          const active = location.pathname === item.url;
+          const active = location.pathname + location.search === item.url || location.pathname === item.url;
           const Icon = item.icon;
           return (
             <button
