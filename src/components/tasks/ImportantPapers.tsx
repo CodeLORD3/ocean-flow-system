@@ -294,6 +294,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       } catch {
         // Kunde inte läsas av — pappret sparas ändå med bilden.
       }
+      // Känner igen kortet på de fyra sista siffrorna → vem som betalat, och utlägg om det är ett privat kort.
+      const known = matchCard(paymentCards, patch.cardLast4 ?? "");
       try {
         const id = await save.mutateAsync({
           storeId: storeId ?? null,
@@ -308,9 +310,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
           documentNumber: patch.documentNumber ?? "",
           description: patch.description ?? "",
           paymentMethod: (patch.paymentMethod as "kort" | "kontant") || null,
-          cardBrand: patch.cardBrand ?? "",
+          cardBrand: patch.cardBrand ?? known?.card_brand ?? "",
           cardLast4: patch.cardLast4 ?? "",
-          cardHolder: patch.cardHolder ?? "",
+          cardHolder: patch.cardHolder ?? known?.staff_name ?? known?.card_holder ?? "",
+          cardId: known?.id ?? null,
+          paidByStaffId: known?.staff_id ?? null,
+          isExpenseClaim: known?.card_kind === "privat",
           expenseAccount: "",
           expenseCategory: patch.expenseCategory ?? "",
           lineItems: parseItems(patch.itemsText ?? ""),
