@@ -335,7 +335,37 @@ export function EntityImageGallery({
     setFeatured.mutate({ entityType, entityId, day, imageIds: next });
   };
 
+  /** Markera bilder för att samla dem i en grupp. */
+  const togglePicked = (id: string) =>
+    setPicked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
+  const saveGroup = async (existingId?: string) => {
+    try {
+      if (existingId) {
+        await addToGroup.mutateAsync({ groupId: existingId, imageIds: picked, entityType, entityId });
+      } else {
+        if (!groupName.trim()) {
+          toast({ title: "Gruppen behöver ett namn", variant: "destructive" });
+          return;
+        }
+        await createGroup.mutateAsync({
+          entityType,
+          entityId,
+          name: groupName.trim(),
+          description: groupDesc.trim() || null,
+          imageIds: picked,
+        });
+      }
+      toast({ title: "Bilderna samlade i gruppen" });
+      setGroupDialog(false);
+      setGroupName("");
+      setGroupDesc("");
+      setPicked([]);
+      setPickMode(false);
+    } catch (e: any) {
+      toast({ title: "Kunde inte spara gruppen", description: e.message, variant: "destructive" });
+    }
+  };
 
   const grid = (
 
