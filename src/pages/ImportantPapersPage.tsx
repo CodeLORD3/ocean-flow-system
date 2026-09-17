@@ -7,7 +7,7 @@ import { ImportantPapers } from "@/components/tasks/ImportantPapers";
 /** Egen sida för Ekonomi → Viktiga papper (kvitton, följesedlar, fakturor, brev, kort). */
 export default function ImportantPapersPage() {
   const { site, activeStoreId } = useSite();
-  const { data: stores = [] } = useAllowedStores();
+  const stores = useAllowedStores() ?? [];
   const [picked, setPicked] = useState<string | null>(null);
 
   const storeId = useMemo(() => {
