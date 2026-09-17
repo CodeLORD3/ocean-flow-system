@@ -313,6 +313,8 @@ export default function StockCount() {
   });
   const [openReportId, setOpenReportId] = useState<string | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(true);
+  /** Visar de räknade varorna i en färdig (låst) inventering. */
+  const [showLockedLines, setShowLockedLines] = useState(true);
   // Raden i inventeringslistan är kompakt; redigering öppnas först vid klick.
   const [editKey, setEditKey] = useState<string | null>(null);
   const reportLinesQuery = useQuery({
@@ -831,14 +833,67 @@ export default function StockCount() {
         )}
       </div>
 
-      {/* Klar rapport — tom sida med stor startknapp, rapporten ligger i listan nedan */}
+      {/* Klar rapport — grön ruta som går att öppna och läsa, plus knapp för en ny räkning */}
       {session && locked && effectiveStoreId && (
-        <Button
-          className="h-12 w-full gap-2 text-sm font-semibold"
-          onClick={() => createSessionFor(date)}
-        >
-          <Plus className="h-4 w-4" /> Skapa inventeringsrapport
-        </Button>
+        <div className="space-y-2">
+          <div className="rounded-lg border border-emerald-500/60 bg-emerald-50 p-3 dark:bg-emerald-500/10">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                  <Check className="h-4 w-4 shrink-0" />
+                  Inventeringsrapporten är klar
+                </p>
+                <p className="text-[11px] leading-snug text-emerald-800/80 dark:text-emerald-200/80">
+                  {weekdayLong(date)} {date}
+                  {session.locked_at ? ` · inskickad ${stampLabel(session.locked_at)}` : ""} ·{" "}
+                  {(linesQuery.data ?? []).filter((l: any) => l.counted_qty !== null).length} räknade varor
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 shrink-0 gap-1 border-emerald-600/40 text-[11px] text-emerald-800 hover:bg-emerald-100 dark:text-emerald-200"
+                onClick={() => setShowLockedLines((v) => !v)}
+              >
+                {showLockedLines ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                {showLockedLines ? "Göm varorna" : "Öppna rapporten"}
+              </Button>
+            </div>
+
+            {showLockedLines && (
+              <div className="mt-2 max-h-80 overflow-y-auto rounded-md border border-emerald-500/30 bg-card">
+                {linesQuery.isLoading ? (
+                  <p className="px-2 py-2 text-[11px] text-muted-foreground">Laddar rader…</p>
+                ) : !(linesQuery.data ?? []).length ? (
+                  <p className="px-2 py-2 text-[11px] text-muted-foreground">Rapporten har inga rader.</p>
+                ) : (
+                  <div className="divide-y divide-border/60">
+                    {(linesQuery.data ?? [])
+                      .filter((l: any) => l.counted_qty !== null)
+                      .map((l: any) => {
+                        const p = productsById.get(l.product_id);
+                        return (
+                          <div key={l.id} className="flex items-center justify-between gap-2 px-2 py-1">
+                            <span className="min-w-0 truncate text-[11px]">{p?.name || "—"}</span>
+                            <span className="shrink-0 font-mono text-[11px] tabular-nums">
+                              {fmtQty(Number(l.counted_qty) || 0, unitOf(l.unit || p?.unit))}
+                            </span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Button
+            className="h-12 w-full gap-2 text-sm font-semibold"
+            onClick={() => createSessionFor(date)}
+          >
+            <Plus className="h-4 w-4" /> Skapa ny inventeringsrapport
+          </Button>
+        </div>
       )}
 
       {/* Start — guidat läge när ingen rapport är igång för datumet */}
@@ -1448,26 +1503,27 @@ export default function StockCount() {
                     onClick={() => {
                       setDate(h.count_date);
                       setSelectedSessionId(h.id);
+                      setShowLockedLines(true);
                     }}
-                    className={`flex w-full items-center justify-between gap-2 px-1.5 py-1 text-left hover:bg-muted/50 ${
-                      isCurrent ? "bg-primary/5" : ""
+                    className={`flex w-full items-center justify-between gap-2 px-1.5 py-1 text-left hover:bg-emerald-100/60 dark:hover:bg-emerald-500/20 ${
+                      isCurrent ? "bg-emerald-100 dark:bg-emerald-500/20" : "bg-emerald-50/60 dark:bg-emerald-500/10"
                     }`}
                   >
                     <span className="flex min-w-0 items-center gap-1.5">
-                      <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
-                      <span className="truncate text-[11px] font-medium">
+                      <Check className="h-3 w-3 shrink-0 text-emerald-600" />
+                      <span className="truncate text-[11px] font-medium text-emerald-900 dark:text-emerald-200">
                         {dayLabel(h.count_date)} {h.count_date}
                       </span>
                       <Badge
                         variant="outline"
-                        className="h-4 bg-muted text-[9px] text-muted-foreground"
+                        className="h-4 border-emerald-500/40 bg-emerald-500/15 text-[9px] text-emerald-700"
                       >
-                        Låst
+                        Klar
                       </Badge>
                     </span>
-                    <span className="flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
+                    <span className="flex shrink-0 items-center gap-2 text-[10px] text-emerald-800/80 dark:text-emerald-200/80">
                       <span>{lineCount} rader</span>
-                      
+                      <span className="underline">Öppna</span>
                     </span>
                   </button>
                 );
