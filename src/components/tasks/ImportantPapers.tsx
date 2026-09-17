@@ -96,6 +96,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const [form, setForm] = useState({
     paperType: "kvitto" as PaperType,
     companyName: "",
+    companyWebsite: "",
     paperDate: new Date().toISOString().slice(0, 10),
     netAmount: "",
     vatAmount: "",
@@ -137,6 +138,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   type FormKey =
     | "paperType"
     | "companyName"
+    | "companyWebsite"
     | "paperDate"
     | "netAmount"
     | "vatAmount"
@@ -235,6 +237,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     const validType = PAPER_TYPES.some((t) => t.value === str(p.paper_type));
     if (validType) patch.paperType = str(p.paper_type);
     if (str(p.company_name)) patch.companyName = str(p.company_name);
+    if (cleanDomain(str(p.company_website))) patch.companyWebsite = cleanDomain(str(p.company_website))!;
     if (/^\d{4}-\d{2}-\d{2}$/.test(str(p.paper_date))) patch.paperDate = str(p.paper_date);
     if (str(p.document_number)) patch.documentNumber = str(p.document_number);
     if (money(p.net_amount)) patch.netAmount = money(p.net_amount);
