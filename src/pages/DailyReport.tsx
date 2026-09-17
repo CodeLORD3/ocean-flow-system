@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useSite } from "@/contexts/SiteContext";
+import { useStores } from "@/hooks/useStores";
 import { useTabs } from "@/contexts/TabsContext";
 import { useStaff } from "@/hooks/useStaff";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
