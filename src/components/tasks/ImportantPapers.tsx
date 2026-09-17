@@ -120,6 +120,32 @@ function parseItems(text: string) {
     });
 }
 
+/** ISO-veckonummer. */
+function weekNumber(d: Date) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return Math.ceil(((t.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+/** "Torsdag 17 september 2026 · 17/9 · vecka 38" — tydligt både i ord och siffror. */
+function longDayLabel(iso: string) {
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  const weekday = d.toLocaleDateString("sv-SE", { weekday: "long" });
+  const rest = d.toLocaleDateString("sv-SE", { day: "numeric", month: "long", year: "numeric" });
+  return `${weekday[0].toUpperCase()}${weekday.slice(1)} ${rest} · ${d.getDate()}/${d.getMonth() + 1} · vecka ${weekNumber(d)}`;
+}
+
+/** "Tors 17 sep · v.38" — kort variant för listrader. */
+function shortDayLabel(iso: string) {
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  const weekday = d.toLocaleDateString("sv-SE", { weekday: "short" }).replace(".", "");
+  const rest = d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+  return `${weekday[0].toUpperCase()}${weekday.slice(1)} ${rest} · v.${weekNumber(d)}`;
+}
+
 /** Banker/kortutgivare vi ser oftast — snabbval i kortregistret. */
 const BANK_CHOICES = [
   "PostFinance",
@@ -702,6 +728,10 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     const list = [...filtered];
     if (sortBy === "belopp") list.sort((a, b) => (b.net_amount ?? 0) - (a.net_amount ?? 0));
     else if (sortBy === "datum") list.sort((a, b) => (b.paper_date ?? "").localeCompare(a.paper_date ?? ""));
+    else if (sortBy === "datum-aldst")
+      list.sort((a, b) => (a.paper_date ?? "zzz").localeCompare(b.paper_date ?? "zzz"));
+    else if (sortBy === "vecka")
+      list.sort((a, b) => (b.paper_date ?? "").localeCompare(a.paper_date ?? ""));
     else if (sortBy === "foretag")
       list.sort((a, b) => (a.company_name ?? "").localeCompare(b.company_name ?? "", "sv"));
     else if (sortBy === "konto")
@@ -1019,7 +1049,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="senast">Senast inlagt</SelectItem>
-              <SelectItem value="datum">Datum på pappret</SelectItem>
+              <SelectItem value="datum">Datum på pappret (nyast först)</SelectItem>
+              <SelectItem value="datum-aldst">Datum på pappret (äldst först)</SelectItem>
+              <SelectItem value="vecka">Vecka och veckodag</SelectItem>
               <SelectItem value="belopp">Högsta belopp</SelectItem>
               <SelectItem value="foretag">Företag A–Ö</SelectItem>
               <SelectItem value="konto">Konto</SelectItem>
@@ -1041,9 +1073,19 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         </p>
       ) : (
         <div className="space-y-1.5">
-          {sorted.map((p) => {
+          {sorted.map((p, i) => {
             const info = paperTypeInfo(p.paper_type);
+            // I veckoläget grupperas pappren under veckodag, datum och veckonummer.
+            const prev = i > 0 ? sorted[i - 1] : null;
+            const header =
+              sortBy === "vecka" && p.paper_date && p.paper_date !== prev?.paper_date
+                ? longDayLabel(p.paper_date)
+                : null;
             return (
+              <div key={`grupp-${p.id}`}>
+              {header && (
+                <p className="mb-1 mt-3 text-xs font-semibold text-foreground first:mt-0">{header}</p>
+              )}
               <div
                 key={p.id}
                 className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-3 py-2"
@@ -1081,7 +1123,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   </span>
                   <span className="block truncate text-[11px] text-muted-foreground">
                     {[
-                      p.paper_date,
+                      p.paper_date ? shortDayLabel(p.paper_date) : null,
                       p.payment_method === "kort"
                         ? [p.card_brand ?? "Kort", p.card_last4 ? `••${p.card_last4}` : null]
                             .filter(Boolean)
@@ -1129,6 +1171,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
+              </div>
             );
           })}
         </div>
@@ -1165,12 +1208,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               <div className="min-w-0 flex-1">
                 <DialogTitle className="truncate text-base">
                   {form.paperDate
-                    ? new Date(form.paperDate).toLocaleDateString("sv-SE", {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })
+                    ? longDayLabel(form.paperDate)
                     : edit
                       ? "Papper utan datum"
                       : "Nytt papper"}
