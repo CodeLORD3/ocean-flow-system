@@ -826,7 +826,77 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 </div>
 
                 {form.paymentMethod === "kort" && (
-                  <div className="mt-2 grid grid-cols-3 gap-2">
+                  <>
+                    <div className="mt-2">
+                      <Label className="text-xs">Vilket kort?</Label>
+                      <div className="mt-1 grid gap-1.5">
+                        {paymentCards.map((c) => {
+                          const on = activeCard?.id === c.id;
+                          return (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => useCard(c)}
+                              className={cn(
+                                "flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-sm transition",
+                                on
+                                  ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-400"
+                                  : "border-border bg-card hover:bg-muted",
+                              )}
+                            >
+                              <StaffAvatar
+                                name={c.staff_name ?? c.card_holder}
+                                imageUrl={c.staff_image}
+                                className="h-8 w-8"
+                              />
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate font-medium">
+                                  {c.staff_name || c.card_holder || c.label || "Kort"}
+                                </span>
+                                <span className="block truncate text-[11px] text-muted-foreground">
+                                  {[c.card_brand || "Kort", `••${c.card_last4}`].join(" ")}
+                                </span>
+                              </span>
+                              {c.card_kind === "privat" ? (
+                                <span className="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+                                  Privat → utlägg
+                                </span>
+                              ) : (
+                                <span className="shrink-0 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
+                                  Företagskort
+                                </span>
+                              )}
+                              {on && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
+                            </button>
+                          );
+                        })}
+                        <Button
+                          variant="outline"
+                          className="h-10 justify-start"
+                          onClick={() => {
+                            setCardForm({
+                              cardBrand: form.cardBrand,
+                              cardLast4: form.cardLast4,
+                              cardHolder: form.cardHolder,
+                              staffId: "",
+                              cardKind: "foretag",
+                            });
+                            setCardOpen(true);
+                          }}
+                        >
+                          <CreditCard className="mr-2 h-4 w-4" /> Lägg till ett kort
+                        </Button>
+                      </div>
+                      {activeCard && (
+                        <p className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2 py-1.5 text-xs font-medium text-emerald-800">
+                          <Check className="h-3.5 w-3.5" />
+                          {activeCard.card_kind === "privat"
+                            ? `${activeCard.staff_name || activeCard.card_holder || "Personen"} har betalat privat — bokförs som utlägg`
+                            : `Betalat med företagskortet ${cardLabel(activeCard)}`}
+                        </p>
+                      )}
+                    </div>
+                    <div className="mt-2 grid grid-cols-3 gap-2">
                     <div>
                       <Label className="text-xs">Korttyp{litLabel("cardBrand")}</Label>
                       <Input
