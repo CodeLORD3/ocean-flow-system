@@ -56,7 +56,7 @@ Fyll bara i det som faktiskt står på pappret. Gissa aldrig.
 - paper_date: datum på pappret, YYYY-MM-DD
 - document_number: kvitto-, följesedels- eller fakturanummer
 - net_amount / vat_amount / gross_amount: belopp som siffror utan valuta
-- currency: CHF, SEK eller EUR
+- currency: valutakoden som står på dokumentet, t.ex. CHF, SEK, DKK, NOK, EUR, GBP eller USD
 - payment_method: kort om kort/karte/carte/visa/mastercard/twint står, kontant om kontant/bar/cash står, annars null
 - card_brand: Visa, Mastercard, Maestro, Amex, Twint, Postfinance eller liknande som står på kvittot
 - card_last4: exakt fyra sista siffrorna i kortnumret om det står (t.ex. "**** 4321" -> "4321"), annars null
