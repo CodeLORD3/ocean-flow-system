@@ -83,18 +83,20 @@ export function MapListViews({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <ImageIcon className="h-4 w-4 text-primary" /> Bilder placerade i kartan ({images.length})
+            <ImageIcon className="h-4 w-4 text-primary" /> Bilder i butiken ({images.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {images.length === 0 ? (
-            <EmptyState title="Inga bilder ännu" description="Välj en yta i kartan och lägg till en bild på en exakt plats." />
+            <EmptyState title="Inga bilder ännu" description="Ta ett foto på en yta eller lägg till bilder från biblioteket." />
           ) : (
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {images.map((i) => (
                 <button
                   key={i.id}
-                  onClick={() => onOpenZone(i.entity_id)}
+                  onClick={() => {
+                    if (zones.some((z) => z.id === i.entity_id)) onOpenZone(i.entity_id);
+                  }}
                   className="overflow-hidden rounded-xl border border-border text-left hover:border-primary"
                 >
                   <img src={i.url} alt={i.caption ?? zoneName(i.entity_id)} className="h-28 w-full object-cover" />

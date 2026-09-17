@@ -47,7 +47,12 @@ import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
 import { ZONE_PALETTE } from "@/lib/mapPalette";
 import { bbox, zonePoints } from "@/lib/mapGeometry";
-import { useFloorPlanImages, useUploadEntityImage } from "@/hooks/useEntityImages";
+import {
+  useEntityImages,
+  useFloorPlanImages,
+  useStoreAreaImages,
+  useUploadEntityImage,
+} from "@/hooks/useEntityImages";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useAllowedStores } from "@/components/StoreSwitcher";
@@ -102,6 +107,22 @@ export default function StoreMap() {
   const { data: versions = [] } = useFloorPlanVersions(plan?.id ?? null);
   const { data: pins = [] } = useMapPins(plan?.id ?? null);
   const { data: planImages = [] } = useFloorPlanImages(plan?.id ?? null);
+  /**
+   * Bildlistan visar butikens alla bilder — både de som placerats på ritningen
+   * och de som tagits på butiken eller på en yta utan exakt plats.
+   */
+  const { data: storeImages = [] } = useEntityImages("store", storeId ?? null);
+  const areaImageIds = useMemo(
+    () => [...zones.map((z) => z.id), ...objects.map((o) => o.id)],
+    [zones, objects],
+  );
+  const { data: areaImages = [] } = useStoreAreaImages(areaImageIds);
+  const allImages = useMemo(() => {
+    const seen = new Set<string>();
+    return [...planImages, ...areaImages, ...storeImages]
+      .filter((i) => (seen.has(i.id) ? false : (seen.add(i.id), true)))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  }, [planImages, areaImages, storeImages]);
   const uploadImage = useUploadEntityImage();
   useMapRealtime(storeId);
 
@@ -475,7 +496,7 @@ export default function StoreMap() {
           objects={objects}
           tasks={tasks}
           deviations={deviations as never}
-          images={planImages}
+          images={allImages}
           versions={versions as never}
           zoneNumbers={zoneNumbers}
           onOpenZone={(id) => {
