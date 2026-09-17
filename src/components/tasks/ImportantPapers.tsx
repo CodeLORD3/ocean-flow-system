@@ -120,8 +120,18 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const [reading, setReading] = useState(false);
   const [queue, setQueue] = useState<{ done: number; total: number } | null>(null);
   const [needsOnly, setNeedsOnly] = useState(false);
-  // Fält som lästes av från pappret — de lyser tills någon rättar dem.
+  // Gult = avläst från pappret och inte kontrollerat än.
   const [autoFilled, setAutoFilled] = useState<Set<string>>(new Set());
+  // Grönt = någon har skrivit in eller rättat värdet själv.
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [cardOpen, setCardOpen] = useState(false);
+  const [cardForm, setCardForm] = useState({
+    cardBrand: "",
+    cardLast4: "",
+    cardHolder: "",
+    staffId: "",
+    cardKind: "foretag" as "foretag" | "privat",
+  });
 
 
   type FormKey =
