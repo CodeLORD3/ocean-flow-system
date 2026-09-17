@@ -1148,6 +1148,7 @@ export default function StoreMap() {
                 canManage={canManage}
                 onOpenPage={() => openAreaPage()}
                 onEditZone={selectedZone ? () => setSheetZoneId(selectedZone.id) : undefined}
+                onEditZoneShape={selectedZone ? () => editZoneShape(selectedZone.id) : undefined}
           zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
                 areaLabel={
                   selectedZone
@@ -1273,6 +1274,7 @@ export default function StoreMap() {
           canManage={canManage}
           onOpenPage={() => openAreaPage()}
                 onEditZone={selectedZone ? () => setSheetZoneId(selectedZone.id) : undefined}
+                onEditZoneShape={selectedZone ? () => editZoneShape(selectedZone.id) : undefined}
           zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
           areaLabel={
             selectedZone
