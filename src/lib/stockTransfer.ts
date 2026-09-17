@@ -8,6 +8,7 @@ import {
 } from "@/lib/stockLedger";
 import { GROSSIST_FLYTANDE_ID, leveranslagerId, butikslagerId } from "@/lib/locations";
 import { isInfiniteStock } from "@/lib/infiniteStock";
+import { isExportStore, freshestLotsAtLocation, lottedQuantity } from "@/lib/exportPicking";
 
 
 /**
@@ -106,7 +107,27 @@ export async function moveStockToTransport(orderId: string) {
     }
   }
 
-
+  /**
+   * Export till Schweiz plockar färskaste partiet först, och varje rad måste
+   * bära parti hela vägen till fakturan. Kontrollen körs före första rörelsen
+   * så att en exportleverans aldrig bokförs halv eller utan spårbarhet.
+   */
+  const exportOrder = await isExportStore(order.store_id);
+  if (exportOrder && gfLocId && !(await isInfiniteStock())) {
+    const needLot = new Map<string, number>();
+    for (const line of order.shop_order_lines) {
+      const qty = Number(line.quantity_delivered || line.quantity_ordered) || 0;
+      if (qty <= 0 || !line.product_id) continue;
+      needLot.set(line.product_id, (needLot.get(line.product_id) || 0) + qty);
+    }
+    const withoutLot: { productId: string; missing: number }[] = [];
+    for (const [productId, qty] of needLot) {
+      const lots = await freshestLotsAtLocation(productId, gfLocId);
+      const missing = qty - lottedQuantity(lots);
+      if (missing > 0.001) withoutLot.push({ productId, missing });
+    }
+    if (withoutLot.length) await throwMissingLot(withoutLot);
+  }
 
 
   for (const line of order.shop_order_lines) {
@@ -136,8 +157,11 @@ export async function moveStockToTransport(orderId: string) {
       const sourceId = (stock as any).location_id as string;
       const cost = Number((stock as any).avg_cost) || null;
 
-      // Plocka parti för parti (FIFO på bäst före) så partiet följer med flytten.
-      const lots = await lotBalancesAtLocation(line.product_id, sourceId);
+      // Butiksleverans i Sverige: äldsta bäst före först (FEFO).
+      // Export till Schweiz: färskaste partiet först.
+      const lots = exportOrder
+        ? (await freshestLotsAtLocation(line.product_id, sourceId)).filter((l) => l.lotId)
+        : await lotBalancesAtLocation(line.product_id, sourceId);
       const picks: { lotId: string | null; qty: number }[] = [];
       let fromThisSource = Math.min(remaining, available);
       for (const lot of lots) {
@@ -147,8 +171,15 @@ export async function moveStockToTransport(orderId: string) {
         picks.push({ lotId: lot.lotId, qty: take });
         fromThisSource -= take;
       }
-      // Saldo utan partihistorik: flytta ändå, utan parti.
-      if (fromThisSource > 0) picks.push({ lotId: null, qty: fromThisSource });
+      // Saldo utan partihistorik: flyttas bara i Sverige. En exportrad utan
+      // parti går inte att spåra på fakturan och stoppas i stället.
+      if (fromThisSource > 0) {
+        if (exportOrder) {
+          await throwMissingLot([{ productId: line.product_id as string, missing: fromThisSource }]);
+        }
+        picks.push({ lotId: null, qty: fromThisSource });
+      }
+
 
       for (const pick of picks) {
         await transferStock({
@@ -208,6 +239,28 @@ async function throwShortage(shortages: { productId: string; missing: number }[]
     .join(", ");
   throw new Error(
     `Grossistlagret räcker inte till hela ordern. ${list}. Bokför inleverans eller minska mängden innan ordern skickas.`,
+  );
+}
+
+/**
+ * Stoppmeddelande när en exportrad inte kan få parti. Exportfakturan måste visa
+ * parti, art, fångstområde och fartyg per rad, så raden får inte skickas utan.
+ */
+async function throwMissingLot(missing: { productId: string; missing: number }[]) {
+  const { data: prods } = await supabase
+    .from("products")
+    .select("id, name, unit")
+    .in("id", missing.map((s) => s.productId));
+  const nameOf = new Map((prods || []).map((p: any) => [p.id, p]));
+  const list = missing
+    .map((s) => {
+      const p: any = nameOf.get(s.productId);
+      const qty = Math.round(s.missing * 10) / 10;
+      return `${p?.name ?? "Okänd produkt"}: ${qty} ${p?.unit ?? "kg"} utan parti`;
+    })
+    .join(", ");
+  throw new Error(
+    `Exportleverans kräver parti på varje rad. ${list}. Bokför inleveransen med partinummer, eller koka/filéa dagens vara, innan ordern skickas.`,
   );
 }
 
