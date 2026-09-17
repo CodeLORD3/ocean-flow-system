@@ -34,7 +34,13 @@ import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { cn } from "@/lib/utils";
 import { resolveStorageUrl } from "@/lib/signedStorage";
 import { cleanDomain, companyLogoUrl } from "@/lib/companyLogo";
-import { accountLabel, accountsFor, suggestAccount } from "@/lib/expenseAccounts";
+import {
+  accountLabel,
+  accountsFor,
+  allAccountGroups,
+  counterpartAccount,
+  suggestAccount,
+} from "@/lib/expenseAccounts";
 import {
   PAPER_TYPES,
   paperTypeInfo,
