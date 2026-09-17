@@ -238,6 +238,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const [accountFilter, setAccountFilter] = useState("alla");
   const [sortBy, setSortBy] = useState("datum");
   const [search, setSearch] = useState("");
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<ImportantPaper | null>(null);
 
