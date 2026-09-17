@@ -532,23 +532,27 @@ export function plausibleLots(line: { lot_numbers?: string[] | null }): string[]
 
 /**
  * Auktionsrader saknar ofta tryckt partinummer — då byggs ett spårbart förslag
- * av datum och fartyg, t.ex. "AUK-2026-09-17-ARKO". Aldrig en gissad siffra.
+ * av datum och fartyg, t.ex. "AUK-2026-09-17-ARKO". Saknas fartyg används artens
+ * namn i stället, så varje rad ändå får ett unikt spårbart nummer.
  */
 export function suggestLotNumber(
-  line: { vessel_name?: string | null; catch_date_from?: string | null },
+  line: { vessel_name?: string | null; catch_date_from?: string | null; product_name?: string | null },
   documentDate?: string | null,
 ): string | null {
-  const vessel = String(line.vessel_name ?? "").trim();
+  const slug = (text: string) =>
+    text
+      .toUpperCase()
+      .replace(/[ÅÄ]/g, "A")
+      .replace(/Ö/g, "O")
+      .replace(/[^A-Z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
   const date = (line.catch_date_from || documentDate || "").slice(0, 10);
-  if (!vessel || !date) return null;
-  const code = vessel
-    .toUpperCase()
-    .replace(/[ÅÄ]/g, "A")
-    .replace(/Ö/g, "O")
-    .replace(/[^A-Z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+  if (!date) return null;
+  const vessel = String(line.vessel_name ?? "").trim();
+  const code = slug(vessel) || slug(String(line.product_name ?? "").trim());
   return code ? `AUK-${date}-${code}` : null;
 }
+
 
 /** En rad i partinummerlistan: visar inläst nummer eller låter dig fylla i det. */
 function LotNumberEditor({
@@ -598,7 +602,7 @@ function LotNumberEditor({
         </>
       ) : locked ? (
         <span className="text-muted-foreground/60">
-          {raw.length > 0 ? `${raw.join(", ")}?` : "saknas"}
+          {raw.length > 0 ? `${raw.join(", ")}?` : "saknas — lås upp för att fylla i"}
         </span>
       ) : (
         <>
@@ -633,6 +637,7 @@ function LotNumberEditor({
     </div>
   );
 }
+
 
 /** Valutastämpel som sparas historiskt på inköpet när leverantören fakturerar i annan valuta. */
 type PurchaseFx = {
@@ -887,7 +892,25 @@ function ReportSection({
               <span className="text-[10px] text-muted-foreground tabular-nums">
                 {lines.filter((l) => plausibleLots(l as any).length > 0).length} av {lines.length} rader
               </span>
+              {!isLocked && lines.some((l) => plausibleLots(l as any).length === 0) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-[10px]"
+                  onClick={() => {
+                    const docDate = (report as any).document_date ?? report.report_date;
+                    lines.forEach((l) => {
+                      if (plausibleLots(l as any).length > 0) return;
+                      const s = suggestLotNumber(l as any, docDate);
+                      if (s) onUpdateLine(l.id, { lot_numbers: [s] } as any);
+                    });
+                  }}
+                >
+                  Fyll i alla saknade
+                </Button>
+              )}
             </div>
+
             <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
               {lines.map((l) => (
                 <LotNumberEditor
