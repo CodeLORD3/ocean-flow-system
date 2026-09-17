@@ -31,6 +31,7 @@ import {
   Trash2,
   Upload,
   ArrowLeft,
+  Plus,
 } from "lucide-react";
 import { todayIso } from "@/hooks/useChecklist";
 import { FloorPlanCanvas, type Selection } from "@/components/storemap/FloorPlanCanvas";
@@ -45,7 +46,7 @@ import { OverviewQuickBar } from "@/components/storemap/OverviewQuickBar";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
-import { ZONE_PALETTE } from "@/lib/mapPalette";
+import { ZONE_PALETTE, nextZoneColor } from "@/lib/mapPalette";
 import { bbox, zonePoints } from "@/lib/mapGeometry";
 import {
   useEntityImages,
@@ -270,6 +271,37 @@ export default function StoreMap() {
     });
     return [...groups.values()];
   }, [planImages, zones]);
+
+  /**
+   * Nytt område: läggs som en ruta på en ledig plats i kartan, får nästa färg
+   * i paletten och öppnas direkt i redigeringsläget så namn och form kan sättas.
+   */
+  const addZone = () => {
+    if (!plan || !storeId) return;
+    const step = 24 * (zones.length % 6);
+    saveZone.mutate(
+      {
+        floor_plan_id: plan.id,
+        store_id: storeId,
+        name: `Nytt område ${zones.length + 1}`,
+        color: nextZoneColor(zones.map((z) => z.color)),
+        x: 60 + step,
+        y: 60 + step,
+        width: 220,
+        height: 160,
+      },
+      {
+        onSuccess: (id) => {
+          setMode("redigera");
+          setView("karta");
+          setSelected({ kind: "zone", id: id as string });
+          toast({ title: "Området är skapat", description: "Ge det ett namn och dra det på plats i kartan." });
+        },
+        onError: (e) =>
+          toast({ title: "Kunde inte skapa området", description: (e as Error).message, variant: "destructive" }),
+      },
+    );
+  };
 
   const addObject = (t: MapObjectType) => {
     if (!plan) return;
@@ -538,15 +570,27 @@ export default function StoreMap() {
                 </div>
               ))}
               {canManage && (
-                <Button
-                  size="sm"
-                  variant={pinMode ? "default" : "outline"}
-                  className="ml-auto h-7 text-[11px] gap-1"
-                  onClick={() => setPinMode((v) => !v)}
-                >
-                  <PinIcon className="h-3 w-3" />
-                  {pinMode ? "Tryck på kartan…" : "Ny punkt"}
-                </Button>
+                <div className="ml-auto flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[11px] gap-1"
+                    onClick={() => addZone()}
+                    disabled={saveZone.isPending}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Nytt område
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={pinMode ? "default" : "outline"}
+                    className="h-7 text-[11px] gap-1"
+                    onClick={() => setPinMode((v) => !v)}
+                  >
+                    <PinIcon className="h-3 w-3" />
+                    {pinMode ? "Tryck på kartan…" : "Ny punkt"}
+                  </Button>
+                </div>
               )}
               <span className={`text-[10px] text-muted-foreground tabular-nums ${canManage ? "" : "ml-auto"}`}>
                 {pxPerMeter ? `Yta ${formatSqm(totalSqm)}` : "Skala saknas — fyll i kvm på en zon"}
@@ -814,12 +858,28 @@ export default function StoreMap() {
                     <p className="text-[10px] text-muted-foreground">
                       Fyll i den uppmätta ytan. Skalan räknas fram och övriga rutor får uppskattad yta.
                     </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 w-full text-[11px] gap-1"
+                      onClick={() => addZone()}
+                      disabled={saveZone.isPending}
+                    >
+                      <Plus className="h-3 w-3" /> Nytt område
+                    </Button>
                     {zones.map((z) => (
                       <div key={z.id} className="space-y-1 border-b border-border pb-1.5 last:border-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] truncate flex-1">
-                            {zoneNumbers[z.id]}. {z.name}
-                          </span>
+                          <span className="text-[11px] tabular-nums text-muted-foreground">{zoneNumbers[z.id]}.</span>
+                          <Input
+                            defaultValue={z.name}
+                            onBlur={(e) =>
+                              e.target.value.trim() &&
+                              e.target.value !== z.name &&
+                              saveZone.mutate({ id: z.id, name: e.target.value.trim() })
+                            }
+                            className="h-7 flex-1 text-xs"
+                          />
                           <Input
                             type="number"
                             inputMode="decimal"
