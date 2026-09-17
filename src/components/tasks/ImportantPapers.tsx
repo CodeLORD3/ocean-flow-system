@@ -80,6 +80,10 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const { data: papers = [], isLoading } = useImportantPapers(storeId);
   const save = useSaveImportantPaper();
   const del = useDeleteImportantPaper();
+  const { data: paymentCards = [] } = usePaymentCards();
+  const saveCard = useSavePaymentCard();
+  const removeCard = useRemovePaymentCard();
+  const { data: staffList = [] } = useStaff(storeId ?? undefined);
 
   const [typeFilter, setTypeFilter] = useState<"alla" | PaperType>("alla");
   const [payFilter, setPayFilter] = useState("alla");
@@ -107,6 +111,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     expenseAccount: "",
     expenseCategory: "",
     itemsText: "",
+    cardId: "",
   });
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
