@@ -3,6 +3,7 @@ import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import {
   Camera,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CreditCard,
@@ -237,6 +238,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const [accountFilter, setAccountFilter] = useState("alla");
   const [sortBy, setSortBy] = useState("datum");
   const [search, setSearch] = useState("");
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<ImportantPaper | null>(null);
 
@@ -739,6 +741,18 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     return list;
   }, [filtered, sortBy]);
 
+  /** Pappren samlas under sitt datum — varje datum går att fälla ihop. */
+  const dateGroups = useMemo(() => {
+    const map = new Map<string, ImportantPaper[]>();
+    for (const p of sorted) {
+      const key = p.paper_date ?? "utan-datum";
+      const list = map.get(key);
+      if (list) list.push(p);
+      else map.set(key, [p]);
+    }
+    return [...map.entries()];
+  }, [sorted]);
+
   const cards = useMemo(() => {
     const map = new Map<string, string>();
     for (const p of papers) {
@@ -910,7 +924,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Sök företag, belopp, innehåll"
+              placeholder="Sök"
               className="h-9 pl-8"
             />
           </div>
@@ -1072,105 +1086,142 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
           Inga papper här ännu — lägg in ett kvitto, en följesedel, en faktura, ett brev eller en anteckning.
         </p>
       ) : (
-        <div className="space-y-1.5">
-          {sorted.map((p, i) => {
-            const info = paperTypeInfo(p.paper_type);
-            // I veckoläget grupperas pappren under veckodag, datum och veckonummer.
-            const prev = i > 0 ? sorted[i - 1] : null;
-            const header =
-              sortBy === "vecka" && p.paper_date && p.paper_date !== prev?.paper_date
-                ? longDayLabel(p.paper_date)
-                : null;
+        <div className="space-y-2">
+          {dateGroups.map(([key, group]) => {
+            const isOpen = !collapsed.has(key);
+            const sum = group.reduce((s, p) => s + (p.net_amount ?? 0), 0);
             return (
-              <div key={`grupp-${p.id}`}>
-              {header && (
-                <p className="mb-1 mt-3 text-xs font-semibold text-foreground first:mt-0">{header}</p>
-              )}
-              <div
-                key={p.id}
-                className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-3 py-2"
-              >
-                <span
-                  className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
-                  style={{ background: info.color }}
+              <div key={key} className="overflow-hidden rounded-lg border border-border bg-card">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCollapsed((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(key)) next.delete(key);
+                      else next.add(key);
+                      return next;
+                    })
+                  }
+                  className="flex w-full items-center gap-2 bg-muted/60 px-3 py-2 text-left hover:bg-muted"
                 >
-                  {info.singular}
-                </span>
-                {p.is_expense_claim && (
-                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
-                    <StaffAvatar name={p.paid_by_name} imageUrl={p.paid_by_image} className="h-5 w-5" />
-                    Utlägg {p.paid_by_name ?? ""}
+                  <ChevronDown
+                    className={cn("h-4 w-4 shrink-0 transition-transform", !isOpen && "-rotate-90")}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-xs font-semibold">
+                    {key === "utan-datum" ? "Utan datum" : longDayLabel(key)}
                   </span>
-                )}
-                {needsCheck(p) && (
-                  <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
-                    Fyll i
-                  </span>
-                )}
-
-                <button type="button" onClick={() => openEdit(p)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
-                  {p.company_logo_url || companyLogoUrl(p.company_website) ? (
-                    <img
-                      src={p.company_logo_url || companyLogoUrl(p.company_website)!}
-                      alt={`Logotyp för ${p.company_name ?? "företaget"}`}
-                      className="h-8 w-8 shrink-0 rounded-md border border-border bg-white object-contain p-0.5"
-                      loading="lazy"
-                    />
-                  ) : null}
-                  <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">
-                    {p.company_name || p.title || "Utan företag"}
-                  </span>
-                  <span className="block truncate text-[11px] text-muted-foreground">
-                    {[
-                      p.paper_date ? shortDayLabel(p.paper_date) : null,
-                      p.payment_method === "kort"
-                        ? [p.card_brand ?? "Kort", p.card_last4 ? `••${p.card_last4}` : null]
-                            .filter(Boolean)
-                            .join(" ")
-                        : p.payment_method === "kontant"
-                          ? "Kontant"
-                          : null,
-                      p.expense_account ? accountLabel(p.expense_account, p.currency) : p.expense_category,
-                      p.document_number,
-                      p.description ||
-                        (p.line_items ?? [])
-                          .slice(0, 3)
-                          .map((l) => l.name)
-                          .join(", "),
-                    ]
-                      .filter(Boolean)
-                      .join(" · ") || "Ingen beskrivning"}
-                  </span>
+                  <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
+                    {group.length} papper · {nf.format(sum)} netto
                   </span>
                 </button>
-                <span className="shrink-0 text-right text-sm font-semibold tabular-nums">
-                  {p.net_amount != null ? `${nf.format(p.net_amount)} ${p.currency}` : "—"}
-                  <span className="block text-[10px] font-normal text-muted-foreground">netto</span>
-                </span>
-                {p.file_url && (
-                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openFile(p.file_url!)}>
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
+
+                {isOpen && (
+                  <div className="divide-y divide-border">
+                    {group.map((p) => {
+                      const info = paperTypeInfo(p.paper_type);
+                      return (
+                        <div key={p.id} className="flex items-center gap-2 px-2 py-1">
+                          <span
+                            className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold text-white"
+                            style={{ background: info.color }}
+                          >
+                            {info.singular}
+                          </span>
+                          {p.is_expense_claim && (
+                            <span className="hidden shrink-0 items-center gap-1 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 sm:flex">
+                              <StaffAvatar
+                                name={p.paid_by_name}
+                                imageUrl={p.paid_by_image}
+                                className="h-4 w-4"
+                              />
+                              Utlägg
+                            </span>
+                          )}
+                          {needsCheck(p) && (
+                            <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                              Fyll i
+                            </span>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => openEdit(p)}
+                            className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                          >
+                            {p.company_logo_url || companyLogoUrl(p.company_website) ? (
+                              <img
+                                src={p.company_logo_url || companyLogoUrl(p.company_website)!}
+                                alt={`Logotyp för ${p.company_name ?? "företaget"}`}
+                                className="h-5 w-5 shrink-0 rounded border border-border bg-white object-contain p-[1px]"
+                                loading="lazy"
+                              />
+                            ) : null}
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[13px] font-medium leading-tight">
+                                {p.company_name || p.title || "Utan företag"}
+                              </span>
+                              <span className="block truncate text-[10px] leading-tight text-muted-foreground">
+                                {[
+                                  p.payment_method === "kort"
+                                    ? [p.card_brand ?? "Kort", p.card_last4 ? `••${p.card_last4}` : null]
+                                        .filter(Boolean)
+                                        .join(" ")
+                                    : p.payment_method === "kontant"
+                                      ? "Kontant"
+                                      : null,
+                                  p.expense_account
+                                    ? accountLabel(p.expense_account, p.currency)
+                                    : p.expense_category,
+                                  p.document_number,
+                                  p.description ||
+                                    (p.line_items ?? [])
+                                      .slice(0, 3)
+                                      .map((l) => l.name)
+                                      .join(", "),
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ") || "Ingen beskrivning"}
+                              </span>
+                            </span>
+                          </button>
+
+                          <span className="shrink-0 text-right text-[12px] font-semibold tabular-nums">
+                            {p.net_amount != null ? `${nf.format(p.net_amount)} ${p.currency}` : "—"}
+                          </span>
+                          {p.file_url && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 shrink-0"
+                              onClick={() => openFile(p.file_url!)}
+                            >
+                              <Paperclip className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          <StaffAvatar
+                            name={p.created_by_name}
+                            imageUrl={p.created_by_image}
+                            className="h-6 w-6 shrink-0"
+                          />
+                          <span className="hidden shrink-0 text-[10px] leading-tight text-muted-foreground sm:block">
+                            <span className="block max-w-[110px] truncate">{p.created_by_name ?? "Okänd"}</span>
+                            <span className="block tabular-nums">{whenLabel(p.created_at)}</span>
+                          </span>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 shrink-0 text-destructive"
+                            onClick={() => {
+                              if (confirm("Ta bort pappret?")) del.mutate(p.id);
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
-                <span className="flex shrink-0 items-center gap-2">
-                  <StaffAvatar name={p.created_by_name} imageUrl={p.created_by_image} className="h-8 w-8" />
-                  <span className="text-[11px] text-muted-foreground">
-                    <span className="block max-w-[120px] truncate">{p.created_by_name ?? "Okänd"}</span>
-                    <span className="block tabular-nums">{whenLabel(p.created_at)}</span>
-                  </span>
-                </span>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-destructive"
-                  onClick={() => {
-                    if (confirm("Ta bort pappret?")) del.mutate(p.id);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
               </div>
             );
           })}
