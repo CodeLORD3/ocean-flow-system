@@ -135,6 +135,11 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const camRef = useRef<HTMLInputElement>(null);
   const libRef = useRef<HTMLInputElement>(null);
   const [reading, setReading] = useState(false);
+  // Ny avläsning av det sparade fotot: visar nytt värde mot det som står nu.
+  const [compare, setCompare] = useState<
+    { key: FormKey; label: string; current: string; next: string }[] | null
+  >(null);
+  const [pickedCompare, setPickedCompare] = useState<Set<string>>(new Set());
   const [queue, setQueue] = useState<{ done: number; total: number } | null>(null);
   const [needsOnly, setNeedsOnly] = useState(false);
   // Gult = avläst från pappret och inte kontrollerat än.
