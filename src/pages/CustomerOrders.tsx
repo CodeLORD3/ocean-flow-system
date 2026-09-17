@@ -778,8 +778,20 @@ export default function CustomerOrders() {
                         {list.map((o) => (
                           <div
                             key={o.id}
-                            draggable={canEdit && !rowReadOnly(o)}
-                            onDragStart={() => startDrag(o.id)}
+                            draggable={canEdit && !rowReadOnly(o) && marked.includes(o.id)}
+                            onDragStart={(e) => {
+                              // Bara markerade beställningar kan dras — alla markerade följer med.
+                              if (!marked.includes(o.id)) {
+                                e.preventDefault();
+                                return;
+                              }
+                              startDrag(o.id);
+                            }}
+                            title={
+                              marked.includes(o.id)
+                                ? "Dra för att flytta markerade beställningar"
+                                : "Markera beställningen först för att kunna dra den"
+                            }
                             onDragEnd={() => {
                               setDragIds([]);
                               setDragOverDay(null);
