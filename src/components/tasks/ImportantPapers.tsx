@@ -120,6 +120,32 @@ function parseItems(text: string) {
     });
 }
 
+/** ISO-veckonummer. */
+function weekNumber(d: Date) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return Math.ceil(((t.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+/** "Torsdag 17 september 2026 · 17/9 · vecka 38" — tydligt både i ord och siffror. */
+function longDayLabel(iso: string) {
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  const weekday = d.toLocaleDateString("sv-SE", { weekday: "long" });
+  const rest = d.toLocaleDateString("sv-SE", { day: "numeric", month: "long", year: "numeric" });
+  return `${weekday[0].toUpperCase()}${weekday.slice(1)} ${rest} · ${d.getDate()}/${d.getMonth() + 1} · vecka ${weekNumber(d)}`;
+}
+
+/** "Tors 17 sep · v.38" — kort variant för listrader. */
+function shortDayLabel(iso: string) {
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  const weekday = d.toLocaleDateString("sv-SE", { weekday: "short" }).replace(".", "");
+  const rest = d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+  return `${weekday[0].toUpperCase()}${weekday.slice(1)} ${rest} · v.${weekNumber(d)}`;
+}
+
 /** Banker/kortutgivare vi ser oftast — snabbval i kortregistret. */
 const BANK_CHOICES = [
   "PostFinance",
