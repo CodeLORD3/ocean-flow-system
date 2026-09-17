@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { cn } from "@/lib/utils";
 import { resolveStorageUrl } from "@/lib/signedStorage";
+import { cleanDomain, companyLogoUrl } from "@/lib/companyLogo";
 import {
   PAPER_TYPES,
   paperTypeInfo,
@@ -305,6 +306,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
           paperType: (patch.paperType as PaperType) ?? "kvitto",
           title: patch.title ?? "",
           companyName: patch.companyName ?? "",
+          companyWebsite: patch.companyWebsite ?? "",
+          companyLogoUrl: companyLogoUrl(patch.companyWebsite ?? ""),
           paperDate: patch.paperDate ?? new Date().toISOString().slice(0, 10),
           netAmount: num(patch.netAmount ?? ""),
           vatAmount: num(patch.vatAmount ?? ""),
@@ -423,6 +426,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     setForm({
       paperType: type ?? (typeFilter === "alla" ? "kvitto" : typeFilter),
       companyName: "",
+      companyWebsite: "",
       paperDate: new Date().toISOString().slice(0, 10),
       netAmount: "",
       vatAmount: "",
@@ -451,6 +455,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     setForm({
       paperType: p.paper_type as PaperType,
       companyName: p.company_name ?? "",
+      companyWebsite: p.company_website ?? "",
       paperDate: p.paper_date ?? "",
       netAmount: p.net_amount != null ? String(p.net_amount) : "",
       vatAmount: p.vat_amount != null ? String(p.vat_amount) : "",
@@ -486,6 +491,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         paperType: form.paperType,
         title: form.title,
         companyName: form.companyName,
+        companyWebsite: form.companyWebsite,
+        companyLogoUrl: companyLogoUrl(form.companyWebsite),
         paperDate: form.paperDate || null,
         netAmount: num(form.netAmount),
         vatAmount: num(form.vatAmount),
