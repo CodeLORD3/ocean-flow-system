@@ -687,6 +687,33 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
         title={task.task}
       />
 
+      <ImageArchivePicker
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        saving={attachArchive.isPending}
+        onPick={async (picked) => {
+          if (!task.zone_id) {
+            toast({ title: "Uppgiften saknar yta på kartan", variant: "destructive" });
+            return;
+          }
+          try {
+            await attachArchive.mutateAsync({
+              images: picked,
+              entityType: "map_zone",
+              entityId: task.zone_id,
+              checklistItemId: task.id,
+              floorPlanId: plan?.id ?? null,
+            });
+            setArchiveOpen(false);
+            toast({ title: picked.length > 1 ? "Bilderna kopplade" : "Bilden kopplad" });
+          } catch (e: any) {
+            toast({ title: "Kunde inte koppla bilden", description: e.message, variant: "destructive" });
+          }
+        }}
+      />
+
+
+
       <TaskIssueDialog
         open={issueOpen}
         onOpenChange={setIssueOpen}
