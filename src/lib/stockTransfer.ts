@@ -107,7 +107,27 @@ export async function moveStockToTransport(orderId: string) {
     }
   }
 
-
+  /**
+   * Export till Schweiz plockar färskaste partiet först, och varje rad måste
+   * bära parti hela vägen till fakturan. Kontrollen körs före första rörelsen
+   * så att en exportleverans aldrig bokförs halv eller utan spårbarhet.
+   */
+  const exportOrder = await isExportStore(order.store_id);
+  if (exportOrder && gfLocId && !(await isInfiniteStock())) {
+    const needLot = new Map<string, number>();
+    for (const line of order.shop_order_lines) {
+      const qty = Number(line.quantity_delivered || line.quantity_ordered) || 0;
+      if (qty <= 0 || !line.product_id) continue;
+      needLot.set(line.product_id, (needLot.get(line.product_id) || 0) + qty);
+    }
+    const withoutLot: { productId: string; missing: number }[] = [];
+    for (const [productId, qty] of needLot) {
+      const lots = await freshestLotsAtLocation(productId, gfLocId);
+      const missing = qty - lottedQuantity(lots);
+      if (missing > 0.001) withoutLot.push({ productId, missing });
+    }
+    if (withoutLot.length) await throwMissingLot(withoutLot);
+  }
 
 
   for (const line of order.shop_order_lines) {
