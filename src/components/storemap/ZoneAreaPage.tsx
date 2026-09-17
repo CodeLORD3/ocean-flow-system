@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { StatusRing } from "@/components/storemap/StatusRing";
 import { MapComposer } from "@/components/storemap/MapComposer";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
 import { OverviewTaskPanel } from "@/components/storemap/OverviewTaskPanel";
+import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { dueText, progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { useToggleChecklistItem } from "@/hooks/useChecklist";
 import { useDeleteEntityImage, useEntityImages, useUploadEntityImage } from "@/hooks/useEntityImages";
@@ -60,6 +61,7 @@ export function ZoneAreaPage({
   const { data: images = [] } = useEntityImages(entityType, entityId || null);
   const { data: logs = [] } = useActivityLogs({ storeId, limit: 300 });
   const { data: deviations = [] } = useDeviations(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const openIssues = (deviations as { id: string; source?: string; source_id?: string; title?: string; description?: string; created_at?: string }[]).filter(
     (d) => d.source === entityType && d.source_id === entityId,
@@ -204,9 +206,16 @@ export function ZoneAreaPage({
               <EmptyState title="Inga bilder ännu" description="Ta ett foto för att dokumentera ytan." />
             ) : (
               <div className="grid grid-cols-3 gap-2">
-                {images.map((i) => (
+                 {images.map((i, imageIndex) => (
                   <div key={i.id} className="overflow-hidden rounded-lg border border-border">
-                    <img src={i.url} alt={i.caption ?? label} className="h-24 w-full object-cover" />
+                     <button
+                       type="button"
+                       className="block w-full"
+                       onClick={() => setLightboxIndex(imageIndex)}
+                       aria-label={`Öppna bild ${imageIndex + 1} av ${images.length}`}
+                     >
+                       <img src={i.url} alt={i.caption ?? label} className="h-24 w-full object-cover" />
+                     </button>
                     <div className="px-2 py-1">
                       <p className="truncate text-[10px] text-muted-foreground">{dt(i.created_at)}</p>
                       <p className="truncate text-[10px] text-muted-foreground">{i.uploaded_by_name ?? "—"}</p>
@@ -223,6 +232,13 @@ export function ZoneAreaPage({
                 ))}
               </div>
             )}
+             <ImageLightbox
+               images={images}
+               index={lightboxIndex}
+               onIndexChange={setLightboxIndex}
+               onClose={() => setLightboxIndex(null)}
+               title={label || "Bilder"}
+             />
           </CardContent>
         </Card>
 
