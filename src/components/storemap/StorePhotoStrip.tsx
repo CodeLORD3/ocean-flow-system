@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Camera, ChevronDown, ImageIcon, Loader2 } from "lucide-react";
+import { Camera, ChevronDown, ImageIcon, LayoutGrid, List, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,8 @@ export function StorePhotoStrip({
   const [allOpen, setAllOpen] = useState(false);
   const [zoneFilter, setZoneFilter] = useState<string>("alla");
   const [personFilter, setPersonFilter] = useState<string>("alla");
+  /** Visningsläge: stora bilder eller lista med namn. */
+  const [layout, setLayout] = useState<"bilder" | "lista">("bilder");
 
   const zoneById = useMemo(
     () => Object.fromEntries(zones.map((z, i) => [z.id, { zone: z, nr: i + 1 }])),
@@ -213,6 +215,37 @@ export function StorePhotoStrip({
     );
   };
 
+  /** Listrad med namn, plats, tid och fotograf. */
+  const row = (img: EntityImage, i: number) => {
+    const color = colorOf(img);
+    return (
+      <button
+        key={img.id}
+        type="button"
+        onClick={() => setIndex(i)}
+        className="flex w-full items-center gap-3 rounded-lg border border-border bg-card px-2 py-2 text-left transition hover:bg-muted"
+      >
+        <img
+          src={img.url}
+          alt={img.caption ?? labelOf(img)}
+          loading="lazy"
+          className="h-12 w-16 shrink-0 rounded-md object-cover"
+        />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium">{img.caption || "Utan namn"}</span>
+          <span className="flex items-center gap-1.5 truncate text-[11px] text-muted-foreground">
+            {color && <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />}
+            {labelOf(img)}
+          </span>
+        </span>
+        <span className="shrink-0 text-right text-[11px] text-muted-foreground">
+          <span className="block tabular-nums">{shortWhen(img.created_at)}</span>
+          {img.uploaded_by_name && <span className="block truncate">{img.uploaded_by_name}</span>}
+        </span>
+      </button>
+    );
+  };
+
   return (
     <div className="rounded-xl border border-border bg-card p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -221,6 +254,29 @@ export function StorePhotoStrip({
           {allImages.length > 0 && <span className="tabular-nums">· {allImages.length}</span>}
         </p>
         <div className="flex items-center gap-1.5">
+          {/* Välj mellan stora bilder och lista med namn */}
+          <div className="flex items-center rounded-full border border-border p-0.5">
+            <Button
+              size="icon"
+              variant={layout === "bilder" ? "default" : "ghost"}
+              className="h-7 w-7 rounded-full"
+              aria-label="Visa som bilder"
+              aria-pressed={layout === "bilder"}
+              onClick={() => setLayout("bilder")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant={layout === "lista" ? "default" : "ghost"}
+              className="h-7 w-7 rounded-full"
+              aria-label="Visa som lista med namn"
+              aria-pressed={layout === "lista"}
+              onClick={() => setLayout("lista")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
           <Button
             size="sm"
             variant="ghost"
@@ -321,9 +377,11 @@ export function StorePhotoStrip({
         <p className="rounded-lg border border-dashed border-border py-6 text-center text-xs text-muted-foreground">
           Inga bilder här — ta en bild på en uppgift eller en yta i butiken så hamnar den här.
         </p>
+      ) : layout === "lista" ? (
+        <div className="space-y-1.5">{images.map((img, i) => row(img, i))}</div>
       ) : (
-        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {images.map((img, i) => card(img, i, "h-28 w-40 shrink-0"))}
+        <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
+          {images.map((img, i) => card(img, i, "h-48 w-64 shrink-0 sm:h-56 sm:w-80"))}
         </div>
       )}
 
@@ -336,9 +394,13 @@ export function StorePhotoStrip({
                 <span className="text-[11px] tabular-nums text-muted-foreground">{g.items.length} bilder</span>
                 <span className="h-px flex-1 bg-border" />
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-                {g.items.map(({ img, index: i }) => card(img, i, "aspect-[4/3]"))}
-              </div>
+              {layout === "lista" ? (
+                <div className="space-y-1.5">{g.items.map(({ img, index: i }) => row(img, i))}</div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {g.items.map(({ img, index: i }) => card(img, i, "aspect-[4/3]"))}
+                </div>
+              )}
             </div>
           ))}
         </div>
