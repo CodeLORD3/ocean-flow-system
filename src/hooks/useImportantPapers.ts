@@ -28,6 +28,10 @@ export interface ImportantPaper {
   paper_type: string;
   title: string | null;
   company_name: string | null;
+  /** Företagets webbadress, används för att hämta logotypen. */
+  company_website: string | null;
+  /** Logotyp för företaget om den kunde hämtas. */
+  company_logo_url: string | null;
   paper_date: string | null;
   net_amount: number | null;
   vat_amount: number | null;
@@ -113,6 +117,8 @@ export interface PaperInput {
   paperType: PaperType;
   title?: string | null;
   companyName?: string | null;
+  companyWebsite?: string | null;
+  companyLogoUrl?: string | null;
   paperDate?: string | null;
   netAmount?: number | null;
   vatAmount?: number | null;
