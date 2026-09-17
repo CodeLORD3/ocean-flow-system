@@ -476,6 +476,80 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     setChecked((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
   }
 
+  /**
+   * Netto, moms, brutto och moms% hänger ihop. När du skriver in två av dem
+   * räknas de övriga ut automatiskt — skriver du brutto och moms% får du netto,
+   * skriver du netto och moms får du brutto och procenten.
+   */
+  function setAmountField(key: "netAmount" | "vatAmount" | "grossAmount" | "vatRate", value: string) {
+    const dec = (s: string) => {
+      const n = Number(String(s).replace(",", ".").replace(/\s/g, ""));
+      return Number.isFinite(n) && String(s).trim() !== "" ? n : null;
+    };
+    const r2 = (n: number) => String(Math.round(n * 100) / 100);
+    const r1 = (n: number) => String(Math.round(n * 10) / 10);
+
+    setForm((f) => {
+      const next = { ...f, [key]: value } as typeof f;
+      const net = key === "netAmount" ? dec(value) : dec(next.netAmount);
+      const vat = key === "vatAmount" ? dec(value) : dec(next.vatAmount);
+      const gross = key === "grossAmount" ? dec(value) : dec(next.grossAmount);
+      const rate = key === "vatRate" ? dec(value) : dec(next.vatRate);
+
+      if (key === "netAmount" && net != null) {
+        if (rate != null) {
+          next.vatAmount = r2((net * rate) / 100);
+          next.grossAmount = r2(net * (1 + rate / 100));
+        } else if (gross != null && gross >= net) {
+          next.vatAmount = r2(gross - net);
+          if (net > 0) next.vatRate = r1(((gross - net) / net) * 100);
+        } else if (vat != null) {
+          next.grossAmount = r2(net + vat);
+          if (net > 0) next.vatRate = r1((vat / net) * 100);
+        }
+      } else if (key === "grossAmount" && gross != null) {
+        if (rate != null) {
+          const n = gross / (1 + rate / 100);
+          next.netAmount = r2(n);
+          next.vatAmount = r2(gross - n);
+        } else if (net != null && gross >= net) {
+          next.vatAmount = r2(gross - net);
+          if (net > 0) next.vatRate = r1(((gross - net) / net) * 100);
+        } else if (vat != null) {
+          next.netAmount = r2(gross - vat);
+          if (gross - vat > 0) next.vatRate = r1((vat / (gross - vat)) * 100);
+        }
+      } else if (key === "vatAmount" && vat != null) {
+        if (net != null) {
+          next.grossAmount = r2(net + vat);
+          if (net > 0) next.vatRate = r1((vat / net) * 100);
+        } else if (gross != null) {
+          next.netAmount = r2(gross - vat);
+          if (gross - vat > 0) next.vatRate = r1((vat / (gross - vat)) * 100);
+        }
+      } else if (key === "vatRate" && rate != null) {
+        if (gross != null) {
+          const n = gross / (1 + rate / 100);
+          next.netAmount = r2(n);
+          next.vatAmount = r2(gross - n);
+        } else if (net != null) {
+          next.vatAmount = r2((net * rate) / 100);
+          next.grossAmount = r2(net * (1 + rate / 100));
+        }
+      }
+      return next;
+    });
+
+    setAutoFilled((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Set(prev);
+      for (const k of ["netAmount", "vatAmount", "grossAmount", "vatRate"] as FormKey[]) next.delete(k);
+      return next;
+    });
+    setChecked((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
+  }
+
+
   const lit = (key: FormKey) =>
     autoFilled.has(key)
       ? "border-amber-500 bg-amber-50 ring-1 ring-amber-400"
