@@ -159,6 +159,24 @@ export function useMailIntakeActions() {
         ? await supabase.from("mail_intake_senders").update(payload).eq("id", id)
         : await supabase.from("mail_intake_senders").insert(payload);
       if (error) throw error;
+
+      // Parkerade mejl från avsändaren ska lämna listan direkt när den kopplats
+      // — annars ser kopplingen ut att inte göra något.
+      if (pattern.includes("@")) {
+        const { error: msgError } = await supabase
+          .from("mail_intake_messages")
+          .update({ status: "vitlistad", supplier_id: payload.supplier_id } as any)
+          .eq("status", "okand_avsandare")
+          .ilike("from_email", pattern);
+        if (msgError) throw msgError;
+      } else {
+        const { error: msgError } = await supabase
+          .from("mail_intake_messages")
+          .update({ status: "vitlistad", supplier_id: payload.supplier_id } as any)
+          .eq("status", "okand_avsandare")
+          .ilike("from_email", `%@${pattern}`);
+        if (msgError) throw msgError;
+      }
     },
     onSuccess: invalidate,
   });
