@@ -256,6 +256,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   // Grönt = någon har skrivit in eller rättat värdet själv.
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [cardOpen, setCardOpen] = useState(false);
+  /** Sätts när vi redigerar ett redan inlagt kort i stället för att lägga till nytt. */
+  const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [cardForm, setCardForm] = useState({
     cardBrand: "",
     bank: "",
