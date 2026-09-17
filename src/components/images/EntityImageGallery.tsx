@@ -1092,6 +1092,63 @@ export function EntityImageGallery({
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Samla markerade bilder i en grupp */}
+      <Dialog open={groupDialog} onOpenChange={setGroupDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Samla {picked.length} bilder i en grupp</DialogTitle>
+            <DialogDescription className="text-xs">
+              Ny grupp eller lägg bilderna i en grupp som redan finns.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Input
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="Gruppens namn, t.ex. Skada i kylen"
+              className="h-9 text-sm"
+            />
+            <Textarea
+              value={groupDesc}
+              onChange={(e) => setGroupDesc(e.target.value)}
+              placeholder="Beskrivning (valfritt)"
+              className="min-h-[60px] text-xs"
+            />
+            <Button
+              size="sm"
+              className="w-full"
+              disabled={createGroup.isPending}
+              onClick={() => saveGroup()}
+            >
+              <FolderPlus className="mr-1 h-3.5 w-3.5" />
+              Skapa grupp
+            </Button>
+            {manualGroups.length > 0 && (
+              <div className="space-y-1 border-t pt-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Lägg i befintlig grupp
+                </p>
+                {manualGroups.map((g) => (
+                  <Button
+                    key={g.id}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-full justify-between text-xs"
+                    disabled={addToGroup.isPending}
+                    onClick={() => saveGroup(g.id)}
+                  >
+                    <span className="truncate">{g.name || "Grupp"}</span>
+                    <span className="font-mono tabular-nums text-[10px] text-muted-foreground">
+                      {g.imageIds.length}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
