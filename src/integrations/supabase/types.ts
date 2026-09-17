@@ -8807,6 +8807,7 @@ export type Database = {
       payment_cards: {
         Row: {
           active: boolean
+          bank: string | null
           card_brand: string | null
           card_holder: string | null
           card_kind: string
@@ -8820,6 +8821,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          bank?: string | null
           card_brand?: string | null
           card_holder?: string | null
           card_kind?: string
@@ -8833,6 +8835,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          bank?: string | null
           card_brand?: string | null
           card_holder?: string | null
           card_kind?: string
