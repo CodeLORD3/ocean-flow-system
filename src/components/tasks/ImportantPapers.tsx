@@ -1265,6 +1265,21 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     Läs av igen
                   </Button>
                 )}
+                {!file && edit?.file_url && (
+                  <>
+                    <Button variant="outline" className="h-10" disabled={reading} onClick={() => void rereadSaved()}>
+                      {reading ? (
+                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Wand2 className="mr-1 h-4 w-4" />
+                      )}
+                      Läs av bilden igen
+                    </Button>
+                    <Button variant="ghost" className="h-10" onClick={() => void openFile(edit.file_url!)}>
+                      Visa bilden
+                    </Button>
+                  </>
+                )}
                 <span className="truncate text-xs text-muted-foreground">
                   {file?.name ?? edit?.file_name ?? "Ingen fil"}
                 </span>
