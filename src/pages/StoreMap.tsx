@@ -382,7 +382,7 @@ export default function StoreMap() {
   return (
     <div className="space-y-4">
       {/* Stora knappar och dagens stapel högst upp */}
-      <OverviewQuickBar tasks={tasks} />
+      <OverviewQuickBar tasks={tasks} storeId={storeId} day={day} />
 
       {/* Viktig statistik högst upp — vilka som arbetar, stämpling, checklistor, avvikelser */}
       <OverviewStatsBar
