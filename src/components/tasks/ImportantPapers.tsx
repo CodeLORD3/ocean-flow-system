@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
-import { FileText, Loader2, Paperclip, Plus, Search, Trash2 } from "lucide-react";
+import { FileText, Loader2, Paperclip, Plus, Search, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,103 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   });
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [reading, setReading] = useState(false);
+  // Fält som lästes av från pappret — de lyser tills någon rättar dem.
+  const [autoFilled, setAutoFilled] = useState<Set<string>>(new Set());
+
+  type FormKey =
+    | "paperType"
+    | "companyName"
+    | "paperDate"
+    | "netAmount"
+    | "vatAmount"
+    | "grossAmount"
+    | "currency"
+    | "documentNumber"
+    | "description"
+    | "title"
+    | "paymentMethod";
+
+  /** Ändrar ett fält och släcker markeringen, eftersom värdet nu är kontrollerat. */
+  function setField(key: FormKey, value: string) {
+    setForm((f) => ({ ...f, [key]: value }) as typeof f);
+    setAutoFilled((prev) => {
+      if (!prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+  }
+
+  const lit = (key: FormKey) =>
+    autoFilled.has(key) ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-400" : "";
+
+  const litLabel = (key: FormKey) =>
+    autoFilled.has(key) ? (
+      <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+        <Sparkles className="h-2.5 w-2.5" /> avläst
+      </span>
+    ) : null;
+
+  function toDataUrl(f: File) {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Kunde inte läsa filen"));
+      reader.readAsDataURL(f);
+    });
+  }
+
+  /** Läser av pappret och fyller i fälten automatiskt, som i inköpsrapporteringen. */
+  async function readPaper(f: File) {
+    setReading(true);
+    try {
+      const dataUrl = await toDataUrl(f);
+      const { data, error } = await supabase.functions.invoke("parse-viktigt-papper", {
+        body: { dataUrl, fileName: f.name },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const p = (data?.paper ?? {}) as Record<string, unknown>;
+
+      const str = (v: unknown) => (v == null ? "" : String(v).trim());
+      const money = (v: unknown) =>
+        typeof v === "number" && Number.isFinite(v) ? String(v) : "";
+
+      const patch: Partial<Record<FormKey, string>> = {};
+      const validType = PAPER_TYPES.some((t) => t.value === str(p.paper_type));
+      if (validType) patch.paperType = str(p.paper_type);
+      if (str(p.company_name)) patch.companyName = str(p.company_name);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str(p.paper_date))) patch.paperDate = str(p.paper_date);
+      if (str(p.document_number)) patch.documentNumber = str(p.document_number);
+      if (money(p.net_amount)) patch.netAmount = money(p.net_amount);
+      if (money(p.vat_amount)) patch.vatAmount = money(p.vat_amount);
+      if (money(p.gross_amount)) patch.grossAmount = money(p.gross_amount);
+      if (["CHF", "SEK", "EUR"].includes(str(p.currency).toUpperCase()))
+        patch.currency = str(p.currency).toUpperCase();
+      if (["kort", "kontant"].includes(str(p.payment_method))) patch.paymentMethod = str(p.payment_method);
+      if (str(p.title)) patch.title = str(p.title);
+      if (str(p.description)) patch.description = str(p.description);
+
+      const keys = Object.keys(patch) as FormKey[];
+      if (keys.length === 0) {
+        toast.info("Hittade ingen information på pappret — fyll i själv");
+        return;
+      }
+      setForm((prev) => ({ ...prev, ...patch }) as typeof prev);
+      setAutoFilled(new Set(keys));
+      toast.success(`${keys.length} fält avlästa — kontrollera de gröna fälten`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunde inte läsa av pappret");
+    } finally {
+      setReading(false);
+    }
+  }
+
+  function pickFile(f: File | null) {
+    setFile(f);
+    if (f) void readPaper(f);
+  }
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -95,6 +193,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   function openNew(type?: PaperType) {
     setEdit(null);
     setFile(null);
+    setAutoFilled(new Set());
     setForm({
       paperType: type ?? (typeFilter === "alla" ? "kvitto" : typeFilter),
       companyName: "",
@@ -114,6 +213,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   function openEdit(p: ImportantPaper) {
     setEdit(p);
     setFile(null);
+    setAutoFilled(new Set());
     setForm({
       paperType: p.paper_type as PaperType,
       companyName: p.company_name ?? "",
@@ -301,12 +401,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
 
           <div className="space-y-3">
             <div>
-              <Label className="text-xs">Vad är det för papper?</Label>
+              <Label className="text-xs">Vad är det för papper?{litLabel("paperType")}</Label>
               <Select
                 value={form.paperType}
-                onValueChange={(v) => setForm({ ...form, paperType: v as PaperType })}
+                onValueChange={(v) => setField("paperType", v)}
               >
-                <SelectTrigger className="h-10">
+                <SelectTrigger className={cn("h-10", lit("paperType"))}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -321,7 +421,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
 
             {form.paperType === "kvitto" && (
               <div>
-                <Label className="text-xs">Betalades med</Label>
+                <Label className="text-xs">Betalades med{litLabel("paymentMethod")}</Label>
                 <div className="mt-1 grid grid-cols-2 gap-2">
                   {[
                     ["kort", "Kort"],
@@ -331,13 +431,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                       key={value}
                       type="button"
                       variant={form.paymentMethod === value ? "default" : "outline"}
-                      className="h-11 text-sm font-semibold"
+                      className={cn("h-11 text-sm font-semibold", form.paymentMethod === value && lit("paymentMethod"))}
                       onClick={() =>
-                        setForm({
-                          ...form,
-                          paymentMethod:
-                            form.paymentMethod === value ? "" : (value as "kort" | "kontant"),
-                        })
+                        setField("paymentMethod", form.paymentMethod === value ? "" : value)
                       }
                     >
                       {label}
@@ -349,50 +445,50 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs">Företag</Label>
+                <Label className="text-xs">Företag{litLabel("companyName")}</Label>
                 <Input
                   value={form.companyName}
-                  onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                  onChange={(e) => setField("companyName", e.target.value)}
                   placeholder="t.ex. Migros"
-                  className="h-10"
+                  className={cn("h-10", lit("companyName"))}
                 />
               </div>
               <div>
-                <Label className="text-xs">Datum på pappret</Label>
+                <Label className="text-xs">Datum på pappret{litLabel("paperDate")}</Label>
                 <Input
                   type="date"
                   value={form.paperDate}
-                  onChange={(e) => setForm({ ...form, paperDate: e.target.value })}
-                  className="h-10"
+                  onChange={(e) => setField("paperDate", e.target.value)}
+                  className={cn("h-10", lit("paperDate"))}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <Label className="text-xs">Nettobelopp</Label>
+                <Label className="text-xs">Nettobelopp{litLabel("netAmount")}</Label>
                 <Input
                   inputMode="decimal"
                   value={form.netAmount}
-                  onChange={(e) => setForm({ ...form, netAmount: e.target.value })}
+                  onChange={(e) => setField("netAmount", e.target.value)}
                   placeholder="0.00"
-                  className="h-10 font-mono tabular-nums"
+                  className={cn("h-10 font-mono tabular-nums", lit("netAmount"))}
                 />
               </div>
               <div>
-                <Label className="text-xs">Moms</Label>
+                <Label className="text-xs">Moms{litLabel("vatAmount")}</Label>
                 <Input
                   inputMode="decimal"
                   value={form.vatAmount}
-                  onChange={(e) => setForm({ ...form, vatAmount: e.target.value })}
+                  onChange={(e) => setField("vatAmount", e.target.value)}
                   placeholder="0.00"
-                  className="h-10 font-mono tabular-nums"
+                  className={cn("h-10 font-mono tabular-nums", lit("vatAmount"))}
                 />
               </div>
               <div>
-                <Label className="text-xs">Valuta</Label>
-                <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
-                  <SelectTrigger className="h-10">
+                <Label className="text-xs">Valuta{litLabel("currency")}</Label>
+                <Select value={form.currency} onValueChange={(v) => setField("currency", v)}>
+                  <SelectTrigger className={cn("h-10", lit("currency"))}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -406,33 +502,34 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs">Nummer på pappret</Label>
+                <Label className="text-xs">Nummer på pappret{litLabel("documentNumber")}</Label>
                 <Input
                   value={form.documentNumber}
-                  onChange={(e) => setForm({ ...form, documentNumber: e.target.value })}
+                  onChange={(e) => setField("documentNumber", e.target.value)}
                   placeholder="Kvitto- eller fakturanummer"
-                  className="h-10"
+                  className={cn("h-10", lit("documentNumber"))}
                 />
               </div>
               <div>
-                <Label className="text-xs">Bruttobelopp</Label>
+                <Label className="text-xs">Bruttobelopp{litLabel("grossAmount")}</Label>
                 <Input
                   inputMode="decimal"
                   value={form.grossAmount}
-                  onChange={(e) => setForm({ ...form, grossAmount: e.target.value })}
+                  onChange={(e) => setField("grossAmount", e.target.value)}
                   placeholder="0.00"
-                  className="h-10 font-mono tabular-nums"
+                  className={cn("h-10 font-mono tabular-nums", lit("grossAmount"))}
                 />
               </div>
             </div>
 
             <div>
-              <Label className="text-xs">Vad innehåller pappret?</Label>
+              <Label className="text-xs">Vad innehåller pappret?{litLabel("description")}</Label>
               <Textarea
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) => setField("description", e.target.value)}
                 placeholder="Kort och sökbart, t.ex. Blommor till disken"
                 rows={2}
+                className={cn(lit("description"))}
               />
             </div>
 
@@ -443,16 +540,39 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 type="file"
                 accept="image/*,application/pdf"
                 className="hidden"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  pickFile(e.target.files?.[0] ?? null);
+                  e.target.value = "";
+                }}
               />
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" className="h-10" onClick={() => fileRef.current?.click()}>
                   <Paperclip className="mr-1 h-4 w-4" /> Välj fil eller ta foto
                 </Button>
+                {file && (
+                  <Button
+                    variant="outline"
+                    className="h-10"
+                    disabled={reading}
+                    onClick={() => void readPaper(file)}
+                  >
+                    {reading ? (
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Wand2 className="mr-1 h-4 w-4" />
+                    )}
+                    Läs av igen
+                  </Button>
+                )}
                 <span className="truncate text-xs text-muted-foreground">
                   {file?.name ?? edit?.file_name ?? "Ingen fil"}
                 </span>
               </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {reading
+                  ? "Läser av pappret …"
+                  : "Fälten fylls i automatiskt från fotot — kontrollera de gröna fälten."}
+              </p>
             </div>
           </div>
 
