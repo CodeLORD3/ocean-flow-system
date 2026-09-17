@@ -102,6 +102,8 @@ export function MapDetailDrawer({
   onOpenPage?: () => void;
   /** Öppnar panelen där området beskrivs och redigeras. */
   onEditZone?: () => void;
+  /** Startar formredigering av området direkt i kartan. */
+  onEditZoneShape?: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
   const entityId = object?.id ?? zone?.id ?? "";
