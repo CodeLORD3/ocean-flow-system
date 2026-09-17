@@ -116,6 +116,14 @@ export function EntityImageGallery({
   const [groupName, setGroupName] = useState("");
   const [groupDesc, setGroupDesc] = useState("");
   const [dayDesc, setDayDesc] = useState<string | null>(null);
+  /** Fritextsökning på bildnamn, person och datum. */
+  const [search, setSearch] = useState("");
+  /** Nyss uppladdade bilder som ska namnges. */
+  const [nameIds, setNameIds] = useState<string[]>([]);
+  const [names, setNames] = useState<Record<string, string>>({});
+  /** Bild som döps om direkt i rutnätet. */
+  const [renameId, setRenameId] = useState<string | null>(null);
+  const [renameText, setRenameText] = useState("");
 
   const [lastDay, setLastDay] = useState(() => dayKey(new Date().toISOString()));
   const selectDay = (key: string) => {
