@@ -405,13 +405,25 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                                 title: "Vitlistad som förmedlare",
                                 description: "Leverantören identifieras per dokument (t.ex. Fortnox).",
                               }),
+                            onError: (e: any) =>
+                              toast({ title: "Kunde inte vitlista", description: e.message, variant: "destructive" }),
                           },
                         )
                       }
                     >
                       Förmedlare
                     </Button>
-                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => ignoreMessage.mutate(m.id)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() =>
+                        ignoreMessage.mutate(m.id, {
+                          onError: (e: any) =>
+                            toast({ title: "Kunde inte ignorera", description: e.message, variant: "destructive" }),
+                        })
+                      }
+                    >
                       Ignorera
                     </Button>
                   </div>
