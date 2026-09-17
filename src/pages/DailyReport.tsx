@@ -92,7 +92,7 @@ export default function DailyReport() {
   const store = stores.find((s) => s.id === activeStoreId);
   const currency = (store?.currency || "SEK").toUpperCase();
   const defaultVat = defaultVatFor(currency);
-  const currencyLabel = currency === "SEK" ? "kr" : currency;
+  const currencyLabel = curLabel(currency);
 
 
   const [gross, setGross] = useState("");
