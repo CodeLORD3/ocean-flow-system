@@ -1284,18 +1284,25 @@ export type Database = {
           category: string | null
           category_id: string | null
           completed_by_staff_id: string | null
+          completion_note: string | null
+          completion_value: number | null
           created_at: string
           day_id: string
           daypart: string | null
           done: boolean
           done_at: string | null
           estimated_minutes: number | null
+          guide: Json | null
           id: string
           important_note: string | null
           instructions: Json | null
+          link_url: string | null
           map_object_id: string | null
           note: string | null
+          recipe_id: string | null
+          requires_note: boolean
           requires_photo: boolean
+          requires_value: boolean
           section: string
           signature: string | null
           sort_order: number
@@ -1306,6 +1313,7 @@ export type Database = {
           time_label: string | null
           time_to: string | null
           updated_at: string
+          value_label: string | null
           work_type: string | null
           zone_id: string | null
         }
@@ -1314,18 +1322,25 @@ export type Database = {
           category?: string | null
           category_id?: string | null
           completed_by_staff_id?: string | null
+          completion_note?: string | null
+          completion_value?: number | null
           created_at?: string
           day_id: string
           daypart?: string | null
           done?: boolean
           done_at?: string | null
           estimated_minutes?: number | null
+          guide?: Json | null
           id?: string
           important_note?: string | null
           instructions?: Json | null
+          link_url?: string | null
           map_object_id?: string | null
           note?: string | null
+          recipe_id?: string | null
+          requires_note?: boolean
           requires_photo?: boolean
+          requires_value?: boolean
           section: string
           signature?: string | null
           sort_order?: number
@@ -1336,6 +1351,7 @@ export type Database = {
           time_label?: string | null
           time_to?: string | null
           updated_at?: string
+          value_label?: string | null
           work_type?: string | null
           zone_id?: string | null
         }
@@ -1344,18 +1360,25 @@ export type Database = {
           category?: string | null
           category_id?: string | null
           completed_by_staff_id?: string | null
+          completion_note?: string | null
+          completion_value?: number | null
           created_at?: string
           day_id?: string
           daypart?: string | null
           done?: boolean
           done_at?: string | null
           estimated_minutes?: number | null
+          guide?: Json | null
           id?: string
           important_note?: string | null
           instructions?: Json | null
+          link_url?: string | null
           map_object_id?: string | null
           note?: string | null
+          recipe_id?: string | null
+          requires_note?: boolean
           requires_photo?: boolean
+          requires_value?: boolean
           section?: string
           signature?: string | null
           sort_order?: number
@@ -1366,6 +1389,7 @@ export type Database = {
           time_label?: string | null
           time_to?: string | null
           updated_at?: string
+          value_label?: string | null
           work_type?: string | null
           zone_id?: string | null
         }
@@ -1417,6 +1441,13 @@ export type Database = {
             columns: ["map_object_id"]
             isOneToOne: false
             referencedRelation: "map_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "production_recipes"
             referencedColumns: ["id"]
           },
           {
@@ -1532,11 +1563,16 @@ export type Database = {
           created_at: string
           daypart: string | null
           estimated_minutes: number | null
+          guide: Json | null
           id: string
           important_note: string | null
           instructions: Json | null
+          link_url: string | null
           map_object_id: string | null
+          recipe_id: string | null
+          requires_note: boolean
           requires_photo: boolean
+          requires_value: boolean
           section: string
           sort_order: number
           specific_time: string | null
@@ -1547,6 +1583,7 @@ export type Database = {
           time_label: string | null
           time_to: string | null
           updated_at: string
+          value_label: string | null
           work_type: string | null
           zone_id: string | null
         }
@@ -1558,11 +1595,16 @@ export type Database = {
           created_at?: string
           daypart?: string | null
           estimated_minutes?: number | null
+          guide?: Json | null
           id?: string
           important_note?: string | null
           instructions?: Json | null
+          link_url?: string | null
           map_object_id?: string | null
+          recipe_id?: string | null
+          requires_note?: boolean
           requires_photo?: boolean
+          requires_value?: boolean
           section: string
           sort_order?: number
           specific_time?: string | null
@@ -1573,6 +1615,7 @@ export type Database = {
           time_label?: string | null
           time_to?: string | null
           updated_at?: string
+          value_label?: string | null
           work_type?: string | null
           zone_id?: string | null
         }
@@ -1584,11 +1627,16 @@ export type Database = {
           created_at?: string
           daypart?: string | null
           estimated_minutes?: number | null
+          guide?: Json | null
           id?: string
           important_note?: string | null
           instructions?: Json | null
+          link_url?: string | null
           map_object_id?: string | null
+          recipe_id?: string | null
+          requires_note?: boolean
           requires_photo?: boolean
+          requires_value?: boolean
           section?: string
           sort_order?: number
           specific_time?: string | null
@@ -1599,6 +1647,7 @@ export type Database = {
           time_label?: string | null
           time_to?: string | null
           updated_at?: string
+          value_label?: string | null
           work_type?: string | null
           zone_id?: string | null
         }
@@ -1629,6 +1678,13 @@ export type Database = {
             columns: ["map_object_id"]
             isOneToOne: false
             referencedRelation: "map_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "production_recipes"
             referencedColumns: ["id"]
           },
           {
@@ -11039,6 +11095,74 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_recipes: {
+        Row: {
+          active: boolean
+          allergens: string | null
+          batch_yield: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          ingredients: Json
+          name: string
+          prep_minutes: number | null
+          product_id: string | null
+          shelf_life_days: number | null
+          steps: Json
+          temperature: string | null
+          tips: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          allergens?: string | null
+          batch_yield?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: Json
+          name: string
+          prep_minutes?: number | null
+          product_id?: string | null
+          shelf_life_days?: number | null
+          steps?: Json
+          temperature?: string | null
+          tips?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          allergens?: string | null
+          batch_yield?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: Json
+          name?: string
+          prep_minutes?: number | null
+          product_id?: string | null
+          shelf_life_days?: number | null
+          steps?: Json
+          temperature?: string | null
+          tips?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_recipes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
