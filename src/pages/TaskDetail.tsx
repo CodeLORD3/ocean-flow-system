@@ -69,6 +69,8 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const upload = useUploadEntityImage();
 
   const [note, setNote] = useState<string | null>(null);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const attachArchive = useAttachArchiveImages();
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [title, setTitle] = useState<string | null>(null);
   const [important, setImportant] = useState<string | null>(null);
