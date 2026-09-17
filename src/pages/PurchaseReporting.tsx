@@ -530,6 +530,110 @@ export function plausibleLots(line: { lot_numbers?: string[] | null }): string[]
     .filter((n) => n.length >= 4);
 }
 
+/**
+ * Auktionsrader saknar ofta tryckt partinummer — då byggs ett spårbart förslag
+ * av datum och fartyg, t.ex. "AUK-2026-09-17-ARKO". Aldrig en gissad siffra.
+ */
+export function suggestLotNumber(
+  line: { vessel_name?: string | null; catch_date_from?: string | null },
+  documentDate?: string | null,
+): string | null {
+  const vessel = String(line.vessel_name ?? "").trim();
+  const date = (line.catch_date_from || documentDate || "").slice(0, 10);
+  if (!vessel || !date) return null;
+  const code = vessel
+    .toUpperCase()
+    .replace(/[ÅÄ]/g, "A")
+    .replace(/Ö/g, "O")
+    .replace(/[^A-Z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return code ? `AUK-${date}-${code}` : null;
+}
+
+/** En rad i partinummerlistan: visar inläst nummer eller låter dig fylla i det. */
+function LotNumberEditor({
+  line,
+  documentDate,
+  locked,
+  onSave,
+}: {
+  line: any;
+  documentDate?: string | null;
+  locked: boolean;
+  onSave: (numbers: string[]) => void;
+}) {
+  const lots = plausibleLots(line);
+  const raw = ((line.lot_numbers ?? []) as string[]).filter(Boolean);
+  const [value, setValue] = useState("");
+  const suggestion = suggestLotNumber(line, documentDate);
+
+  const save = (text: string) => {
+    const numbers = text
+      .split(/[,\s]+/)
+      .map((n) => n.trim())
+      .filter(Boolean);
+    if (!numbers.length) return;
+    onSave(numbers);
+    setValue("");
+  };
+
+  return (
+    <div className="flex items-center gap-1.5 text-[11px] min-w-0">
+      <span className="truncate flex-1 text-muted-foreground">{line.product_name}</span>
+      {lots.length > 0 ? (
+        <>
+          {lots.map((n) => (
+            <span key={n} className="font-mono tabular-nums text-foreground">{n}</span>
+          ))}
+          {!locked && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 px-1 text-[10px] text-muted-foreground"
+              onClick={() => onSave([])}
+            >
+              Rensa
+            </Button>
+          )}
+        </>
+      ) : locked ? (
+        <span className="text-muted-foreground/60">
+          {raw.length > 0 ? `${raw.join(", ")}?` : "saknas"}
+        </span>
+      ) : (
+        <>
+          {raw.length > 0 && (
+            <span className="font-mono tabular-nums text-amber-600" title="Inläst värde ser inte ut som ett partinummer">
+              {raw.join(", ")}?
+            </span>
+          )}
+          <Input
+            className="h-5 w-[150px] px-1.5 text-[11px] font-mono"
+            placeholder="Fyll i partinummer"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={() => save(value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") save(value);
+            }}
+          />
+          {suggestion && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 px-1 text-[10px]"
+              title={`Använd ${suggestion}`}
+              onClick={() => onSave([suggestion])}
+            >
+              Fartyg + datum
+            </Button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 /** Valutastämpel som sparas historiskt på inköpet när leverantören fakturerar i annan valuta. */
 type PurchaseFx = {
   source_currency: string;
