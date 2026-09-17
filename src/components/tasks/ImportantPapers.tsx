@@ -1266,7 +1266,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                                   {c.staff_name || c.card_holder || c.label || "Kort"}
                                 </span>
                                 <span className="block truncate text-[11px] text-muted-foreground">
-                                  {[c.card_brand || "Kort", `••${c.card_last4}`].join(" ")}
+                                  {[c.bank, c.card_brand || "Kort", `••${c.card_last4}`]
+                                    .filter(Boolean)
+                                    .join(" · ")}
                                 </span>
                               </span>
                               {c.card_kind === "privat" ? (
@@ -1288,6 +1290,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                           onClick={() => {
                             setCardForm({
                               cardBrand: form.cardBrand,
+                              bank: "",
                               cardLast4: form.cardLast4,
                               cardHolder: form.cardHolder,
                               staffId: "",
