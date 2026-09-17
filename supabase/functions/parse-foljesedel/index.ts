@@ -127,6 +127,7 @@ Rules:
 - size_grade: the EU sorting class printed on the line as a single digit 1-9 ("Torsk 3", "Sej stl 1", "klass 2"). A count range like "16-20" or "6-10" is NOT a sorting class — leave size_grade null and keep the range in product_name.
 - Report DELIVERED quantity in quantity, never ordered quantity.
 - Copy latin names and batch numbers exactly as printed, including misspellings.
+- lot_numbers: ONLY the real parti-/batch-/klubbslagsnummer, which always contains digits. Quality class and seller/vessel short codes printed on the line (e.g. "Kategori A ToCa", "Kat B JaAn") are NOT lot numbers — put the class in grade and the seller/vessel code in vessel_name, and leave lot_numbers empty if no real number is printed.
 - Dates as YYYY-MM-DD.
 - Use null for anything not printed on the document. Never guess.`,
           },
