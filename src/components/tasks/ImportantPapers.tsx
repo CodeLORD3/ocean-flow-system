@@ -1191,12 +1191,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               <div className="min-w-0 flex-1">
                 <DialogTitle className="truncate text-base">
                   {form.paperDate
-                    ? new Date(form.paperDate).toLocaleDateString("sv-SE", {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })
+                    ? longDayLabel(form.paperDate)
                     : edit
                       ? "Papper utan datum"
                       : "Nytt papper"}
