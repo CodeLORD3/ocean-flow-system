@@ -307,6 +307,34 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
               </Select>
             </div>
 
+            {form.paperType === "kvitto" && (
+              <div>
+                <Label className="text-xs">Betalades med</Label>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  {[
+                    ["kort", "Kort"],
+                    ["kontant", "Kontant"],
+                  ].map(([value, label]) => (
+                    <Button
+                      key={value}
+                      type="button"
+                      variant={form.paymentMethod === value ? "default" : "outline"}
+                      className="h-11 text-sm font-semibold"
+                      onClick={() =>
+                        setForm({
+                          ...form,
+                          paymentMethod:
+                            form.paymentMethod === value ? "" : (value as "kort" | "kontant"),
+                        })
+                      }
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Företag</Label>
