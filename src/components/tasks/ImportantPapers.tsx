@@ -728,6 +728,10 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     const list = [...filtered];
     if (sortBy === "belopp") list.sort((a, b) => (b.net_amount ?? 0) - (a.net_amount ?? 0));
     else if (sortBy === "datum") list.sort((a, b) => (b.paper_date ?? "").localeCompare(a.paper_date ?? ""));
+    else if (sortBy === "datum-aldst")
+      list.sort((a, b) => (a.paper_date ?? "zzz").localeCompare(b.paper_date ?? "zzz"));
+    else if (sortBy === "vecka")
+      list.sort((a, b) => (b.paper_date ?? "").localeCompare(a.paper_date ?? ""));
     else if (sortBy === "foretag")
       list.sort((a, b) => (a.company_name ?? "").localeCompare(b.company_name ?? "", "sv"));
     else if (sortBy === "konto")
