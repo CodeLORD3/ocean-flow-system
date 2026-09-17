@@ -148,6 +148,10 @@ export default function StoreMap() {
   const [focus, setFocus] = useState<Selection>(null);
   /** Områdets egna sida ligger som en egen flik i butikskartan. */
   const [areaPage, setAreaPage] = useState<Selection>(null);
+  /** Nytt område som ännu inte är beskrivet — visar den stora knappen över kartan. */
+  const [draftZoneId, setDraftZoneId] = useState<string | null>(null);
+  /** Området vars sidopanel med all information är öppen. */
+  const [sheetZoneId, setSheetZoneId] = useState<string | null>(null);
   const [pinDialog, setPinDialog] = useState<{
     point: { x: number; y: number } | null;
     zoneId: string | null;
