@@ -75,6 +75,8 @@ export function StorePhotoStrip({
   const [allOpen, setAllOpen] = useState(false);
   const [zoneFilter, setZoneFilter] = useState<string>("alla");
   const [personFilter, setPersonFilter] = useState<string>("alla");
+  /** Visningsläge: stora bilder eller lista med namn. */
+  const [layout, setLayout] = useState<"bilder" | "lista">("bilder");
 
   const zoneById = useMemo(
     () => Object.fromEntries(zones.map((z, i) => [z.id, { zone: z, nr: i + 1 }])),
