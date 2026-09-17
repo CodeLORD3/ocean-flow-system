@@ -176,7 +176,11 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     staffId: "",
     cardKind: "foretag" as "foretag" | "privat",
   });
-
+  // Foto av kortet: fälten läses av på samma sätt som på ett papper.
+  const cardCamRef = useRef<HTMLInputElement>(null);
+  const cardLibRef = useRef<HTMLInputElement>(null);
+  const [cardReading, setCardReading] = useState(false);
+  const [cardAutoFilled, setCardAutoFilled] = useState<Set<string>>(new Set());
 
   type FormKey =
     | "paperType"
