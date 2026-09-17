@@ -3708,6 +3708,7 @@ export type Database = {
           comment: string | null
           created_at: string
           created_by: string | null
+          currency: string | null
           gross_sales: number | null
           id: string
           largest_sale: number | null
@@ -3726,12 +3727,14 @@ export type Database = {
           staff_notes: string | null
           store_id: string
           updated_at: string
+          vat_rate: number | null
           waste_items: Json
         }
         Insert: {
           comment?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string | null
           gross_sales?: number | null
           id?: string
           largest_sale?: number | null
@@ -3750,12 +3753,14 @@ export type Database = {
           staff_notes?: string | null
           store_id: string
           updated_at?: string
+          vat_rate?: number | null
           waste_items?: Json
         }
         Update: {
           comment?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string | null
           gross_sales?: number | null
           id?: string
           largest_sale?: number | null
@@ -3774,6 +3779,7 @@ export type Database = {
           staff_notes?: string | null
           store_id?: string
           updated_at?: string
+          vat_rate?: number | null
           waste_items?: Json
         }
         Relationships: [
