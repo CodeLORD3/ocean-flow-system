@@ -586,6 +586,8 @@ export function TotalOrderedView({
           unit: r.unit,
           total: r.total,
           packed: r.packed,
+          closed: r.closed,
+
           stock: r.stock ?? null,
           onOrder: r.onOrder ?? null,
           combined: r.combined ?? null,
