@@ -833,14 +833,67 @@ export default function StockCount() {
         )}
       </div>
 
-      {/* Klar rapport — tom sida med stor startknapp, rapporten ligger i listan nedan */}
+      {/* Klar rapport — grön ruta som går att öppna och läsa, plus knapp för en ny räkning */}
       {session && locked && effectiveStoreId && (
-        <Button
-          className="h-12 w-full gap-2 text-sm font-semibold"
-          onClick={() => createSessionFor(date)}
-        >
-          <Plus className="h-4 w-4" /> Skapa inventeringsrapport
-        </Button>
+        <div className="space-y-2">
+          <div className="rounded-lg border border-emerald-500/60 bg-emerald-50 p-3 dark:bg-emerald-500/10">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                  <Check className="h-4 w-4 shrink-0" />
+                  Inventeringsrapporten är klar
+                </p>
+                <p className="text-[11px] leading-snug text-emerald-800/80 dark:text-emerald-200/80">
+                  {weekdayLong(date)} {date}
+                  {session.locked_at ? ` · inskickad ${stampLabel(session.locked_at)}` : ""} ·{" "}
+                  {(linesQuery.data ?? []).filter((l: any) => l.counted_qty !== null).length} räknade varor
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 shrink-0 gap-1 border-emerald-600/40 text-[11px] text-emerald-800 hover:bg-emerald-100 dark:text-emerald-200"
+                onClick={() => setShowLockedLines((v) => !v)}
+              >
+                {showLockedLines ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                {showLockedLines ? "Göm varorna" : "Öppna rapporten"}
+              </Button>
+            </div>
+
+            {showLockedLines && (
+              <div className="mt-2 max-h-80 overflow-y-auto rounded-md border border-emerald-500/30 bg-card">
+                {linesQuery.isLoading ? (
+                  <p className="px-2 py-2 text-[11px] text-muted-foreground">Laddar rader…</p>
+                ) : !(linesQuery.data ?? []).length ? (
+                  <p className="px-2 py-2 text-[11px] text-muted-foreground">Rapporten har inga rader.</p>
+                ) : (
+                  <div className="divide-y divide-border/60">
+                    {(linesQuery.data ?? [])
+                      .filter((l: any) => l.counted_qty !== null)
+                      .map((l: any) => {
+                        const p = productsById.get(l.product_id);
+                        return (
+                          <div key={l.id} className="flex items-center justify-between gap-2 px-2 py-1">
+                            <span className="min-w-0 truncate text-[11px]">{p?.name || "—"}</span>
+                            <span className="shrink-0 font-mono text-[11px] tabular-nums">
+                              {fmtQty(Number(l.counted_qty) || 0, unitOf(l.unit || p?.unit))}
+                            </span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Button
+            className="h-12 w-full gap-2 text-sm font-semibold"
+            onClick={() => createSessionFor(date)}
+          >
+            <Plus className="h-4 w-4" /> Skapa ny inventeringsrapport
+          </Button>
+        </div>
       )}
 
       {/* Start — guidat läge när ingen rapport är igång för datumet */}
