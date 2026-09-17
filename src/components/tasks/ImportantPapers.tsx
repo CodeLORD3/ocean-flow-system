@@ -1082,7 +1082,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           {/* Bilden: överst på mobilen, vid sidan om på datorn. */}
           {preview ? (
-            <div className="order-first lg:sticky lg:top-0 lg:self-start">
+            <div className="order-first lg:order-last lg:sticky lg:top-0 lg:self-start">
               <div className="overflow-hidden rounded-lg border border-border bg-muted/40">
                 {previewIsPdf ? (
                   <iframe src={preview} title="Pappret" className="h-[40vh] w-full lg:h-[72vh]" />
