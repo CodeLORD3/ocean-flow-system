@@ -220,8 +220,13 @@ export function EntityImageGallery({
     if (!catalog) return previewImages;
     if (view.mode === "favorites") return favorites;
     if (view.mode === "featured") return previewImages;
+    if (view.mode === "group") {
+      const g = groups.find((x) => x.id === view.id);
+      if (!g) return [];
+      return g.imageIds.map((id) => images.find((i) => i.id === id)).filter(Boolean) as EntityImage[];
+    }
     return images.filter((i) => dayKey(i.created_at) === view.key);
-  }, [catalog, view, images, favorites, previewImages]);
+  }, [catalog, view, images, favorites, previewImages, groups]);
 
   /** I helskärmsläge bläddrar man genom hela den utvalda poolen, inte bara de synliga. */
   const lightboxImages: EntityImage[] =
