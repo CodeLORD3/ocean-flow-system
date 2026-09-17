@@ -83,42 +83,45 @@ export function TaskRegister({
 
   return (
     <div className="space-y-4">
-      <Card className="flex flex-wrap items-center gap-2 p-3">
-        <div className="relative min-w-[220px] flex-1">
-          <Search className="pointer-events-none absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Card className="flex flex-col gap-2 p-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="relative w-full sm:min-w-[220px] sm:flex-1">
+          <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Sök uppgift"
-            className="pl-8"
+            className="h-11 pl-8 sm:h-10"
           />
         </div>
-        <Select value={cat} onValueChange={setCat}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alla överkategorier</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
-              </SelectItem>
-            ))}
-            <SelectItem value="ovrigt">Övrigt</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
-          <SelectTrigger className="w-[170px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="namn">Namn A–Ö</SelectItem>
-            <SelectItem value="oftast">Görs oftast</SelectItem>
-            <SelectItem value="senast">Senast gjord</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={cat} onValueChange={setCat}>
+            <SelectTrigger className="h-11 flex-1 text-sm sm:h-10 sm:w-[200px] sm:flex-none">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alla överkategorier</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+              <SelectItem value="ovrigt">Övrigt</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
+            <SelectTrigger className="h-11 flex-1 text-sm sm:h-10 sm:w-[170px] sm:flex-none">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="namn">Namn A–Ö</SelectItem>
+              <SelectItem value="oftast">Görs oftast</SelectItem>
+              <SelectItem value="senast">Senast gjord</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <span className="text-xs text-muted-foreground">{filtered.length} uppgifter</span>
       </Card>
+
 
       {isLoading && <p className="text-sm text-muted-foreground">Hämtar registret …</p>}
       {!isLoading && groups.length === 0 && (
