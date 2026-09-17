@@ -1107,7 +1107,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   </span>
                   <span className="block truncate text-[11px] text-muted-foreground">
                     {[
-                      p.paper_date,
+                      p.paper_date ? shortDayLabel(p.paper_date) : null,
                       p.payment_method === "kort"
                         ? [p.card_brand ?? "Kort", p.card_last4 ? `••${p.card_last4}` : null]
                             .filter(Boolean)
