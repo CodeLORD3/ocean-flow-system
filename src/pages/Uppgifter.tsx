@@ -44,6 +44,7 @@ import { WORK_TYPES, workTypeLabel } from "@/lib/workType";
 import { TASK_LINKS, taskTarget } from "@/lib/taskLink";
 import { useProductionRecipes } from "@/hooks/useProductionRecipes";
 import ProductionRecipes from "@/pages/ProductionRecipes";
+import { ImportantPapers } from "@/components/tasks/ImportantPapers";
 
 const WEEKDAY_NAMES = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
 
@@ -381,6 +382,7 @@ export default function Uppgifter() {
             ["personer", "Personer"],
             ["kalender", "Kalender"],
             ["produktion", "Produktion"],
+            ["ekonomi", "Ekonomi"],
             ["checklistor", "Checklistor"],
             ["sagordu", "Så gör du"],
             ["standard", "Standarduppgifter"],
@@ -663,6 +665,10 @@ export default function Uppgifter() {
 
         <TabsContent value="produktion">
           <ProductionRecipes />
+        </TabsContent>
+
+        <TabsContent value="ekonomi" className="space-y-3">
+          <ImportantPapers storeId={storeId} />
         </TabsContent>
 
         <TabsContent value="checklistor" className="space-y-3">

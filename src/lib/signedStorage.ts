@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /** Buckets that are private — their files must be served through signed URLs. */
-const PRIVATE_BUCKETS = ["trade-offers", "purchase-documents", "leverantorsdokument"] as const;
+const PRIVATE_BUCKETS = ["trade-offers", "purchase-documents", "leverantorsdokument", "viktiga-papper"] as const;
 
 const SIGNED_TTL_SECONDS = 60 * 60; // 1 h
 
