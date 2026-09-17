@@ -501,19 +501,35 @@ export function EntityImageGallery({
           )}
         </div>
         {editable && (
-          <>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {/* Kamera: ett foto direkt. Bibliotek: flera bilder ur telefonen. */}
+            <input
+              ref={cameraRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                handleFiles(e.target.files);
+                e.currentTarget.value = "";
+              }}
+            />
             <input
               ref={fileRef}
               type="file"
               accept="image/*"
               multiple
               className="hidden"
-              onChange={(e) => handleFiles(e.target.files)}
+              onChange={(e) => {
+                handleFiles(e.target.files);
+                e.currentTarget.value = "";
+              }}
             />
             <Button
               size="sm"
               className="h-10 shrink-0 gap-1.5 px-3 text-xs sm:h-7"
-              onClick={() => fileRef.current?.click()}
+              onClick={() => cameraRef.current?.click()}
               disabled={upload.isPending}
             >
               {upload.isPending ? (
@@ -521,9 +537,19 @@ export function EntityImageGallery({
               ) : (
                 <Camera className="h-4 w-4 sm:h-3 sm:w-3" />
               )}
-              Lägg till bild
+              Ta foto
             </Button>
-          </>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 shrink-0 gap-1.5 px-3 text-xs sm:h-7"
+              onClick={() => fileRef.current?.click()}
+              disabled={upload.isPending}
+            >
+              <ImageIcon className="h-4 w-4 sm:h-3 sm:w-3" />
+              Bibliotek
+            </Button>
+          </div>
         )}
       </div>
 
