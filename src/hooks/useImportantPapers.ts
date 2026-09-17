@@ -123,6 +123,9 @@ export interface PaperInput {
   cardBrand?: string | null;
   cardLast4?: string | null;
   cardHolder?: string | null;
+  cardId?: string | null;
+  paidByStaffId?: string | null;
+  isExpenseClaim?: boolean;
   expenseAccount?: string | null;
   expenseCategory?: string | null;
   lineItems?: PaperLineItem[];
@@ -169,6 +172,9 @@ export function useSaveImportantPaper() {
         card_brand: input.cardBrand?.trim() || null,
         card_last4: /^\d{4}$/.test((input.cardLast4 ?? "").trim()) ? input.cardLast4!.trim() : null,
         card_holder: input.cardHolder?.trim() || null,
+        card_id: input.cardId ?? null,
+        paid_by_staff_id: input.paidByStaffId ?? null,
+        is_expense_claim: input.isExpenseClaim ?? false,
         expense_account: input.expenseAccount?.trim() || null,
         expense_category: input.expenseCategory?.trim() || null,
         line_items: (input.lineItems ?? []).filter((l) => l.name?.trim()),
