@@ -1,5 +1,3 @@
--- Attest av faktura stoppades: finalize_lot_price satte price_status = 'faststalld',
--- ett värde som lots_price_status_check inte tillåter ('preliminar' | 'bekraftad').
 CREATE OR REPLACE FUNCTION public.finalize_lot_price(_lot_id uuid, _final_unit_cost numeric, _invoice_number text DEFAULT NULL::text, _invoice_date date DEFAULT NULL::date)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -37,7 +35,6 @@ BEGIN
     updated_at = now()
   WHERE id = _lot_id;
 
-  -- Alla partier som härstammar ur partiet (tillverkning) skalas proportionellt.
   WITH RECURSIVE d AS (
     SELECT to_lot_id AS lot_id FROM public.lot_transformations WHERE from_lot_id = _lot_id
     UNION
@@ -56,7 +53,6 @@ BEGIN
 
   _ids := COALESCE(_ids, ARRAY[]::uuid[]) || _lot_id;
 
-  -- Rörelser bär partiets pris.
   PERFORM set_config('app.stock_ledger', 'on', true);
 
   UPDATE public.stock_movements m
@@ -64,7 +60,6 @@ BEGIN
   FROM public.lots l
   WHERE m.lot_id = l.id AND l.id = ANY(_ids);
 
-  -- Dagssnitt och lagervärde räknas om ur kvarvarande partisaldon per lagerplats.
   WITH pairs AS (
     SELECT DISTINCT product_id, location_id
     FROM public.stock_movements
