@@ -167,16 +167,37 @@ export function ZoneAreaPage({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm">Bilder ({images.length})</CardTitle>
-            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted">
-              <Camera className="h-3.5 w-3.5" /> Lägg till
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && addImage(e.target.files[0])}
-              />
-            </label>
+            <div className="flex items-center gap-1.5">
+              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted">
+                <Camera className="h-3.5 w-3.5" /> Ta foto
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  multiple
+                  className="hidden"
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    e.currentTarget.value = "";
+                    for (const f of files) await addImage(f);
+                  }}
+                />
+              </label>
+              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted">
+                <ImageIcon className="h-3.5 w-3.5" /> Bibliotek
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    e.currentTarget.value = "";
+                    for (const f of files) await addImage(f);
+                  }}
+                />
+              </label>
+            </div>
           </CardHeader>
           <CardContent>
             {images.length === 0 ? (
