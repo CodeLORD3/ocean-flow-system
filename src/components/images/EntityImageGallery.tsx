@@ -688,13 +688,32 @@ export function EntityImageGallery({
         )}
 
         {images.length > 0 && (
+          <div className="relative w-40 shrink-0 sm:w-52">
+            <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Sök bild"
+              className="h-9 pl-7 text-xs sm:h-7"
+            />
+          </div>
+        )}
+
+        {search.trim() ? (
+          <Badge
+            variant="secondary"
+            className="h-9 shrink-0 rounded-md px-3 font-mono tabular-nums text-[11px] sm:h-6 sm:px-2 sm:text-[10px]"
+          >
+            {searchHits.length} träff{searchHits.length === 1 ? "" : "ar"}
+          </Badge>
+        ) : images.length > 0 ? (
           <Badge
             variant="secondary"
             className="h-9 shrink-0 rounded-md px-3 font-mono tabular-nums text-[11px] sm:h-6 sm:px-2 sm:text-[10px]"
           >
             {images.length} {images.length === 1 ? "bild" : "bilder"}
           </Badge>
-        )}
+        ) : null}
         {favorites.length > 0 && (
           <Badge
             variant="outline"
