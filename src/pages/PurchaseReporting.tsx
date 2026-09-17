@@ -893,7 +893,7 @@ function ReportSection({
                 <LotNumberEditor
                   key={l.id}
                   line={l as any}
-                  documentDate={report.document_date}
+                  documentDate={(report as any).document_date ?? report.report_date}
                   locked={isLocked}
                   onSave={(numbers) => onUpdateLine(l.id, { lot_numbers: numbers } as any)}
                 />
