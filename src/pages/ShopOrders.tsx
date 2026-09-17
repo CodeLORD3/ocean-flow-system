@@ -1174,15 +1174,30 @@ export default function ShopOrders() {
             <Dialog open={confirmSendOpen} onOpenChange={setConfirmSendOpen}>
               <DialogContent className="max-w-sm">
                 <DialogHeader>
-                  <DialogTitle className="font-heading">Bekräfta beställning</DialogTitle>
+                  <DialogTitle className="font-heading">Kontrollera beställningen</DialogTitle>
                   <DialogDescription className="text-xs">
-                    Är du säker på att du vill skicka beställningen med {orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkt(er)? Ordern kan inte ändras efter att den skickats.
+                    {orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkter, leverans{" "}
+                    {desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : "–"}. Ordern kan inte ändras efter att den skickats.
                   </DialogDescription>
                 </DialogHeader>
-                <DialogFooter>
-                  <Button variant="outline" size="sm" onClick={() => setConfirmSendOpen(false)}>Avbryt</Button>
-                  <Button size="sm" className="gap-1.5" onClick={() => { setConfirmSendOpen(false); handleCreateOrder(); }}>
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Ja, skicka
+                <div className="max-h-64 overflow-y-auto rounded-md border border-border divide-y divide-border/60">
+                  {orderLines
+                    .filter(l => l.quantity && Number(l.quantity) > 0)
+                    .map(l => (
+                      <div key={l.product_id} className="flex items-center justify-between gap-2 px-3 py-2">
+                        <span className="text-sm text-foreground break-words">{l.product_name}</span>
+                        <span className="text-sm font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
+                          {l.quantity} {l.unit}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+                <DialogFooter className="flex-col gap-2 sm:flex-row">
+                  <Button variant="outline" className="h-11 w-full sm:h-8 sm:w-auto sm:text-xs" onClick={() => setConfirmSendOpen(false)}>
+                    Nej, lägg till mer
+                  </Button>
+                  <Button className="h-12 w-full gap-1.5 text-base sm:h-8 sm:w-auto sm:text-xs" onClick={() => { setConfirmSendOpen(false); handleCreateOrder(); }}>
+                    <CheckCircle2 className="h-5 w-5 sm:h-3.5 sm:w-3.5" /> Ja, skicka
                   </Button>
                 </DialogFooter>
               </DialogContent>
