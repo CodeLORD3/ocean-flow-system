@@ -755,6 +755,33 @@ export default function StoreMap() {
               </div>
             )}
 
+            {/* Ändra ett befintligt område: dra i kartan, spara sedan eller öppna informationen */}
+            {shapeZoneId && shapeZoneId !== draftZoneId && zones.some((z) => z.id === shapeZoneId) && (
+              <div className="border-t border-primary/40 bg-primary/5 px-3 py-3">
+                <p className="pb-2 text-xs">
+                  Dra området till rätt plats och dra i hörnen till rätt storlek. Ändringen sparas direkt.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    className="h-12 flex-1 text-base font-semibold"
+                    onClick={() => {
+                      setShapeZoneId(null);
+                      toast({ title: "Området är uppdaterat" });
+                    }}
+                  >
+                    <Check className="mr-2 h-5 w-5" /> Klar med formen
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-12 text-sm"
+                    onClick={() => setSheetZoneId(shapeZoneId)}
+                  >
+                    Ändra namn och info
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {placing && (
               <p className="border-t border-primary/40 bg-primary/5 px-3 py-2 text-[11px]">
                 Tryck på platsen inne i ytan där bilden är tagen.{" "}
