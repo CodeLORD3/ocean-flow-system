@@ -15,7 +15,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { dataUrl, fileName } = await req.json();
+    const { dataUrl, fileName, kind } = await req.json();
+    // kind = "card" -> fotot är ett betalkort, inte ett papper.
+    const isCard = String(kind ?? "") === "card";
     if (!dataUrl) throw new Error("dataUrl is required");
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -34,7 +36,17 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Du läser papper i en svensk/schweizisk fiskbutik: kvitton, följesedlar, fakturor, brev och anteckningar.
+            content: isCard
+              ? `Du läser av ett foto av ett betalkort i en fiskbutik.
+
+Fyll bara i det som syns på kortet. Gissa aldrig.
+- card_brand: Visa, Mastercard, Maestro, Amex, Twint, Postfinance eller det som står på kortet
+- card_last4: BARA de fyra sista siffrorna i kortnumret. Returnera aldrig hela kortnumret.
+- card_holder: namnet som är tryckt på kortet
+- company_name: banken eller utgivaren om den syns
+
+Allt annat lämnas tomt.`
+              : `Du läser papper i en svensk/schweizisk fiskbutik: kvitton, följesedlar, fakturor, brev och anteckningar.
 
 Fyll bara i det som faktiskt står på pappret. Gissa aldrig.
 - paper_type: kvitto | foljesedel | faktura | brev | anteckning
@@ -57,7 +69,7 @@ Fyll bara i det som faktiskt står på pappret. Gissa aldrig.
             role: "user",
             content: [
               fileContent as any,
-              { type: "text", text: "Läs av pappret och fyll i fälten." },
+              { type: "text", text: isCard ? "Läs av kortet: korttyp, de fyra sista siffrorna och namnet." : "Läs av pappret och fyll i fälten." },
             ],
           },
         ],
