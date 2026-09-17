@@ -41,11 +41,27 @@ export function ShopOrderFortnoxButton({ orderId }: { orderId: string }) {
 
   const send = async () => {
     setSending(true);
+    // Exportorder till Schweiz: varje rad måste bära parti på fakturan.
+    const { data: order } = await supabase
+      .from("shop_orders")
+      .select("store_id")
+      .eq("id", orderId)
+      .maybeSingle();
+    if (order?.store_id && (await isExportStore(order.store_id))) {
+      const missing = await shopOrderLinesMissingBatch(orderId);
+      if (missing.length) {
+        setSending(false);
+        return toast.error(
+          `Kan inte faktureras: parti saknas på ${missing.map((m) => m.productName).join(", ")}. Koppla parti på leveransen först.`,
+        );
+      }
+    }
     const { data, error } = await supabase.functions.invoke("fortnox-send-shop-invoice", {
       body: { order_id: orderId },
     });
     setSending(false);
     if (error) return toast.error(await edgeErrorMessage(error));
+
     if (data?.error) return toast.error(data.error);
     toast.success(
       data.already_sent
