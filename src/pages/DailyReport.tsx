@@ -96,7 +96,7 @@ export default function DailyReport() {
   const [waste, setWaste] = useState<WasteItem[]>([]);
   const [wasteRaw, setWasteRaw] = useState<Record<string, string>>({});
   const [comment, setComment] = useState("");
-  const [vatPct, setVatPct] = useState("12");
+  const [vatPct, setVatPct] = useState("6");
   const [hydrated, setHydrated] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
