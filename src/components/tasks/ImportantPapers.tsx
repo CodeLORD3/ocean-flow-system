@@ -605,6 +605,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   function openEdit(p: ImportantPaper) {
     setEdit(p);
     setFile(null);
+    setKortOwner(p.paid_by_staff_id ?? "");
+    setKortPrivat(!!p.is_expense_claim);
     setAutoFilled(new Set());
     setChecked(new Set());
     setForm({
