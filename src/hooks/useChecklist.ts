@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { guessWorkType } from "@/lib/workType";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 export type ChecklistItem = {
@@ -476,6 +477,7 @@ export function useDailyChecklist(storeId?: string | null, date?: string, templa
                 section: t.section,
                 time_label: t.time_label,
                 category: t.category,
+                work_type: t.work_type ?? guessWorkType(t.category || t.section || t.task),
                 task: t.task,
                 sort_order: t.sort_order,
               }))
@@ -747,6 +749,8 @@ export function useEditChecklistItem() {
       task: string;
       time?: string;
       category?: string;
+      /** Arbetstyp, t.ex. stadning eller rapporter. Utan värde gissas den. */
+      workType?: string;
       persist?: boolean;
       templateId?: string | null;
       storeId?: string | null;
@@ -759,10 +763,11 @@ export function useEditChecklistItem() {
       const normalized = normalizeTimeLabel(input.time || "");
       if ((input.time || "").trim() && !normalized) throw new Error("Ogiltig tid — skriv t.ex. 07:30.");
       const category = input.category?.trim() || null;
+      const workType = input.workType || guessWorkType(category || input.section || task);
 
       const { error } = await supabase
         .from("checklist_items")
-        .update({ task, time_label: normalized, category })
+        .update({ task, time_label: normalized, category, work_type: workType })
         .eq("id", input.id);
       if (error) throw error;
       await resequenceDay(input.dayId);
@@ -780,7 +785,7 @@ export function useEditChecklistItem() {
         if (own.length > 0) {
           await supabase
             .from("checklist_template_items")
-            .update({ task, time_label: normalized, category })
+            .update({ task, time_label: normalized, category, work_type: workType })
             .in("id", own.map((r: any) => r.id));
         } else {
           const globalRow = (rows || []).find((r: any) => r.store_id === null);
@@ -801,6 +806,7 @@ export function useEditChecklistItem() {
             task,
             time_label: normalized,
             category,
+            work_type: workType,
             active: true,
           });
         }
@@ -825,6 +831,8 @@ export function useAddChecklistItem() {
       task: string;
       time?: string;
       category?: string;
+      /** Arbetstyp, t.ex. stadning eller rapporter. Utan värde gissas den. */
+      workType?: string;
       templateId?: string | null;
       storeId?: string | null;
       /** false = bara idag */
@@ -849,6 +857,7 @@ export function useAddChecklistItem() {
         task,
         time_label: normalized,
         category: input.category?.trim() || null,
+        work_type: input.workType || guessWorkType(input.category || input.section || task),
         sort_order: nextOrder,
       });
       if (error) throw error;
@@ -867,7 +876,12 @@ export function useAddChecklistItem() {
         if (existing) {
           await supabase
             .from("checklist_template_items")
-            .update({ active: true, time_label: normalized, category: input.category?.trim() || null })
+            .update({
+              active: true,
+              time_label: normalized,
+              category: input.category?.trim() || null,
+              work_type: input.workType || guessWorkType(input.category || input.section || task),
+            })
             .eq("id", existing.id);
         } else {
           await supabase.from("checklist_template_items").insert({
@@ -877,6 +891,7 @@ export function useAddChecklistItem() {
             task,
             time_label: normalized,
             category: input.category?.trim() || null,
+            work_type: input.workType || guessWorkType(input.category || input.section || task),
             sort_order: nextOrder,
             active: true,
           });

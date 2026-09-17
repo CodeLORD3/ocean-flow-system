@@ -5,6 +5,7 @@ import {
   LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText, SlidersHorizontal, MessageSquare, ClipboardCheck, History, ShieldCheck, ArrowLeftRight, Trash2,
 
   CalendarRange,
+  CookingPot,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -32,12 +33,13 @@ import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 
 const overviewNav = [
-  { title: "Översikt", url: "/organisation", icon: LayoutDashboard },
+  { title: "Översikt", url: "/store-map", icon: Map },
   { title: "Bildflöde", url: "/image-feed", icon: Images },
-  { title: "Chatt", url: "/chat", icon: MessageSquare },
 
-  { title: "Checklista", url: "/checklist", icon: ClipboardCheck },
-  { title: "Butikskarta", url: "/store-map", icon: Map },
+  { title: "Uppgifter", url: "/uppgifter", icon: ListTodo },
+  { title: "Produktion", url: "/produktion-recept", icon: CookingPot },
+  
+  
   { title: "Egenkontroll", url: "/food-safety", icon: ClipboardCheck },
   { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
   { title: "Bokningsinställningar", url: "/booking-settings", icon: SlidersHorizontal },
@@ -47,7 +49,7 @@ const overviewNav = [
 const calendarNav = [
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
   { title: "Mötesprotokoll", url: "/meetings", icon: FileText },
-  { title: "Uppgifter", url: "/tasks", icon: ListTodo },
+  { title: "Kalenderuppgifter", url: "/tasks", icon: ListTodo },
 ];
 
 const salesNav = [
@@ -109,7 +111,7 @@ export function ShopSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "
 
   const { hiddenUrls, itemOrder, sectionLabels, sectionOrder } = useStoreSidebarPrefs();
   const [customizeOpen, setCustomizeOpen] = useState(false);
-  const LOCKED_URLS = ["/organisation"];
+  const LOCKED_URLS = ["/store-map"];
 
   const visibleSections = sections
     .map((section, sIdx) => ({

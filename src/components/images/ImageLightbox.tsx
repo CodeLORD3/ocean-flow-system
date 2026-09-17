@@ -16,6 +16,7 @@ import {
 } from "@/hooks/useEntityImages";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { thumbUrl, THUMB_FULL } from "@/lib/imageThumb";
+import { dayBadgeClass } from "@/lib/dayColor";
 
 type Props = {
   images: EntityImage[];
@@ -31,6 +32,23 @@ type Props = {
   /** Etikett för var bilden kommer ifrån (t.ex. butiksnamn) — visas ovanpå bilden. */
   sourceLabelOf?: (image: EntityImage) => string | null | undefined;
 };
+
+/** "Idag 14:05", "Igår 09:12" eller "Tisdag 16 sep 08:20" — när bilden lades ut. */
+function uploadedWhen(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const time = d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+  const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  const today = new Date();
+  if (sameDay(d, today)) return `Idag ${time}`;
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (sameDay(d, yesterday)) return `Igår ${time}`;
+  const weekday = d.toLocaleDateString("sv-SE", { weekday: "long" });
+  const date = d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)} ${date} ${time}`;
+}
+
 
 /** Helskärmsgalleri: pilnavigering (desktop), Instagram-liknande swipe-karusell (mobil) och kommentarschatt. */
 export function ImageLightbox({
@@ -508,7 +526,10 @@ export function ImageLightbox({
                   </button>
                 </DialogClose>
 
-                <div className="absolute top-2 left-2 flex max-w-[70%] items-center gap-1.5">
+                <div className="absolute top-2 left-2 flex max-w-[80%] flex-wrap items-center gap-1.5">
+                  <span className={cn("rounded px-2 py-0.5 text-[11px] font-semibold shadow", dayBadgeClass(current.created_at))}>
+                    {uploadedWhen(current.created_at)}
+                  </span>
                   <span className="rounded bg-background/80 px-2 py-0.5 font-mono tabular-nums text-[11px] text-foreground backdrop-blur">
                     {(index as number) + 1} / {images.length}
                   </span>
@@ -693,12 +714,17 @@ export function ImageLightbox({
                   </button>
                 </DialogClose>
 
-                {sourceLabel && (
-                  <span className="absolute top-2 left-2 flex max-w-[60%] items-center gap-1 rounded bg-background/90 px-2 py-1 text-xs font-semibold text-foreground backdrop-blur border border-border">
-                    <Store className="h-3.5 w-3.5 shrink-0 text-primary" />
-                    <span className="truncate">{sourceLabel}</span>
+                <div className="absolute top-2 left-2 flex max-w-[70%] flex-wrap items-center gap-1.5">
+                  <span className={cn("rounded px-2 py-1 text-xs font-semibold shadow", dayBadgeClass(current.created_at))}>
+                    {uploadedWhen(current.created_at)}
                   </span>
-                )}
+                  {sourceLabel && (
+                    <span className="flex min-w-0 items-center gap-1 rounded bg-background/90 px-2 py-1 text-xs font-semibold text-foreground backdrop-blur border border-border">
+                      <Store className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      <span className="truncate">{sourceLabel}</span>
+                    </span>
+                  )}
+                </div>
 
                 <span className="absolute bottom-2 right-2 rounded bg-background/80 px-2 py-0.5 font-mono tabular-nums text-[11px] text-foreground backdrop-blur">
                   {(index as number) + 1} / {images.length}

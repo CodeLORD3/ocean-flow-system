@@ -25,6 +25,7 @@ import PlaceholderPage from "@/pages/PlaceholderPage";
 import Invoices from "@/pages/Invoices";
 import SizeGrades from "@/pages/SizeGrades";
 import TransformationRecipes from "@/pages/TransformationRecipes";
+import ProductionRecipes from "@/pages/ProductionRecipes";
 import PurchaseReporting from "@/pages/PurchaseReporting";
 import PurchaseReconciliation from "@/pages/PurchaseReconciliation";
 import Pricing from "@/pages/Pricing";
@@ -78,6 +79,8 @@ import Chat from "@/pages/Chat";
 import ImageFeed from "@/pages/ImageFeed";
 
 import Checklist from "@/pages/Checklist";
+import Uppgifter from "@/pages/Uppgifter";
+import TaskDetail from "@/pages/TaskDetail";
 import StoreMap from "@/pages/StoreMap";
 import Manual from "@/pages/Manual";
 import DailyReport from "@/pages/DailyReport";
@@ -132,6 +135,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/purchase-reconciliation": { component: <PurchaseReconciliation /> },
   "/size-grades": { component: <SizeGrades /> },
   "/transformation-recipes": { component: <TransformationRecipes /> },
+  "/produktion-recept": { component: <ProductionRecipes /> },
   "/receiving": { component: <Receiving /> },
   "/products": { component: <Products /> },
   "/barcodes": { component: <Barcodes /> },
@@ -184,6 +188,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/chat": { component: <Chat /> },
   "/image-feed": { component: <ImageFeed /> },
   "/checklist": { component: <Checklist /> },
+  "/uppgifter": { component: <Uppgifter /> },
   "/store-map": { component: <StoreMap /> },
 
   "/manual": { component: <Manual /> },
@@ -224,9 +229,12 @@ export function KeepAliveTabs() {
     <>
       {tabs.map((tab) => {
         const kund = tab.path.match(/^\/customer-orders\/kund\/([^/]+)$/);
+        const uppgift = tab.path.match(/^\/uppgift\/([^/]+)$/);
         const route: RouteEntry | undefined = kund
           ? { component: <RetailCustomerProfile customerId={kund[1]} /> }
-          : ROUTE_MAP[tab.path];
+          : uppgift
+            ? { component: <TaskDetail taskId={uppgift[1]} /> }
+            : ROUTE_MAP[tab.path];
         if (!route) return null;
 
         const isActive = tab.path === activeTab;

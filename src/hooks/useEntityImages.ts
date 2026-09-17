@@ -26,6 +26,8 @@ export type EntityImage = {
   norm_x: number | null;
   norm_y: number | null;
   floor_plan_id: string | null;
+  /** Checklistuppgiften bilden togs för, om bilden kom från en uppgift. */
+  checklist_item_id?: string | null;
 };
 
 export type EntityImageComment = {
@@ -114,6 +116,7 @@ export function useUploadEntityImage() {
       imageKind,
       floorPlanId,
       norm,
+      checklistItemId,
     }: {
       entityType: string;
       entityId: string;
@@ -126,6 +129,8 @@ export function useUploadEntityImage() {
       floorPlanId?: string | null;
       /** Exakt plats inom ytan, 0–1 i båda riktningarna. */
       norm?: { x: number; y: number } | null;
+      /** Checklistuppgiften bilden hör till, när bilden tas från en uppgift. */
+      checklistItemId?: string | null;
     }) => {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth?.user?.id ?? null;
@@ -161,7 +166,8 @@ export function useUploadEntityImage() {
           floor_plan_id: floorPlanId ?? null,
           norm_x: norm?.x ?? null,
           norm_y: norm?.y ?? null,
-        })
+          checklist_item_id: checklistItemId ?? null,
+        } as never)
         .select("id")
         .single();
       if (error) throw error;
@@ -172,7 +178,31 @@ export function useUploadEntityImage() {
       qc.invalidateQueries({ queryKey: ["store-cover-images"] });
       qc.invalidateQueries({ queryKey: ["product-photos"] });
       qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
+      qc.invalidateQueries({ queryKey: ["floor-plan-images"] });
+      qc.invalidateQueries({ queryKey: ["store-area-images"] });
     },
+  });
+}
+
+/**
+ * Alla bilder som hör till butikens ytor och objekt på kartan.
+ * Används för filtrering per område i Översikt.
+ */
+export function useStoreAreaImages(ids: string[]) {
+  const key = [...ids].sort().join(",");
+  return useQuery({
+    queryKey: ["store-area-images", key],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entity_images")
+        .select("*")
+        .in("entity_type", ["map_zone", "map_object"])
+        .in("entity_id", ids)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as unknown as EntityImage[];
+    },
+    enabled: ids.length > 0,
   });
 }
 

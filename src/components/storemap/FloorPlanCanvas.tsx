@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Maximize2 } from "lucide-react";
+import { Minus, Plus, Maximize2, SquareDashed } from "lucide-react";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
 import { STATUS_COLOR, type MapProgress } from "@/lib/mapStatus";
 import { areaOf, formatSqm } from "@/lib/mapScale";
@@ -63,6 +63,9 @@ export function FloorPlanCanvas({
   onPlacePhoto,
   onPhotoSpotSelect,
   onZonePointsCommit,
+  showObjects = true,
+  showPins = true,
+  onOpenArea,
 }: {
   plan: FloorPlan;
   zones: MapZone[];
@@ -73,6 +76,8 @@ export function FloorPlanCanvas({
   objectProgress: Record<string, MapProgress>;
   selected: Selection;
   onSelect: (s: Selection) => void;
+  /** Dubbelklick på en yta går direkt vidare till ytans egna sida. */
+  onOpenArea?: (s: Selection) => void;
   editMode: boolean;
   showBackground: boolean;
   showGrid: boolean;
@@ -101,6 +106,9 @@ export function FloorPlanCanvas({
   onPlacePhoto?: (zoneId: string, norm: { x: number; y: number }) => void;
   onPhotoSpotSelect?: (zoneId: string) => void;
   onZonePointsCommit?: (id: string, points: { x: number; y: number }[]) => void;
+  /** Inventarier ritas bara i redigeringsläget — normalvyn ska vara ren. */
+  showObjects?: boolean;
+  showPins?: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -114,16 +122,67 @@ export function FloorPlanCanvas({
   );
   const [ghostPts, setGhostPts] = useState<Record<string, Pt[]>>({});
 
+  /**
+   * Kartan zoomar först när man klickat i den. Annars skrollar sidan som vanligt
+   * när man rullar över kartan.
+   */
+  const [active, setActive] = useState(false);
+  const activeRef = useRef(false);
+  activeRef.current = active;
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      const el = wrapRef.current;
+      if (el && !el.contains(e.target as Node)) setActive(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, []);
+
+  /** Har användaren själv zoomat eller dragit? Då rör vi inte vyn vid omritning. */
+  const touched = useRef(false);
+
+  /**
+   * Passa in det som faktiskt är intressant: ytorna på kartan. Tom planyta
+   * runt om beskärs bort, så ritningen fyller rutan i stället för att bli liten.
+   */
   const fit = useCallback(() => {
     const el = wrapRef.current;
-    if (!el) return;
-    const z = Math.min(el.clientWidth / plan.width, el.clientHeight / plan.height) * 0.95;
+    if (!el || !el.clientWidth) return;
+    const boxes = zones.map((z) => bbox(zonePoints(z)));
+    let x = 0;
+    let y = 0;
+    let w = plan.width;
+    let h = plan.height;
+    if (boxes.length) {
+      const pad = Math.max(plan.width, plan.height) * 0.05;
+      const x1 = Math.max(0, Math.min(...boxes.map((b) => b.x)) - pad);
+      const y1 = Math.max(0, Math.min(...boxes.map((b) => b.y)) - pad);
+      const x2 = Math.min(plan.width, Math.max(...boxes.map((b) => b.x + b.width)) + pad);
+      const y2 = Math.min(plan.height, Math.max(...boxes.map((b) => b.y + b.height)) + pad);
+      x = x1;
+      y = y1;
+      w = Math.max(1, x2 - x1);
+      h = Math.max(1, y2 - y1);
+    }
+    const z = clamp(Math.min(el.clientWidth / w, el.clientHeight / h) * 0.96, MIN_ZOOM, MAX_ZOOM);
     setZoom(z);
-    setOffset({ x: (el.clientWidth - plan.width * z) / 2, y: (el.clientHeight - plan.height * z) / 2 });
-  }, [plan.width, plan.height]);
+    setOffset({ x: (el.clientWidth - w * z) / 2 - x * z, y: (el.clientHeight - h * z) / 2 - y * z });
+    touched.current = false;
+  }, [plan.width, plan.height, zones]);
 
   useEffect(() => {
     fit();
+  }, [fit]);
+
+  /* Följ rutans storlek: byter man fönsterbredd eller öppnar panelen passas kartan in igen. */
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      if (!touched.current) fit();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [fit]);
 
   /* Fokusläge: zooma mjukt in på den modul man tryckt på. */
@@ -164,6 +223,7 @@ export function FloorPlanCanvas({
   wheelRef.current = (e: WheelEvent) => {
     const el = wrapRef.current;
     if (!el) return;
+    touched.current = true;
     const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
     const next = clamp(zoom * Math.exp(-dy * 0.0015), MIN_ZOOM, MAX_ZOOM);
     const rect = el.getBoundingClientRect();
@@ -177,6 +237,8 @@ export function FloorPlanCanvas({
     const el = wrapRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
+      /* Inte aktiverad: låt sidan skrolla som vanligt. */
+      if (!activeRef.current && !e.ctrlKey) return;
       e.preventDefault();
       wheelRef.current(e);
     };
@@ -188,13 +250,22 @@ export function FloorPlanCanvas({
   const panRef = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const onBackgroundDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
-    panRef.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
+    touched.current = true;
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    if (e.shiftKey || marqueeMode) {
+      const pt = planPoint(e);
+      if (pt) {
+        setMarquee({ x0: pt.x, y0: pt.y, x1: pt.x, y1: pt.y });
+        return;
+      }
+    }
+    panRef.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
   };
 
   const zoomBy = (factor: number) => {
     const el = wrapRef.current;
     if (!el) return;
+    touched.current = true;
     const next = clamp(zoom * factor, MIN_ZOOM, MAX_ZOOM);
     const px = el.clientWidth / 2;
     const py = el.clientHeight / 2;
@@ -204,6 +275,35 @@ export function FloorPlanCanvas({
   };
 
   const snap = (v: number) => (plan.grid_size > 0 ? Math.round(v / plan.grid_size) * plan.grid_size : Math.round(v));
+
+  /* Rutnätet: små rutor (halva planens rutmått) med grövre linje var femte ruta. */
+  
+  const minor = plan.grid_size > 0 ? plan.grid_size / 2 : 10;
+
+  /* Markera ett område med musen och zooma dit — fungerar även inne i en yta. */
+  const [marquee, setMarquee] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const [marqueeMode, setMarqueeMode] = useState(false);
+
+  const zoomToBox = (box: { x: number; y: number; width: number; height: number }) => {
+    const el = wrapRef.current;
+    if (!el || box.width < 4 || box.height < 4) return;
+    touched.current = true;
+    const z = clamp(Math.min(el.clientWidth / box.width, el.clientHeight / box.height) * 0.95, MIN_ZOOM, MAX_ZOOM);
+    setZoom(z);
+    setOffset({
+      x: el.clientWidth / 2 - (box.x + box.width / 2) * z,
+      y: el.clientHeight / 2 - (box.y + box.height / 2) * z,
+    });
+  };
+
+  const marqueeBox = marquee
+    ? {
+        x: Math.min(marquee.x0, marquee.x1),
+        y: Math.min(marquee.y0, marquee.y1),
+        width: Math.abs(marquee.x1 - marquee.x0),
+        height: Math.abs(marquee.y1 - marquee.y0),
+      }
+    : null;
 
   const startDrag = (
     e: React.PointerEvent,
@@ -228,6 +328,11 @@ export function FloorPlanCanvas({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    if (marquee) {
+      const pt = planPoint(e);
+      if (pt) setMarquee((m) => (m ? { ...m, x1: pt.x, y1: pt.y } : m));
+      return;
+    }
     if (vDrag) {
       const dx = (e.clientX - vDrag.startX) / zoom;
       const dy = (e.clientY - vDrag.startY) / zoom;
@@ -265,6 +370,12 @@ export function FloorPlanCanvas({
 
   const endPointer = () => {
     panRef.current = null;
+    if (marquee) {
+      if (marqueeBox) zoomToBox(marqueeBox);
+      setMarquee(null);
+      setMarqueeMode(false);
+      return;
+    }
     if (vDrag) {
       const pts = ghostPts[vDrag.zoneId];
       if (pts && onZonePointsCommit) onZonePointsCommit(vDrag.zoneId, pts);
@@ -313,11 +424,14 @@ export function FloorPlanCanvas({
   const geom = (id: string, base: { x: number; y: number; width: number; height: number }) => ghost[id] ?? base;
 
   return (
-    <div className="relative rounded-md border border-border bg-muted/20 overflow-hidden">
+    <div
+      className={`relative rounded-md border bg-muted/20 overflow-hidden ${active ? "border-primary" : "border-border"}`}
+    >
       <div
         ref={wrapRef}
-        className={`h-[62vh] min-h-[380px] w-full touch-none ${pinMode || placeZoneId ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
+        className={`h-[56vh] min-h-[320px] max-h-[560px] w-full ${active || marquee ? "touch-none" : ""} ${pinMode || placeZoneId || marqueeMode ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
         onClickCapture={pinMode ? placePin : placeZoneId ? placePhoto : undefined}
+        onPointerDownCapture={() => setActive(true)}
         onPointerDown={onBackgroundDown}
         onPointerMove={(e) => {
           onPointerMove(e);
@@ -337,35 +451,11 @@ export function FloorPlanCanvas({
                 y={plan.background_y}
                 width={plan.width * plan.background_scale}
                 height={plan.height * plan.background_scale}
-                opacity={plan.background_opacity}
+                opacity={editMode ? plan.background_opacity : Math.min(plan.background_opacity, 0.22)}
                 preserveAspectRatio="xMidYMid meet"
               />
             )}
 
-            {showGrid && plan.grid_size > 0 && (
-              <g opacity={0.25}>
-                {Array.from({ length: Math.ceil(plan.width / plan.grid_size) + 1 }).map((_, i) => (
-                  <line
-                    key={`v${i}`}
-                    x1={i * plan.grid_size}
-                    y1={0}
-                    x2={i * plan.grid_size}
-                    y2={plan.height}
-                    stroke="hsl(var(--border))"
-                  />
-                ))}
-                {Array.from({ length: Math.ceil(plan.height / plan.grid_size) + 1 }).map((_, i) => (
-                  <line
-                    key={`h${i}`}
-                    x1={0}
-                    y1={i * plan.grid_size}
-                    x2={plan.width}
-                    y2={i * plan.grid_size}
-                    stroke="hsl(var(--border))"
-                  />
-                ))}
-              </g>
-            )}
 
             {/* Lager 2 — väggar, dörrar, öppningar */}
             {walls.map((w) => (
@@ -399,8 +489,8 @@ export function FloorPlanCanvas({
               return (
                 <g
                   key={z.id}
-                  opacity={dim ? 0.45 : 1}
-                  style={{ transition: "opacity 180ms ease" }}
+                  opacity={dim ? 0.55 : 1}
+                  style={{ transition: "opacity 200ms ease" }}
                   onPointerDown={(e) => {
                     if (!editMode) return;
                     e.stopPropagation();
@@ -408,17 +498,24 @@ export function FloorPlanCanvas({
                     setVDrag({ zoneId: z.id, index: -1, base: pts, startX: e.clientX, startY: e.clientY });
                   }}
                 >
+                  {/* Vit botten gör zonfärgen pastellig även över ritningen */}
+                  <polygon
+                    points={toPath(pts)}
+                    fill="hsl(var(--card))"
+                    fillOpacity={0.82}
+                    style={{ pointerEvents: "none" }}
+                  />
                   <polygon
                     points={toPath(pts)}
                     fill={identity}
-                    fillOpacity={isSel ? 0.5 : isHover ? 0.42 : 0.3}
-                    stroke={isSel || isHover ? identity : status}
-                    strokeWidth={isSel ? 4 : isHover ? 3.5 : 2.5}
+                    fillOpacity={isSel ? 0.34 : isHover ? 0.3 : 0.2}
+                    stroke={identity}
+                    strokeWidth={isSel ? 3.5 : isHover ? 3 : 2}
                     strokeLinejoin="round"
                     className="cursor-pointer"
                     style={{
-                      transition: "fill-opacity 180ms ease, stroke-width 180ms ease, filter 180ms ease",
-                      filter: isHover || isSel ? "drop-shadow(0 3px 10px rgba(15,35,50,0.28))" : undefined,
+                      transition: "fill-opacity 200ms ease, stroke-width 200ms ease, filter 200ms ease",
+                      filter: isHover || isSel ? `drop-shadow(0 0 10px ${identity})` : undefined,
                     }}
                     onPointerEnter={(e) =>
                       setHover({
@@ -444,68 +541,75 @@ export function FloorPlanCanvas({
                       setHover(null);
                       onSelect({ kind: "zone", id: z.id });
                     }}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      setHover(null);
+                      onOpenArea?.({ kind: "zone", id: z.id });
+                    }}
                   />
 
-                  {/* Svagt rutnät bara inuti den yta man placerar en bild i */}
-                  {placeZoneId === z.id && plan.grid_size > 0 && (
-                    <g clipPath={`url(#zone-clip-${z.id})`} opacity={0.5} style={{ pointerEvents: "none" }}>
+                  {/* Rutnät i ytans egen färg, bara inuti ytan */}
+                  {(showGrid || placeZoneId === z.id) && minor > 0 && (
+                    <g
+                      clipPath={`url(#zone-clip-${z.id})`}
+                      opacity={placeZoneId === z.id ? 0.85 : 0.5}
+                      style={{ pointerEvents: "none" }}
+                    >
                       <clipPath id={`zone-clip-${z.id}`}>
                         <polygon points={toPath(pts)} />
                       </clipPath>
-                      {Array.from({ length: Math.ceil(b.width / plan.grid_size) + 1 }).map((_, i) => (
+                      {Array.from({ length: Math.ceil(b.width / minor) + 1 }).map((_, i) => (
                         <line
                           key={`pv${i}`}
-                          x1={b.x + i * plan.grid_size}
+                          x1={b.x + i * minor}
                           y1={b.y}
-                          x2={b.x + i * plan.grid_size}
+                          x2={b.x + i * minor}
                           y2={b.y + b.height}
-                          stroke="hsl(var(--foreground))"
-                          strokeWidth={0.5}
+                          stroke={identity}
+                          strokeWidth={0.6}
                         />
                       ))}
-                      {Array.from({ length: Math.ceil(b.height / plan.grid_size) + 1 }).map((_, i) => (
+                      {Array.from({ length: Math.ceil(b.height / minor) + 1 }).map((_, i) => (
                         <line
                           key={`ph${i}`}
                           x1={b.x}
-                          y1={b.y + i * plan.grid_size}
+                          y1={b.y + i * minor}
                           x2={b.x + b.width}
-                          y2={b.y + i * plan.grid_size}
-                          stroke="hsl(var(--foreground))"
-                          strokeWidth={0.5}
+                          y2={b.y + i * minor}
+                          stroke={identity}
+                          strokeWidth={0.6}
                         />
                       ))}
                     </g>
                   )}
 
-                  {/* Nummerbricka, namn och yta i zonens tyngdpunkt */}
-                  <g style={{ pointerEvents: "none" }}>
+                  {/*
+                    Nummerbricka, namn och yta i zonens tyngdpunkt. Texten ritas i
+                    skärmstorlek (delat med zoomen) så brickorna alltid är små och
+                    lika stora, oavsett hur mycket man zoomat.
+                  */}
+                  <g
+                    style={{ pointerEvents: "none" }}
+                    transform={`translate(${c.x} ${c.y}) scale(${1 / zoom})`}
+                  >
                     {num != null && (
                       <>
-                        <circle cx={c.x} cy={c.y - 22} r={13} fill={identity} stroke="hsl(var(--card))" strokeWidth={2} />
-                        <text
-                          x={c.x}
-                          y={c.y - 17}
-                          textAnchor="middle"
-                          fontSize={13}
-                          fontWeight={700}
-                          fill="hsl(var(--foreground))"
-                        >
+                        <circle cx={0} cy={-14} r={9} fill={identity} stroke="hsl(var(--card))" strokeWidth={2} />
+                        <text x={0} y={-10.5} textAnchor="middle" fontSize={10} fontWeight={700} fill="#ffffff">
                           {num}
                         </text>
                       </>
                     )}
-                    <text x={c.x} y={c.y + 4} textAnchor="middle" fontSize={13} fontWeight={600} fill="hsl(var(--foreground))">
+                    <text x={0} y={4} textAnchor="middle" fontSize={11} fontWeight={600} fill="hsl(var(--foreground))">
                       {z.name}
                     </text>
-                    {area.sqm != null && (
-                      <text x={c.x} y={c.y + 20} textAnchor="middle" fontSize={11} fill="hsl(var(--muted-foreground))">
+                    {area.sqm != null && (isHover || isSel) && (
+                      <text x={0} y={17} textAnchor="middle" fontSize={9.5} fill="hsl(var(--muted-foreground))">
                         {area.exact ? "" : "≈ "}
                         {formatSqm(area.sqm)}
                       </text>
                     )}
-                    {p && p.total > 0 && (
-                      <circle cx={c.x + 34} cy={c.y - 22} r={5} fill={STATUS_COLOR[p.status]} />
-                    )}
+                    {p && p.total > 0 && <circle cx={22} cy={-14} r={4} fill={STATUS_COLOR[p.status]} />}
                   </g>
 
                   {/* Polygonpunkter: bara i redigeringsläget för vald zon */}
@@ -531,8 +635,8 @@ export function FloorPlanCanvas({
               );
             })}
 
-            {/* Lager 4 och 5 — inventarier och utrustning */}
-            {objects.map((o) => {
+            {/* Lager 4 och 5 — inventarier, bara i redigeringsläget */}
+            {(showObjects ? objects : []).map((o) => {
               const g = geom(o.id, o);
               const t = types[o.object_type_id];
               const p = objectProgress[o.id];
@@ -611,7 +715,7 @@ export function FloorPlanCanvas({
               );
             })}
             {/* Lager 6 — punkter: anteckningar och uppgifter på exakt plats */}
-            {pins.map((pin) => {
+            {(showPins ? pins : []).map((pin) => {
               const done = pin.status === "done";
               const c = done ? "hsl(var(--muted-foreground))" : pin.kind === "note" ? "hsl(var(--primary))" : "hsl(var(--warning, var(--primary)))";
               const r = 9 / Math.max(zoom, 0.5);
@@ -691,6 +795,21 @@ export function FloorPlanCanvas({
                   </g>
                 );
               })}
+            {/* Lager 8 — området man drar ut för att zooma dit */}
+            {marqueeBox && (
+              <rect
+                x={marqueeBox.x}
+                y={marqueeBox.y}
+                width={marqueeBox.width}
+                height={marqueeBox.height}
+                fill="hsl(var(--primary))"
+                fillOpacity={0.12}
+                stroke="hsl(var(--primary))"
+                strokeWidth={1.5 / Math.max(zoom, 0.4)}
+                strokeDasharray={`${6 / Math.max(zoom, 0.4)} ${4 / Math.max(zoom, 0.4)}`}
+                style={{ pointerEvents: "none" }}
+              />
+            )}
           </g>
         </svg>
       </div>
@@ -710,7 +829,7 @@ export function FloorPlanCanvas({
       {focusBox && (
         <button
           onClick={() => onExitFocus?.()}
-          className="absolute left-2 top-2 rounded-md border border-border bg-card/95 p-1 shadow-md hover:border-primary"
+          className="absolute bottom-3 right-3 rounded-md border border-border bg-card/95 p-1 shadow-md hover:border-primary"
           title="Tillbaka till hela kartan"
         >
           <svg width={116} height={82} viewBox={`0 0 ${plan.width} ${plan.height}`} className="block">
@@ -739,18 +858,33 @@ export function FloorPlanCanvas({
         </button>
       )}
 
-      <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md border border-border bg-card/95 p-1">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomBy(1 / 1.25)}>
-          <Minus className="h-3.5 w-3.5" />
+      {/* Rullhjulet zoomar först när kartan är aktiv — annars skrollar sidan */}
+      {!active && (
+        <div className="pointer-events-none absolute bottom-3 left-3 rounded-full border border-border bg-card/95 px-3 py-1 text-[11px] text-muted-foreground shadow-sm">
+          Klicka på kartan för att zooma
+        </div>
+      )}
+
+      {/* Zoomreglage som i ritningsvyn: plus, minus, procent och passa in */}
+      <div className="absolute left-3 top-3 flex flex-col items-center gap-0.5 rounded-xl border border-border bg-card/95 p-1 shadow-sm">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => zoomBy(1.25)} title="Zooma in">
+          <Plus className="h-4 w-4" />
         </Button>
-        <span className="text-[10px] tabular-nums w-9 text-center text-muted-foreground">
-          {Math.round(zoom * 100)}%
-        </span>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoomBy(1.25)}>
-          <Plus className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => zoomBy(1 / 1.25)} title="Zooma ut">
+          <Minus className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={fit}>
-          <Maximize2 className="h-3.5 w-3.5" />
+        <span className="w-9 text-center text-[10px] tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
+        <Button
+          variant={marqueeMode ? "default" : "ghost"}
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => setMarqueeMode((v) => !v)}
+          title="Markera ett område att zooma till (eller håll Shift och dra)"
+        >
+          <SquareDashed className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fit} title="Passa in hela ritningen">
+          <Maximize2 className="h-4 w-4" />
         </Button>
       </div>
     </div>

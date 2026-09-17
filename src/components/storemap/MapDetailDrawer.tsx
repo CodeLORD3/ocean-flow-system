@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +7,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { EmptyState } from "@/components/EmptyState";
-import { Camera, CheckCircle2, Info, Link2, Thermometer } from "lucide-react";
+import { ArrowRight, Camera, CheckCircle2, Image as ImageIcon, Info, Link2, MoreVertical, Thermometer, Trash2, X } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { bbox, zonePoints } from "@/lib/mapGeometry";
 import { toast } from "@/hooks/use-toast";
 import { MapComposer } from "@/components/storemap/MapComposer";
@@ -15,7 +21,13 @@ import { StatusRing } from "@/components/storemap/StatusRing";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
 import { dueText, progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { useToggleChecklistItem } from "@/hooks/useChecklist";
-import { useEntityImages, useUploadEntityImage } from "@/hooks/useEntityImages";
+import {
+  useDeleteEntityImage,
+  useEntityImages,
+  useSetImagePosition,
+  useUpdateEntityImage,
+  useUploadEntityImage,
+} from "@/hooks/useEntityImages";
 import { useActivityLogs } from "@/hooks/useActivityLog";
 import { useDeviations } from "@/hooks/useFoodSafety";
 import { useStaff } from "@/hooks/useStaff";
@@ -23,6 +35,18 @@ import { useLinkTaskToMap, type MapObject, type MapObjectType, type MapTask, typ
 
 const time = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }) : "";
+
+/** Idag, Igår eller datum — samma språk som resten av systemet. */
+const dayText = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const today = new Date();
+  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  const yesterday = new Date(today.getTime() - 86400000);
+  if (same(d, today)) return "Idag";
+  if (same(d, yesterday)) return "Igår";
+  return d.toLocaleDateString("sv-SE");
+};
 
 function ActorAvatar({ name, url }: { name: string; url?: string | null }) {
   const initials = name
@@ -52,6 +76,8 @@ export function MapDetailDrawer({
   canManage,
   zoneNumber,
   areaLabel,
+  inline = false,
+  onOpenPage,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -67,6 +93,10 @@ export function MapDetailDrawer({
   zoneNumber?: number;
   /** Ytans storlek i kvadratmeter, färdigformaterad. */
   areaLabel?: string | null;
+  /** Panelläge: visas som egen kolumn till höger istället för som överlägg. */
+  inline?: boolean;
+  /** Öppnar områdets egna sida under kartan. */
+  onOpenPage?: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
   const entityId = object?.id ?? zone?.id ?? "";
@@ -75,11 +105,14 @@ export function MapDetailDrawer({
   const toggle = useToggleChecklistItem();
   const link = useLinkTaskToMap();
   const upload = useUploadEntityImage();
+  const deleteImage = useDeleteEntityImage();
+  const updateImage = useUpdateEntityImage();
+  const setPosition = useSetImagePosition();
   const { data: images = [] } = useEntityImages(entityType, entityId || null);
   const { data: logs = [] } = useActivityLogs({ storeId, limit: 300 });
   const { data: deviations = [] } = useDeviations(false);
   const { data: staff = [] } = useStaff(storeId);
-  const [tab, setTab] = useState("images");
+  const [tab, setTab] = useState("summary");
 
   const openIssues = deviations.filter(
     (d) => (d as { source?: string; source_id?: string }).source === entityType && (d as { source_id?: string }).source_id === entityId,
@@ -146,10 +179,30 @@ export function MapDetailDrawer({
     }
   };
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader className="space-y-3">
+  /** Högerpil på tangentbordet flyttar fokus till Gå vidare och tänder knappen. */
+  const goRef = useRef<HTMLButtonElement | null>(null);
+  const [goLit, setGoLit] = useState(false);
+  useEffect(() => {
+    if (!onOpenPage) return;
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing = !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (typing) return;
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setGoLit(true);
+        goRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onOpenPage]);
+  useEffect(() => {
+    setGoLit(false);
+  }, [entityId]);
+
+  const head = (
+    <div className="space-y-3">
           <div className="flex items-center gap-3">
             {zone && (
               <span
@@ -160,12 +213,34 @@ export function MapDetailDrawer({
               </span>
             )}
             <div className="min-w-0">
-              <SheetTitle className="flex items-center gap-2 text-xl leading-tight">
+              <h2 className="flex items-center gap-2 text-xl font-semibold leading-tight">
                 {object && <MapObjectIcon icon={objectType?.icon} className="h-4 w-4" />}
                 {label}
-              </SheetTitle>
+              </h2>
               {areaLabel && <p className="text-sm text-muted-foreground tabular-nums">{areaLabel}</p>}
             </div>
+            {onOpenPage && (
+              <Button
+                ref={goRef}
+                size="sm"
+                autoFocus
+                title="Tryck högerpil och sedan Enter för att gå vidare"
+                className={`ml-auto h-8 shrink-0 gap-1 text-xs text-white ring-offset-2 transition hover:opacity-90 focus-visible:ring-2 ${
+                  goLit ? "scale-105 animate-pulse ring-2 ring-offset-2" : ""
+                }`}
+                style={
+                  zone?.color
+                    ? {
+                        background: zone.color,
+                        boxShadow: goLit ? `0 0 0 4px ${zone.color}55` : undefined,
+                      }
+                    : undefined
+                }
+                onClick={onOpenPage}
+              >
+                Gå vidare <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <StatusRing percent={progress.percent} status={progress.status} size={40} label={`${progress.percent}%`} />
@@ -184,16 +259,73 @@ export function MapDetailDrawer({
               ))}
             </div>
           </div>
-        </SheetHeader>
+    </div>
+  );
 
+
+  const body = (
+    <>
         <Tabs value={tab} onValueChange={setTab} className="mt-4">
           <TabsList className="h-9 w-full justify-start gap-1 overflow-x-auto rounded-lg bg-muted p-1">
+            <TabsTrigger value="summary" className="h-7 rounded-md px-3 text-xs">Översikt</TabsTrigger>
             <TabsTrigger value="images" className="h-7 rounded-md px-3 text-xs">Bilder</TabsTrigger>
             <TabsTrigger value="tasks" className="h-7 rounded-md px-3 text-xs">Uppgifter</TabsTrigger>
             <TabsTrigger value="overview" className="h-7 rounded-md px-3 text-xs">Info</TabsTrigger>
             <TabsTrigger value="activity" className="h-7 rounded-md px-3 text-xs">Historik</TabsTrigger>
             <TabsTrigger value="standard" className="h-7 rounded-md px-3 text-xs">Standard</TabsTrigger>
           </TabsList>
+
+          {/* Snabb överblick: statistik, senaste bilderna och det som hänt */}
+          <TabsContent value="summary" className="space-y-3 pt-3">
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                [`${progress.done}/${progress.total}`, "Uppgifter klara"],
+                [String(latest.length), "Bilder"],
+                [String(openIssues.length), "Öppna anmärkningar"],
+                [areaLabel ?? "—", "Yta"],
+              ].map(([v, t]) => (
+                <div key={t} className="rounded-lg border border-border p-2">
+                  <p className="text-[10px] text-muted-foreground">{t}</p>
+                  <p className="text-sm font-semibold tabular-nums">{v}</p>
+                </div>
+              ))}
+            </div>
+
+            {latest.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {latest.slice(0, 3).map((i) => (
+                  <img key={i.id} src={i.url} alt={i.caption ?? label} className="h-16 w-full rounded-md object-cover" />
+                ))}
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold text-muted-foreground">Senast gjort här</p>
+              {activity.length === 0 && <p className="text-[11px] text-muted-foreground">Inget har hänt ännu.</p>}
+              {activity.slice(0, 6).map((a, i) => (
+                <div key={i} className="flex items-start justify-between gap-2 text-[11px]">
+                  <span className="min-w-0 truncate">
+                    <span className="font-medium">{a.who}</span> {a.text}
+                  </span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
+                    {dayText(a.at)} {time(a.at)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {tasks.some((t) => !t.done) && (
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold text-muted-foreground">Kvar att göra</p>
+                {tasks
+                  .filter((t) => !t.done)
+                  .slice(0, 5)
+                  .map((t) => (
+                    <p key={t.id} className="truncate text-[11px]">• {t.task}</p>
+                  ))}
+              </div>
+            )}
+          </TabsContent>
 
           <TabsContent value="overview" className="space-y-3 pt-3">
             {object && objectType && (
@@ -305,27 +437,83 @@ export function MapDetailDrawer({
               <p className="text-sm font-semibold">
                 Bilder på denna yta {latest.length > 0 && <span className="text-muted-foreground">({latest.length})</span>}
               </p>
-              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted">
-                <Camera className="h-3.5 w-3.5" /> Lägg till bild
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="hidden"
-                  onChange={(e) => e.target.files?.[0] && addImage(e.target.files[0], "completion")}
-                />
-              </label>
+              <div className="flex items-center gap-1.5">
+                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted">
+                  <Camera className="h-3.5 w-3.5" /> Ta foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    multiple
+                    className="hidden"
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files ?? []);
+                      e.currentTarget.value = "";
+                      for (const f of files) await addImage(f, "completion");
+                    }}
+                  />
+                </label>
+                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted">
+                  <ImageIcon className="h-3.5 w-3.5" /> Från bibliotek
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files ?? []);
+                      e.currentTarget.value = "";
+                      for (const f of files) await addImage(f, "completion");
+                    }}
+                  />
+                </label>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               {latest.map((i) => (
                 <div key={i.id} className="overflow-hidden rounded-xl border border-border">
                   <img src={i.url} alt={i.caption ?? label} className="h-28 w-full object-cover" />
-                  <div className="px-2 py-1.5">
-                    <p className="truncate text-xs font-medium">{i.caption ?? label}</p>
-                    <p className="truncate text-[10px] text-muted-foreground">
-                      {time(i.created_at)} · {i.uploaded_by_name ?? "—"}
-                    </p>
+                  <div className="flex items-start gap-1 px-2 py-1.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium">{i.caption ?? label}</p>
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        {dayText(i.created_at)} {time(i.created_at)} · {i.uploaded_by_name ?? "—"}
+                      </p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="rounded-md p-1 text-muted-foreground hover:bg-muted" aria-label="Fler val">
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="text-xs">
+                        {i.norm_x != null && (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setPosition.mutate({
+                                id: i.id,
+                                entityType,
+                                entityId,
+                                floorPlanId: i.floor_plan_id ?? "",
+                                norm: null,
+                              })
+                            }
+                          >
+                            Ta bort platsen i kartan
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => updateImage.mutate({ id: i.id, caption: label })}>
+                          Döp om till ytans namn
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => deleteImage.mutate(i.id, { onSuccess: () => toast({ title: "Bilden är borttagen" }) })}
+                        >
+                          Ta bort bilden
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))}
@@ -367,6 +555,19 @@ export function MapDetailDrawer({
                   </svg>
                 </div>
               </div>
+            )}
+
+            {latest.length > 0 && canManage && (
+              <Button
+                variant="outline"
+                className="w-full gap-2 border-destructive/50 text-destructive hover:bg-destructive/5"
+                onClick={() => {
+                  latest.forEach((i) => deleteImage.mutate(i.id));
+                  toast({ title: `${latest.length} bilder togs bort från ${label}` });
+                }}
+              >
+                <Trash2 className="h-4 w-4" /> Ta bort alla bilder från denna yta
+              </Button>
             )}
           </TabsContent>
 
@@ -413,23 +614,49 @@ export function MapDetailDrawer({
           </TabsContent>
         </Tabs>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-[11px]"
-            onClick={() => {
-              const next = tasks.find((t) => !t.done);
-              if (!next) return toast({ title: "Allt är redan klart här" });
-              toggle.mutate({ id: next.id, done: true });
-            }}
-          >
-            ✓ Åtgärd klar
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 text-[11px]" onClick={() => setTab("overview")}>
-            Kommentar
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-[11px]"
+          onClick={() => {
+            const next = tasks.find((t) => !t.done);
+            if (!next) return toast({ title: "Allt är redan klart här" });
+            toggle.mutate({ id: next.id, done: true });
+          }}
+        >
+          ✓ Åtgärd klar
+        </Button>
+        <Button variant="outline" size="sm" className="h-8 text-[11px]" onClick={() => setTab("overview")}>
+          Kommentar
+        </Button>
+      </div>
+    </>
+  );
+
+  /* Panelläge: ligger som egen kolumn till höger, kartan syns hela tiden. */
+  if (inline) {
+    return (
+      <div className="max-h-[78vh] overflow-y-auto rounded-xl border border-border bg-card p-4">
+        <div className="flex justify-end">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onOpenChange(false)} title="Stäng">
+            <X className="h-4 w-4" />
           </Button>
         </div>
+        {head}
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-sm overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="sr-only">{label}</SheetTitle>
+          {head}
+        </SheetHeader>
+        {body}
       </SheetContent>
     </Sheet>
   );

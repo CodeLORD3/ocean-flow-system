@@ -1,12 +1,14 @@
 import { useState, useCallback, useMemo, useRef } from "react";
 import { prepareUpload, COMPRESS_PHOTO, COMPRESS_AVATAR } from "@/lib/imageCompress";
 import { ALLERGENS } from "@/lib/catering";
+import { useTabs } from "@/contexts/TabsContext";
 
 import {
   Plus,
   Search,
   Edit,
   Trash2,
+  ChefHat,
   Package,
   Tag,
   Printer,
@@ -228,6 +230,7 @@ export default function Products() {
   const addCategory = useAddCategory();
   const addSubproduct = useAddSubproduct();
   const updateProduct = useUpdateProduct();
+  const { switchTab } = useTabs();
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   /** Detaljläge: visar sekundära kolumner (HS, producent, hållbarhet, EAN, marginal, rek. butikspris). */
@@ -1086,6 +1089,15 @@ export default function Products() {
                 <Layers className="h-3.5 w-3.5" />
               </Button>
             )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              title="Så gör vi produkten — produktionsrecept"
+              onClick={() => switchTab(`/produktion-recept?product=${p.id}`)}
+            >
+              <ChefHat className="h-3.5 w-3.5" />
+            </Button>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(p)}>
               <Edit className="h-3.5 w-3.5" />
             </Button>

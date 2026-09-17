@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useTabs } from "@/contexts/TabsContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,11 +17,31 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "@/hooks/use-toast";
-import { Copy, History, Map as MapIcon, MapPin as PinIcon, Pencil, RotateCw, Save, Trash2, Upload } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarDays,
+  Copy,
+  History,
+  ImageIcon,
+  Map as MapIcon,
+  MapPin as PinIcon,
+  Pencil,
+  RotateCw,
+  Save,
+  Trash2,
+  Upload,
+  ArrowLeft,
+} from "lucide-react";
+import { todayIso } from "@/hooks/useChecklist";
 import { FloorPlanCanvas, type Selection } from "@/components/storemap/FloorPlanCanvas";
 import { MapDetailDrawer } from "@/components/storemap/MapDetailDrawer";
+import { ZoneAreaPage } from "@/components/storemap/ZoneAreaPage";
 import { ObjectLibrary } from "@/components/storemap/ObjectLibrary";
 import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog";
+import { MapListViews } from "@/components/storemap/MapListViews";
+import { OverviewStatsBar } from "@/components/storemap/OverviewStatsBar";
+import { StorePhotoStrip } from "@/components/storemap/StorePhotoStrip";
+import { OverviewQuickBar } from "@/components/storemap/OverviewQuickBar";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
@@ -44,6 +66,7 @@ import {
   useMapTasks,
   useMapWalls,
   useMapZones,
+  useStoresWithFloorPlan,
   usePublishFloorPlan,
   useSaveFloorPlan,
   useSaveMapObject,
@@ -59,7 +82,10 @@ export default function StoreMap() {
   const canManage = (staff?.portal_access ?? []).includes("admin") || !!staff?.is_platform_admin;
 
   const [pickedStore, setPickedStore] = useState<string | null>(null);
-  const storeId = site === "shop" ? activeStoreId : (pickedStore ?? stores[0]?.id ?? null);
+  const { data: planStores = [] } = useStoresWithFloorPlan();
+  /** Utan eget val visas den första butiken som verkligen har en ritning. */
+  const defaultStore = stores.find((s) => planStores.includes(s.id))?.id ?? stores[0]?.id ?? null;
+  const storeId = site === "shop" ? activeStoreId : (pickedStore ?? defaultStore);
 
   const { data: plans = [], isLoading: plansLoading } = useFloorPlans(storeId);
   const [planId, setPlanId] = useState<string | null>(null);
@@ -69,7 +95,9 @@ export default function StoreMap() {
   const { data: objects = [] } = useMapObjects(plan?.id ?? null);
   const { data: walls = [] } = useMapWalls(plan?.id ?? null);
   const { data: types = [] } = useMapObjectTypes();
-  const { data: tasks = [] } = useMapTasks(storeId);
+  /** Vald dag — styr uppgifterna och historiken i alla vyer. */
+  const [day, setDay] = useState(todayIso());
+  const { data: tasks = [] } = useMapTasks(storeId, day);
   const { data: deviations = [] } = useDeviations(false);
   const { data: versions = [] } = useFloorPlanVersions(plan?.id ?? null);
   const { data: pins = [] } = useMapPins(plan?.id ?? null);
@@ -86,18 +114,28 @@ export default function StoreMap() {
   const deletePin = useDeleteMapPin();
 
   const [mode, setMode] = useState<"drift" | "redigera">("drift");
-  const [layers, setLayers] = useState({ background: true, grid: false, tasks: true, issues: true, photos: true });
+  const [view, setView] = useState("karta");
+  const [layers, setLayers] = useState({ background: true, grid: true, tasks: true, issues: true, photos: true });
   /** Ytan man just nu placerar en bild i, tillsammans med den valda filen. */
   const [placing, setPlacing] = useState<{ zoneId: string; file: File } | null>(null);
   const [selected, setSelected] = useState<Selection>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pinMode, setPinMode] = useState(false);
   const [focus, setFocus] = useState<Selection>(null);
+  /** Områdets egna sida ligger som en egen flik i butikskartan. */
+  const [areaPage, setAreaPage] = useState<Selection>(null);
   const [pinDialog, setPinDialog] = useState<{
     point: { x: number; y: number } | null;
     zoneId: string | null;
     existing: MapPin | null;
   } | null>(null);
+
+  /** Kom man hit från en uppgift? Då markeras ytan och man kan gå direkt tillbaka. */
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { switchTab } = useTabs();
+  const fromZoneId = searchParams.get("zone");
+  const fromTaskId = searchParams.get("fromTask");
+  const fromTaskName = searchParams.get("taskName");
 
   const pxPerMeter = useMemo(() => (plan ? derivePxPerMeter(plan, zones, objects) : null), [plan, zones, objects]);
   const totalSqm = useMemo(
@@ -144,11 +182,55 @@ export default function StoreMap() {
   const selectedObject = selected?.kind === "object" ? objects.find((o) => o.id === selected.id) ?? null : null;
   const unlinkedTasks = tasks.filter((t) => !t.zone_id && !t.map_object_id);
 
+  /** Öppnar och markerar ytan man kom till från en uppgift. */
+  useEffect(() => {
+    if (!fromZoneId || !zones.some((z) => z.id === fromZoneId)) return;
+    setView("karta");
+    setSelected({ kind: "zone", id: fromZoneId });
+    setFocus({ kind: "zone", id: fromZoneId });
+    setDrawerOpen(true);
+  }, [fromZoneId, zones]);
+
+  const fromZone = fromZoneId ? zones.find((z) => z.id === fromZoneId) ?? null : null;
+
+  const backToTask = () => {
+    setSearchParams({}, { replace: true });
+    switchTab(fromTaskId ? `/uppgifter?markera=${fromTaskId}` : "/uppgifter");
+  };
+
   /** Nummerbricka per yta — samma nummer i kartan som i förteckningen under. */
   const zoneNumbers = useMemo(
     () => Object.fromEntries(zones.map((z, i) => [z.id, i + 1])) as Record<string, number>,
     [zones],
   );
+
+  /** Fliknamn för områdets egna sida. */
+  const areaPageLabel = (() => {
+    if (!areaPage) return "";
+    if (areaPage.kind === "zone") {
+      const z = zones.find((x) => x.id === areaPage.id);
+      return z ? `${zoneNumbers[z.id] ?? ""} ${z.name}`.trim() : "Område";
+    }
+    const o = objects.find((x) => x.id === areaPage.id);
+    return o?.name ?? "Område";
+  })();
+
+  /** Färgen på områdesfliken följer ytans egen färg. */
+  const areaPageColor = (() => {
+    if (!areaPage) return null;
+    if (areaPage.kind === "zone") return zones.find((x) => x.id === areaPage.id)?.color ?? null;
+    const o = objects.find((x) => x.id === areaPage.id);
+    return (o?.zone_id ? zones.find((z) => z.id === o.zone_id)?.color : null) ?? null;
+  })();
+
+  /** Öppnar valt områdes egna sida som flik och stänger sidopanelen. */
+  const openAreaPage = (target?: Selection) => {
+    const next = target ?? selected;
+    if (!next) return;
+    setAreaPage(next);
+    setSelected(null);
+    setView("omrade");
+  };
 
   /**
    * Bildmarkörer: riktiga uppladdade bilder som fått en exakt plats i en yta.
@@ -200,12 +282,35 @@ export default function StoreMap() {
 
   return (
     <div className="space-y-4">
+      {/* Stora knappar och dagens stapel högst upp */}
+      <OverviewQuickBar tasks={tasks} />
+
+      {/* Viktig statistik högst upp — vilka som arbetar, stämpling, checklistor, avvikelser */}
+      <OverviewStatsBar
+        storeId={storeId}
+        openTasks={tasks.filter((t) => !t.done).length}
+        openDeviations={Object.values(issuesByEntity).reduce((a, b) => a + b, 0)}
+        totalSqm={totalSqm}
+      />
+
+      {/* Bilder från butiken — senaste bilderna som en rad man kan bläddra i */}
+      <StorePhotoStrip
+        storeId={storeId}
+        planId={plan?.id ?? null}
+        planImages={planImages}
+        zones={zones}
+        objects={objects}
+        onOpenZone={(id) => { setAreaPage({ kind: "zone", id }); setView("omrade"); }}
+      />
+
+
+
       {/* Rubrikrad — stor titel, butik under, läge till höger */}
       <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
             <MapIcon className="h-5 w-5 text-primary" />
-            Butikskarta
+            Översikt
           </h1>
           {site !== "shop" && stores.length > 0 ? (
             <Select value={storeId} onValueChange={(v) => { setPickedStore(v); setPlanId(null); }}>
@@ -238,20 +343,67 @@ export default function StoreMap() {
             </SelectContent>
           </Select>
         )}
-        <div className="ml-auto flex items-center gap-4">
+        {/* Vyväljare — samma fem vyer för hela butiken */}
+        <Tabs value={view} onValueChange={setView}>
+          <TabsList className="h-10 rounded-xl bg-muted p-1">
+            {(
+              [
+                ["karta", "Karta"],
+                ["uppgifter", "Uppgifter"],
+                ["bilder", "Bilder"],
+                ["avvikelser", "Avvikelser"],
+                ["historik", "Historik"],
+              ] as const
+            ).map(([key, label]) => (
+              <TabsTrigger key={key} value={key} className="h-8 rounded-lg px-4 text-xs">
+                {label}
+              </TabsTrigger>
+            ))}
+            {areaPage && (
+              <TabsTrigger
+                value="omrade"
+                className="h-8 max-w-[180px] gap-2 rounded-lg px-4 text-xs data-[state=active]:text-white"
+                style={
+                  areaPageColor && view === "omrade"
+                    ? { background: areaPageColor, boxShadow: `0 0 0 2px ${areaPageColor}33` }
+                    : undefined
+                }
+              >
+                {areaPageColor && (
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ background: view === "omrade" ? "#fff" : areaPageColor }}
+                  />
+                )}
+                <span className="truncate">{areaPageLabel}</span>
+              </TabsTrigger>
+            )}
+          </TabsList>
+        </Tabs>
+        <div className="ml-auto flex items-center gap-3">
+          {/* Dagväljare — styr vilka uppgifter och vilken historik som visas */}
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5">
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <input
+              type="date"
+              value={day}
+              onChange={(e) => setDay(e.target.value || todayIso())}
+              className="bg-transparent text-xs outline-none tabular-nums"
+            />
+          </div>
           <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
             <StatusRing percent={dayProgress.percent} status={dayProgress.status} label={`${dayProgress.percent}%`} />
             <div className="leading-tight">
               <p className="text-[11px] font-medium">{STATUS_LABEL[dayProgress.status]}</p>
               <p className="text-[10px] text-muted-foreground tabular-nums">
-                {dayProgress.done}/{dayProgress.total} uppgifter idag
+                {dayProgress.done}/{dayProgress.total} uppgifter
               </p>
             </div>
           </div>
           {canManage && (
             <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
               <TabsList className="h-9 rounded-full bg-muted p-1">
-                <TabsTrigger value="drift" className="h-7 rounded-full px-4 text-xs">Karta</TabsTrigger>
+                <TabsTrigger value="drift" className="h-7 rounded-full px-4 text-xs">Visa</TabsTrigger>
                 <TabsTrigger value="redigera" className="h-7 gap-1 rounded-full px-4 text-xs">
                   <Pencil className="h-3 w-3" /> Redigera
                 </TabsTrigger>
@@ -261,6 +413,30 @@ export default function StoreMap() {
         </div>
       </div>
 
+
+      {fromZone && (
+        <div
+          className="flex flex-wrap items-center gap-3 rounded-xl border-2 px-4 py-3"
+          style={{ borderColor: fromZone.color, background: `${fromZone.color}14` }}
+        >
+          <span
+            className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white"
+            style={{ background: fromZone.color }}
+          >
+            {zoneNumbers[fromZone.id] ?? ""}
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">{fromZone.name}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {fromTaskName ? `Yta för: ${fromTaskName}` : "Ytan är markerad på kartan"}
+            </p>
+          </div>
+          <Button size="lg" className="ml-auto gap-2" onClick={backToTask}>
+            <ArrowLeft className="h-4 w-4" /> Tillbaka till uppgiften
+          </Button>
+        </div>
+      )}
+
       {plansLoading ? (
         <p className="text-xs text-muted-foreground">Hämtar ritning…</p>
       ) : !plan ? (
@@ -268,19 +444,65 @@ export default function StoreMap() {
           title="Ingen ritning ännu"
           description="En administratör lägger upp butikens planritning innan kartan kan användas."
         />
+      ) : areaPage && view === "omrade" ? (
+        (() => {
+          const pageZone = areaPage.kind === "zone" ? zones.find((z) => z.id === areaPage.id) ?? null : null;
+          const pageObject = areaPage.kind === "object" ? objects.find((o) => o.id === areaPage.id) ?? null : null;
+          const target = pageObject ?? pageZone;
+          const area = target ? areaOf(target, pxPerMeter) : null;
+          return (
+            <ZoneAreaPage
+              storeId={storeId}
+              portal={site}
+              zone={pageZone}
+              object={pageObject}
+              objectType={pageObject ? typeById[pageObject.object_type_id] : null}
+              tasks={pageObject ? tasksForObject(pageObject.id) : pageZone ? tasksForZone(pageZone.id) : []}
+              canManage={canManage}
+              zoneNumber={pageZone ? zoneNumbers[pageZone.id] : undefined}
+              areaLabel={area?.sqm != null ? `${area.exact ? "" : "≈ "}${formatSqm(area.sqm)}` : null}
+              onBack={() => {
+                setAreaPage(null);
+                setView("karta");
+              }}
+            />
+          );
+        })()
+      ) : view !== "karta" ? (
+        <MapListViews
+          view={view}
+          zones={zones}
+          objects={objects}
+          tasks={tasks}
+          deviations={deviations as never}
+          images={planImages}
+          versions={versions as never}
+          zoneNumbers={zoneNumbers}
+          onOpenZone={(id) => {
+            setSelected({ kind: "zone", id });
+            setView("karta");
+            setFocus({ kind: "zone", id });
+            setDrawerOpen(true);
+          }}
+        />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+        <div className={`grid gap-4 ${editMode ? "lg:grid-cols-[1fr_340px]" : ""}`}>
           <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
-            {/* Lagerväljare */}
+            {/* Kartans egen rad: bara det man behöver, resten ligger i redigeringsläget */}
             <div className="flex flex-wrap items-center gap-3 border-b border-border px-3 py-2">
               {(
-                [
-                  ["background", "Ritning"],
-                  ["grid", "Rutnät"],
-                  ["tasks", "Uppgifter"],
-                  ["issues", "Anmärkningar"],
-                  ["photos", "Bilder"],
-                ] as const
+                editMode
+                  ? ([
+                      ["background", "Ritning"],
+                      ["grid", "Rutnät"],
+                      ["tasks", "Uppgifter"],
+                      ["issues", "Anmärkningar"],
+                      ["photos", "Bilder"],
+                    ] as const)
+                  : ([
+                      ["grid", "Rutnät"],
+                      ["photos", "Bilder"],
+                    ] as const)
               ).map(([key, label]) => (
                 <div key={key} className="flex items-center gap-1.5">
                   <Switch
@@ -294,22 +516,25 @@ export default function StoreMap() {
                   </Label>
                 </div>
               ))}
-              <Button
-                size="sm"
-                variant={pinMode ? "default" : "outline"}
-                className="ml-auto h-7 text-[11px] gap-1"
-                onClick={() => setPinMode((v) => !v)}
-              >
-                <PinIcon className="h-3 w-3" />
-                {pinMode ? "Tryck på kartan…" : "Ny punkt"}
-              </Button>
-              <span className="text-[10px] text-muted-foreground tabular-nums">
+              {canManage && (
+                <Button
+                  size="sm"
+                  variant={pinMode ? "default" : "outline"}
+                  className="ml-auto h-7 text-[11px] gap-1"
+                  onClick={() => setPinMode((v) => !v)}
+                >
+                  <PinIcon className="h-3 w-3" />
+                  {pinMode ? "Tryck på kartan…" : "Ny punkt"}
+                </Button>
+              )}
+              <span className={`text-[10px] text-muted-foreground tabular-nums ${canManage ? "" : "ml-auto"}`}>
                 {pxPerMeter ? `Yta ${formatSqm(totalSqm)}` : "Skala saknas — fyll i kvm på en zon"}
               </span>
               {plan.status === "draft" && (
                 <Badge variant="outline" className="text-[10px]">Utkast — ej publicerad</Badge>
               )}
             </div>
+
 
             <FloorPlanCanvas
               plan={plan}
@@ -320,6 +545,7 @@ export default function StoreMap() {
               zoneProgress={zoneProgress}
               objectProgress={objectProgress}
               selected={selected}
+              onOpenArea={(s) => openAreaPage(s)}
               onSelect={(s) => {
                 setSelected(s);
                 if (s && !editMode) {
@@ -335,6 +561,8 @@ export default function StoreMap() {
               editMode={editMode}
               showBackground={layers.background}
               showGrid={layers.grid || editMode}
+              showObjects={editMode}
+              showPins={editMode || pinMode}
               zoneNumbers={zoneNumbers}
               photoSpots={photoSpots}
               showPhotos={layers.photos}
@@ -448,7 +676,8 @@ export default function StoreMap() {
             </div>
           </div>
 
-          {/* Höger panel */}
+          {/* Höger panel: bara i redigeringsläget, annars ligger kartan i full bredd */}
+          {editMode && (
           <div className="space-y-3">
             {editMode ? (
               <>
@@ -669,96 +898,164 @@ export default function StoreMap() {
                   </CardContent>
                 </Card>
               </>
+            ) : selectedZone || selectedObject ? (
+              /* Vald yta ligger kvar bredvid kartan — kartan syns hela tiden */
+              <MapDetailDrawer
+                inline
+                open
+                onOpenChange={(v) => {
+                  if (!v) {
+                    setSelected(null);
+                    setFocus(null);
+                    setDrawerOpen(false);
+                  }
+                }}
+                storeId={storeId}
+                portal={site}
+                zone={selectedZone}
+                object={selectedObject}
+                objectType={selectedObject ? typeById[selectedObject.object_type_id] : null}
+                tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
+                unlinkedTasks={unlinkedTasks}
+                canManage={canManage}
+                onOpenPage={() => openAreaPage()}
+          zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
+                areaLabel={
+                  selectedZone
+                    ? areaOf(selectedZone, pxPerMeter).sqm != null
+                      ? `${areaOf(selectedZone, pxPerMeter).exact ? "" : "≈ "}${formatSqm(areaOf(selectedZone, pxPerMeter).sqm)}`
+                      : null
+                    : selectedObject && areaOf(selectedObject, pxPerMeter).sqm != null
+                      ? formatSqm(areaOf(selectedObject, pxPerMeter).sqm)
+                      : null
+                }
+              />
             ) : (
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-xs">Behöver åtgärd</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1">
-                  {tasks.filter((t) => !t.done).length === 0 ? (
-                    <p className="text-[11px] text-muted-foreground">Allt är klart just nu.</p>
-                  ) : (
-                    tasks
-                      .filter((t) => !t.done)
-                      .slice(0, 12)
-                      .map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => {
-                            const target: Selection = t.map_object_id
-                              ? { kind: "object", id: t.map_object_id }
-                              : t.zone_id
-                                ? { kind: "zone", id: t.zone_id }
-                                : null;
-                            setSelected(target);
-                            setFocus(target);
-                            setDrawerOpen(true);
-                          }}
-                          className="w-full text-left text-[11px] rounded-md border border-border px-2 py-1 hover:bg-muted"
-                        >
-                          <span className="truncate block">{t.task}</span>
-                          <span className="text-[10px] text-muted-foreground">{t.section}</span>
-                        </button>
-                      ))
-                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    Tryck på en yta i kartan för att se bilder, uppgifter och information.
+                  </p>
+                  {tasks
+                    .filter((t) => !t.done)
+                    .slice(0, 12)
+                    .map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => {
+                          const target: Selection = t.map_object_id
+                            ? { kind: "object", id: t.map_object_id }
+                            : t.zone_id
+                              ? { kind: "zone", id: t.zone_id }
+                              : null;
+                          setSelected(target);
+                          setFocus(target);
+                          setDrawerOpen(true);
+                        }}
+                        className="w-full text-left text-[11px] rounded-md border border-border px-2 py-1 hover:bg-muted"
+                      >
+                        <span className="truncate block">{t.task}</span>
+                        <span className="text-[10px] text-muted-foreground">{t.section}</span>
+                      </button>
+                    ))}
                 </CardContent>
               </Card>
             )}
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs flex items-center gap-1">
-                  <PinIcon className="h-3.5 w-3.5" /> Punkter på kartan
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-1.5">
-                {pins.length === 0 && (
-                  <p className="text-[11px] text-muted-foreground">
-                    Tryck på “Ny punkt” och sedan på platsen i kartan.
-                  </p>
-                )}
-                {pins.slice(0, 20).map((pin) => (
-                  <div key={pin.id} className="rounded-md border border-border p-2 space-y-1">
-                    <div className="flex items-start gap-2">
-                      <button
-                        className="text-left min-w-0 flex-1"
-                        onClick={() => setPinDialog({ point: null, zoneId: pin.zone_id, existing: pin })}
-                      >
-                        <p className={`text-[11px] font-medium truncate ${pin.status === "done" ? "line-through text-muted-foreground" : ""}`}>
-                          {pin.title}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground truncate">
-                          {PIN_KIND_LABEL[pin.kind] ?? pin.kind}
-                          {pin.assigned_name ? ` · ${pin.assigned_name}` : " · ingen ansvarig"}
-                          {pin.due_date ? ` · till ${pin.due_date}` : ""}
-                        </p>
-                      </button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-1 text-[10px]"
-                        onClick={() => completePin.mutate({ id: pin.id, done: pin.status !== "done" })}
-                      >
-                        {pin.status === "done" ? "Öppna" : "Klar"}
-                      </Button>
-                      {canManage && (
+            {(editMode || pins.length > 0) && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs flex items-center gap-1">
+                    <PinIcon className="h-3.5 w-3.5" /> Punkter på kartan
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-1.5">
+                  {pins.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Tryck på “Ny punkt” och sedan på platsen i kartan.
+                    </p>
+                  )}
+                  {pins.slice(0, 20).map((pin) => (
+                    <div key={pin.id} className="rounded-md border border-border p-2 space-y-1">
+                      <div className="flex items-start gap-2">
+                        <button
+                          className="text-left min-w-0 flex-1"
+                          onClick={() => setPinDialog({ point: null, zoneId: pin.zone_id, existing: pin })}
+                        >
+                          <p className={`text-[11px] font-medium truncate ${pin.status === "done" ? "line-through text-muted-foreground" : ""}`}>
+                            {pin.title}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {PIN_KIND_LABEL[pin.kind] ?? pin.kind}
+                            {pin.assigned_name ? ` · ${pin.assigned_name}` : " · ingen ansvarig"}
+                            {pin.due_date ? ` · till ${pin.due_date}` : ""}
+                          </p>
+                        </button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 px-1 text-[10px] text-destructive"
-                          onClick={() => deletePin.mutate(pin.id)}
+                          className="h-6 px-1 text-[10px]"
+                          onClick={() => completePin.mutate({ id: pin.id, done: pin.status !== "done" })}
                         >
-                          <Trash2 className="h-3 w-3" />
+                          {pin.status === "done" ? "Öppna" : "Klar"}
                         </Button>
-                      )}
+                        {canManage && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-1 text-[10px] text-destructive"
+                            onClick={() => deletePin.mutate(pin.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
           </div>
+          )}
         </div>
       )}
+
+      {/* Vald yta glider in från höger, kartan ligger kvar i full bredd bakom */}
+      {!editMode && (selectedZone || selectedObject) && (
+        <MapDetailDrawer
+          open
+          onOpenChange={(v) => {
+            if (!v) {
+              setSelected(null);
+              setFocus(null);
+              setDrawerOpen(false);
+            }
+          }}
+          storeId={storeId}
+          portal={site}
+          zone={selectedZone}
+          object={selectedObject}
+          objectType={selectedObject ? typeById[selectedObject.object_type_id] : null}
+          tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
+          unlinkedTasks={unlinkedTasks}
+          canManage={canManage}
+          onOpenPage={() => openAreaPage()}
+          zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
+          areaLabel={
+            selectedZone
+              ? areaOf(selectedZone, pxPerMeter).sqm != null
+                ? `${areaOf(selectedZone, pxPerMeter).exact ? "" : "≈ "}${formatSqm(areaOf(selectedZone, pxPerMeter).sqm)}`
+                : null
+              : selectedObject && areaOf(selectedObject, pxPerMeter).sqm != null
+                ? formatSqm(areaOf(selectedObject, pxPerMeter).sqm)
+                : null
+          }
+        />
+      )}
+
 
       {plan && pinDialog && (
         <MapPinDialog
@@ -772,30 +1069,6 @@ export default function StoreMap() {
         />
       )}
 
-      {(selectedZone || selectedObject) && (
-        <MapDetailDrawer
-          open={drawerOpen}
-          onOpenChange={setDrawerOpen}
-          storeId={storeId}
-          portal={site}
-          zone={selectedZone}
-          object={selectedObject}
-          objectType={selectedObject ? typeById[selectedObject.object_type_id] : null}
-          tasks={selectedObject ? tasksForObject(selectedObject.id) : selectedZone ? tasksForZone(selectedZone.id) : []}
-          unlinkedTasks={unlinkedTasks}
-          canManage={canManage}
-          zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
-          areaLabel={
-            selectedZone
-              ? areaOf(selectedZone, pxPerMeter).sqm != null
-                ? `${areaOf(selectedZone, pxPerMeter).exact ? "" : "≈ "}${formatSqm(areaOf(selectedZone, pxPerMeter).sqm)}`
-                : null
-              : selectedObject && areaOf(selectedObject, pxPerMeter).sqm != null
-                ? formatSqm(areaOf(selectedObject, pxPerMeter).sqm)
-                : null
-          }
-        />
-      )}
     </div>
   );
 }

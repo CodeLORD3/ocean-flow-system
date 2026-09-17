@@ -87,7 +87,7 @@ const overviewNav = [
 const calendarNav = [
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
   { title: "Mötesprotokoll", url: "/meetings", icon: FileText },
-  { title: "Uppgifter", url: "/tasks", icon: ListTodo },
+  { title: "Kalenderuppgifter", url: "/tasks", icon: ListTodo },
 ];
 
 const salesNav = [
@@ -129,7 +129,8 @@ const financeNav = [
   { title: "Dagsrapport", url: "/dagsrapport", icon: FileText },
   { title: "Försvunnet ur lagret", url: "/stock-disappearance", icon: Package },
   { title: "Kassa live", url: "/pos-live", icon: Radio },
-  { title: "Checklistor", url: "/checklist", icon: ClipboardCheck },
+  { title: "Uppgifter", url: "/uppgifter", icon: ListTodo },
+  
   { title: "Butikskarta", url: "/store-map", icon: Map },
 
   { title: "Datakvalitet", url: "/coverage", icon: Shield },
@@ -138,6 +139,7 @@ const financeNav = [
   { title: "Stämpelklockan — guider", url: "/clock-guides", icon: FileText },
   { title: "Webbordrar", url: "/shopify", icon: Globe },
   { title: "Storlekssortering", url: "/size-grades", icon: Ruler },
+  { title: "Produktion — så gör vi", url: "/produktion-recept", icon: CookingPot },
   { title: "Omvandlingsrecept", url: "/transformation-recipes", icon: CookingPot },
   { title: "Fortnox", url: "/fortnox", icon: Plug },
   { title: "Ekonomi", url: "/finance", icon: CreditCard },
