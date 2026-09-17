@@ -32,6 +32,7 @@ import {
   Upload,
   ArrowLeft,
   Plus,
+  Check,
 } from "lucide-react";
 import { todayIso } from "@/hooks/useChecklist";
 import { FloorPlanCanvas, type Selection } from "@/components/storemap/FloorPlanCanvas";
@@ -46,6 +47,7 @@ import { OverviewQuickBar } from "@/components/storemap/OverviewQuickBar";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
+import ZoneDetailsSheet from "@/components/storemap/ZoneDetailsSheet";
 import { ZONE_PALETTE, nextZoneColor } from "@/lib/mapPalette";
 import { bbox, zonePoints } from "@/lib/mapGeometry";
 import {
@@ -148,6 +150,10 @@ export default function StoreMap() {
   const [focus, setFocus] = useState<Selection>(null);
   /** Områdets egna sida ligger som en egen flik i butikskartan. */
   const [areaPage, setAreaPage] = useState<Selection>(null);
+  /** Nytt område som ännu inte är beskrivet — visar den stora knappen över kartan. */
+  const [draftZoneId, setDraftZoneId] = useState<string | null>(null);
+  /** Området vars sidopanel med all information är öppen. */
+  const [sheetZoneId, setSheetZoneId] = useState<string | null>(null);
   const [pinDialog, setPinDialog] = useState<{
     point: { x: number; y: number } | null;
     zoneId: string | null;
@@ -297,10 +303,35 @@ export default function StoreMap() {
           setMode("redigera");
           setView("karta");
           setSelected({ kind: "zone", id: id as string });
-          toast({ title: "Området är skapat", description: "Ge det ett namn och dra det på plats i kartan." });
+          setDraftZoneId(id as string);
+          setSheetZoneId(null);
         },
         onError: (e) =>
           toast({ title: "Kunde inte skapa området", description: (e as Error).message, variant: "destructive" }),
+      },
+    );
+  };
+
+  /** Sparar uppgifterna från sidopanelen på området. */
+  const saveZoneDetails = (values: {
+    name: string;
+    zone_kind: string | null;
+    area_sqm: number | null;
+    color: string;
+    description: string | null;
+  }) => {
+    const id = sheetZoneId;
+    if (!id) return;
+    saveZone.mutate(
+      { id, ...values },
+      {
+        onSuccess: () => {
+          setSheetZoneId(null);
+          setDraftZoneId(null);
+          toast({ title: "Området är sparat", description: values.name });
+        },
+        onError: (e) =>
+          toast({ title: "Kunde inte spara området", description: (e as Error).message, variant: "destructive" }),
       },
     );
   };
@@ -679,6 +710,38 @@ export default function StoreMap() {
               }
             />
 
+            {/* Nytt område: dra det på plats, tryck sedan på den stora knappen */}
+            {draftZoneId && zones.some((z) => z.id === draftZoneId) && (
+              <div className="border-t border-emerald-500/40 bg-emerald-50 px-3 py-3">
+                <p className="pb-2 text-xs text-emerald-900">
+                  Dra området på plats i kartan och dra i hörnen till rätt storlek. Tryck sedan på knappen.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    className="h-12 flex-1 bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-700"
+                    onClick={() => setSheetZoneId(draftZoneId)}
+                  >
+                    <Check className="mr-2 h-5 w-5" /> Området färdigmarkerat
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-12 text-sm"
+                    onClick={() => {
+                      if (!confirm("Ta bort det nya området?")) return;
+                      deleteZone.mutate(draftZoneId, {
+                        onSuccess: () => {
+                          setDraftZoneId(null);
+                          setSelected(null);
+                        },
+                      });
+                    }}
+                  >
+                    Ångra
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {placing && (
               <p className="border-t border-primary/40 bg-primary/5 px-3 py-2 text-[11px]">
                 Tryck på platsen inne i ytan där bilden är tagen.{" "}
@@ -901,6 +964,15 @@ export default function StoreMap() {
                             }
                             className="h-7 w-20 text-xs tabular-nums"
                           />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-[10px] gap-1"
+                            title="Beskriv området"
+                            onClick={() => setSheetZoneId(z.id)}
+                          >
+                            <Pencil className="h-3 w-3" /> Info
+                          </Button>
                         </div>
                         <div className="flex items-center gap-1">
                           {ZONE_PALETTE.map((c) => (
@@ -1172,6 +1244,15 @@ export default function StoreMap() {
         />
       )}
 
+
+      <ZoneDetailsSheet
+        zone={sheetZoneId ? zones.find((z) => z.id === sheetZoneId) ?? null : null}
+        open={!!sheetZoneId}
+        isNew={!!sheetZoneId && sheetZoneId === draftZoneId}
+        saving={saveZone.isPending}
+        onClose={() => setSheetZoneId(null)}
+        onSave={saveZoneDetails}
+      />
 
       {plan && pinDialog && (
         <MapPinDialog

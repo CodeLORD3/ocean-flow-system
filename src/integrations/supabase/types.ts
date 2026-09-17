@@ -7851,6 +7851,7 @@ export type Database = {
           area_sqm: number | null
           color: string | null
           created_at: string
+          description: string | null
           floor_plan_id: string
           height: number
           id: string
@@ -7863,11 +7864,13 @@ export type Database = {
           x: number
           y: number
           zone_key: string | null
+          zone_kind: string | null
         }
         Insert: {
           area_sqm?: number | null
           color?: string | null
           created_at?: string
+          description?: string | null
           floor_plan_id: string
           height?: number
           id?: string
@@ -7880,11 +7883,13 @@ export type Database = {
           x?: number
           y?: number
           zone_key?: string | null
+          zone_kind?: string | null
         }
         Update: {
           area_sqm?: number | null
           color?: string | null
           created_at?: string
+          description?: string | null
           floor_plan_id?: string
           height?: number
           id?: string
@@ -7897,6 +7902,7 @@ export type Database = {
           x?: number
           y?: number
           zone_key?: string | null
+          zone_kind?: string | null
         }
         Relationships: [
           {

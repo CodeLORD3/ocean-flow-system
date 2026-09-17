@@ -44,6 +44,10 @@ export type MapZone = {
   height: number;
   sort_order: number;
   area_sqm: number | null;
+  /** Vad området används till, t.ex. beredning eller kyl. */
+  zone_kind: string | null;
+  /** Fritext: vad som finns här och vad man behöver veta. */
+  description: string | null;
   /** Polygon i planens koordinater. Saknas den används rektangeln ovan. */
   points: { x: number; y: number }[] | null;
 };
