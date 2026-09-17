@@ -59,6 +59,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     description: "",
     title: "",
     paymentMethod: "" as "" | "kort" | "kontant",
+    cardBrand: "",
+    cardLast4: "",
+    cardHolder: "",
+    expenseAccount: "",
+    expenseCategory: "",
+    itemsText: "",
   });
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -77,7 +83,13 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     | "documentNumber"
     | "description"
     | "title"
-    | "paymentMethod";
+    | "paymentMethod"
+    | "cardBrand"
+    | "cardLast4"
+    | "cardHolder"
+    | "expenseAccount"
+    | "expenseCategory"
+    | "itemsText";
 
   /** Ändrar ett fält och släcker markeringen, eftersom värdet nu är kontrollerat. */
   function setField(key: FormKey, value: string) {
@@ -137,6 +149,16 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       if (["CHF", "SEK", "EUR"].includes(str(p.currency).toUpperCase()))
         patch.currency = str(p.currency).toUpperCase();
       if (["kort", "kontant"].includes(str(p.payment_method))) patch.paymentMethod = str(p.payment_method);
+      if (str(p.card_brand)) patch.cardBrand = str(p.card_brand);
+      if (/^\d{4}$/.test(str(p.card_last4))) patch.cardLast4 = str(p.card_last4);
+      if (str(p.card_holder)) patch.cardHolder = str(p.card_holder);
+      if (str(p.expense_category)) patch.expenseCategory = str(p.expense_category);
+      if (Array.isArray(p.line_items) && p.line_items.length) {
+        patch.itemsText = (p.line_items as any[])
+          .map((l) => [str(l?.name), l?.amount != null ? String(l.amount) : ""].filter(Boolean).join(" "))
+          .filter(Boolean)
+          .join("\n");
+      }
       if (str(p.title)) patch.title = str(p.title);
       if (str(p.description)) patch.description = str(p.description);
 
@@ -206,6 +228,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       description: "",
       title: "",
       paymentMethod: "",
+      cardBrand: "",
+      cardLast4: "",
+      cardHolder: "",
+      expenseAccount: "",
+      expenseCategory: "",
+      itemsText: "",
     });
     setOpen(true);
   }
@@ -226,6 +254,14 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       description: p.description ?? "",
       title: p.title ?? "",
       paymentMethod: (p.payment_method as "kort" | "kontant" | null) ?? "",
+      cardBrand: p.card_brand ?? "",
+      cardLast4: p.card_last4 ?? "",
+      cardHolder: p.card_holder ?? "",
+      expenseAccount: p.expense_account ?? "",
+      expenseCategory: p.expense_category ?? "",
+      itemsText: (p.line_items ?? [])
+        .map((l) => [l.name, l.amount != null ? String(l.amount) : ""].filter(Boolean).join(" "))
+        .join("\n"),
     });
     setOpen(true);
   }
@@ -251,6 +287,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         documentNumber: form.documentNumber,
         description: form.description,
         paymentMethod: form.paymentMethod || null,
+        cardBrand: form.cardBrand,
+        cardLast4: form.cardLast4,
+        cardHolder: form.cardHolder,
+        expenseAccount: form.expenseAccount,
+        expenseCategory: form.expenseCategory,
+        lineItems: parseItems(form.itemsText),
         file,
       });
       toast.success(edit ? "Pappret uppdaterat" : "Pappret sparat");
