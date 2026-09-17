@@ -18,7 +18,7 @@ const num = (v: unknown): number | null => {
   const n = typeof v === "number" ? v : v == null || v === "" ? NaN : Number(v);
   return Number.isFinite(n) ? n : null;
 };
-const money = (value: unknown) => { const n = num(value); return n == null ? "—" : `${int.format(n)} kr`; };
+const money = (value: unknown, cur = "kr") => { const n = num(value); return n == null ? "—" : `${int.format(n)} ${cur}`; };
 const intFmt = (v: unknown) => { const n = num(v); return n == null ? "—" : int.format(n); };
 const decFmt = (v: unknown) => { const n = num(v); return n == null ? "—" : dec.format(n); };
 const REGION_LABELS: Record<string, string> = { vast: "Göteborg", stockholm: "Stockholm", schweiz: "Schweiz", SE_TOTAL: "Sverige totalt" };
@@ -38,8 +38,8 @@ function StatusBadge({ status, corrected }: { status: string; corrected?: boolea
 function Metrics({ row }: { row: MonthlyStoreReport | MonthlyRegionReport }) {
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-5">
-      <div><p className="text-[10px] text-muted-foreground">Nettoomsättning</p><p className="font-mono text-sm tabular-nums">{money(row.total_sales_sek)}</p></div>
-      <div><p className="text-[10px] text-muted-foreground">Netto snitt/dag</p><p className="font-mono text-sm tabular-nums">{money(row.avg_sales_per_day_sek)}</p></div>
+      <div><p className="text-[10px] text-muted-foreground">Nettoomsättning</p><p className="font-mono text-sm tabular-nums">{money(row.total_sales_sek, cur)}</p></div>
+      <div><p className="text-[10px] text-muted-foreground">Netto snitt/dag</p><p className="font-mono text-sm tabular-nums">{money(row.avg_sales_per_day_sek, cur)}</p></div>
       <div><p className="text-[10px] text-muted-foreground">Timmar</p><p className="font-mono text-sm tabular-nums">{decFmt(row.staff_hours)} h</p></div>
       <div><p className="text-[10px] text-muted-foreground">Personpass</p><p className="font-mono text-sm tabular-nums">{intFmt(row.staff_shifts)}</p></div>
       <div><p className="text-[10px] text-muted-foreground">Dagsrapporter</p><p className="font-mono text-sm tabular-nums">{intFmt(row.daily_reports_count)} / {intFmt(row.expected_open_days)}</p></div>
@@ -61,6 +61,8 @@ export function MonthlyReportsSection() {
     [...regions, ...details].forEach((row) => map.set(`${row.year}-${row.month}`, { year: row.year, month: row.month, month_start: row.month_start, month_end: row.month_end }));
     return [...map.entries()].map(([key, value]) => ({ key, ...value })).sort((a, b) => String(b.month_start ?? "").localeCompare(String(a.month_start ?? "")));
   }, [regions, details]);
+  /** Butikens valuta — Zollikon och Morges redovisas i CHF. */
+  const curOf = (id: string) => currencyLabel(stores.find((store) => store.id === id)?.currency);
   const storeName = (id: string) => stores.find((store) => store.id === id)?.name ?? "Butik";
   const groupFilter = filter !== "all" && filter in REGION_LABELS ? filter : null;
   const storeFilter = filter !== "all" && !groupFilter ? filter : null;
@@ -139,7 +141,7 @@ export function MonthlyReportsSection() {
         </div>
       </div>
 
-      {summary && latest && <div className="border-b pb-4"><div className="mb-3 flex flex-wrap items-end justify-between gap-2"><div><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">Senaste månaden</p><p className="mt-1 text-sm font-semibold">{summaryLabel}</p><p className="text-xs capitalize text-muted-foreground">{monthLabel(latest.month_start)}</p></div><StatusBadge status={summary.status} corrected={summary.corrected} /></div><Metrics row={summary} /></div>}
+      {summary && latest && <div className="border-b pb-4"><div className="mb-3 flex flex-wrap items-end justify-between gap-2"><div><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">Senaste månaden</p><p className="mt-1 text-sm font-semibold">{summaryLabel}</p><p className="text-xs capitalize text-muted-foreground">{monthLabel(latest.month_start)}</p></div><StatusBadge status={summary.status} corrected={summary.corrected} /></div><Metrics row={summary} cur={storeFilter ? curOf(storeFilter) : groupFilter === "schweiz" ? "CHF" : "kr"} /></div>}
 
       <div className="divide-y rounded-md border">{months.map((month) => {
         const monthRegions = regions.filter((row) => row.year === month.year && row.month === month.month &&
@@ -153,8 +155,8 @@ export function MonthlyReportsSection() {
         const corrected = headline?.corrected ?? monthStores.some((row) => row.corrected);
         const open = openMonth === month.key;
         return <div key={month.key}><button type="button" onClick={() => setOpenMonth(open ? null : month.key)} className="flex w-full items-start gap-2 px-3 py-3 text-left transition-colors hover:bg-muted/40">{open ? <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />}<span className="min-w-0 flex-1"><span className="block text-sm font-medium capitalize">{monthLabel(month.month_start)}</span><span className="mt-0.5 block text-xs text-muted-foreground">{storeFilter ? storeName(storeFilter) : REGION_LABELS[groupFilter ?? "SE_TOTAL"] ?? "Sverige totalt"}</span></span><span className="flex shrink-0 flex-col items-end gap-1"><span className="font-mono text-sm tabular-nums">{money(total)}</span><StatusBadge status={status} corrected={corrected} /></span></button>
-          {open && <div className="space-y-3 bg-muted/20 px-3 pb-4 pt-2">{monthRegions.map((row) => <div key={row.group_key} className="rounded-md border bg-background p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{row.group_label}</span><StatusBadge status={row.status} corrected={row.corrected} /></div>{row.missing_stores?.length ? <p className="mb-2 text-[10px] text-muted-foreground">Saknar månadsrapport: {row.missing_stores.join(", ")}</p> : null}<Metrics row={row} /></div>)}
-            {monthStores.length > 0 && <div><p className="mb-1.5 text-[11px] text-muted-foreground">Butiksnivå</p><div className="divide-y rounded-md border bg-background">{monthStores.map((row) => <div key={row.store_id} className="p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{storeName(row.store_id)}</span><StatusBadge status={row.status} corrected={row.corrected} /></div><Metrics row={row} />{open && storeFilter && <StoreWeekDays storeId={row.store_id} weekStart={month.month_start} weekEnd={month.month_end} />}</div>)}</div></div>}
+          {open && <div className="space-y-3 bg-muted/20 px-3 pb-4 pt-2">{monthRegions.map((row) => <div key={row.group_key} className="rounded-md border bg-background p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{row.group_label}</span><StatusBadge status={row.status} corrected={row.corrected} /></div>{row.missing_stores?.length ? <p className="mb-2 text-[10px] text-muted-foreground">Saknar månadsrapport: {row.missing_stores.join(", ")}</p> : null}<Metrics row={row} cur={row.group_key === "schweiz" ? "CHF" : "kr"} /></div>)}
+            {monthStores.length > 0 && <div><p className="mb-1.5 text-[11px] text-muted-foreground">Butiksnivå</p><div className="divide-y rounded-md border bg-background">{monthStores.map((row) => <div key={row.store_id} className="p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{storeName(row.store_id)}</span><StatusBadge status={row.status} corrected={row.corrected} /></div><Metrics row={row} cur={curOf(row.store_id)} />{open && storeFilter && <StoreWeekDays storeId={row.store_id} weekStart={month.month_start} weekEnd={month.month_end} />}</div>)}</div></div>}
           </div>}
         </div>;
       })}</div>

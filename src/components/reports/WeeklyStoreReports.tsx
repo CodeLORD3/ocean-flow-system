@@ -21,6 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ChevronDown, ChevronRight, AlertTriangle, LockKeyhole, Printer, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { currencyLabel } from "@/lib/reportCurrency";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -149,6 +150,8 @@ export function WeeklyStoreReportsSection() {
     latestWeekForExport?.week_end,
   );
 
+  /** Butikens valuta — Zollikon och Morges redovisas i CHF. */
+  const curOf = (id: string) => currencyLabel(stores.find((s) => s.id === id)?.currency);
   const storeName = (id: string) => stores.find((s) => s.id === id)?.name ?? "Butik";
   const isClosed = (storeId: string, year: number, week: number) =>
     (closures.data ?? []).some((c) => c.store_id === storeId && c.iso_year === year && c.iso_week === week);
@@ -376,7 +379,7 @@ export function WeeklyStoreReportsSection() {
                           Saknar låst veckorapport: {row.missing_stores.join(", ")}
                         </p>
                       ) : null}
-                      <Metrics row={row} comparison={row} />
+                      <Metrics row={row} comparison={row} cur={row.group_key === "schweiz" ? "CHF" : "kr"} />
                     </div>
                   ))}
 
@@ -412,7 +415,7 @@ export function WeeklyStoreReportsSection() {
                                   </Button>
                                 </div>
                               </div>
-                              <Metrics row={row} />
+                              <Metrics row={row} cur={curOf(row.store_id)} />
                               {row.drift_after_lock && row.drift_note && (
                                 <p className="mt-2 text-[10px] text-destructive">{row.drift_note}</p>
                               )}
