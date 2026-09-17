@@ -373,6 +373,20 @@ export default function CustomerOrders() {
             )}
           </Button>
         )}
+        {/* Flytta markerade till ett annat datum — fungerar även på mobil där man inte kan dra. */}
+        {canEdit && marked.length > 0 && (
+          <div className="flex items-center gap-2 rounded-sm border border-grid-line bg-card px-3 py-1.5">
+            <span className="whitespace-nowrap text-xs font-semibold">
+              Flytta {marked.length} till
+            </span>
+            <Input
+              type="date"
+              className="h-10 w-[9.5rem] text-sm"
+              disabled={moveOrders.isPending}
+              onChange={(e) => e.target.value && moveTo(e.target.value, marked)}
+            />
+          </div>
+        )}
         {/* Bulkutskrift: markera alla (eller några) och skriv ut packlistan i ett svep. */}
         {panel === "orders" && viewOrders.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
