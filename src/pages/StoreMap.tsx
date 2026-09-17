@@ -47,7 +47,12 @@ import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
 import { ZONE_PALETTE } from "@/lib/mapPalette";
 import { bbox, zonePoints } from "@/lib/mapGeometry";
-import { useFloorPlanImages, useUploadEntityImage } from "@/hooks/useEntityImages";
+import {
+  useEntityImages,
+  useFloorPlanImages,
+  useStoreAreaImages,
+  useUploadEntityImage,
+} from "@/hooks/useEntityImages";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useAllowedStores } from "@/components/StoreSwitcher";
