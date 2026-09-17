@@ -1,5 +1,18 @@
 import { useMemo, useRef, useState } from "react";
-import { Camera, FileText, ImagePlus, Loader2, Paperclip, Plus, Search, Sparkles, Trash2, Wand2 } from "lucide-react";
+import {
+  Camera,
+  Check,
+  CreditCard,
+  FileText,
+  ImagePlus,
+  Loader2,
+  Paperclip,
+  Plus,
+  Search,
+  Sparkles,
+  Trash2,
+  Wand2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +34,11 @@ import {
   type ImportantPaper,
   type PaperType,
 } from "@/hooks/useImportantPapers";
+import {
+  cardLabel,
+  matchCard,
+  usedummy as _unused,
+} from "@/hooks/usePaymentCards";
 
 const nf = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
