@@ -2030,6 +2030,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 try {
                   const staff = staffList.find((s) => s.id === cardForm.staffId);
                   await saveCard.mutateAsync({
+                    id: editingCardId ?? undefined,
                     storeId: storeId ?? null,
                     staffId: cardForm.staffId || null,
                     cardBrand: cardForm.cardBrand,
