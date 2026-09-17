@@ -279,6 +279,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     const q = search.trim().toLowerCase();
     return papers.filter((p) => {
       if (typeFilter !== "alla" && p.paper_type !== typeFilter) return false;
+      if (needsOnly && !needsCheck(p)) return false;
       if (payFilter === "kontant" && p.payment_method !== "kontant") return false;
       if (payFilter === "kort" && p.payment_method !== "kort") return false;
       if (payFilter.startsWith("kort:") && p.card_last4 !== payFilter.slice(5)) return false;
