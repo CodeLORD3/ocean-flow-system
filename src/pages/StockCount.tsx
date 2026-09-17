@@ -1503,26 +1503,27 @@ export default function StockCount() {
                     onClick={() => {
                       setDate(h.count_date);
                       setSelectedSessionId(h.id);
+                      setShowLockedLines(true);
                     }}
-                    className={`flex w-full items-center justify-between gap-2 px-1.5 py-1 text-left hover:bg-muted/50 ${
-                      isCurrent ? "bg-primary/5" : ""
+                    className={`flex w-full items-center justify-between gap-2 px-1.5 py-1 text-left hover:bg-emerald-100/60 dark:hover:bg-emerald-500/20 ${
+                      isCurrent ? "bg-emerald-100 dark:bg-emerald-500/20" : "bg-emerald-50/60 dark:bg-emerald-500/10"
                     }`}
                   >
                     <span className="flex min-w-0 items-center gap-1.5">
-                      <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
-                      <span className="truncate text-[11px] font-medium">
+                      <Check className="h-3 w-3 shrink-0 text-emerald-600" />
+                      <span className="truncate text-[11px] font-medium text-emerald-900 dark:text-emerald-200">
                         {dayLabel(h.count_date)} {h.count_date}
                       </span>
                       <Badge
                         variant="outline"
-                        className="h-4 bg-muted text-[9px] text-muted-foreground"
+                        className="h-4 border-emerald-500/40 bg-emerald-500/15 text-[9px] text-emerald-700"
                       >
-                        Låst
+                        Klar
                       </Badge>
                     </span>
-                    <span className="flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
+                    <span className="flex shrink-0 items-center gap-2 text-[10px] text-emerald-800/80 dark:text-emerald-200/80">
                       <span>{lineCount} rader</span>
-                      
+                      <span className="underline">Öppna</span>
                     </span>
                   </button>
                 );
