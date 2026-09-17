@@ -46,7 +46,8 @@ type Props = {
  */
 export default function ZoneDetailsSheet({ zone, open, isNew, saving, onClose, onSave }: Props) {
   const [name, setName] = useState("");
-  const [kind, setKind] = useState<string>("");
+  const [kinds, setKinds] = useState<string[]>([]);
+  const [newKind, setNewKind] = useState("");
   const [sqm, setSqm] = useState("");
   const [color, setColor] = useState<string>(ZONE_PALETTE[0].color);
   const [description, setDescription] = useState("");
