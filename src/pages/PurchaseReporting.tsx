@@ -29,6 +29,7 @@ import { useSuppliers } from "@/hooks/useSuppliers";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { useSizeGrades, useSupplierArticleMap, learnSupplierArticle } from "@/hooks/useSizeGrades";
 import { suggestProducts } from "@/lib/foljesedelMatch";
+import { isAuctionLotNumber, extractAuctionLotNumber } from "@/lib/lotNumbers";
 import { gradeRangeText } from "@/lib/sizeGrades";
 import { useEntityCurrency } from "@/hooks/useEntityCurrency";
 import { useFxRate } from "@/hooks/useFxRate";
@@ -619,7 +620,8 @@ function LotNumberEditor({
           )}
           <Input
             className="h-5 w-[150px] px-1.5 text-[11px] font-mono"
-            placeholder="Fyll i partinummer"
+            placeholder="10012.6194994"
+            title="Spårbarhetsnummer från fiskauktionen, t.ex. 10012.6194994"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onBlur={() => save(value)}
