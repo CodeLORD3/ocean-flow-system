@@ -532,23 +532,27 @@ export function plausibleLots(line: { lot_numbers?: string[] | null }): string[]
 
 /**
  * Auktionsrader saknar ofta tryckt partinummer — då byggs ett spårbart förslag
- * av datum och fartyg, t.ex. "AUK-2026-09-17-ARKO". Aldrig en gissad siffra.
+ * av datum och fartyg, t.ex. "AUK-2026-09-17-ARKO". Saknas fartyg används artens
+ * namn i stället, så varje rad ändå får ett unikt spårbart nummer.
  */
 export function suggestLotNumber(
-  line: { vessel_name?: string | null; catch_date_from?: string | null },
+  line: { vessel_name?: string | null; catch_date_from?: string | null; product_name?: string | null },
   documentDate?: string | null,
 ): string | null {
-  const vessel = String(line.vessel_name ?? "").trim();
+  const slug = (text: string) =>
+    text
+      .toUpperCase()
+      .replace(/[ÅÄ]/g, "A")
+      .replace(/Ö/g, "O")
+      .replace(/[^A-Z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
   const date = (line.catch_date_from || documentDate || "").slice(0, 10);
-  if (!vessel || !date) return null;
-  const code = vessel
-    .toUpperCase()
-    .replace(/[ÅÄ]/g, "A")
-    .replace(/Ö/g, "O")
-    .replace(/[^A-Z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+  if (!date) return null;
+  const vessel = String(line.vessel_name ?? "").trim();
+  const code = slug(vessel) || slug(String(line.product_name ?? "").trim());
   return code ? `AUK-${date}-${code}` : null;
 }
+
 
 /** En rad i partinummerlistan: visar inläst nummer eller låter dig fylla i det. */
 function LotNumberEditor({
