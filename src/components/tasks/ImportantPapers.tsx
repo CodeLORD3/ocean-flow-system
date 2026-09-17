@@ -188,7 +188,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     paymentCards.find((c) => c.id === form.cardId) ?? matchCard(paymentCards, form.cardLast4);
 
   /** Väljer ett registrerat kort och fyller i korttyp, siffror och ägare. */
-  function useCard(c: PaymentCard) {
+  function pickCard(c: PaymentCard) {
     setForm((f) => ({
       ...f,
       cardId: c.id,
@@ -270,7 +270,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       }
       setForm((prev) => ({ ...prev, ...patch }) as typeof prev);
       setAutoFilled(new Set(keys));
-      toast.success(`${keys.length} fält avlästa — kontrollera de gröna fälten`);
+      toast.success(`${keys.length} fält avlästa — kontrollera de gula fälten`);
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte läsa av pappret");
     } finally {
@@ -844,7 +844,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                             <button
                               key={c.id}
                               type="button"
-                              onClick={() => useCard(c)}
+                              onClick={() => pickCard(c)}
                               className={cn(
                                 "flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-sm transition",
                                 on
