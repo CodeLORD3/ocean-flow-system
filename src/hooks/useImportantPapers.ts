@@ -28,6 +28,8 @@ export interface ImportantPaper {
   gross_amount: number | null;
   currency: string;
   document_number: string | null;
+  /** Betalsätt, används främst för kvitton: "kort" eller "kontant". */
+  payment_method: string | null;
   description: string | null;
   tags: string[];
   file_url: string | null;
@@ -85,6 +87,7 @@ export interface PaperInput {
   grossAmount?: number | null;
   currency?: string;
   documentNumber?: string | null;
+  paymentMethod?: "kort" | "kontant" | null;
   description?: string | null;
   tags?: string[];
   file?: File | null;
@@ -124,6 +127,7 @@ export function useSaveImportantPaper() {
         gross_amount: input.grossAmount ?? null,
         currency: input.currency || "CHF",
         document_number: input.documentNumber?.trim() || null,
+        payment_method: input.paymentMethod ?? null,
         description: input.description?.trim() || null,
         tags: input.tags ?? [],
       };

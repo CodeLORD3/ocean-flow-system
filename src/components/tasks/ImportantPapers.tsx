@@ -57,6 +57,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
     documentNumber: "",
     description: "",
     title: "",
+    paymentMethod: "" as "" | "kort" | "kontant",
   });
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -77,6 +78,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         p.company_name,
         p.description,
         p.document_number,
+        p.payment_method,
         p.paper_date,
         p.created_by_name,
         paperTypeInfo(p.paper_type).singular,
@@ -104,6 +106,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       documentNumber: "",
       description: "",
       title: "",
+      paymentMethod: "",
     });
     setOpen(true);
   }
@@ -122,6 +125,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       documentNumber: p.document_number ?? "",
       description: p.description ?? "",
       title: p.title ?? "",
+      paymentMethod: (p.payment_method as "kort" | "kontant" | null) ?? "",
     });
     setOpen(true);
   }
@@ -146,6 +150,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
         currency: form.currency,
         documentNumber: form.documentNumber,
         description: form.description,
+        paymentMethod: form.paymentMethod || null,
         file,
       });
       toast.success(edit ? "Pappret uppdaterat" : "Pappret sparat");
@@ -242,7 +247,18 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     {p.company_name || p.title || "Utan företag"}
                   </span>
                   <span className="block truncate text-[11px] text-muted-foreground">
-                    {[p.paper_date, p.document_number, p.description].filter(Boolean).join(" · ") || "Ingen beskrivning"}
+                    {[
+                      p.paper_date,
+                      p.payment_method === "kort"
+                        ? "Kort"
+                        : p.payment_method === "kontant"
+                          ? "Kontant"
+                          : null,
+                      p.document_number,
+                      p.description,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "Ingen beskrivning"}
                   </span>
                 </button>
                 <span className="shrink-0 text-right text-sm font-semibold tabular-nums">
@@ -302,6 +318,34 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                 </SelectContent>
               </Select>
             </div>
+
+            {form.paperType === "kvitto" && (
+              <div>
+                <Label className="text-xs">Betalades med</Label>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  {[
+                    ["kort", "Kort"],
+                    ["kontant", "Kontant"],
+                  ].map(([value, label]) => (
+                    <Button
+                      key={value}
+                      type="button"
+                      variant={form.paymentMethod === value ? "default" : "outline"}
+                      className="h-11 text-sm font-semibold"
+                      onClick={() =>
+                        setForm({
+                          ...form,
+                          paymentMethod:
+                            form.paymentMethod === value ? "" : (value as "kort" | "kontant"),
+                        })
+                      }
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-2">
               <div>
