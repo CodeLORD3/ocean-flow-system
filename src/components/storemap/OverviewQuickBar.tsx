@@ -14,8 +14,60 @@ function tone(_pct: number) {
  * Två stora knappar högst upp i Översikt — dagens uppgifter och stämpla in —
  * med en bred stapel där varje uppgift är en stolpe som tänds när den är klar.
  */
-export function OverviewQuickBar({ tasks }: { tasks: MapTask[] }) {
+export function OverviewQuickBar({
+  tasks,
+  storeId,
+  day,
+}: {
+  tasks: MapTask[];
+  storeId?: string | null;
+  day?: string;
+}) {
   const navigate = useNavigate();
+  const date = day || new Date().toISOString().slice(0, 10);
+
+  /** Är dagsrapporten skriven för dagen? Då lyser knappen grön. */
+  const { data: dailyDone = false } = useQuery({
+    queryKey: ["overview-daily-report-done", storeId, date],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("daily_reports")
+        .select("id")
+        .eq("store_id", storeId!)
+        .eq("report_date", date)
+        .limit(1);
+      if (error) throw error;
+      return (data ?? []).length > 0;
+    },
+  });
+
+  /** Är inventeringen färdigställd för dagen? Låst tillfälle = klar rapport. */
+  const { data: countDone = false } = useQuery({
+    queryKey: ["overview-stock-count-done", storeId, date],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stock_count_sessions")
+        .select("id")
+        .eq("store_id", storeId!)
+        .eq("count_date", date)
+        .eq("status", "locked")
+        .limit(1);
+      if (error) throw error;
+      return (data ?? []).length > 0;
+    },
+  });
+
+  /** Grön ruta när rapporten är klar, annars vanlig ljus ruta. */
+  const boxClass = (done: boolean) =>
+    cn(
+      "flex items-center gap-3 rounded-2xl border px-5 py-5 text-left shadow-sm transition",
+      done
+        ? "border-emerald-500/50 bg-emerald-50 ring-1 ring-emerald-500/40 hover:bg-emerald-100 dark:bg-emerald-500/10"
+        : "border-border bg-card ring-1 ring-primary/30 hover:bg-muted",
+    );
+
   const total = tasks.length;
   const done = tasks.filter((t) => t.done).length;
   const pct = total > 0 ? Math.round((done / total) * 100) : 100;
