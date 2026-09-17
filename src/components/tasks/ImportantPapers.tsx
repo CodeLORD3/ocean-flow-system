@@ -683,6 +683,32 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   /** Papper som behöver kompletteras innan de duger som bokföringsunderlag. */
   const needsCheck = (p: ImportantPaper) => !p.company_name || p.net_amount == null;
 
+  /**
+   * Möjliga dubbletter: samma företag + dokumentnummer, eller samma företag,
+   * datum och belopp. Pappren varnas men tas aldrig bort automatiskt.
+   */
+  const dupGroups = useMemo(() => {
+    const map = new Map<string, ImportantPaper[]>();
+    for (const p of papers) {
+      const key = duplicateKey(p);
+      if (!key) continue;
+      const list = map.get(key);
+      if (list) list.push(p);
+      else map.set(key, [p]);
+    }
+    return [...map.entries()].filter(([, g]) => g.length > 1);
+  }, [papers]);
+
+  const dupKeyById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const [key, group] of dupGroups) for (const p of group) m.set(p.id, key);
+    return m;
+  }, [dupGroups]);
+
+  const [compareKey, setCompareKey] = useState<string | null>(null);
+  const compareGroup = dupGroups.find(([k]) => k === compareKey)?.[1] ?? [];
+
+
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
