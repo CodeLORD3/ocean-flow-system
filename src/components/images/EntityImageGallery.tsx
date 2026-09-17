@@ -588,6 +588,54 @@ export function EntityImageGallery({
               )}
             </div>
 
+            {/* Namn på bilden — gör den lätt att hitta med sökningen */}
+            <div className="border-t border-border px-2 py-1.5">
+              {renameId === img.id ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    autoFocus
+                    value={renameText}
+                    onChange={(e) => setRenameText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        updateImage.mutate({ id: img.id, caption: renameText.trim() || null });
+                        setRenameId(null);
+                      }
+                      if (e.key === "Escape") setRenameId(null);
+                    }}
+                    placeholder="Namn på bilden"
+                    className="h-8 text-xs"
+                  />
+                  <Button
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    aria-label="Spara namn"
+                    onClick={() => {
+                      updateImage.mutate({ id: img.id, caption: renameText.trim() || null });
+                      setRenameId(null);
+                    }}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={!editable}
+                  onClick={() => {
+                    setRenameText(img.caption ?? "");
+                    setRenameId(img.id);
+                  }}
+                  className="flex w-full items-center gap-1 text-left text-[11px]"
+                >
+                  <span className={cn("min-w-0 truncate", img.caption ? "font-medium" : "text-muted-foreground")}>
+                    {img.caption || (editable ? "Namnge bilden" : "Utan namn")}
+                  </span>
+                  {editable && <Pencil className="ml-auto h-3 w-3 shrink-0 text-muted-foreground" />}
+                </button>
+              )}
+            </div>
+
           </Card>
         );
       })}
