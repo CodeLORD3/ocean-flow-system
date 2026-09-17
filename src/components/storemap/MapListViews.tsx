@@ -83,7 +83,7 @@ export function MapListViews({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <ImageIcon className="h-4 w-4 text-primary" /> Bilder placerade i kartan ({images.length})
+            <ImageIcon className="h-4 w-4 text-primary" /> Bilder i butiken ({images.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
