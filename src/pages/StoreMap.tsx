@@ -708,6 +708,38 @@ export default function StoreMap() {
               }
             />
 
+            {/* Nytt område: dra det på plats, tryck sedan på den stora knappen */}
+            {draftZoneId && zones.some((z) => z.id === draftZoneId) && (
+              <div className="border-t border-emerald-500/40 bg-emerald-50 px-3 py-3">
+                <p className="pb-2 text-xs text-emerald-900">
+                  Dra området på plats i kartan och dra i hörnen till rätt storlek. Tryck sedan på knappen.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    className="h-12 flex-1 bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-700"
+                    onClick={() => setSheetZoneId(draftZoneId)}
+                  >
+                    <Check className="mr-2 h-5 w-5" /> Området färdigmarkerat
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-12 text-sm"
+                    onClick={() => {
+                      if (!confirm("Ta bort det nya området?")) return;
+                      deleteZone.mutate(draftZoneId, {
+                        onSuccess: () => {
+                          setDraftZoneId(null);
+                          setSelected(null);
+                        },
+                      });
+                    }}
+                  >
+                    Ångra
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {placing && (
               <p className="border-t border-primary/40 bg-primary/5 px-3 py-2 text-[11px]">
                 Tryck på platsen inne i ytan där bilden är tagen.{" "}
