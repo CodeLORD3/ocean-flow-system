@@ -203,7 +203,8 @@ export function MapDetailDrawer({
 
   const head = (
     <div className="space-y-3">
-          <div className="flex items-center gap-3">
+          {/* pr-10: håller avstånd till panelens stängkryss uppe till höger */}
+          <div className="flex items-center gap-3 pr-10">
             {zone && (
               <span
                 className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-base font-bold text-white shadow-sm"
