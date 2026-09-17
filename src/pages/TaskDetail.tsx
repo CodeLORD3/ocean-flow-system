@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowUpRight, Camera, Check, Clock, MapPin, Timer, Trash2, User } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  Camera,
+  Check,
+  Clock,
+  Image as ImageIcon,
+  MapPin,
+  Search,
+  Timer,
+  Trash2,
+  User,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,6 +25,8 @@ import { useStaff } from "@/hooks/useStaff";
 import { useFloorPlans, useMapZones } from "@/hooks/useStoreMap";
 import { useUploadEntityImage, type EntityImage } from "@/hooks/useEntityImages";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
+import { ImageArchivePicker } from "@/components/images/ImageArchivePicker";
+import { useAttachArchiveImages } from "@/hooks/useImageArchive";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { missingRequirements, missingText, valueLabel } from "@/lib/taskRequirements";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
@@ -57,6 +71,8 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const upload = useUploadEntityImage();
 
   const [note, setNote] = useState<string | null>(null);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const attachArchive = useAttachArchiveImages();
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [title, setTitle] = useState<string | null>(null);
   const [important, setImportant] = useState<string | null>(null);
@@ -214,17 +230,37 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                 type="file"
                 accept="image/*"
                 capture="environment"
+                multiple
                 className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) addPhoto(f);
+                onChange={async (e) => {
+                  const files = Array.from(e.target.files ?? []);
                   e.currentTarget.value = "";
+                  for (const f of files) await addPhoto(f);
                 }}
               />
               <span className="inline-flex h-10 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted">
                 <Camera className="h-4 w-4" /> Ta bild
               </span>
             </label>
+            <label className="inline-flex">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={async (e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  e.currentTarget.value = "";
+                  for (const f of files) await addPhoto(f);
+                }}
+              />
+              <span className="inline-flex h-10 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted">
+                <ImageIcon className="h-4 w-4" /> Bibliotek
+              </span>
+            </label>
+            <Button variant="outline" size="lg" onClick={() => setArchiveOpen(true)}>
+              <Search className="mr-1 h-4 w-4" /> Sök i arkiv
+            </Button>
           </div>
         </div>
         {(task.requires_note || task.requires_value) && (
@@ -650,6 +686,33 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
         onClose={() => setLightbox(null)}
         title={task.task}
       />
+
+      <ImageArchivePicker
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        saving={attachArchive.isPending}
+        onPick={async (picked) => {
+          if (!task.zone_id) {
+            toast({ title: "Uppgiften saknar yta på kartan", variant: "destructive" });
+            return;
+          }
+          try {
+            await attachArchive.mutateAsync({
+              images: picked,
+              entityType: "map_zone",
+              entityId: task.zone_id,
+              checklistItemId: task.id,
+              floorPlanId: plan?.id ?? null,
+            });
+            setArchiveOpen(false);
+            toast({ title: picked.length > 1 ? "Bilderna kopplade" : "Bilden kopplad" });
+          } catch (e: any) {
+            toast({ title: "Kunde inte koppla bilden", description: e.message, variant: "destructive" });
+          }
+        }}
+      />
+
+
 
       <TaskIssueDialog
         open={issueOpen}
