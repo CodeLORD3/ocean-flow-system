@@ -101,6 +101,8 @@ export function useImportantPapers(storeId?: string | null) {
         line_items: Array.isArray(r.line_items) ? r.line_items : [],
         created_by_name: r.created_by_staff_id ? byStaff[r.created_by_staff_id]?.name ?? null : null,
         created_by_image: r.created_by_staff_id ? byStaff[r.created_by_staff_id]?.image ?? null : null,
+        paid_by_name: r.paid_by_staff_id ? byStaff[r.paid_by_staff_id]?.name ?? null : null,
+        paid_by_image: r.paid_by_staff_id ? byStaff[r.paid_by_staff_id]?.image ?? null : null,
       }));
     },
   });
