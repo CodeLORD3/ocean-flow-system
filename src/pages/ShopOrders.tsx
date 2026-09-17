@@ -625,9 +625,11 @@ export default function ShopOrders() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Copy last order + Product search */}
-            <div className="flex items-end gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sticky top-0 z-20 bg-card pb-2 sm:static sm:bg-transparent sm:pb-0">
               <div className="relative flex-1">
-                <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
+                <Label className="text-sm font-semibold mb-1.5 block sm:text-xs sm:font-medium">
+                  1. Lägg till produkter <span className="font-normal text-muted-foreground">(en åt gången — de samlas i samma beställning)</span>
+                </Label>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <Input
