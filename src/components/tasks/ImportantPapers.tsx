@@ -1423,12 +1423,68 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
           </DialogHeader>
 
           <div className="space-y-3">
+            <input
+              ref={cardCamRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                void readCardPhoto(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            <input
+              ref={cardLibRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                void readCardPhoto(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                className="h-14 justify-center text-sm font-semibold"
+                disabled={cardReading}
+                onClick={() => cardCamRef.current?.click()}
+              >
+                {cardReading ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  <Camera className="mr-2 h-5 w-5" />
+                )}
+                Ta foto på kortet
+              </Button>
+              <Button
+                variant="outline"
+                className="h-14 justify-center text-sm font-semibold"
+                disabled={cardReading}
+                onClick={() => cardLibRef.current?.click()}
+              >
+                <ImagePlus className="mr-2 h-5 w-5" /> Välj bild
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {cardReading
+                ? "Läser av kortet …"
+                : "Fotot används bara för att läsa av korttyp, de fyra sista siffrorna och namnet. Hela kortnumret sparas aldrig."}
+            </p>
+
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Korttyp</Label>
                 <Input
                   value={cardForm.cardBrand}
-                  onChange={(e) => setCardForm((f) => ({ ...f, cardBrand: e.target.value }))}
+                  onChange={(e) => {
+                    setCardAutoFilled((s) => {
+                      const n = new Set(s);
+                      n.delete("cardBrand");
+                      return n;
+                    });
+                    setCardForm((f) => ({ ...f, cardBrand: e.target.value }));
+                  }}
                   placeholder="Visa, Twint …"
                   className="h-10"
                 />
