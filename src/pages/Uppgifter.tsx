@@ -44,6 +44,7 @@ import { WORK_TYPES, workTypeLabel } from "@/lib/workType";
 import { TASK_LINKS, taskTarget } from "@/lib/taskLink";
 import { useProductionRecipes } from "@/hooks/useProductionRecipes";
 import ProductionRecipes from "@/pages/ProductionRecipes";
+import { ImportantPapers } from "@/components/tasks/ImportantPapers";
 
 const WEEKDAY_NAMES = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
 
