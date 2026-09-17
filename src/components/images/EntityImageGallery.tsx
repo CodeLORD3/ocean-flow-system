@@ -249,7 +249,7 @@ export function EntityImageGallery({
       return g.imageIds.map((id) => images.find((i) => i.id === id)).filter(Boolean) as EntityImage[];
     }
     return images.filter((i) => dayKey(i.created_at) === view.key);
-  }, [catalog, view, images, favorites, previewImages, groups]);
+  }, [catalog, view, images, favorites, previewImages, groups, search, searchHits]);
 
   /** I helskärmsläge bläddrar man genom hela den utvalda poolen, inte bara de synliga. */
   const lightboxImages: EntityImage[] =
