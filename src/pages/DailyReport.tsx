@@ -108,6 +108,8 @@ export default function DailyReport() {
   const [hydrated, setHydrated] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  /** True så snart momssatsen är ändrad för hand eller läst ur ett utkast. */
+  const vatTouched = useRef(false);
 
   // Nollställ formuläret när butik eller datum byts — inget följer med mellan butiker.
   const scopeKey = `${activeStoreId ?? ""}|${date}`;
@@ -141,7 +143,7 @@ export default function DailyReport() {
       if (typeof d.receipts === "string") setReceipts(d.receipts);
       if (typeof d.largest === "string") setLargest(d.largest);
       if (typeof d.comment === "string") setComment(d.comment);
-      if (typeof d.vatPct === "string") setVatPct(d.vatPct);
+      if (typeof d.vatPct === "string") { setVatPct(d.vatPct); vatTouched.current = true; }
       if (d.staffRows && typeof d.staffRows === "object") setStaffRows(d.staffRows);
       if (Array.isArray(d.extraIds)) setExtraIds(d.extraIds);
       if (Array.isArray(d.waste)) setWaste(d.waste);
@@ -271,7 +273,6 @@ export default function DailyReport() {
   }, [existing, isLoading, hydrated]);
 
   // Momssatsen följer butiken: 2,6 % i Schweiz, 6 % i Sverige.
-  const vatTouched = useRef(false);
   useEffect(() => {
     if (vatTouched.current) return;
     setVatPct(String(defaultVat).replace(".", ","));
@@ -515,7 +516,7 @@ export default function DailyReport() {
                   inputMode="decimal"
                   autoComplete="off"
                   value={vatPct}
-                  onChange={(e) => setVatPct(decText(e.target.value))}
+                  onChange={(e) => { vatTouched.current = true; setVatPct(decText(e.target.value)); }}
                 />
               </div>
               <div className="space-y-1">
