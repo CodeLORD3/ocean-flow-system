@@ -78,7 +78,8 @@ export function useImportantPapers(storeId?: string | null) {
     queryKey: ["important-papers", storeId ?? "alla"],
     queryFn: async () => {
       let q = supabase.from("important_papers").select("*").order("created_at", { ascending: false });
-      if (storeId) q = q.or(`store_id.is.null,store_id.eq.${storeId}`);
+      // Papper hör bara till sin egen butik — inget delas mellan butikerna.
+      if (storeId) q = q.eq("store_id", storeId);
       const { data, error } = await q;
       if (error) throw error;
       const rows = (data ?? []) as unknown as ImportantPaper[];
