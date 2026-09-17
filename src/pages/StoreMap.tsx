@@ -917,6 +917,35 @@ export default function StoreMap() {
                           <span className="ml-auto text-[10px] text-muted-foreground">
                             {zonePoints(z).length} hörn
                           </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-1.5 text-[10px] text-destructive"
+                            title="Ta bort området"
+                            onClick={() => {
+                              if (
+                                !window.confirm(
+                                  `Ta bort ${z.name}? Uppgifter och bilder som hör till ytan tappar sin plats i kartan.`,
+                                )
+                              )
+                                return;
+                              deleteZone.mutate(z.id, {
+                                onSuccess: () => {
+                                  setSelected(null);
+                                  setFocus(null);
+                                  toast({ title: `${z.name} är borttagen` });
+                                },
+                                onError: (e) =>
+                                  toast({
+                                    title: "Kunde inte ta bort området",
+                                    description: (e as Error).message,
+                                    variant: "destructive",
+                                  }),
+                              });
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
                     ))}
