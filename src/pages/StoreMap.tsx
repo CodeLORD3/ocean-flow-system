@@ -538,15 +538,27 @@ export default function StoreMap() {
                 </div>
               ))}
               {canManage && (
-                <Button
-                  size="sm"
-                  variant={pinMode ? "default" : "outline"}
-                  className="ml-auto h-7 text-[11px] gap-1"
-                  onClick={() => setPinMode((v) => !v)}
-                >
-                  <PinIcon className="h-3 w-3" />
-                  {pinMode ? "Tryck på kartan…" : "Ny punkt"}
-                </Button>
+                <div className="ml-auto flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[11px] gap-1"
+                    onClick={() => addZone()}
+                    disabled={saveZone.isPending}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Nytt område
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={pinMode ? "default" : "outline"}
+                    className="h-7 text-[11px] gap-1"
+                    onClick={() => setPinMode((v) => !v)}
+                  >
+                    <PinIcon className="h-3 w-3" />
+                    {pinMode ? "Tryck på kartan…" : "Ny punkt"}
+                  </Button>
+                </div>
               )}
               <span className={`text-[10px] text-muted-foreground tabular-nums ${canManage ? "" : "ml-auto"}`}>
                 {pxPerMeter ? `Yta ${formatSqm(totalSqm)}` : "Skala saknas — fyll i kvm på en zon"}
