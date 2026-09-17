@@ -652,7 +652,7 @@ export default function ShopOrders() {
                         if (pick) addProduct(pick);
                       }
                     }}
-                    className="pl-8 h-8 text-xs"
+                    className="pl-9 h-12 text-base sm:pl-8 sm:h-8 sm:text-xs"
                   />
                 </div>
                 {filteredProducts.length > 0 && (
