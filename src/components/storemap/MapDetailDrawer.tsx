@@ -80,6 +80,7 @@ export function MapDetailDrawer({
   inline = false,
   onOpenPage,
   onEditZone,
+  onEditZoneShape,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -101,6 +102,8 @@ export function MapDetailDrawer({
   onOpenPage?: () => void;
   /** Öppnar panelen där området beskrivs och redigeras. */
   onEditZone?: () => void;
+  /** Startar formredigering av området direkt i kartan. */
+  onEditZoneShape?: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
   const entityId = object?.id ?? zone?.id ?? "";
@@ -258,10 +261,19 @@ export function MapDetailDrawer({
           {zone?.description && (
             <p className="whitespace-pre-line rounded-lg bg-muted/60 px-3 py-2 text-sm">{zone.description}</p>
           )}
-          {zone && canManage && onEditZone && (
-            <Button variant="outline" className="h-10 w-full gap-2 text-sm font-semibold" onClick={onEditZone}>
-              <Pencil className="h-4 w-4" /> Redigera området
-            </Button>
+          {zone && canManage && (onEditZone || onEditZoneShape) && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {onEditZone && (
+                <Button variant="outline" className="h-10 w-full gap-2 text-sm font-semibold" onClick={onEditZone}>
+                  <Pencil className="h-4 w-4" /> Redigera området
+                </Button>
+              )}
+              {onEditZoneShape && (
+                <Button variant="outline" className="h-10 w-full gap-2 text-sm font-semibold" onClick={onEditZoneShape}>
+                  <Pencil className="h-4 w-4" /> Ändra form på kartan
+                </Button>
+              )}
+            </div>
           )}
           <div className="flex items-center gap-3">
             <StatusRing percent={progress.percent} status={progress.status} size={40} label={`${progress.percent}%`} />
