@@ -49,7 +49,7 @@ export function MobileTabBar() {
   const location = useLocation();
 
   const base = site === "shop" ? SHOP : site === "production" ? PRODUCTION : ADMIN;
-  const items = base.filter((i) => canAccessRoute(site, i.url)).slice(0, 4);
+  const items = base.filter((i) => canAccessRoute(site, i.url)).slice(0, 5);
 
   return (
     <nav
