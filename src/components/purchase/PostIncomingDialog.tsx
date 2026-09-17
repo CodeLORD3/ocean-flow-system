@@ -133,6 +133,65 @@ export default function PostIncomingDialog({ open, onOpenChange, report, lines, 
     }));
   };
 
+  // Rader som inte kan räknas om till lagerenhet — visas med direkt åtgärd så
+  // ingen vikt behöver gissas: fyll i styck-/lådvikt eller rätta radens enhet.
+  const unresolvedLines = useMemo(
+    () =>
+      effectiveLines
+        .map((l) => ({ line: l, res: quantityToStockUnit(l, productById.get(l.product_id ?? "")) }))
+        .filter(({ res }) => res.qty === null && (res.reason ?? "").includes("vikt")),
+    [effectiveLines, productById],
+  );
+
+  const [weightInputs, setWeightInputs] = useState<Record<string, string>>({});
+  const [fixing, setFixing] = useState<string | null>(null);
+
+  const refreshAfterFix = () => {
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+    queryClient.invalidateQueries({ queryKey: ["products_active"] });
+    queryClient.invalidateQueries({ queryKey: ["purchase-report-lines"] });
+  };
+
+  const saveWeight = async (productId: string, field: "weight_per_piece" | "nominal_weight_kg") => {
+    const raw = weightInputs[productId] ?? "";
+    const value = Number(raw.replace(",", "."));
+    if (!Number.isFinite(value) || value <= 0) {
+      toast({ title: "Ange en vikt större än noll", variant: "destructive" });
+      return;
+    }
+    setFixing(productId);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .update({ [field]: value } as any)
+        .eq("id", productId);
+      if (error) throw error;
+      refreshAfterFix();
+      toast({ title: "Vikten sparad på produkten" });
+    } catch (e: any) {
+      toast({ title: "Kunde inte spara vikten", description: e.message, variant: "destructive" });
+    } finally {
+      setFixing(null);
+    }
+  };
+
+  const setLineUnit = async (lineId: string, unit: string) => {
+    setFixing(lineId);
+    try {
+      const { error } = await supabase
+        .from("purchase_report_lines")
+        .update({ unit } as any)
+        .eq("id", lineId);
+      if (error) throw error;
+      refreshAfterFix();
+      toast({ title: `Raden räknas nu i ${unit}` });
+    } catch (e: any) {
+      toast({ title: "Kunde inte ändra enheten", description: e.message, variant: "destructive" });
+    } finally {
+      setFixing(null);
+    }
+  };
+
   const handlePost = async () => {
     if (!report) return;
     setSaving(true);
@@ -300,6 +359,61 @@ export default function PostIncomingDialog({ open, onOpenChange, report, lines, 
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> {w}
                   </p>
                 ))}
+              </div>
+            )}
+
+            {unresolvedLines.length > 0 && (
+              <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/5 p-3">
+                <p className="text-sm font-medium text-destructive">Åtgärda vikten</p>
+                {unresolvedLines.map(({ line, res }) => {
+                  const product = productById.get(line.product_id ?? "");
+                  const productUnit = (product?.unit ?? "kg").toLowerCase();
+                  const boxCase = (res.reason ?? "").includes("låd");
+                  const field = boxCase ? "nominal_weight_kg" : "weight_per_piece";
+                  const pid = line.product_id ?? "";
+                  return (
+                    <div key={line.id} className="space-y-2 rounded-md border bg-background p-3">
+                      <div className="text-sm font-medium">{line.product_name}</div>
+                      <p className="text-xs text-muted-foreground">
+                        {Number(line.quantity ?? 0)} {line.unit ?? productUnit} på följesedeln —{" "}
+                        {res.reason}
+                      </p>
+                      <div className="flex flex-wrap items-end gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs">
+                            {boxCase ? "Vikt per låda (kg)" : "Styckvikt (kg per styck)"}
+                          </Label>
+                          <Input
+                            className="h-12 w-40 tabular-nums"
+                            inputMode="decimal"
+                            placeholder={boxCase ? "10" : "0,5"}
+                            value={weightInputs[pid] ?? ""}
+                            onChange={(e) =>
+                              setWeightInputs((prev) => ({ ...prev, [pid]: e.target.value }))
+                            }
+                          />
+                        </div>
+                        <Button
+                          className="min-h-[48px]"
+                          disabled={!pid || fixing === pid}
+                          onClick={() => saveWeight(pid, field)}
+                        >
+                          Spara vikten
+                        </Button>
+                        {productUnit === "kg" && (line.unit ?? "").toLowerCase() !== "kg" && (
+                          <Button
+                            variant="outline"
+                            className="min-h-[48px]"
+                            disabled={fixing === line.id}
+                            onClick={() => setLineUnit(line.id, "kg")}
+                          >
+                            Raden är i kilo
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
