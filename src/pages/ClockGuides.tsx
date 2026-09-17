@@ -76,8 +76,10 @@ export default function ClockGuides() {
         <CardContent className="space-y-4">
           <ol className="space-y-3">
             <Step n={1} title="Stämpla in: slå ditt personnummer på knappsatsen och tryck FORTSÄTT.">
-              Ditt namn visas. Tryck IN. Skärmen kvitterar tiden och butiken.
+              Ditt namn visas. Tryck IN. Skärmen kvitterar tiden och butiken. Har du inget svenskt
+              personnummer slår du i stället din personliga kod från kontoret — allt annat är lika.
             </Step>
+
             <Step n={2} title="Stämpla ut: samma sak, tryck UT.">
               Kvittensen visar din arbetade tid för dagen.
             </Step>
