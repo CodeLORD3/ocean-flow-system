@@ -242,6 +242,28 @@ async function throwShortage(shortages: { productId: string; missing: number }[]
   );
 }
 
+/**
+ * Stoppmeddelande när en exportrad inte kan få parti. Exportfakturan måste visa
+ * parti, art, fångstområde och fartyg per rad, så raden får inte skickas utan.
+ */
+async function throwMissingLot(missing: { productId: string; missing: number }[]) {
+  const { data: prods } = await supabase
+    .from("products")
+    .select("id, name, unit")
+    .in("id", missing.map((s) => s.productId));
+  const nameOf = new Map((prods || []).map((p: any) => [p.id, p]));
+  const list = missing
+    .map((s) => {
+      const p: any = nameOf.get(s.productId);
+      const qty = Math.round(s.missing * 10) / 10;
+      return `${p?.name ?? "Okänd produkt"}: ${qty} ${p?.unit ?? "kg"} utan parti`;
+    })
+    .join(", ");
+  throw new Error(
+    `Exportleverans kräver parti på varje rad. ${list}. Bokför inleveransen med partinummer, eller koka/filéa dagens vara, innan ordern skickas.`,
+  );
+}
+
 
 
 /**
