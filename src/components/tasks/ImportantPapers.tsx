@@ -545,14 +545,34 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   e.target.value = "";
                 }}
               />
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" className="h-10" onClick={() => fileRef.current?.click()}>
                   <Paperclip className="mr-1 h-4 w-4" /> Välj fil eller ta foto
                 </Button>
+                {file && (
+                  <Button
+                    variant="outline"
+                    className="h-10"
+                    disabled={reading}
+                    onClick={() => void readPaper(file)}
+                  >
+                    {reading ? (
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Wand2 className="mr-1 h-4 w-4" />
+                    )}
+                    Läs av igen
+                  </Button>
+                )}
                 <span className="truncate text-xs text-muted-foreground">
                   {file?.name ?? edit?.file_name ?? "Ingen fil"}
                 </span>
               </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {reading
+                  ? "Läser av pappret …"
+                  : "Fälten fylls i automatiskt från fotot — kontrollera de gröna fälten."}
+              </p>
             </div>
           </div>
 
