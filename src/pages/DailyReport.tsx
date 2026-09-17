@@ -96,6 +96,7 @@ export default function DailyReport() {
   const [waste, setWaste] = useState<WasteItem[]>([]);
   const [wasteRaw, setWasteRaw] = useState<Record<string, string>>({});
   const [comment, setComment] = useState("");
+  const [vatPct, setVatPct] = useState("12");
   const [hydrated, setHydrated] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -118,6 +119,73 @@ export default function DailyReport() {
     setHydrated(false);
   }, [scopeKey]);
 
+  // ── Utkast: allt man skrivit ligger kvar om man byter sida och kommer tillbaka ──
+  const draftKey = `dagsrapport-utkast:${scopeKey}`;
+
+  /** Läs in sparat utkast när butik/datum är känt — före serverns värden. */
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (!raw) return;
+      const d = JSON.parse(raw) as Record<string, any>;
+      if (typeof d.gross === "string") setGross(d.gross);
+      if (typeof d.net === "string") setNet(d.net);
+      if (typeof d.receipts === "string") setReceipts(d.receipts);
+      if (typeof d.largest === "string") setLargest(d.largest);
+      if (typeof d.comment === "string") setComment(d.comment);
+      if (typeof d.vatPct === "string") setVatPct(d.vatPct);
+      if (d.staffRows && typeof d.staffRows === "object") setStaffRows(d.staffRows);
+      if (Array.isArray(d.extraIds)) setExtraIds(d.extraIds);
+      if (Array.isArray(d.waste)) setWaste(d.waste);
+      setHydrated(true);
+    } catch {
+      /* trasigt utkast ignoreras */
+    }
+  }, [draftKey]);
+
+  /** Spara utkastet vid varje ändring så inget tappas när man lämnar sidan. */
+  useEffect(() => {
+    if (!hydrated || !activeStoreId) return;
+    try {
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({ gross, net, receipts, largest, comment, vatPct, staffRows, extraIds, waste }),
+      );
+    } catch {
+      /* fullt lagringsutrymme får inte stoppa arbetet */
+    }
+  }, [hydrated, activeStoreId, draftKey, gross, net, receipts, largest, comment, vatPct, staffRows, extraIds, waste]);
+
+  /**
+   * Brutto och netto räknas ut ur varandra med butikens momssats.
+   * Fältet man skriver i styr — det andra fylls i automatiskt.
+   */
+  const vatRate = useMemo(() => {
+    const r = num(vatPct);
+    return r != null && r >= 0 && r < 100 ? r : 0;
+  }, [vatPct]);
+
+  const grossToNet = (v: string) => {
+    const g = num(v);
+    if (g == null) return "";
+    return (g / (1 + vatRate / 100)).toFixed(2);
+  };
+  const netToGross = (v: string) => {
+    const n = num(v);
+    if (n == null) return "";
+    return (n * (1 + vatRate / 100)).toFixed(2);
+  };
+
+  const onGrossChange = (v: string) => {
+    const t = decText(v);
+    setGross(t);
+    setNet(grossToNet(t));
+  };
+  const onNetChange = (v: string) => {
+    const t = decText(v);
+    setNet(t);
+    setGross(netToGross(t));
+  };
 
   /** Enter hoppar till nästa fält istället för att skicka formuläret. */
   const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
@@ -352,6 +420,11 @@ export default function DailyReport() {
         comment: comment.trim() || null,
         created_by: me ? `${me.first_name} ${me.last_name}` : null,
       });
+      try {
+        localStorage.removeItem(draftKey);
+      } catch {
+        /* ignoreras */
+      }
       toast.success("Dagsrapport sparad");
       switchTab("/organisation");
     } catch (e: any) {
@@ -401,7 +474,7 @@ export default function DailyReport() {
                   enterKeyHint="next"
                   autoComplete="off"
                   value={gross}
-                  onChange={(e) => setGross(e.target.value)}
+                  onChange={(e) => onGrossChange(e.target.value)}
                 />
               </div>
               <div className="space-y-1">
@@ -412,7 +485,20 @@ export default function DailyReport() {
                   enterKeyHint="next"
                   autoComplete="off"
                   value={net}
-                  onChange={(e) => setNet(e.target.value)}
+                  onChange={(e) => onNetChange(e.target.value)}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Brutto och netto räknas ut åt varandra med {vatPct || "0"} % moms.
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Moms (%)</Label>
+                <Input
+                  className="h-11 w-28 text-base font-mono tabular-nums"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  value={vatPct}
+                  onChange={(e) => setVatPct(decText(e.target.value))}
                 />
               </div>
               <div className="space-y-1">
