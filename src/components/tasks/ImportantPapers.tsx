@@ -1323,31 +1323,24 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                                 {on && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
                               </button>
                               {!c.bank && (
-                                <div className="flex flex-wrap items-center gap-1 border-t border-dashed px-2.5 py-1.5">
-                                  <span className="text-[11px] text-muted-foreground">Vilken bank?</span>
-                                  {BANK_CHOICES.map((b) => (
-                                    <button
-                                      key={b}
-                                      type="button"
-                                      className="rounded-full border px-2 py-0.5 text-[11px] font-medium hover:bg-muted"
-                                      onClick={() =>
-                                        saveCard.mutate({
-                                          id: c.id,
-                                          staffId: c.staff_id,
-                                          cardBrand: c.card_brand,
-                                          bank: b,
-                                          cardLast4: c.card_last4,
-                                          cardHolder: c.card_holder,
-                                          label: c.label,
-                                          cardKind: c.card_kind,
-                                          storeId: c.store_id,
-                                        })
-                                      }
-                                    >
-                                      {b}
-                                    </button>
-                                  ))}
-                                </div>
+                                <button
+                                  type="button"
+                                  className="w-full border-t border-dashed px-2.5 py-1 text-left text-[11px] font-medium text-primary hover:bg-muted"
+                                  onClick={() => {
+                                    setEditingCardId(c.id);
+                                    setCardForm({
+                                      cardBrand: c.card_brand ?? "",
+                                      bank: "",
+                                      cardLast4: c.card_last4,
+                                      cardHolder: c.card_holder ?? "",
+                                      staffId: c.staff_id ?? "",
+                                      cardKind: c.card_kind,
+                                    });
+                                    setCardOpen(true);
+                                  }}
+                                >
+                                  Ange bank
+                                </button>
                               )}
                             </div>
                           );
@@ -1356,6 +1349,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                           variant="outline"
                           className="h-10 justify-start"
                           onClick={() => {
+                            setEditingCardId(null);
                             setCardForm({
                               cardBrand: form.cardBrand,
                               bank: "",
