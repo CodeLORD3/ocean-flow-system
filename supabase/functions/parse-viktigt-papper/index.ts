@@ -44,6 +44,11 @@ Fyll bara i det som faktiskt står på pappret. Gissa aldrig.
 - net_amount / vat_amount / gross_amount: belopp som siffror utan valuta
 - currency: CHF, SEK eller EUR
 - payment_method: kort om kort/karte/carte/visa/mastercard/twint står, kontant om kontant/bar/cash står, annars null
+- card_brand: Visa, Mastercard, Maestro, Amex, Twint, Postfinance eller liknande som står på kvittot
+- card_last4: exakt fyra sista siffrorna i kortnumret om det står (t.ex. "**** 4321" -> "4321"), annars null
+- card_holder: namnet på kortinnehavaren om det står
+- line_items: varje köpt rad med name, quantity och amount — det som köptes
+- expense_category: kort kostnadsslag, t.ex. Livsmedel, Förbrukningsmaterial, Frakt, Reparation, Kontor
 - title: kort rubrik, t.ex. "Frukt och grönt"
 - description: en kort mening om vad pappret innehåller, på svenska`,
           },
@@ -73,6 +78,23 @@ Fyll bara i det som faktiskt står på pappret. Gissa aldrig.
                   gross_amount: { type: ["number", "null"] },
                   currency: { type: ["string", "null"] },
                   payment_method: { type: ["string", "null"] },
+                  card_brand: { type: ["string", "null"] },
+                  card_last4: { type: ["string", "null"] },
+                  card_holder: { type: ["string", "null"] },
+                  expense_category: { type: ["string", "null"] },
+                  line_items: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        name: { type: "string" },
+                        quantity: { type: ["number", "null"] },
+                        amount: { type: ["number", "null"] },
+                      },
+                      required: ["name"],
+                      additionalProperties: false,
+                    },
+                  },
                   title: { type: ["string", "null"] },
                   description: { type: ["string", "null"] },
                 },
