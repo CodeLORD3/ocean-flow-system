@@ -21,7 +21,7 @@ const SHOP: Item[] = [
   { title: "Lager", url: "/inventory", icon: Package },
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
   { title: "Kundorder", url: "/customer-orders", icon: ClipboardList },
-  { title: "Ekonomi", url: "/uppgifter?flik=ekonomi", icon: Receipt },
+  { title: "Ekonomi", url: "/viktiga-papper", icon: Receipt },
 ];
 
 const PRODUCTION: Item[] = [
