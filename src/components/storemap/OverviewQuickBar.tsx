@@ -1,4 +1,4 @@
-import { ClipboardList, Clock } from "lucide-react";
+import { ClipboardCheck, ClipboardList, Clock, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import type { MapTask } from "@/hooks/useStoreMap";
