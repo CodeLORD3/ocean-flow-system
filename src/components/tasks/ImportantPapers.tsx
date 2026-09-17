@@ -233,6 +233,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
   const [cardOpen, setCardOpen] = useState(false);
   const [cardForm, setCardForm] = useState({
     cardBrand: "",
+    bank: "",
     cardLast4: "",
     cardHolder: "",
     staffId: "",
@@ -532,10 +533,12 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
       const brand = typeof card.card_brand === "string" ? card.card_brand : "";
       const last4 = typeof card.card_last4 === "string" ? card.card_last4.replace(/\D/g, "").slice(-4) : "";
       const holder = typeof card.card_holder === "string" ? card.card_holder : "";
+      const bank = typeof card.company_name === "string" ? card.company_name : "";
       const found = new Set<string>();
       setCardForm((f) => {
         const next = { ...f };
         if (brand) { next.cardBrand = brand; found.add("cardBrand"); }
+        if (bank) { next.bank = bank; found.add("bank"); }
         if (last4.length === 4) { next.cardLast4 = last4; found.add("cardLast4"); }
         if (holder) { next.cardHolder = holder; found.add("cardHolder"); }
         const owner = staffIdFromName(holder);
@@ -1265,7 +1268,9 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                                   {c.staff_name || c.card_holder || c.label || "Kort"}
                                 </span>
                                 <span className="block truncate text-[11px] text-muted-foreground">
-                                  {[c.card_brand || "Kort", `••${c.card_last4}`].join(" ")}
+                                  {[c.bank, c.card_brand || "Kort", `••${c.card_last4}`]
+                                    .filter(Boolean)
+                                    .join(" · ")}
                                 </span>
                               </span>
                               {c.card_kind === "privat" ? (
@@ -1287,6 +1292,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                           onClick={() => {
                             setCardForm({
                               cardBrand: form.cardBrand,
+                              bank: "",
                               cardLast4: form.cardLast4,
                               cardHolder: form.cardHolder,
                               staffId: "",
@@ -1827,6 +1833,45 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
             </div>
 
             <div>
+              <Label className="text-xs">Vilken bank står på kortet?</Label>
+              <Input
+                value={cardForm.bank}
+                onChange={(e) => {
+                  setCardAutoFilled((s) => {
+                    const n = new Set(s);
+                    n.delete("bank");
+                    return n;
+                  });
+                  setCardForm((f) => ({ ...f, bank: e.target.value }));
+                }}
+                placeholder="PostFinance, UBS, SEB …"
+                className={`h-10 ${cardAutoFilled.has("bank") ? "border-amber-400 bg-amber-50" : ""}`}
+              />
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {["PostFinance", "UBS", "Raiffeisen", "ZKB", "Migros Bank", "SEB", "Swedbank", "Handelsbanken", "Nordea"].map(
+                  (b) => (
+                    <Button
+                      key={b}
+                      type="button"
+                      variant={cardForm.bank === b ? "default" : "outline"}
+                      className="h-7 px-2 text-[11px]"
+                      onClick={() => {
+                        setCardAutoFilled((s) => {
+                          const n = new Set(s);
+                          n.delete("bank");
+                          return n;
+                        });
+                        setCardForm((f) => ({ ...f, bank: f.bank === b ? "" : b }));
+                      }}
+                    >
+                      {b}
+                    </Button>
+                  ),
+                )}
+              </div>
+            </div>
+
+            <div>
               <Label className="text-xs">Vem äger kortet?</Label>
               <PersonSelect
                 value={cardForm.staffId}
@@ -1919,6 +1964,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                     storeId: storeId ?? null,
                     staffId: cardForm.staffId || null,
                     cardBrand: cardForm.cardBrand,
+                    bank: cardForm.bank,
                     cardLast4: cardForm.cardLast4,
                     cardHolder:
                       cardForm.cardHolder ||

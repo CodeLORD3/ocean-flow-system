@@ -7,6 +7,8 @@ export interface PaymentCard {
   store_id: string | null;
   staff_id: string | null;
   card_brand: string | null;
+  /** Banken eller utgivaren som står på kortet, t.ex. PostFinance, UBS, SEB. */
+  bank: string | null;
   card_last4: string;
   card_holder: string | null;
   label: string | null;
@@ -59,6 +61,7 @@ export interface PaymentCardInput {
   storeId?: string | null;
   staffId?: string | null;
   cardBrand?: string | null;
+  bank?: string | null;
   cardLast4: string;
   cardHolder?: string | null;
   label?: string | null;
@@ -73,6 +76,7 @@ export function useSavePaymentCard() {
         store_id: input.storeId ?? null,
         staff_id: input.staffId ?? null,
         card_brand: input.cardBrand?.trim() || null,
+        bank: input.bank?.trim() || null,
         card_last4: input.cardLast4.trim(),
         card_holder: input.cardHolder?.trim() || null,
         label: input.label?.trim() || null,
@@ -110,7 +114,7 @@ export function matchCard(cards: PaymentCard[], last4: string) {
 
 export function cardLabel(c: PaymentCard) {
   const who = c.staff_name || c.card_holder;
-  return [c.card_brand || "Kort", `••${c.card_last4}`, who, c.card_kind === "privat" ? "privat" : null]
+  return [c.bank, c.card_brand || "Kort", `••${c.card_last4}`, who, c.card_kind === "privat" ? "privat" : null]
     .filter(Boolean)
     .join(" · ");
 }
