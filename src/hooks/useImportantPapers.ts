@@ -127,6 +127,7 @@ export function useSaveImportantPaper() {
         gross_amount: input.grossAmount ?? null,
         currency: input.currency || "CHF",
         document_number: input.documentNumber?.trim() || null,
+        payment_method: input.paymentMethod ?? null,
         description: input.description?.trim() || null,
         tags: input.tags ?? [],
       };
