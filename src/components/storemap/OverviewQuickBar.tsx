@@ -1,5 +1,7 @@
-import { ClipboardCheck, ClipboardList, Clock, FileText } from "lucide-react";
+import { Check, ClipboardCheck, ClipboardList, Clock, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import type { MapTask } from "@/hooks/useStoreMap";
 
