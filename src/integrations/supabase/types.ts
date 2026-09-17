@@ -5852,6 +5852,188 @@ export type Database = {
         }
         Relationships: []
       }
+      image_group_items: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          image_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          image_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          image_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_group_items_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "image_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_group_items_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "entity_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      image_groups: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          day_key: string | null
+          description: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          kind: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          day_key?: string | null
+          description?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          kind?: string
+          name?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          day_key?: string | null
+          description?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          kind?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      important_papers: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          created_by: string | null
+          created_by_staff_id: string | null
+          currency: string
+          description: string | null
+          document_number: string | null
+          file_mime: string | null
+          file_name: string | null
+          file_url: string | null
+          gross_amount: number | null
+          id: string
+          net_amount: number | null
+          paper_date: string | null
+          paper_type: string
+          payment_method: string | null
+          store_id: string | null
+          tags: string[]
+          title: string | null
+          updated_at: string
+          vat_amount: number | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_staff_id?: string | null
+          currency?: string
+          description?: string | null
+          document_number?: string | null
+          file_mime?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          gross_amount?: number | null
+          id?: string
+          net_amount?: number | null
+          paper_date?: string | null
+          paper_type?: string
+          payment_method?: string | null
+          store_id?: string | null
+          tags?: string[]
+          title?: string | null
+          updated_at?: string
+          vat_amount?: number | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_staff_id?: string | null
+          currency?: string
+          description?: string | null
+          document_number?: string | null
+          file_mime?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          gross_amount?: number | null
+          id?: string
+          net_amount?: number | null
+          paper_date?: string | null
+          paper_type?: string
+          payment_method?: string | null
+          store_id?: string | null
+          tags?: string[]
+          title?: string | null
+          updated_at?: string
+          vat_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "important_papers_created_by_staff_id_fkey"
+            columns: ["created_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "important_papers_created_by_staff_id_fkey"
+            columns: ["created_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "important_papers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "important_papers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incoming_deliveries: {
         Row: {
           created_at: string | null
@@ -7770,6 +7952,7 @@ export type Database = {
           area_sqm: number | null
           color: string | null
           created_at: string
+          description: string | null
           floor_plan_id: string
           height: number
           id: string
@@ -7782,11 +7965,13 @@ export type Database = {
           x: number
           y: number
           zone_key: string | null
+          zone_kind: string | null
         }
         Insert: {
           area_sqm?: number | null
           color?: string | null
           created_at?: string
+          description?: string | null
           floor_plan_id: string
           height?: number
           id?: string
@@ -7799,11 +7984,13 @@ export type Database = {
           x?: number
           y?: number
           zone_key?: string | null
+          zone_kind?: string | null
         }
         Update: {
           area_sqm?: number | null
           color?: string | null
           created_at?: string
+          description?: string | null
           floor_plan_id?: string
           height?: number
           id?: string
@@ -7816,6 +8003,7 @@ export type Database = {
           x?: number
           y?: number
           zone_key?: string | null
+          zone_kind?: string | null
         }
         Relationships: [
           {
