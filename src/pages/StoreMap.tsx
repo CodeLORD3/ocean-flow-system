@@ -271,6 +271,37 @@ export default function StoreMap() {
     return [...groups.values()];
   }, [planImages, zones]);
 
+  /**
+   * Nytt område: läggs som en ruta på en ledig plats i kartan, får nästa färg
+   * i paletten och öppnas direkt i redigeringsläget så namn och form kan sättas.
+   */
+  const addZone = () => {
+    if (!plan || !storeId) return;
+    const step = 24 * (zones.length % 6);
+    saveZone.mutate(
+      {
+        floor_plan_id: plan.id,
+        store_id: storeId,
+        name: `Nytt område ${zones.length + 1}`,
+        color: nextZoneColor(zones.map((z) => z.color)),
+        x: 60 + step,
+        y: 60 + step,
+        width: 220,
+        height: 160,
+      },
+      {
+        onSuccess: (id) => {
+          setMode("redigera");
+          setView("karta");
+          setSelected({ kind: "zone", id: id as string });
+          toast({ title: "Området är skapat", description: "Ge det ett namn och dra det på plats i kartan." });
+        },
+        onError: (e) =>
+          toast({ title: "Kunde inte skapa området", description: (e as Error).message, variant: "destructive" }),
+      },
+    );
+  };
+
   const addObject = (t: MapObjectType) => {
     if (!plan) return;
     const zone = selectedZone ?? zones[0];
