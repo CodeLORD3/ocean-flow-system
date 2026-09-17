@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { FileText, Loader2, Paperclip, Plus, Search, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { Camera, FileText, ImagePlus, Loader2, Paperclip, Plus, Search, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
