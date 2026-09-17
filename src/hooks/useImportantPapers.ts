@@ -168,6 +168,8 @@ export function useSaveImportantPaper() {
         paper_type: input.paperType,
         title: input.title?.trim() || null,
         company_name: input.companyName?.trim() || null,
+        company_website: input.companyWebsite?.trim() || null,
+        company_logo_url: input.companyLogoUrl?.trim() || null,
         paper_date: input.paperDate || null,
         net_amount: input.netAmount ?? null,
         vat_amount: input.vatAmount ?? null,
