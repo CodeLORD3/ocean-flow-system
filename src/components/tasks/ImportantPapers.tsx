@@ -926,7 +926,8 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                         className={cn("h-10", lit("cardHolder"))}
                       />
                     </div>
-                  </div>
+                    </div>
+                  </>
                 )}
               </div>
             )}
