@@ -469,7 +469,7 @@ export default function DailyReport() {
                   enterKeyHint="next"
                   autoComplete="off"
                   value={gross}
-                  onChange={(e) => setGross(e.target.value)}
+                  onChange={(e) => onGrossChange(e.target.value)}
                 />
               </div>
               <div className="space-y-1">
