@@ -52,7 +52,30 @@ export function OverviewQuickBar({ tasks }: { tasks: MapTask[] }) {
             <span className="block text-xs text-muted-foreground">Stämpelklockan för butiken</span>
           </span>
         </button>
+        <button
+          type="button"
+          onClick={() => navigate("/dagsrapport")}
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-5 text-left shadow-sm transition hover:bg-muted"
+        >
+          <FileText className="h-7 w-7 shrink-0 text-primary" />
+          <span className="min-w-0">
+            <span className="block font-heading text-lg font-semibold leading-tight">Dagsrapport</span>
+            <span className="block text-xs text-muted-foreground">Dagens siffror för butiken</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate("/inventory")}
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-5 text-left shadow-sm transition hover:bg-muted"
+        >
+          <ClipboardCheck className="h-7 w-7 shrink-0 text-primary" />
+          <span className="min-w-0">
+            <span className="block font-heading text-lg font-semibold leading-tight">Inventeringsrapport</span>
+            <span className="block text-xs text-muted-foreground">Räkna av lagret</span>
+          </span>
+        </button>
       </div>
+
 
       <div className="rounded-2xl border border-border bg-card px-4 py-3">
         <div className="flex items-end justify-between">
