@@ -506,10 +506,12 @@ function ImageGrid({
 
               {img.caption && <p className="text-[11px] text-foreground line-clamp-2">{img.caption}</p>}
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] text-muted-foreground truncate">
-                  {img.uploaded_by_name
-                    ? `${initialsOf(img.uploaded_by_name)} · ${img.uploaded_by_name}`
-                    : "Okänd uppladdare"}
+                <span className="flex min-w-0 items-center gap-1 truncate text-[10px] text-muted-foreground">
+                  {img.uploaded_by_name ? (
+                    <StaffName name={img.uploaded_by_name} />
+                  ) : (
+                    "Okänd uppladdare"
+                  )}
                 </span>
                 <div className="flex items-center gap-1 shrink-0">
                   <button
