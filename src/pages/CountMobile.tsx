@@ -346,6 +346,7 @@ export default function CountMobile() {
           <BigButton onClick={() => setStep("plats")}>
             <Play className="h-6 w-6" /> Starta inventering
           </BigButton>
+          <PendingCountApprovals storeId={storeId} />
         </div>
       )}
 
