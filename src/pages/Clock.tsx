@@ -504,10 +504,22 @@ export default function Clock() {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Vilka som är igång ska synas högst upp, inte bara längst ned. */}
+            {onSite.length > 0 && (
+              <div className="ind-row ind-row--edge-accent">
+                <StatusLabel tone="ok">Instämplade nu</StatusLabel>
+                <span className="text-sm">
+                  {onSite
+                    .map((p) => `${p.first_name} ${p.initial}. ${p.on_break ? "på rast" : "sedan"} ${p.on_break ? "" : timeOf(p.since)}`.trim())
+                    .join(" · ")}
+                </span>
+              </div>
+            )}
             <div className="text-center">
               <SectionLabel>Stämpla</SectionLabel>
               <h2 className="ind-h2">Personnummer eller kortnummer</h2>
             </div>
+
             {/* Readonly: enhetens virtuella tangentbord ska aldrig kunna öppnas. */}
             <IndustryInput
               kiosk
