@@ -120,6 +120,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/": { component: <Dashboard /> },
   "/inventory": { component: <InventoryRouter /> },
   "/rakna": { component: <CountMobile /> },
+  "/m/inventering": { component: <CountMobile /> },
   "/orders": { component: <OrdersRouter /> },
   "/customer-orders": { component: <CustomerOrders /> },
   "/suppliers": { component: <Suppliers /> },

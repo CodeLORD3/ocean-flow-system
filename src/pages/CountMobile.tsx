@@ -6,8 +6,8 @@ import {
   ClipboardCheck,
   HelpCircle,
   Keyboard,
+  MessageSquarePlus,
   Package,
-  Play,
   RotateCcw,
   Search,
   Send,
@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useSite } from "@/contexts/SiteContext";
+import { useTabs } from "@/contexts/TabsContext";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import {
   useCountItems,
@@ -44,9 +45,10 @@ import NumberPad from "@/components/inventory/mobile/NumberPad";
 import CountStepper from "@/components/inventory/mobile/CountStepper";
 import IntroSlides, { hasSeenIntro } from "@/components/inventory/mobile/IntroSlides";
 import PendingCountApprovals from "@/components/inventory/mobile/PendingCountApprovals";
+import CountNoteSheet from "@/components/inventory/mobile/CountNoteSheet";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 
-type Step = "start" | "plats" | "rakna" | "sammanfattning" | "klar";
+type Step = "plats" | "rakna" | "sammanfattning" | "klar";
 
 const BLIND_KEY = "count-blind";
 
@@ -88,11 +90,14 @@ function BigButton({
 export default function CountMobile() {
   const { activeStoreId, activeStoreName } = useSite();
   const { activeUser } = useActiveUser();
+  const { switchTab } = useTabs();
   const storeId = activeStoreId;
   const staffId = activeUser?.id ?? null;
   const staffName = activeUser ? `${activeUser.first_name} ${activeUser.last_name}`.trim() : null;
 
-  const [step, setStep] = useState<Step>("start");
+  const [step, setStep] = useState<Step>("plats");
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [noteOpen, setNoteOpen] = useState(false);
   const [locationId, setLocationId] = useState<string | null>(null);
   const [locationName, setLocationName] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -178,7 +183,7 @@ export default function CountMobile() {
 
   const saveAndNext = async () => {
     if (!current) return;
-    await store(current, values[current.key] ?? 0);
+    await store(current, values[current.key] ?? 0, notes[current.key] || undefined);
     goNext();
   };
 
@@ -296,19 +301,17 @@ export default function CountMobile() {
 
   const header = (
     <div className="sticky top-0 z-20 -mx-4 mb-4 flex items-center justify-between gap-2 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
-      {step === "start" ? (
-        <span className="font-heading text-[20px] font-semibold">Räkna varor</span>
-      ) : (
-        <button
-          type="button"
-          onClick={() =>
-            setStep(step === "rakna" ? "plats" : step === "sammanfattning" ? "rakna" : "start")
-          }
-          className="flex h-14 min-h-[56px] items-center gap-2 rounded-2xl px-3 text-[18px] font-semibold"
-        >
-          <ArrowLeft className="h-6 w-6" /> Tillbaka
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() =>
+          step === "plats"
+            ? switchTab("/inventory")
+            : setStep(step === "rakna" ? "plats" : step === "sammanfattning" ? "rakna" : "plats")
+        }
+        className="flex h-14 min-h-[56px] items-center gap-2 rounded-2xl px-3 text-[18px] font-semibold"
+      >
+        <ArrowLeft className="h-6 w-6" /> Tillbaka
+      </button>
       <button
         type="button"
         onClick={() => setHelpOpen(true)}
@@ -331,28 +334,11 @@ export default function CountMobile() {
     <div className="mx-auto w-full max-w-[520px] overflow-x-hidden px-4 pb-10">
       {header}
 
-      {/* Steg 1 — starta */}
-      {step === "start" && (
-        <div className="space-y-5">
-          <div className="rounded-3xl border border-border bg-card p-5">
-            <p className="text-[16px] text-muted-foreground">{activeStoreName}</p>
-            <h1 className="font-heading text-[26px] font-semibold leading-tight">
-              Räkna av lagret
-            </h1>
-            <p className="mt-2 text-[18px] leading-snug text-muted-foreground">
-              Du får en vara i taget. Lagret ändras först när butikschefen godkänner.
-            </p>
-          </div>
-          <BigButton onClick={() => setStep("plats")}>
-            <Play className="h-6 w-6" /> Starta inventering
-          </BigButton>
-          <PendingCountApprovals storeId={storeId} />
-        </div>
-      )}
 
       {/* Steg 2 — välj plats */}
       {step === "plats" && (
         <div className="space-y-3">
+          <p className="text-[16px] text-muted-foreground">{activeStoreName}</p>
           <h2 className="font-heading text-[22px] font-semibold">Var räknar du?</h2>
           {places.isLoading && <p className="text-[18px] text-muted-foreground">Hämtar platser…</p>}
           {(places.data ?? []).map((p) => (
@@ -369,8 +355,23 @@ export default function CountMobile() {
                 <span className="block text-[16px] text-muted-foreground">
                   {p.productCount} varor
                 </span>
+                <span
+                  className={`mt-1 block text-[16px] font-semibold ${
+                    p.countedRows === 0
+                      ? "text-muted-foreground"
+                      : p.countedRows >= p.productCount
+                        ? "text-emerald-600"
+                        : "text-amber-600"
+                  }`}
+                >
+                  {p.countedRows === 0
+                    ? "Ej påbörjad"
+                    : p.countedRows >= p.productCount
+                      ? "Klar"
+                      : `Pågår — ${p.countedRows} av ${p.productCount} klara`}
+                </span>
                 {p.countedRows > 0 && (
-                  <span className="mt-1 block text-[16px] font-semibold text-emerald-600">
+                  <span className="block text-[16px] text-muted-foreground">
                     Fortsätt där du slutade
                     {timeText(p.lastActivityAt) ? ` — ${timeText(p.lastActivityAt)}` : ""}
                   </span>
@@ -389,6 +390,7 @@ export default function CountMobile() {
               Butiken har inga lagerplatser upplagda ännu.
             </p>
           )}
+          <PendingCountApprovals storeId={storeId} />
         </div>
       )}
 
@@ -470,6 +472,15 @@ export default function CountMobile() {
                 className="flex h-16 min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card text-[19px] font-semibold active:bg-muted"
               >
                 <Keyboard className="h-6 w-6" /> Skriv siffra
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setNoteOpen(true)}
+                className="flex h-14 min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card text-[18px] font-medium active:bg-muted"
+              >
+                <MessageSquarePlus className="h-6 w-6" />
+                {notes[current.key] ? "Ändra anteckningen" : "Lägg till anteckning"}
               </button>
 
               <BigButton onClick={saveAndNext}>
@@ -703,6 +714,20 @@ export default function CountMobile() {
           <DialogFooter />
         </DialogContent>
       </Dialog>
+
+      {current && (
+        <CountNoteSheet
+          open={noteOpen}
+          onOpenChange={setNoteOpen}
+          productId={current.productId}
+          productName={current.productName}
+          note={notes[current.key] ?? ""}
+          onSave={(text) => {
+            setNotes({ ...notes, [current.key]: text });
+            if (values[current.key] !== undefined) void store(current, values[current.key], text);
+          }}
+        />
+      )}
 
       <IntroSlides open={introOpen} onOpenChange={setIntroOpen} />
     </div>

@@ -52,6 +52,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/manual": "Manual",
   "/dagsrapport": "Dagsrapport",
   "/rakna": "Räkna varor",
+  "/m/inventering": "Räkna varor",
   "/viktiga-papper": "Viktiga papper",
   "/staff-rules": "Regler & OB",
   "/payroll-exports": "Löneunderlag",
