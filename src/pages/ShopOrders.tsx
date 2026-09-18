@@ -705,10 +705,14 @@ export default function ShopOrders() {
           <h1 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
             <ShoppingCart className="h-5 w-5 text-primary" /> Beställningar
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Beställ produkter från grossist/produktion och följ leveransstatus.</p>
+          <p className="text-[15px] sm:text-xs text-muted-foreground mt-0.5">Beställ produkter från grossist/produktion och följ leveransstatus.</p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs" onClick={startNewOrder}>
-          <Plus className="h-3.5 w-3.5" /> Ny beställning
+        <Button
+          size="sm"
+          className="h-14 w-full gap-2 text-[17px] sm:h-8 sm:w-auto sm:gap-1.5 sm:text-xs"
+          onClick={startNewOrder}
+        >
+          <Plus className="h-5 w-5 sm:h-3.5 sm:w-3.5" /> Ny beställning
         </Button>
       </div>
 
