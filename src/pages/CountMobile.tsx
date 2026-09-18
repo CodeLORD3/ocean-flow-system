@@ -641,6 +641,21 @@ export default function CountMobile() {
                     {fmtQty(counted, item.unit)}
                   </span>
                 </button>
+                {storeId && (
+                  <div className="w-[56px] shrink-0">
+                    <OrderSheet
+                      storeId={storeId}
+                      staffName={staffName}
+                      productId={item.productId}
+                      productName={item.productName}
+                      unit={item.unit}
+                      wantedDate={wantedDate}
+                      existing={ordered}
+                      editable
+                    />
+                  </div>
+                )}
+                </div>
               );
             })}
             {summary.length === 0 && (
