@@ -220,10 +220,8 @@ export default function CountMobile() {
 
   /** Väljer lagerplats. Någon annans påbörjade räkning öppnas aldrig. */
   const choosePlace = async (place: CountPlace) => {
-    if (place.claimedBy && staffId && place.claimedBy !== staffId && place.countedRows > 0) {
-      toast.error(`${place.claimedByName || "En kollega"} räknar redan här. Välj en annan plats.`);
-      return;
-    }
+    // En kollega kan ha börjat på samma plats. Ingen låsning — man fortsätter
+    // på samma räkning så inga rader tappas.
     setLocationId(place.id);
     setLocationName(place.name);
     const draft = storeId ? readDraft(storeId, place.id, staffId) : null;
