@@ -529,9 +529,10 @@ export function EntityImageGallery({
             <div className="flex items-center gap-0.5 p-2 sm:p-1.5">
               {/* Uppladdare */}
               <span className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-1">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-semibold text-primary sm:h-4 sm:w-4 sm:text-[8px]">
-                  {initialsOf(img.uploaded_by_name)}
-                </span>
+                <StaffFace
+                  name={img.uploaded_by_name}
+                  className="h-5 w-5 bg-primary/10 text-[9px] text-primary sm:h-4 sm:w-4 sm:text-[8px]"
+                />
                 <span className="truncate text-[11px] text-muted-foreground sm:text-[10px]">
                   {img.uploaded_by_name || "Okänd"}
                 </span>
