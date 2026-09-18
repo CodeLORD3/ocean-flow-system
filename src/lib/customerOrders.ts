@@ -185,6 +185,9 @@ export interface CustomerOrder {
   status: OrderStatus;
   source: string;
   received_by_name: string | null;
+  received_by_staff_id?: string | null;
+  packed_by_name?: string | null;
+  packed_by_staff_id?: string | null;
   estimated_total: number;
   total_incl_vat: number;
   note: string | null;

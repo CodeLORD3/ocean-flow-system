@@ -41,6 +41,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
+import { StaffPicker } from "@/components/orders/StaffPicker";
 import {
   useCreateCustomerOrder,
   useRetailCustomers,
@@ -134,6 +135,8 @@ export function CustomerOrderWizard({
   const [allergyNote, setAllergyNote] = useState("");
   const [excludedAllergens, setExcludedAllergens] = useState<string[]>([]);
   const [note, setNote] = useState("");
+  /** Obligatoriskt: den som lägger in beställningen i systemet. */
+  const [receivedBy, setReceivedBy] = useState<{ staffId: string; name: string } | null>(null);
   const [showMore, setShowMore] = useState(false);
 
   const [lines, setLines] = useState<DraftLine[]>([]);
@@ -159,6 +162,15 @@ export function CustomerOrderWizard({
 
   const pickupStoreName =
     allowedStores.find((s) => s.id === pickupStoreId)?.name ?? storeName ?? "";
+
+  /* Förifyll med den som är inloggad, men kravet står kvar. */
+  useEffect(() => {
+    if (!receivedBy && activeUser)
+      setReceivedBy({
+        staffId: activeUser.id,
+        name: `${activeUser.first_name} ${activeUser.last_name}`.trim(),
+      });
+  }, [activeUser, receivedBy]);
 
   /* Öppettider, kapacitetstak och storhelger för hämtningsbutiken */
   const { data: settings } = useStoreOrderSettings(pickupStoreId);
@@ -332,6 +344,7 @@ export function CustomerOrderWizard({
     if (lines.length === 0) return toast.error("Ordern behöver minst en rad.");
     if (!customer) return toast.error("Välj kund först.");
     if (capacity.blocking) return toast.error(capacity.blocking);
+    if (!receivedBy) return toast.error("Välj vem som lägger in beställningen.");
 
     try {
       await createOrder.mutateAsync({
@@ -351,7 +364,8 @@ export function CustomerOrderWizard({
         allergy_note: allergyNote || null,
         excluded_allergens: excludedAllergens,
         source,
-        received_by_name: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : null,
+        received_by_name: receivedBy.name,
+        received_by_staff_id: receivedBy.staffId,
         note: note || null,
         lines: lines.map(({ key, productName, imageUrl, warning, allergens, ...l }) => l),
       });
@@ -366,6 +380,7 @@ export function CustomerOrderWizard({
     if (step === 1 && lines.length === 0) return toast.error("Lägg till minst en produkt.");
     if (step === 2 && !customer) return toast.error("Välj eller skapa kund.");
     if (step === 3 && capacity.blocking) return toast.error(capacity.blocking);
+    if (step === 3 && !receivedBy) return toast.error("Välj vem som lägger in beställningen.");
     setStep(step + 1);
   };
 
@@ -836,6 +851,21 @@ export function CustomerOrderWizard({
                   </div>
                 </>
               )}
+              <div className="sm:col-span-2">
+                <Label>
+                  Vem lägger in beställningen? <span className="text-destructive">*</span>
+                </Label>
+                <StaffPicker
+                  storeId={pickupStoreId}
+                  staffId={receivedBy?.staffId ?? null}
+                  onChange={setReceivedBy}
+                  placeholder="Välj vem som tar emot beställningen"
+                />
+                {!receivedBy && (
+                  <p className="pt-1 text-xs text-destructive">Obligatoriskt — välj person.</p>
+                )}
+              </div>
+
               <div className="sm:col-span-2">
                 <Label htmlFor="wiz-note">
                   {orderType === "upphamtning"

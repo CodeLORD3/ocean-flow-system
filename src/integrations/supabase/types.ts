@@ -3012,6 +3012,8 @@ export type Database = {
           order_type: string
           pack_status: string
           packed_at: string | null
+          packed_by_name: string | null
+          packed_by_staff_id: string | null
           packing_started_at: string | null
           paid_at: string | null
           paid_by: string | null
@@ -3020,6 +3022,7 @@ export type Database = {
           price_locked: boolean
           received_by: string | null
           received_by_name: string | null
+          received_by_staff_id: string | null
           shopify_order_id: string | null
           shopify_order_number: string | null
           source: string
@@ -3074,6 +3077,8 @@ export type Database = {
           order_type?: string
           pack_status?: string
           packed_at?: string | null
+          packed_by_name?: string | null
+          packed_by_staff_id?: string | null
           packing_started_at?: string | null
           paid_at?: string | null
           paid_by?: string | null
@@ -3082,6 +3087,7 @@ export type Database = {
           price_locked?: boolean
           received_by?: string | null
           received_by_name?: string | null
+          received_by_staff_id?: string | null
           shopify_order_id?: string | null
           shopify_order_number?: string | null
           source?: string
@@ -3136,6 +3142,8 @@ export type Database = {
           order_type?: string
           pack_status?: string
           packed_at?: string | null
+          packed_by_name?: string | null
+          packed_by_staff_id?: string | null
           packing_started_at?: string | null
           paid_at?: string | null
           paid_by?: string | null
@@ -3144,6 +3152,7 @@ export type Database = {
           price_locked?: boolean
           received_by?: string | null
           received_by_name?: string | null
+          received_by_staff_id?: string | null
           shopify_order_id?: string | null
           shopify_order_number?: string | null
           source?: string
@@ -3181,6 +3190,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "customer_orders_packed_by_staff_id_fkey"
+            columns: ["packed_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_orders_packed_by_staff_id_fkey"
+            columns: ["packed_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "customer_orders_received_by_fkey"
             columns: ["received_by"]
             isOneToOne: false
@@ -3190,6 +3213,20 @@ export type Database = {
           {
             foreignKeyName: "customer_orders_received_by_fkey"
             columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_orders_received_by_staff_id_fkey"
+            columns: ["received_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_orders_received_by_staff_id_fkey"
+            columns: ["received_by_staff_id"]
             isOneToOne: false
             referencedRelation: "staff_access"
             referencedColumns: ["id"]
