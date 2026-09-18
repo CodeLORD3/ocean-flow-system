@@ -48,7 +48,7 @@ import PendingCountApprovals from "@/components/inventory/mobile/PendingCountApp
 import CountNoteSheet from "@/components/inventory/mobile/CountNoteSheet";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 
-type Step = "plats" | "rakna" | "sammanfattning" | "klar";
+type Step = "plats" | "rakna" | "klarplats" | "sammanfattning" | "klar";
 
 const BLIND_KEY = "count-blind";
 
@@ -178,7 +178,7 @@ export default function CountMobile() {
 
   const goNext = () => {
     if (index + 1 < list.length) setIndex(index + 1);
-    else setStep("sammanfattning");
+    else setStep("klarplats");
   };
 
   const saveAndNext = async () => {
@@ -300,7 +300,7 @@ export default function CountMobile() {
   };
 
   const header = (
-    <div className="sticky top-0 z-20 -mx-4 mb-4 flex items-center justify-between gap-2 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
+    <div className="-mx-4 flex shrink-0 items-center justify-between gap-1 border-b border-border bg-background px-2 py-1">
       <button
         type="button"
         onClick={() =>
@@ -308,17 +308,34 @@ export default function CountMobile() {
             ? switchTab("/inventory")
             : setStep(step === "rakna" ? "plats" : step === "sammanfattning" ? "rakna" : "plats")
         }
-        className="flex h-14 min-h-[56px] items-center gap-2 rounded-2xl px-3 text-[18px] font-semibold"
+        className="flex h-14 min-h-[56px] min-w-[56px] items-center gap-1 rounded-2xl px-2 text-[17px] font-semibold"
       >
-        <ArrowLeft className="h-6 w-6" /> Tillbaka
+        <ArrowLeft className="h-6 w-6 shrink-0" /> Tillbaka
       </button>
-      <button
-        type="button"
-        onClick={() => setHelpOpen(true)}
-        className="flex h-14 min-h-[56px] items-center gap-2 rounded-2xl border border-border px-3 text-[17px] font-medium"
-      >
-        <HelpCircle className="h-6 w-6 text-primary" /> Hur gör jag?
-      </button>
+      {step === "rakna" && list.length > 0 && (
+        <span className="truncate text-[17px] font-semibold tabular-nums">
+          Vara {Math.min(index + 1, list.length)} av {list.length}
+        </span>
+      )}
+      <div className="flex items-center gap-1">
+        {step === "rakna" && lastKey && (
+          <button
+            type="button"
+            onClick={undoLast}
+            className="flex h-14 min-h-[56px] min-w-[56px] items-center gap-1 rounded-2xl border border-border px-2 text-[17px] font-medium"
+          >
+            <RotateCcw className="h-6 w-6 shrink-0" /> Ångra
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => setHelpOpen(true)}
+          aria-label="Hur gör jag?"
+          className="flex h-14 min-h-[56px] min-w-[56px] items-center justify-center gap-1 rounded-2xl border border-border px-2 text-[17px] font-medium"
+        >
+          <HelpCircle className="h-6 w-6 shrink-0 text-primary" />
+        </button>
+      </div>
     </div>
   );
 
@@ -331,13 +348,13 @@ export default function CountMobile() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[520px] overflow-x-hidden px-4 pb-10">
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-[520px] flex-col overflow-x-hidden px-4">
       {header}
 
 
       {/* Steg 2 — välj plats */}
       {step === "plats" && (
-        <div className="space-y-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto py-4">
           <p className="text-[16px] text-muted-foreground">{activeStoreName}</p>
           <h2 className="font-heading text-[22px] font-semibold">Var räknar du?</h2>
           {places.isLoading && <p className="text-[18px] text-muted-foreground">Hämtar platser…</p>}
@@ -394,36 +411,25 @@ export default function CountMobile() {
         </div>
       )}
 
-      {/* Steg 3 — räkna */}
+      {/* Steg 3 — räkna: allt ryms på en skärm, knappzonen alltid synlig */}
       {step === "rakna" && (
-        <div className="space-y-4">
-          <div>
-            <p className="text-[17px] font-semibold text-muted-foreground">
-              {locationName} · Vara {Math.min(index + 1, list.length)} av {list.length}
-            </p>
-            <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-emerald-500 transition-all"
-                style={{ width: `${list.length ? ((index + 1) / list.length) * 100 : 0}%` }}
-              />
-            </div>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="mt-2 h-2 w-full shrink-0 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-emerald-500 transition-all"
+              style={{ width: `${list.length ? ((index + 1) / list.length) * 100 : 0}%` }}
+            />
           </div>
 
-          {items.isLoading && <p className="text-[18px] text-muted-foreground">Hämtar varor…</p>}
-
-          {!items.isLoading && !current && (
-            <div className="space-y-4 rounded-3xl border border-border bg-card p-5">
-              <p className="text-[19px]">Alla varor är genomgångna.</p>
-              <BigButton onClick={() => setStep("sammanfattning")}>
-                <Check className="h-6 w-6" /> Klar med hyllan
-              </BigButton>
-            </div>
+          {items.isLoading && (
+            <p className="mt-4 text-[18px] text-muted-foreground">Hämtar varor…</p>
           )}
 
           {current && (
             <>
-              <div className="rounded-3xl border border-border bg-card p-4">
-                <div className="flex h-40 items-center justify-center overflow-hidden rounded-2xl bg-muted">
+              {/* Produktrad — liten bild till vänster, namnet stort */}
+              <div className="mt-3 flex min-h-0 shrink items-start gap-3">
+                <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-muted">
                   {current.imageUrl ? (
                     <img
                       src={thumbUrl(current.imageUrl, THUMB_TILE) as string}
@@ -431,107 +437,131 @@ export default function CountMobile() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <Package className="h-14 w-14 text-muted-foreground/50" />
+                    <Package className="h-8 w-8 text-muted-foreground/50" />
                   )}
                 </div>
-                <h2 className="mt-3 break-words font-heading text-[24px] font-semibold leading-tight">
-                  {current.productName}
-                </h2>
-                <p className="text-[18px] text-muted-foreground">
-                  Räknas i {current.unit === "st" ? "stycken" : "kilo"}
-                </p>
-                {current.lotNumber && (
-                  <p className="mt-1 text-[17px] font-medium">
-                    Parti {current.lotNumber}
-                    {bestBeforeText(current.bestBefore) ? ` · ${bestBeforeText(current.bestBefore)}` : ""}
+                <div className="min-w-0 flex-1">
+                  <h2 className="break-words font-heading text-[24px] font-semibold leading-tight">
+                    {current.productName}
+                  </h2>
+                  <p className="text-[18px] leading-snug text-muted-foreground">
+                    Räknas i {current.unit === "st" ? "stycken" : "kg"}
                   </p>
-                )}
-                {!blind && (
-                  <p className="mt-1 text-[17px] text-muted-foreground">
-                    Systemet har {fmtQty(current.expectedQty, current.unit)}
-                  </p>
-                )}
+                  {current.lotNumber && (
+                    <p className="text-[17px] font-medium leading-snug">
+                      Parti {current.lotNumber}
+                      {bestBeforeText(current.bestBefore)
+                        ? ` · ${bestBeforeText(current.bestBefore)}`
+                        : ""}
+                    </p>
+                  )}
+                  {!blind && (
+                    <p className="text-[17px] leading-snug text-muted-foreground">
+                      Systemet har {fmtQty(current.expectedQty, current.unit)}
+                    </p>
+                  )}
+                  {notes[current.key] && (
+                    <p className="truncate text-[16px] italic text-muted-foreground">
+                      {notes[current.key]}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <CountStepper
-                value={values[current.key] ?? 0}
-                unit={current.unit}
-                onChange={(v) => setValues({ ...values, [current.key]: v })}
-              />
+              {/* Stegaren */}
+              <div className="mt-3 shrink-0">
+                <CountStepper
+                  value={values[current.key] ?? 0}
+                  unit={current.unit}
+                  onChange={(v) => setValues({ ...values, [current.key]: v })}
+                />
+              </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setPadValue(
-                    values[current.key] !== undefined
-                      ? String(values[current.key]).replace(".", ",")
-                      : "",
-                  );
-                  setPadOpen(true);
-                }}
-                className="flex h-16 min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card text-[19px] font-semibold active:bg-muted"
-              >
-                <Keyboard className="h-6 w-6" /> Skriv siffra
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setNoteOpen(true)}
-                className="flex h-14 min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card text-[18px] font-medium active:bg-muted"
-              >
-                <MessageSquarePlus className="h-6 w-6" />
-                {notes[current.key] ? "Ändra anteckningen" : "Lägg till anteckning"}
-              </button>
-
-              <BigButton onClick={saveAndNext}>
-                <Check className="h-6 w-6" /> Spara och nästa
-              </BigButton>
-
-              <div className="grid grid-cols-2 gap-3">
+              {/* En rad med två sekundärknappar */}
+              <div className="mt-3 grid shrink-0 grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={goNext}
-                  className="flex h-16 min-h-[56px] items-center justify-center gap-2 rounded-2xl border border-border bg-card text-[18px] font-semibold active:bg-muted"
-                >
-                  <SkipForward className="h-6 w-6" /> Hoppa över
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await store(current, 0, "Finns inte här");
-                    goNext();
+                  onClick={() => {
+                    setPadValue(
+                      values[current.key] !== undefined
+                        ? String(values[current.key]).replace(".", ",")
+                        : "",
+                    );
+                    setPadOpen(true);
                   }}
-                  className="flex h-16 min-h-[56px] items-center justify-center gap-2 rounded-2xl border border-border bg-card text-[18px] font-semibold active:bg-muted"
+                  className="flex h-14 min-h-[56px] items-center justify-center gap-2 rounded-2xl border border-border bg-card px-2 text-[18px] font-semibold active:bg-muted"
                 >
-                  <XCircle className="h-6 w-6" /> Finns inte här
+                  <Keyboard className="h-6 w-6 shrink-0" />
+                  <span className="truncate">Skriv siffra</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNoteOpen(true)}
+                  className="flex h-14 min-h-[56px] items-center justify-center gap-2 rounded-2xl border border-border bg-card px-2 text-[18px] font-semibold active:bg-muted"
+                >
+                  <MessageSquarePlus className="h-6 w-6 shrink-0" />
+                  <span className="truncate">Anteckning</span>
                 </button>
               </div>
 
-              {lastKey && (
-                <button
-                  type="button"
-                  onClick={undoLast}
-                  className="flex h-14 min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl border border-border text-[18px] font-semibold"
-                >
-                  <RotateCcw className="h-6 w-6" /> Ångra senaste
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setStep("sammanfattning")}
-                className="flex h-14 min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl text-[18px] font-semibold text-primary"
-              >
-                Klar med hyllan ({countedTotal} räknade)
-              </button>
+              {/* Knappzon — alltid längst ner, aldrig under vecket */}
+              <div className="mt-auto shrink-0 space-y-3 pb-3 pt-3">
+                <BigButton onClick={saveAndNext}>
+                  <Check className="h-6 w-6" /> Spara och nästa
+                </BigButton>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    className="flex h-14 min-h-[56px] items-center justify-center gap-2 rounded-2xl border border-border bg-card px-2 text-[18px] font-semibold active:bg-muted"
+                  >
+                    <SkipForward className="h-6 w-6 shrink-0" />
+                    <span className="truncate">Hoppa över</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await store(current, 0, "Finns inte här");
+                      goNext();
+                    }}
+                    className="flex h-14 min-h-[56px] items-center justify-center gap-2 rounded-2xl border border-border bg-card px-2 text-[18px] font-semibold active:bg-muted"
+                  >
+                    <XCircle className="h-6 w-6 shrink-0" />
+                    <span className="truncate">Finns inte här</span>
+                  </button>
+                </div>
+              </div>
             </>
           )}
         </div>
       )}
 
+      {/* Egen skärm efter sista varan */}
+      {step === "klarplats" && (
+        <div className="flex min-h-0 flex-1 flex-col py-4">
+          <div className="rounded-3xl border border-emerald-500/50 bg-emerald-50 p-5 dark:bg-emerald-500/10">
+            <Check className="h-10 w-10 text-emerald-600" />
+            <h2 className="mt-2 font-heading text-[24px] font-semibold leading-tight">
+              Klar med platsen
+            </h2>
+            <p className="mt-1 text-[18px] leading-snug text-muted-foreground">
+              {locationName}: {countedTotal} varor räknade. Titta igenom listan innan du skickar in.
+            </p>
+          </div>
+          <div className="mt-auto space-y-3 pb-3">
+            <BigButton onClick={() => setStep("sammanfattning")}>
+              <ChevronRight className="h-6 w-6" /> Titta igenom och skicka in
+            </BigButton>
+            <BigButton variant="plain" onClick={() => setStep("rakna")}>
+              Tillbaka till varorna
+            </BigButton>
+          </div>
+        </div>
+      )}
+
       {/* Steg 4 — sammanfattning */}
       {step === "sammanfattning" && (
-        <div className="space-y-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto py-4">
           <div>
             <h2 className="font-heading text-[22px] font-semibold">Det du räknat</h2>
             <p className="text-[18px] text-muted-foreground">
@@ -596,7 +626,7 @@ export default function CountMobile() {
 
       {/* Steg 5 — klart */}
       {step === "klar" && (
-        <div className="space-y-5">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto py-4">
           <div className="rounded-3xl border border-emerald-500/50 bg-emerald-50 p-5 dark:bg-emerald-500/10">
             <ClipboardCheck className="h-10 w-10 text-emerald-600" />
             <h2 className="mt-2 font-heading text-[24px] font-semibold leading-tight text-emerald-800 dark:text-emerald-200">
