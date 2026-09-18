@@ -851,19 +851,44 @@ export async function fetchTodaysPrice(productId: string, storeId: string) {
 export function useMarkCustomerOrderPacked() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ order, undo }: { order: CustomerOrder; undo?: boolean }) => {
+    mutationFn: async ({
+      order,
+      undo,
+      packedBy,
+    }: {
+      order: CustomerOrder;
+      undo?: boolean;
+      /** Obligatoriskt när ordern markeras packad: vem som packade. */
+      packedBy?: { staffId: string; name: string } | null;
+    }) => {
+      if (!undo && !packedBy?.name) throw new Error("Välj vem som packade beställningen.");
       await db
         .from("customer_orders")
         .update(
           undo
-            ? { pack_status: "opackad", packed_at: null, status: "bekraftad" }
-            : { pack_status: "packad", packed_at: new Date().toISOString(), status: "packad" },
+            ? {
+                pack_status: "opackad",
+                packed_at: null,
+                status: "bekraftad",
+                packed_by_name: null,
+                packed_by_staff_id: null,
+              }
+            : {
+                pack_status: "packad",
+                packed_at: new Date().toISOString(),
+                status: "packad",
+                packed_by_name: packedBy!.name,
+                packed_by_staff_id: packedBy!.staffId,
+              },
         )
         .eq("id", order.id);
       await logOrderEvent({
         orderId: order.id,
         eventType: undo ? "packning_angrad" : "order_packad",
-        description: undo ? "Packning ångrad" : "Beställningen markerad som packad",
+        description: undo
+          ? "Packning ångrad"
+          : `Beställningen packad av ${packedBy!.name}`,
+        performedBy: packedBy?.name ?? null,
       });
     },
     onSuccess: () => {
