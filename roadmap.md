@@ -7,9 +7,10 @@ Dator lämnas oförändrad (allt görs med `sm:`-brytpunkten eller separata mobi
 ## Steg 1 — Menyer och byggstenar
 - [x] Sidomenyn (butik/produktion/admin): rader ≥56 px, 18 px text, bredare panel
 - [x] Rubriker i menyn läsbara på mobil
-- [ ] Bottenmenyn: ikon + text, aktivt läge tydligare
-- [ ] Delade byggstenar: ResponsiveTable (kortläge ≥56 px, 18 px), MobileActionBar,
-      responsiv dialog/sheet, sidhuvud med tillbakaknapp
+- [x] Bottenmenyn: ikon + text, aktivt läge tydligare
+- [x] Delade byggstenar: ResponsiveTable (kortläge ≥56 px, 18 px), MobileActionBar
+- [x] Globala mobilregler: inget sidoscroll, 48 px radhöjd, 16 px formulärfält,
+      44 px minsta tryckyta, dialoger max 92 % höjd
 
 ## Steg 2 — Butikens dagliga sidor
 - [ ] /store-map (Översikt)
