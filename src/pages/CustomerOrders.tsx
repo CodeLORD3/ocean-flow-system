@@ -673,26 +673,34 @@ export default function CustomerOrders() {
           </div>
 
           {canEdit && marked.length > 0 && (
-            <div className="flex shrink-0 flex-wrap gap-2">
-              <Button
-                size="sm"
-                className="h-11 gap-1.5 bg-emerald-600 px-4 text-xs font-semibold text-white hover:bg-emerald-700"
-                disabled={setDeliveryRun.isPending}
-                onClick={() => putInRun(true)}
-              >
-                <Truck className="h-4 w-4" /> Lägg {marked.length} i utkörning
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-11 gap-1.5 px-3 text-xs"
-                disabled={setDeliveryRun.isPending}
-                onClick={() => putInRun(false)}
-              >
-                <Undo2 className="h-4 w-4" /> Ta ur utkörning
-              </Button>
+            <div className="sticky top-0 z-30 -mx-2 w-full basis-full px-2 py-2">
+              <div className="flex flex-wrap items-center gap-3 rounded-lg border-2 border-emerald-600 bg-emerald-50 p-3 shadow-md">
+                <span className="flex items-center gap-2 text-sm font-bold text-emerald-900">
+                  <Truck className="h-5 w-5" />
+                  {marked.length} beställning{marked.length === 1 ? "" : "ar"} markerad
+                  {marked.length === 1 ? "" : "e"}
+                </span>
+                <Button
+                  size="lg"
+                  className="h-12 gap-2 bg-emerald-600 px-6 text-sm font-bold text-white hover:bg-emerald-700"
+                  disabled={setDeliveryRun.isPending}
+                  onClick={() => putInRun(true)}
+                >
+                  <Truck className="h-5 w-5" /> Lägg i utkörning
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="h-12 gap-2 border-emerald-700/40 px-4 text-sm font-semibold text-emerald-900"
+                  disabled={setDeliveryRun.isPending}
+                  onClick={() => putInRun(false)}
+                >
+                  <Undo2 className="h-5 w-5" /> Ta ur utkörning
+                </Button>
+              </div>
             </div>
           )}
+
 
           <div className="ml-auto flex shrink-0 flex-wrap gap-2">
             {/* Totallista lyfts fram: personalen sorterar och packar varor i bulk innan enskilda ordrar packas. */}
