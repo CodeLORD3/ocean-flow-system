@@ -438,17 +438,30 @@ export default function Clock() {
             <SectionLabel>{ACTION_LABEL[receipt.action]} registrerad</SectionLabel>
             <p className="ind-h1">{receipt.name}</p>
             <p className="ind-h3 ind-mono">{timeOf(receipt.at)}</p>
+            {/* Tydligt läge efteråt: personalen ska se att passet är igång. */}
+            <p className="ind-h3">{RECEIPT_STATE[receipt.action]}</p>
+            <p className="ind-muted text-sm">
+              Slå in personnummret igen när du ska {receipt.action === "ut" ? "stämpla in nästa gång" : "ta rast eller stämpla ut"}.
+            </p>
             {receipt.offline && (
               <p className="ind-muted text-sm">Sparad i offline-kön och syncas när nätet är tillbaka.</p>
             )}
           </div>
         ) : found ? (
           <div className="space-y-6">
-            <div>
+            <div className="space-y-2">
               <h2 className="ind-h2">
                 Hej {found.first_name} {found.pnr_masked ? `(${found.pnr_masked})` : ""}
               </h2>
+              {/* Nuläget i klartext innan man trycker: in, på rast eller ute. */}
+              <div className={`ind-row ${found.suggested === "in" ? "" : "ind-row--edge-ok"}`}>
+                <StatusLabel tone={found.suggested === "in" ? "neutral" : "ok"}>
+                  {found.suggested === "in" ? "Inte instämplad" : found.suggested === "rast_slut" ? "På rast" : "Instämplad"}
+                </StatusLabel>
+                <span className="text-sm">{FOUND_STATE[found.suggested]}</span>
+              </div>
             </div>
+
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {VALID_ACTIONS[found.suggested].includes("in") && (
                 <IndustryButton variant={found.suggested === "in" ? "primary" : "secondary"} size="kiosk" corners onClick={() => handlePunch("in")} disabled={busy}>IN</IndustryButton>
