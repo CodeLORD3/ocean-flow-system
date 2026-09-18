@@ -149,6 +149,11 @@ export default function PersonalHub() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {level === "employee" ? null : (
+            <NavLink to="/staff?ny=1" className="sl-btn sl-btn--primary">
+              <UserPlus size={15} /> Lägg till personal
+            </NavLink>
+          )}
           <SegmentSwitch<Region>
             value={region}
             onChange={setRegion}
