@@ -16,6 +16,9 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useSite } from "@/contexts/SiteContext";
+import { useStores } from "@/hooks/useStores";
+import { currencyLabel as curLabel, defaultVatFor } from "@/lib/reportCurrency";
+import { getStoreCurrency } from "@/lib/currency";
 import { useTabs } from "@/contexts/TabsContext";
 import { useStaff } from "@/hooks/useStaff";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
@@ -85,6 +88,12 @@ export default function DailyReport() {
   // Kassan (egna kassor + externa Nimpos-kassor) är grunden för rapporten.
   usePosRealtime(true);
   const { data: pos } = usePosDaySummary(activeStoreId, date);
+  // Butikens valuta styr både momssats och hur beloppen skrivs i rapporten.
+  const { data: stores = [] } = useStores();
+  const store = stores.find((s) => s.id === activeStoreId);
+  const currency = getStoreCurrency(store as any).toUpperCase();
+  const defaultVat = defaultVatFor(currency);
+  const currencyLabel = curLabel(currency);
 
 
   const [gross, setGross] = useState("");
@@ -96,9 +105,12 @@ export default function DailyReport() {
   const [waste, setWaste] = useState<WasteItem[]>([]);
   const [wasteRaw, setWasteRaw] = useState<Record<string, string>>({});
   const [comment, setComment] = useState("");
+  const [vatPct, setVatPct] = useState("6");
   const [hydrated, setHydrated] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  /** True så snart momssatsen är ändrad för hand eller läst ur ett utkast. */
+  const vatTouched = useRef(false);
 
   // Nollställ formuläret när butik eller datum byts — inget följer med mellan butiker.
   const scopeKey = `${activeStoreId ?? ""}|${date}`;
@@ -118,6 +130,73 @@ export default function DailyReport() {
     setHydrated(false);
   }, [scopeKey]);
 
+  // ── Utkast: allt man skrivit ligger kvar om man byter sida och kommer tillbaka ──
+  const draftKey = `dagsrapport-utkast:${scopeKey}`;
+
+  /** Läs in sparat utkast när butik/datum är känt — före serverns värden. */
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (!raw) return;
+      const d = JSON.parse(raw) as Record<string, any>;
+      if (typeof d.gross === "string") setGross(d.gross);
+      if (typeof d.net === "string") setNet(d.net);
+      if (typeof d.receipts === "string") setReceipts(d.receipts);
+      if (typeof d.largest === "string") setLargest(d.largest);
+      if (typeof d.comment === "string") setComment(d.comment);
+      if (typeof d.vatPct === "string") { setVatPct(d.vatPct); vatTouched.current = true; }
+      if (d.staffRows && typeof d.staffRows === "object") setStaffRows(d.staffRows);
+      if (Array.isArray(d.extraIds)) setExtraIds(d.extraIds);
+      if (Array.isArray(d.waste)) setWaste(d.waste);
+      setHydrated(true);
+    } catch {
+      /* trasigt utkast ignoreras */
+    }
+  }, [draftKey]);
+
+  /** Spara utkastet vid varje ändring så inget tappas när man lämnar sidan. */
+  useEffect(() => {
+    if (!hydrated || !activeStoreId) return;
+    try {
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({ gross, net, receipts, largest, comment, vatPct, staffRows, extraIds, waste }),
+      );
+    } catch {
+      /* fullt lagringsutrymme får inte stoppa arbetet */
+    }
+  }, [hydrated, activeStoreId, draftKey, gross, net, receipts, largest, comment, vatPct, staffRows, extraIds, waste]);
+
+  /**
+   * Brutto och netto räknas ut ur varandra med butikens momssats.
+   * Fältet man skriver i styr — det andra fylls i automatiskt.
+   */
+  const vatRate = useMemo(() => {
+    const r = num(vatPct);
+    return r != null && r >= 0 && r < 100 ? r : 0;
+  }, [vatPct]);
+
+  const grossToNet = (v: string) => {
+    const g = num(v);
+    if (g == null) return "";
+    return (g / (1 + vatRate / 100)).toFixed(2);
+  };
+  const netToGross = (v: string) => {
+    const n = num(v);
+    if (n == null) return "";
+    return (n * (1 + vatRate / 100)).toFixed(2);
+  };
+
+  const onGrossChange = (v: string) => {
+    const t = decText(v);
+    setGross(t);
+    setNet(grossToNet(t));
+  };
+  const onNetChange = (v: string) => {
+    const t = decText(v);
+    setNet(t);
+    setGross(netToGross(t));
+  };
 
   /** Enter hoppar till nästa fält istället för att skicka formuläret. */
   const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
@@ -193,6 +272,12 @@ export default function DailyReport() {
     }
     setHydrated(true);
   }, [existing, isLoading, hydrated]);
+
+  // Momssatsen följer butiken: 2,6 % i Schweiz, 6 % i Sverige.
+  useEffect(() => {
+    if (vatTouched.current) return;
+    setVatPct(String(defaultVat).replace(".", ","));
+  }, [defaultVat]);
 
   // Förifyll instämplingstider som grund där inget är ifyllt
   useEffect(() => {
@@ -315,6 +400,8 @@ export default function DailyReport() {
       await save.mutateAsync({
         ...(existing?.id ? { id: existing.id } : {}),
         store_id: activeStoreId,
+        currency,
+        vat_rate: vatRate,
         report_date: date,
         gross_sales: num(gross),
         net_sales: num(net),
@@ -352,6 +439,11 @@ export default function DailyReport() {
         comment: comment.trim() || null,
         created_by: me ? `${me.first_name} ${me.last_name}` : null,
       });
+      try {
+        localStorage.removeItem(draftKey);
+      } catch {
+        /* ignoreras */
+      }
       toast.success("Dagsrapport sparad");
       switchTab("/organisation");
     } catch (e: any) {
@@ -394,25 +486,38 @@ export default function DailyReport() {
             </CardHeader>
             <CardContent className="flex flex-col gap-3 max-w-md">
               <div className="space-y-1">
-                <Label className="text-xs">Bruttoförsäljning (kr) *</Label>
+                <Label className="text-xs">Bruttoförsäljning ({currencyLabel}) *</Label>
                 <Input
                   className={cn("h-11 text-base font-mono tabular-nums", errCls(missing.gross))}
                   inputMode="decimal"
                   enterKeyHint="next"
                   autoComplete="off"
                   value={gross}
-                  onChange={(e) => setGross(e.target.value)}
+                  onChange={(e) => onGrossChange(e.target.value)}
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Nettoförsäljning (kr) *</Label>
+                <Label className="text-xs">Nettoförsäljning ({currencyLabel}) *</Label>
                 <Input
                   className={cn("h-11 text-base font-mono tabular-nums", errCls(missing.net))}
                   inputMode="decimal"
                   enterKeyHint="next"
                   autoComplete="off"
                   value={net}
-                  onChange={(e) => setNet(e.target.value)}
+                  onChange={(e) => onNetChange(e.target.value)}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Brutto och netto räknas ut åt varandra med {vatPct || "0"} % moms.
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Moms (%)</Label>
+                <Input
+                  className="h-11 w-28 text-base font-mono tabular-nums"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  value={vatPct}
+                  onChange={(e) => { vatTouched.current = true; setVatPct(decText(e.target.value)); }}
                 />
               </div>
               <div className="space-y-1">
@@ -427,7 +532,7 @@ export default function DailyReport() {
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Snittköp (kr)</Label>
+                <Label className="text-xs">Snittköp ({currencyLabel})</Label>
                 <Input
                   readOnly
                   tabIndex={-1}
@@ -436,7 +541,7 @@ export default function DailyReport() {
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Största försäljning (kr) *</Label>
+                <Label className="text-xs">Största försäljning ({currencyLabel}) *</Label>
                 <Input
                   className={cn("h-11 text-base font-mono tabular-nums", errCls(missing.largest))}
                   inputMode="decimal"
@@ -581,7 +686,7 @@ export default function DailyReport() {
                     <tr className="text-left text-xs text-muted-foreground">
                       <th className="py-1 pr-2 font-medium">Vara</th>
                       <th className="py-1 pr-2 font-medium">Vikt (kg)</th>
-                      <th className="py-1 pr-2 font-medium">Värde (kr)</th>
+                      <th className="py-1 pr-2 font-medium">Värde ({currencyLabel})</th>
                       <th className="py-1 pr-2 font-medium">Anledning</th>
                       <th className="py-1" />
                     </tr>
@@ -688,7 +793,7 @@ export default function DailyReport() {
                   </p>
                 </div>
                 <div className="rounded-md border border-border bg-muted/30 px-3 py-2">
-                  <p className="text-[11px] text-muted-foreground">Totalt värde (kr)</p>
+                  <p className="text-[11px] text-muted-foreground">Totalt värde ({currencyLabel})</p>
                   <p className="font-mono tabular-nums text-lg text-foreground">
                     {wasteValue.toLocaleString("sv-SE", { maximumFractionDigits: 2 })}
                   </p>

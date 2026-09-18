@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Banknote, Receipt, Users, Trash2, TrendingUp, Store as StoreIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { currencyLabel } from "@/lib/reportCurrency";
 import type { DailyReport, StaffEntry, WasteItem } from "@/hooks/useDailyReport";
 
 const nf = (v: number) => v.toLocaleString("sv-SE", { maximumFractionDigits: 0 }).replace(/\u00a0/g, " ");
@@ -44,12 +45,16 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
   const from = isoDaysAgo(days * 2);
   const { data: stores = [] } = useStores();
 
+  /* Valutan följer butiken; utan valt butik visas kr som gemensam etikett. */
+  const curOf = (id: string) => currencyLabel(stores.find((s) => s.id === id)?.currency);
+  const bandCur = storeId ? curOf(storeId) : "kr";
+
   const { data: rows = [] } = useQuery({
     queryKey: ["reports-stats-band", from, storeId ?? "all"],
     queryFn: async () => {
       let q = (supabase as any)
         .from("daily_reports")
-        .select("store_id, report_date, net_sales, receipt_count, staff_entries, waste_items")
+        .select("store_id, report_date, net_sales, receipt_count, staff_entries, waste_items, currency")
         .gte("report_date", from)
         .order("report_date", { ascending: true });
       if (storeId) q = q.eq("store_id", storeId);
@@ -137,11 +142,11 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
         <StatTile
           label="Nettoomsättning"
           value={nf(stats.now.net)}
-          unit="kr"
+          unit={bandCur}
           icon={Banknote}
           tone="navy"
           trend={stats.trends.net}
-          hint={`${nf(stats.perReceipt)} kr per kvitto`}
+          hint={`${nf(stats.perReceipt)} ${bandCur} per kvitto`}
           spark={stats.spark}
         />
         <StatTile
@@ -159,12 +164,12 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
           icon={Users}
           tone="amber"
           trend={stats.trends.hours}
-          hint={`${nf(stats.perHour)} kr per timme`}
+          hint={`${nf(stats.perHour)} ${bandCur} per timme`}
         />
         <StatTile
           label="Svinn"
           value={nf(stats.now.waste)}
-          unit="kr"
+          unit={bandCur}
           icon={Trash2}
           tone="brick"
           trend={stats.trends.waste}
@@ -198,8 +203,8 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-mono text-sm font-semibold tabular-nums">{nf(r.net)} kr</p>
-                  <p className="font-mono text-[10px] tabular-nums text-destructive">svinn {nf(r.waste)} kr</p>
+                  <p className="font-mono text-sm font-semibold tabular-nums">{nf(r.net)} {curOf(r.id)}</p>
+                  <p className="font-mono text-[10px] tabular-nums text-destructive">svinn {nf(r.waste)} {curOf(r.id)}</p>
                 </div>
               </div>
             ))}

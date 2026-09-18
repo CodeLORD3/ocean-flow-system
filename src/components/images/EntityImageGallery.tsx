@@ -14,6 +14,8 @@ import {
   CalendarDays,
   MessageSquare,
   ListFilter,
+  Search,
+  Pencil,
 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,7 +42,18 @@ import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { cn } from "@/lib/utils";
 import { focalStyle, focalPercent, focalLabel } from "@/lib/imageFocal";
 import { dayKey, dayLabel, initialsOf } from "@/lib/imageMeta";
+import { dayBadgeClass } from "@/lib/dayColor";
 import { thumbUrl, THUMB_TILE, THUMB_CARD } from "@/lib/imageThumb";
+import {
+  useImageGroups,
+  useCreateImageGroup,
+  useAddImagesToGroup,
+  useUpdateImageGroup,
+  useDeleteImageGroup,
+  useSaveDayDescription,
+} from "@/hooks/useImageGroups";
+import { FolderPlus, Folder } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 /** Datum + tid då bilden laddades upp, t.ex. "03-08 10:24". */
 function uploadedLabel(iso: string) {
@@ -53,7 +66,11 @@ function uploadedLabel(iso: string) {
   );
 }
 
-type View = { mode: "featured" } | { mode: "favorites" } | { mode: "day"; key: string };
+type View =
+  | { mode: "featured" }
+  | { mode: "favorites" }
+  | { mode: "day"; key: string }
+  | { mode: "group"; id: string };
 
 type Props = {
   entityType: string;
@@ -94,10 +111,26 @@ export function EntityImageGallery({
   const [dateLimit, setDateLimit] = useState(DATE_PAGE);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [catalogCollapsed, setCatalogCollapsed] = useState(false);
+  /** Markeringsläge för att samla bilder i en grupp. */
+  const [pickMode, setPickMode] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [groupDialog, setGroupDialog] = useState(false);
+  const [groupName, setGroupName] = useState("");
+  const [groupDesc, setGroupDesc] = useState("");
+  const [dayDesc, setDayDesc] = useState<string | null>(null);
+  /** Fritextsökning på bildnamn, person och datum. */
+  const [search, setSearch] = useState("");
+  /** Nyss uppladdade bilder som ska namnges. */
+  const [nameIds, setNameIds] = useState<string[]>([]);
+  const [names, setNames] = useState<Record<string, string>>({});
+  /** Bild som döps om direkt i rutnätet. */
+  const [renameId, setRenameId] = useState<string | null>(null);
+  const [renameText, setRenameText] = useState("");
 
   const [lastDay, setLastDay] = useState(() => dayKey(new Date().toISOString()));
   const selectDay = (key: string) => {
     setLastDay(key);
+    setDayDesc(null);
     setView({ mode: "day", key });
   };
 
@@ -111,6 +144,17 @@ export function EntityImageGallery({
   const setCover = useSetCoverImage();
   const setFeatured = useSetFeaturedImages();
   const toggleFavorite = useToggleImageFavorite();
+
+  /** Grupper: dagsgrupper med beskrivning och egna grupper med valda bilder. */
+  const { data: groups = [] } = useImageGroups(entityType, entityId);
+  const createGroup = useCreateImageGroup();
+  const addToGroup = useAddImagesToGroup();
+  const updateGroup = useUpdateImageGroup();
+  const deleteGroup = useDeleteImageGroup();
+  const saveDayDesc = useSaveDayDescription();
+  const manualGroups = groups.filter((g) => g.kind !== "day");
+  const dayGroups = groups.filter((g) => g.kind === "day");
+  const activeGroup = view.mode === "group" ? groups.find((g) => g.id === view.id) : undefined;
 
   /** Dagens datumnyckel — uppdateras automatiskt när dygnet slår över. */
   const [todayKey, setTodayKey] = useState(() => dayKey(new Date().toISOString()));
@@ -183,12 +227,31 @@ export function EntityImageGallery({
   /** Aktivt datum i katalogen — styr dagsvyn. */
   const activeDay = view.mode === "day" ? view.key : lastDay;
 
+  /** Sökningen går igenom alla bilder, oavsett vilket filter som är valt. */
+  const searchHits: EntityImage[] = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    return images.filter((i) =>
+      [i.caption, i.uploaded_by_name, dayLabel(dayKey(i.created_at)), dayKey(i.created_at)]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [images, search]);
+
   const shown: EntityImage[] = useMemo(() => {
+    if (search.trim()) return searchHits;
     if (!catalog) return previewImages;
     if (view.mode === "favorites") return favorites;
     if (view.mode === "featured") return previewImages;
+    if (view.mode === "group") {
+      const g = groups.find((x) => x.id === view.id);
+      if (!g) return [];
+      return g.imageIds.map((id) => images.find((i) => i.id === id)).filter(Boolean) as EntityImage[];
+    }
     return images.filter((i) => dayKey(i.created_at) === view.key);
-  }, [catalog, view, images, favorites, previewImages]);
+  }, [catalog, view, images, favorites, previewImages, groups, search, searchHits]);
 
   /** I helskärmsläge bläddrar man genom hela den utvalda poolen, inte bara de synliga. */
   const lightboxImages: EntityImage[] =
@@ -230,15 +293,21 @@ export function EntityImageGallery({
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     try {
+      const newIds: string[] = [];
       for (let i = 0; i < files.length; i++) {
-        await upload.mutateAsync({
+        const id = await upload.mutateAsync({
           entityType,
           entityId,
           file: files[i],
           sortOrder: images.length + i,
         });
+        if (id) newIds.push(id);
       }
       toast({ title: "Bild uppladdad", description: `${files.length} bild(er) sparade.` });
+      if (newIds.length) {
+        setNames({});
+        setNameIds(newIds);
+      }
       if (catalog) selectDay(dayKey(new Date().toISOString()));
     } catch (e: any) {
       toast({ title: "Kunde inte ladda upp", description: e.message, variant: "destructive" });
@@ -280,6 +349,8 @@ export function EntityImageGallery({
       :
     catalog && view.mode === "favorites"
       ? "Inga favoriter ännu — tryck på hjärtat på en bild."
+      : catalog && view.mode === "group"
+        ? "Gruppen är tom — markera bilder och samla dem här."
       : catalog && view.mode === "day"
         ? "Inga bilder detta datum."
         : catalog && view.mode === "featured"
@@ -297,7 +368,37 @@ export function EntityImageGallery({
     setFeatured.mutate({ entityType, entityId, day, imageIds: next });
   };
 
+  /** Markera bilder för att samla dem i en grupp. */
+  const togglePicked = (id: string) =>
+    setPicked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
+  const saveGroup = async (existingId?: string) => {
+    try {
+      if (existingId) {
+        await addToGroup.mutateAsync({ groupId: existingId, imageIds: picked, entityType, entityId });
+      } else {
+        if (!groupName.trim()) {
+          toast({ title: "Gruppen behöver ett namn", variant: "destructive" });
+          return;
+        }
+        await createGroup.mutateAsync({
+          entityType,
+          entityId,
+          name: groupName.trim(),
+          description: groupDesc.trim() || null,
+          imageIds: picked,
+        });
+      }
+      toast({ title: "Bilderna samlade i gruppen" });
+      setGroupDialog(false);
+      setGroupName("");
+      setGroupDesc("");
+      setPicked([]);
+      setPickMode(false);
+    } catch (e: any) {
+      toast({ title: "Kunde inte spara gruppen", description: e.message, variant: "destructive" });
+    }
+  };
 
   const grid = (
 
@@ -305,10 +406,16 @@ export function EntityImageGallery({
       {shown.map((img) => {
         const isFav = favoriteIds.includes(img.id);
         return (
-          <Card key={img.id} className="overflow-hidden group relative">
+          <Card
+            key={img.id}
+            className={cn(
+              "overflow-hidden group relative",
+              pickMode && picked.includes(img.id) && "ring-2 ring-primary",
+            )}
+          >
             <button
               type="button"
-              onClick={() => setLightboxId(img.id)}
+              onClick={() => (pickMode ? togglePicked(img.id) : setLightboxId(img.id))}
               className="relative block w-full aspect-video bg-muted overflow-hidden"
             >
               <img
@@ -322,6 +429,18 @@ export function EntityImageGallery({
               <span className="absolute bottom-1 left-1 rounded bg-background/85 px-1.5 py-0.5 font-mono tabular-nums text-[10px] text-foreground backdrop-blur pointer-events-none sm:text-[9px]">
                 {uploadedLabel(img.created_at)}
               </span>
+              {pickMode && (
+                <span
+                  className={cn(
+                    "absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border-2 bg-background/90",
+                    picked.includes(img.id)
+                      ? "border-primary text-primary"
+                      : "border-border text-transparent",
+                  )}
+                >
+                  <Check className="h-3.5 w-3.5" />
+                </span>
+              )}
             </button>
 
             {img.is_cover && (
@@ -469,6 +588,54 @@ export function EntityImageGallery({
               )}
             </div>
 
+            {/* Namn på bilden — gör den lätt att hitta med sökningen */}
+            <div className="border-t border-border px-2 py-1.5">
+              {renameId === img.id ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    autoFocus
+                    value={renameText}
+                    onChange={(e) => setRenameText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        updateImage.mutate({ id: img.id, caption: renameText.trim() || null });
+                        setRenameId(null);
+                      }
+                      if (e.key === "Escape") setRenameId(null);
+                    }}
+                    placeholder="Namn på bilden"
+                    className="h-8 text-xs"
+                  />
+                  <Button
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    aria-label="Spara namn"
+                    onClick={() => {
+                      updateImage.mutate({ id: img.id, caption: renameText.trim() || null });
+                      setRenameId(null);
+                    }}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={!editable}
+                  onClick={() => {
+                    setRenameText(img.caption ?? "");
+                    setRenameId(img.id);
+                  }}
+                  className="flex w-full items-center gap-1 text-left text-[11px]"
+                >
+                  <span className={cn("min-w-0 truncate", img.caption ? "font-medium" : "text-muted-foreground")}>
+                    {img.caption || (editable ? "Namnge bilden" : "Utan namn")}
+                  </span>
+                  {editable && <Pencil className="ml-auto h-3 w-3 shrink-0 text-muted-foreground" />}
+                </button>
+              )}
+            </div>
+
           </Card>
         );
       })}
@@ -571,13 +738,32 @@ export function EntityImageGallery({
         )}
 
         {images.length > 0 && (
+          <div className="relative w-40 shrink-0 sm:w-52">
+            <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Sök bild"
+              className="h-9 pl-7 text-xs sm:h-7"
+            />
+          </div>
+        )}
+
+        {search.trim() ? (
+          <Badge
+            variant="secondary"
+            className="h-9 shrink-0 rounded-md px-3 font-mono tabular-nums text-[11px] sm:h-6 sm:px-2 sm:text-[10px]"
+          >
+            {searchHits.length} träff{searchHits.length === 1 ? "" : "ar"}
+          </Badge>
+        ) : images.length > 0 ? (
           <Badge
             variant="secondary"
             className="h-9 shrink-0 rounded-md px-3 font-mono tabular-nums text-[11px] sm:h-6 sm:px-2 sm:text-[10px]"
           >
             {images.length} {images.length === 1 ? "bild" : "bilder"}
           </Badge>
-        )}
+        ) : null}
         {favorites.length > 0 && (
           <Badge
             variant="outline"
@@ -608,7 +794,134 @@ export function EntityImageGallery({
             <span className="hidden sm:inline">Redigera vilka bilder som visas</span>
           </Button>
         )}
+        {editable && images.length > 0 && (
+          <Button
+            variant={pickMode ? "default" : "outline"}
+            size="sm"
+            className="h-9 shrink-0 gap-1.5 px-3 text-xs sm:h-7"
+            onClick={() => {
+              setPickMode((v) => !v);
+              setPicked([]);
+            }}
+          >
+            <FolderPlus className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+            {pickMode ? "Avbryt val" : "Samla i grupp"}
+          </Button>
+        )}
+        {pickMode && (
+          <Button
+            size="sm"
+            className="h-9 shrink-0 gap-1.5 px-3 text-xs sm:h-7"
+            disabled={!picked.length}
+            onClick={() => setGroupDialog(true)}
+          >
+            <Check className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+            Spara grupp ({picked.length})
+          </Button>
+        )}
       </div>
+
+      {/* Beskrivning för dagen eller gruppen man tittar på */}
+      {catalog && editable && view.mode === "day" && (
+        <Card className="space-y-1.5 p-2.5">
+          <div className="flex items-center gap-2">
+            <span className={cn("rounded px-2 py-0.5 text-[11px] font-semibold", dayBadgeClass(`${view.key}T12:00:00`))}>
+              {dayLabel(view.key)}
+            </span>
+            <span className="text-[11px] text-muted-foreground">Beskriv dagens bilder</span>
+          </div>
+          <Textarea
+            value={dayDesc ?? dayGroups.find((g) => g.day_key === view.key)?.description ?? ""}
+            onChange={(e) => setDayDesc(e.target.value)}
+            placeholder="T.ex. Ombyggnad av disken"
+            className="min-h-[52px] text-xs"
+          />
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              disabled={dayDesc === null || saveDayDesc.isPending}
+              onClick={async () => {
+                const key = view.mode === "day" ? view.key : "";
+                try {
+                  await saveDayDesc.mutateAsync({
+                    entityType,
+                    entityId,
+                    dayKey: key,
+                    description: dayDesc ?? "",
+                    name: dayLabel(key),
+                  });
+                  setDayDesc(null);
+                  toast({ title: "Beskrivningen sparad" });
+                } catch (e: any) {
+                  toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
+                }
+              }}
+            >
+              Spara beskrivning
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {catalog && activeGroup && (
+        <Card className="space-y-1.5 p-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-1.5 text-sm font-semibold">
+              <Folder className="h-3.5 w-3.5 text-muted-foreground" />
+              {activeGroup.name}
+            </span>
+            {editable && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-destructive"
+                onClick={async () => {
+                  await deleteGroup.mutateAsync({ id: activeGroup.id, entityType, entityId });
+                  setView({ mode: "featured" });
+                  toast({ title: "Gruppen borttagen — bilderna ligger kvar" });
+                }}
+              >
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                Ta bort grupp
+              </Button>
+            )}
+          </div>
+          {editable ? (
+            <>
+              <Textarea
+                value={dayDesc ?? activeGroup.description ?? ""}
+                onChange={(e) => setDayDesc(e.target.value)}
+                placeholder="Beskriv gruppen"
+                className="min-h-[52px] text-xs"
+              />
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  disabled={dayDesc === null || updateGroup.isPending}
+                  onClick={async () => {
+                    await updateGroup.mutateAsync({
+                      id: activeGroup.id,
+                      description: dayDesc ?? "",
+                      entityType,
+                      entityId,
+                    });
+                    setDayDesc(null);
+                    toast({ title: "Beskrivningen sparad" });
+                  }}
+                >
+                  Spara beskrivning
+                </Button>
+              </div>
+            </>
+          ) : (
+            activeGroup.description && <p className="text-xs text-muted-foreground">{activeGroup.description}</p>
+          )}
+        </Card>
+      )}
 
       {/* Saknas utvalda bilder för idag? Påminn personalen om stjärnan. */}
       {editable && previewCount && !isLoading && featured.length === 0 && todayImageCount > 0 && (
@@ -690,6 +1003,27 @@ export function EntityImageGallery({
                   )
 
                 : null}
+              {manualGroups.length > 0 && (
+                <>
+                  <div className="my-1 border-t" />
+                  <p className="px-2 pb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Grupper
+                  </p>
+                  {manualGroups.map((g) =>
+                    catalogButton(
+                      view.mode === "group" && view.id === g.id,
+                      g.id,
+                      g.name || "Grupp",
+                      g.imageIds.length,
+                      <Folder className="h-3 w-3" />,
+                      () => {
+                        setDayDesc(null);
+                        setView({ mode: "group", id: g.id });
+                      }
+                    )
+                  )}
+                </>
+              )}
               <div className="my-1 border-t" />
               {dates.slice(0, dateLimit).map(([key, count]) =>
                 catalogButton(
@@ -855,6 +1189,117 @@ export function EntityImageGallery({
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Samla markerade bilder i en grupp */}
+      <Dialog open={groupDialog} onOpenChange={setGroupDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Samla {picked.length} bilder i en grupp</DialogTitle>
+            <DialogDescription className="text-xs">
+              Ny grupp eller lägg bilderna i en grupp som redan finns.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Input
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="Gruppens namn, t.ex. Skada i kylen"
+              className="h-9 text-sm"
+            />
+            <Textarea
+              value={groupDesc}
+              onChange={(e) => setGroupDesc(e.target.value)}
+              placeholder="Beskrivning (valfritt)"
+              className="min-h-[60px] text-xs"
+            />
+            <Button
+              size="sm"
+              className="w-full"
+              disabled={createGroup.isPending}
+              onClick={() => saveGroup()}
+            >
+              <FolderPlus className="mr-1 h-3.5 w-3.5" />
+              Skapa grupp
+            </Button>
+            {manualGroups.length > 0 && (
+              <div className="space-y-1 border-t pt-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Lägg i befintlig grupp
+                </p>
+                {manualGroups.map((g) => (
+                  <Button
+                    key={g.id}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-full justify-between text-xs"
+                    disabled={addToGroup.isPending}
+                    onClick={() => saveGroup(g.id)}
+                  >
+                    <span className="truncate">{g.name || "Grupp"}</span>
+                    <span className="font-mono tabular-nums text-[10px] text-muted-foreground">
+                      {g.imageIds.length}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Namnge nyss uppladdade bilder — gör dem sökbara direkt */}
+      <Dialog open={nameIds.length > 0} onOpenChange={(v) => !v && setNameIds([])}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Namnge bilderna</DialogTitle>
+            <DialogDescription className="text-xs">
+              Ett kort namn gör bilden lätt att söka fram senare, t.ex. "Disken efter städning".
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {nameIds.map((id, idx) => {
+              const img = images.find((i) => i.id === id);
+              return (
+                <div key={id} className="flex items-center gap-2">
+                  {img && (
+                    <img
+                      src={thumbUrl(img.url, THUMB_TILE)}
+                      alt=""
+                      className="h-12 w-12 shrink-0 rounded-md object-cover"
+                    />
+                  )}
+                  <Input
+                    autoFocus={idx === 0}
+                    value={names[id] ?? ""}
+                    onChange={(e) => setNames((p) => ({ ...p, [id]: e.target.value }))}
+                    placeholder="Namn på bilden"
+                    className="h-10 text-sm"
+                  />
+                </div>
+              );
+            })}
+            <div className="flex gap-2">
+              <Button
+                className="h-11 flex-1 text-sm font-semibold"
+                onClick={() => {
+                  nameIds.forEach((id) => {
+                    const n = (names[id] ?? "").trim();
+                    if (n) updateImage.mutate({ id, caption: n });
+                  });
+                  setNameIds([]);
+                  setNames({});
+                  toast({ title: "Namnen är sparade" });
+                }}
+              >
+                Spara namn
+              </Button>
+              <Button variant="outline" className="h-11 text-sm" onClick={() => setNameIds([])}>
+                Hoppa över
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

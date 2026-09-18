@@ -185,6 +185,9 @@ export interface CustomerOrder {
   status: OrderStatus;
   source: string;
   received_by_name: string | null;
+  received_by_staff_id?: string | null;
+  packed_by_name?: string | null;
+  packed_by_staff_id?: string | null;
   estimated_total: number;
   total_incl_vat: number;
   note: string | null;
@@ -192,6 +195,10 @@ export interface CustomerOrder {
   /** Sätts när personalen trycker "Starta packning" — ordern tonas gul. */
   packing_started_at?: string | null;
   handed_over_at: string | null;
+  /** Satt när beställningen är lastad för utkörning (t.ex. på bilen). */
+  delivery_run_at?: string | null;
+  /** Fritext om utkörningen, t.ex. vem som kör. */
+  delivery_run_note?: string | null;
   archived_at?: string | null;
   cancelled_at?: string | null;
   cancelled_reason?: string | null;

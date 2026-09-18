@@ -1,3 +1,4 @@
+import { OrdererName } from "@/components/orders/OrdererName";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -536,9 +537,16 @@ export function CustomerOrderCard({
                 )}
                 {order.guest_count != null && <div>Antal gäster: {order.guest_count}</div>}
                 {order.note && <div className="pt-2">{order.note}</div>}
-                <div className="pt-2 text-xs text-muted-foreground">
-                  Mottagen av {order.received_by_name || "okänd"} ·{" "}
-                  {new Date(order.created_at).toLocaleString("sv-SE")}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    Inlagd av <OrdererName name={order.received_by_name} size="sm" />
+                  </span>
+                  <span>{new Date(order.created_at).toLocaleString("sv-SE")}</span>
+                  {order.packed_by_name && (
+                    <span className="inline-flex items-center gap-1">
+                      · Packad av <OrdererName name={order.packed_by_name} size="sm" />
+                    </span>
+                  )}
                 </div>
                 <OrderAuditLine
                   stacked

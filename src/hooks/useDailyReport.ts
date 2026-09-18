@@ -22,6 +22,10 @@ export type DailyReport = {
   staff_notes: string | null;
   waste_items: WasteItem[];
   comment: string | null;
+  /** Butikens valuta när rapporten skrevs, t.ex. CHF för Zollikon och Morges. */
+  currency?: string | null;
+  /** Momssats som brutto/netto räknades med. */
+  vat_rate?: number | null;
   created_by: string | null;
   created_at: string;
   updated_at?: string;

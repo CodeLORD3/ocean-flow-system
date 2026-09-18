@@ -1,0 +1,273 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+/** Typer av papper som samlas under Ekonomi → Viktiga papper. */
+export const PAPER_TYPES = [
+  { value: "kvitto", label: "Kvitton", singular: "Kvitto", color: "#16a34a" },
+  { value: "foljesedel", label: "Följesedlar", singular: "Följesedel", color: "#0ea5e9" },
+  { value: "faktura", label: "Fakturor", singular: "Faktura", color: "#f59e0b" },
+  { value: "brev", label: "Brev", singular: "Brev", color: "#7c3aed" },
+  { value: "anteckning", label: "Anteckningar", singular: "Anteckning", color: "#64748b" },
+  { value: "kort", label: "Kort", singular: "Kort", color: "#0f766e" },
+] as const;
+
+export type PaperType = (typeof PAPER_TYPES)[number]["value"];
+
+export function paperTypeInfo(value: string | null | undefined) {
+  return PAPER_TYPES.find((t) => t.value === value) ?? PAPER_TYPES[0];
+}
+
+export interface PaperLineItem {
+  name: string;
+  quantity?: number | null;
+  amount?: number | null;
+}
+
+export interface ImportantPaper {
+  id: string;
+  store_id: string | null;
+  paper_type: string;
+  title: string | null;
+  company_name: string | null;
+  /** Företagets webbadress, används för att hämta logotypen. */
+  company_website: string | null;
+  /** Logotyp för företaget om den kunde hämtas. */
+  company_logo_url: string | null;
+  paper_date: string | null;
+  net_amount: number | null;
+  vat_amount: number | null;
+  gross_amount: number | null;
+  currency: string;
+  document_number: string | null;
+  /** Betalsätt, används främst för kvitton: "kort" eller "kontant". */
+  payment_method: string | null;
+  /** Korttyp, t.ex. Visa, Mastercard, Twint. */
+  card_brand: string | null;
+  /** Kortets fyra sista siffror. */
+  card_last4: string | null;
+  card_holder: string | null;
+  /** Bokföringskonto, t.ex. 4010. */
+  expense_account: string | null;
+  expense_category: string | null;
+  /** Köpta varor: [{ name, quantity, amount }] — underlag för bokföringen. */
+  line_items: PaperLineItem[];
+  description: string | null;
+  tags: string[];
+  file_url: string | null;
+  file_name: string | null;
+  file_mime: string | null;
+  created_by: string | null;
+  created_by_staff_id: string | null;
+  /** Registrerat kort som användes. */
+  card_id: string | null;
+  /** Personen som betalade (hämtas från kortet). */
+  paid_by_staff_id: string | null;
+  /** Privat kort → utlägg som ska ersättas. */
+  is_expense_claim: boolean;
+  created_at: string;
+  /** Fylls i av hooken: namn och profilbild på den som lade in pappret. */
+  created_by_name?: string | null;
+  created_by_image?: string | null;
+  /** Fylls i av hooken: namn och profilbild på den som betalade. */
+  paid_by_name?: string | null;
+  paid_by_image?: string | null;
+}
+
+export function useImportantPapers(storeId?: string | null) {
+  return useQuery({
+    queryKey: ["important-papers", storeId ?? "alla"],
+    queryFn: async () => {
+      let q = supabase.from("important_papers").select("*").order("created_at", { ascending: false });
+      // Papper hör bara till sin egen butik — inget delas mellan butikerna.
+      if (storeId) q = q.eq("store_id", storeId);
+      const { data, error } = await q;
+      if (error) throw error;
+      const rows = (data ?? []) as unknown as ImportantPaper[];
+
+      const staffIds = [
+        ...new Set(
+          rows.flatMap((r) => [r.created_by_staff_id, r.paid_by_staff_id]).filter(Boolean),
+        ),
+      ] as string[];
+      let byStaff: Record<string, { name: string; image: string | null }> = {};
+      if (staffIds.length) {
+        const { data: staff } = await supabase
+          .from("staff")
+          .select("id, first_name, last_name, profile_image_url")
+          .in("id", staffIds);
+        byStaff = Object.fromEntries(
+          (staff ?? []).map((s: any) => [
+            s.id,
+            { name: `${s.first_name ?? ""} ${s.last_name ?? ""}`.trim(), image: s.profile_image_url ?? null },
+          ]),
+        );
+      }
+      return rows.map((r) => ({
+        ...r,
+        line_items: Array.isArray(r.line_items) ? r.line_items : [],
+        created_by_name: r.created_by_staff_id ? byStaff[r.created_by_staff_id]?.name ?? null : null,
+        created_by_image: r.created_by_staff_id ? byStaff[r.created_by_staff_id]?.image ?? null : null,
+        paid_by_name: r.paid_by_staff_id ? byStaff[r.paid_by_staff_id]?.name ?? null : null,
+        paid_by_image: r.paid_by_staff_id ? byStaff[r.paid_by_staff_id]?.image ?? null : null,
+      }));
+    },
+  });
+}
+
+export interface PaperInput {
+  storeId?: string | null;
+  paperType: PaperType;
+  title?: string | null;
+  companyName?: string | null;
+  companyWebsite?: string | null;
+  companyLogoUrl?: string | null;
+  paperDate?: string | null;
+  netAmount?: number | null;
+  vatAmount?: number | null;
+  grossAmount?: number | null;
+  currency?: string;
+  documentNumber?: string | null;
+  paymentMethod?: "kort" | "kontant" | null;
+  cardBrand?: string | null;
+  cardLast4?: string | null;
+  cardHolder?: string | null;
+  cardId?: string | null;
+  paidByStaffId?: string | null;
+  isExpenseClaim?: boolean;
+  expenseAccount?: string | null;
+  expenseCategory?: string | null;
+  lineItems?: PaperLineItem[];
+  description?: string | null;
+  tags?: string[];
+  file?: File | null;
+}
+
+/** Laddar upp filen (om det finns någon) och sparar pappret. */
+export function useSaveImportantPaper() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: PaperInput & { id?: string }) => {
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id ?? null;
+      const { data: staff } = await supabase.rpc("current_staff");
+      const staffId = (staff as any)?.id ?? (Array.isArray(staff) ? (staff[0] as any)?.id : null) ?? null;
+
+      let fileUrl: string | null = null;
+      let fileName: string | null = null;
+      let fileMime: string | null = null;
+      if (input.file) {
+        const ext = input.file.name.split(".").pop() ?? "bin";
+        const path = `${input.storeId ?? "gemensamt"}/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("viktiga-papper").upload(path, input.file);
+        if (upErr) throw upErr;
+        fileUrl = supabase.storage.from("viktiga-papper").getPublicUrl(path).data.publicUrl;
+        fileName = input.file.name;
+        fileMime = input.file.type || null;
+      }
+
+      const row: Record<string, unknown> = {
+        store_id: input.storeId ?? null,
+        paper_type: input.paperType,
+        title: input.title?.trim() || null,
+        company_name: input.companyName?.trim() || null,
+        company_website: input.companyWebsite?.trim() || null,
+        company_logo_url: input.companyLogoUrl?.trim() || null,
+        paper_date: input.paperDate || null,
+        net_amount: input.netAmount ?? null,
+        vat_amount: input.vatAmount ?? null,
+        gross_amount: input.grossAmount ?? null,
+        currency: input.currency || "CHF",
+        document_number: input.documentNumber?.trim() || null,
+        payment_method: input.paymentMethod ?? null,
+        card_brand: input.cardBrand?.trim() || null,
+        card_last4: /^\d{4}$/.test((input.cardLast4 ?? "").trim()) ? input.cardLast4!.trim() : null,
+        card_holder: input.cardHolder?.trim() || null,
+        card_id: input.cardId ?? null,
+        paid_by_staff_id: input.paidByStaffId ?? null,
+        is_expense_claim: input.isExpenseClaim ?? false,
+        expense_account: input.expenseAccount?.trim() || null,
+        expense_category: input.expenseCategory?.trim() || null,
+        line_items: (input.lineItems ?? []).filter((l) => l.name?.trim()),
+        description: input.description?.trim() || null,
+        tags: input.tags ?? [],
+      };
+      if (fileUrl) Object.assign(row, { file_url: fileUrl, file_name: fileName, file_mime: fileMime });
+
+      // Ett foto av ett kort läggs in i kortregistret, så att köp kan matchas mot kortet.
+      const last4 = row.card_last4 as string | null;
+      if (last4) {
+        const { data: existing } = await supabase
+          .from("payment_cards")
+          .select("id")
+          .eq("card_last4", last4)
+          .eq("active", true)
+          .maybeSingle();
+        let cardId = (existing as { id?: string } | null)?.id ?? null;
+        if (input.paperType === "kort") {
+          // På ett kortpapper är företagsnamnet banken/kortutgivaren.
+          const bank = (row.company_name as string | null) ?? null;
+          if (cardId) {
+            await supabase
+              .from("payment_cards")
+              .update({
+                card_brand: (row.card_brand as string | null) ?? null,
+                card_holder: (row.card_holder as string | null) ?? null,
+                bank,
+                store_id: input.storeId ?? null,
+                staff_id: input.paidByStaffId ?? null,
+                card_kind: input.isExpenseClaim ? "privat" : "foretag",
+              })
+              .eq("id", cardId);
+          } else {
+            const { data: created, error: cardErr } = await supabase
+              .from("payment_cards")
+              .insert({
+                card_last4: last4,
+                card_brand: (row.card_brand as string | null) ?? null,
+                card_holder: (row.card_holder as string | null) ?? null,
+                bank,
+                store_id: input.storeId ?? null,
+                staff_id: input.paidByStaffId ?? null,
+                card_kind: input.isExpenseClaim ? "privat" : "foretag",
+              })
+              .select("id")
+              .single();
+            if (cardErr) throw cardErr;
+            cardId = created.id as string;
+          }
+          row.payment_method = null;
+        }
+        // Kortköp kopplas alltid till kortet med samma fyra sista siffror.
+        if (cardId && !row.card_id) row.card_id = cardId;
+      }
+
+      if (input.id) {
+        const { error } = await supabase.from("important_papers").update(row).eq("id", input.id);
+        if (error) throw error;
+        return input.id;
+      }
+      const { data, error } = await supabase
+        .from("important_papers")
+        .insert({ ...row, created_by: userId, created_by_staff_id: staffId })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id as string;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["important-papers"] });
+      qc.invalidateQueries({ queryKey: ["payment-cards"] });
+    },
+  });
+}
+
+export function useDeleteImportantPaper() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("important_papers").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["important-papers"] }),
+  });
+}

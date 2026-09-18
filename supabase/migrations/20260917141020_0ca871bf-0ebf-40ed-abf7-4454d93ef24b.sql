@@ -1,0 +1,1 @@
+ALTER TABLE public.payment_cards ADD COLUMN IF NOT EXISTS bank text;

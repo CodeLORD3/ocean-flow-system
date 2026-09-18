@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check, Printer, CheckSquare } from "lucide-react";
+import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check, Printer, CheckSquare, Truck, ChevronDown, ChevronRight, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,7 +24,10 @@ import {
   useApproveCustomerOrder,
   useCustomerOrderCounts,
   useCustomerOrderTabCounts,
+  useMoveCustomerOrders,
+  useSetDeliveryRun,
 } from "@/hooks/useCustomerOrders";
+import { toast } from "sonner";
 import {
   CustomerOrder,
   ORDER_STATUS_LABELS,
@@ -210,6 +213,62 @@ export default function CustomerOrders() {
   const toggleMark = (id: string, next: boolean) =>
     setMarked((cur) => (next ? [...new Set([...cur, id])] : cur.filter((x) => x !== id)));
 
+  /* Dra-och-släpp: flytta en order — eller alla markerade — till en annan dag. */
+  const moveOrders = useMoveCustomerOrders();
+  const [dragIds, setDragIds] = useState<string[]>([]);
+  const [dragOverDay, setDragOverDay] = useState<string | null>(null);
+
+  /** Bara markerade rader kan dras. Alla markerade följer med. */
+  const startDrag = (id: string) => {
+    if (!marked.includes(id)) return;
+    setDragIds(marked);
+  };
+
+  const moveTo = (date: string, ids: string[]) => {
+    const list = ids.filter(Boolean);
+    if (list.length === 0) return;
+    moveOrders.mutate(
+      { ids: list, date },
+      {
+        onSuccess: () => {
+          toast.success(
+            list.length === 1
+              ? `Beställningen flyttades till ${dayLabel(date)}`
+              : `${list.length} beställningar flyttades till ${dayLabel(date)}`,
+          );
+          setMarked([]);
+        },
+        onError: (e: any) => toast.error(e?.message ?? "Kunde inte flytta beställningen"),
+      },
+    );
+  };
+
+  /* Utkörning: beställningar som är lastade på bilen samlas i en egen,
+     ihopfällbar grupp per dag så butikspersonalen bara ser sitt eget kvar. */
+  const setDeliveryRun = useSetDeliveryRun();
+  const [openRuns, setOpenRuns] = useState<string[]>([]);
+  const toggleRun = (day: string) =>
+    setOpenRuns((cur) => (cur.includes(day) ? cur.filter((d) => d !== day) : [...cur, day]));
+
+  const putInRun = (on: boolean) => {
+    const ids = marked.filter((id) => viewOrders.some((o) => o.id === id));
+    if (ids.length === 0) return;
+    setDeliveryRun.mutate(
+      { ids, on },
+      {
+        onSuccess: () => {
+          toast.success(
+            on
+              ? `${ids.length} beställning${ids.length === 1 ? "" : "ar"} lagd${ids.length === 1 ? "" : "a"} i utkörningen`
+              : `${ids.length} beställning${ids.length === 1 ? "" : "ar"} tillbaka i butikslistan`,
+          );
+          setMarked([]);
+        },
+        onError: (e: any) => toast.error(e?.message ?? "Kunde inte ändra utkörningen"),
+      },
+    );
+  };
+
   const isArchiveView = tab === "arkiverade";
   const archiveOrders = useArchiveCustomerOrder();
   const approveOrders = useApproveCustomerOrder();
@@ -287,6 +346,44 @@ export default function CustomerOrders() {
   const canCreate = canEdit && (isShop ? !!activeStoreId : !!effectiveStore);
 
 
+  /** En orderrad med dra-och-släpp, används både i butikslistan och utkörningen. */
+  const renderOrderRow = (o: CustomerOrder, day: string) => (
+    <div
+      key={o.id}
+      draggable={canEdit && !rowReadOnly(o) && marked.includes(o.id)}
+      onDragStart={(e) => {
+        if (!marked.includes(o.id)) {
+          e.preventDefault();
+          return;
+        }
+        startDrag(o.id);
+      }}
+      title={
+        marked.includes(o.id)
+          ? "Dra för att flytta markerade beställningar"
+          : "Markera beställningen först för att kunna dra den"
+      }
+      onDragEnd={() => {
+        setDragIds([]);
+        setDragOverDay(null);
+      }}
+      className={dragIds.includes(o.id) ? "opacity-50" : ""}
+    >
+      <CustomerOrderRow
+        order={o}
+        canEdit={canEdit}
+        readOnly={rowReadOnly(o)}
+        open={openRows.includes(o.id)}
+        onToggle={toggleRow}
+        selected={marked.includes(o.id)}
+        onSelect={toggleMark}
+        photoCount={photoCounts?.[o.id] ?? 0}
+        orderCount={o.customer_id ? customerOrderCounts?.[o.customer_id] ?? 0 : 0}
+        highlightProduct={focus?.orderId === o.id ? focus.product : null}
+      />
+    </div>
+  );
+
   return (
     <div className="space-y-3 p-3 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -343,6 +440,20 @@ export default function CustomerOrders() {
               </>
             )}
           </Button>
+        )}
+        {/* Flytta markerade till ett annat datum — fungerar även på mobil där man inte kan dra. */}
+        {canEdit && marked.length > 0 && (
+          <div className="flex items-center gap-2 rounded-sm border border-grid-line bg-card px-3 py-1.5">
+            <span className="whitespace-nowrap text-xs font-semibold">
+              Flytta {marked.length} till
+            </span>
+            <Input
+              type="date"
+              className="h-10 w-[9.5rem] text-sm"
+              disabled={moveOrders.isPending}
+              onChange={(e) => e.target.value && moveTo(e.target.value, marked)}
+            />
+          </div>
         )}
         {/* Bulkutskrift: markera alla (eller några) och skriv ut packlistan i ett svep. */}
         {panel === "orders" && viewOrders.length > 0 && (
@@ -561,6 +672,36 @@ export default function CustomerOrders() {
             </Popover>
           </div>
 
+          {canEdit && marked.length > 0 && (
+            <div className="sticky top-0 z-30 -mx-2 w-full basis-full px-2 py-2">
+              <div className="flex flex-wrap items-center gap-3 rounded-lg border-2 border-emerald-600 bg-emerald-50 p-3 shadow-md">
+                <span className="flex items-center gap-2 text-sm font-bold text-emerald-900">
+                  <Truck className="h-5 w-5" />
+                  {marked.length} beställning{marked.length === 1 ? "" : "ar"} markerad
+                  {marked.length === 1 ? "" : "e"}
+                </span>
+                <Button
+                  size="lg"
+                  className="h-12 gap-2 bg-emerald-600 px-6 text-sm font-bold text-white hover:bg-emerald-700"
+                  disabled={setDeliveryRun.isPending}
+                  onClick={() => putInRun(true)}
+                >
+                  <Truck className="h-5 w-5" /> Lägg i utkörning
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="h-12 gap-2 border-emerald-700/40 px-4 text-sm font-semibold text-emerald-900"
+                  disabled={setDeliveryRun.isPending}
+                  onClick={() => putInRun(false)}
+                >
+                  <Undo2 className="h-5 w-5" /> Ta ur utkörning
+                </Button>
+              </div>
+            </div>
+          )}
+
+
           <div className="ml-auto flex shrink-0 flex-wrap gap-2">
             {/* Totallista lyfts fram: personalen sorterar och packar varor i bulk innan enskilda ordrar packas. */}
             <Button
@@ -702,31 +843,66 @@ export default function CustomerOrders() {
                     </div>
 
                     {w.days.map(([day, list]) => (
-                      <div key={day}>
+                      <div
+                        key={day}
+                        onDragOver={(e) => {
+                          if (!canEdit || dragIds.length === 0) return;
+                          e.preventDefault();
+                          setDragOverDay(day);
+                        }}
+                        onDragLeave={() => setDragOverDay((d) => (d === day ? null : d))}
+                        onDrop={(e) => {
+                          if (!canEdit || dragIds.length === 0) return;
+                          e.preventDefault();
+                          const ids = dragIds;
+                          setDragIds([]);
+                          setDragOverDay(null);
+                          moveTo(day, ids);
+                        }}
+                        className={dragOverDay === day ? "ring-2 ring-inset ring-primary" : ""}
+                      >
                         <div className="flex items-center gap-2 border-x border-b border-grid-line bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                           <span className="truncate">{dayLabel(day)}</span>
                           <span className="shrink-0 font-mono tabular-nums">
-                            {list.length} order
+                            {list.filter((o) => !o.delivery_run_at).length} order
                           </span>
+                          {dragOverDay === day && dragIds.length > 0 && (
+                            <span className="ml-auto shrink-0 rounded-sm bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                              Släpp här — flytta {dragIds.length}
+                            </span>
+                          )}
                         </div>
 
-                        {list.map((o) => (
-                          <CustomerOrderRow
-                            key={o.id}
-                            order={o}
-                            canEdit={canEdit}
-                            readOnly={rowReadOnly(o)}
-                            open={openRows.includes(o.id)}
-                            onToggle={toggleRow}
-                            selected={marked.includes(o.id)}
-                            onSelect={toggleMark}
-                            photoCount={photoCounts?.[o.id] ?? 0}
-                            orderCount={
-                              o.customer_id ? customerOrderCounts?.[o.customer_id] ?? 0 : 0
-                            }
-                            highlightProduct={focus?.orderId === o.id ? focus.product : null}
-                          />
-                        ))}
+                        {list.filter((o) => !o.delivery_run_at).map((o) => renderOrderRow(o, day))}
+
+                        {/* Utkörningen: allt som är lastat på bilen, ihopfällbart. */}
+                        {list.some((o) => !!o.delivery_run_at) && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => toggleRun(day)}
+                              className="flex w-full items-center gap-2 border-x border-b border-grid-line bg-emerald-500/10 px-2.5 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
+                            >
+                              {openRuns.includes(day) ? (
+                                <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                              ) : (
+                                <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                              )}
+                              <Truck className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate">Utkörning — lastade på bilen</span>
+                              <span className="shrink-0 font-mono tabular-nums">
+                                {list.filter((o) => !!o.delivery_run_at).length} order
+                              </span>
+                              <span className="ml-auto shrink-0 font-normal normal-case text-muted-foreground">
+                                {openRuns.includes(day) ? "Göm" : "Visa"}
+                              </span>
+                            </button>
+                            {openRuns.includes(day) &&
+                              list
+                                .filter((o) => !!o.delivery_run_at)
+                                .map((o) => renderOrderRow(o, day))}
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>

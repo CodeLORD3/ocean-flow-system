@@ -37,6 +37,8 @@ import {
   useMarkCustomerOrderPacked,
   useSoftDeleteCustomerOrder,
 } from "@/hooks/useCustomerOrders";
+import { PackedByDialog } from "@/components/orders/PackedByDialog";
+import { OrdererName } from "@/components/orders/OrdererName";
 import { useMarkNoShow } from "@/hooks/useBookingAdmin";
 import {
   CustomerOrder,
@@ -217,6 +219,7 @@ export function CustomerOrderRow({
   const handOver = useHandOverCustomerOrder();
   const markPaid = useMarkCustomerOrderPaid();
   const markPacked = useMarkCustomerOrderPacked();
+  const [packedByOpen, setPackedByOpen] = useState(false);
   const softDelete = useSoftDeleteCustomerOrder();
   const [deleteReason, setDeleteReason] = useState<string | null>(null);
   const isArchived = !!order.archived_at;
@@ -829,17 +832,43 @@ export function CustomerOrderRow({
                 </div>
               )}
 
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  Inlagd av <OrdererName name={order.received_by_name} size="sm" />
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  Packad av{" "}
+                  {order.packed_by_name ? (
+                    <OrdererName name={order.packed_by_name} size="sm" />
+                  ) : (
+                    <span className="italic">inte packad</span>
+                  )}
+                </span>
+              </div>
+
               <div className="flex flex-wrap gap-1.5">
                 {!readOnly && canEdit && !cancelled && !handedOver && order.pack_status !== "packad" && (
                   <Button
                     size="sm"
                     className="h-7 text-[11px]"
                     disabled={markPacked.isPending}
-                    onClick={() => markPacked.mutate({ order })}
+                    onClick={() => setPackedByOpen(true)}
                   >
                     <PackageCheck className="mr-1 h-3.5 w-3.5" /> Markera packad
                   </Button>
                 )}
+                <PackedByDialog
+                  open={packedByOpen}
+                  onOpenChange={setPackedByOpen}
+                  storeId={order.store_id}
+                  pending={markPacked.isPending}
+                  onConfirm={(packedBy) => {
+                    markPacked.mutate(
+                      { order, packedBy },
+                      { onSuccess: () => setPackedByOpen(false) },
+                    );
+                  }}
+                />
                 {!readOnly && canEdit && !cancelled && !handedOver && order.pack_status === "packad" && (
                   <Button
                     variant="outline"

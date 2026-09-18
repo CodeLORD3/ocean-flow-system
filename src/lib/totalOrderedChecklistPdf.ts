@@ -7,6 +7,9 @@ export interface TotalChecklistRow {
   total: number;
   /** Redan packad mängd, för kolumnen Kvar. */
   packed?: number;
+  /** Beställd mängd på rader som packats klart — räknas inte som kvar. */
+  closed?: number;
+
   /** Butikens lagersaldo, om kolumnen är påslagen. */
   stock?: number | null;
   /** Utestående grossistorder, om kolumnen är påslagen. */
@@ -149,7 +152,7 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
         "",
         r.name,
         `${qty(r.total, r.unit)} ${r.unit}`,
-        `${qty(Math.max(r.total - Number(r.packed || 0), 0), r.unit)} ${r.unit}`,
+        `${qty(Math.max(r.total - Math.max(Number(r.packed || 0), Number(r.closed || 0)), 0), r.unit)} ${r.unit}`,
         ...extraKeys.map((k) => extraCell(r, k)),
         String(r.orderCount),
         r.types,

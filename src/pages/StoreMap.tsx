@@ -31,6 +31,8 @@ import {
   Trash2,
   Upload,
   ArrowLeft,
+  Plus,
+  Check,
 } from "lucide-react";
 import { todayIso } from "@/hooks/useChecklist";
 import { FloorPlanCanvas, type Selection } from "@/components/storemap/FloorPlanCanvas";
@@ -45,9 +47,15 @@ import { OverviewQuickBar } from "@/components/storemap/OverviewQuickBar";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
-import { ZONE_PALETTE } from "@/lib/mapPalette";
+import ZoneDetailsSheet from "@/components/storemap/ZoneDetailsSheet";
+import { ZONE_PALETTE, nextZoneColor } from "@/lib/mapPalette";
 import { bbox, zonePoints } from "@/lib/mapGeometry";
-import { useFloorPlanImages, useUploadEntityImage } from "@/hooks/useEntityImages";
+import {
+  useEntityImages,
+  useFloorPlanImages,
+  useStoreAreaImages,
+  useUploadEntityImage,
+} from "@/hooks/useEntityImages";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useAllowedStores } from "@/components/StoreSwitcher";
@@ -55,6 +63,7 @@ import { useDeviations } from "@/hooks/useFoodSafety";
 import {
   nextInstanceName,
   useDeleteMapObject,
+  useDeleteZone,
   useFloorPlanVersions,
   useFloorPlans,
   useMapObjectTypes,
@@ -102,12 +111,29 @@ export default function StoreMap() {
   const { data: versions = [] } = useFloorPlanVersions(plan?.id ?? null);
   const { data: pins = [] } = useMapPins(plan?.id ?? null);
   const { data: planImages = [] } = useFloorPlanImages(plan?.id ?? null);
+  /**
+   * Bildlistan visar butikens alla bilder — både de som placerats på ritningen
+   * och de som tagits på butiken eller på en yta utan exakt plats.
+   */
+  const { data: storeImages = [] } = useEntityImages("store", storeId ?? null);
+  const areaImageIds = useMemo(
+    () => [...zones.map((z) => z.id), ...objects.map((o) => o.id)],
+    [zones, objects],
+  );
+  const { data: areaImages = [] } = useStoreAreaImages(areaImageIds);
+  const allImages = useMemo(() => {
+    const seen = new Set<string>();
+    return [...planImages, ...areaImages, ...storeImages]
+      .filter((i) => (seen.has(i.id) ? false : (seen.add(i.id), true)))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  }, [planImages, areaImages, storeImages]);
   const uploadImage = useUploadEntityImage();
   useMapRealtime(storeId);
 
   const saveZone = useSaveZone();
   const saveObject = useSaveMapObject();
   const deleteObject = useDeleteMapObject();
+  const deleteZone = useDeleteZone();
   const savePlan = useSaveFloorPlan();
   const publish = usePublishFloorPlan();
   const completePin = useCompleteMapPin();
@@ -124,6 +150,12 @@ export default function StoreMap() {
   const [focus, setFocus] = useState<Selection>(null);
   /** Områdets egna sida ligger som en egen flik i butikskartan. */
   const [areaPage, setAreaPage] = useState<Selection>(null);
+  /** Nytt område som ännu inte är beskrivet — visar den stora knappen över kartan. */
+  const [draftZoneId, setDraftZoneId] = useState<string | null>(null);
+  /** Området vars sidopanel med all information är öppen. */
+  const [sheetZoneId, setSheetZoneId] = useState<string | null>(null);
+  /** Befintligt område som just nu ritas om i kartan. */
+  const [shapeZoneId, setShapeZoneId] = useState<string | null>(null);
   const [pinDialog, setPinDialog] = useState<{
     point: { x: number; y: number } | null;
     zoneId: string | null;
@@ -250,6 +282,73 @@ export default function StoreMap() {
     return [...groups.values()];
   }, [planImages, zones]);
 
+  /**
+   * Nytt område: läggs som en ruta på en ledig plats i kartan, får nästa färg
+   * i paletten och öppnas direkt i redigeringsläget så namn och form kan sättas.
+   */
+  const addZone = () => {
+    if (!plan || !storeId) return;
+    const step = 24 * (zones.length % 6);
+    saveZone.mutate(
+      {
+        floor_plan_id: plan.id,
+        store_id: storeId,
+        name: `Nytt område ${zones.length + 1}`,
+        color: nextZoneColor(zones.map((z) => z.color)),
+        x: 60 + step,
+        y: 60 + step,
+        width: 220,
+        height: 160,
+      },
+      {
+        onSuccess: (id) => {
+          setMode("redigera");
+          setView("karta");
+          setSelected({ kind: "zone", id: id as string });
+          setDraftZoneId(id as string);
+          setSheetZoneId(null);
+        },
+        onError: (e) =>
+          toast({ title: "Kunde inte skapa området", description: (e as Error).message, variant: "destructive" }),
+      },
+    );
+  };
+
+  /** Sparar uppgifterna från sidopanelen på området. */
+  const saveZoneDetails = (values: {
+    name: string;
+    zone_kind: string | null;
+    area_sqm: number | null;
+    color: string;
+    description: string | null;
+  }) => {
+    const id = sheetZoneId;
+    if (!id) return;
+    saveZone.mutate(
+      { id, ...values },
+      {
+        onSuccess: () => {
+          setSheetZoneId(null);
+          setDraftZoneId(null);
+          toast({ title: "Området är sparat", description: values.name });
+        },
+        onError: (e) =>
+          toast({ title: "Kunde inte spara området", description: (e as Error).message, variant: "destructive" }),
+      },
+    );
+  };
+
+  /** Öppnar kartan i redigeringsläge så man kan flytta och ändra storlek på ett befintligt område. */
+  const editZoneShape = (id: string) => {
+    setMode("redigera");
+    setView("karta");
+    setSelected({ kind: "zone", id });
+    setFocus({ kind: "zone", id });
+    setDrawerOpen(false);
+    setShapeZoneId(id);
+    setSheetZoneId(null);
+  };
+
   const addObject = (t: MapObjectType) => {
     if (!plan) return;
     const zone = selectedZone ?? zones[0];
@@ -283,7 +382,7 @@ export default function StoreMap() {
   return (
     <div className="space-y-4">
       {/* Stora knappar och dagens stapel högst upp */}
-      <OverviewQuickBar tasks={tasks} />
+      <OverviewQuickBar tasks={tasks} storeId={storeId} day={day} />
 
       {/* Viktig statistik högst upp — vilka som arbetar, stämpling, checklistor, avvikelser */}
       <OverviewStatsBar
@@ -355,7 +454,11 @@ export default function StoreMap() {
                 ["historik", "Historik"],
               ] as const
             ).map(([key, label]) => (
-              <TabsTrigger key={key} value={key} className="h-8 rounded-lg px-4 text-xs">
+              <TabsTrigger
+                key={key}
+                value={key}
+                className="h-8 rounded-lg px-4 text-xs font-medium text-muted-foreground transition-colors data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+              >
                 {label}
               </TabsTrigger>
             ))}
@@ -475,7 +578,7 @@ export default function StoreMap() {
           objects={objects}
           tasks={tasks}
           deviations={deviations as never}
-          images={planImages}
+          images={allImages}
           versions={versions as never}
           zoneNumbers={zoneNumbers}
           onOpenZone={(id) => {
@@ -517,15 +620,27 @@ export default function StoreMap() {
                 </div>
               ))}
               {canManage && (
-                <Button
-                  size="sm"
-                  variant={pinMode ? "default" : "outline"}
-                  className="ml-auto h-7 text-[11px] gap-1"
-                  onClick={() => setPinMode((v) => !v)}
-                >
-                  <PinIcon className="h-3 w-3" />
-                  {pinMode ? "Tryck på kartan…" : "Ny punkt"}
-                </Button>
+                <div className="ml-auto flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[11px] gap-1"
+                    onClick={() => addZone()}
+                    disabled={saveZone.isPending}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Nytt område
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={pinMode ? "default" : "outline"}
+                    className="h-7 text-[11px] gap-1"
+                    onClick={() => setPinMode((v) => !v)}
+                  >
+                    <PinIcon className="h-3 w-3" />
+                    {pinMode ? "Tryck på kartan…" : "Ny punkt"}
+                  </Button>
+                </div>
               )}
               <span className={`text-[10px] text-muted-foreground tabular-nums ${canManage ? "" : "ml-auto"}`}>
                 {pxPerMeter ? `Yta ${formatSqm(totalSqm)}` : "Skala saknas — fyll i kvm på en zon"}
@@ -607,6 +722,65 @@ export default function StoreMap() {
                   : saveObject.mutate({ id, x, y, width, height })
               }
             />
+
+            {/* Nytt område: dra det på plats, tryck sedan på den stora knappen */}
+            {draftZoneId && zones.some((z) => z.id === draftZoneId) && (
+              <div className="border-t border-emerald-500/40 bg-emerald-50 px-3 py-3">
+                <p className="pb-2 text-xs text-emerald-900">
+                  Dra området på plats i kartan och dra i hörnen till rätt storlek. Tryck sedan på knappen.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    className="h-12 flex-1 bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-700"
+                    onClick={() => setSheetZoneId(draftZoneId)}
+                  >
+                    <Check className="mr-2 h-5 w-5" /> Området färdigmarkerat
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-12 text-sm"
+                    onClick={() => {
+                      if (!confirm("Ta bort det nya området?")) return;
+                      deleteZone.mutate(draftZoneId, {
+                        onSuccess: () => {
+                          setDraftZoneId(null);
+                          setSelected(null);
+                        },
+                      });
+                    }}
+                  >
+                    Ångra
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Ändra ett befintligt område: dra i kartan, spara sedan eller öppna informationen */}
+            {shapeZoneId && shapeZoneId !== draftZoneId && zones.some((z) => z.id === shapeZoneId) && (
+              <div className="border-t border-primary/40 bg-primary/5 px-3 py-3">
+                <p className="pb-2 text-xs">
+                  Dra området till rätt plats och dra i hörnen till rätt storlek. Ändringen sparas direkt.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    className="h-12 flex-1 text-base font-semibold"
+                    onClick={() => {
+                      setShapeZoneId(null);
+                      toast({ title: "Området är uppdaterat" });
+                    }}
+                  >
+                    <Check className="mr-2 h-5 w-5" /> Klar med formen
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-12 text-sm"
+                    onClick={() => setSheetZoneId(shapeZoneId)}
+                  >
+                    Ändra namn och info
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {placing && (
               <p className="border-t border-primary/40 bg-primary/5 px-3 py-2 text-[11px]">
@@ -793,12 +967,28 @@ export default function StoreMap() {
                     <p className="text-[10px] text-muted-foreground">
                       Fyll i den uppmätta ytan. Skalan räknas fram och övriga rutor får uppskattad yta.
                     </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 w-full text-[11px] gap-1"
+                      onClick={() => addZone()}
+                      disabled={saveZone.isPending}
+                    >
+                      <Plus className="h-3 w-3" /> Nytt område
+                    </Button>
                     {zones.map((z) => (
                       <div key={z.id} className="space-y-1 border-b border-border pb-1.5 last:border-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] truncate flex-1">
-                            {zoneNumbers[z.id]}. {z.name}
-                          </span>
+                          <span className="text-[11px] tabular-nums text-muted-foreground">{zoneNumbers[z.id]}.</span>
+                          <Input
+                            defaultValue={z.name}
+                            onBlur={(e) =>
+                              e.target.value.trim() &&
+                              e.target.value !== z.name &&
+                              saveZone.mutate({ id: z.id, name: e.target.value.trim() })
+                            }
+                            className="h-7 flex-1 text-xs"
+                          />
                           <Input
                             type="number"
                             inputMode="decimal"
@@ -814,6 +1004,15 @@ export default function StoreMap() {
                             }
                             className="h-7 w-20 text-xs tabular-nums"
                           />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-[10px] gap-1"
+                            title="Beskriv området"
+                            onClick={() => setSheetZoneId(z.id)}
+                          >
+                            <Pencil className="h-3 w-3" /> Info
+                          </Button>
                         </div>
                         <div className="flex items-center gap-1">
                           {ZONE_PALETTE.map((c) => (
@@ -832,6 +1031,35 @@ export default function StoreMap() {
                           <span className="ml-auto text-[10px] text-muted-foreground">
                             {zonePoints(z).length} hörn
                           </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-1.5 text-[10px] text-destructive"
+                            title="Ta bort området"
+                            onClick={() => {
+                              if (
+                                !window.confirm(
+                                  `Ta bort ${z.name}? Uppgifter och bilder som hör till ytan tappar sin plats i kartan.`,
+                                )
+                              )
+                                return;
+                              deleteZone.mutate(z.id, {
+                                onSuccess: () => {
+                                  setSelected(null);
+                                  setFocus(null);
+                                  toast({ title: `${z.name} är borttagen` });
+                                },
+                                onError: (e) =>
+                                  toast({
+                                    title: "Kunde inte ta bort området",
+                                    description: (e as Error).message,
+                                    variant: "destructive",
+                                  }),
+                              });
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -919,6 +1147,8 @@ export default function StoreMap() {
                 unlinkedTasks={unlinkedTasks}
                 canManage={canManage}
                 onOpenPage={() => openAreaPage()}
+                onEditZone={selectedZone ? () => setSheetZoneId(selectedZone.id) : undefined}
+                onEditZoneShape={selectedZone ? () => editZoneShape(selectedZone.id) : undefined}
           zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
                 areaLabel={
                   selectedZone
@@ -1043,6 +1273,8 @@ export default function StoreMap() {
           unlinkedTasks={unlinkedTasks}
           canManage={canManage}
           onOpenPage={() => openAreaPage()}
+                onEditZone={selectedZone ? () => setSheetZoneId(selectedZone.id) : undefined}
+                onEditZoneShape={selectedZone ? () => editZoneShape(selectedZone.id) : undefined}
           zoneNumber={selectedZone ? zoneNumbers[selectedZone.id] : undefined}
           areaLabel={
             selectedZone
@@ -1056,6 +1288,15 @@ export default function StoreMap() {
         />
       )}
 
+
+      <ZoneDetailsSheet
+        zone={sheetZoneId ? zones.find((z) => z.id === sheetZoneId) ?? null : null}
+        open={!!sheetZoneId}
+        isNew={!!sheetZoneId && sheetZoneId === draftZoneId}
+        saving={saveZone.isPending}
+        onClose={() => setSheetZoneId(null)}
+        onSave={saveZoneDetails}
+      />
 
       {plan && pinDialog && (
         <MapPinDialog

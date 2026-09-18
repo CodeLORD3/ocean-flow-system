@@ -234,6 +234,7 @@ export interface NewOrderInput {
   excluded_allergens?: string[];
   source: string;
   received_by_name?: string | null;
+  received_by_staff_id?: string | null;
   status?: string;
   note?: string | null;
   lines: NewOrderLineInput[];
@@ -383,6 +384,71 @@ export function useArchiveCustomerOrder() {
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["customer_orders"] }),
+  });
+}
+
+/**
+ * Flyttar en eller flera beställningar till ett annat önskat datum.
+ * Används av dra-och-släpp i dagslistan och av datumväljaren för markerade rader.
+ */
+export function useMoveCustomerOrders() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, date }: { ids: string[]; date: string }) => {
+      if (ids.length === 0) return;
+      const { data: auth } = await supabase.auth.getUser();
+      const { error } = await db.from("customer_orders").update({ wanted_date: date }).in("id", ids);
+      if (error) throw error;
+      for (const id of ids) {
+        await logOrderEvent({
+          orderId: id,
+          eventType: "flyttad",
+          description: `Beställningen flyttades till ${date}`,
+          newValue: { wanted_date: date },
+          performedBy: auth?.user?.id ?? null,
+        });
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customer_orders"] });
+      qc.invalidateQueries({ queryKey: ["customer_order_events"] });
+    },
+  });
+}
+
+/**
+ * Lägger beställningar i utkörningen (lastade på bilen) eller tar dem ur den.
+ * Butiken kan då fälla ihop utkörningen och bara se det som är kvar i butiken.
+ */
+export function useSetDeliveryRun() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, on, note }: { ids: string[]; on: boolean; note?: string | null }) => {
+      if (ids.length === 0) return;
+      const { data: auth } = await supabase.auth.getUser();
+      const { error } = await db
+        .from("customer_orders")
+        .update({
+          delivery_run_at: on ? new Date().toISOString() : null,
+          delivery_run_note: on ? note ?? null : null,
+        })
+        .in("id", ids);
+      if (error) throw error;
+      for (const id of ids) {
+        await logOrderEvent({
+          orderId: id,
+          eventType: on ? "utkorning" : "utkorning_borttagen",
+          description: on
+            ? `Lagd i utkörning${note ? ` (${note})` : ""}`
+            : "Tagen ur utkörning",
+          performedBy: auth?.user?.id ?? null,
+        });
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customer_orders"] });
+      qc.invalidateQueries({ queryKey: ["customer_order_events"] });
+    },
   });
 }
 
@@ -785,19 +851,44 @@ export async function fetchTodaysPrice(productId: string, storeId: string) {
 export function useMarkCustomerOrderPacked() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ order, undo }: { order: CustomerOrder; undo?: boolean }) => {
+    mutationFn: async ({
+      order,
+      undo,
+      packedBy,
+    }: {
+      order: CustomerOrder;
+      undo?: boolean;
+      /** Obligatoriskt när ordern markeras packad: vem som packade. */
+      packedBy?: { staffId: string; name: string } | null;
+    }) => {
+      if (!undo && !packedBy?.name) throw new Error("Välj vem som packade beställningen.");
       await db
         .from("customer_orders")
         .update(
           undo
-            ? { pack_status: "opackad", packed_at: null, status: "bekraftad" }
-            : { pack_status: "packad", packed_at: new Date().toISOString(), status: "packad" },
+            ? {
+                pack_status: "opackad",
+                packed_at: null,
+                status: "bekraftad",
+                packed_by_name: null,
+                packed_by_staff_id: null,
+              }
+            : {
+                pack_status: "packad",
+                packed_at: new Date().toISOString(),
+                status: "packad",
+                packed_by_name: packedBy!.name,
+                packed_by_staff_id: packedBy!.staffId,
+              },
         )
         .eq("id", order.id);
       await logOrderEvent({
         orderId: order.id,
         eventType: undo ? "packning_angrad" : "order_packad",
-        description: undo ? "Packning ångrad" : "Beställningen markerad som packad",
+        description: undo
+          ? "Packning ångrad"
+          : `Beställningen packad av ${packedBy!.name}`,
+        performedBy: packedBy?.name ?? null,
       });
     },
     onSuccess: () => {

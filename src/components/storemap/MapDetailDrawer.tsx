@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { EmptyState } from "@/components/EmptyState";
-import { ArrowRight, Camera, CheckCircle2, Image as ImageIcon, Info, Link2, MoreVertical, Thermometer, Trash2, X } from "lucide-react";
+import { ArrowRight, Camera, CheckCircle2, Image as ImageIcon, Info, Link2, MoreVertical, Pencil, Thermometer, Trash2, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +19,7 @@ import { toast } from "@/hooks/use-toast";
 import { MapComposer } from "@/components/storemap/MapComposer";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
+import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { dueText, progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { useToggleChecklistItem } from "@/hooks/useChecklist";
 import {
@@ -78,6 +79,8 @@ export function MapDetailDrawer({
   areaLabel,
   inline = false,
   onOpenPage,
+  onEditZone,
+  onEditZoneShape,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -97,6 +100,10 @@ export function MapDetailDrawer({
   inline?: boolean;
   /** Öppnar områdets egna sida under kartan. */
   onOpenPage?: () => void;
+  /** Öppnar panelen där området beskrivs och redigeras. */
+  onEditZone?: () => void;
+  /** Startar formredigering av området direkt i kartan. */
+  onEditZoneShape?: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
   const entityId = object?.id ?? zone?.id ?? "";
@@ -113,6 +120,7 @@ export function MapDetailDrawer({
   const { data: deviations = [] } = useDeviations(false);
   const { data: staff = [] } = useStaff(storeId);
   const [tab, setTab] = useState("summary");
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const openIssues = deviations.filter(
     (d) => (d as { source?: string; source_id?: string }).source === entityType && (d as { source_id?: string }).source_id === entityId,
@@ -219,6 +227,13 @@ export function MapDetailDrawer({
                 {label}
               </h2>
               {areaLabel && <p className="text-sm text-muted-foreground tabular-nums">{areaLabel}</p>}
+              {zone?.zone_kind && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {zone.zone_kind.split(",").map((k) => k.trim()).filter(Boolean).map((k) => (
+                    <Badge key={k} variant="outline" className="text-[10px]">{k}</Badge>
+                  ))}
+                </div>
+              )}
             </div>
             {onOpenPage && (
               <Button
@@ -243,6 +258,23 @@ export function MapDetailDrawer({
               </Button>
             )}
           </div>
+          {zone?.description && (
+            <p className="whitespace-pre-line rounded-lg bg-muted/60 px-3 py-2 text-sm">{zone.description}</p>
+          )}
+          {zone && canManage && (onEditZone || onEditZoneShape) && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {onEditZone && (
+                <Button variant="outline" className="h-10 w-full gap-2 text-sm font-semibold" onClick={onEditZone}>
+                  <Pencil className="h-4 w-4" /> Redigera området
+                </Button>
+              )}
+              {onEditZoneShape && (
+                <Button variant="outline" className="h-10 w-full gap-2 text-sm font-semibold" onClick={onEditZoneShape}>
+                  <Pencil className="h-4 w-4" /> Ändra form på kartan
+                </Button>
+              )}
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <StatusRing percent={progress.percent} status={progress.status} size={40} label={`${progress.percent}%`} />
             <div className="space-y-1">
@@ -294,8 +326,15 @@ export function MapDetailDrawer({
 
             {latest.length > 0 && (
               <div className="grid grid-cols-3 gap-2">
-                {latest.slice(0, 3).map((i) => (
-                  <img key={i.id} src={i.url} alt={i.caption ?? label} className="h-16 w-full rounded-md object-cover" />
+                 {latest.slice(0, 3).map((i, imageIndex) => (
+                   <button
+                     key={i.id}
+                     type="button"
+                     onClick={() => setLightboxIndex(imageIndex)}
+                     aria-label={`Öppna bild ${imageIndex + 1} av ${latest.length}`}
+                   >
+                     <img src={i.url} alt={i.caption ?? label} className="h-16 w-full rounded-md object-cover" />
+                   </button>
                 ))}
               </div>
             )}
@@ -472,9 +511,16 @@ export function MapDetailDrawer({
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {latest.map((i) => (
+               {latest.map((i, imageIndex) => (
                 <div key={i.id} className="overflow-hidden rounded-xl border border-border">
-                  <img src={i.url} alt={i.caption ?? label} className="h-28 w-full object-cover" />
+                   <button
+                     type="button"
+                     className="block w-full"
+                     onClick={() => setLightboxIndex(imageIndex)}
+                     aria-label={`Öppna bild ${imageIndex + 1} av ${latest.length}`}
+                   >
+                     <img src={i.url} alt={i.caption ?? label} className="h-28 w-full object-cover" />
+                   </button>
                   <div className="flex items-start gap-1 px-2 py-1.5">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-medium">{i.caption ?? label}</p>
@@ -520,6 +566,13 @@ export function MapDetailDrawer({
               ))}
             </div>
             {latest.length === 0 && <EmptyState title="Inga bilder ännu" description="Ta ett foto för att dokumentera." />}
+             <ImageLightbox
+               images={latest}
+               index={lightboxIndex}
+               onIndexChange={setLightboxIndex}
+               onClose={() => setLightboxIndex(null)}
+               title={label || "Bilder"}
+             />
 
             {zone && (
               <div className="space-y-2">

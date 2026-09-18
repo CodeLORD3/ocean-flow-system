@@ -11,7 +11,7 @@ export type VatRateRow = {
   valid_to?: string | null;
 };
 
-const FALLBACK: Record<string, number> = { SEK: 6, CHF: 2.6, EUR: 7 };
+const FALLBACK: Record<string, number> = { SEK: 6, CHF: 2.6, EUR: 7, DKK: 25, NOK: 15 };
 
 /** Slår upp momssats för ett bolag och en produktkategori. */
 export function resolveVatRate(

@@ -7,6 +7,9 @@ export function getCurrency(country?: string | null): string {
   const c = country.toLowerCase().trim();
   if (c === "sweden" || c === "se" || c === "sverige") return "SEK";
   if (c === "switzerland" || c === "ch" || c === "schweiz" || c === "suisse") return "CHF";
+  if (c === "denmark" || c === "dk" || c === "danmark") return "DKK";
+  if (c === "norway" || c === "no" || c === "norge") return "NOK";
+  if (c === "united kingdom" || c === "gb" || c === "uk" || c === "england" || c === "storbritannien") return "GBP";
   if (c === "germany" || c === "de" || c === "france" || c === "fr" || c === "italy" || c === "it" || c === "spain" || c === "es" || c === "netherlands" || c === "nl") return "EUR";
   if (c === "united states" || c === "us" || c === "usa") return "USD";
   return "SEK";
@@ -37,6 +40,22 @@ export function getStoreCurrency(
     s.includes("switzerland")
   ) {
     return "CHF";
+  }
+  if (
+    s.includes("öresund") ||
+    s.includes("oresund") ||
+    s.includes("köpenhamn") ||
+    s.includes("kopenhamn") ||
+    s.includes("københav") ||
+    s.includes("copenhagen") ||
+    s.includes("kastrup") ||
+    s.includes("danmark") ||
+    s.includes("denmark")
+  ) {
+    return "DKK";
+  }
+  if (s.includes("norge") || s.includes("norway") || s.includes("oslo")) {
+    return "NOK";
   }
   return "SEK";
 }

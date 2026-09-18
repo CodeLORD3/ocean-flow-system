@@ -102,7 +102,11 @@ export function InventoryReportsArchive({ storeId, limit = 100 }: Props) {
             <button
               type="button"
               onClick={() => setOpenId(open ? null : r.id)}
-              className="flex w-full items-center gap-2 px-2 py-1.5 text-left hover:bg-muted/40"
+              className={`flex w-full items-center gap-2 px-2 py-1.5 text-left ${
+                done
+                  ? "bg-emerald-50/70 hover:bg-emerald-100 dark:bg-emerald-500/10"
+                  : "hover:bg-muted/40"
+              }`}
             >
               {open ? (
                 <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
@@ -129,10 +133,12 @@ export function InventoryReportsArchive({ storeId, limit = 100 }: Props) {
                 </span>
               </span>
               <Badge
-                variant={done ? "secondary" : "outline"}
-                className="ml-1 shrink-0 text-[10px]"
+                variant="outline"
+                className={`ml-1 shrink-0 text-[10px] ${
+                  done ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-700" : ""
+                }`}
               >
-                {done ? "Inskickad" : "Utkast"}
+                {done ? "Klar" : "Utkast"}
               </Badge>
             </button>
 

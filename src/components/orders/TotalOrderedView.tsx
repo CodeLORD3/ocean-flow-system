@@ -81,16 +81,26 @@ const typeLabel = (t?: string | null) =>
 /** Härledd packstatus: allt packat, delvis packat eller inget packat. */
 type PackState = "packad" | "delvis" | "opackad";
 
-const packState = (total: number, packed: number): PackState => {
-  if (total > 0 && packed >= total - 0.005) return "packad";
-  return packed > 0.005 ? "delvis" : "opackad";
+/**
+ * En rad som packats klart är färdig även om den packade mängden blev mindre än
+ * den beställda — resten levereras inte och ska inte ligga kvar som "kvar att packa".
+ * `closed` är beställd mängd på rader med packstatus "packad".
+ */
+const packState = (total: number, packed: number, closed = 0): PackState => {
+  if (total > 0 && (packed >= total - 0.005 || closed >= total - 0.005)) return "packad";
+  return packed > 0.005 || closed > 0.005 ? "delvis" : "opackad";
 };
+
+/** Kvar att packa: färdigpackade rader räknas bort helt. */
+const remainingOf = (total: number, packed: number, closed = 0) =>
+  Math.max(total - Math.max(packed, closed), 0);
 
 const PACK_LABEL: Record<PackState, string> = {
   packad: "Packad",
   delvis: "Delvis packad",
   opackad: "Ej packad",
 };
+
 
 type OrderLink = {
   orderId: string;
@@ -100,6 +110,8 @@ type OrderLink = {
   quantity: number;
   /** Packad mängd i just den beställningen. */
   packed: number;
+  /** Beställd mängd på rader som packats klart. */
+  closed: number;
   orderType: string;
   wantedDate: string;
 };
@@ -111,6 +123,9 @@ type ProductRow = {
   total: number;
   /** Packad mängd summerad över alla beställningar på raden. */
   packed: number;
+  /** Beställd mängd på färdigpackade rader — räknas inte som kvar att packa. */
+  closed: number;
+
   /** Summerat radvärde (kr) när priser finns på raderna. */
   value: number;
   category: string;
@@ -289,6 +304,9 @@ export function TotalOrderedView({
           l.pack_status === "packad"
             ? Number(l.quantity_packed ?? qty) || qty
             : Number(l.quantity_packed ?? 0) || 0;
+        // Rader som packats klart är avslutade även om mindre än beställt packades.
+        const closedQty = l.pack_status === "packad" ? qty : 0;
+
         const cat = (l.products?.category || "").trim() || OTHER_CATEGORY;
         cats.add(cat);
         if (category !== "all" && normalizeCategoryKey(cat) !== normalizeCategoryKey(category)) continue;
@@ -308,6 +326,7 @@ export function TotalOrderedView({
             unit,
             total: 0,
             packed: 0,
+            closed: 0,
             value: 0,
             category: cat,
             productId: null,
@@ -318,12 +337,14 @@ export function TotalOrderedView({
         row.imageUrl = row.imageUrl ?? l.products?.image_url ?? null;
         row.total += qty;
         row.packed += packedQty;
+        row.closed += closedQty;
         row.value += lineValue;
 
         const existing = row.orders.find((x) => x.orderNumber === o.order_number);
         if (existing) {
           existing.quantity += qty;
           existing.packed += packedQty;
+          existing.closed += closedQty;
         } else
           row.orders.push({
             orderId: o.id,
@@ -332,7 +353,9 @@ export function TotalOrderedView({
             storeName: o.stores?.name ?? "",
             quantity: qty,
             packed: packedQty,
+            closed: closedQty,
             orderType: o.order_type ?? "",
+
             wantedDate: o.wanted_date,
           });
         group.rows.set(rowKey, row);
@@ -435,7 +458,10 @@ export function TotalOrderedView({
           unit: l.unit,
           total: 0,
           packed: 0,
+          closed: 0,
           value: 0,
+
+
           category: cat,
           productId: l.productId,
           imageUrl: l.imageUrl,
@@ -452,7 +478,8 @@ export function TotalOrderedView({
           .map((r) => {
             const stock = lookup(r, extras.stockById, extras.stockByName);
             const onOrder = lookup(r, extras.orderedById, extras.orderedByName);
-            const remaining = Math.max(r.total - r.packed, 0);
+            const remaining = remainingOf(r.total, r.packed, r.closed);
+
             return {
               ...r,
               stock,
@@ -515,8 +542,9 @@ export function TotalOrderedView({
           r.unit,
           qtyText(r.total, r.unit),
           qtyText(r.packed, r.unit),
-          qtyText(Math.max(r.total - r.packed, 0), r.unit),
-          PACK_LABEL[packState(r.total, r.packed)],
+          qtyText(remainingOf(r.total, r.packed, r.closed), r.unit),
+          PACK_LABEL[packState(r.total, r.packed, r.closed)],
+
           extraText(r.stock, r.unit),
           extraText(r.onOrder, r.unit),
           extraText(r.combined, r.unit),
@@ -530,7 +558,7 @@ export function TotalOrderedView({
             .map(
               (o) =>
                 `${o.orderNumber} ${o.customer} (${qtyText(o.quantity, r.unit)} ${r.unit}, ${
-                  PACK_LABEL[packState(o.quantity, o.packed)]
+                  PACK_LABEL[packState(o.quantity, o.packed, o.closed)]
                 })`,
             )
             .join(" | "),
@@ -558,6 +586,8 @@ export function TotalOrderedView({
           unit: r.unit,
           total: r.total,
           packed: r.packed,
+          closed: r.closed,
+
           stock: r.stock ?? null,
           onOrder: r.onOrder ?? null,
           combined: r.combined ?? null,
@@ -938,8 +968,9 @@ export function TotalOrderedView({
                     const visible = expanded ? r.orders : r.orders.slice(0, 5);
                     const newCategory = i === 0 || g.rows[i - 1].category !== r.category;
                     const catRows = g.rows.filter((x) => x.category === r.category);
-                    const state = packState(r.total, r.packed);
-                    const remaining = Math.max(r.total - r.packed, 0);
+                    const state = packState(r.total, r.packed, r.closed);
+                    const remaining = remainingOf(r.total, r.packed, r.closed);
+
                     // Grönt när allt är packat, gult när bara en del av raden är packad.
                     const rowTone =
                       state === "packad"
@@ -1098,7 +1129,7 @@ export function TotalOrderedView({
                               </div>
                               <div className="divide-y divide-border/40">
                                 {visible.map((o) => {
-                                  const os = packState(o.quantity, o.packed);
+                                  const os = packState(o.quantity, o.packed, o.closed);
                                   return (
                                   <button
                                     type="button"
