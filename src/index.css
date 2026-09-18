@@ -272,3 +272,54 @@
   background: #1a49b8;
   border-radius: 50% 50% 45% 55% / 2% 2% 2% 2%;
 }
+
+/* ------------------------------------------------------------------
+   Mobilanpassning (under 768 px): större tryckytor, läsbar text och
+   inget sidoscroll på hela sidan. Datorvyn påverkas inte.
+   ------------------------------------------------------------------ */
+@media (max-width: 767px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Sidinnehåll får aldrig tvinga hela sidan i sidled */
+  main {
+    max-width: 100vw;
+  }
+
+  /* Tabeller behåller sin struktur men skrollar inuti sin egen ruta,
+     med tillräckligt höga rader och läsbar text. */
+  main table {
+    font-size: 15px;
+  }
+  main table :is(td, th) {
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+    white-space: nowrap;
+  }
+  main table tbody tr {
+    height: 48px;
+  }
+
+  /* Alla knappar, flikar och länkade rader blir tumvänliga */
+  main :is(button, [role="tab"], [role="menuitem"], [role="option"], a[href]):not(
+      .no-mobile-touch
+    ):not([data-slot="icon-only"]) {
+    min-height: 44px;
+  }
+  main :is(button, [role="tab"]):not(.no-mobile-touch) {
+    font-size: 15px;
+  }
+
+  /* Formulärfält: 16 px hindrar att telefonen zoomar in vid fokus */
+  main :is(input, select, textarea) {
+    font-size: 16px !important;
+    min-height: 48px;
+  }
+
+  /* Dialoger och sheets tar hela bredden med luft för tummen */
+  [role="dialog"] {
+    max-height: 92vh;
+  }
+}
