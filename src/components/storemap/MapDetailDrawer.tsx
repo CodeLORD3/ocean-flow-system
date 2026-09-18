@@ -656,8 +656,9 @@ export function MapDetailDrawer({
                 {latest[0] ? (
                   <>
                     <img src={latest[0].url} alt="Senaste" className="w-full h-28 object-cover rounded-md" />
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      {latest[0].uploaded_by_name} · {time(latest[0].created_at)}
+                    <p className="mt-1 flex min-w-0 items-center gap-1 text-[10px] text-muted-foreground">
+                      <StaffName name={latest[0].uploaded_by_name} />
+                      <span className="shrink-0">· {time(latest[0].created_at)}</span>
                     </p>
                   </>
                 ) : (
