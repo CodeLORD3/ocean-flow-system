@@ -732,22 +732,32 @@ export default function ShopOrders() {
 
       {/* Inline order creation view */}
       {creatingOrder && (
-        <Card className="shadow-card">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex flex-col bg-background sm:static sm:z-auto sm:bg-transparent">
+        <Card className="flex min-h-0 flex-1 flex-col rounded-none border-0 shadow-none sm:block sm:rounded-lg sm:border sm:shadow-card">
+          <CardHeader className="shrink-0 border-b border-border pb-3 sm:border-0">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <CardTitle className="font-heading text-base sm:text-base">Ny beställning till grossist</CardTitle>
-                <CardDescription className="text-xs sm:text-xs">
+                <CardTitle className="font-heading text-lg sm:text-base">Ny beställning till grossist</CardTitle>
+                <CardDescription className="hidden sm:block sm:text-xs">
                   Sök produkt, skriv antal — och fortsätt söka nästa produkt. Allt du lägger till hamnar i
                   <strong className="text-foreground"> samma beställning</strong>. Skicka först när allt är med.
                 </CardDescription>
+                <CardDescription className="text-[15px] sm:hidden">
+                  Sök en produkt, skriv antal, sök nästa. Allt hamnar i samma beställning.
+                </CardDescription>
               </div>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCreatingOrder(false)}>
-                <X className="h-4 w-4" />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-12 w-12 shrink-0 sm:h-7 sm:w-7"
+                aria-label="Stäng"
+                onClick={() => setCreatingOrder(false)}
+              >
+                <X className="h-6 w-6 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="min-h-0 flex-1 space-y-4 overflow-y-auto pb-2 sm:overflow-visible">
             {/* Copy last order + Product search */}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sticky top-0 z-20 bg-card pb-2 sm:static sm:bg-transparent sm:pb-0">
               <div className="relative flex-1">
