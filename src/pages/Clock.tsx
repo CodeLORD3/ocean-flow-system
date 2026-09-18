@@ -8,6 +8,7 @@
  * Design: "Industry" — ett fokus per vy, blueprint-hörn bara på ytterram och
  * primärknapp, status via vänsterkant + textetikett.
  */
+import { useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { svenskTid } from "@/lib/swedishTime";
