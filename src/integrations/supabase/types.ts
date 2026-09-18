@@ -16550,6 +16550,21 @@ export type Database = {
           },
         ]
       }
+      tmp_bb_proof: {
+        Row: {
+          result: string | null
+          step: string | null
+        }
+        Insert: {
+          result?: string | null
+          step?: string | null
+        }
+        Update: {
+          result?: string | null
+          step?: string | null
+        }
+        Relationships: []
+      }
       trade_offers: {
         Row: {
           annual_return: number | null
