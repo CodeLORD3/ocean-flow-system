@@ -18,6 +18,7 @@ import { bbox, zonePoints } from "@/lib/mapGeometry";
 import { toast } from "@/hooks/use-toast";
 import { MapComposer } from "@/components/storemap/MapComposer";
 import { StatusRing } from "@/components/storemap/StatusRing";
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { dueText, progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
