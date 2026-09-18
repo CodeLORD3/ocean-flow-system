@@ -84,6 +84,8 @@ import TaskDetail from "@/pages/TaskDetail";
 import StoreMap from "@/pages/StoreMap";
 import Manual from "@/pages/Manual";
 import DailyReport from "@/pages/DailyReport";
+import StoreOrderToday from "@/pages/StoreOrderToday";
+import IncomingStoreOrders from "@/pages/IncomingStoreOrders";
 import CountMobile from "@/pages/CountMobile";
 import ImportantPapersPage from "@/pages/ImportantPapersPage";
 import Production from "@/pages/Production";
@@ -121,6 +123,8 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/inventory": { component: <InventoryRouter /> },
   "/rakna": { component: <CountMobile /> },
   "/m/inventering": { component: <CountMobile /> },
+  "/dagens-bestallning": { component: <StoreOrderToday /> },
+  "/inkomna-bestallningar": { component: <IncomingStoreOrders /> },
   "/orders": { component: <OrdersRouter /> },
   "/customer-orders": { component: <CustomerOrders /> },
   "/suppliers": { component: <Suppliers /> },
