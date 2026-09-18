@@ -29,21 +29,34 @@ export function ActiveUserProvider({ children }: { children: React.ReactNode }) 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from("staff")
-      .select("id, first_name, last_name, email, workplace, profile_image_url")
-      .order("first_name")
-      .then(({ data }) => {
-        if (data) {
-          setStaff(data);
-          if (!activeUserId || !data.find((s) => s.id === activeUserId)) {
-            const defaultId = data[0]?.id ?? null;
-            setActiveUserId(defaultId);
-            if (defaultId) localStorage.setItem(STORAGE_KEY, defaultId);
+    // Den inloggade personen är alltid förvalet. Annars hamnar beställningar och
+    // räkningar på första namnet i listan i stället för den som faktiskt jobbar.
+    (async () => {
+      const { data } = await supabase
+        .from("staff")
+        .select("id, first_name, last_name, email, workplace, profile_image_url")
+        .order("first_name");
+      if (data) {
+        setStaff(data);
+        if (!activeUserId || !data.find((s) => s.id === activeUserId)) {
+          const { data: auth } = await supabase.auth.getUser();
+          const uid = auth?.user?.id ?? null;
+          let mineId: string | null = null;
+          if (uid) {
+            const { data: mine } = await supabase
+              .from("staff")
+              .select("id")
+              .eq("user_id", uid)
+              .limit(1);
+            mineId = (mine?.[0]?.id as string | undefined) ?? null;
           }
+          const defaultId = mineId ?? data[0]?.id ?? null;
+          setActiveUserId(defaultId);
+          if (defaultId) localStorage.setItem(STORAGE_KEY, defaultId);
         }
-        setLoading(false);
-      });
+      }
+      setLoading(false);
+    })();
   }, []);
 
   const switchUser = (id: string) => {
