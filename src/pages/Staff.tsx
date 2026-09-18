@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { prepareUpload, COMPRESS_PHOTO, COMPRESS_AVATAR } from "@/lib/imageCompress";
 import { motion } from "framer-motion";
 import {
@@ -121,6 +122,17 @@ export default function Staff() {
     setPreviewUrl(null);
     setDialogOpen(true);
   };
+
+  /** Kommer man via genvägen "Lägg till personal" öppnas formuläret direkt. */
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("ny") !== "1") return;
+    openAdd();
+    const next = new URLSearchParams(searchParams);
+    next.delete("ny");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const openEdit = (s: any) => {
     setEditId(s.id);

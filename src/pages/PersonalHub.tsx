@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { BarChart3, CalendarDays, PieChart, User, Users } from "lucide-react";
+import { BarChart3, CalendarDays, PieChart, User, UserPlus, Users } from "lucide-react";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { staffLevelOf, staffLevelLabel } from "@/lib/staffModuleAccess";
@@ -149,6 +149,11 @@ export default function PersonalHub() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {level === "employee" ? null : (
+            <NavLink to="/staff?ny=1" className="sl-btn sl-btn--primary">
+              <UserPlus size={15} /> Lägg till personal
+            </NavLink>
+          )}
           <SegmentSwitch<Region>
             value={region}
             onChange={setRegion}
