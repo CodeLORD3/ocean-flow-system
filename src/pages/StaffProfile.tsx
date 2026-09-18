@@ -12,6 +12,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { prepareUpload, COMPRESS_AVATAR } from "@/lib/imageCompress";
+import { Camera } from "lucide-react";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useStores } from "@/hooks/useStores";
 import { PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
@@ -21,7 +24,7 @@ import {
 
 export default function StaffProfile() {
   const { toast } = useToast();
-  const { staff, loading } = useStaffAuth();
+  const { staff, loading, refresh } = useStaffAuth();
   const { data: stores = [] } = useStores(true);
   const clockIn = useClockIn();
   const clockOut = useClockOut();
@@ -46,6 +49,36 @@ export default function StaffProfile() {
 
   const [selectedStore, setSelectedStore] = useState<string>("");
   const effectiveStore = selectedStore || allowedStores[0]?.id || "";
+
+  /** Personalen byter sin egen profilbild direkt här — bilden komprimeras före uppladdning. */
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const handlePhotoPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !staff) return;
+    setUploadingPhoto(true);
+    try {
+      const prepared = await prepareUpload(file, COMPRESS_AVATAR);
+      const path = `profiles/${staff.id}-${Date.now()}.${prepared.ext}`;
+      const up = await supabase.storage
+        .from("staff-photos")
+        .upload(path, prepared.file, { upsert: true, contentType: prepared.contentType });
+      if (up.error) throw up.error;
+      const { data: urlData } = supabase.storage.from("staff-photos").getPublicUrl(path);
+      const { error } = await supabase
+        .from("staff")
+        .update({ profile_image_url: urlData.publicUrl } as any)
+        .eq("id", staff.id);
+      if (error) throw error;
+      await refresh();
+      toast({ title: "Profilbilden är uppdaterad" });
+    } catch {
+      toast({ title: "Kunde inte spara bilden", description: "Försök igen", variant: "destructive" });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
 
   if (loading) {
     return <div className="p-6 space-y-4"><Skeleton className="h-10 w-64" /><Skeleton className="h-64" /></div>;
@@ -115,12 +148,29 @@ export default function StaffProfile() {
         <Card className="shadow-card lg:col-span-2">
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center gap-4">
-              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
-                {staff.profile_image_url ? (
-                  <img src={staff.profile_image_url} alt={fullName} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
-                ) : (
-                  <User className="h-8 w-8 text-primary" />
-                )}
+              <div className="relative h-20 w-20 shrink-0">
+                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                  {staff.profile_image_url ? (
+                    <img src={staff.profile_image_url} alt={fullName} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                  ) : (
+                    <User className="h-8 w-8 text-primary" />
+                  )}
+                </div>
+                <label
+                  className="absolute -bottom-1 -right-1 grid h-8 w-8 cursor-pointer place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm"
+                  title="Byt profilbild"
+                >
+                  <Camera className="h-4 w-4" />
+                  <span className="sr-only">Byt profilbild</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="user"
+                    className="hidden"
+                    disabled={uploadingPhoto}
+                    onChange={handlePhotoPick}
+                  />
+                </label>
               </div>
               <div className="min-w-0">
                 <h3 className="font-heading font-semibold text-foreground text-lg">{fullName}</h3>
