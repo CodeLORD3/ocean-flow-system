@@ -309,7 +309,7 @@ export function TotalOrderedView({
       if (selected && !selected.has(o.wanted_date)) continue;
       const { week, year } = isoWeekOf(o.wanted_date);
       const groupKey = mode === "day" ? o.wanted_date : `${year}-${String(week).padStart(2, "0")}`;
-      const label = mode === "day" ? dayLabel(o.wanted_date) : `Vecka ${week}`;
+      const label = mode === "day" ? dayLabel(o.wanted_date) : weekLabel(o.wanted_date, week);
 
       for (const l of o.customer_order_lines ?? []) {
         const name = l.products?.name || l.free_text_name || "Okänd vara";
