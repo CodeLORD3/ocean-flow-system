@@ -836,11 +836,23 @@ export function CustomerOrderRow({
                     size="sm"
                     className="h-7 text-[11px]"
                     disabled={markPacked.isPending}
-                    onClick={() => markPacked.mutate({ order })}
+                    onClick={() => setPackedByOpen(true)}
                   >
                     <PackageCheck className="mr-1 h-3.5 w-3.5" /> Markera packad
                   </Button>
                 )}
+                <PackedByDialog
+                  open={packedByOpen}
+                  onOpenChange={setPackedByOpen}
+                  storeId={order.store_id}
+                  pending={markPacked.isPending}
+                  onConfirm={(packedBy) => {
+                    markPacked.mutate(
+                      { order, packedBy },
+                      { onSuccess: () => setPackedByOpen(false) },
+                    );
+                  }}
+                />}
                 {!readOnly && canEdit && !cancelled && !handedOver && order.pack_status === "packad" && (
                   <Button
                     variant="outline"
