@@ -15,6 +15,7 @@ import {
 } from "@/hooks/useEntityImages";
 import type { MapObject, MapZone } from "@/hooks/useStoreMap";
 import { dayBadgeClass } from "@/lib/dayColor";
+import { StaffFace, StaffName } from "@/components/staff/StaffNameAvatar";
 
 /** "Idag 14:05", "Igår 08:20" eller "12 sep 08:20". */
 function shortWhen(iso: string) {
