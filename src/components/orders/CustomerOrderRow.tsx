@@ -832,6 +832,20 @@ export function CustomerOrderRow({
                 </div>
               )}
 
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  Inlagd av <OrdererName name={order.received_by_name} size="sm" />
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  Packad av{" "}
+                  {order.packed_by_name ? (
+                    <OrdererName name={order.packed_by_name} size="sm" />
+                  ) : (
+                    <span className="italic">inte packad</span>
+                  )}
+                </span>
+              </div>
+
               <div className="flex flex-wrap gap-1.5">
                 {!readOnly && canEdit && !cancelled && !handedOver && order.pack_status !== "packad" && (
                   <Button
