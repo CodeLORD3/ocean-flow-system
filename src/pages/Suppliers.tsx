@@ -166,63 +166,61 @@ export default function Suppliers() {
       {/* Table */}
       <Card className="shadow-card">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="p-3 text-left font-medium text-muted-foreground">LEVERANTÖR</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">TYP</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">VALUTA</th>
-
-                  <th className="p-3 text-left font-medium text-muted-foreground">KONTAKT</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">E-POST</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">TELEFON</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">LAND</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">ADRESS</th>
-                  <th className="p-3 text-center font-medium text-muted-foreground">ÅTGÄRD</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 && (
-                  <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">
-                    {suppliers.length === 0 ? "Inga leverantörer ännu. Klicka \"Ny leverantör\" för att börja." : "Inga leverantörer matchar sökningen."}
-                  </td></tr>
-                )}
-                {filtered.map(s => (
-                  <tr key={s.id} className={`border-b border-border/40 hover:bg-muted/20 transition-colors ${flashClass(s.id)}`}>
-                    <td className="p-3 font-medium text-foreground">{s.name}</td>
-                    <td className="p-3">
-                      <Badge variant="outline" className={`text-[10px] ${typeColor[s.supplier_type || ""] || ""}`}>
-                        {s.supplier_type || "Övrigt"}
-                      </Badge>
-                    </td>
-                    <td className="p-3">
-                      <span className="font-mono tabular-nums text-foreground">{(s.currency || "SEK").toUpperCase()}</span>
-                      {s.is_intercompany && (
-                        <Badge variant="outline" className="ml-1.5 text-[9px] border-primary/30 text-primary">Koncernintern</Badge>
-                      )}
-                    </td>
-
-                    <td className="p-3 text-muted-foreground">{s.contact_person || "–"}</td>
-                    <td className="p-3 text-muted-foreground">{s.email || "–"}</td>
-                    <td className="p-3 text-muted-foreground">{s.phone || "–"}</td>
-                    <td className="p-3 text-muted-foreground">{s.country || "–"}</td>
-                    <td className="p-3 text-muted-foreground text-[10px]">{s.address || "–"}</td>
-                    <td className="p-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(s)}>
-                          <Edit className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: s.id, name: s.name })}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ResponsiveTable
+            rows={filtered}
+            rowKey={(s) => s.id}
+            empty={suppliers.length === 0 ? 'Inga leverantörer ännu. Tryck "Ny leverantör" för att börja.' : "Inga leverantörer matchar sökningen."}
+            columns={[
+              { key: "name", header: "Leverantör", primary: true, cell: (s) => <span className="font-medium text-foreground">{s.name}</span> },
+              {
+                key: "type",
+                header: "Typ",
+                cell: (s) => (
+                  <Badge variant="outline" className={`text-[11px] ${typeColor[s.supplier_type || ""] || ""}`}>
+                    {s.supplier_type || "Övrigt"}
+                  </Badge>
+                ),
+              },
+              {
+                key: "currency",
+                header: "Valuta",
+                cell: (s) => (
+                  <>
+                    <span className="font-mono tabular-nums text-foreground">{(s.currency || "SEK").toUpperCase()}</span>
+                    {s.is_intercompany && (
+                      <Badge variant="outline" className="ml-1.5 text-[10px] border-primary/30 text-primary">Koncernintern</Badge>
+                    )}
+                  </>
+                ),
+              },
+              { key: "contact", header: "Kontakt", cell: (s) => s.contact_person || "–" },
+              { key: "email", header: "E-post", cell: (s) => s.email || "–" },
+              { key: "phone", header: "Telefon", cell: (s) => s.phone || "–" },
+              { key: "country", header: "Land", cell: (s) => s.country || "–" },
+              { key: "address", header: "Adress", cell: (s) => s.address || "–" },
+              {
+                key: "actions",
+                header: "Åtgärd",
+                headerClassName: "text-center",
+                className: "text-center",
+                cell: (s) => (
+                  <div className="flex items-center gap-2 sm:justify-center">
+                    <Button variant="outline" size="sm" className="h-11 flex-1 gap-1.5 sm:h-7 sm:w-7 sm:flex-none sm:p-0" onClick={() => openEdit(s)}>
+                      <Edit className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> <span className="sm:hidden">Ändra</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-11 flex-1 gap-1.5 text-destructive hover:text-destructive sm:h-7 sm:w-7 sm:flex-none sm:p-0"
+                      onClick={() => setDeleteTarget({ id: s.id, name: s.name })}
+                    >
+                      <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> <span className="sm:hidden">Ta bort</span>
+                    </Button>
+                  </div>
+                ),
+              },
+            ]}
+          />
         </CardContent>
       </Card>
 
