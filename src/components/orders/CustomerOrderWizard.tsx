@@ -363,7 +363,8 @@ export function CustomerOrderWizard({
         allergy_note: allergyNote || null,
         excluded_allergens: excludedAllergens,
         source,
-        received_by_name: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : null,
+        received_by_name: receivedBy.name,
+        received_by_staff_id: receivedBy.staffId,
         note: note || null,
         lines: lines.map(({ key, productName, imageUrl, warning, allergens, ...l }) => l),
       });
