@@ -10,6 +10,9 @@ import WasteReports from "@/pages/WasteReports";
 import TraceabilityPage from "@/pages/TraceabilityPage";
 import StockTransformation from "@/pages/StockTransformation";
 import { useSite } from "@/contexts/SiteContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import CountMobile from "@/pages/CountMobile";
+import CountEntryButton from "@/components/inventory/mobile/CountEntryButton";
 
 
 type SubTab =
@@ -29,6 +32,8 @@ type SubTab =
  */
 export default function InventoryRouter() {
   const { site } = useSite();
+  // Under 768 px är inventeringen ett eget mobilflöde — aldrig desktoptabellen.
+  const isMobile = useIsMobile();
   // Butikerna behöver prisfliken för prislistan att sätta upp.
   const showPricing = true;
   // Butiksportalen har inga egna flikar för Överföringar, Streckkoder eller Svinn.
@@ -82,7 +87,7 @@ export default function InventoryRouter() {
           <Inventory />
         </div>
         <div style={{ display: tab === "inventering" ? "block" : "none" }}>
-          <StockCount />
+          {isMobile ? <CountMobile /> : <StockCount />}
         </div>
         <div style={{ display: tab === "omvandling" ? "block" : "none" }}>
           <StockTransformation />
@@ -114,6 +119,14 @@ export default function InventoryRouter() {
           <TraceabilityPage />
         </div>
       </div>
+
+      {/* Fast ingång till räkningen — alltid synlig i lagervyn på telefon */}
+      {isMobile && tab === "lager" && (
+        <>
+          <div className="h-24" aria-hidden />
+          <CountEntryButton variant="sticky" />
+        </>
+      )}
     </div>
   );
 }
