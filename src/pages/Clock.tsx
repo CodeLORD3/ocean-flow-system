@@ -41,6 +41,22 @@ const ACTION_LABEL: Record<Action, string> = {
   rast_slut: "Rast slutar",
 };
 
+/** Vad som gäller direkt efter en stämpling — i klartext på kvittot. */
+const RECEIPT_STATE: Record<Action, string> = {
+  in: "Du är instämplad.",
+  ut: "Du är utstämplad. Passet är avslutat.",
+  rast_start: "Du är på rast.",
+  rast_slut: "Rasten är slut — du är instämplad igen.",
+};
+
+/** Nuläget innan man trycker, utifrån vad systemet föreslår som nästa steg. */
+const FOUND_STATE: Record<Action, string> = {
+  in: "Du är inte instämplad just nu. Tryck IN för att börja passet.",
+  ut: "Ditt pass är igång. Tryck UT när du slutar, eller Rast börjar.",
+  rast_start: "Ditt pass är igång.",
+  rast_slut: "Du är på rast. Tryck Rast slutar för att fortsätta passet.",
+};
+
 /**
  * Bara giltiga val visas (7d). Efter en instämpling går det att gå på rast
  * eller stämpla ut; under rast är enda vägen "Rast slutar".
