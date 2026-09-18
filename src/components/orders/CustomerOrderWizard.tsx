@@ -134,6 +134,8 @@ export function CustomerOrderWizard({
   const [allergyNote, setAllergyNote] = useState("");
   const [excludedAllergens, setExcludedAllergens] = useState<string[]>([]);
   const [note, setNote] = useState("");
+  /** Obligatoriskt: den som lägger in beställningen i systemet. */
+  const [receivedBy, setReceivedBy] = useState<{ staffId: string; name: string } | null>(null);
   const [showMore, setShowMore] = useState(false);
 
   const [lines, setLines] = useState<DraftLine[]>([]);
