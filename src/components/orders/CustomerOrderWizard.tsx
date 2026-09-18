@@ -343,6 +343,7 @@ export function CustomerOrderWizard({
     if (lines.length === 0) return toast.error("Ordern behöver minst en rad.");
     if (!customer) return toast.error("Välj kund först.");
     if (capacity.blocking) return toast.error(capacity.blocking);
+    if (!receivedBy) return toast.error("Välj vem som lägger in beställningen.");
 
     try {
       await createOrder.mutateAsync({
