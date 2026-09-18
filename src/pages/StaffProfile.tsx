@@ -50,6 +50,36 @@ export default function StaffProfile() {
   const [selectedStore, setSelectedStore] = useState<string>("");
   const effectiveStore = selectedStore || allowedStores[0]?.id || "";
 
+  /** Personalen byter sin egen profilbild direkt här — bilden komprimeras före uppladdning. */
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const handlePhotoPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !staff) return;
+    setUploadingPhoto(true);
+    try {
+      const prepared = await prepareUpload(file, COMPRESS_AVATAR);
+      const path = `profiles/${staff.id}-${Date.now()}.${prepared.ext}`;
+      const up = await supabase.storage
+        .from("staff-photos")
+        .upload(path, prepared.file, { upsert: true, contentType: prepared.contentType });
+      if (up.error) throw up.error;
+      const { data: urlData } = supabase.storage.from("staff-photos").getPublicUrl(path);
+      const { error } = await supabase
+        .from("staff")
+        .update({ profile_image_url: urlData.publicUrl } as any)
+        .eq("id", staff.id);
+      if (error) throw error;
+      await refresh();
+      toast({ title: "Profilbilden är uppdaterad" });
+    } catch {
+      toast({ title: "Kunde inte spara bilden", description: "Försök igen", variant: "destructive" });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+
   if (loading) {
     return <div className="p-6 space-y-4"><Skeleton className="h-10 w-64" /><Skeleton className="h-64" /></div>;
   }
