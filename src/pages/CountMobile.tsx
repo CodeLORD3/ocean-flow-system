@@ -6,8 +6,8 @@ import {
   ClipboardCheck,
   HelpCircle,
   Keyboard,
+  MessageSquarePlus,
   Package,
-  Play,
   RotateCcw,
   Search,
   Send,
@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useSite } from "@/contexts/SiteContext";
+import { useTabs } from "@/contexts/TabsContext";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import {
   useCountItems,
@@ -44,6 +45,7 @@ import NumberPad from "@/components/inventory/mobile/NumberPad";
 import CountStepper from "@/components/inventory/mobile/CountStepper";
 import IntroSlides, { hasSeenIntro } from "@/components/inventory/mobile/IntroSlides";
 import PendingCountApprovals from "@/components/inventory/mobile/PendingCountApprovals";
+import CountNoteSheet from "@/components/inventory/mobile/CountNoteSheet";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 
 type Step = "plats" | "rakna" | "sammanfattning" | "klar";
@@ -88,6 +90,7 @@ function BigButton({
 export default function CountMobile() {
   const { activeStoreId, activeStoreName } = useSite();
   const { activeUser } = useActiveUser();
+  const { switchTab } = useTabs();
   const storeId = activeStoreId;
   const staffId = activeUser?.id ?? null;
   const staffName = activeUser ? `${activeUser.first_name} ${activeUser.last_name}`.trim() : null;
