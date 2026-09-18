@@ -1266,9 +1266,9 @@ export default function ShopOrders() {
               </p>
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
                 <Button
-                  className="h-12 w-full gap-2 text-base sm:hidden"
+                  className="h-14 w-full gap-2 text-[17px] sm:hidden"
                   onClick={() => setConfirmSendOpen(true)}
-                  disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !desiredDeliveryDate}
+                  disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0}
                 >
                   <ShoppingCart className="h-5 w-5" /> Skicka beställning
                 </Button>
