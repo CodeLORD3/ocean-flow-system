@@ -525,8 +525,9 @@ export function MapDetailDrawer({
                   <div className="flex items-start gap-1 px-2 py-1.5">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-medium">{i.caption ?? label}</p>
-                      <p className="truncate text-[10px] text-muted-foreground">
-                        {dayText(i.created_at)} {time(i.created_at)} · {i.uploaded_by_name ?? "—"}
+                      <p className="flex min-w-0 items-center gap-1 truncate text-[10px] text-muted-foreground">
+                        <span className="shrink-0">{dayText(i.created_at)} {time(i.created_at)} ·</span>
+                        <StaffName name={i.uploaded_by_name} />
                       </p>
                     </div>
                     <DropdownMenu>
