@@ -18,10 +18,10 @@ export function MobileActionBar({
   return (
     <>
       {/* Utfyllnad så innehållet under inte hamnar bakom raden */}
-      <div className="h-16 sm:hidden" aria-hidden />
+      <div className="h-20 sm:hidden" aria-hidden />
       <div
         className={cn(
-          "sm:hidden fixed bottom-14 left-0 right-0 z-30 flex items-center justify-between gap-2 border-t border-border bg-background/95 px-3 py-2 backdrop-blur",
+          "sm:hidden fixed bottom-16 left-0 right-0 z-30 flex items-center justify-between gap-2 border-t border-border bg-background/95 px-3 py-2 backdrop-blur",
           className,
         )}
         style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}

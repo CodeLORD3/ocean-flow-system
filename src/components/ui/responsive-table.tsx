@@ -55,17 +55,17 @@ export function ResponsiveTable<T>({
           <div
             key={rowKey(row)}
             onClick={onRowClick ? () => onRowClick(row) : undefined}
-            className={cn("px-3 py-2.5 space-y-1.5", onRowClick && "active:bg-muted/60")}
+            className={cn("min-h-14 px-4 py-3 space-y-1.5", onRowClick && "active:bg-muted/60")}
           >
-            <div className="text-[13px] font-semibold leading-tight">{primary.cell(row)}</div>
+            <div className="text-[18px] font-semibold leading-snug">{primary.cell(row)}</div>
             {secondary.length > 0 && (
               <dl className="grid grid-cols-2 gap-x-3 gap-y-1">
                 {secondary.map((c) => (
                   <div key={c.key} className="min-w-0">
-                    <dt className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">
+                    <dt className="text-[12px] uppercase tracking-wide text-muted-foreground truncate">
                       {c.header}
                     </dt>
-                    <dd className="text-[12px]">{c.cell(row)}</dd>
+                    <dd className="text-[16px]">{c.cell(row)}</dd>
                   </div>
                 ))}
               </dl>
