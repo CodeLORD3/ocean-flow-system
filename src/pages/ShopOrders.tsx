@@ -155,7 +155,126 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
 
   return (
     <>
-      <Card className="shadow-card">
+      {/* Mobil — ett kort per beställning, inga tabeller */}
+      <div className="sm:hidden space-y-3">
+        {orders.length === 0 && (
+          <Card className="shadow-card">
+            <CardContent className="p-6 text-center text-[16px] text-muted-foreground">{emptyMsg}</CardContent>
+          </Card>
+        )}
+        {orders.map((o: any) => {
+          const lines = o.shop_order_lines || [];
+          const hasFolljesedel = FOLLJESEDEL_STATUSES.includes(o.status);
+          const isExpanded = expandedId === o.id;
+          return (
+            <Card key={o.id} className={`shadow-card overflow-hidden ${rowBgByStatus[o.status] || ""} ${flashClass(o.id)}`}>
+              <button
+                type="button"
+                onClick={() => toggleExpand(o.id)}
+                className="w-full px-4 py-3 text-left active:bg-muted/50"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[20px] font-semibold leading-tight text-foreground">
+                      {o.stores?.name || "Butik"}
+                    </p>
+                    <p className="mt-0.5 text-[15px] text-muted-foreground">
+                      {displayOrderWeek(o)} · lagd {new Date(o.created_at).toLocaleDateString("sv-SE")}
+                    </p>
+                  </div>
+                  {o.status === "Öppen" && o.open_locked_at ? (
+                    <Badge variant="outline" className="shrink-0 gap-1 border-success/30 bg-success/15 text-success text-[13px]">
+                      <Lock className="h-3.5 w-3.5" /> Låst
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className={`shrink-0 gap-1 text-[13px] ${statusColor[o.status] || ""}`}>
+                      {statusIcon[o.status]}
+                      {o.status}
+                    </Badge>
+                  )}
+                </div>
+
+                <dl className="mt-3 grid grid-cols-2 gap-3">
+                  <div>
+                    <dt className="text-[12px] uppercase tracking-wide text-muted-foreground">Önskad leverans</dt>
+                    <dd className="text-[17px] font-medium text-foreground">{o.desired_delivery_date || "–"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[12px] uppercase tracking-wide text-muted-foreground">Rader</dt>
+                    <dd className="text-[17px] font-medium text-foreground">{lines.length}</dd>
+                  </div>
+                </dl>
+
+                <div className="mt-3">
+                  <p className="text-[12px] uppercase tracking-wide text-muted-foreground">Produkter</p>
+                  {lines.length === 0 ? (
+                    <p className="text-[16px] text-warning">Ofullständig — rader saknas</p>
+                  ) : (
+                    <ul className="mt-1 space-y-0.5">
+                      {lines.slice(0, isExpanded ? lines.length : 4).map((l: any) => (
+                        <li key={l.id ?? l.products?.name} className="text-[16px] leading-snug text-foreground">
+                          {l.products?.name} <span className="text-muted-foreground">({l.quantity_ordered} {l.unit || ""})</span>
+                        </li>
+                      ))}
+                      {!isExpanded && lines.length > 4 && (
+                        <li className="text-[15px] text-muted-foreground">+ {lines.length - 4} fler</li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+
+                {o.notes ? (
+                  <p className="mt-3 rounded-md bg-muted/60 px-3 py-2 text-[15px] leading-snug">{o.notes}</p>
+                ) : null}
+
+                <p className="mt-3 text-[15px] font-medium text-primary">
+                  {isExpanded ? "Stäng beställningen" : "Tryck för att öppna"}
+                </p>
+              </button>
+
+              {hasFolljesedel && (
+                <div className="border-t border-border px-4 py-3">
+                  <Button
+                    variant="outline"
+                    className="h-14 w-full gap-2 text-[17px]"
+                    onClick={(e) => { e.stopPropagation(); setFolljesedelOrder(o); }}
+                  >
+                    <FileText className="h-5 w-5" /> Skriv ut följesedel
+                  </Button>
+                </div>
+              )}
+
+              {isExpanded && (
+                <div className="border-t border-border bg-card px-3 py-3">
+                  {o.status === "Öppen" ? (
+                    <OpenOrderEditor
+                      order={o}
+                      products={products}
+                      toast={toast}
+                      allowedWeekdays={allowedWeekdays}
+                      isDateDisabled={isDateDisabled}
+                      onClose={() => setExpandedId(null)}
+                    />
+                  ) : (
+                    <OrderDetailWithEdit
+                      order={o}
+                      products={products}
+                      onClose={() => setExpandedId(null)}
+                      toast={toast}
+                      allowedWeekdays={allowedWeekdays}
+                      isDateDisabled={isDateDisabled}
+                      inline
+                    />
+                  )}
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Dator — tabellen oförändrad */}
+      <Card className="hidden shadow-card sm:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
