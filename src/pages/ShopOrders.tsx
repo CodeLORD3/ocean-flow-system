@@ -1395,7 +1395,7 @@ export default function ShopOrders() {
             </Dialog>
           </CardContent>
         </Card>
-        </div>
+        </CreatePanelShell>
       )}
 
       {/* Produktkort */}
