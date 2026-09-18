@@ -851,6 +851,21 @@ export function CustomerOrderWizard({
                 </>
               )}
               <div className="sm:col-span-2">
+                <Label>
+                  Vem lägger in beställningen? <span className="text-destructive">*</span>
+                </Label>
+                <StaffPicker
+                  storeId={pickupStoreId}
+                  staffId={receivedBy?.staffId ?? null}
+                  onChange={setReceivedBy}
+                  placeholder="Välj vem som tar emot beställningen"
+                />
+                {!receivedBy && (
+                  <p className="pt-1 text-xs text-destructive">Obligatoriskt — välj person.</p>
+                )}
+              </div>
+
+              <div className="sm:col-span-2">
                 <Label htmlFor="wiz-note">
                   {orderType === "upphamtning"
                     ? "Anteckning till hämtningen"
