@@ -450,7 +450,7 @@ export default function Clock() {
 
 
         {receipt ? (
-          <div className="ind-accent-surface p-8 space-y-2">
+          <div className="ind-accent-surface p-8 space-y-3">
             <SectionLabel>{ACTION_LABEL[receipt.action]} registrerad</SectionLabel>
             <p className="ind-h1">{receipt.name}</p>
             <p className="ind-h3 ind-mono">{timeOf(receipt.at)}</p>
@@ -462,6 +462,10 @@ export default function Clock() {
             {receipt.offline && (
               <p className="ind-muted text-sm">Sparad i offline-kön och syncas när nätet är tillbaka.</p>
             )}
+            {/* På telefon måste man kunna gå tillbaka till appen direkt. */}
+            <IndustryButton variant="primary" size="touch" className="w-full" onClick={leaveClock}>
+              Klar — tillbaka till appen
+            </IndustryButton>
           </div>
         ) : found ? (
           <div className="space-y-6">
