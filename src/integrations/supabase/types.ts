@@ -14866,6 +14866,53 @@ export type Database = {
           },
         ]
       }
+      store_order_invoice_basis: {
+        Row: {
+          amount_ex_vat: number
+          buyer_legal_entity_id: string
+          created_at: string
+          currency: string
+          id: string
+          note: string | null
+          order_id: string
+          seller_legal_entity_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_ex_vat?: number
+          buyer_legal_entity_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          note?: string | null
+          order_id: string
+          seller_legal_entity_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_ex_vat?: number
+          buyer_legal_entity_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          note?: string | null
+          order_id?: string
+          seller_legal_entity_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_order_invoice_basis_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "store_replenishment_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_order_settings: {
         Row: {
           approval_cutoff_hours: number
@@ -14874,6 +14921,8 @@ export type Database = {
           max_catering_per_day: number
           max_deliveries_per_slot: number
           opening_hours: Json
+          replenish_auto_send_time: string
+          replenish_send_role: string
           require_web_pickup_approval: boolean
           store_id: string
           updated_at: string
@@ -14885,6 +14934,8 @@ export type Database = {
           max_catering_per_day?: number
           max_deliveries_per_slot?: number
           opening_hours?: Json
+          replenish_auto_send_time?: string
+          replenish_send_role?: string
           require_web_pickup_approval?: boolean
           store_id: string
           updated_at?: string
@@ -14896,6 +14947,8 @@ export type Database = {
           max_catering_per_day?: number
           max_deliveries_per_slot?: number
           opening_hours?: Json
+          replenish_auto_send_time?: string
+          replenish_send_role?: string
           require_web_pickup_approval?: boolean
           store_id?: string
           updated_at?: string
@@ -14913,6 +14966,259 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: true
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_replenishment_lines: {
+        Row: {
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          dispatch_key: string | null
+          id: string
+          line_status: string
+          order_id: string
+          product_id: string
+          quantity_confirmed: number | null
+          quantity_ordered: number
+          quantity_received: number | null
+          quantity_shipped: number | null
+          receive_deviation_note: string | null
+          rejection_reason: string | null
+          source: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          dispatch_key?: string | null
+          id?: string
+          line_status?: string
+          order_id: string
+          product_id: string
+          quantity_confirmed?: number | null
+          quantity_ordered: number
+          quantity_received?: number | null
+          quantity_shipped?: number | null
+          receive_deviation_note?: string | null
+          rejection_reason?: string | null
+          source?: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          dispatch_key?: string | null
+          id?: string
+          line_status?: string
+          order_id?: string
+          product_id?: string
+          quantity_confirmed?: number | null
+          quantity_ordered?: number
+          quantity_received?: number | null
+          quantity_shipped?: number | null
+          receive_deviation_note?: string | null
+          rejection_reason?: string | null
+          source?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_replenishment_lines_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_replenishment_lines_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_replenishment_lines_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "store_replenishment_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_replenishment_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_replenishment_orders: {
+        Row: {
+          auto_sent: boolean
+          cancelled_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          dispatched_at: string | null
+          id: string
+          intercompany: boolean
+          note: string | null
+          order_number: string
+          received_at: string | null
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+          store_id: string
+          supplier: string
+          updated_at: string
+          wanted_date: string
+        }
+        Insert: {
+          auto_sent?: boolean
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          dispatched_at?: string | null
+          id?: string
+          intercompany?: boolean
+          note?: string | null
+          order_number: string
+          received_at?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          store_id: string
+          supplier?: string
+          updated_at?: string
+          wanted_date: string
+        }
+        Update: {
+          auto_sent?: boolean
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          dispatched_at?: string | null
+          id?: string
+          intercompany?: boolean
+          note?: string | null
+          order_number?: string
+          received_at?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          store_id?: string
+          supplier?: string
+          updated_at?: string
+          wanted_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_replenishment_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_replenishment_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_replenishment_orders_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_replenishment_orders_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_replenishment_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_replenishment_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_replenishment_picks: {
+        Row: {
+          created_at: string
+          dispatched: boolean
+          id: string
+          line_id: string
+          lot_id: string | null
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dispatched?: boolean
+          id?: string
+          line_id: string
+          lot_id?: string | null
+          quantity: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dispatched?: boolean
+          id?: string
+          line_id?: string
+          lot_id?: string | null
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_replenishment_picks_line_id_fkey"
+            columns: ["line_id"]
+            isOneToOne: false
+            referencedRelation: "store_replenishment_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_replenishment_picks_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "store_replenishment_picks_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
             referencedColumns: ["id"]
           },
         ]
@@ -19199,6 +19505,7 @@ export type Database = {
       }
       stock_reconciliation_check: { Args: { _source?: string }; Returns: Json }
       stock_write_allowed: { Args: never; Returns: boolean }
+      store_replenishment_auto_send: { Args: never; Returns: number }
       store_report_allowed_products: {
         Args: { _store_id: string }
         Returns: {
