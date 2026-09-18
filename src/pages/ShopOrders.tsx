@@ -1295,7 +1295,7 @@ export default function ShopOrders() {
 
             {/* Confirmation dialog */}
             <Dialog open={confirmSendOpen} onOpenChange={setConfirmSendOpen}>
-              <DialogContent className="max-w-sm">
+              <DialogContent className="max-h-[92vh] max-w-sm overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="font-heading">Kontrollera beställningen</DialogTitle>
                   <DialogDescription className="text-xs">
@@ -1303,6 +1303,48 @@ export default function ShopOrders() {
                     {desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : "–"}. Ordern kan inte ändras efter att den skickats.
                   </DialogDescription>
                 </DialogHeader>
+
+                {/* Mobil: datum och anteckning fylls i här, inte längre ner på sidan */}
+                <div className="space-y-3 sm:hidden">
+                  <div className="space-y-1.5">
+                    <Label className="text-[15px]">När ska den levereras? <span className="text-destructive">*</span></Label>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "h-14 w-full justify-start gap-2 text-[17px] font-normal",
+                        !desiredDeliveryDate && "text-muted-foreground",
+                      )}
+                      onClick={() => setMobileCalendarOpen((v) => !v)}
+                    >
+                      <CalendarIcon className="h-5 w-5" />
+                      {desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : "Välj datum…"}
+                    </Button>
+                    {mobileCalendarOpen && (
+                      <div className="rounded-md border border-border">
+                        <Calendar
+                          mode="single"
+                          selected={desiredDeliveryDate}
+                          onSelect={(d) => { setDesiredDeliveryDate(d); setMobileCalendarOpen(false); }}
+                          disabled={isDateDisabled}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                          modifiers={allowedWeekdays ? { allowed: (date: Date) => !isDateDisabled(date) } : {}}
+                          modifiersClassNames={allowedWeekdays ? { allowed: "!bg-primary/10 !text-primary font-medium" } : {}}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[15px]">Anteckning (valfritt)</Label>
+                    <Textarea
+                      value={orderNote}
+                      onChange={(e) => setOrderNote(e.target.value)}
+                      placeholder="T.ex. brådskande leverans"
+                      className="min-h-[64px] text-[16px]"
+                    />
+                  </div>
+                </div>
+
                 <div className="max-h-64 overflow-y-auto rounded-md border border-border divide-y divide-border/60">
                   {orderLines
                     .filter(l => l.quantity && Number(l.quantity) > 0)
