@@ -162,6 +162,15 @@ export function CustomerOrderWizard({
   const pickupStoreName =
     allowedStores.find((s) => s.id === pickupStoreId)?.name ?? storeName ?? "";
 
+  /* Förifyll med den som är inloggad, men kravet står kvar. */
+  useEffect(() => {
+    if (!receivedBy && activeUser)
+      setReceivedBy({
+        staffId: activeUser.id,
+        name: `${activeUser.first_name} ${activeUser.last_name}`.trim(),
+      });
+  }, [activeUser, receivedBy]);
+
   /* Öppettider, kapacitetstak och storhelger för hämtningsbutiken */
   const { data: settings } = useStoreOrderSettings(pickupStoreId);
   const { data: specialDays = [] } = useSpecialDays(pickupStoreId);
