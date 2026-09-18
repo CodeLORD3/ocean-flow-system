@@ -2993,6 +2993,8 @@ export type Database = {
           deleted_reason: string | null
           delivery_city: string | null
           delivery_postal_code: string | null
+          delivery_run_at: string | null
+          delivery_run_note: string | null
           delivery_street: string | null
           estimated_total: number
           excluded_allergens: string[]
@@ -3053,6 +3055,8 @@ export type Database = {
           deleted_reason?: string | null
           delivery_city?: string | null
           delivery_postal_code?: string | null
+          delivery_run_at?: string | null
+          delivery_run_note?: string | null
           delivery_street?: string | null
           estimated_total?: number
           excluded_allergens?: string[]
@@ -3113,6 +3117,8 @@ export type Database = {
           deleted_reason?: string | null
           delivery_city?: string | null
           delivery_postal_code?: string | null
+          delivery_run_at?: string | null
+          delivery_run_note?: string | null
           delivery_street?: string | null
           estimated_total?: number
           excluded_allergens?: string[]
