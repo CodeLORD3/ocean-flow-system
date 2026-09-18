@@ -214,7 +214,7 @@ export default function Clock() {
   const showReceipt = (name: string, action: Action, at: string, offline = false) => {
     setReceipt({ name, action, at, offline });
     reset();
-    setTimeout(() => setReceipt(null), 3000);
+    setTimeout(() => setReceipt(null), 6000);
   };
 
   const handleLookup = async () => {
@@ -325,7 +325,7 @@ export default function Clock() {
       const res = await switchAllocation(value, activeSite.id);
       setReceipt({ name: res.employee.first_name, action: "in", at: new Date().toISOString() });
       reset();
-      setTimeout(() => setReceipt(null), 3000);
+      setTimeout(() => setReceipt(null), 6000);
       void refreshOnSite();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Kunde inte byta kostnadsställe");
