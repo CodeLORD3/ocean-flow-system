@@ -209,73 +209,84 @@ export default function StockTransfers() {
               onAction={() => setNewOpen(true)}
             />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead className="bg-muted/50 text-muted-foreground">
-                  <tr>
-                    <th className="p-2 text-left font-medium">Order</th>
-                    <th className="p-2 text-left font-medium">Från</th>
-                    <th className="p-2 text-left font-medium">Till</th>
-                    <th className="p-2 text-right font-medium">Rader</th>
-                    <th className="p-2 text-left font-medium">Status</th>
-                    <th className="p-2 text-left font-medium">Skapad</th>
-                    <th className="p-2" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {filtered.map((o) => (
-                    <tr key={o.id} className="hover:bg-muted/40">
-                      <td className="p-2 font-mono text-[11px]">{o.order_number}</td>
-                      <td className="p-2">
-                        {o.from_location?.name}
-                        <span className="block text-[11px] text-muted-foreground">
-                          {LEVEL_LABEL[o.from_location?.location_type as LocationLevel] ?? ""}
-                        </span>
-                      </td>
-                      <td className="p-2">
-                        {o.to_location?.name}
-                        <span className="block text-[11px] text-muted-foreground">
-                          {LEVEL_LABEL[o.to_location?.location_type as LocationLevel] ?? ""}
-                        </span>
-                      </td>
-                      <td className="p-2 text-right font-mono tabular-nums">
-                        {o.transfer_order_lines?.length ?? 0}
-                      </td>
-                      <td className="p-2">
-                        <Badge
-                          variant={
-                            o.status === "avvisad"
-                              ? "destructive"
-                              : o.status === "godkand_inleverans"
-                                ? "outline"
-                                : "secondary"
-                          }
-                          className="text-[11px]"
-                        >
-                          {STATUS_LABEL[o.status] ?? o.status}
-                        </Badge>
-                      </td>
-                      <td className="p-2 text-muted-foreground">
-                        {new Date(o.created_at).toLocaleString("sv-SE", {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        })}
-                      </td>
-                      <td className="p-2 text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs"
-                          onClick={() => setOpenOrder(o)}
-                        >
-                          Öppna
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ResponsiveTable
+              rows={filtered}
+              rowKey={(o) => o.id}
+              columns={[
+                { key: "order", header: "Order", primary: true, cell: (o) => <span className="font-mono">{o.order_number}</span> },
+                {
+                  key: "from",
+                  header: "Från",
+                  cell: (o) => (
+                    <>
+                      {o.from_location?.name}
+                      <span className="block text-[12px] text-muted-foreground">
+                        {LEVEL_LABEL[o.from_location?.location_type as LocationLevel] ?? ""}
+                      </span>
+                    </>
+                  ),
+                },
+                {
+                  key: "to",
+                  header: "Till",
+                  cell: (o) => (
+                    <>
+                      {o.to_location?.name}
+                      <span className="block text-[12px] text-muted-foreground">
+                        {LEVEL_LABEL[o.to_location?.location_type as LocationLevel] ?? ""}
+                      </span>
+                    </>
+                  ),
+                },
+                {
+                  key: "lines",
+                  header: "Rader",
+                  headerClassName: "text-right",
+                  className: "text-right",
+                  cell: (o) => <span className="font-mono tabular-nums">{o.transfer_order_lines?.length ?? 0}</span>,
+                },
+                {
+                  key: "status",
+                  header: "Status",
+                  cell: (o) => (
+                    <Badge
+                      variant={
+                        o.status === "avvisad"
+                          ? "destructive"
+                          : o.status === "godkand_inleverans"
+                            ? "outline"
+                            : "secondary"
+                      }
+                      className="text-[11px]"
+                    >
+                      {STATUS_LABEL[o.status] ?? o.status}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: "created",
+                  header: "Skapad",
+                  cell: (o) =>
+                    new Date(o.created_at).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" }),
+                },
+                {
+                  key: "open",
+                  header: "",
+                  headerClassName: "text-right",
+                  className: "text-right",
+                  cell: (o) => (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-12 w-full text-base sm:h-7 sm:w-auto sm:text-xs"
+                      onClick={() => setOpenOrder(o)}
+                    >
+                      Öppna
+                    </Button>
+                  ),
+                },
+              ]}
+            />
           )}
         </CardContent>
       </Card>
