@@ -128,56 +128,62 @@ function WholesaleCustomers() {
 
       <Card className="shadow-card">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="p-3 text-left font-medium text-muted-foreground">NAMN</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">KONTAKTPERSON</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">E-POST</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">TELEFON</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">STAD</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">KOPPLAD BUTIK</th>
-                  <th className="p-3 text-center font-medium text-muted-foreground">ÅTGÄRD</th>
-                </tr>
-              </thead>
-              <tbody>
-                {customersLoading ? (
-                  <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Laddar kunder…</td></tr>
-                ) : filtered.length === 0 ? (
-                  <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">{allCustomers.length === 0 ? 'Inga kunder ännu. Klicka "Lägg till kund" för att börja.' : "Inga kunder matchar sökningen."}</td></tr>
-                ) : filtered.map(c => {
+          <ResponsiveTable
+            rows={customersLoading ? [] : filtered}
+            rowKey={(c) => c.id}
+            empty={
+              customersLoading
+                ? "Laddar kunder…"
+                : allCustomers.length === 0
+                  ? 'Inga kunder ännu. Tryck "Lägg till kund" för att börja.'
+                  : "Inga kunder matchar sökningen."
+            }
+            columns={[
+              { key: "name", header: "Namn", primary: true, cell: (c) => <span className="font-medium text-foreground">{c.name}</span> },
+              { key: "contact", header: "Kontaktperson", cell: (c) => c.contact_person || "–" },
+              { key: "email", header: "E-post", cell: (c) => c.email || "–" },
+              { key: "phone", header: "Telefon", cell: (c) => c.phone || "–" },
+              { key: "city", header: "Stad", cell: (c) => c.city || "–" },
+              {
+                key: "store",
+                header: "Kopplad butik",
+                cell: (c) => {
                   const linkedStore = getLinkedStoreName(c.store_id);
-                  return (
-                    <tr key={c.id} className={`border-b border-border/40 hover:bg-muted/20 transition-colors ${flashClass(c.id)}`}>
-                      <td className="p-3 font-medium text-foreground">{c.name}</td>
-                      <td className="p-3 text-muted-foreground">{c.contact_person || "–"}</td>
-                      <td className="p-3 text-muted-foreground">{c.email || "–"}</td>
-                      <td className="p-3 text-muted-foreground">{c.phone || "–"}</td>
-                      <td className="p-3 text-muted-foreground">{c.city || "–"}</td>
-                      <td className="p-3">
-                        {linkedStore ? (
-                          <Badge variant="outline" className="text-[10px] gap-1 bg-success/10 text-success border-success/20">
-                            <StoreIcon className="h-3 w-3" /> {linkedStore}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-[10px] text-warning border-warning/20">Ej kopplad</Badge>
-                        )}
-                      </td>
-                      <td className="p-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Edit className="h-3.5 w-3.5" /></Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: c.id, name: c.name })}><Trash2 className="h-3.5 w-3.5" /></Button>
-                        </div>
-                      </td>
-                    </tr>
+                  return linkedStore ? (
+                    <Badge variant="outline" className="text-[11px] gap-1 bg-success/10 text-success border-success/20">
+                      <StoreIcon className="h-3 w-3" /> {linkedStore}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[11px] text-warning border-warning/20">Ej kopplad</Badge>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
+                },
+              },
+              {
+                key: "actions",
+                header: "Åtgärd",
+                headerClassName: "text-center",
+                className: "text-center",
+                cell: (c) => (
+                  <div className="flex items-center gap-2 sm:justify-center">
+                    <Button variant="outline" size="sm" className="h-11 flex-1 gap-1.5 sm:h-7 sm:w-7 sm:flex-none sm:p-0" onClick={() => openEdit(c)}>
+                      <Edit className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> <span className="sm:hidden">Ändra</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-11 flex-1 gap-1.5 text-destructive hover:text-destructive sm:h-7 sm:w-7 sm:flex-none sm:p-0"
+                      onClick={() => setDeleteTarget({ id: c.id, name: c.name })}
+                    >
+                      <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> <span className="sm:hidden">Ta bort</span>
+                    </Button>
+                  </div>
+                ),
+              },
+            ]}
+          />
         </CardContent>
       </Card>
+
 
       {/* Create / Edit dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
