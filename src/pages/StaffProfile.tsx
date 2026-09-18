@@ -148,12 +148,29 @@ export default function StaffProfile() {
         <Card className="shadow-card lg:col-span-2">
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center gap-4">
-              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
-                {staff.profile_image_url ? (
-                  <img src={staff.profile_image_url} alt={fullName} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
-                ) : (
-                  <User className="h-8 w-8 text-primary" />
-                )}
+              <div className="relative h-20 w-20 shrink-0">
+                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                  {staff.profile_image_url ? (
+                    <img src={staff.profile_image_url} alt={fullName} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                  ) : (
+                    <User className="h-8 w-8 text-primary" />
+                  )}
+                </div>
+                <label
+                  className="absolute -bottom-1 -right-1 grid h-8 w-8 cursor-pointer place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm"
+                  title="Byt profilbild"
+                >
+                  <Camera className="h-4 w-4" />
+                  <span className="sr-only">Byt profilbild</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="user"
+                    className="hidden"
+                    disabled={uploadingPhoto}
+                    onChange={handlePhotoPick}
+                  />
+                </label>
               </div>
               <div className="min-w-0">
                 <h3 className="font-heading font-semibold text-foreground text-lg">{fullName}</h3>
