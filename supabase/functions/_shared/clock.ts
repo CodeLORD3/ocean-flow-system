@@ -67,9 +67,12 @@ export function normalizePnr(raw: string): string | null {
 /** Samma hash som public.pnr_hash. */
 export const pnrHash = (pnr: string) => sha256Hex(`SE:${pnr}`);
 
-/** Samma hash som public.clock_code_hash. */
+/**
+ * Samma hash som public.clock_code_hash: bindestreck, mellanslag och andra
+ * tecken räknas bort, så koden får skrivas med eller utan bindestreck.
+ */
 export const clockCodeHash = (code: string) =>
-  sha256Hex(`CLOCK:${(code ?? "").replace(/\s/g, "").toUpperCase()}`);
+  sha256Hex(`CLOCK:${(code ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "")}`);
 
 export const sessionTokenHash = (token: string) => sha256Hex(`CLOCKSESSION:${token}`);
 
