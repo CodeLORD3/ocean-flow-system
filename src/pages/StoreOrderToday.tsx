@@ -34,7 +34,7 @@ const MANAGER_ROLES = [
  * och mottagning.
  */
 export default function StoreOrderToday() {
-  const { selectedStoreId } = useSite();
+  const { activeStoreId: selectedStoreId } = useSite();
   const { activeUser } = useActiveUser();
   const { staff } = useStaffAuth();
   const wantedDate = useMemo(() => tomorrowSe(), []);
