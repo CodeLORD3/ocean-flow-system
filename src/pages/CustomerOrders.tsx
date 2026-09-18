@@ -346,6 +346,44 @@ export default function CustomerOrders() {
   const canCreate = canEdit && (isShop ? !!activeStoreId : !!effectiveStore);
 
 
+  /** En orderrad med dra-och-släpp, används både i butikslistan och utkörningen. */
+  const renderOrderRow = (o: CustomerOrder, day: string) => (
+    <div
+      key={o.id}
+      draggable={canEdit && !rowReadOnly(o) && marked.includes(o.id)}
+      onDragStart={(e) => {
+        if (!marked.includes(o.id)) {
+          e.preventDefault();
+          return;
+        }
+        startDrag(o.id);
+      }}
+      title={
+        marked.includes(o.id)
+          ? "Dra för att flytta markerade beställningar"
+          : "Markera beställningen först för att kunna dra den"
+      }
+      onDragEnd={() => {
+        setDragIds([]);
+        setDragOverDay(null);
+      }}
+      className={dragIds.includes(o.id) ? "opacity-50" : ""}
+    >
+      <CustomerOrderRow
+        order={o}
+        canEdit={canEdit}
+        readOnly={rowReadOnly(o)}
+        open={openRows.includes(o.id)}
+        onToggle={toggleRow}
+        selected={marked.includes(o.id)}
+        onSelect={toggleMark}
+        photoCount={photoCounts?.[o.id] ?? 0}
+        orderCount={o.customer_id ? customerOrderCounts?.[o.customer_id] ?? 0 : 0}
+        highlightProduct={focus?.orderId === o.id ? focus.product : null}
+      />
+    </div>
+  );
+
   return (
     <div className="space-y-3 p-3 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
