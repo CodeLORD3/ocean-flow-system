@@ -1362,7 +1362,11 @@ export default function ShopOrders() {
                   <Button variant="outline" className="h-11 w-full sm:h-8 sm:w-auto sm:text-xs" onClick={() => setConfirmSendOpen(false)}>
                     Nej, lägg till mer
                   </Button>
-                  <Button className="h-12 w-full gap-1.5 text-base sm:h-8 sm:w-auto sm:text-xs" onClick={() => { setConfirmSendOpen(false); handleCreateOrder(); }}>
+                  <Button
+                    className="h-14 w-full gap-1.5 text-[17px] sm:h-8 sm:w-auto sm:text-xs"
+                    disabled={!desiredDeliveryDate}
+                    onClick={() => { setConfirmSendOpen(false); handleCreateOrder(); }}
+                  >
                     <CheckCircle2 className="h-5 w-5 sm:h-3.5 sm:w-3.5" /> Ja, skicka
                   </Button>
                 </DialogFooter>
