@@ -6,6 +6,7 @@ import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { STATUS_COLOR } from "@/lib/mapStatus";
 import type { EntityImage } from "@/hooks/useEntityImages";
 import type { MapObject, MapTask, MapZone } from "@/hooks/useStoreMap";
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 
 const clock = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString("sv-SE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
