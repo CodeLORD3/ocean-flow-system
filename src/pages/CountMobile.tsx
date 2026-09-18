@@ -46,6 +46,9 @@ import CountStepper from "@/components/inventory/mobile/CountStepper";
 import IntroSlides, { hasSeenIntro } from "@/components/inventory/mobile/IntroSlides";
 import PendingCountApprovals from "@/components/inventory/mobile/PendingCountApprovals";
 import CountNoteSheet from "@/components/inventory/mobile/CountNoteSheet";
+import OrderSheet from "@/components/inventory/mobile/OrderSheet";
+import { useDraftOrder } from "@/hooks/useStoreReplenishment";
+import { tomorrowSe } from "@/lib/storeReplenishment";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 
 type Step = "plats" | "rakna" | "klarplats" | "sammanfattning" | "klar";
@@ -123,6 +126,15 @@ export default function CountMobile() {
   useEffect(() => {
     if (!hasSeenIntro()) setIntroOpen(true);
   }, []);
+
+  /** Butikens beställning till imorgon — samma utkast för alla tryck. */
+  const wantedDate = useMemo(() => tomorrowSe(), []);
+  const draftOrder = useDraftOrder(storeId, wantedDate);
+  const orderedByProduct = useMemo(() => {
+    const map = new Map<string, any>();
+    for (const l of draftOrder.data?.store_replenishment_lines ?? []) map.set(l.product_id, l);
+    return map;
+  }, [draftOrder.data]);
 
   const places = useCountPlaces(storeId);
   const items = useCountItems(locationId);
@@ -504,6 +516,22 @@ export default function CountMobile() {
                 </button>
               </div>
 
+              {/* Beställ varan till butiken — inget lager flyttas här */}
+              {storeId && (
+                <div className="mt-3 shrink-0">
+                  <OrderSheet
+                    storeId={storeId}
+                    staffName={staffName}
+                    productId={current.productId}
+                    productName={current.productName}
+                    unit={current.unit}
+                    wantedDate={wantedDate}
+                    existing={orderedByProduct.get(current.productId) ?? null}
+                    editable
+                  />
+                </div>
+              )}
+
               {/* Knappzon — alltid längst ner, aldrig under vecket */}
               <div className="mt-auto shrink-0 space-y-3 pb-3 pt-3">
                 <BigButton onClick={saveAndNext}>
@@ -580,9 +608,10 @@ export default function CountMobile() {
           <div className="space-y-2">
             {summary.map(({ item, counted, diff }) => {
               const off = Math.abs(diff) >= 0.05;
+              const ordered = orderedByProduct.get(item.productId) ?? null;
               return (
+                <div key={item.key} className="flex items-stretch gap-2">
                 <button
-                  key={item.key}
                   type="button"
                   onClick={() => {
                     setIndex(list.findIndex((i) => i.key === item.key));
@@ -612,6 +641,21 @@ export default function CountMobile() {
                     {fmtQty(counted, item.unit)}
                   </span>
                 </button>
+                {storeId && (
+                  <div className="w-[56px] shrink-0">
+                    <OrderSheet
+                      storeId={storeId}
+                      staffName={staffName}
+                      productId={item.productId}
+                      productName={item.productName}
+                      unit={item.unit}
+                      wantedDate={wantedDate}
+                      existing={ordered}
+                      editable
+                    />
+                  </div>
+                )}
+                </div>
               );
             })}
             {summary.length === 0 && (
