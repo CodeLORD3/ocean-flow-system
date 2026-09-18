@@ -105,8 +105,9 @@ export function MapListViews({
                   <img src={i.url} alt={i.caption ?? zoneName(i.entity_id)} className="h-28 w-full object-cover" />
                   <div className="px-2 py-1.5">
                     <p className="truncate text-xs font-medium">{i.caption ?? zoneName(i.entity_id)}</p>
-                    <p className="truncate text-[10px] text-muted-foreground">
-                      {clock(i.created_at)} · {i.uploaded_by_name ?? "—"}
+                    <p className="flex min-w-0 items-center gap-1 truncate text-[10px] text-muted-foreground">
+                      <span className="shrink-0">{clock(i.created_at)} ·</span>
+                      <StaffName name={i.uploaded_by_name} />
                     </p>
                   </div>
                 </button>
