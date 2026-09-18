@@ -234,6 +234,7 @@ export interface NewOrderInput {
   excluded_allergens?: string[];
   source: string;
   received_by_name?: string | null;
+  received_by_staff_id?: string | null;
   status?: string;
   note?: string | null;
   lines: NewOrderLineInput[];
