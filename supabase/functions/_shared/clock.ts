@@ -10,7 +10,9 @@
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const ALLOWED_ORIGIN_SUFFIXES = [".lovable.app", ".makrilltrade.com"];
+// Förhandsvisningen (*.lovableproject.com) måste också få tala med klockan,
+// annars går det inte att aktivera eller stämpla när man provar i Lovable.
+const ALLOWED_ORIGIN_SUFFIXES = [".lovable.app", ".lovableproject.com", ".makrilltrade.com"];
 const ALLOWED_PRIMARY_ORIGIN = "https://makrilltrade.com";
 const ALLOWED_ORIGINS = new Set([
   "https://makrilltrade.com",
