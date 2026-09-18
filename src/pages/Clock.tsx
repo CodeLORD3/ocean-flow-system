@@ -421,7 +421,11 @@ export default function Clock() {
               {now.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })}
             </p>
           </div>
-          <span />
+          <div className="sm:text-right">
+            <IndustryButton variant="secondary" size="touch" onClick={leaveClock}>
+              Tillbaka till appen
+            </IndustryButton>
+          </div>
         </header>
 
         {!online && (
