@@ -71,16 +71,40 @@ Deno.serve(async (req) => {
     storeName = (store?.name as string | undefined) ?? null;
   }
 
-  let workSites: Array<{ id: string; name: string; posting_cost_center: string; geofence_radius_m: number; allow_mobile_punch: boolean }> = [];
-  let siteQuery = db
-    .from("work_sites")
-    .select("id, name, posting_cost_center, geofence_radius_m, allow_mobile_punch")
-    .eq("is_active", true)
-    .order("sort_order");
-  if (station.store_id) siteQuery = siteQuery.eq("store_id", station.store_id);
-  else if (station.legal_entity_id) siteQuery = siteQuery.eq("legal_entity_id", station.legal_entity_id);
-  const { data: sites } = await siteQuery;
-  workSites = (sites ?? []) as typeof workSites;
+  type SiteRow = { id: string; name: string; posting_cost_center: string; geofence_radius_m: number; allow_mobile_punch: boolean };
+  const SITE_COLS = "id, name, posting_cost_center, geofence_radius_m, allow_mobile_punch, sort_order";
+  const collected: SiteRow[] = [];
+  const seen = new Set<string>();
+  const push = (rows: unknown[] | null) => {
+    for (const row of (rows ?? []) as (SiteRow & { sort_order?: number })[]) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      collected.push(row);
+    }
+  };
+
+  if (station.store_id) {
+    const { data: storeSites } = await db
+      .from("work_sites")
+      .select(SITE_COLS)
+      .eq("is_active", true)
+      .eq("store_id", station.store_id)
+      .order("sort_order");
+    push(storeSites);
+  }
+  // Bolagsgemensamma kostnadsställen (t.ex. Administration) ska kunna väljas
+  // även på en station som hör till en butik.
+  if (station.legal_entity_id) {
+    const { data: entitySites } = await db
+      .from("work_sites")
+      .select(SITE_COLS)
+      .eq("is_active", true)
+      .is("store_id", null)
+      .eq("legal_entity_id", station.legal_entity_id)
+      .order("sort_order");
+    push(entitySites);
+  }
+  const workSites: SiteRow[] = collected;
 
   return json(req, {
     session_token: token,
