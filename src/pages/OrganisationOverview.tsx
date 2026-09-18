@@ -23,6 +23,7 @@ import { focalStyle } from "@/lib/imageFocal";
 import storeHero from "@/assets/store-hero.jpg";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useSuppliers } from "@/hooks/useSuppliers";
+import CountEntryButton from "@/components/inventory/mobile/CountEntryButton";
 import { useSite } from "@/contexts/SiteContext";
 import { useTabs } from "@/contexts/TabsContext";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
@@ -282,6 +283,13 @@ export default function OrganisationOverview() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 sm:space-y-6 max-w-full overflow-x-hidden">
+      {/* Ingång till räkningen — det första en butiksanställd ser på telefon */}
+      {isShop && (
+        <div className="md:hidden">
+          <CountEntryButton variant="card" />
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="min-w-0">
