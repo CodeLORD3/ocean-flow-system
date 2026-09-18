@@ -254,6 +254,14 @@ export function TotalOrderedView({
 
   const anyExtra = cols.stock || cols.onOrder || cols.combined || cols.sellable;
 
+  /* Veckoläget räknar hela veckor: intervallet snäpps till måndag–söndag. */
+  useEffect(() => {
+    if (mode !== "week") return;
+    setPicked([]);
+    setFrom((f) => iso(mondayOf(parseIso(f))));
+    setTo((t) => iso(sundayOf(parseIso(t))));
+  }, [mode]);
+
 
 
 
