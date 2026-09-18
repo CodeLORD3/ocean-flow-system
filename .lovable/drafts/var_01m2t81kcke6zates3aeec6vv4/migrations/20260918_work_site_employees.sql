@@ -35,3 +35,12 @@ WHERE ws.name = 'Administration'
     '0ced8b7e-844a-4db7-add1-9b306f4c4185'  -- Joakim Hvarfvenius
   )
 ON CONFLICT DO NOTHING;
+
+-- Caisa Carning (De No.1 AB) får också stämpla på Administration.
+INSERT INTO public.work_site_employees (work_site_id, employee_id)
+SELECT ws.id, e.id
+FROM public.work_sites ws
+CROSS JOIN public.employees e
+WHERE ws.name = 'Administration'
+  AND e.email = 'caisacarning@gmail.com'
+ON CONFLICT DO NOTHING;
