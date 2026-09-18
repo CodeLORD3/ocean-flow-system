@@ -143,8 +143,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       .replace(/^./, (c) => c.toUpperCase()) || "Översikt");
   // Räkningen på telefon är ett helskärmsflöde: ingen butiksbanner, ingen
   // bottenmeny och ingen chattbubbla som stjäl höjd eller tryckytor.
+  const [isNarrow, setIsNarrow] = React.useState(
+    typeof window !== "undefined" ? window.innerWidth < 768 : false,
+  );
+  React.useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const onChange = () => setIsNarrow(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
   const isCountFlow =
-    location.pathname === "/m/inventering" || location.pathname === "/rakna";
+    location.pathname === "/m/inventering" ||
+    location.pathname === "/rakna" ||
+    (isNarrow && location.pathname === "/inventory");
   const page = pageTitles[location.pathname] || { title: fallbackTitle, breadcrumb: ["Hem", fallbackTitle] };
   const allowedStores = useAllowedStores();
   /** Personal & schema: ingen toppbild och sidomenyn helt gömd bakom hamburgaren. */
