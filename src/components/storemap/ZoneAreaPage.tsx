@@ -219,7 +219,7 @@ export function ZoneAreaPage({
                      </button>
                     <div className="px-2 py-1">
                       <p className="truncate text-[10px] text-muted-foreground">{dt(i.created_at)}</p>
-                      <p className="truncate text-[10px] text-muted-foreground">{i.uploaded_by_name ?? "—"}</p>
+                      <p className="flex min-w-0 items-center text-[10px] text-muted-foreground"><StaffName name={i.uploaded_by_name} /></p>
                       {canManage && (
                         <button
                           className="text-[10px] text-destructive hover:underline"
