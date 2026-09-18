@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -143,10 +144,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       .replace(/^./, (c) => c.toUpperCase()) || "Översikt");
   // Räkningen på telefon är ett helskärmsflöde: ingen butiksbanner, ingen
   // bottenmeny och ingen chattbubbla som stjäl höjd eller tryckytor.
-  const [isNarrow, setIsNarrow] = React.useState(
+  const [isNarrow, setIsNarrow] = useState(
     typeof window !== "undefined" ? window.innerWidth < 768 : false,
   );
-  React.useEffect(() => {
+  useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
     const onChange = () => setIsNarrow(mq.matches);
     onChange();
