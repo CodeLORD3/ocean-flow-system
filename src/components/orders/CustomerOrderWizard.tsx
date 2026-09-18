@@ -41,6 +41,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
+import { StaffPicker } from "@/components/orders/StaffPicker";
 import {
   useCreateCustomerOrder,
   useRetailCustomers,
