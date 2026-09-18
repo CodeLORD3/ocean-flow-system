@@ -52,7 +52,7 @@ export function OverviewQuickBar({
         .select("id")
         .eq("store_id", storeId!)
         .eq("count_date", date)
-        .eq("status", "locked")
+        .in("status", ["inskickad", "locked"])
         .limit(1);
       if (error) throw error;
       return (data ?? []).length > 0;
@@ -108,7 +108,7 @@ export function OverviewQuickBar({
             </span>
           </span>
         </button>
-        <button type="button" onClick={() => navigate("/inventory")} className={boxClass(countDone)}>
+        <button type="button" onClick={() => navigate("/rakna")} className={boxClass(countDone)}>
           {countDone ? (
             <Check className="h-7 w-7 shrink-0 text-emerald-600" />
           ) : (
