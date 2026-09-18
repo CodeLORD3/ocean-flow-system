@@ -81,6 +81,7 @@ const DIGIT_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 const CODE_KEYS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split("");
 
 export default function Clock() {
+  const navigate = useNavigate();
   const [station, setStation] = useState<ClockStationInfo | null>(storedStation());
   const [activated, setActivated] = useState(Boolean(storedSession()));
   const [code, setCode] = useState("");
