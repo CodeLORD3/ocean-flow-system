@@ -801,7 +801,7 @@ export default function ShopOrders() {
                   />
                 </div>
                 {filteredProducts.length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  <div className="relative z-30 mt-1 w-full max-h-[50vh] overflow-y-auto rounded-md border border-border bg-popover shadow-lg sm:absolute sm:max-h-60">
                     {groupedSearchResults.map(([cat, prods]) => (
                       <div key={cat}>
                         <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground bg-muted/50 sticky top-0">
