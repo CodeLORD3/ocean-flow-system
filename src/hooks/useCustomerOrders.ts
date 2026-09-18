@@ -415,6 +415,42 @@ export function useMoveCustomerOrders() {
   });
 }
 
+/**
+ * Lägger beställningar i utkörningen (lastade på bilen) eller tar dem ur den.
+ * Butiken kan då fälla ihop utkörningen och bara se det som är kvar i butiken.
+ */
+export function useSetDeliveryRun() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, on, note }: { ids: string[]; on: boolean; note?: string | null }) => {
+      if (ids.length === 0) return;
+      const { data: auth } = await supabase.auth.getUser();
+      const { error } = await db
+        .from("customer_orders")
+        .update({
+          delivery_run_at: on ? new Date().toISOString() : null,
+          delivery_run_note: on ? note ?? null : null,
+        })
+        .in("id", ids);
+      if (error) throw error;
+      for (const id of ids) {
+        await logOrderEvent({
+          orderId: id,
+          eventType: on ? "utkorning" : "utkorning_borttagen",
+          description: on
+            ? `Lagd i utkörning${note ? ` (${note})` : ""}`
+            : "Tagen ur utkörning",
+          performedBy: auth?.user?.id ?? null,
+        });
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customer_orders"] });
+      qc.invalidateQueries({ queryKey: ["customer_order_events"] });
+    },
+  });
+}
+
 export function useUpdateCustomerOrder() {
   const qc = useQueryClient();
   return useMutation({
