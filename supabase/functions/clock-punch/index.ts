@@ -192,7 +192,23 @@ Deno.serve(async (req) => {
     if (person?.is_test === true) {
       return json(req, { error: "Det här är en testperson i systemet och kan inte stämpla. Kontakta kontoret." }, 403);
     }
-    if (mode === "lookup" || action !== "ut") {
+    // Företagsledningen arbetar i alla bolag och butiker. Den som är admin i
+    // systemet får därför stämpla på vilken klocka som helst — bolagsspärren
+    // gäller övrig personal.
+    let punchesEverywhere = false;
+    {
+      const { data: link } = await db.from("employees").select("staff_id").eq("id", hit.id).maybeSingle();
+      const staffId = (link?.staff_id as string | null) ?? null;
+      if (staffId) {
+        const { data: staffRow } = await db.from("staff").select("user_id").eq("id", staffId).maybeSingle();
+        const userId = (staffRow?.user_id as string | null) ?? null;
+        if (userId) {
+          const { data: roles } = await db.from("user_roles").select("role").eq("user_id", userId);
+          punchesEverywhere = (roles ?? []).some((r) => r.role === "admin" || r.role === "platform_admin");
+        }
+      }
+    }
+    if (!punchesEverywhere && (mode === "lookup" || action !== "ut")) {
       const today = new Date().toISOString().slice(0, 10);
       const { data: employments } = await db
         .from("employments")
