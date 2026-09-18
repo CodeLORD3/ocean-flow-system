@@ -18186,6 +18186,42 @@ export type Database = {
         }
         Relationships: []
       }
+      work_site_employees: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          work_site_id: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          work_site_id: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          work_site_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_site_employees_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_site_employees_work_site_id_fkey"
+            columns: ["work_site_id"]
+            isOneToOne: false
+            referencedRelation: "work_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_sites: {
         Row: {
           allow_mobile_punch: boolean
