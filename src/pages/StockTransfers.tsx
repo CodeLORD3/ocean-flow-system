@@ -1,3 +1,4 @@
+import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
