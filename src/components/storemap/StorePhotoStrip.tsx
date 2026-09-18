@@ -247,7 +247,7 @@ export function StorePhotoStrip({
         </span>
         <span className="shrink-0 text-right text-[11px] text-muted-foreground">
           <span className="block tabular-nums">{shortWhen(img.created_at)}</span>
-          {img.uploaded_by_name && <span className="block truncate">{img.uploaded_by_name}</span>}
+          {img.uploaded_by_name && <StaffName name={img.uploaded_by_name} className="justify-end" />}
         </span>
       </button>
     );
