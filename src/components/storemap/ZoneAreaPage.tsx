@@ -9,6 +9,7 @@ import { ArrowLeft, Camera, CheckCircle2, Image as ImageIcon, ListChecks, Triang
 import { toast } from "@/hooks/use-toast";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { MapComposer } from "@/components/storemap/MapComposer";
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
 import { OverviewTaskPanel } from "@/components/storemap/OverviewTaskPanel";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
