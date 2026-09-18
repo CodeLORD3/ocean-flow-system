@@ -834,7 +834,7 @@ export default function CustomerOrders() {
                         <div className="flex items-center gap-2 border-x border-b border-grid-line bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                           <span className="truncate">{dayLabel(day)}</span>
                           <span className="shrink-0 font-mono tabular-nums">
-                            {list.length} order
+                            {list.filter((o) => !o.delivery_run_at).length} order
                           </span>
                           {dragOverDay === day && dragIds.length > 0 && (
                             <span className="ml-auto shrink-0 rounded-sm bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
@@ -843,45 +843,36 @@ export default function CustomerOrders() {
                           )}
                         </div>
 
-                        {list.map((o) => (
-                          <div
-                            key={o.id}
-                            draggable={canEdit && !rowReadOnly(o) && marked.includes(o.id)}
-                            onDragStart={(e) => {
-                              // Bara markerade beställningar kan dras — alla markerade följer med.
-                              if (!marked.includes(o.id)) {
-                                e.preventDefault();
-                                return;
-                              }
-                              startDrag(o.id);
-                            }}
-                            title={
-                              marked.includes(o.id)
-                                ? "Dra för att flytta markerade beställningar"
-                                : "Markera beställningen först för att kunna dra den"
-                            }
-                            onDragEnd={() => {
-                              setDragIds([]);
-                              setDragOverDay(null);
-                            }}
-                            className={dragIds.includes(o.id) ? "opacity-50" : ""}
-                          >
-                            <CustomerOrderRow
-                              order={o}
-                              canEdit={canEdit}
-                              readOnly={rowReadOnly(o)}
-                              open={openRows.includes(o.id)}
-                              onToggle={toggleRow}
-                              selected={marked.includes(o.id)}
-                              onSelect={toggleMark}
-                              photoCount={photoCounts?.[o.id] ?? 0}
-                              orderCount={
-                                o.customer_id ? customerOrderCounts?.[o.customer_id] ?? 0 : 0
-                              }
-                              highlightProduct={focus?.orderId === o.id ? focus.product : null}
-                            />
-                          </div>
-                        ))}
+                        {list.filter((o) => !o.delivery_run_at).map((o) => renderOrderRow(o, day))}
+
+                        {/* Utkörningen: allt som är lastat på bilen, ihopfällbart. */}
+                        {list.some((o) => !!o.delivery_run_at) && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => toggleRun(day)}
+                              className="flex w-full items-center gap-2 border-x border-b border-grid-line bg-emerald-500/10 px-2.5 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
+                            >
+                              {openRuns.includes(day) ? (
+                                <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                              ) : (
+                                <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                              )}
+                              <Truck className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate">Utkörning — lastade på bilen</span>
+                              <span className="shrink-0 font-mono tabular-nums">
+                                {list.filter((o) => !!o.delivery_run_at).length} order
+                              </span>
+                              <span className="ml-auto shrink-0 font-normal normal-case text-muted-foreground">
+                                {openRuns.includes(day) ? "Göm" : "Visa"}
+                              </span>
+                            </button>
+                            {openRuns.includes(day) &&
+                              list
+                                .filter((o) => !!o.delivery_run_at)
+                                .map((o) => renderOrderRow(o, day))}
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
