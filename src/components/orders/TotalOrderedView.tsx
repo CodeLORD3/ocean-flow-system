@@ -72,6 +72,17 @@ const dayLabel = (s: string) =>
 const shortDay = (s: string) =>
   parseIso(s).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" });
 
+/** Söndag i samma ISO-vecka som datumet. */
+const sundayOf = (d: Date) => addDays(mondayOf(d), 6);
+
+const dayMonth = (d: Date) => d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+
+/** "Vecka 40 · 28 sep–4 okt" — svensk veckoräkning, måndag till söndag. */
+const weekLabel = (s: string, week: number) => {
+  const start = mondayOf(parseIso(s));
+  return `Vecka ${week} · ${dayMonth(start)}–${dayMonth(addDays(start, 6))}`;
+};
+
 const customerName = (o: CustomerOrder) =>
   o.customers_retail?.name || o.customer_name_snapshot || "Kund utan namn";
 
