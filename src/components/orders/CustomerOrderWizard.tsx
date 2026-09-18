@@ -379,6 +379,7 @@ export function CustomerOrderWizard({
     if (step === 1 && lines.length === 0) return toast.error("Lägg till minst en produkt.");
     if (step === 2 && !customer) return toast.error("Välj eller skapa kund.");
     if (step === 3 && capacity.blocking) return toast.error(capacity.blocking);
+    if (step === 3 && !receivedBy) return toast.error("Välj vem som lägger in beställningen.");
     setStep(step + 1);
   };
 
