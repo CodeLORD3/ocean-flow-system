@@ -72,6 +72,17 @@ const dayLabel = (s: string) =>
 const shortDay = (s: string) =>
   parseIso(s).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" });
 
+/** Söndag i samma ISO-vecka som datumet. */
+const sundayOf = (d: Date) => addDays(mondayOf(d), 6);
+
+const dayMonth = (d: Date) => d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+
+/** "Vecka 40 · 28 sep–4 okt" — svensk veckoräkning, måndag till söndag. */
+const weekLabel = (s: string, week: number) => {
+  const start = mondayOf(parseIso(s));
+  return `Vecka ${week} · ${dayMonth(start)}–${dayMonth(addDays(start, 6))}`;
+};
+
 const customerName = (o: CustomerOrder) =>
   o.customers_retail?.name || o.customer_name_snapshot || "Kund utan namn";
 
@@ -218,8 +229,8 @@ export function TotalOrderedView({
   const today = iso(new Date());
   const [mode, setMode] = useState<"day" | "week">("day");
   const [from, setFrom] = useState(today);
-  // Två veckor framåt från början, så beställningar längre fram inte hamnar utanför.
-  const [to, setTo] = useState(iso(addDays(new Date(), 14)));
+  // Två veckor framåt, avrundat till veckans slut (söndag) enligt svensk veckoräkning.
+  const [to, setTo] = useState(iso(sundayOf(addDays(new Date(), 14))));
   /** Ibockade enskilda dagar. Finns de, styr de urvalet istället för intervallet. */
   const [picked, setPicked] = useState<string[]>([]);
   const [orderType, setOrderType] = useState("all");
@@ -242,6 +253,14 @@ export function TotalOrderedView({
   }, [cols]);
 
   const anyExtra = cols.stock || cols.onOrder || cols.combined || cols.sellable;
+
+  /* Veckoläget räknar hela veckor: intervallet snäpps till måndag–söndag. */
+  useEffect(() => {
+    if (mode !== "week") return;
+    setPicked([]);
+    setFrom((f) => iso(mondayOf(parseIso(f))));
+    setTo((t) => iso(sundayOf(parseIso(t))));
+  }, [mode]);
 
 
 
@@ -290,7 +309,7 @@ export function TotalOrderedView({
       if (selected && !selected.has(o.wanted_date)) continue;
       const { week, year } = isoWeekOf(o.wanted_date);
       const groupKey = mode === "day" ? o.wanted_date : `${year}-${String(week).padStart(2, "0")}`;
-      const label = mode === "day" ? dayLabel(o.wanted_date) : `Vecka ${week}`;
+      const label = mode === "day" ? dayLabel(o.wanted_date) : weekLabel(o.wanted_date, week);
 
       for (const l of o.customer_order_lines ?? []) {
         const name = l.products?.name || l.free_text_name || "Okänd vara";
@@ -439,7 +458,7 @@ export function TotalOrderedView({
         if (!group) {
           group = {
             key: groupKey,
-            label: mode === "day" ? dayLabel(date) : `Vecka ${week}`,
+            label: mode === "day" ? dayLabel(date) : weekLabel(date, week),
             orderCount: 0,
             rows: [],
           };
