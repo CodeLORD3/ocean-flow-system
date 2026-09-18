@@ -202,6 +202,17 @@ export default function Clock() {
     punchIdRef.current = null;
   };
 
+  /**
+   * Klockan öppnas ofta på telefon från appen. Utan en väg tillbaka blir man
+   * inlåst i kioskvyn — därför en egen knapp som backar eller går till start.
+   */
+  const leaveClock = () => {
+    reset();
+    setReceipt(null);
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/");
+  };
+
   /** Knappsatsen är enda vägen in: inget fält har fokus, inget tangentbord öppnas. */
   const pressDigit = (digit: string) => {
     setError(null);
