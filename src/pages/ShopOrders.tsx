@@ -6,7 +6,7 @@ function CreatePanelShell({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   if (!isMobile) return <>{children}</>;
   return createPortal(
-    <div className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-background">{children}</div>,
+    <div className="fixed inset-0 z-[70] flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">{children}</div>,
     document.body,
   );
 }
@@ -801,7 +801,7 @@ export default function ShopOrders() {
                   />
                 </div>
                 {filteredProducts.length > 0 && (
-                  <div className="relative z-30 mt-1 w-full max-h-[50vh] overflow-y-auto rounded-md border border-border bg-popover shadow-lg sm:absolute sm:max-h-60">
+                  <div className="relative z-30 mt-1 w-full max-h-[38dvh] overflow-y-auto rounded-md border border-border bg-popover shadow-lg sm:absolute sm:max-h-60">
                     {groupedSearchResults.map(([cat, prods]) => (
                       <div key={cat}>
                         <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground bg-muted/50 sticky top-0">
