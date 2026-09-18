@@ -192,6 +192,10 @@ export interface CustomerOrder {
   /** Sätts när personalen trycker "Starta packning" — ordern tonas gul. */
   packing_started_at?: string | null;
   handed_over_at: string | null;
+  /** Satt när beställningen är lastad för utkörning (t.ex. på bilen). */
+  delivery_run_at?: string | null;
+  /** Fritext om utkörningen, t.ex. vem som kör. */
+  delivery_run_note?: string | null;
   archived_at?: string | null;
   cancelled_at?: string | null;
   cancelled_reason?: string | null;
