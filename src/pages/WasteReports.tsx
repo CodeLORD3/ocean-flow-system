@@ -146,56 +146,63 @@ export default function WasteReports() {
               onAction={() => setOpen(true)}
             />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead className="bg-muted/50 text-muted-foreground">
-                  <tr>
-                    <th className="p-2 text-left font-medium">Datum</th>
-                    <th className="p-2 text-left font-medium">Lagerplats</th>
-                    <th className="p-2 text-left font-medium">Orsak</th>
-                    <th className="p-2 text-left font-medium">Rader</th>
-                    <th className="p-2 text-right font-medium">Kilo</th>
-                    <th className="p-2 text-left font-medium">Kommentar</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {(reports as any[]).map((r) => {
-                    const lines = (r.waste_report_lines ?? []) as any[];
-                    const total = lines.reduce((s, l) => s + Math.abs(Number(l.quantity_kg || 0)), 0);
-                    return (
-                      <tr key={r.id} className="align-top hover:bg-muted/40">
-                        <td className="p-2 text-muted-foreground">
-                          {new Date(r.created_at).toLocaleString("sv-SE", {
-                            dateStyle: "short",
-                            timeStyle: "short",
-                          })}
-                        </td>
-                        <td className="p-2">
-                          {r.storage_locations?.name}
-                          <span className="block text-[11px] text-muted-foreground">
-                            {LEVEL_LABEL[r.storage_locations?.location_type as LocationLevel] ?? ""}
-                          </span>
-                        </td>
-                        <td className="p-2">
-                          {WASTE_REASON_LABEL[r.reason as WasteReason] ?? r.reason}
-                        </td>
-                        <td className="p-2">
-                          {lines.map((l) => (
-                            <span key={l.id} className="block">
-                              {l.products?.name ?? "Produkt"}
-                              {l.lots?.lot_number ? ` (${l.lots.lot_number})` : ""} —{" "}
-                              {nf(Math.abs(Number(l.quantity_kg)))} kg
-                            </span>
-                          ))}
-                        </td>
-                        <td className="p-2 text-right font-mono tabular-nums">{nf(total)}</td>
-                        <td className="p-2 text-muted-foreground">{r.comment ?? "—"}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <ResponsiveTable
+              rows={reports as any[]}
+              rowKey={(r) => r.id}
+              columns={[
+                {
+                  key: "date",
+                  header: "Datum",
+                  primary: true,
+                  cell: (r) =>
+                    new Date(r.created_at).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" }),
+                },
+                {
+                  key: "place",
+                  header: "Lagerplats",
+                  cell: (r) => (
+                    <>
+                      {r.storage_locations?.name}
+                      <span className="block text-[12px] text-muted-foreground">
+                        {LEVEL_LABEL[r.storage_locations?.location_type as LocationLevel] ?? ""}
+                      </span>
+                    </>
+                  ),
+                },
+                {
+                  key: "reason",
+                  header: "Orsak",
+                  cell: (r) => WASTE_REASON_LABEL[r.reason as WasteReason] ?? r.reason,
+                },
+                {
+                  key: "lines",
+                  header: "Rader",
+                  cell: (r) => (
+                    <>
+                      {((r.waste_report_lines ?? []) as any[]).map((l) => (
+                        <span key={l.id} className="block">
+                          {l.products?.name ?? "Produkt"}
+                          {l.lots?.lot_number ? ` (${l.lots.lot_number})` : ""} —{" "}
+                          {nf(Math.abs(Number(l.quantity_kg)))} kg
+                        </span>
+                      ))}
+                    </>
+                  ),
+                },
+                {
+                  key: "total",
+                  header: "Kilo",
+                  headerClassName: "text-right",
+                  className: "text-right",
+                  cell: (r) => (
+                    <span className="font-mono tabular-nums">
+                      {nf(((r.waste_report_lines ?? []) as any[]).reduce((s, l) => s + Math.abs(Number(l.quantity_kg || 0)), 0))}
+                    </span>
+                  ),
+                },
+                { key: "comment", header: "Kommentar", cell: (r) => r.comment ?? "—" },
+              ]}
+            />
           )}
         </CardContent>
       </Card>
