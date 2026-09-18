@@ -43,6 +43,7 @@ import {
 import NumberPad from "@/components/inventory/mobile/NumberPad";
 import CountStepper from "@/components/inventory/mobile/CountStepper";
 import IntroSlides, { hasSeenIntro } from "@/components/inventory/mobile/IntroSlides";
+import PendingCountApprovals from "@/components/inventory/mobile/PendingCountApprovals";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 
 type Step = "start" | "plats" | "rakna" | "sammanfattning" | "klar";
