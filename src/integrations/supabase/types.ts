@@ -2993,6 +2993,8 @@ export type Database = {
           deleted_reason: string | null
           delivery_city: string | null
           delivery_postal_code: string | null
+          delivery_run_at: string | null
+          delivery_run_note: string | null
           delivery_street: string | null
           estimated_total: number
           excluded_allergens: string[]
@@ -3010,6 +3012,8 @@ export type Database = {
           order_type: string
           pack_status: string
           packed_at: string | null
+          packed_by_name: string | null
+          packed_by_staff_id: string | null
           packing_started_at: string | null
           paid_at: string | null
           paid_by: string | null
@@ -3018,6 +3022,7 @@ export type Database = {
           price_locked: boolean
           received_by: string | null
           received_by_name: string | null
+          received_by_staff_id: string | null
           shopify_order_id: string | null
           shopify_order_number: string | null
           source: string
@@ -3053,6 +3058,8 @@ export type Database = {
           deleted_reason?: string | null
           delivery_city?: string | null
           delivery_postal_code?: string | null
+          delivery_run_at?: string | null
+          delivery_run_note?: string | null
           delivery_street?: string | null
           estimated_total?: number
           excluded_allergens?: string[]
@@ -3070,6 +3077,8 @@ export type Database = {
           order_type?: string
           pack_status?: string
           packed_at?: string | null
+          packed_by_name?: string | null
+          packed_by_staff_id?: string | null
           packing_started_at?: string | null
           paid_at?: string | null
           paid_by?: string | null
@@ -3078,6 +3087,7 @@ export type Database = {
           price_locked?: boolean
           received_by?: string | null
           received_by_name?: string | null
+          received_by_staff_id?: string | null
           shopify_order_id?: string | null
           shopify_order_number?: string | null
           source?: string
@@ -3113,6 +3123,8 @@ export type Database = {
           deleted_reason?: string | null
           delivery_city?: string | null
           delivery_postal_code?: string | null
+          delivery_run_at?: string | null
+          delivery_run_note?: string | null
           delivery_street?: string | null
           estimated_total?: number
           excluded_allergens?: string[]
@@ -3130,6 +3142,8 @@ export type Database = {
           order_type?: string
           pack_status?: string
           packed_at?: string | null
+          packed_by_name?: string | null
+          packed_by_staff_id?: string | null
           packing_started_at?: string | null
           paid_at?: string | null
           paid_by?: string | null
@@ -3138,6 +3152,7 @@ export type Database = {
           price_locked?: boolean
           received_by?: string | null
           received_by_name?: string | null
+          received_by_staff_id?: string | null
           shopify_order_id?: string | null
           shopify_order_number?: string | null
           source?: string
@@ -3175,6 +3190,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "customer_orders_packed_by_staff_id_fkey"
+            columns: ["packed_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_orders_packed_by_staff_id_fkey"
+            columns: ["packed_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "customer_orders_received_by_fkey"
             columns: ["received_by"]
             isOneToOne: false
@@ -3184,6 +3213,20 @@ export type Database = {
           {
             foreignKeyName: "customer_orders_received_by_fkey"
             columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_orders_received_by_staff_id_fkey"
+            columns: ["received_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_orders_received_by_staff_id_fkey"
+            columns: ["received_by_staff_id"]
             isOneToOne: false
             referencedRelation: "staff_access"
             referencedColumns: ["id"]
@@ -3708,6 +3751,7 @@ export type Database = {
           comment: string | null
           created_at: string
           created_by: string | null
+          currency: string | null
           gross_sales: number | null
           id: string
           largest_sale: number | null
@@ -3726,12 +3770,14 @@ export type Database = {
           staff_notes: string | null
           store_id: string
           updated_at: string
+          vat_rate: number | null
           waste_items: Json
         }
         Insert: {
           comment?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string | null
           gross_sales?: number | null
           id?: string
           largest_sale?: number | null
@@ -3750,12 +3796,14 @@ export type Database = {
           staff_notes?: string | null
           store_id: string
           updated_at?: string
+          vat_rate?: number | null
           waste_items?: Json
         }
         Update: {
           comment?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string | null
           gross_sales?: number | null
           id?: string
           largest_sale?: number | null
@@ -3774,6 +3822,7 @@ export type Database = {
           staff_notes?: string | null
           store_id?: string
           updated_at?: string
+          vat_rate?: number | null
           waste_items?: Json
         }
         Relationships: [
@@ -8807,6 +8856,7 @@ export type Database = {
       payment_cards: {
         Row: {
           active: boolean
+          bank: string | null
           card_brand: string | null
           card_holder: string | null
           card_kind: string
@@ -8820,6 +8870,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          bank?: string | null
           card_brand?: string | null
           card_holder?: string | null
           card_kind?: string
@@ -8833,6 +8884,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          bank?: string | null
           card_brand?: string | null
           card_holder?: string | null
           card_kind?: string
