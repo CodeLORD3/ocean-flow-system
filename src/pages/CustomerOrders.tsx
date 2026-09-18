@@ -243,6 +243,32 @@ export default function CustomerOrders() {
     );
   };
 
+  /* Utkörning: beställningar som är lastade på bilen samlas i en egen,
+     ihopfällbar grupp per dag så butikspersonalen bara ser sitt eget kvar. */
+  const setDeliveryRun = useSetDeliveryRun();
+  const [openRuns, setOpenRuns] = useState<string[]>([]);
+  const toggleRun = (day: string) =>
+    setOpenRuns((cur) => (cur.includes(day) ? cur.filter((d) => d !== day) : [...cur, day]));
+
+  const putInRun = (on: boolean) => {
+    const ids = marked.filter((id) => viewOrders.some((o) => o.id === id));
+    if (ids.length === 0) return;
+    setDeliveryRun.mutate(
+      { ids, on },
+      {
+        onSuccess: () => {
+          toast.success(
+            on
+              ? `${ids.length} beställning${ids.length === 1 ? "" : "ar"} lagd${ids.length === 1 ? "" : "a"} i utkörningen`
+              : `${ids.length} beställning${ids.length === 1 ? "" : "ar"} tillbaka i butikslistan`,
+          );
+          setMarked([]);
+        },
+        onError: (e: any) => toast.error(e?.message ?? "Kunde inte ändra utkörningen"),
+      },
+    );
+  };
+
   const isArchiveView = tab === "arkiverade";
   const archiveOrders = useArchiveCustomerOrder();
   const approveOrders = useApproveCustomerOrder();
