@@ -21,7 +21,7 @@ import {
 
 export default function StaffProfile() {
   const { toast } = useToast();
-  const { staff, loading } = useStaffAuth();
+  const { staff, loading, refresh } = useStaffAuth();
   const { data: stores = [] } = useStores(true);
   const clockIn = useClockIn();
   const clockOut = useClockOut();
