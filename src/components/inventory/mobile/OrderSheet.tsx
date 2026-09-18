@@ -56,7 +56,8 @@ export default function OrderSheet({
       });
       setOpen(false);
       setComment("");
-      toast.success(`På beställningen: ${fmtQty(qty, unit)}`);
+      // Meddelandet läggs högst upp: längst ner täcker det knappzonen.
+      toast.success(`På beställningen: ${fmtQty(qty, unit)}`, { position: "top-center" });
     } catch (e: any) {
       toast.error(e?.message || "Kunde inte lägga på beställningen.");
     }
@@ -88,7 +89,7 @@ export default function OrderSheet({
               aria-label="Ta bort från beställningen"
               onClick={async () => {
                 await removeLine.mutateAsync(existing.id);
-                toast.success("Togs bort från beställningen");
+                toast.success("Togs bort från beställningen", { position: "top-center" });
               }}
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-card"
             >

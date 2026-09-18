@@ -215,7 +215,7 @@ export default function CountMobile() {
       });
     if (item) setIndex(Math.max(0, list.findIndex((i) => i.key === item.key)));
     setLastKey(null);
-    toast.success("Inmatningen togs bort");
+    toast.success("Inmatningen togs bort", { position: "top-center" });
   };
 
   /** Väljer lagerplats. Någon annans påbörjade räkning öppnas aldrig. */
