@@ -1249,7 +1249,7 @@ export default function ShopOrders() {
               </Popover>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="hidden space-y-1.5 sm:block">
               <Label className="text-xs">Anteckning (valfritt)</Label>
               <Textarea
                 ref={noteRef}
