@@ -44,6 +44,7 @@ import { MapListViews } from "@/components/storemap/MapListViews";
 import { OverviewStatsBar } from "@/components/storemap/OverviewStatsBar";
 import { StorePhotoStrip } from "@/components/storemap/StorePhotoStrip";
 import { OverviewQuickBar } from "@/components/storemap/OverviewQuickBar";
+import CountEntryButton from "@/components/inventory/mobile/CountEntryButton";
 import { StatusRing } from "@/components/storemap/StatusRing";
 import { progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
@@ -381,6 +382,11 @@ export default function StoreMap() {
 
   return (
     <div className="space-y-4">
+      {/* Ingång till räkningen — det första en butiksanställd ser på telefon */}
+      <div className="md:hidden">
+        <CountEntryButton variant="card" />
+      </div>
+
       {/* Stora knappar och dagens stapel högst upp */}
       <OverviewQuickBar tasks={tasks} storeId={storeId} day={day} />
 
