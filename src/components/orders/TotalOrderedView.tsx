@@ -229,8 +229,8 @@ export function TotalOrderedView({
   const today = iso(new Date());
   const [mode, setMode] = useState<"day" | "week">("day");
   const [from, setFrom] = useState(today);
-  // Två veckor framåt från början, så beställningar längre fram inte hamnar utanför.
-  const [to, setTo] = useState(iso(addDays(new Date(), 14)));
+  // Två veckor framåt, avrundat till veckans slut (söndag) enligt svensk veckoräkning.
+  const [to, setTo] = useState(iso(sundayOf(addDays(new Date(), 14))));
   /** Ibockade enskilda dagar. Finns de, styr de urvalet istället för intervallet. */
   const [picked, setPicked] = useState<string[]>([]);
   const [orderType, setOrderType] = useState("all");
