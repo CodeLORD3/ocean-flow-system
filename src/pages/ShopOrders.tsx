@@ -1,4 +1,16 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+/** På telefon läggs beställningsvyn som egen helskärm ovanpå allt; på dator ligger den kvar i sidan. */
+function CreatePanelShell({ children }: { children: React.ReactNode }) {
+  const isMobile = useIsMobile();
+  if (!isMobile) return <>{children}</>;
+  return createPortal(
+    <div className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-background">{children}</div>,
+    document.body,
+  );
+}
 import { displayOrderWeek } from "@/lib/orderWeek";
 import { motion } from "framer-motion";
 import {
