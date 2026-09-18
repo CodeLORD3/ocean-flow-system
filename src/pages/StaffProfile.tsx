@@ -12,6 +12,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { prepareUpload, COMPRESS_AVATAR } from "@/lib/imageCompress";
+import { Camera } from "lucide-react";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useStores } from "@/hooks/useStores";
 import { PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
