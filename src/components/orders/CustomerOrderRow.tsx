@@ -217,6 +217,7 @@ export function CustomerOrderRow({
   const handOver = useHandOverCustomerOrder();
   const markPaid = useMarkCustomerOrderPaid();
   const markPacked = useMarkCustomerOrderPacked();
+  const [packedByOpen, setPackedByOpen] = useState(false);
   const softDelete = useSoftDeleteCustomerOrder();
   const [deleteReason, setDeleteReason] = useState<string | null>(null);
   const isArchived = !!order.archived_at;
