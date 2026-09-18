@@ -672,6 +672,28 @@ export default function CustomerOrders() {
             </Popover>
           </div>
 
+          {canEdit && marked.length > 0 && (
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Button
+                size="sm"
+                className="h-11 gap-1.5 bg-emerald-600 px-4 text-xs font-semibold text-white hover:bg-emerald-700"
+                disabled={setDeliveryRun.isPending}
+                onClick={() => putInRun(true)}
+              >
+                <Truck className="h-4 w-4" /> Lägg {marked.length} i utkörning
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-11 gap-1.5 px-3 text-xs"
+                disabled={setDeliveryRun.isPending}
+                onClick={() => putInRun(false)}
+              >
+                <Undo2 className="h-4 w-4" /> Ta ur utkörning
+              </Button>
+            </div>
+          )}
+
           <div className="ml-auto flex shrink-0 flex-wrap gap-2">
             {/* Totallista lyfts fram: personalen sorterar och packar varor i bulk innan enskilda ordrar packas. */}
             <Button
