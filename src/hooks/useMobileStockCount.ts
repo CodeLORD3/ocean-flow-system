@@ -309,21 +309,38 @@ export function useSaveCountLine() {
       quantity: number | null;
       comment?: string | null;
     }) => {
-      const { error } = await supabase.from("stock_count_lines").upsert(
-        {
-          session_id: sessionId,
-          product_id: item.productId,
-          location_id: locationId,
-          lot_id: item.lotId,
-          counted_qty: quantity,
-          system_qty: item.expectedQty,
-          unit: item.unit,
-          comment: comment ?? null,
-          counted_at: new Date().toISOString(),
-        } as any,
-        { onConflict: "session_id,product_id,location_id,lot_id" as any },
-      );
-      if (error) throw error;
+      // Unika raden i databasen bygger på COALESCE, så ON CONFLICT går inte att
+      // använda. Vi letar upp raden först och uppdaterar den, annars skapas den.
+      const row = {
+        session_id: sessionId,
+        product_id: item.productId,
+        location_id: locationId,
+        lot_id: item.lotId,
+        counted_qty: quantity,
+        system_qty: item.expectedQty,
+        unit: item.unit,
+        comment: comment ?? null,
+        counted_at: new Date().toISOString(),
+      };
+      let find = supabase
+        .from("stock_count_lines")
+        .select("id")
+        .eq("session_id", sessionId)
+        .eq("product_id", item.productId)
+        .eq("location_id", locationId);
+      find = item.lotId ? find.eq("lot_id", item.lotId) : find.is("lot_id", null);
+      const { data: existing, error: findErr } = await find.maybeSingle();
+      if (findErr) throw findErr;
+      if (existing) {
+        const { error } = await supabase
+          .from("stock_count_lines")
+          .update(row as any)
+          .eq("id", (existing as any).id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("stock_count_lines").insert(row as any);
+        if (error) throw error;
+      }
       await supabase
         .from("stock_count_sessions")
         .update({ last_activity_at: new Date().toISOString() } as any)
