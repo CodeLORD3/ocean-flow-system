@@ -85,12 +85,12 @@ export default function Clock() {
 
   const workSites = station?.work_sites ?? [];
   /**
-   * Rastknappen är avstängd som standard: rasttryck glöms i praktiken bort och
-   * ger fel lön. Rastavdraget görs i attesten. En station kan sätta break.mode
-   * till "manual" om rasttryck ändå ska användas där.
+   * Rastknappen visas som standard så att personalen kan stämpla rast direkt.
+   * En station kan stänga av den med break.mode = "off" (rastavdraget görs då
+   * i attesten istället).
    */
   const breakMode = (station?.profile as { break?: { mode?: string } } | undefined)?.break?.mode;
-  const breaksEnabled = breakMode === "manual";
+  const breaksEnabled = breakMode !== "off";
   const activeSite = workSites.find((s) => s.id === siteId) ?? (workSites.length === 1 ? workSites[0] : null);
 
   /** Hämtar position när driftstället har geofence. Tyst fallback utan position. */
