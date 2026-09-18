@@ -743,7 +743,7 @@ export default function ShopOrders() {
 
       {/* Inline order creation view */}
       {creatingOrder && (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-background sm:static sm:z-auto sm:bg-transparent">
+        <CreatePanelShell>
         <Card className="flex min-h-0 flex-1 flex-col rounded-none border-0 shadow-none sm:block sm:rounded-lg sm:border sm:shadow-card">
           <CardHeader className="shrink-0 border-b border-border pb-3 sm:border-0">
             <div className="flex items-center justify-between gap-3">
