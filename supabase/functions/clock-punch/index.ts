@@ -288,6 +288,19 @@ Deno.serve(async (req) => {
     return json(req, { error: "Driftstället tillhör en annan butik." }, 403);
   }
 
+  // Vissa kostnadsställen (t.ex. Administration) är begränsade till namngivna
+  // personer. Saknas rader för kostnadsstället är det öppet för alla.
+  if (workSite) {
+    const { data: limited } = await db
+      .from("work_site_employees")
+      .select("employee_id")
+      .eq("work_site_id", workSite.id);
+    const allowed = (limited ?? []) as { employee_id: string }[];
+    if (allowed.length > 0 && !allowed.some((r) => r.employee_id === hit!.id)) {
+      return json(req, { error: `${workSite.name} är inte valbart för dig. Välj ditt vanliga kostnadsställe.` }, 403);
+    }
+  }
+
   const latitude = numberOrNull(body.punch_lat);
   const longitude = numberOrNull(body.punch_lng);
   const accuracy = numberOrNull(body.punch_accuracy_m);
