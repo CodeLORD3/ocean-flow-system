@@ -579,18 +579,36 @@ export default function StockCount() {
   const saveLine = useCallback(
     async (row: Row, patch: { counted_qty?: number | null; quality?: Quality | null; comment?: string | null }) => {
       if (!session?.id || locked) return;
-      const { error } = await supabase.from("stock_count_lines").upsert(
-        {
-          session_id: session.id,
-          product_id: row.productId,
-          location_id: row.locationId,
-          unit: row.unit,
-          system_qty: row.systemQty,
-          counted_at: new Date().toISOString(),
-          ...patch,
-        } as any,
-        { onConflict: "session_id,product_id,location_id" },
-      );
+      const values = {
+        session_id: session.id,
+        product_id: row.productId,
+        location_id: row.locationId,
+        unit: row.unit,
+        system_qty: row.systemQty,
+        counted_at: new Date().toISOString(),
+        ...patch,
+      };
+      // Unika raden i databasen bygger på COALESCE (parti kan saknas), så
+      // ON CONFLICT går inte att använda. Raden letas upp och uppdateras,
+      // annars skapas den.
+      const { data: existing, error: findErr } = await supabase
+        .from("stock_count_lines")
+        .select("id")
+        .eq("session_id", session.id)
+        .eq("product_id", row.productId)
+        .eq("location_id", row.locationId)
+        .is("lot_id", null)
+        .maybeSingle();
+      if (findErr) {
+        toast({ title: "Kunde inte spara", description: findErr.message, variant: "destructive" });
+        return;
+      }
+      const { error } = existing
+        ? await supabase
+            .from("stock_count_lines")
+            .update(values as any)
+            .eq("id", (existing as any).id)
+        : await supabase.from("stock_count_lines").insert(values as any);
       if (error) {
         toast({ title: "Kunde inte spara", description: error.message, variant: "destructive" });
         return;
