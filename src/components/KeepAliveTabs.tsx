@@ -84,6 +84,7 @@ import TaskDetail from "@/pages/TaskDetail";
 import StoreMap from "@/pages/StoreMap";
 import Manual from "@/pages/Manual";
 import DailyReport from "@/pages/DailyReport";
+import CountMobile from "@/pages/CountMobile";
 import ImportantPapersPage from "@/pages/ImportantPapersPage";
 import Production from "@/pages/Production";
 import DataCoverage from "@/pages/DataCoverage";
@@ -118,6 +119,7 @@ interface RouteEntry {
 const ROUTE_MAP: Record<string, RouteEntry> = {
   "/": { component: <Dashboard /> },
   "/inventory": { component: <InventoryRouter /> },
+  "/rakna": { component: <CountMobile /> },
   "/orders": { component: <OrdersRouter /> },
   "/customer-orders": { component: <CustomerOrders /> },
   "/suppliers": { component: <Suppliers /> },
