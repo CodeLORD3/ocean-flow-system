@@ -67,11 +67,11 @@ export function MobileTabBar() {
               type="button"
               onClick={() => switchTab(item.url)}
               className={cn(
-                "flex h-14 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors",
+                "flex h-16 min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors",
                 active ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <Icon className={cn("h-5 w-5", active && "scale-110")} />
+              <Icon className={cn("h-6 w-6", active && "scale-110")} />
               <span className="truncate max-w-full px-0.5">{item.title}</span>
             </button>
           );
@@ -79,9 +79,9 @@ export function MobileTabBar() {
         <button
           type="button"
           onClick={() => setOpenMobile(true)}
-          className="flex h-14 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground"
+          className="flex h-16 min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-muted-foreground"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-6 w-6" />
           <span>Mer</span>
         </button>
       </div>
