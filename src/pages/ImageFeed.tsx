@@ -12,6 +12,7 @@ import { useMyImageFavorites, useToggleImageFavorite } from "@/hooks/useEntityIm
 import { useAllowedStores, useSwitchStore } from "@/components/StoreSwitcher";
 import { useNavigate } from "react-router-dom";
 import { dayKey, dayLabel, initialsOf } from "@/lib/imageMeta";
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { focalStyle } from "@/lib/imageFocal";
 import { cn } from "@/lib/utils";
 import { thumbUrl, THUMB_TILE, THUMB_CARD } from "@/lib/imageThumb";
