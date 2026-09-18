@@ -141,6 +141,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       .split("/")[0]
       .replace(/-/g, " ")
       .replace(/^./, (c) => c.toUpperCase()) || "Översikt");
+  // Räkningen på telefon är ett helskärmsflöde: ingen butiksbanner, ingen
+  // bottenmeny och ingen chattbubbla som stjäl höjd eller tryckytor.
+  const isCountFlow =
+    location.pathname === "/m/inventering" || location.pathname === "/rakna";
   const page = pageTitles[location.pathname] || { title: fallbackTitle, breadcrumb: ["Hem", fallbackTitle] };
   const allowedStores = useAllowedStores();
   /** Personal & schema: ingen toppbild och sidomenyn helt gömd bakom hamburgaren. */
@@ -328,16 +332,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <main
-            className="app-main flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 lg:p-6"
+            className={
+              isCountFlow
+                ? "app-main flex-1 min-h-0 min-w-0 overflow-hidden px-2"
+                : "app-main flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 lg:p-6"
+            }
           >
-            {!isStaffModule && <StoreHero />}
+            {!isStaffModule && !isCountFlow && <StoreHero />}
             {children}
           </main>
 
-          <MobileTabBar />
+          {!isCountFlow && <MobileTabBar />}
 
           {/* Chatten ligger i en flytande bubbla nere till höger */}
-          <ChatBubble />
+          {!isCountFlow && <ChatBubble />}
 
 
           {/* Footer — hidden on mobile to save vertical space */}
