@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { useSite } from "@/contexts/SiteContext";
 import { useTabs } from "@/contexts/TabsContext";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
+import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
 import {
   useCountItems,
   useCountLines,
@@ -93,10 +94,15 @@ function BigButton({
 export default function CountMobile() {
   const { activeStoreId, activeStoreName } = useSite();
   const { activeUser } = useActiveUser();
+  const { data: me } = useCurrentStaff();
   const { switchTab } = useTabs();
   const storeId = activeStoreId;
-  const staffId = activeUser?.id ?? null;
-  const staffName = activeUser ? `${activeUser.first_name} ${activeUser.last_name}`.trim() : null;
+  // Räkningen måste alltid kopplas till den INLOGGADE personen, aldrig till
+  // "aktiv användare"-väljaren — annars hamnar räkningen på fel namn.
+  const staffId = me?.id ?? activeUser?.id ?? null;
+  const staffName =
+    staffFullName(me) ??
+    (activeUser ? `${activeUser.first_name} ${activeUser.last_name}`.trim() : null);
 
   const [step, setStep] = useState<Step>("plats");
   const [notes, setNotes] = useState<Record<string, string>>({});
