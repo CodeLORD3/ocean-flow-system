@@ -470,7 +470,7 @@ export default function Clock() {
                 Hej {found.first_name} {found.pnr_masked ? `(${found.pnr_masked})` : ""}
               </h2>
               {/* Nuläget i klartext innan man trycker: in, på rast eller ute. */}
-              <div className={`ind-row ${found.suggested === "in" ? "" : "ind-row--edge-ok"}`}>
+              <div className={`ind-row ${found.suggested === "in" ? "ind-row--edge-neutral" : "ind-row--edge-accent"}`}>
                 <StatusLabel tone={found.suggested === "in" ? "neutral" : "ok"}>
                   {found.suggested === "in" ? "Inte instämplad" : found.suggested === "rast_slut" ? "På rast" : "Instämplad"}
                 </StatusLabel>
