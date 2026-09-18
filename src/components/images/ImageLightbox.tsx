@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { initialsOf } from "@/lib/imageMeta";
+import { StaffFace } from "@/components/staff/StaffNameAvatar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   useAddImageComment,
@@ -411,7 +412,10 @@ export function ImageLightbox({
             )}
           >
             {current.uploaded_by_name && current.caption && (
-              <span className="mr-1.5 font-semibold">{current.uploaded_by_name}</span>
+              <span className="mr-1.5 inline-flex items-center gap-1 align-middle font-semibold">
+                <StaffFace name={current.uploaded_by_name} className="h-4 w-4" />
+                {current.uploaded_by_name}
+              </span>
             )}
             {current.caption || (editable ? "Lägg till en bildtext…" : "—")}
           </p>
@@ -441,9 +445,7 @@ export function ImageLightbox({
 
   const uploaderMeta = current && (
     <div className="flex items-center gap-2">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
-        {initialsOf(current.uploaded_by_name)}
-      </span>
+      <StaffFace name={current.uploaded_by_name} className="h-6 w-6 bg-primary/10 text-[10px] text-primary" />
       <div className="min-w-0">
         <p className="text-xs font-medium text-foreground truncate">
           {current.uploaded_by_name || "Okänd uppladdare"}

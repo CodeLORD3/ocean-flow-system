@@ -15,6 +15,7 @@ import {
 } from "@/hooks/useEntityImages";
 import type { MapObject, MapZone } from "@/hooks/useStoreMap";
 import { dayBadgeClass } from "@/lib/dayColor";
+import { StaffFace, StaffName } from "@/components/staff/StaffNameAvatar";
 
 /** "Idag 14:05", "Igår 08:20" eller "12 sep 08:20". */
 function shortWhen(iso: string) {
@@ -206,9 +207,15 @@ export function StorePhotoStrip({
             {color && <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />}
             {labelOf(img)}
           </p>
-          <p className="truncate text-[9px] text-white/75">
-            {shortWhen(img.created_at)}
-            {img.uploaded_by_name ? ` · ${img.uploaded_by_name}` : ""}
+          <p className="flex min-w-0 items-center gap-1 truncate text-[9px] text-white/75">
+            <span className="shrink-0">{shortWhen(img.created_at)}</span>
+            {img.uploaded_by_name && (
+              <>
+                <span className="shrink-0">·</span>
+                <StaffFace name={img.uploaded_by_name} className="h-4 w-4 ring-1 ring-white/50" />
+                <span className="truncate">{img.uploaded_by_name}</span>
+              </>
+            )}
           </p>
         </div>
       </button>
@@ -240,7 +247,7 @@ export function StorePhotoStrip({
         </span>
         <span className="shrink-0 text-right text-[11px] text-muted-foreground">
           <span className="block tabular-nums">{shortWhen(img.created_at)}</span>
-          {img.uploaded_by_name && <span className="block truncate">{img.uploaded_by_name}</span>}
+          {img.uploaded_by_name && <StaffName name={img.uploaded_by_name} className="justify-end" />}
         </span>
       </button>
     );

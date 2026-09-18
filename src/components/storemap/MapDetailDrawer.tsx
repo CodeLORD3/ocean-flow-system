@@ -18,6 +18,7 @@ import { bbox, zonePoints } from "@/lib/mapGeometry";
 import { toast } from "@/hooks/use-toast";
 import { MapComposer } from "@/components/storemap/MapComposer";
 import { StatusRing } from "@/components/storemap/StatusRing";
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { MapObjectIcon } from "@/components/storemap/MapObjectIcon";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { dueText, progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
@@ -524,8 +525,9 @@ export function MapDetailDrawer({
                   <div className="flex items-start gap-1 px-2 py-1.5">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-medium">{i.caption ?? label}</p>
-                      <p className="truncate text-[10px] text-muted-foreground">
-                        {dayText(i.created_at)} {time(i.created_at)} · {i.uploaded_by_name ?? "—"}
+                      <p className="flex min-w-0 items-center gap-1 truncate text-[10px] text-muted-foreground">
+                        <span className="shrink-0">{dayText(i.created_at)} {time(i.created_at)} ·</span>
+                        <StaffName name={i.uploaded_by_name} />
                       </p>
                     </div>
                     <DropdownMenu>
@@ -654,8 +656,9 @@ export function MapDetailDrawer({
                 {latest[0] ? (
                   <>
                     <img src={latest[0].url} alt="Senaste" className="w-full h-28 object-cover rounded-md" />
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      {latest[0].uploaded_by_name} · {time(latest[0].created_at)}
+                    <p className="mt-1 flex min-w-0 items-center gap-1 text-[10px] text-muted-foreground">
+                      <StaffName name={latest[0].uploaded_by_name} />
+                      <span className="shrink-0">· {time(latest[0].created_at)}</span>
                     </p>
                   </>
                 ) : (
