@@ -22,7 +22,11 @@ Dator lämnas oförändrad (allt görs med `sm:`-brytpunkten eller separata mobi
 - [ ] /personal, /my-shifts, /my-time, /clock
 
 ## Steg 3 — Inköp och produktion
-- [ ] /orders, /customers, /wishes, /suppliers
+- [x] /customers (kundlistor som kort på mobil)
+- [x] /suppliers
+- [x] /stock-transfers, /waste-reports
+- [ ] /orders, /wishes
+- [ ] /vehicles, /invoices, /barcodes (inline-redigering kräver egen mobilvy)
 - [ ] /produktion*, /purchase*, /pricing, /products
 
 ## Steg 4 — Organisation, rapporter, admin
