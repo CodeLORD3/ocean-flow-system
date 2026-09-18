@@ -458,7 +458,7 @@ export function TotalOrderedView({
         if (!group) {
           group = {
             key: groupKey,
-            label: mode === "day" ? dayLabel(date) : `Vecka ${week}`,
+            label: mode === "day" ? dayLabel(date) : weekLabel(date, week),
             orderCount: 0,
             rows: [],
           };
