@@ -42,6 +42,7 @@ import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { cn } from "@/lib/utils";
 import { focalStyle, focalPercent, focalLabel } from "@/lib/imageFocal";
 import { dayKey, dayLabel, initialsOf } from "@/lib/imageMeta";
+import { StaffFace } from "@/components/staff/StaffNameAvatar";
 import { dayBadgeClass } from "@/lib/dayColor";
 import { thumbUrl, THUMB_TILE, THUMB_CARD } from "@/lib/imageThumb";
 import {
