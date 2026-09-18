@@ -6569,6 +6569,9 @@ export type Database = {
       }
       inventory_reports: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
+          count_session_id: string | null
           id: string
           line_count: number
           location_id: string | null
@@ -6584,6 +6587,9 @@ export type Database = {
           total_value: number
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          count_session_id?: string | null
           id?: string
           line_count?: number
           location_id?: string | null
@@ -6599,6 +6605,9 @@ export type Database = {
           total_value?: number
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          count_session_id?: string | null
           id?: string
           line_count?: number
           location_id?: string | null
@@ -6614,6 +6623,13 @@ export type Database = {
           total_value?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "inventory_reports_count_session_id_fkey"
+            columns: ["count_session_id"]
+            isOneToOne: false
+            referencedRelation: "stock_count_sessions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inventory_reports_location_id_fkey"
             columns: ["location_id"]
@@ -14028,6 +14044,7 @@ export type Database = {
           created_at: string
           id: string
           location_id: string | null
+          lot_id: string | null
           product_id: string
           quality: string | null
           session_id: string
@@ -14043,6 +14060,7 @@ export type Database = {
           created_at?: string
           id?: string
           location_id?: string | null
+          lot_id?: string | null
           product_id: string
           quality?: string | null
           session_id: string
@@ -14058,6 +14076,7 @@ export type Database = {
           created_at?: string
           id?: string
           location_id?: string | null
+          lot_id?: string | null
           product_id?: string
           quality?: string | null
           session_id?: string
@@ -14081,6 +14100,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "stock_count_lines_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "stock_count_lines_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "stock_count_lines_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
@@ -14099,6 +14132,7 @@ export type Database = {
       stock_count_sessions: {
         Row: {
           category_done: Json
+          claimed_by: string | null
           count_date: string
           created_at: string
           created_by: string | null
@@ -14107,6 +14141,8 @@ export type Database = {
           handed_to: string | null
           id: string
           label: string | null
+          last_activity_at: string | null
+          location_id: string | null
           locked_at: string | null
           locked_by: string | null
           note: string | null
@@ -14117,6 +14153,7 @@ export type Database = {
         }
         Insert: {
           category_done?: Json
+          claimed_by?: string | null
           count_date?: string
           created_at?: string
           created_by?: string | null
@@ -14125,6 +14162,8 @@ export type Database = {
           handed_to?: string | null
           id?: string
           label?: string | null
+          last_activity_at?: string | null
+          location_id?: string | null
           locked_at?: string | null
           locked_by?: string | null
           note?: string | null
@@ -14135,6 +14174,7 @@ export type Database = {
         }
         Update: {
           category_done?: Json
+          claimed_by?: string | null
           count_date?: string
           created_at?: string
           created_by?: string | null
@@ -14143,6 +14183,8 @@ export type Database = {
           handed_to?: string | null
           id?: string
           label?: string | null
+          last_activity_at?: string | null
+          location_id?: string | null
           locked_at?: string | null
           locked_by?: string | null
           note?: string | null
@@ -14152,6 +14194,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "stock_count_sessions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "stock_count_sessions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stock_count_sessions_store_id_fkey"
             columns: ["store_id"]
