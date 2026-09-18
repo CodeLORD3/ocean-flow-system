@@ -608,9 +608,10 @@ export default function CountMobile() {
           <div className="space-y-2">
             {summary.map(({ item, counted, diff }) => {
               const off = Math.abs(diff) >= 0.05;
+              const ordered = orderedByProduct.get(item.productId) ?? null;
               return (
+                <div key={item.key} className="flex items-stretch gap-2">
                 <button
-                  key={item.key}
                   type="button"
                   onClick={() => {
                     setIndex(list.findIndex((i) => i.key === item.key));
