@@ -852,7 +852,7 @@ export function CustomerOrderRow({
                       { onSuccess: () => setPackedByOpen(false) },
                     );
                   }}
-                />}
+                />
                 {!readOnly && canEdit && !cancelled && !handedOver && order.pack_status === "packad" && (
                   <Button
                     variant="outline"
