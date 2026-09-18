@@ -441,9 +441,7 @@ export function ImageLightbox({
 
   const uploaderMeta = current && (
     <div className="flex items-center gap-2">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
-        {initialsOf(current.uploaded_by_name)}
-      </span>
+      <StaffFace name={current.uploaded_by_name} className="h-6 w-6 bg-primary/10 text-[10px] text-primary" />
       <div className="min-w-0">
         <p className="text-xs font-medium text-foreground truncate">
           {current.uploaded_by_name || "Okänd uppladdare"}
