@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { BarChart3, CalendarDays, PieChart, User, Users } from "lucide-react";
+import { BarChart3, CalendarDays, PieChart, User, UserPlus, Users } from "lucide-react";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { staffLevelOf, staffLevelLabel } from "@/lib/staffModuleAccess";
