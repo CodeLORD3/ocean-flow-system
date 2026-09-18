@@ -48,11 +48,14 @@ export function useCountPlaces(storeId?: string | null) {
     queryKey: ["count-places", storeId, date],
     enabled: !!storeId,
     queryFn: async (): Promise<CountPlace[]> => {
+      // Transportlagret räknas aldrig: där står varor som är på väg och
+      // stäms av vid mottagningen i stället.
       const { data: locs, error } = await supabase
         .from("storage_locations")
         .select("id, name")
         .eq("store_id", storeId!)
         .eq("active", true)
+        .neq("location_type", "leveranslager")
         .order("name");
       if (error) throw error;
       const ids = (locs || []).map((l: any) => l.id as string);
