@@ -814,7 +814,7 @@ export default function ShopOrders() {
                               key={p.id}
                               role="button"
                               tabIndex={-1}
-                              className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 cursor-pointer ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
+                              className={`w-full min-h-14 text-left px-3 py-3 text-[16px] flex items-center gap-2 cursor-pointer sm:min-h-0 sm:py-2 sm:text-xs ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
                               onClick={() => addProduct(p)}
                               onMouseEnter={() => setHighlightedIndex(idx)}
                             >
