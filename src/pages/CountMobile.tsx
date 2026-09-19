@@ -547,11 +547,20 @@ export default function CountMobile() {
                 <BigButton onClick={saveAndNext}>
                   <Check className="h-6 w-6" /> Spara och nästa
                 </BigButton>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    type="button"
+                    onClick={goPrev}
+                    disabled={index === 0}
+                    className="flex h-14 min-h-[56px] items-center justify-center gap-1 rounded-2xl border border-border bg-card px-2 text-[18px] font-semibold active:bg-muted disabled:opacity-40"
+                  >
+                    <ArrowLeft className="h-6 w-6 shrink-0" />
+                    <span className="truncate">Föregående</span>
+                  </button>
                   <button
                     type="button"
                     onClick={goNext}
-                    className="flex h-14 min-h-[56px] items-center justify-center gap-2 rounded-2xl border border-border bg-card px-2 text-[18px] font-semibold active:bg-muted"
+                    className="flex h-14 min-h-[56px] items-center justify-center gap-1 rounded-2xl border border-border bg-card px-2 text-[18px] font-semibold active:bg-muted"
                   >
                     <SkipForward className="h-6 w-6 shrink-0" />
                     <span className="truncate">Hoppa över</span>
@@ -562,12 +571,13 @@ export default function CountMobile() {
                       await store(current, 0, "Finns inte här");
                       goNext();
                     }}
-                    className="flex h-14 min-h-[56px] items-center justify-center gap-2 rounded-2xl border border-border bg-card px-2 text-[18px] font-semibold active:bg-muted"
+                    className="flex h-14 min-h-[56px] items-center justify-center gap-1 rounded-2xl border border-border bg-card px-2 text-[18px] font-semibold active:bg-muted"
                   >
                     <XCircle className="h-6 w-6 shrink-0" />
-                    <span className="truncate">Finns inte här</span>
+                    <span className="truncate">Finns inte</span>
                   </button>
                 </div>
+
               </div>
             </>
           )}
