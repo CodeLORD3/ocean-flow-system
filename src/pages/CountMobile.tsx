@@ -195,6 +195,9 @@ export default function CountMobile() {
   const [introOpen, setIntroOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [search, setSearch] = useState("");
+  /** Varor som saknades i listan men stod i hyllan. */
+  const [extras, setExtras] = useState<CountItem[]>([]);
+  const [extraSearch, setExtraSearch] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [blind, setBlind] = useState(() => {
