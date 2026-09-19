@@ -274,6 +274,24 @@ export default function CountMobile() {
     return map;
   }, [draftOrder.data]);
 
+  /** Landet avgör om såser räknas i burkar (Schweiz) eller kilo (Sverige). */
+  const country = useStoreCountry(storeId);
+  /** Burkläge för en vara — kilo sparas som förut. */
+  const packFor = (item: CountItem | undefined | null) => {
+    if (!item) return null;
+    const m = packMode(
+      { category: item.category, unit: item.unit, weightPerPiece: item.weightPerPiece },
+      country,
+    );
+    return m.mode === "burk" ? m.packKg : null;
+  };
+
+  /** Anteckningar som ligger kvar på varorna i butiken. */
+  const productNotes = useProductNotes(storeId);
+  const saveProductNote = useSaveProductNote();
+  /** Vilken vara anteckningsrutan gäller — räknevyn eller sammanfattningen. */
+  const [noteTarget, setNoteTarget] = useState<CountItem | null>(null);
+
   const places = useCountPlaces(storeId);
   const items = useCountItems(locationId);
   const lines = useCountLines(sessionId);
