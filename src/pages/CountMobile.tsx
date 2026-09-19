@@ -799,8 +799,14 @@ export default function CountMobile() {
             <BigButton onClick={() => setStep("sammanfattning")}>
               <ChevronRight className="h-6 w-6" /> Titta igenom och skicka in
             </BigButton>
-            <BigButton variant="plain" onClick={() => setStep("rakna")}>
-              Tillbaka till varorna
+            <BigButton
+              variant="plain"
+              onClick={() => {
+                setGroupKey(null);
+                setStep("grupp");
+              }}
+            >
+              Tillbaka till grupperna
             </BigButton>
           </div>
         </div>
