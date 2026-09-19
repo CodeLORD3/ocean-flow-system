@@ -423,7 +423,7 @@ export function DailyReportsArchive() {
       <StatTiles>
         <StatTile label="Rapporter" value={nf(rows.length)} icon={FileText} tone="navy" />
         <StatTile label="Nettoomsättning totalt" value={netTotalLabel} icon={Banknote} tone="spruce" />
-        <StatTile label="Kvitton totalt" value={nf(totalReceipts)} icon={Receipt} tone="amber" />
+        <StatTile label="Antal köp totalt" value={nf(totalReceipts)} icon={Receipt} tone="amber" />
         <StatTile label="Bemanning" value={totalStaffHours.toFixed(1)} unit="h" icon={Users} tone="brick" />
       </StatTiles>
 
@@ -494,7 +494,7 @@ export function DailyReportsArchive() {
                       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
                         <Metric label="Nettoomsättning" value={`${nf(report.net_sales)} ${cur}`} emphasis />
                         <Metric label="Brutto" value={`${nf(report.gross_sales)} ${cur}`} />
-                        <Metric label="Kvitton" value={nf(report.receipt_count)} />
+                        <Metric label="Antal köp" value={nf(report.receipt_count)} />
                         <Metric label="Snittköp" value={report.receipt_count ? `${((report.net_sales ?? 0) / report.receipt_count).toFixed(2)} ${cur}` : "—"} />
                         <Metric label="Största köp" value={`${nf(report.largest_sale)} ${cur}`} />
                       </div>

@@ -227,11 +227,11 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
           icon={Banknote}
           tone="navy"
           trend={stats.trends.net}
-          hint={`${nf(stats.perReceipt)} ${bandCur} per kvitto`}
+          hint={`${nf(stats.perReceipt)} ${bandCur} per köp`}
           spark={stats.spark}
         />
         <StatTile
-          label="Kvitton"
+          label="Antal köp"
           value={nf(stats.now.receipts)}
           icon={Receipt}
           tone="spruce"

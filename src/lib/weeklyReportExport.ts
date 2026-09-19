@@ -42,7 +42,7 @@ export interface WeeklyExportPayload {
 }
 
 const HEAD = ["Enhet", "Nettoomsättning (kr)", "Varav webbshop (kr)", "Netto snitt/dag (kr)", "Timmar", "Personpass", "Dagsrapporter", "Status"];
-const DAY_HEAD = ["Datum", "Dag", "Brutto (kr)", "Netto (kr)", "Varav webbshop (kr)", "Väder", "Kvitton", "Timmar", "Pass"];
+const DAY_HEAD = ["Datum", "Dag", "Brutto (kr)", "Netto (kr)", "Varav webbshop (kr)", "Väder", "Antal köp", "Timmar", "Pass"];
 
 export function weeklyReportPdf(payload: WeeklyExportPayload) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });

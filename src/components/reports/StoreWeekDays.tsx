@@ -69,7 +69,7 @@ export function StoreWeekDays({
             <th className="px-2 py-1.5 text-right font-medium">Nettoomsättning ({cur})</th>
             <th className="px-2 py-1.5 text-right font-medium">Varav webbshop ({cur})</th>
             <th className="w-[11rem] px-2 py-1.5 text-left font-medium">Väder</th>
-            <th className="px-2 py-1.5 text-right font-medium">Kvitton</th>
+            <th className="px-2 py-1.5 text-right font-medium">Antal köp</th>
             <th className="px-2 py-1.5 text-right font-medium">Timmar</th>
             <th className="px-2 py-1.5 text-right font-medium">Pass</th>
           </tr>
