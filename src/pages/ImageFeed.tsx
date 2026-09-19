@@ -1,8 +1,18 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, Images, MessageCircle, Star, Trophy, Flame, ArrowRight, Clock, Store } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  Heart,
+  MessageCircle,
+  Star,
+  Trophy,
+  Clock,
+  MapPin,
+  ChevronLeft,
+  ChevronRight,
+  ArrowRight,
+  X,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
@@ -11,19 +21,27 @@ import { useImageFeed, type FeedImage } from "@/hooks/useImageFeed";
 import { useMyImageFavorites, useToggleImageFavorite } from "@/hooks/useEntityImages";
 import { useAllowedStores, useSwitchStore } from "@/components/StoreSwitcher";
 import { useNavigate } from "react-router-dom";
-import { dayKey, dayLabel, dayDateLabel, initialsOf } from "@/lib/imageMeta";
-import { dayTone } from "@/lib/dayColor";
-import { StaffName } from "@/components/staff/StaffNameAvatar";
+import { dayKey, dayLabel, dayDateLabel } from "@/lib/imageMeta";
+import { StaffFace } from "@/components/staff/StaffNameAvatar";
 import { focalStyle } from "@/lib/imageFocal";
 import { cn } from "@/lib/utils";
 import { thumbUrl, THUMB_TILE, THUMB_CARD } from "@/lib/imageThumb";
 
 const ALL = "all";
 
+/** Klockslag i svensk form, t.ex. "11:54". */
+const timeOf = (iso: string) =>
+  new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+
+/** Ett inlägg: en eller flera bilder från samma person, samma ställe, nära i tid. */
+type FeedPost = {
+  id: string;
+  items: FeedImage[];
+};
+
 /**
- * Gemensam tidslinje för utvalda bilder från alla butiker, grossisten och admin.
- * Syftet är inspiration: personal på ett ställe ser vad som finns på de andra,
- * kan hjärta, kommentera och hoppa vidare in i den andra butikens portal.
+ * Gemensam tidslinje för bilder från alla butiker, grossisten och admin.
+ * Bilden är huvudprodukten: stora kort, personen och platsen ovanpå bilden.
  */
 export default function ImageFeed() {
   const { data, isLoading } = useImageFeed();
@@ -36,6 +54,7 @@ export default function ImageFeed() {
   const navigate = useNavigate();
 
   const [source, setSource] = useState<string>(ALL);
+  const [person, setPerson] = useState<string | null>(null);
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [sort, setSort] = useState<"latest" | "popular">("latest");
   const [lightboxId, setLightboxId] = useState<string | null>(null);
@@ -43,6 +62,7 @@ export default function ImageFeed() {
   const visible = useMemo(() => {
     const list = rows.filter((r) => {
       if (source !== ALL && r.sourceId !== source) return false;
+      if (person && r.uploaded_by_name !== person) return false;
       if (onlyFavorites && !favoriteIds.includes(r.id)) return false;
       return true;
     });
@@ -55,9 +75,11 @@ export default function ImageFeed() {
       );
     }
     return list;
-  }, [rows, source, onlyFavorites, favoriteIds, sort]);
+  }, [rows, source, person, onlyFavorites, favoriteIds, sort]);
 
+  /** Dagar med inlägg. I "Populärast" visas allt i ett svep utan dagsindelning. */
   const days = useMemo(() => {
+    if (sort === "popular") return [["", toPosts(visible, false)]] as [string, FeedPost[]][];
     const map = new Map<string, FeedImage[]>();
     visible.forEach((img) => {
       const key = dayKey(img.created_at);
@@ -65,10 +87,12 @@ export default function ImageFeed() {
       if (list) list.push(img);
       else map.set(key, [img]);
     });
-    return Array.from(map.entries()).sort((a, b) => b[0].localeCompare(a[0]));
-  }, [visible]);
+    return Array.from(map.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([key, items]) => [key, toPosts(items, true)] as [string, FeedPost[]]);
+  }, [visible, sort]);
 
-  /** Topplista: max 4 mest hjärtade senaste 30 dagarna. Lika många hjärtan → flest kommentarer, sedan senaste bilden. */
+  /** Mest hjärtade senaste 30 dagarna — liten remsa högst upp. */
   const topImages = useMemo(() => {
     const since = Date.now() - 30 * 86400000;
     return rows
@@ -79,18 +103,8 @@ export default function ImageFeed() {
           b.commentCount - a.commentCount ||
           b.created_at.localeCompare(a.created_at),
       )
-      .slice(0, 4);
+      .slice(0, 6);
   }, [rows]);
-
-  /** Mest aktiva enheter senaste 7 dagarna */
-  const activeSources = useMemo(
-    () =>
-      [...sources]
-        .filter((s) => s.recentCount > 0 || s.favoriteCount > 0)
-        .sort((a, b) => b.recentCount - a.recentCount || b.favoriteCount - a.favoriteCount)
-        .slice(0, 6),
-    [sources],
-  );
 
   const allowedIds = useMemo(() => new Set(allowedStores.map((s: any) => s.id)), [allowedStores]);
   const peek = (id: string, name: string) => {
@@ -100,311 +114,174 @@ export default function ImageFeed() {
 
   const lightboxIndex = lightboxId ? visible.findIndex((i) => i.id === lightboxId) : -1;
   const activeSource = sources.find((s) => s.id === source);
-  /** Senaste dagen som har utvalda bilder i flödet. */
   const latestDay = rows.length ? dayKey(rows[0].created_at) : "";
+  const filtered = source !== ALL || person || onlyFavorites;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-3 sm:space-y-5 max-w-full overflow-x-hidden"
+      className="mx-auto max-w-[1400px] space-y-5 overflow-x-hidden"
     >
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-base sm:text-xl font-heading font-bold text-foreground flex items-center gap-2">
-            <Images className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
-            <span className="truncate">Bildflöde</span>
-          </h1>
-          <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
-            Alla bilder från butikerna och grossisten hamnar här automatiskt. Stjärnmärk en bild i
-            &quot;Bilder från butiken&quot; på Översikt så hamnar den först den dagen.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex rounded-md border border-border overflow-hidden">
-            <Button
-              size="sm"
-              variant={sort === "latest" ? "default" : "ghost"}
-              className="h-8 rounded-none text-xs"
-              onClick={() => setSort("latest")}
-            >
-              <Clock className="h-3.5 w-3.5 mr-1" /> Senaste
-            </Button>
-            <Button
-              size="sm"
-              variant={sort === "popular" ? "default" : "ghost"}
-              className="h-8 rounded-none text-xs"
-              onClick={() => setSort("popular")}
-            >
-              <Trophy className="h-3.5 w-3.5 mr-1" /> Populärast
-            </Button>
+      {/* Ren header: rubrik och filter som chips */}
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div className="min-w-0">
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              Bildflöde
+            </h1>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Bilderna från butikerna och grossisten, senaste först.
+            </p>
           </div>
-          <Button
-            size="sm"
-            variant={onlyFavorites ? "default" : "outline"}
-            className="h-8 text-xs"
-            onClick={() => setOnlyFavorites((v) => !v)}
-          >
-            <Heart className={cn("h-3.5 w-3.5 mr-1", onlyFavorites && "fill-current")} />
-            Favoriter
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <Chip active={sort === "latest"} onClick={() => setSort("latest")}>
+              <Clock className="h-3.5 w-3.5" /> Senaste
+            </Chip>
+            <Chip active={sort === "popular"} onClick={() => setSort("popular")}>
+              <Trophy className="h-3.5 w-3.5" /> Populärast
+            </Chip>
+            <Chip active={onlyFavorites} onClick={() => setOnlyFavorites((v) => !v)}>
+              <Heart className={cn("h-3.5 w-3.5", onlyFavorites && "fill-current")} /> Favoriter
+            </Chip>
+          </div>
         </div>
+
+        {sources.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Chip active={source === ALL} onClick={() => setSource(ALL)}>
+              Alla
+            </Chip>
+            {sources.map((s) => (
+              <Chip
+                key={s.id}
+                active={s.id === source}
+                onClick={() => setSource(s.id === source ? ALL : s.id)}
+              >
+                <span className="max-w-[160px] truncate">{s.name}</span>
+              </Chip>
+            ))}
+          </div>
+        )}
+
+        {filtered && (
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span>
+              Visar {visible.length} bild{visible.length === 1 ? "" : "er"}
+              {person ? ` av ${person}` : ""}
+              {activeSource ? ` från ${activeSource.name}` : ""}
+            </span>
+            {activeSource?.kind === "store" && allowedIds.has(activeSource.id) && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 rounded-full text-xs"
+                onClick={() => peek(activeSource.id, activeSource.name)}
+              >
+                Kika in hos {activeSource.name} <ArrowRight className="ml-1 h-3 w-3" />
+              </Button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setSource(ALL);
+                setPerson(null);
+                setOnlyFavorites(false);
+              }}
+              className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 hover:text-foreground"
+            >
+              <X className="h-3 w-3" /> Rensa
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Enhetsfilter som chips — ett klick för att kika hos en annan butik */}
-      {sources.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setSource(ALL)}
-            className={cn(
-              "h-7 rounded-full border px-2.5 text-[11px] transition-colors",
-              source === ALL
-                ? "bg-primary text-primary-foreground border-primary"
-                : "border-border text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Alla enheter ({rows.length})
-          </button>
-          {sources.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setSource(s.id === source ? ALL : s.id)}
-              className={cn(
-                "h-7 rounded-full border px-2.5 text-[11px] transition-colors flex items-center gap-1",
-                s.id === source
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "border-border text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <span className="truncate max-w-[160px]">{s.name}</span>
-              <span className="tabular-nums opacity-70">{s.imageCount}</span>
-              {s.recentCount > 0 && <Flame className="h-3 w-3 text-amber-500" />}
-            </button>
-          ))}
-          {activeSource && activeSource.kind === "store" && allowedIds.has(activeSource.id) && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 text-[11px]"
-              onClick={() => peek(activeSource.id, activeSource.name)}
-            >
-              Kika in hos {activeSource.name} <ArrowRight className="h-3 w-3 ml-1" />
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* Statusrad: syns direkt om dagens bilder inte hunnit bli utvalda ännu */}
-      {!isLoading && rows.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-          <Badge variant="outline" className="h-6 gap-1 text-[10px]">
-            <Clock className="h-3 w-3" />
-            Senaste bilderna: {dayLabel(latestDay)}
-          </Badge>
-          {latestDay !== dayKey(new Date().toISOString()) && (
-            <span>Inga bilder är uppladdade idag ännu.</span>
-          )}
-        </div>
-      )}
-
-
-      {/* Topplista + aktivitet */}
-      {(topImages.length > 0 || activeSources.length > 0) && !isLoading && (
-        <div className="grid gap-3 lg:grid-cols-3">
-          {topImages.length > 0 && (
-            <Card className="lg:col-span-2">
-              <CardHeader className="py-2.5">
-                <CardTitle className="text-sm font-heading flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-amber-500" /> Mest hjärtade – 30 dagar
-                </CardTitle>
-                <CardDescription className="text-[11px]">
-                  Det som inspirerat mest i organisationen den senaste månaden.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                  {topImages.map((img, i) => (
-                    <button
-                      key={img.id}
-                      type="button"
-                      onClick={() => setLightboxId(img.id)}
-                      className="relative aspect-square overflow-hidden rounded-md border border-border group"
-                      aria-label={`Öppna bild från ${img.sourceName}`}
-                    >
-                      <img
-                        src={thumbUrl(img.url, THUMB_TILE)}
-                        alt={img.caption || `Bild från ${img.sourceName}`}
-                        loading="lazy"
-                        style={focalStyle(img.focal_point)}
-                        className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                      />
-                      <span className="absolute top-1 left-1 h-4 w-4 grid place-items-center rounded-full bg-background/85 text-[9px] font-bold tabular-nums">
-                        {i + 1}
-                      </span>
-                      <span className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/75 to-transparent px-1 py-0.5 flex items-center justify-between text-[9px] text-white">
-                        <span className="truncate">{img.sourceName}</span>
-                        <span className="flex items-center gap-0.5 tabular-nums shrink-0">
-                          <Heart className="h-2.5 w-2.5 fill-current" />
-                          {img.favoriteCount}
-                        </span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {activeSources.length > 0 && (
-            <Card>
-              <CardHeader className="py-2.5">
-                <CardTitle className="text-sm font-heading flex items-center gap-2">
-                  <Flame className="h-4 w-4 text-amber-500" /> Mest aktiva enheter
-                </CardTitle>
-                <CardDescription className="text-[11px]">Bilder senaste 7 dagarna</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-1">
-                {activeSources.map((s) => (
-                  <div key={s.id} className="flex items-center gap-2 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setSource(s.id)}
-                      className="flex-1 truncate text-left hover:underline"
-                    >
-                      {s.name}
-                    </button>
-                    <span className="tabular-nums text-muted-foreground">{s.recentCount}</span>
-                    <span className="flex items-center gap-0.5 tabular-nums text-muted-foreground">
-                      <Heart className="h-3 w-3" />
-                      {s.favoriteCount}
-                    </span>
-                    {s.kind === "store" && allowedIds.has(s.id) && (
-                      <button
-                        type="button"
-                        onClick={() => peek(s.id, s.name)}
-                        className="text-primary hover:underline shrink-0"
-                        aria-label={`Kika in hos ${s.name}`}
-                      >
-                        Kika in
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
+      {/* Mest hjärtade — diskret remsa, bilden först */}
+      {topImages.length > 0 && !isLoading && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+            <Trophy className="h-3.5 w-3.5 text-amber-500" /> Mest hjärtade senaste månaden
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+            {topImages.map((img) => (
+              <button
+                key={img.id}
+                type="button"
+                onClick={() => setLightboxId(img.id)}
+                className="group relative aspect-square overflow-hidden rounded-2xl"
+                aria-label={`Öppna bild från ${img.sourceName}`}
+              >
+                <img
+                  src={thumbUrl(img.url, THUMB_TILE)}
+                  alt={img.caption || `Bild från ${img.sourceName}`}
+                  loading="lazy"
+                  style={focalStyle(img.focal_point)}
+                  className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+                />
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-gradient-to-t from-black/70 to-transparent px-2 pb-1.5 pt-6 text-[10px] font-medium text-white">
+                  <span className="truncate">{img.sourceName}</span>
+                  <span className="flex shrink-0 items-center gap-0.5 tabular-nums">
+                    <Heart className="h-2.5 w-2.5 fill-current" />
+                    {img.favoriteCount}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-[4/3] w-full rounded-lg" />
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="aspect-[4/5] w-full rounded-[20px]" />
           ))}
         </div>
-      ) : days.length === 0 ? (
-        <Card>
-          <CardContent className="py-8">
+      ) : visible.length === 0 ? (
+        <Card className="rounded-[20px]">
+          <CardContent className="py-10">
             <EmptyState
               bare
               icon={<Star className="h-4 w-4" />}
-              title="Inga utvalda bilder än"
-              description="När någon markerar en bild som utvald på sin översiktssida hamnar den här för alla att se."
-            />
-          </CardContent>
-        </Card>
-      ) : sort === "popular" ? (
-        <Card>
-          <CardHeader className="py-2.5">
-            <CardTitle className="text-sm font-heading flex items-center gap-2">
-              Populärast först
-              <Badge variant="secondary" className="text-[10px]">
-                {visible.length} bild{visible.length === 1 ? "" : "er"}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ImageGrid
-              items={visible}
-              favoriteIds={favoriteIds}
-              onOpen={setLightboxId}
-              onToggleFavorite={(id, favorite) => toggleFavorite.mutate({ imageId: id, favorite })}
-              onPeek={peek}
-              allowedIds={allowedIds}
+              title="Inga bilder än"
+              description="När någon laddar upp en bild i butiken eller hos grossisten hamnar den här."
             />
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
-          {days.map(([key, items]) => {
-            const tone = dayTone(key);
-            const groups = groupBySource(items);
-            return (
-            <Card key={key} className="overflow-hidden">
-              <CardHeader
-                className={cn(
-                  "sticky top-0 z-10 border-b px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-opacity-90",
-                  tone.band,
-                )}
-              >
-                <CardTitle className="font-heading flex flex-wrap items-center gap-x-3 gap-y-1 text-xl font-bold sm:text-2xl">
-                  <span>{dayLabel(key)}</span>
-                  <span className="text-base font-semibold opacity-70 sm:text-lg">{dayDateLabel(key)}</span>
-                  <span className={cn("rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums", tone.chip)}>
-                    {items.length} bild{items.length === 1 ? "" : "er"}
-                  </span>
-                </CardTitle>
-                <CardDescription className="text-sm font-medium opacity-80">
-                  {groups.length} ställe
-                  {groups.length === 1 ? "" : "n"} har lagt ut
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6 pt-4">
-                {/* En rubrik per ställe i stället för text på varje bild — grupperna blir lätta att skilja på */}
-                {groups.map((g) => (
-                  <div key={g.id} className="space-y-3">
-                    <div className="flex items-center justify-between gap-2 border-b border-border pb-2">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className={cn("h-6 w-1.5 shrink-0 rounded-full", tone.bar)} aria-hidden="true" />
-                        <Store className="h-5 w-5 shrink-0 text-primary" />
-                        <h3 className="truncate text-lg font-heading font-bold text-foreground">
-                          {g.name}
-                        </h3>
-                        <Badge variant="outline" className="shrink-0 text-xs tabular-nums">
-                          {g.items.length}
-                        </Badge>
-                      </div>
-                      {g.kind === "store" && allowedIds.has(g.id) && (
-                        <button
-                          type="button"
-                          onClick={() => peek(g.id, g.name)}
-                          className="shrink-0 text-sm font-semibold text-primary hover:underline"
-                          aria-label={`Kika in hos ${g.name}`}
-                        >
-                          Kika in
-                        </button>
-                      )}
-                    </div>
-                    <ImageGrid
-                      items={g.items}
-                      favoriteIds={favoriteIds}
-                      onOpen={setLightboxId}
-                      onToggleFavorite={(id, favorite) => toggleFavorite.mutate({ imageId: id, favorite })}
-                      onPeek={peek}
-                      allowedIds={allowedIds}
-                      showSource={false}
-                    />
-                  </div>
+        <div className="space-y-8">
+          {days.map(([key, posts]) => (
+            <section key={key || "populart"} className="space-y-4">
+              {key ? (
+                <div className="sticky top-0 z-10 -mx-1 flex items-center gap-2 bg-background/85 px-1 py-2 backdrop-blur">
+                  <h2 className="font-heading text-sm font-bold text-foreground">{dayLabel(key)}</h2>
+                  <span className="text-xs text-muted-foreground">{dayDateLabel(key)}</span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+              ) : null}
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {posts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    favoriteIds={favoriteIds}
+                    onOpen={setLightboxId}
+                    onToggleFavorite={(id, favorite) =>
+                      toggleFavorite.mutate({ imageId: id, favorite })
+                    }
+                    onPerson={(name) => setPerson(name)}
+                    onSource={(id) => setSource(id)}
+                  />
                 ))}
-              </CardContent>
-            </Card>
-            );
-          })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
 
+      {!isLoading && rows.length > 0 && latestDay !== dayKey(new Date().toISOString()) && (
+        <p className="text-xs text-muted-foreground">Inga bilder är uppladdade idag ännu.</p>
+      )}
 
       <ImageLightbox
         images={visible}
@@ -420,142 +297,210 @@ export default function ImageFeed() {
   );
 }
 
-/** Grupperar en dags bilder per ställe, i den ordning ställena senast lade ut. */
-function groupBySource(items: FeedImage[]) {
-  const map = new Map<string, { id: string; name: string; kind: string; items: FeedImage[] }>();
-  items.forEach((img) => {
-    const g = map.get(img.sourceId);
-    if (g) g.items.push(img);
-    else
-      map.set(img.sourceId, {
-        id: img.sourceId,
-        name: img.sourceName,
-        kind: img.sourceKind,
-        items: [img],
-      });
-  });
-  return Array.from(map.values());
+/** Minimalistisk filterchip. */
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors",
+        active
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground",
+      )}
+    >
+      {children}
+    </button>
+  );
 }
 
-function ImageGrid({
-  items,
+/**
+ * Slår ihop bilder från samma person och samma ställe inom en timme till ett
+ * inlägg med carousel. I "Populärast" står varje bild för sig.
+ */
+function toPosts(items: FeedImage[], group: boolean): FeedPost[] {
+  if (!group) return items.map((i) => ({ id: i.id, items: [i] }));
+  const posts: FeedPost[] = [];
+  items.forEach((img) => {
+    const last = posts[posts.length - 1];
+    const prev = last?.items[last.items.length - 1];
+    const near =
+      prev &&
+      prev.sourceId === img.sourceId &&
+      (prev.uploaded_by_name ?? "") === (img.uploaded_by_name ?? "") &&
+      Math.abs(new Date(prev.created_at).getTime() - new Date(img.created_at).getTime()) <= 3600000;
+    if (last && near) last.items.push(img);
+    else posts.push({ id: img.id, items: [img] });
+  });
+  return posts;
+}
+
+/** Ett inlägg: stor bild, person och plats ovanpå bilden. */
+function PostCard({
+  post,
   favoriteIds,
   onOpen,
   onToggleFavorite,
-  onPeek,
-  allowedIds,
-  showSource = true,
+  onPerson,
+  onSource,
 }: {
-  items: FeedImage[];
+  post: FeedPost;
   favoriteIds: string[];
   onOpen: (id: string) => void;
   onToggleFavorite: (id: string, favorite: boolean) => void;
-  onPeek: (id: string, name: string) => void;
-  allowedIds: Set<string>;
-  /** Visa avsändaren på varje kort — av när gruppen redan har en rubrik per ställe. */
-  showSource?: boolean;
+  onPerson: (name: string) => void;
+  onSource: (id: string) => void;
 }) {
+  const [idx, setIdx] = useState(0);
+  const [touchX, setTouchX] = useState<number | null>(null);
+  const count = post.items.length;
+  const img = post.items[Math.min(idx, count - 1)];
+  const isFav = favoriteIds.includes(img.id);
+  const name = img.uploaded_by_name;
+
+  const step = (delta: number) => setIdx((v) => Math.min(count - 1, Math.max(0, v + delta)));
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {items.map((img) => {
-        const isFav = favoriteIds.includes(img.id);
-        return (
-          <div key={img.id} className="group rounded-lg border border-border overflow-hidden bg-card">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => onOpen(img.id)}
-                className="block w-full aspect-[4/3] overflow-hidden"
-                aria-label={`Öppna bild från ${img.sourceName}`}
-              >
-                <img
-                  src={thumbUrl(img.url, THUMB_CARD)}
-                  alt={img.caption || `Bild från ${img.sourceName}`}
-                  loading="lazy"
-                  style={focalStyle(img.focal_point)}
-                  className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
-                />
-              </button>
-              {/* Avsändaren visas bara när korten inte redan ligger under en rubrik per ställe */}
-              {showSource && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end gap-1.5 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-1.5 pt-6">
-                  <span className="flex min-w-0 items-center gap-1 rounded-md bg-background/90 px-1.5 py-0.5 text-[11px] font-semibold text-foreground shadow-sm backdrop-blur">
-                    <Store className="h-3 w-3 shrink-0 text-primary" />
-                    <span className="truncate">{img.sourceName}</span>
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="space-y-2 p-3">
-              <div className="flex min-w-0 items-center justify-between gap-2">
-                {!showSource ? (
-                  <span className="sr-only">{img.sourceName}</span>
-                ) : img.sourceKind === "store" && allowedIds.has(img.sourceId) ? (
-                  <button
-                    type="button"
-                    onClick={() => onPeek(img.sourceId, img.sourceName)}
-                    title={`Kika in hos ${img.sourceName}`}
-                    className="flex min-w-0 items-center gap-1.5 truncate rounded-full border border-border px-2.5 py-1 text-sm font-semibold transition-colors hover:border-primary hover:text-primary"
-                  >
-                    <Store className="h-4 w-4 shrink-0 text-primary" />
-                    <span className="truncate">{img.sourceName}</span>
-                  </button>
-                ) : (
-                  <Badge variant="outline" className="max-w-full gap-1.5 truncate py-1 text-sm font-semibold">
-                    <Store className="h-4 w-4 shrink-0 text-primary" />
-                    <span className="truncate">{img.sourceName}</span>
-                  </Badge>
-                )}
-                <span className="shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">
-                  {new Date(img.created_at).toLocaleTimeString("sv-SE", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              </div>
+    <article className="group relative overflow-hidden rounded-[20px] bg-muted shadow-sm ring-1 ring-border/60 transition-shadow duration-200 hover:shadow-lg">
+      <button
+        type="button"
+        onClick={() => onOpen(img.id)}
+        className="block aspect-[4/5] w-full cursor-pointer overflow-hidden"
+        aria-label={`Öppna bild från ${img.sourceName}`}
+        onTouchStart={(e) => setTouchX(e.touches[0].clientX)}
+        onTouchEnd={(e) => {
+          if (touchX === null) return;
+          const dx = e.changedTouches[0].clientX - touchX;
+          if (Math.abs(dx) > 40) step(dx < 0 ? 1 : -1);
+          setTouchX(null);
+        }}
+      >
+        <img
+          src={thumbUrl(img.url, THUMB_CARD)}
+          alt={img.caption || `Bild från ${img.sourceName}`}
+          loading="lazy"
+          style={focalStyle(img.focal_point)}
+          className="h-full w-full object-cover transition-transform duration-[220ms] ease-out group-hover:scale-[1.015]"
+        />
+      </button>
 
-              {img.caption && <p className="line-clamp-2 text-sm text-foreground">{img.caption}</p>}
-              <div className="flex items-center justify-between gap-2">
-                <span className="flex min-w-0 items-center gap-1.5 truncate text-sm text-muted-foreground">
-                  {img.uploaded_by_name ? (
-                    <StaffName name={img.uploaded_by_name} />
-                  ) : (
-                    "Okänd uppladdare"
-                  )}
-                </span>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => onToggleFavorite(img.id, !isFav)}
-                    aria-label={isFav ? "Ta bort favorit" : "Favoritmarkera"}
-                    className={cn(
-                      "grid h-9 min-w-9 place-items-center rounded-md border border-border px-2",
-                      isFav ? "text-destructive" : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    <span className="flex items-center gap-1 text-sm tabular-nums">
-                      <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
-                      {img.favoriteCount || ""}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onOpen(img.id)}
-                    aria-label="Kommentarer"
-                    className="grid h-9 min-w-9 place-items-center rounded-md border border-border px-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <span className="flex items-center gap-1 text-sm tabular-nums">
-                      <MessageCircle className="h-4 w-4" />
-                      {img.commentCount || ""}
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
+      {/* Överkant: person, plats och klockslag ovanpå bilden */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 bg-gradient-to-b from-black/55 via-black/15 to-transparent p-3 pb-10">
+        <button
+          type="button"
+          onClick={() => name && onPerson(name)}
+          className="pointer-events-auto flex min-w-0 items-center gap-2 text-left"
+          aria-label={name ? `Visa bilder av ${name}` : "Okänd uppladdare"}
+        >
+          <StaffFace
+            name={name}
+            className="h-11 w-11 border border-white/70 text-sm shadow-sm"
+          />
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold text-white drop-shadow">
+              {name || "Okänd uppladdare"}
+            </span>
+            <span className="block truncate text-[11px] text-white/80 drop-shadow">
+              {img.sourceName} · {timeOf(img.created_at)}
+            </span>
+          </span>
+        </button>
+        {count > 1 && (
+          <span className="rounded-full bg-black/45 px-2 py-0.5 text-[11px] font-medium tabular-nums text-white backdrop-blur">
+            {idx + 1} / {count}
+          </span>
+        )}
+      </div>
+
+      {/* Pilar vid hover på desktop */}
+      {count > 1 && (
+        <>
+          {idx > 0 && (
+            <button
+              type="button"
+              onClick={() => step(-1)}
+              aria-label="Föregående bild"
+              className="absolute left-2 top-1/2 hidden -translate-y-1/2 place-items-center rounded-full bg-black/40 p-1.5 text-white opacity-0 backdrop-blur transition-opacity duration-200 group-hover:opacity-100 sm:grid"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          )}
+          {idx < count - 1 && (
+            <button
+              type="button"
+              onClick={() => step(1)}
+              aria-label="Nästa bild"
+              className="absolute right-2 top-1/2 hidden -translate-y-1/2 place-items-center rounded-full bg-black/40 p-1.5 text-white opacity-0 backdrop-blur transition-opacity duration-200 group-hover:opacity-100 sm:grid"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          )}
+        </>
+      )}
+
+      {/* Underkant: bildtext, hjärtan, kommentarer och plats */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 space-y-2 bg-gradient-to-t from-black/70 via-black/25 to-transparent p-3 pt-10">
+        {img.caption && (
+          <p className="line-clamp-2 text-sm text-white drop-shadow">{img.caption}</p>
+        )}
+        <div className="flex items-end justify-between gap-2">
+          <div className="pointer-events-auto flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => onToggleFavorite(img.id, !isFav)}
+              aria-label={isFav ? "Ta bort favorit" : "Favoritmarkera"}
+              className="flex h-9 items-center gap-1.5 rounded-full px-2 text-sm font-medium text-white transition-colors hover:bg-white/15"
+            >
+              <Heart className={cn("h-[18px] w-[18px]", isFav && "fill-current text-rose-400")} />
+              <span className="tabular-nums">{img.favoriteCount || 0}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpen(img.id)}
+              aria-label="Kommentarer"
+              className="flex h-9 items-center gap-1.5 rounded-full px-2 text-sm font-medium text-white transition-colors hover:bg-white/15"
+            >
+              <MessageCircle className="h-[18px] w-[18px]" />
+              <span className="tabular-nums">{img.commentCount || 0}</span>
+            </button>
           </div>
-        );
-      })}
-    </div>
+          <div className="flex flex-col items-end gap-1.5">
+            {count > 1 && (
+              <span className="flex items-center gap-1">
+                {post.items.map((it, i) => (
+                  <button
+                    key={it.id}
+                    type="button"
+                    onClick={() => setIdx(i)}
+                    aria-label={`Bild ${i + 1}`}
+                    className={cn(
+                      "pointer-events-auto h-1.5 w-1.5 rounded-full transition-colors",
+                      i === idx ? "bg-white" : "bg-white/45",
+                    )}
+                  />
+                ))}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => onSource(img.sourceId)}
+              className="pointer-events-auto flex max-w-[60%] items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur transition-colors hover:bg-black/60"
+            >
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate">{img.sourceName}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }
