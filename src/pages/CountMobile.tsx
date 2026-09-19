@@ -8,6 +8,7 @@ import {
   Keyboard,
   MessageSquarePlus,
   Package,
+  Plus,
   RotateCcw,
   Search,
   Send,
