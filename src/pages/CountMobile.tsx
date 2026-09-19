@@ -1156,10 +1156,30 @@ export default function CountMobile() {
                     >
                       {diffText(diff, item.unit)}
                     </span>
+                    {noteFor(item) && (
+                      <span className="block break-words text-[16px] italic text-muted-foreground">
+                        {noteFor(item)}
+                      </span>
+                    )}
                   </span>
                   <span className="shrink-0 font-heading text-[22px] font-semibold tabular-nums">
-                    {fmtQty(counted, item.unit)}
+                    {packFor(item) ? jarsText(counted, packFor(item)!) : fmtQty(counted, item.unit)}
                   </span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Anteckning"
+                  onClick={() => {
+                    setNoteTarget(item);
+                    setNoteOpen(true);
+                  }}
+                  className={`flex w-[56px] shrink-0 items-center justify-center rounded-2xl border ${
+                    noteFor(item)
+                      ? "border-primary/40 bg-primary/10 text-primary"
+                      : "border-border bg-card"
+                  }`}
+                >
+                  <MessageSquarePlus className="h-6 w-6" />
                 </button>
                 {storeId && (
                   <div className="w-[56px] shrink-0">
