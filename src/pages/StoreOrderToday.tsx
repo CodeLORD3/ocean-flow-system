@@ -101,7 +101,14 @@ export default function StoreOrderToday() {
       <header>
         <h1 className="font-heading text-[26px] font-semibold leading-tight">Dagens beställning</h1>
         <p className="text-[18px] text-muted-foreground">
-          Leverans {wantedDate} från {SUPPLIER_LABEL.grossist}
+          Leverans {delivery.label} ({wantedDate}) från {SUPPLIER_LABEL.grossist}
+        </p>
+        <p className="text-[16px] text-muted-foreground">
+          Butiken beställer minst {delivery.leadDays} {delivery.leadDays === 1 ? "dag" : "dagar"} i
+          förväg.
+          {delivery.lastChanceThisWeek
+            ? " Det här är veckans sista beställning — nästa leverans är i nästa vecka."
+            : ""}
         </p>
       </header>
 
