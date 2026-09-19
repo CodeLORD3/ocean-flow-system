@@ -151,11 +151,13 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
       },
       spark,
       ranked,
+      webTotalSek,
+      webOrders,
       perReceipt: now.receipts > 0 ? now.net / now.receipts : 0,
       perHour: now.hours > 0 ? now.net / now.hours : 0,
       wasteShare: now.net > 0 ? (now.waste / now.net) * 100 : 0,
     };
-  }, [rows, days, stores, fx, storeId]);
+  }, [rows, days, stores, fx, storeId, web]);
 
   const maxNet = Math.max(...stats.ranked.map((r) => r.netSek ?? r.net), 1);
 
