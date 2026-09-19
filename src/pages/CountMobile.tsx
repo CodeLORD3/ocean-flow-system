@@ -398,7 +398,7 @@ export default function CountMobile() {
     if (!storeId || !sessionId || !locationId) return;
     setSending(true);
     try {
-      const rows = list
+      const rows = allItems
         .filter((i) => values[i.key] !== undefined)
         .map((i) => ({
           productId: i.productId,
