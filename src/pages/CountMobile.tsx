@@ -1379,16 +1379,28 @@ export default function CountMobile() {
         </DialogContent>
       </Dialog>
 
-      {current && (
+      {(noteTarget ?? current) && (
         <CountNoteSheet
           open={noteOpen}
           onOpenChange={setNoteOpen}
-          productId={current.productId}
-          productName={current.productName}
-          note={notes[current.key] ?? ""}
+          productId={(noteTarget ?? current)!.productId}
+          productName={(noteTarget ?? current)!.productName}
+          note={noteFor((noteTarget ?? current)!)}
           onSave={(text) => {
-            setNotes({ ...notes, [current.key]: text });
-            if (values[current.key] !== undefined) void store(current, values[current.key], text);
+            const target = (noteTarget ?? current)!;
+            setNotes({ ...notes, [target.key]: text });
+            if (values[target.key] !== undefined) void store(target, values[target.key], text);
+            // Anteckningen ligger kvar på varan till nästa räkning.
+            if (storeId)
+              saveProductNote.mutate(
+                { storeId, productId: target.productId, note: text, staffId, staffName },
+                {
+                  onError: () =>
+                    toast.error(
+                      "Anteckningen följer med räkningen, men kunde inte sparas på varan just nu.",
+                    ),
+                },
+              );
           }}
         />
       )}
