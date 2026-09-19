@@ -142,7 +142,7 @@ export default function CountMobile() {
    */
   const [restored, setRestored] = useState(false);
   useEffect(() => {
-    if (restored || !storeId) return;
+    if (restored || !storeId || !staffId) return;
     const pos = readPosition(storeId, staffId);
     if (!pos) {
       setRestored(true);
