@@ -134,6 +134,7 @@ export default function CountMobile() {
   const [locationName, setLocationName] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
+  const [groupKey, setGroupKey] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, number>>({});
   const [lastKey, setLastKey] = useState<string | null>(null);
   const [padOpen, setPadOpen] = useState(false);
