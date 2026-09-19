@@ -173,17 +173,31 @@ export default function CountMobile() {
     setLocationName(pos.locationName);
     setSessionId(pos.sessionId);
     setIndex(pos.index ?? 0);
+    setGroupKey(pos.groupKey ?? null);
     if (draft?.values) setValues(draft.values);
-    setStep((pos.step === "rakna" || pos.step === "sammanfattning" ? pos.step : "rakna") as Step);
+    setStep(
+      (pos.step === "rakna" || pos.step === "sammanfattning" || pos.step === "grupp"
+        ? pos.step
+        : "grupp") as Step,
+    );
     setRestored(true);
   }, [restored, storeId, staffId]);
 
   /** Varje förflyttning sparas direkt, så telefonen alltid vet var man var. */
   useEffect(() => {
     if (!restored || !storeId || !locationId) return;
-    if (step !== "rakna" && step !== "sammanfattning") return;
-    writePosition({ storeId, staffId, locationId, locationName, sessionId, index, step });
-  }, [restored, storeId, staffId, locationId, locationName, sessionId, index, step]);
+    if (step !== "rakna" && step !== "sammanfattning" && step !== "grupp") return;
+    writePosition({
+      storeId,
+      staffId,
+      locationId,
+      locationName,
+      sessionId,
+      index,
+      step,
+      groupKey,
+    });
+  }, [restored, storeId, staffId, locationId, locationName, sessionId, index, step, groupKey]);
 
 
   /** Butikens beställning till imorgon — samma utkast för alla tryck. */
