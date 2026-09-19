@@ -5710,6 +5710,39 @@ export type Database = {
         }
         Relationships: []
       }
+      fx_daily_rates: {
+        Row: {
+          base_currency: string
+          created_at: string
+          id: string
+          quote_currency: string
+          rate: number
+          rate_date: string
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_currency: string
+          created_at?: string
+          id?: string
+          quote_currency?: string
+          rate: number
+          rate_date: string
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_currency?: string
+          created_at?: string
+          id?: string
+          quote_currency?: string
+          rate?: number
+          rate_date?: string
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       holiday_calendar: {
         Row: {
           country_code: string
