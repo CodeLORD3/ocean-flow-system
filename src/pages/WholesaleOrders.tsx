@@ -1331,6 +1331,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
   const { toast } = useToast();
   const createChange = useCreateChangeRequest();
   const updateLineStatus = useUpdateOrderLineStatus();
+  const { data: allProducts = [] } = useProducts();
   // Djuplänk från lagret: ?line=<produkt> markerar och skrollar till raden.
   const detailLocation = useLocation();
   const detailParams = new URLSearchParams(detailLocation.search);
@@ -1389,18 +1390,6 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
     );
   };
   const { data: allStock = [] } = useAllStockByLocation();
-  const { data: allProducts } = useQuery({
-    queryKey: ["products", "alt-match"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, name, unit, family_id, category")
-        .eq("active", true)
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
 
   /**
    * Syskonvaror: samma produktgrupp, annars samma namn frånsett storleks-

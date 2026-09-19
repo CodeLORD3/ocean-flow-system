@@ -42,13 +42,22 @@ export default function StockPricePoster() {
   const { data: products = [] } = useQuery({
     queryKey: ["poster_products"],
     queryFn: async (): Promise<ProductInfo[]> => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, name, unit, category, retail_suggested, wholesale_price")
-        .eq("active", true)
-        .order("name");
-      if (error) throw error;
-      return (data ?? []) as any;
+      const pageSize = 1000;
+      const products: ProductInfo[] = [];
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, name, unit, category, retail_suggested, wholesale_price")
+          .eq("active", true)
+          .order("name")
+          .order("id")
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        const rows = (data ?? []) as ProductInfo[];
+        products.push(...rows);
+        if (rows.length < pageSize) break;
+      }
+      return products;
     },
   });
 

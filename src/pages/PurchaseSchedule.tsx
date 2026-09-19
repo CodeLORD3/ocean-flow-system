@@ -27,6 +27,7 @@ import { useCreateChangeRequest } from "@/hooks/useOrderChangeRequests";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useManualScheduleEntries } from "@/hooks/useManualScheduleEntries";
+import { useProducts } from "@/hooks/useProducts";
 
 const WEEKDAYS = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 const WEEKDAY_OPTIONS = WEEKDAYS.map((name, i) => ({ value: i + 1, label: name }));
@@ -123,14 +124,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
   const createChange = useCreateChangeRequest();
   const queryClient = useQueryClient();
   const { entries: manualEntries, addEntry: addManualEntry, deleteEntry: deleteManualEntry } = useManualScheduleEntries("purchase");
-  const { data: allProducts } = useQuery({
-    queryKey: ["products_active"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("id, name, unit, category").eq("active", true).order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: allProducts } = useProducts();
 
   // Fetch stock from Grossist Flytande
   const { data: grossistStock } = useQuery({
