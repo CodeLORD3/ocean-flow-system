@@ -46,7 +46,7 @@ import { printQuote } from "@/lib/customerQuotePdf";
 import { printConfirmation, confirmationText } from "@/lib/customerOrderConfirmation";
 import { printPackList } from "@/lib/customerOrderPackListPdf";
 import { allergenLabel, scaleQuantity } from "@/lib/catering";
-import { OrderAuditLine } from "./OrderAuditLine";
+import { OrderAuditLine, OrderApprovedBy } from "./OrderAuditLine";
 import { CurrencyAmount, useSekRate } from "@/components/orders/CurrencyAmount";
 import { getStoreCurrency } from "@/lib/currency";
 
@@ -546,6 +546,13 @@ export function CustomerOrderCard({
                     <span className="inline-flex items-center gap-1">
                       · Packad av <OrdererName name={order.packed_by_name} size="sm" />
                     </span>
+                  )}
+                  <OrderApprovedBy
+                    approvedBy={(order as any).approved_by}
+                    approvedAt={(order as any).approved_at}
+                  />
+                  {order.packed_at && (
+                    <span>· packad {new Date(order.packed_at).toLocaleString("sv-SE")}</span>
                   )}
                 </div>
                 <OrderAuditLine

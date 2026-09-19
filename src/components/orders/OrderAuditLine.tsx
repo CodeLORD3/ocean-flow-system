@@ -72,3 +72,27 @@ export function OrderAuditLine({
     </div>
   );
 }
+
+/**
+ * Vem som godkände ordern och när. Visas bara när ordern faktiskt är godkänd.
+ */
+export function OrderApprovedBy({
+  approvedBy,
+  approvedAt,
+  className = "",
+}: {
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  className?: string;
+}) {
+  const { nameOf } = useActorNames();
+  if (!approvedAt) return null;
+  const name = nameOf(approvedBy) || "";
+  return (
+    <span className={`inline-flex min-w-0 items-center gap-1 ${className}`}>
+      Godkänd av{" "}
+      {name ? <StaffName name={name} faceClassName="h-5 w-5 text-[9px]" /> : "okänd"} ·{" "}
+      {fmt(approvedAt)}
+    </span>
+  );
+}
