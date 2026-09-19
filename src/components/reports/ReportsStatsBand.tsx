@@ -157,6 +157,7 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
           name: stores.find((s: any) => s.id === id)?.name ?? "Okänd butik",
           ...v,
           net: v.net + (w?.net ?? 0),
+          receipts: v.receipts + (w?.orders ?? 0),
           netSek: v.netSek == null || w?.sek == null ? (w ? null : v.netSek) : v.netSek + w.sek,
           web: w,
         };
@@ -172,7 +173,7 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
         net: w.net,
         netSek: w.sek,
         waste: 0,
-        receipts: 0,
+        receipts: w.orders,
         reports: 0,
         web: w,
       });
@@ -194,6 +195,7 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
       },
       spark,
       ranked,
+      storeReceipts,
       webTotalSek,
       webOrders,
       webNoReport,
