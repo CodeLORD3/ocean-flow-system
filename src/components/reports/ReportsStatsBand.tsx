@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { currencyLabel } from "@/lib/reportCurrency";
 import { useFxRates } from "@/hooks/useFxRates";
 import { rateFor, type FxRateMap } from "@/lib/fxRates";
+import { useWebSales } from "@/hooks/useWebSales";
 import type { DailyReport, StaffEntry, WasteItem } from "@/hooks/useDailyReport";
 
 const nf = (v: number) => v.toLocaleString("sv-SE", { maximumFractionDigits: 0 }).replace(/\u00a0/g, " ");
@@ -47,6 +48,8 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
   const from = isoDaysAgo(days * 2);
   const { data: stores = [] } = useStores();
   const { data: fx = new Map() as FxRateMap } = useFxRates(from);
+  /* Nätförsäljningen (fiskskaldjur.se/.ch) på leveransdagen, per butik. */
+  const { data: web } = useWebSales(from, isoDaysAgo(0), storeId ?? null);
 
   /* Valutan följer butiken; utan valt butik visas kr som gemensam etikett. */
   const curOf = (id: string) => currencyLabel(stores.find((s) => s.id === id)?.currency);
@@ -111,9 +114,32 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
       e.netSek = e.netSek == null || rate == null ? null : e.netSek + (r.net_sales ?? 0) * rate;
       byStore.set(r.store_id, e);
     });
+    /* Webbförsäljning per butik i perioden — egen siffra, aldrig inräknad i kassans netto. */
+    const webByStore = new Map<string, { amount: number; sek: number | null; orders: number }>();
+    (web ?? new Map()).forEach((row: { amount: number; orders: number }, key: string) => {
+      const [sid, date] = key.split("|");
+      if (!sid || !date || date < cut) return;
+      const cur = rawCurOf(sid);
+      const rate = cur === "SEK" ? 1 : rateFor(fx, cur, date);
+      const e = webByStore.get(sid) ?? { amount: 0, sek: 0 as number | null, orders: 0 };
+      e.amount += row.amount;
+      e.orders += row.orders;
+      e.sek = e.sek == null || rate == null ? null : e.sek + row.amount * rate;
+      webByStore.set(sid, e);
+    });
+
     const ranked = [...byStore.entries()]
-      .map(([id, v]) => ({ id, name: stores.find((s: any) => s.id === id)?.name ?? "Okänd butik", ...v }))
+      .map(([id, v]) => ({
+        id,
+        name: stores.find((s: any) => s.id === id)?.name ?? "Okänd butik",
+        ...v,
+        web: webByStore.get(id) ?? null,
+      }))
       .sort((a, b) => (b.netSek ?? b.net) - (a.netSek ?? a.net));
+
+    const webTotalSek = [...webByStore.values()].reduce((s, v) => s + (v.sek ?? v.amount), 0);
+    const webOrders = [...webByStore.values()].reduce((s, v) => s + v.orders, 0);
+
 
     return {
       now,
@@ -125,11 +151,13 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
       },
       spark,
       ranked,
+      webTotalSek,
+      webOrders,
       perReceipt: now.receipts > 0 ? now.net / now.receipts : 0,
       perHour: now.hours > 0 ? now.net / now.hours : 0,
       wasteShare: now.net > 0 ? (now.waste / now.net) * 100 : 0,
     };
-  }, [rows, days, stores, fx, storeId]);
+  }, [rows, days, stores, fx, storeId, web]);
 
   const maxNet = Math.max(...stats.ranked.map((r) => r.netSek ?? r.net), 1);
 
@@ -210,6 +238,7 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
                     </span>
                     <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
                       {r.reports} rapporter · {nf(r.receipts)} kvitton
+                      {r.web ? ` · ${nf(r.web.orders)} webbordrar` : ""}
                     </span>
                   </div>
                   <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
@@ -226,11 +255,23 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
                       {r.netSek == null ? "kurs saknas" : `≈ ${nf(r.netSek)} kr`}
                     </p>
                   )}
+                  {r.web && (
+                    <p className="font-mono text-[10px] tabular-nums text-primary">
+                      webb {nf(r.web.amount)} {curOf(r.id)}
+                    </p>
+                  )}
                   <p className="font-mono text-[10px] tabular-nums text-destructive">svinn {nf(r.waste)} {curOf(r.id)}</p>
                 </div>
               </div>
             ))}
           </div>
+          {stats.webOrders > 0 && (
+            <p className="mt-3 border-t pt-2 text-[10px] text-muted-foreground">
+              Webbförsäljning i perioden: <span className="font-mono tabular-nums">{nf(stats.webTotalSek)} kr</span> på{" "}
+              {nf(stats.webOrders)} ordrar, bokförd på leveransdagen och butiken kunden hämtar i. Ligger utanför kassans
+              nettoomsättning.
+            </p>
+          )}
         </Card>
       )}
     </div>
