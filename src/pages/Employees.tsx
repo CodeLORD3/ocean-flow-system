@@ -118,6 +118,7 @@ export default function Employees() {
           <SelectContent>
             <SelectItem value="active">Aktiva</SelectItem>
             <SelectItem value="inactive">Avslutade</SelectItem>
+            <SelectItem value="no_login">Utan inloggning</SelectItem>
             <SelectItem value="all">Alla</SelectItem>
           </SelectContent>
         </Select>
