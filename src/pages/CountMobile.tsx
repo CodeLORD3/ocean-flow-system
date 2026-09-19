@@ -29,6 +29,7 @@ import {
   useCountItems,
   useCountLines,
   useCountPlaces,
+  useCountQueue,
   useOpenCountSession,
   useRemoveCountLine,
   useSaveCountLine,
@@ -663,6 +664,14 @@ export default function CountMobile() {
                     {timeText(p.lastActivityAt) ? ` — ${timeText(p.lastActivityAt)}` : ""}
                   </span>
                 )}
+                <span className="block text-[16px] text-muted-foreground">
+                  {p.lastCountedAt
+                    ? `Senast räknad ${new Date(p.lastCountedAt).toLocaleDateString("sv-SE", {
+                        day: "numeric",
+                        month: "short",
+                      })}`
+                    : "Aldrig räknad"}
+                </span>
                 {p.claimedBy && staffId && p.claimedBy !== staffId && p.countedRows > 0 && (
                   <span className="block text-[16px] text-muted-foreground">
                     {p.claimedByName || "En kollega"} räknar här
