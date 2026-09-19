@@ -16,6 +16,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -354,6 +356,38 @@ export default function CountMobile() {
     setGroupKey(key);
     const first = g ? g.items.findIndex((i) => values[i.key] === undefined) : -1;
     setIndex(first >= 0 ? first : 0);
+    setStep("rakna");
+  };
+
+  /** Lägger till en vara som stod i hyllan men saknades i listan, och räknar den. */
+  const addExtra = (p: any) => {
+    const already = extraItems.findIndex((i) => i.productId === p.id);
+    if (stockItems.some((i) => i.productId === p.id)) {
+      toast.info("Varan finns redan i listan");
+      const g = groups.find((x) => x.items.some((i) => i.productId === p.id));
+      if (g) openGroup(g.key);
+      setExtraSearch("");
+      return;
+    }
+    const item: CountItem = {
+      key: `${p.id}:`,
+      productId: p.id,
+      lotId: null,
+      productName: p.name || "Okänd vara",
+      sku: p.sku ?? null,
+      unit: p.unit || "kg",
+      imageUrl: p.image_url ?? null,
+      category: p.category ?? null,
+      costPrice: Number(p.cost_price) || 0,
+      expectedQty: 0,
+      lotNumber: null,
+      bestBefore: null,
+    };
+    const nextIndex = already >= 0 ? already : extraItems.length;
+    if (already < 0) setExtras((prev) => [...prev, item]);
+    setGroupKey("extra");
+    setIndex(nextIndex);
+    setExtraSearch("");
     setStep("rakna");
   };
 
