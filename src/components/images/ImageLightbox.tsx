@@ -411,12 +411,6 @@ export function ImageLightbox({
                 : "text-xs italic text-muted-foreground"
             )}
           >
-            {current.uploaded_by_name && current.caption && (
-              <span className="mr-1.5 inline-flex items-center gap-1 align-middle font-semibold">
-                <StaffFace name={current.uploaded_by_name} className="h-7 w-7" />
-                {current.uploaded_by_name}
-              </span>
-            )}
             {current.caption || (editable ? "Lägg till en bildtext…" : "—")}
           </p>
           {editable && (
