@@ -695,6 +695,9 @@ export default function CountMobile() {
             <BigButton onClick={() => setStep("klarplats")} disabled={countedTotal === 0}>
               <Check className="h-6 w-6" /> Klar med hyllan
             </BigButton>
+            <BigButton variant="plain" onClick={() => setStep("extra")}>
+              <Plus className="h-6 w-6" /> Lägg till vara som saknas
+            </BigButton>
           </div>
         </div>
       )}
