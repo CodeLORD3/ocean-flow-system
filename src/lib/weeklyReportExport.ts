@@ -17,6 +17,8 @@ export type ReportRow = {
   staff_shifts: number;
   reports: string;
   status: string;
+  /** Förbetald webbshop som ingår i nettoomsättningen ovan. */
+  web_sales?: number | null;
 };
 
 export type DayRow = {
@@ -29,6 +31,7 @@ export type DayRow = {
   staff_shifts: number;
   comment?: string | null;
   weather?: string | null;
+  web_sales?: number | null;
 };
 
 export interface WeeklyExportPayload {
@@ -38,8 +41,8 @@ export interface WeeklyExportPayload {
   days?: { storeLabel: string; rows: DayRow[] }[];
 }
 
-const HEAD = ["Enhet", "Nettoomsättning (kr)", "Netto snitt/dag (kr)", "Timmar", "Personpass", "Dagsrapporter", "Status"];
-const DAY_HEAD = ["Datum", "Dag", "Brutto (kr)", "Netto (kr)", "Väder", "Kvitton", "Timmar", "Pass"];
+const HEAD = ["Enhet", "Nettoomsättning (kr)", "Varav webbshop (kr)", "Netto snitt/dag (kr)", "Timmar", "Personpass", "Dagsrapporter", "Status"];
+const DAY_HEAD = ["Datum", "Dag", "Brutto (kr)", "Netto (kr)", "Varav webbshop (kr)", "Väder", "Kvitton", "Timmar", "Pass"];
 
 export function weeklyReportPdf(payload: WeeklyExportPayload) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -54,6 +57,7 @@ export function weeklyReportPdf(payload: WeeklyExportPayload) {
     body: payload.rows.map((r) => [
       r.label,
       r.total_sales_sek == null ? "—" : int.format(r.total_sales_sek),
+      r.web_sales ? int.format(r.web_sales) : "—",
       r.avg_sales_per_day_sek == null ? "—" : int.format(r.avg_sales_per_day_sek),
       dec.format(r.staff_hours),
       int.format(r.staff_shifts),
@@ -68,12 +72,13 @@ export function weeklyReportPdf(payload: WeeklyExportPayload) {
     const prev = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 28;
     autoTable(doc, {
       startY: prev + 8,
-      head: [[`Dag för dag · ${group.storeLabel}`, "", "", "", "", "", "", ""], DAY_HEAD],
+      head: [[`Dag för dag · ${group.storeLabel}`, "", "", "", "", "", "", "", ""], DAY_HEAD],
       body: group.rows.map((d) => [
         d.date,
         d.weekday,
         d.gross_sales == null ? "—" : int.format(d.gross_sales),
         d.net_sales == null ? "—" : int.format(d.net_sales),
+        d.web_sales ? int.format(d.web_sales) : "—",
         d.weather ?? "—",
         d.receipt_count == null ? "—" : int.format(d.receipt_count),
         dec.format(d.staff_hours),
@@ -97,6 +102,7 @@ export function weeklyReportXlsx(payload: WeeklyExportPayload) {
     ...payload.rows.map((r) => [
       r.label,
       r.total_sales_sek ?? null,
+      r.web_sales ?? null,
       r.avg_sales_per_day_sek ?? null,
       r.staff_hours,
       r.staff_shifts,
@@ -116,6 +122,7 @@ export function weeklyReportXlsx(payload: WeeklyExportPayload) {
         d.weekday,
         d.gross_sales ?? null,
         d.net_sales ?? null,
+        d.web_sales ?? null,
         d.weather ?? "—",
         d.receipt_count ?? null,
         d.staff_hours,
