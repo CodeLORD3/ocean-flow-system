@@ -58,7 +58,7 @@ function PortalAvatar({
   size?: "sm" | "md";
   className?: string;
 }) {
-  const dim = size === "sm" ? "h-6 w-6" : "h-8 w-8";
+  const dim = size === "sm" ? "h-8 w-8" : "h-10 w-10";
   return (
     <span
       className={cn(
@@ -634,7 +634,7 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                           />
                         )
                       ) : (
-                        <span aria-hidden className="h-6 w-6 shrink-0" />
+                        <span aria-hidden className="h-8 w-8 shrink-0" />
                       )}
 
                       <div
