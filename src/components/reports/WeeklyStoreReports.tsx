@@ -416,6 +416,12 @@ export function WeeklyStoreReportsSection() {
                                 </div>
                               </div>
                               <Metrics row={row} cur={curOf(row.store_id)} />
+                              <StoreWebWeek
+                                storeId={row.store_id}
+                                weekStart={row.week_start}
+                                weekEnd={row.week_end}
+                                cur={curOf(row.store_id)}
+                              />
                               {row.drift_after_lock && row.drift_note && (
                                 <p className="mt-2 text-[10px] text-destructive">{row.drift_note}</p>
                               )}
