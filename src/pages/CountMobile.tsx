@@ -316,8 +316,11 @@ export default function CountMobile() {
       byCategory.get(c)!.push(i);
     }
     for (const [c, arr] of byCategory) out.push({ key: `kat:${c}`, label: c, items: arr });
-    return out.sort((a, b) => a.label.localeCompare(b.label, "sv"));
-  }, [allItems]);
+    out.sort((a, b) => a.label.localeCompare(b.label, "sv"));
+    // Tillagda varor ligger sist, så de inte blandas ihop med hyllans lista.
+    if (extraItems.length) out.push({ key: "extra", label: "Tillagda varor", items: extraItems });
+    return out;
+  }, [stockItems, extraItems]);
 
   const activeGroup = groupKey ? groups.find((g) => g.key === groupKey) ?? null : null;
   const list = activeGroup ? activeGroup.items : allItems;
