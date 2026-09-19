@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { IdCard, Plus, Search, AlertTriangle, ShieldCheck } from "lucide-react";
+import { IdCard, Plus, Search, AlertTriangle, ShieldCheck, KeyRound } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLegalEntities } from "@/hooks/useLegalEntities";
+import { useStaff } from "@/hooks/useStaff";
 import {
   Employee, employeeName, lasWarnings, useEmployees, useAllEmployments,
 } from "@/hooks/useEmployees";
@@ -18,12 +19,19 @@ export default function Employees() {
   const { data: employees, isLoading } = useEmployees(true);
   const { data: employments = [] } = useAllEmployments();
   const { data: entities = [] } = useLegalEntities();
+  const { data: staffRows = [] } = useStaff();
 
   const [q, setQ] = useState("");
   const [entity, setEntity] = useState("all");
   const [status, setStatus] = useState("active");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<Employee | null>(null);
+
+  // Vilka personalkort har ett riktigt konto? Registret visar det direkt i listan.
+  const withLogin = useMemo(
+    () => new Set(staffRows.filter((s: any) => s.user_id).map((s: any) => s.id as string)),
+    [staffRows],
+  );
 
   const byEmployee = useMemo(() => {
     const m = new Map<string, typeof employments>();
@@ -40,6 +48,7 @@ export default function Employees() {
     return (employees ?? []).filter((e) => {
       if (status === "active" && !e.is_active) return false;
       if (status === "inactive" && e.is_active) return false;
+      if (status === "no_login" && e.staff_id && withLogin.has(e.staff_id)) return false;
       const ems = byEmployee.get(e.id) ?? [];
       if (entity !== "all" && !ems.some((em) => em.legal_entity_id === entity)) return false;
       if (!needle) return true;
@@ -49,7 +58,7 @@ export default function Employees() {
       ].join(" ").toLowerCase();
       return hay.includes(needle);
     });
-  }, [employees, byEmployee, q, entity, status]);
+  }, [employees, byEmployee, q, entity, status, withLogin]);
 
   const warningCount = useMemo(
     () => employments.reduce((sum, em) => sum + lasWarnings(em).length, 0),
@@ -109,6 +118,7 @@ export default function Employees() {
           <SelectContent>
             <SelectItem value="active">Aktiva</SelectItem>
             <SelectItem value="inactive">Avslutade</SelectItem>
+            <SelectItem value="no_login">Utan inloggning</SelectItem>
             <SelectItem value="all">Alla</SelectItem>
           </SelectContent>
         </Select>
@@ -145,6 +155,15 @@ export default function Employees() {
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-1">
+                    {e.staff_id && withLogin.has(e.staff_id) ? (
+                      <Badge className="gap-1 bg-emerald-600 text-white hover:bg-emerald-600">
+                        <KeyRound className="h-3 w-3" /> Inloggning
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="gap-1 text-muted-foreground">
+                        <KeyRound className="h-3 w-3" /> Ingen inloggning
+                      </Badge>
+                    )}
                     {e.pnr_masked && (
                       <Badge variant="outline" className="gap-1 font-mono tabular-nums">
                         <ShieldCheck className="h-3 w-3" /> {e.pnr_masked}
