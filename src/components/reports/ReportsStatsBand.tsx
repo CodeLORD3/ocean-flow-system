@@ -114,9 +114,32 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
       e.netSek = e.netSek == null || rate == null ? null : e.netSek + (r.net_sales ?? 0) * rate;
       byStore.set(r.store_id, e);
     });
+    /* Webbförsäljning per butik i perioden — egen siffra, aldrig inräknad i kassans netto. */
+    const webByStore = new Map<string, { amount: number; sek: number | null; orders: number }>();
+    (web ?? new Map()).forEach((row: { amount: number; orders: number }, key: string) => {
+      const [sid, date] = key.split("|");
+      if (!sid || !date || date < cut) return;
+      const cur = rawCurOf(sid);
+      const rate = cur === "SEK" ? 1 : rateFor(fx, cur, date);
+      const e = webByStore.get(sid) ?? { amount: 0, sek: 0 as number | null, orders: 0 };
+      e.amount += row.amount;
+      e.orders += row.orders;
+      e.sek = e.sek == null || rate == null ? null : e.sek + row.amount * rate;
+      webByStore.set(sid, e);
+    });
+
     const ranked = [...byStore.entries()]
-      .map(([id, v]) => ({ id, name: stores.find((s: any) => s.id === id)?.name ?? "Okänd butik", ...v }))
+      .map(([id, v]) => ({
+        id,
+        name: stores.find((s: any) => s.id === id)?.name ?? "Okänd butik",
+        ...v,
+        web: webByStore.get(id) ?? null,
+      }))
       .sort((a, b) => (b.netSek ?? b.net) - (a.netSek ?? a.net));
+
+    const webTotalSek = [...webByStore.values()].reduce((s, v) => s + (v.sek ?? v.amount), 0);
+    const webOrders = [...webByStore.values()].reduce((s, v) => s + v.orders, 0);
+
 
     return {
       now,
