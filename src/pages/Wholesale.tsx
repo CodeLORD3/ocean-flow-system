@@ -1,3 +1,4 @@
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {

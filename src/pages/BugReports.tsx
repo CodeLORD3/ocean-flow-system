@@ -1,3 +1,4 @@
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { useMemo, useState } from "react";
 import { Bug, Search, Clock, User, MonitorSmartphone, FileText, Check } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";

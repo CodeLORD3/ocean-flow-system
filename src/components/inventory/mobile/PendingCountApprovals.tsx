@@ -1,3 +1,4 @@
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, ShieldCheck } from "lucide-react";

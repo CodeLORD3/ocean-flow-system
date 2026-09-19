@@ -1,3 +1,4 @@
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { useActorNames } from "@/hooks/useActorNames";
 
 interface Props {

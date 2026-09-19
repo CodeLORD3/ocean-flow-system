@@ -1,3 +1,4 @@
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { useMemo, useState } from "react";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import { FileText, CheckCircle2, Clock, ChevronDown, ChevronRight, Printer } from "lucide-react";
