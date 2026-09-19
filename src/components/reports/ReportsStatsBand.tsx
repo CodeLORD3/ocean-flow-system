@@ -265,6 +265,13 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
               </div>
             ))}
           </div>
+          {stats.webOrders > 0 && (
+            <p className="mt-3 border-t pt-2 text-[10px] text-muted-foreground">
+              Webbförsäljning i perioden: <span className="font-mono tabular-nums">{nf(stats.webTotalSek)} kr</span> på{" "}
+              {nf(stats.webOrders)} ordrar, bokförd på leveransdagen och butiken kunden hämtar i. Ligger utanför kassans
+              nettoomsättning.
+            </p>
+          )}
         </Card>
       )}
     </div>
