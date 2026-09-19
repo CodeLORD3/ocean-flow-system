@@ -906,6 +906,7 @@ export default function CountMobile() {
                     productName={current.productName}
                     unit={current.unit}
                     wantedDate={wantedDate}
+                    dayLabel={delivery.label}
                     existing={orderedByProduct.get(current.productId) ?? null}
                     editable
                   />
