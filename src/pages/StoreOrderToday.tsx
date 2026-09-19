@@ -17,7 +17,8 @@ import {
   useStoreOrders,
   useUpdateOrderLine,
 } from "@/hooks/useStoreReplenishment";
-import { STATUS_LABEL, SUPPLIER_LABEL, tomorrowSe } from "@/lib/storeReplenishment";
+import { STATUS_LABEL, SUPPLIER_LABEL } from "@/lib/storeReplenishment";
+import { useNextDeliveryDay } from "@/hooks/useNextDeliveryDay";
 import { fmtQty } from "@/lib/mobileCount";
 
 const MANAGER_ROLES = [
