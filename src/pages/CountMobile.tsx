@@ -359,11 +359,16 @@ export default function CountMobile() {
     <div className="-mx-4 flex shrink-0 items-center justify-between gap-1 border-b border-border bg-background px-2 py-1">
       <button
         type="button"
-        onClick={() =>
-          step === "plats"
-            ? switchTab("/inventory")
-            : setStep(step === "rakna" ? "plats" : step === "sammanfattning" ? "rakna" : "plats")
-        }
+        onClick={() => {
+          if (step === "plats") {
+            switchTab("/inventory");
+            return;
+          }
+          const back = step === "rakna" ? "plats" : step === "sammanfattning" ? "rakna" : "plats";
+          // Lämnar man platsvalet ska nästa öppning inte hoppa tillbaka in igen.
+          if (back === "plats" && storeId) clearPosition(storeId, staffId);
+          setStep(back as Step);
+        }}
         className="flex h-14 min-h-[56px] min-w-[56px] items-center gap-1 rounded-2xl px-2 text-[17px] font-semibold"
       >
         <ArrowLeft className="h-6 w-6 shrink-0" /> Tillbaka
