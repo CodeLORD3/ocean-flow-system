@@ -215,12 +215,17 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
                   <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
                     <div
                       className={cn("h-full rounded-full", i === 0 ? "bg-primary" : "bg-primary/60")}
-                      style={{ width: `${Math.max(3, (r.net / maxNet) * 100)}%` }}
+                      style={{ width: `${Math.max(3, ((r.netSek ?? r.net) / maxNet) * 100)}%` }}
                     />
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="font-mono text-sm font-semibold tabular-nums">{nf(r.net)} {curOf(r.id)}</p>
+                  {curOf(r.id) !== "kr" && (
+                    <p className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                      {r.netSek == null ? "kurs saknas" : `≈ ${nf(r.netSek)} kr`}
+                    </p>
+                  )}
                   <p className="font-mono text-[10px] tabular-nums text-destructive">svinn {nf(r.waste)} {curOf(r.id)}</p>
                 </div>
               </div>
