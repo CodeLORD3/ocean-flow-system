@@ -1291,18 +1291,23 @@ export default function CountMobile() {
           </DialogHeader>
           <div className="flex h-16 items-center justify-end rounded-2xl border border-border bg-muted/40 px-4 font-heading text-[30px] font-semibold tabular-nums">
             {padValue || "0"}
-            <span className="ml-2 text-[18px] text-muted-foreground">{current?.unit}</span>
+            <span className="ml-2 text-[18px] text-muted-foreground">
+              {packFor(current) ? "burkar" : current?.unit}
+            </span>
           </div>
           <NumberPad
             value={padValue}
             onChange={setPadValue}
-            allowDecimal={current?.unit !== "st"}
+            allowDecimal={!packFor(current) && current?.unit !== "st"}
           />
           <BigButton
             onClick={() => {
               if (!current) return;
-              const qty = Number((padValue || "0").replace(",", "."));
-              setValues({ ...values, [current.key]: Number.isFinite(qty) ? qty : 0 });
+              const pack = packFor(current);
+              const typed = Number((padValue || "0").replace(",", "."));
+              const safe = Number.isFinite(typed) ? typed : 0;
+              const qty = pack ? jarsToKg(Math.round(safe), pack) : safe;
+              setValues({ ...values, [current.key]: qty });
               setPadOpen(false);
             }}
           >
