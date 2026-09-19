@@ -579,9 +579,12 @@ export default function CountMobile() {
           if (back === "grupp") setGroupKey(null);
           setStep(back as Step);
         }}
-        className="flex h-14 min-h-[56px] min-w-[56px] items-center gap-1 rounded-2xl px-2 text-[17px] font-semibold"
+        className="flex h-14 min-h-[56px] min-w-[56px] shrink-0 items-center gap-1 rounded-2xl px-2 text-[17px] font-semibold"
       >
-        <ArrowLeft className="h-6 w-6 shrink-0" /> Tillbaka
+        <ArrowLeft className="h-6 w-6 shrink-0" />
+        <span className="whitespace-nowrap">
+          {step === "rakna" || step === "sammanfattning" ? "Alla varugrupper" : "Tillbaka"}
+        </span>
       </button>
       {step === "rakna" && list.length > 0 && (
         <span className="min-w-0 truncate text-center text-[17px] font-semibold">
