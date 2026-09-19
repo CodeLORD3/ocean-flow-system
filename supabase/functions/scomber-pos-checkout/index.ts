@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
         control_code: controlCode,
         status: "completed",
       })
-      .select("id, receipt_no, occurred_at")
+      .select("id, receipt_no, occurred_at, store_id")
       .single();
     if (txErr) throw txErr;
 
@@ -156,3 +156,153 @@ Deno.serve(async (req) => {
     return errorResponse("Internal error", 500, String(e));
   }
 });
+
+const round3 = (n: number) => Math.round(n * 1000) / 1000;
+
+/** Butikens försäljningslager — lagerplatsen kvittot drar ifrån. */
+async function salesLocation(sb: any, storeId: string): Promise<string | null> {
+  const { data } = await sb
+    .from("storage_locations")
+    .select("id")
+    .eq("store_id", storeId)
+    .eq("location_type", "butik")
+    .eq("active", true)
+    .is("parent_location_id", null)
+    .limit(1)
+    .maybeSingle();
+  return (data?.id as string) ?? null;
+}
+
+/** Vår artikel bakom kassaraden: native id först, annars kassaartikelns koppling. */
+async function resolveProduct(sb: any, line: CheckoutLine): Promise<{ id: string; unit: string } | null> {
+  const { data: direct } = await sb
+    .from("products")
+    .select("id, unit")
+    .eq("id", line.article_id)
+    .maybeSingle();
+  if (direct?.id) return { id: direct.id, unit: direct.unit ?? "kg" };
+
+  if (line.pos_product_id) {
+    const { data: pp } = await sb
+      .from("pos_products")
+      .select("erp_id")
+      .eq("id", line.pos_product_id)
+      .maybeSingle();
+    if (pp?.erp_id) {
+      const { data: p } = await sb
+        .from("products")
+        .select("id, unit")
+        .eq("id", pp.erp_id)
+        .maybeSingle();
+      if (p?.id) return { id: p.id, unit: p.unit ?? "kg" };
+    }
+  }
+  return null;
+}
+
+/**
+ * Bokför försäljningen som rörelser ut ur butikens försäljningslager, parti
+ * enligt FEFO. Idempotent per kvitto: finns rörelser redan skrivs inga nya.
+ * Rader utan matchad artikel eller utan butikslager bokförs inte — de
+ * rapporteras tillbaka som unposted_lines så att de kan rättas.
+ */
+async function postSaleMovements(
+  sb: any,
+  transactionId: string,
+  lines: CheckoutLine[],
+  items: Array<{ id: string }>,
+): Promise<{ written: number; unposted: number }> {
+  const { data: tx } = await sb
+    .from("pos_transactions")
+    .select("store_id, receipt_no")
+    .eq("id", transactionId)
+    .maybeSingle();
+  const storeId = tx?.store_id as string | null;
+  if (!storeId) return { written: 0, unposted: lines.length };
+
+  const itemIds = items.map((i) => i.id);
+  const { data: already } = await sb
+    .from("stock_movements")
+    .select("id")
+    .eq("reference_type", "pos_transaction_item")
+    .in("reference_id", itemIds)
+    .limit(1);
+  if (already?.length) return { written: 0, unposted: 0 };
+
+  const locationId = await salesLocation(sb, storeId);
+  if (!locationId) {
+    console.error(`pos-checkout: butik ${storeId} saknar butikslager — kvitto drar inte lager`);
+    return { written: 0, unposted: lines.length };
+  }
+
+  const rows: Record<string, unknown>[] = [];
+  let unposted = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const itemId = items[i]?.id;
+    const qty = round3(Math.abs(Number(line.quantity ?? 0)));
+    const product = await resolveProduct(sb, line);
+    if (!product || !itemId || qty === 0) {
+      unposted++;
+      continue;
+    }
+    const pieces = (product.unit ?? "").toLowerCase().startsWith("st");
+    const note = `Kassa kvitto ${tx?.receipt_no ?? ""}`.trim();
+
+    const { data: lots } = await sb.rpc("pos_fefo_lots", {
+      _product_id: product.id,
+      _location_id: locationId,
+    });
+
+    let left = qty;
+    for (const lot of (lots ?? []) as any[]) {
+      if (left <= 0) break;
+      const take = round3(Math.min(left, Number(lot.available ?? 0)));
+      if (take <= 0) continue;
+      rows.push({
+        product_id: product.id,
+        location_id: locationId,
+        lot_id: lot.lot_id,
+        movement_type: "forsaljning",
+        quantity_kg: -take,
+        quantity_pieces: pieces ? -Math.round(take) : null,
+        unit_cost: lot.unit_cost != null ? Number(lot.unit_cost) : null,
+        reference_type: "pos_transaction_item",
+        reference_id: itemId,
+        note,
+      });
+      left = round3(left - take);
+    }
+    if (left > 0) {
+      rows.push({
+        product_id: product.id,
+        location_id: locationId,
+        lot_id: null,
+        movement_type: "forsaljning",
+        quantity_kg: -left,
+        quantity_pieces: pieces ? -Math.round(left) : null,
+        unit_cost: null,
+        reference_type: "pos_transaction_item",
+        reference_id: itemId,
+        note: `${note} (utan parti, undersaldo)`,
+      });
+    }
+  }
+
+  if (!rows.length) return { written: 0, unposted };
+
+  const { data: moved, error } = await sb.from("stock_movements").insert(rows).select("id, lot_id, reference_id");
+  if (error) throw error;
+
+  // Kopplar raden till sin första rörelse så kvittot kan spåras till partiet.
+  for (const itemId of new Set((moved ?? []).map((m: any) => m.reference_id))) {
+    const first = (moved ?? []).find((m: any) => m.reference_id === itemId);
+    await sb
+      .from("pos_transaction_items")
+      .update({ movement_id: first?.id ?? null, lot_id: first?.lot_id ?? null })
+      .eq("id", itemId);
+  }
+
+  return { written: moved?.length ?? 0, unposted };
+}
