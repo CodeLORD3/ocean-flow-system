@@ -106,7 +106,10 @@ export function StoreWeekDays({
                 <WeatherCell day={weather.data?.get(d.date)} loading={weather.isLoading} />
               </td>
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">
-                {intFmt(d.receipt_count)}
+                {/* Antal köp = kassans kvitton + förbetalda webbordrar samma dag. */}
+                {num(d.receipt_count) == null && !w
+                  ? "—"
+                  : intFmt((num(d.receipt_count) ?? 0) + (w?.orders ?? 0))}
               </td>
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">{decFmt(d.staff_hours)}</td>
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">{intFmt(d.staff_shifts)}</td>
