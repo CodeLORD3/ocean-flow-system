@@ -136,6 +136,36 @@ export default function CountMobile() {
     if (!hasSeenIntro()) setIntroOpen(true);
   }, []);
 
+  /**
+   * Fortsätt där man var. Släckt skärm eller omstartad app ska aldrig betyda
+   * att man börjar om från noll — lagerplats, vara och siffror plockas upp igen.
+   */
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    if (restored || !storeId) return;
+    const pos = readPosition(storeId, staffId);
+    if (!pos) {
+      setRestored(true);
+      return;
+    }
+    const draft = readDraft(storeId, pos.locationId, staffId);
+    setLocationId(pos.locationId);
+    setLocationName(pos.locationName);
+    setSessionId(pos.sessionId);
+    setIndex(pos.index ?? 0);
+    if (draft?.values) setValues(draft.values);
+    setStep((pos.step === "rakna" || pos.step === "sammanfattning" ? pos.step : "rakna") as Step);
+    setRestored(true);
+  }, [restored, storeId, staffId]);
+
+  /** Varje förflyttning sparas direkt, så telefonen alltid vet var man var. */
+  useEffect(() => {
+    if (!restored || !storeId || !locationId) return;
+    if (step !== "rakna" && step !== "sammanfattning") return;
+    writePosition({ storeId, staffId, locationId, locationName, sessionId, index, step });
+  }, [restored, storeId, staffId, locationId, locationName, sessionId, index, step]);
+
+
   /** Butikens beställning till imorgon — samma utkast för alla tryck. */
   const wantedDate = useMemo(() => tomorrowSe(), []);
   const draftOrder = useDraftOrder(storeId, wantedDate);
