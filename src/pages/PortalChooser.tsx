@@ -136,6 +136,7 @@ export default function PortalChooser() {
     setSite("shop");
     setActiveStore(id, name);
     // Butiksportalen startar alltid i den nya Översikten (butikskartan)
+    sessionStorage.setItem("erp_last_route", "/store-map");
     navigate("/store-map", { replace: true });
   };
 
@@ -153,6 +154,7 @@ export default function PortalChooser() {
       setActiveStore(null, null);
     }
     // Landing page is always the overview page
+    sessionStorage.setItem("erp_last_route", "/organisation");
     navigate("/organisation", { replace: true });
   };
 

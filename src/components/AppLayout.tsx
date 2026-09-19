@@ -191,7 +191,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {access.includes("wholesale") && (
         <DropdownMenuItem
           className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
-          onClick={() => { setSite("wholesale"); setActiveStore(null, null); switchTab("/organisation"); }}
+          onClick={() => { setSite("wholesale"); setActiveStore(null, null); sessionStorage.setItem("erp_last_route", "/organisation"); switchTab("/organisation"); }}
         >
           <Shield className="h-3 w-3" /> Admin
         </DropdownMenuItem>
@@ -199,7 +199,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {access.includes("production") && (
         <DropdownMenuItem
           className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
-          onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/organisation"); }}
+          onClick={() => { setSite("production"); setActiveStore(null, null); sessionStorage.setItem("erp_last_route", "/organisation"); switchTab("/organisation"); }}
         >
           <Factory className="h-3 w-3" /> Grossist
         </DropdownMenuItem>
@@ -217,7 +217,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuItem
                 key={store.id}
                 className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
-                onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/organisation"); }}
+                onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); sessionStorage.setItem("erp_last_route", "/store-map"); switchTab("/store-map"); }}
               >
                 <Store className="h-3 w-3" /> {store.name}
               </DropdownMenuItem>
