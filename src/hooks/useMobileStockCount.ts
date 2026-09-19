@@ -297,7 +297,11 @@ export function useOpenCountSession() {
   });
 }
 
-/** Sparar en räknad rad. Anropas efter varje inmatning. */
+/**
+ * Sparar en räknad rad. Anropas efter varje inmatning. Raden läggs först i
+ * telefonens kö och tas ur kön när databasen bekräftat — tappad täckning
+ * tappar därför aldrig en räkning.
+ */
 export function useSaveCountLine() {
   const qc = useQueryClient();
   return useMutation({
@@ -314,48 +318,57 @@ export function useSaveCountLine() {
       quantity: number | null;
       comment?: string | null;
     }) => {
-      // Unika raden i databasen bygger på COALESCE, så ON CONFLICT går inte att
-      // använda. Vi letar upp raden först och uppdaterar den, annars skapas den.
-      const row = {
-        session_id: sessionId,
-        product_id: item.productId,
-        location_id: locationId,
-        lot_id: item.lotId,
-        counted_qty: quantity,
-        system_qty: item.expectedQty,
+      const row: QueuedLine = {
+        sessionId,
+        productId: item.productId,
+        locationId,
+        lotId: item.lotId,
+        quantity,
+        systemQty: item.expectedQty,
         unit: item.unit,
         comment: comment ?? null,
-        counted_at: new Date().toISOString(),
+        at: new Date().toISOString(),
       };
-      let find = supabase
-        .from("stock_count_lines")
-        .select("id")
-        .eq("session_id", sessionId)
-        .eq("product_id", item.productId)
-        .eq("location_id", locationId);
-      find = item.lotId ? find.eq("lot_id", item.lotId) : find.is("lot_id", null);
-      const { data: existing, error: findErr } = await find.maybeSingle();
-      if (findErr) throw findErr;
-      if (existing) {
-        const { error } = await supabase
-          .from("stock_count_lines")
-          .update(row as any)
-          .eq("id", (existing as any).id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("stock_count_lines").insert(row as any);
-        if (error) throw error;
-      }
-      await supabase
-        .from("stock_count_sessions")
-        .update({ last_activity_at: new Date().toISOString() } as any)
-        .eq("id", sessionId);
+      enqueueLine(row);
+      await saveCountLine(row);
+      dequeueLine(row);
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["count-lines", vars.sessionId] });
       qc.invalidateQueries({ queryKey: ["count-places"] });
+      qc.invalidateQueries({ queryKey: ["count-queue"] });
+    },
+    onError: () => {
+      qc.invalidateQueries({ queryKey: ["count-queue"] });
     },
   });
+}
+
+/**
+ * Antal räknade rader som väntar på att komma fram. Försöker skicka dem igen
+ * när telefonen får nät och visas som "sparas …" i räkningen.
+ */
+export function useCountQueue() {
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ["count-queue"],
+    queryFn: async () => flushQueue(),
+    refetchInterval: 15000,
+    initialData: readQueue().length,
+  });
+
+  useEffect(() => {
+    const retry = () => {
+      void flushQueue().then(() => {
+        qc.invalidateQueries({ queryKey: ["count-queue"] });
+        qc.invalidateQueries({ queryKey: ["count-lines"] });
+      });
+    };
+    window.addEventListener("online", retry);
+    return () => window.removeEventListener("online", retry);
+  }, [qc]);
+
+  return query;
 }
 
 /** Tar bort en räknad rad — "Ångra" på senaste inmatning. */
