@@ -440,9 +440,17 @@ export default function CountMobile() {
             switchTab("/inventory");
             return;
           }
-          const back = step === "rakna" ? "plats" : step === "sammanfattning" ? "rakna" : "plats";
+          const back =
+            step === "rakna"
+              ? "grupp"
+              : step === "sammanfattning"
+                ? "grupp"
+                : step === "grupp"
+                  ? "plats"
+                  : "plats";
           // Lämnar man platsvalet ska nästa öppning inte hoppa tillbaka in igen.
           if (back === "plats" && storeId) clearPosition(storeId, staffId);
+          if (back === "grupp") setGroupKey(null);
           setStep(back as Step);
         }}
         className="flex h-14 min-h-[56px] min-w-[56px] items-center gap-1 rounded-2xl px-2 text-[17px] font-semibold"
