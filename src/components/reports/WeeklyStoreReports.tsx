@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ChevronDown, ChevronRight, AlertTriangle, LockKeyhole, Printer, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { currencyLabel } from "@/lib/reportCurrency";
+import { useWebSales, webTotal } from "@/hooks/useWebSales";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -107,6 +108,21 @@ function Metrics({ row, comparison, cur = "kr" }: { row: WeeklyStoreReport | Wee
         </div>
       )}
     </div>
+  );
+}
+
+/** Nätförsäljning (fiskskaldjur.se/.ch) för butiken under veckan, bokförd på leveransdagen. */
+function StoreWebWeek({
+  storeId, weekStart, weekEnd, cur,
+}: { storeId: string; weekStart: string; weekEnd: string; cur: string }) {
+  const web = useWebSales(weekStart, weekEnd, storeId);
+  const total = webTotal(web.data, storeId, weekDayList(weekStart, weekEnd));
+  if (web.isLoading || total.orders === 0) return null;
+  return (
+    <p className="mt-2 text-[10px] text-muted-foreground">
+      Varav webbförsäljning: <span className="font-mono tabular-nums">{money(total.amount, cur)}</span> på {total.orders} ordrar
+      — bokförd på leveransdagen, utanför kassans dagsrapport.
+    </p>
   );
 }
 
@@ -416,6 +432,12 @@ export function WeeklyStoreReportsSection() {
                                 </div>
                               </div>
                               <Metrics row={row} cur={curOf(row.store_id)} />
+                              <StoreWebWeek
+                                storeId={row.store_id}
+                                weekStart={row.week_start}
+                                weekEnd={row.week_end}
+                                cur={curOf(row.store_id)}
+                              />
                               {row.drift_after_lock && row.drift_note && (
                                 <p className="mt-2 text-[10px] text-destructive">{row.drift_note}</p>
                               )}
