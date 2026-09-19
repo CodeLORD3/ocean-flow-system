@@ -30,6 +30,8 @@ export interface CountItem {
   imageUrl: string | null;
   category: string | null;
   costPrice: number;
+  /** Vikt per burk/styck, används för burkräkning i Schweiz. */
+  weightPerPiece: number | null;
   /** Systemets saldo — visas aldrig under räkningen vid blindräkning. */
   expectedQty: number;
   lotNumber: string | null;
@@ -145,7 +147,7 @@ export function useCountItems(locationId?: string | null) {
       const { data: balances, error } = await supabase
         .from("product_stock_locations")
         .select(
-          "product_id, quantity, products(name, sku, unit, category, cost_price, image_url)",
+          "product_id, quantity, products(name, sku, unit, category, cost_price, image_url, weight_per_piece)",
         )
         .eq("location_id", locationId!);
       if (error) throw error;
@@ -195,6 +197,7 @@ export function useCountItems(locationId?: string | null) {
           imageUrl: p.image_url ?? null,
           category: p.category ?? null,
           costPrice: Number(p.cost_price) || 0,
+          weightPerPiece: p.weight_per_piece != null ? Number(p.weight_per_piece) : null,
         };
         const lots = lotQty.get(row.product_id);
         if (lots && lots.size > 1) {
