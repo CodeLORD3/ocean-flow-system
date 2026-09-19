@@ -117,13 +117,27 @@ export default function PriceListDialog({ open, onOpenChange, allProducts }: Pro
     (async () => {
       setLoadingLines(true);
       let latestProducts = allProducts;
-      const { data: productRows, error: productError } = await supabase
-        .from("products")
-        .select("id, name, sku, unit, category, wholesale_price, parent_product_id")
-        .eq("active", true)
-        .order("name");
-      if (!productError && productRows) {
-        latestProducts = productRows as AnyProduct[];
+      const pageSize = 1000;
+      const productRows: AnyProduct[] = [];
+      let productError: unknown = null;
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, name, sku, unit, category, wholesale_price, parent_product_id")
+          .eq("active", true)
+          .order("name")
+          .order("id")
+          .range(from, from + pageSize - 1);
+        if (error) {
+          productError = error;
+          break;
+        }
+        const page = (data ?? []) as AnyProduct[];
+        productRows.push(...page);
+        if (page.length < pageSize) break;
+      }
+      if (!productError) {
+        latestProducts = productRows;
         setFreshAllProducts(latestProducts);
       }
       // Mirror the Inköpsrapport page: show all non-archived reports

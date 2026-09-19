@@ -123,13 +123,22 @@ export function useReconProducts() {
   return useQuery({
     queryKey: ["recon_products"],
     queryFn: async () => {
-      const { data, error } = await db
-        .from("products")
-        .select("id, name, sku, unit, category, image_url, purchasable")
-        .eq("active", true)
-        .order("name");
-      if (error) throw error;
-      return (data ?? []) as ReconProduct[];
+      const pageSize = 1000;
+      const products: ReconProduct[] = [];
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await db
+          .from("products")
+          .select("id, name, sku, unit, category, image_url, purchasable")
+          .eq("active", true)
+          .order("name")
+          .order("id")
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        const rows = (data ?? []) as ReconProduct[];
+        products.push(...rows);
+        if (rows.length < pageSize) break;
+      }
+      return products;
     },
     staleTime: 5 * 60 * 1000,
   });
