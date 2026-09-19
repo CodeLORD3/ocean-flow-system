@@ -157,6 +157,11 @@ export function useCountItems(locationId?: string | null) {
 
       const items: CountItem[] = [];
       for (const row of (balances || []) as any[]) {
+        // Bara varor som verkligen finns inlevererade på platsen. Varor utan
+        // saldo läggs till i slutet av räkningen om de ändå står i hyllan.
+        const lotsHere = lotQty.get(row.product_id);
+        const hasLotQty = !!lotsHere && lotsHere.size > 0;
+        if (Number(row.quantity || 0) <= 0.0005 && !hasLotQty) continue;
         const p = row.products || {};
         const base = {
           productId: row.product_id as string,
