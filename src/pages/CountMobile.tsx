@@ -35,12 +35,15 @@ import {
 import {
   bestBeforeText,
   clearDraft,
+  clearPosition,
   diffText,
   fmtQty,
   readDraft,
+  readPosition,
   submitCount,
   timeText,
   writeDraft,
+  writePosition,
 } from "@/lib/mobileCount";
 import NumberPad from "@/components/inventory/mobile/NumberPad";
 import CountStepper from "@/components/inventory/mobile/CountStepper";
