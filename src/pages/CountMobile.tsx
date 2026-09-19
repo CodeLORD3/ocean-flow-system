@@ -258,7 +258,6 @@ export default function CountMobile() {
     return out.sort((a, b) => a.label.localeCompare(b.label, "sv"));
   }, [allItems]);
 
-  const [groupKey, setGroupKey] = useState<string | null>(null);
   const activeGroup = groupKey ? groups.find((g) => g.key === groupKey) ?? null : null;
   const list = activeGroup ? activeGroup.items : allItems;
   const current: CountItem | undefined = list[index];
