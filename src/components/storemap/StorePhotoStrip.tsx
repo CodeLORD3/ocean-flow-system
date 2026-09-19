@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Camera, ChevronDown, ImageIcon, LayoutGrid, List, Loader2 } from "lucide-react";
+import { Camera, ChevronDown, ImageIcon, LayoutGrid, List, Loader2, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,7 @@ export function StorePhotoStrip({
   const [allOpen, setAllOpen] = useState(false);
   const [zoneFilter, setZoneFilter] = useState<string>("alla");
   const [personFilter, setPersonFilter] = useState<string>("alla");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   /** Visningsläge: stora bilder eller lista med namn. */
   const [layout, setLayout] = useState<"bilder" | "lista">("bilder");
 
@@ -160,6 +161,13 @@ export function StorePhotoStrip({
     const z = zoneIdOf(img);
     return z ? zoneById[z]?.zone.color ?? null : null;
   };
+
+  const activeFilterLabel = [
+    zoneFilter === "alla" ? null : zoneFilter === "butiken" ? "Butiken" : zoneById[zoneFilter]?.zone.name ?? null,
+    personFilter === "alla" ? null : personFilter,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   const chip = (active: boolean) =>
     cn(
@@ -314,71 +322,99 @@ export function StorePhotoStrip({
         />
       </div>
 
-      {/* Filter: område och fotograf */}
-      <div className="-mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1">
-        <button
-          type="button"
-          onClick={() => setZoneFilter("alla")}
-          className={chip(zoneFilter === "alla")}
-          style={zoneFilter === "alla" ? { background: "hsl(var(--primary))" } : undefined}
+      {/* Filter: dolt tills man vill filtrera */}
+      <div className="mb-2 flex items-center gap-2">
+        <Button
+          size="sm"
+          variant={filtersOpen ? "secondary" : "ghost"}
+          className="h-7 gap-1.5 rounded-full px-2.5 text-xs"
+          onClick={() => setFiltersOpen((v) => !v)}
         >
-          Alla platser <span className="tabular-nums opacity-70">{allImagesRaw.length}</span>
-        </button>
-        {zones
-          .filter((z) => (zoneCounts[z.id] ?? 0) > 0)
-          .map((z) => {
-            const active = zoneFilter === z.id;
-            const color = z.color ?? "#1f4d6b";
-            return (
-              <button
-                key={z.id}
-                type="button"
-                onClick={() => setZoneFilter(active ? "alla" : z.id)}
-                onDoubleClick={() => onOpenZone?.(z.id)}
-                className={chip(active)}
-                style={active ? { background: color } : { borderColor: `${color}66`, color }}
-              >
-                <span className="h-2 w-2 rounded-full" style={{ background: active ? "#fff" : color }} />
-                {zoneById[z.id]?.nr}. {z.name}
-                <span className="tabular-nums opacity-70">{zoneCounts[z.id]}</span>
-              </button>
-            );
-          })}
-        {(zoneCounts["butiken"] ?? 0) > 0 && (
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          Filtrera
+        </Button>
+        {activeFilterLabel && (
           <button
             type="button"
-            onClick={() => setZoneFilter(zoneFilter === "butiken" ? "alla" : "butiken")}
-            className={chip(zoneFilter === "butiken")}
-            style={zoneFilter === "butiken" ? { background: "#64748b" } : undefined}
+            className="truncate text-xs text-muted-foreground underline-offset-2 hover:underline"
+            onClick={() => {
+              setZoneFilter("alla");
+              setPersonFilter("alla");
+            }}
           >
-            Butiken <span className="tabular-nums opacity-70">{zoneCounts["butiken"]}</span>
+            {activeFilterLabel} — rensa
           </button>
         )}
       </div>
 
-      {photographers.length > 1 && (
-        <div className="-mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          <button
-            type="button"
-            onClick={() => setPersonFilter("alla")}
-            className={chip(personFilter === "alla")}
-            style={personFilter === "alla" ? { background: "hsl(var(--primary))" } : undefined}
-          >
-            Alla fotografer
-          </button>
-          {photographers.map(([who, n]) => (
+      {filtersOpen && (
+        <div className="mb-2 space-y-1.5">
+          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
             <button
-              key={who}
               type="button"
-              onClick={() => setPersonFilter(personFilter === who ? "alla" : who)}
-              className={chip(personFilter === who)}
-              style={personFilter === who ? { background: "#1f4d6b" } : undefined}
+              onClick={() => setZoneFilter("alla")}
+              className={chip(zoneFilter === "alla")}
+              style={zoneFilter === "alla" ? { background: "hsl(var(--primary))" } : undefined}
             >
-              {who} <span className="tabular-nums opacity-70">{n}</span>
+              Alla platser
             </button>
-          ))}
+            {zones
+              .filter((z) => (zoneCounts[z.id] ?? 0) > 0)
+              .map((z) => {
+                const active = zoneFilter === z.id;
+                const color = z.color ?? "#1f4d6b";
+                return (
+                  <button
+                    key={z.id}
+                    type="button"
+                    onClick={() => setZoneFilter(active ? "alla" : z.id)}
+                    onDoubleClick={() => onOpenZone?.(z.id)}
+                    className={chip(active)}
+                    style={active ? { background: color } : { borderColor: `${color}66`, color }}
+                  >
+                    <span className="h-2 w-2 rounded-full" style={{ background: active ? "#fff" : color }} />
+                    {z.name}
+                  </button>
+                );
+              })}
+            {(zoneCounts["butiken"] ?? 0) > 0 && (
+              <button
+                type="button"
+                onClick={() => setZoneFilter(zoneFilter === "butiken" ? "alla" : "butiken")}
+                className={chip(zoneFilter === "butiken")}
+                style={zoneFilter === "butiken" ? { background: "#64748b" } : undefined}
+              >
+                Butiken
+              </button>
+            )}
+          </div>
+
+          {photographers.length > 1 && (
+            <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+              <button
+                type="button"
+                onClick={() => setPersonFilter("alla")}
+                className={chip(personFilter === "alla")}
+                style={personFilter === "alla" ? { background: "hsl(var(--primary))" } : undefined}
+              >
+                Alla fotografer
+              </button>
+              {photographers.map(([who]) => (
+                <button
+                  key={who}
+                  type="button"
+                  onClick={() => setPersonFilter(personFilter === who ? "alla" : who)}
+                  className={chip(personFilter === who)}
+                  style={personFilter === who ? { background: "#1f4d6b" } : undefined}
+                >
+                  {who}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
+
 
       {images.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border py-6 text-center text-xs text-muted-foreground">
