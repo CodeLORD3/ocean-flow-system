@@ -55,7 +55,7 @@ import { useDraftOrder } from "@/hooks/useStoreReplenishment";
 import { tomorrowSe } from "@/lib/storeReplenishment";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 
-type Step = "plats" | "grupp" | "rakna" | "klarplats" | "sammanfattning" | "klar";
+type Step = "plats" | "grupp" | "rakna" | "extra" | "klarplats" | "sammanfattning" | "klar";
 
 const BLIND_KEY = "count-blind";
 
