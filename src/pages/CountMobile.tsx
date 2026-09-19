@@ -283,12 +283,18 @@ export default function CountMobile() {
     });
   }, [lines.data]);
 
-  const allItems = items.data ?? [];
+  const stockItems = items.data ?? [];
+  /** Varor som stod i hyllan men saknades i listan — läggs till i slutet. */
+  const extraItems = useMemo(
+    () => extras.filter((e) => !stockItems.some((i) => i.productId === e.productId)),
+    [extras, stockItems],
+  );
+  const allItems = useMemo(() => [...stockItems, ...extraItems], [stockItems, extraItems]);
 
   /** Varorna samlade i grupper, så man ser vad som väntar innan man börjar. */
   const groups = useMemo(() => {
     const byKey = new Map<string, CountItem[]>();
-    for (const i of allItems) {
+    for (const i of stockItems) {
       const k = nameGroupKey(i.productName);
       if (!byKey.has(k)) byKey.set(k, []);
       byKey.get(k)!.push(i);
