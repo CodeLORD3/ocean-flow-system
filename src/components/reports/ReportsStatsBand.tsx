@@ -46,9 +46,11 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
   const [days, setDays] = useState(30);
   const from = isoDaysAgo(days * 2);
   const { data: stores = [] } = useStores();
+  const { data: fx = new Map() as FxRateMap } = useFxRates(from);
 
   /* Valutan följer butiken; utan valt butik visas kr som gemensam etikett. */
   const curOf = (id: string) => currencyLabel(stores.find((s) => s.id === id)?.currency);
+  const rawCurOf = (id: string) => (stores.find((s) => s.id === id)?.currency || "SEK").toUpperCase();
   const bandCur = storeId ? curOf(storeId) : "kr";
 
   const { data: rows = [] } = useQuery({
@@ -71,11 +73,21 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
     const current = rows.filter((r) => r.report_date >= cut);
     const previous = rows.filter((r) => r.report_date < cut);
 
+    /* Utan vald butik summeras flera valutor ihop — då räknas varje dag om till
+       SEK med den dagens kurs, annars visas butikens egen valuta som den är. */
+    const convert = (r: DailyReport, value: number) => {
+      if (storeId) return value;
+      const cur = (r.currency || rawCurOf(r.store_id) || "SEK").toUpperCase();
+      if (cur === "SEK") return value;
+      const rate = rateFor(fx, cur, r.report_date);
+      return rate == null ? value : value * rate;
+    };
+
     const sum = (list: DailyReport[]) => ({
-      net: list.reduce((s, r) => s + (r.net_sales ?? 0), 0),
+      net: list.reduce((s, r) => s + convert(r, r.net_sales ?? 0), 0),
       receipts: list.reduce((s, r) => s + (r.receipt_count ?? 0), 0),
       hours: list.reduce((s, r) => s + hoursOf(r.staff_entries), 0),
-      waste: list.reduce((s, r) => s + wasteOf(r.waste_items), 0),
+      waste: list.reduce((s, r) => s + convert(r, wasteOf(r.waste_items)), 0),
       count: list.length,
     });
 
@@ -84,21 +96,24 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
     const trend = (a: number, b: number) => (b > 0 ? ((a - b) / b) * 100 : null);
 
     const byDay = new Map<string, number>();
-    current.forEach((r) => byDay.set(r.report_date, (byDay.get(r.report_date) ?? 0) + (r.net_sales ?? 0)));
+    current.forEach((r) => byDay.set(r.report_date, (byDay.get(r.report_date) ?? 0) + convert(r, r.net_sales ?? 0)));
     const spark = [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v);
 
-    const byStore = new Map<string, { net: number; waste: number; receipts: number; reports: number }>();
+    const byStore = new Map<string, { net: number; waste: number; receipts: number; reports: number; netSek: number | null }>();
     current.forEach((r) => {
-      const e = byStore.get(r.store_id) ?? { net: 0, waste: 0, receipts: 0, reports: 0 };
+      const e = byStore.get(r.store_id) ?? { net: 0, waste: 0, receipts: 0, reports: 0, netSek: 0 as number | null };
+      const cur = (r.currency || rawCurOf(r.store_id) || "SEK").toUpperCase();
+      const rate = cur === "SEK" ? 1 : rateFor(fx, cur, r.report_date);
       e.net += r.net_sales ?? 0;
       e.waste += wasteOf(r.waste_items);
       e.receipts += r.receipt_count ?? 0;
       e.reports += 1;
+      e.netSek = e.netSek == null || rate == null ? null : e.netSek + (r.net_sales ?? 0) * rate;
       byStore.set(r.store_id, e);
     });
     const ranked = [...byStore.entries()]
       .map(([id, v]) => ({ id, name: stores.find((s: any) => s.id === id)?.name ?? "Okänd butik", ...v }))
-      .sort((a, b) => b.net - a.net);
+      .sort((a, b) => (b.netSek ?? b.net) - (a.netSek ?? a.net));
 
     return {
       now,
@@ -114,9 +129,9 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
       perHour: now.hours > 0 ? now.net / now.hours : 0,
       wasteShare: now.net > 0 ? (now.waste / now.net) * 100 : 0,
     };
-  }, [rows, days, stores]);
+  }, [rows, days, stores, fx, storeId]);
 
-  const maxNet = Math.max(...stats.ranked.map((r) => r.net), 1);
+  const maxNet = Math.max(...stats.ranked.map((r) => r.netSek ?? r.net), 1);
 
   return (
     <div className="space-y-3">
