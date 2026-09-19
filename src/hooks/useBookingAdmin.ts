@@ -31,14 +31,27 @@ export function useBookingProducts(search = "") {
   return useQuery({
     queryKey: ["booking_products", search],
     queryFn: async () => {
-      let q = db.from("products").select(PRODUCT_FIELDS).eq("active", true).order("name");
-      if (search.trim()) {
-        const s = `%${search.trim()}%`;
-        q = q.or(`name.ilike.${s},sku.ilike.${s},booking_display_name.ilike.${s}`);
+      const pageSize = 1000;
+      const products: BookingProduct[] = [];
+      for (let from = 0; ; from += pageSize) {
+        let q = db
+          .from("products")
+          .select(PRODUCT_FIELDS)
+          .eq("active", true)
+          .order("name")
+          .order("id")
+          .range(from, from + pageSize - 1);
+        if (search.trim()) {
+          const s = `%${search.trim()}%`;
+          q = q.or(`name.ilike.${s},sku.ilike.${s},booking_display_name.ilike.${s}`);
+        }
+        const { data, error } = await q;
+        if (error) throw error;
+        const rows = (data || []) as BookingProduct[];
+        products.push(...rows);
+        if (rows.length < pageSize) break;
       }
-      const { data, error } = await q.limit(500);
-      if (error) throw error;
-      return (data || []) as BookingProduct[];
+      return products;
     },
   });
 }

@@ -1389,18 +1389,9 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
     );
   };
   const { data: allStock = [] } = useAllStockByLocation();
-  const { data: allProducts } = useQuery({
-    queryKey: ["products", "alt-match"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, name, unit, family_id, category")
-        .eq("active", true)
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
+  // Återanvänd den sidindelade produktlistan. En direkt hämtning kapades vid
+  // 1 000 rader och dolde därför produkter sent i alfabetet, t.ex. Varmrökt.
+  const allProducts = products;
 
   /**
    * Syskonvaror: samma produktgrupp, annars samma namn frånsett storleks-

@@ -24,6 +24,7 @@ export function useProducts() {
           .select("*, suppliers(name)")
           .eq("active", true)
           .order("name")
+          .order("id")
           .range(from, from + PAGE - 1);
         if (error) throw error;
         const rows = (data ?? []) as ProductRow[];

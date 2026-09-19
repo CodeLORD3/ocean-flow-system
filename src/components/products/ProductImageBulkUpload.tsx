@@ -123,8 +123,21 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
   const pickFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const list = Array.from(files);
-    const { data } = await supabase.from("products").select("id, sku, name, image_url");
-    const all: ProductOption[] = (data ?? []).map((p) => ({
+    const pageSize = 1000;
+    const productRows: any[] = [];
+    for (let from = 0; ; from += pageSize) {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, sku, name, image_url")
+        .order("name")
+        .order("id")
+        .range(from, from + pageSize - 1);
+      if (error) throw error;
+      const page = data ?? [];
+      productRows.push(...page);
+      if (page.length < pageSize) break;
+    }
+    const all: ProductOption[] = productRows.map((p) => ({
       id: String(p.id),
       sku: String(p.sku ?? ""),
       name: String(p.name ?? ""),
