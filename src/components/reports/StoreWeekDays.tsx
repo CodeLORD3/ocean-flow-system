@@ -31,6 +31,8 @@ export function StoreWeekDays({
   /* Schweiziska butiker visar CHF, svenska kr. */
   const { data: stores = [] } = useStores();
   const cur = currencyLabel(stores.find((s) => s.id === storeId)?.currency);
+  /* Nätförsäljning på leveransdagen, vid sidan av kassan. */
+  const web = useWebSales(weekStart, weekEnd, storeId);
 
   if (isLoading) {
     return (
