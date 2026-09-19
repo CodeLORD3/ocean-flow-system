@@ -246,7 +246,11 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
           icon={Receipt}
           tone="spruce"
           trend={stats.trends.receipts}
-          hint={`${nf1(stats.now.count > 0 ? stats.now.receipts / stats.now.count : 0)} per dag`}
+          hint={
+            stats.webOrders > 0
+              ? `${nf(stats.storeReceipts)} i butik · ${nf(stats.webOrders)} webb`
+              : `${nf1(stats.now.count > 0 ? stats.now.receipts / stats.now.count : 0)} per dag`
+          }
         />
         <StatTile
           label="Bemanning"
@@ -283,8 +287,8 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
                       {i + 1}. {r.name}
                     </span>
                     <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
-                      {r.reports} rapporter · {nf(r.receipts)} kvitton
-                      {r.web ? ` · ${nf(r.web.orders)} webbordrar` : ""}
+                      {r.reports} rapporter · {nf(r.receipts)} köp
+                      {r.web ? ` (varav ${nf(r.web.orders)} webb)` : ""}
                     </span>
                   </div>
                   <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
