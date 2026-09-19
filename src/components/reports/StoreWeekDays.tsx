@@ -45,16 +45,19 @@ export function StoreWeekDays({
     return <p className="px-3 py-3 text-xs text-destructive">Kunde inte läsa dagsrapporterna.</p>;
   }
 
-  const rows = dayRowsFrom(weekDayList(weekStart, weekEnd), data ?? []);
+  const days = weekDayList(weekStart, weekEnd);
+  const rows = dayRowsFrom(days, data ?? []);
+  const webWeek = webTotal(web.data, storeId, days);
 
   return (
     <div className="mt-2 overflow-x-auto rounded-md border bg-background">
-      <table className="w-full min-w-[620px] text-xs">
+      <table className="w-full min-w-[700px] text-xs">
         <thead className="bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground">
           <tr>
             <th className="px-2 py-1.5 text-left font-medium">Dag</th>
             <th className="px-2 py-1.5 text-right font-medium">Brutto ({cur})</th>
             <th className="px-2 py-1.5 text-right font-medium">Nettoomsättning ({cur})</th>
+            <th className="px-2 py-1.5 text-right font-medium">Webb ({cur})</th>
             <th className="w-[11rem] px-2 py-1.5 text-left font-medium">Väder</th>
             <th className="px-2 py-1.5 text-right font-medium">Kvitton</th>
             <th className="px-2 py-1.5 text-right font-medium">Timmar</th>
@@ -62,7 +65,9 @@ export function StoreWeekDays({
           </tr>
         </thead>
         <tbody className="divide-y">
-          {rows.map((d) => (
+          {rows.map((d) => {
+            const w = web.data?.get(webKey(storeId, d.date));
+            return (
             <tr key={d.date} className={d.gross_sales == null ? "text-muted-foreground" : ""}>
               <td className="px-2 py-1.5">
                 <span className="font-medium">{d.weekday}</span>{" "}
@@ -74,6 +79,13 @@ export function StoreWeekDays({
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">
                 {num(d.net_sales) == null ? "—" : `${intFmt(d.net_sales)} ${cur}`}
               </td>
+              <td className="px-2 py-1.5 text-right font-mono tabular-nums">
+                {w ? (
+                  <span title={`${w.orders} webbordrar`}>{intFmt(w.amount)} {cur}</span>
+                ) : (
+                  "—"
+                )}
+              </td>
               <td className="w-[11rem] px-2 py-1.5">
                 <WeatherCell day={weather.data?.get(d.date)} loading={weather.isLoading} />
               </td>
@@ -83,9 +95,16 @@ export function StoreWeekDays({
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">{decFmt(d.staff_hours)}</td>
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">{intFmt(d.staff_shifts)}</td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
+      {webWeek.orders > 0 && (
+        <p className="px-2 py-2 text-[10px] text-muted-foreground">
+          Webbförsäljning (fiskskaldjur.se/.ch) denna vecka: {intFmt(webWeek.amount)} {cur} på {webWeek.orders} ordrar,
+          bokförda på leveransdagen. Räknas inte in i kassans dagsrapport.
+        </p>
+      )}
       {rows.every((d) => d.gross_sales == null) && (
         <p className="px-2 py-2 text-[10px] text-muted-foreground">Inga dagsrapporter sparade för veckan.</p>
       )}
