@@ -55,9 +55,29 @@ import { useDraftOrder } from "@/hooks/useStoreReplenishment";
 import { tomorrowSe } from "@/lib/storeReplenishment";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 
-type Step = "plats" | "rakna" | "klarplats" | "sammanfattning" | "klar";
+type Step = "plats" | "grupp" | "rakna" | "klarplats" | "sammanfattning" | "klar";
 
 const BLIND_KEY = "count-blind";
+
+/**
+ * Varugrupp ur varans namn: "Gravad lax i skivor", "Gravad lax helsida" och
+ * "Gravad lax lösvikt" hör ihop i gruppen "Gravad lax". Två första orden räcker
+ * för hur varorna heter i registret; hittas ingen granne används varugruppen.
+ */
+function nameGroupKey(name: string) {
+  const words = name
+    .toLowerCase()
+    .replace(/[(),.]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length < 2) return words[0] ?? "";
+  return `${words[0]} ${words[1]}`;
+}
+
+function nameGroupLabel(name: string) {
+  const words = name.replace(/[(),.]/g, " ").split(/\s+/).filter(Boolean);
+  return words.slice(0, 2).join(" ");
+}
 
 /** Stor primärknapp längst ner i tumzonen. */
 function BigButton({
@@ -114,6 +134,7 @@ export default function CountMobile() {
   const [locationName, setLocationName] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
+  const [groupKey, setGroupKey] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, number>>({});
   const [lastKey, setLastKey] = useState<string | null>(null);
   const [padOpen, setPadOpen] = useState(false);
@@ -153,17 +174,31 @@ export default function CountMobile() {
     setLocationName(pos.locationName);
     setSessionId(pos.sessionId);
     setIndex(pos.index ?? 0);
+    setGroupKey(pos.groupKey ?? null);
     if (draft?.values) setValues(draft.values);
-    setStep((pos.step === "rakna" || pos.step === "sammanfattning" ? pos.step : "rakna") as Step);
+    setStep(
+      (pos.step === "rakna" || pos.step === "sammanfattning" || pos.step === "grupp"
+        ? pos.step
+        : "grupp") as Step,
+    );
     setRestored(true);
   }, [restored, storeId, staffId]);
 
   /** Varje förflyttning sparas direkt, så telefonen alltid vet var man var. */
   useEffect(() => {
     if (!restored || !storeId || !locationId) return;
-    if (step !== "rakna" && step !== "sammanfattning") return;
-    writePosition({ storeId, staffId, locationId, locationName, sessionId, index, step });
-  }, [restored, storeId, staffId, locationId, locationName, sessionId, index, step]);
+    if (step !== "rakna" && step !== "sammanfattning" && step !== "grupp") return;
+    writePosition({
+      storeId,
+      staffId,
+      locationId,
+      locationName,
+      sessionId,
+      index,
+      step,
+      groupKey,
+    });
+  }, [restored, storeId, staffId, locationId, locationName, sessionId, index, step, groupKey]);
 
 
   /** Butikens beställning till imorgon — samma utkast för alla tryck. */
@@ -196,10 +231,49 @@ export default function CountMobile() {
     });
   }, [lines.data]);
 
-  const list = items.data ?? [];
+  const allItems = items.data ?? [];
+
+  /** Varorna samlade i grupper, så man ser vad som väntar innan man börjar. */
+  const groups = useMemo(() => {
+    const byKey = new Map<string, CountItem[]>();
+    for (const i of allItems) {
+      const k = nameGroupKey(i.productName);
+      if (!byKey.has(k)) byKey.set(k, []);
+      byKey.get(k)!.push(i);
+    }
+    const out: { key: string; label: string; items: CountItem[] }[] = [];
+    const singles: CountItem[] = [];
+    for (const [k, arr] of byKey) {
+      if (arr.length >= 2) out.push({ key: k, label: nameGroupLabel(arr[0].productName), items: arr });
+      else singles.push(...arr);
+    }
+    // Ensamma varor samlas under sin varugrupp så inget hamnar utanför.
+    const byCategory = new Map<string, CountItem[]>();
+    for (const i of singles) {
+      const c = i.category || "Övriga varor";
+      if (!byCategory.has(c)) byCategory.set(c, []);
+      byCategory.get(c)!.push(i);
+    }
+    for (const [c, arr] of byCategory) out.push({ key: `kat:${c}`, label: c, items: arr });
+    return out.sort((a, b) => a.label.localeCompare(b.label, "sv"));
+  }, [allItems]);
+
+  const activeGroup = groupKey ? groups.find((g) => g.key === groupKey) ?? null : null;
+  const list = activeGroup ? activeGroup.items : allItems;
   const current: CountItem | undefined = list[index];
   const countedKeys = Object.keys(values);
   const countedTotal = countedKeys.length;
+  const countedInGroup = (g: { items: CountItem[] }) =>
+    g.items.filter((i) => values[i.key] !== undefined).length;
+
+  /** Öppnar en grupp och startar på första varan som inte är räknad. */
+  const openGroup = (key: string) => {
+    const g = groups.find((x) => x.key === key);
+    setGroupKey(key);
+    const first = g ? g.items.findIndex((i) => values[i.key] === undefined) : -1;
+    setIndex(first >= 0 ? first : 0);
+    setStep("rakna");
+  };
 
   const setBlindMode = (v: boolean) => {
     setBlind(v);
@@ -229,6 +303,7 @@ export default function CountMobile() {
 
   const goNext = () => {
     if (index + 1 < list.length) setIndex(index + 1);
+    else if (activeGroup) setStep("grupp");
     else setStep("klarplats");
   };
 
@@ -295,7 +370,8 @@ export default function CountMobile() {
         fresh,
       });
       setSessionId(id);
-      setStep("rakna");
+      setGroupKey(null);
+      setStep("grupp");
     } catch (e: any) {
       toast.error(e?.message || "Kunde inte starta räkningen.");
     }
@@ -304,25 +380,25 @@ export default function CountMobile() {
   /** Rader att visa i sammanfattningen, med avvikelse mot systemets saldo. */
   const summary = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return list
+    return allItems
       .filter((i) => values[i.key] !== undefined)
       .filter((i) => !q || i.productName.toLowerCase().includes(q))
       .map((i) => ({ item: i, counted: values[i.key], diff: values[i.key] - i.expectedQty }));
-  }, [list, values, search]);
+  }, [allItems, values, search]);
 
   const diffCount = useMemo(
     () =>
-      list.filter(
+      allItems.filter(
         (i) => values[i.key] !== undefined && Math.abs(values[i.key] - i.expectedQty) >= 0.05,
       ).length,
-    [list, values],
+    [allItems, values],
   );
 
   const sendCount = async () => {
     if (!storeId || !sessionId || !locationId) return;
     setSending(true);
     try {
-      const rows = list
+      const rows = allItems
         .filter((i) => values[i.key] !== undefined)
         .map((i) => ({
           productId: i.productId,
@@ -364,9 +440,17 @@ export default function CountMobile() {
             switchTab("/inventory");
             return;
           }
-          const back = step === "rakna" ? "plats" : step === "sammanfattning" ? "rakna" : "plats";
+          const back =
+            step === "rakna"
+              ? "grupp"
+              : step === "sammanfattning"
+                ? "grupp"
+                : step === "grupp"
+                  ? "plats"
+                  : "plats";
           // Lämnar man platsvalet ska nästa öppning inte hoppa tillbaka in igen.
           if (back === "plats" && storeId) clearPosition(storeId, staffId);
+          if (back === "grupp") setGroupKey(null);
           setStep(back as Step);
         }}
         className="flex h-14 min-h-[56px] min-w-[56px] items-center gap-1 rounded-2xl px-2 text-[17px] font-semibold"
@@ -374,8 +458,11 @@ export default function CountMobile() {
         <ArrowLeft className="h-6 w-6 shrink-0" /> Tillbaka
       </button>
       {step === "rakna" && list.length > 0 && (
-        <span className="truncate text-[17px] font-semibold tabular-nums">
-          Vara {Math.min(index + 1, list.length)} av {list.length}
+        <span className="min-w-0 truncate text-center text-[17px] font-semibold">
+          {activeGroup && <span className="block truncate">{activeGroup.label}</span>}
+          <span className="block tabular-nums">
+            Vara {Math.min(index + 1, list.length)} av {list.length}
+          </span>
         </span>
       )}
       <div className="flex items-center gap-1">
@@ -469,6 +556,82 @@ export default function CountMobile() {
             </p>
           )}
           <PendingCountApprovals storeId={storeId} />
+        </div>
+      )}
+
+      {/* Steg 2b — välj varugrupp: rutor så man ser vad som väntar */}
+      {step === "grupp" && (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto py-4">
+            <p className="text-[16px] text-muted-foreground">{locationName}</p>
+            <h2 className="font-heading text-[22px] font-semibold">Vad räknar du nu?</h2>
+            <p className="text-[17px] leading-snug text-muted-foreground">
+              {countedTotal} av {allItems.length} varor räknade. Välj en grupp — du ser vilka varor
+              som ingår innan du börjar.
+            </p>
+            {items.isLoading && <p className="text-[18px] text-muted-foreground">Hämtar varor…</p>}
+            <div className="grid grid-cols-2 gap-3">
+              {groups.map((g) => {
+                const done = countedInGroup(g);
+                const klar = done >= g.items.length;
+                return (
+                  <button
+                    key={g.key}
+                    type="button"
+                    onClick={() => openGroup(g.key)}
+                    className={`flex min-h-[132px] flex-col justify-between rounded-2xl border p-3 text-left shadow-sm active:bg-muted ${
+                      klar
+                        ? "border-emerald-500/50 bg-emerald-50 dark:bg-emerald-500/10"
+                        : done > 0
+                          ? "border-amber-500/50 bg-amber-50 dark:bg-amber-500/10"
+                          : "border-border bg-card"
+                    }`}
+                  >
+                    <span className="min-w-0">
+                      <span className="block break-words font-heading text-[19px] font-semibold leading-tight">
+                        {g.label}
+                      </span>
+                      <span className="mt-1 block text-[16px] text-muted-foreground">
+                        {g.items.length} varor
+                      </span>
+                    </span>
+                    <span className="mt-2 block min-w-0">
+                      {g.items.slice(0, 3).map((i) => (
+                        <span
+                          key={i.key}
+                          className="block truncate text-[15px] leading-snug text-muted-foreground"
+                        >
+                          {i.productName}
+                        </span>
+                      ))}
+                      {g.items.length > 3 && (
+                        <span className="block text-[15px] text-muted-foreground">
+                          + {g.items.length - 3} till
+                        </span>
+                      )}
+                      <span
+                        className={`mt-1 block text-[16px] font-semibold ${
+                          klar ? "text-emerald-600" : done > 0 ? "text-amber-600" : "text-muted-foreground"
+                        }`}
+                      >
+                        {klar ? "Klar" : done > 0 ? `${done} av ${g.items.length} klara` : "Ej räknad"}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {!items.isLoading && groups.length === 0 && (
+              <p className="text-[18px] text-muted-foreground">
+                Det finns inga varor att räkna på den här platsen.
+              </p>
+            )}
+          </div>
+          <div className="shrink-0 space-y-3 pb-3">
+            <BigButton onClick={() => setStep("klarplats")} disabled={countedTotal === 0}>
+              <Check className="h-6 w-6" /> Klar med hyllan
+            </BigButton>
+          </div>
         </div>
       )}
 
@@ -639,8 +802,14 @@ export default function CountMobile() {
             <BigButton onClick={() => setStep("sammanfattning")}>
               <ChevronRight className="h-6 w-6" /> Titta igenom och skicka in
             </BigButton>
-            <BigButton variant="plain" onClick={() => setStep("rakna")}>
-              Tillbaka till varorna
+            <BigButton
+              variant="plain"
+              onClick={() => {
+                setGroupKey(null);
+                setStep("grupp");
+              }}
+            >
+              Tillbaka till grupperna
             </BigButton>
           </div>
         </div>
@@ -673,7 +842,13 @@ export default function CountMobile() {
                 <button
                   type="button"
                   onClick={() => {
-                    setIndex(list.findIndex((i) => i.key === item.key));
+                    // Hoppa till varan i rätt grupp, så räkningen fortsätter där.
+                    const g = groups.find((x) => x.items.some((i) => i.key === item.key));
+                    setGroupKey(g?.key ?? null);
+                    setIndex(
+                      g ? g.items.findIndex((i) => i.key === item.key)
+                        : allItems.findIndex((i) => i.key === item.key),
+                    );
                     setStep("rakna");
                   }}
                   className={`flex min-h-[72px] w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left ${
