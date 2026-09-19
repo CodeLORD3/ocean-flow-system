@@ -231,7 +231,7 @@ async function postSaleMovements(
   transactionId: string,
   lines: CheckoutLine[],
   items: Array<{ id: string }>,
-): Promise<{ written: number; unposted: number }> {
+): Promise<{ written: number; unposted: number; skipped?: string }> {
   const { data: tx } = await sb
     .from("pos_transactions")
     .select("store_id, receipt_no")
@@ -239,6 +239,12 @@ async function postSaleMovements(
     .maybeSingle();
   const storeId = tx?.store_id as string | null;
   if (!storeId) return { written: 0, unposted: lines.length };
+
+  if (!(await stockPostingEnabled(sb, storeId))) {
+    return { written: 0, unposted: 0, skipped: "lagerdrag_ej_aktivt_i_bolaget" };
+  }
+
+
 
   const itemIds = items.map((i) => i.id);
   const { data: already } = await sb
