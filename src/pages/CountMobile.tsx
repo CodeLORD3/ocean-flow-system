@@ -815,11 +815,24 @@ export default function CountMobile() {
                     Räknas i {current.unit === "st" ? "stycken" : "kg"}
                   </p>
                   {current.lotNumber && (
-                    <p className="text-[17px] font-medium leading-snug">
+                    <p
+                      className={`text-[17px] font-medium leading-snug ${
+                        expiryTone(current.bestBefore) === "passerad"
+                          ? "text-rose-600"
+                          : expiryTone(current.bestBefore) === "snart"
+                            ? "text-amber-600"
+                            : ""
+                      }`}
+                    >
                       Parti {current.lotNumber}
                       {bestBeforeText(current.bestBefore)
                         ? ` · ${bestBeforeText(current.bestBefore)}`
                         : ""}
+                      {expiryTone(current.bestBefore) === "passerad"
+                        ? " · bäst före har passerat"
+                        : expiryTone(current.bestBefore) === "snart"
+                          ? " · går ut snart"
+                          : ""}
                     </p>
                   )}
                   {!blind && (
