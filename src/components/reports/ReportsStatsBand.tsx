@@ -118,6 +118,8 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
     const webByStore = new Map<string, { net: number; sek: number | null; orders: number; noReport: number }>();
     let webNow = 0;
     let webBefore = 0;
+    let webOrdersNow = 0;
+    let webOrdersBefore = 0;
     const reportDays = new Set(rows.map((r) => `${r.store_id}|${r.report_date}`));
     (web ?? new Map()).forEach((row: { net: number; orders: number }, key: string) => {
       const [sid, date] = key.split("|");
@@ -127,9 +129,11 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
       const asBand = storeId ? row.net : rate == null ? row.net : row.net * rate;
       if (date < cut) {
         webBefore += asBand;
+        webOrdersBefore += row.orders;
         return;
       }
       webNow += asBand;
+      webOrdersNow += row.orders;
       const e = webByStore.get(sid) ?? { net: 0, sek: 0 as number | null, orders: 0, noReport: 0 };
       e.net += row.net;
       e.orders += row.orders;
@@ -140,6 +144,10 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
 
     now.net += webNow;
     before.net += webBefore;
+    /* Antal köp = kassans kvitton + förbetalda webbordrar i samma period. */
+    const storeReceipts = now.receipts;
+    now.receipts += webOrdersNow;
+    before.receipts += webOrdersBefore;
 
     const ranked = [...byStore.entries()]
       .map(([id, v]) => {
