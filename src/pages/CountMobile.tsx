@@ -458,8 +458,11 @@ export default function CountMobile() {
         <ArrowLeft className="h-6 w-6 shrink-0" /> Tillbaka
       </button>
       {step === "rakna" && list.length > 0 && (
-        <span className="truncate text-[17px] font-semibold tabular-nums">
-          Vara {Math.min(index + 1, list.length)} av {list.length}
+        <span className="min-w-0 truncate text-center text-[17px] font-semibold">
+          {activeGroup && <span className="block truncate">{activeGroup.label}</span>}
+          <span className="block tabular-nums">
+            Vara {Math.min(index + 1, list.length)} av {list.length}
+          </span>
         </span>
       )}
       <div className="flex items-center gap-1">
