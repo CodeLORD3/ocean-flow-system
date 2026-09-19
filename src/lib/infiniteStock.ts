@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
  * Uppstartsläge: lagret behandlas som obegränsat (∞) så att orderflödet
  * — packa, skicka, ta emot — kan köras innan riktiga saldon är inlästa.
  * Styrs av system_settings-nyckeln `infinite_stock` ({ enabled: boolean }).
- * Saknas raden är läget PÅ, eftersom inget lager är laddat ännu.
+ * Saknas raden är läget AV: riktiga saldon gäller, annars skulle lagret tyst
+ * fyllas på med justeringar utan underlag.
  */
 export const INFINITE_STOCK_KEY = "infinite_stock";
 
@@ -18,7 +19,7 @@ export async function isInfiniteStock(): Promise<boolean> {
     .eq("key", INFINITE_STOCK_KEY)
     .maybeSingle();
   const enabled = (data as any)?.value?.enabled;
-  cached = enabled === undefined || enabled === null ? true : !!enabled;
+  cached = enabled === true;
   return cached;
 }
 

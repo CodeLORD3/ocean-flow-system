@@ -268,10 +268,17 @@ export async function storeLocations(storeId: string) {
   return rows.sort((a, b) => (a.parent_location_id ? 1 : 0) - (b.parent_location_id ? 1 : 0));
 }
 
-/** Butikens primära lagerplats — där kundorderuttag bokförs. */
+/**
+ * Butikens lagerplats för kundorderuttag — alltid butikslagret (nivån "butik"
+ * utan förälder), aldrig första hyllan i listan.
+ */
 export async function primaryStoreLocationId(storeId: string) {
-  const locs = await storeLocations(storeId);
-  return locs[0]?.id ?? null;
+  try {
+    return await butikslagerId(storeId);
+  } catch {
+    const locs = await storeLocations(storeId);
+    return locs.find((l: any) => !l.parent_location_id)?.id ?? locs[0]?.id ?? null;
+  }
 }
 
 /**
