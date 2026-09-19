@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { IdCard, Plus, Search, AlertTriangle, ShieldCheck } from "lucide-react";
+import { IdCard, Plus, Search, AlertTriangle, ShieldCheck, KeyRound } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLegalEntities } from "@/hooks/useLegalEntities";
+import { useStaff } from "@/hooks/useStaff";
 import {
   Employee, employeeName, lasWarnings, useEmployees, useAllEmployments,
 } from "@/hooks/useEmployees";
