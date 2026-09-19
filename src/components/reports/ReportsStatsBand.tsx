@@ -238,6 +238,7 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
                     </span>
                     <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
                       {r.reports} rapporter · {nf(r.receipts)} kvitton
+                      {r.web ? ` · ${nf(r.web.orders)} webbordrar` : ""}
                     </span>
                   </div>
                   <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
@@ -252,6 +253,11 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
                   {curOf(r.id) !== "kr" && (
                     <p className="font-mono text-[10px] tabular-nums text-muted-foreground">
                       {r.netSek == null ? "kurs saknas" : `≈ ${nf(r.netSek)} kr`}
+                    </p>
+                  )}
+                  {r.web && (
+                    <p className="font-mono text-[10px] tabular-nums text-primary">
+                      webb {nf(r.web.amount)} {curOf(r.id)}
                     </p>
                   )}
                   <p className="font-mono text-[10px] tabular-nums text-destructive">svinn {nf(r.waste)} {curOf(r.id)}</p>
