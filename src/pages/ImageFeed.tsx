@@ -336,32 +336,42 @@ export default function ImageFeed() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {days.map(([key, items]) => (
-            <Card key={key}>
-              <CardHeader className="py-2.5">
-                <CardTitle className="text-sm font-heading flex items-center gap-2">
-                  {dayLabel(key)}
-                  <Badge variant="secondary" className="text-[10px]">
+        <div className="space-y-6">
+          {days.map(([key, items]) => {
+            const tone = dayTone(key);
+            const groups = groupBySource(items);
+            return (
+            <Card key={key} className="overflow-hidden">
+              <CardHeader
+                className={cn(
+                  "sticky top-0 z-10 border-b px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-opacity-90",
+                  tone.band,
+                )}
+              >
+                <CardTitle className="font-heading flex flex-wrap items-center gap-x-3 gap-y-1 text-xl font-bold sm:text-2xl">
+                  <span>{dayLabel(key)}</span>
+                  <span className="text-base font-semibold opacity-70 sm:text-lg">{dayDateLabel(key)}</span>
+                  <span className={cn("rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums", tone.chip)}>
                     {items.length} bild{items.length === 1 ? "" : "er"}
-                  </Badge>
+                  </span>
                 </CardTitle>
-                <CardDescription className="text-[11px]">
-                  {groupBySource(items).length} ställe
-                  {groupBySource(items).length === 1 ? "" : "n"} har lagt ut
+                <CardDescription className="text-sm font-medium opacity-80">
+                  {groups.length} ställe
+                  {groups.length === 1 ? "" : "n"} har lagt ut
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6 pt-4">
                 {/* En rubrik per ställe i stället för text på varje bild — grupperna blir lätta att skilja på */}
-                {groupBySource(items).map((g) => (
-                  <div key={g.id} className="space-y-2">
-                    <div className="flex items-center justify-between gap-2 border-b border-border pb-1.5">
-                      <div className="flex min-w-0 items-center gap-1.5">
-                        <Store className="h-3.5 w-3.5 shrink-0 text-primary" />
-                        <h3 className="truncate text-sm font-heading font-bold text-foreground">
+                {groups.map((g) => (
+                  <div key={g.id} className="space-y-3">
+                    <div className="flex items-center justify-between gap-2 border-b border-border pb-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className={cn("h-6 w-1.5 shrink-0 rounded-full", tone.bar)} aria-hidden="true" />
+                        <Store className="h-5 w-5 shrink-0 text-primary" />
+                        <h3 className="truncate text-lg font-heading font-bold text-foreground">
                           {g.name}
                         </h3>
-                        <Badge variant="outline" className="shrink-0 text-[10px] tabular-nums">
+                        <Badge variant="outline" className="shrink-0 text-xs tabular-nums">
                           {g.items.length}
                         </Badge>
                       </div>
@@ -369,7 +379,7 @@ export default function ImageFeed() {
                         <button
                           type="button"
                           onClick={() => peek(g.id, g.name)}
-                          className="shrink-0 text-[11px] font-medium text-primary hover:underline"
+                          className="shrink-0 text-sm font-semibold text-primary hover:underline"
                           aria-label={`Kika in hos ${g.name}`}
                         >
                           Kika in
