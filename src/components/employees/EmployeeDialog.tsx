@@ -183,9 +183,24 @@ export function EmployeeDialog({ open, employee, onOpenChange }: Props) {
         <Tabs defaultValue="person">
           <TabsList>
             <TabsTrigger value="person">Personuppgifter</TabsTrigger>
+            <TabsTrigger value="login" disabled={!employeeId}>Inloggning</TabsTrigger>
             <TabsTrigger value="employments" disabled={!employeeId}>Anställningar</TabsTrigger>
             <TabsTrigger value="docs" disabled={!employeeId}>Dokument</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="login" className="pt-4">
+            {employeeId && (
+              <EmployeeLoginSection
+                employeeId={employeeId}
+                staffId={employee?.staff_id ?? null}
+                firstName={f.first_name}
+                lastName={f.last_name}
+                email={f.email || employee?.email || null}
+                phone={f.phone}
+                profileImageUrl={employee?.profile_image_url ?? null}
+              />
+            )}
+          </TabsContent>
 
           <TabsContent value="person" className="space-y-4 pt-4">
             {pkRow}
