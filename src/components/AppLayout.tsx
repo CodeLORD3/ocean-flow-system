@@ -199,7 +199,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {access.includes("production") && (
         <DropdownMenuItem
           className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
-          onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/organisation"); }}
+          onClick={() => { setSite("production"); setActiveStore(null, null); sessionStorage.setItem("erp_last_route", "/organisation"); switchTab("/organisation"); }}
         >
           <Factory className="h-3 w-3" /> Grossist
         </DropdownMenuItem>
