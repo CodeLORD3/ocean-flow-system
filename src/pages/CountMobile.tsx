@@ -55,9 +55,29 @@ import { useDraftOrder } from "@/hooks/useStoreReplenishment";
 import { tomorrowSe } from "@/lib/storeReplenishment";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 
-type Step = "plats" | "rakna" | "klarplats" | "sammanfattning" | "klar";
+type Step = "plats" | "grupp" | "rakna" | "klarplats" | "sammanfattning" | "klar";
 
 const BLIND_KEY = "count-blind";
+
+/**
+ * Varugrupp ur varans namn: "Gravad lax i skivor", "Gravad lax helsida" och
+ * "Gravad lax lösvikt" hör ihop i gruppen "Gravad lax". Två första orden räcker
+ * för hur varorna heter i registret; hittas ingen granne används varugruppen.
+ */
+function nameGroupKey(name: string) {
+  const words = name
+    .toLowerCase()
+    .replace(/[(),.]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length < 2) return words[0] ?? "";
+  return `${words[0]} ${words[1]}`;
+}
+
+function nameGroupLabel(name: string) {
+  const words = name.replace(/[(),.]/g, " ").split(/\s+/).filter(Boolean);
+  return words.slice(0, 2).join(" ");
+}
 
 /** Stor primärknapp längst ner i tumzonen. */
 function BigButton({
