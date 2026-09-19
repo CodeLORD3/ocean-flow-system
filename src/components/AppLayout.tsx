@@ -191,7 +191,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {access.includes("wholesale") && (
         <DropdownMenuItem
           className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
-          onClick={() => { setSite("wholesale"); setActiveStore(null, null); switchTab("/organisation"); }}
+          onClick={() => { setSite("wholesale"); setActiveStore(null, null); sessionStorage.setItem("erp_last_route", "/organisation"); switchTab("/organisation"); }}
         >
           <Shield className="h-3 w-3" /> Admin
         </DropdownMenuItem>
