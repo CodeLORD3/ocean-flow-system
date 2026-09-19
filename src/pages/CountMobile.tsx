@@ -833,7 +833,13 @@ export default function CountMobile() {
                 <button
                   type="button"
                   onClick={() => {
-                    setIndex(list.findIndex((i) => i.key === item.key));
+                    // Hoppa till varan i rätt grupp, så räkningen fortsätter där.
+                    const g = groups.find((x) => x.items.some((i) => i.key === item.key));
+                    setGroupKey(g?.key ?? null);
+                    setIndex(
+                      g ? g.items.findIndex((i) => i.key === item.key)
+                        : allItems.findIndex((i) => i.key === item.key),
+                    );
                     setStep("rakna");
                   }}
                   className={`flex min-h-[72px] w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left ${
