@@ -149,6 +149,7 @@ Deno.serve(async (req) => {
       allocations: allocations.length,
       movements: movements.written,
       unposted_lines: movements.unposted,
+      stock_skipped: movements.skipped ?? null,
     });
   } catch (e) {
     if (e instanceof ValidationError) return errorResponse(e.message, 400);
