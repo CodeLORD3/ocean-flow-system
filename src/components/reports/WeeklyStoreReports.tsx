@@ -110,6 +110,21 @@ function Metrics({ row, comparison, cur = "kr" }: { row: WeeklyStoreReport | Wee
   );
 }
 
+/** Nätförsäljning (fiskskaldjur.se/.ch) för butiken under veckan, bokförd på leveransdagen. */
+function StoreWebWeek({
+  storeId, weekStart, weekEnd, cur,
+}: { storeId: string; weekStart: string; weekEnd: string; cur: string }) {
+  const web = useWebSales(weekStart, weekEnd, storeId);
+  const total = webTotal(web.data, storeId, weekDayList(weekStart, weekEnd));
+  if (web.isLoading || total.orders === 0) return null;
+  return (
+    <p className="mt-2 text-[10px] text-muted-foreground">
+      Varav webbförsäljning: <span className="font-mono tabular-nums">{money(total.amount, cur)}</span> på {total.orders} ordrar
+      — bokförd på leveransdagen, utanför kassans dagsrapport.
+    </p>
+  );
+}
+
 export function WeeklyStoreReportsSection() {
   const { data: stores = [] } = useStores(true);
   const storeReports = useWeeklyStoreReports();
