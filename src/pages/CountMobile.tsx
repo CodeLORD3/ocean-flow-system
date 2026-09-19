@@ -840,7 +840,12 @@ export default function CountMobile() {
                     {current.productName}
                   </h2>
                   <p className="text-[18px] leading-snug text-muted-foreground">
-                    Räknas i {current.unit === "st" ? "stycken" : "kg"}
+                    Räknas i{" "}
+                    {packFor(current)
+                      ? packLabel(packFor(current)!)
+                      : current.unit === "st"
+                        ? "stycken"
+                        : "kg"}
                   </p>
                   {current.lotNumber && (
                     <p
@@ -865,12 +870,16 @@ export default function CountMobile() {
                   )}
                   {!blind && (
                     <p className="text-[17px] leading-snug text-muted-foreground">
-                      Systemet har {fmtQty(current.expectedQty, current.unit)}
+                      Systemet har{" "}
+                      {packFor(current)
+                        ? jarsText(current.expectedQty, packFor(current)!)
+                        : fmtQty(current.expectedQty, current.unit)}
                     </p>
                   )}
-                  {notes[current.key] && (
+                  {noteFor(current) && (
                     <p className="break-words text-[16px] italic text-muted-foreground">
-                      {notes[current.key]}
+                      {noteFor(current)}
+                      {noteMeta(current) ? ` — ${noteMeta(current)}` : ""}
                     </p>
                   )}
                 </div>
