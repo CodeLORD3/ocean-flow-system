@@ -343,6 +343,7 @@ export default function CountMobile() {
         rows,
       });
       clearDraft(storeId, locationId, staffId);
+      clearPosition(storeId, staffId);
       setConfirmOpen(false);
       setStep("klar");
       places.refetch();
