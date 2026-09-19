@@ -135,8 +135,8 @@ Deno.serve(async (req) => {
     }
 
     // 4. Lagerrörelser: försäljningen ut ur butikens försäljningslager, FEFO.
-    //    Enda skrivvägen till saldon är stock_movements. Idempotent: rörelser
-    //    skrivs bara om kvittot inte redan har några.
+    //    Enda skrivvägen till saldon är stock_movements. Idempotent per kvitto.
+    //    Gäller bara schweiziska butiker — svenska bolag stödjer det inte ännu.
     const movements = await postSaleMovements(sb, tx.id, lines, insertedItems);
 
     return jsonResponse({
