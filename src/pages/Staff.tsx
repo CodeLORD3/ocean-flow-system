@@ -189,11 +189,12 @@ export default function Staff() {
     }
 
     setCreatingLoginFor(s.id);
-    // Tillfälligt lösenord: förnamnet + Fisk2026! (t.ex. "LeonieFisk2026!").
-    // Enkla varianter som "Leonie123" nekas som för svaga.
+    // Tillfälligt lösenord: förnamnet + Fisk + fyra slumpsiffror + "!".
+    // Kända, enkla varianter nekas av kontrollen mot läckta lösenord.
     const rawFirst = String(s.first_name || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z]/g, "");
     const baseName = rawFirst.length >= 2 ? rawFirst : "Makrill";
-    const password = `${baseName.charAt(0).toUpperCase()}${baseName.slice(1).toLowerCase()}Fisk2026!`;
+    const rnd = String(Math.floor(1000 + Math.random() * 9000));
+    const password = `${baseName.charAt(0).toUpperCase()}${baseName.slice(1).toLowerCase()}Fisk${rnd}!`;
     const { data, error } = await supabase.functions.invoke("staff-account-email", {
       body: { staff_id: s.id, email, password },
     });
