@@ -291,6 +291,15 @@ export default function CountMobile() {
   const saveProductNote = useSaveProductNote();
   /** Vilken vara anteckningsrutan gäller — räknevyn eller sammanfattningen. */
   const [noteTarget, setNoteTarget] = useState<CountItem | null>(null);
+  /** Anteckningen som visas: den du skrivit nu, annars varans sparade. */
+  const noteFor = (item: CountItem) =>
+    notes[item.key] ?? productNotes.data?.get(item.productId)?.note ?? "";
+  const noteMeta = (item: CountItem) => {
+    if (notes[item.key] !== undefined) return "";
+    const n = productNotes.data?.get(item.productId);
+    if (!n?.byName) return "";
+    return n.at ? `${n.byName}, ${timeText(n.at) ?? ""}`.trim() : n.byName;
+  };
 
   const places = useCountPlaces(storeId);
   const items = useCountItems(locationId);
