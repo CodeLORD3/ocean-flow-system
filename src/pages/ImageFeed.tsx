@@ -487,28 +487,27 @@ function ImageGrid({
                 </div>
               )}
             </div>
-            <div className="p-2 space-y-1">
-              <div className="flex items-center justify-between gap-1.5 min-w-0">
+            <div className="space-y-2 p-3">
+              <div className="flex min-w-0 items-center justify-between gap-2">
                 {!showSource ? (
                   <span className="sr-only">{img.sourceName}</span>
                 ) : img.sourceKind === "store" && allowedIds.has(img.sourceId) ? (
-
                   <button
                     type="button"
                     onClick={() => onPeek(img.sourceId, img.sourceName)}
                     title={`Kika in hos ${img.sourceName}`}
-                    className="flex min-w-0 items-center gap-1 truncate rounded-full border border-border px-1.5 py-0.5 text-[11px] font-semibold hover:border-primary hover:text-primary transition-colors"
+                    className="flex min-w-0 items-center gap-1.5 truncate rounded-full border border-border px-2.5 py-1 text-sm font-semibold transition-colors hover:border-primary hover:text-primary"
                   >
-                    <Store className="h-3 w-3 shrink-0 text-primary" />
+                    <Store className="h-4 w-4 shrink-0 text-primary" />
                     <span className="truncate">{img.sourceName}</span>
                   </button>
                 ) : (
-                  <Badge variant="outline" className="gap-1 text-[11px] font-semibold max-w-full truncate">
-                    <Store className="h-3 w-3 shrink-0 text-primary" />
+                  <Badge variant="outline" className="max-w-full gap-1.5 truncate py-1 text-sm font-semibold">
+                    <Store className="h-4 w-4 shrink-0 text-primary" />
                     <span className="truncate">{img.sourceName}</span>
                   </Badge>
                 )}
-                <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                <span className="shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">
                   {new Date(img.created_at).toLocaleTimeString("sv-SE", {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -516,28 +515,27 @@ function ImageGrid({
                 </span>
               </div>
 
-
-              {img.caption && <p className="text-[11px] text-foreground line-clamp-2">{img.caption}</p>}
+              {img.caption && <p className="line-clamp-2 text-sm text-foreground">{img.caption}</p>}
               <div className="flex items-center justify-between gap-2">
-                <span className="flex min-w-0 items-center gap-1 truncate text-[10px] text-muted-foreground">
+                <span className="flex min-w-0 items-center gap-1.5 truncate text-sm text-muted-foreground">
                   {img.uploaded_by_name ? (
                     <StaffName name={img.uploaded_by_name} />
                   ) : (
                     "Okänd uppladdare"
                   )}
                 </span>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex shrink-0 items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => onToggleFavorite(img.id, !isFav)}
                     aria-label={isFav ? "Ta bort favorit" : "Favoritmarkera"}
                     className={cn(
-                      "h-6 min-w-6 px-1 grid place-items-center rounded-md border border-border",
+                      "grid h-9 min-w-9 place-items-center rounded-md border border-border px-2",
                       isFav ? "text-destructive" : "text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    <span className="flex items-center gap-0.5 text-[10px] tabular-nums">
-                      <Heart className={cn("h-3 w-3", isFav && "fill-current")} />
+                    <span className="flex items-center gap-1 text-sm tabular-nums">
+                      <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
                       {img.favoriteCount || ""}
                     </span>
                   </button>
@@ -545,10 +543,10 @@ function ImageGrid({
                     type="button"
                     onClick={() => onOpen(img.id)}
                     aria-label="Kommentarer"
-                    className="h-6 min-w-6 px-1 grid place-items-center rounded-md border border-border text-muted-foreground hover:text-foreground"
+                    className="grid h-9 min-w-9 place-items-center rounded-md border border-border px-2 text-muted-foreground hover:text-foreground"
                   >
-                    <span className="flex items-center gap-0.5 text-[10px] tabular-nums">
-                      <MessageCircle className="h-3 w-3" />
+                    <span className="flex items-center gap-1 text-sm tabular-nums">
+                      <MessageCircle className="h-4 w-4" />
                       {img.commentCount || ""}
                     </span>
                   </button>
