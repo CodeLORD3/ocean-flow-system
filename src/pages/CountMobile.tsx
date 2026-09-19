@@ -870,6 +870,9 @@ export default function CountMobile() {
             <BigButton onClick={() => setStep("sammanfattning")}>
               <ChevronRight className="h-6 w-6" /> Titta igenom och skicka in
             </BigButton>
+            <BigButton variant="plain" onClick={() => setStep("extra")}>
+              <Plus className="h-6 w-6" /> Lägg till vara som saknas
+            </BigButton>
             <BigButton
               variant="plain"
               onClick={() => {
@@ -878,6 +881,68 @@ export default function CountMobile() {
               }}
             >
               Tillbaka till grupperna
+            </BigButton>
+          </div>
+        </div>
+      )}
+
+      {/* Missad vara — står i hyllan men fanns inte i listan */}
+      {step === "extra" && (
+        <div className="flex min-h-0 flex-1 flex-col py-4">
+          <h2 className="font-heading text-[22px] font-semibold leading-tight">
+            Stod något mer i hyllan?
+          </h2>
+          <p className="mt-1 text-[18px] leading-snug text-muted-foreground">
+            Sök upp varan och räkna den. Den läggs till sist i räkningen.
+          </p>
+          <div className="relative mt-3 shrink-0">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={extraSearch}
+              onChange={(e) => setExtraSearch(e.target.value)}
+              placeholder="Sök vara"
+              className="h-16 min-h-[56px] pl-11 text-[18px]"
+              autoFocus
+            />
+          </div>
+          <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto">
+            {extraSearch.trim().length < 2 && (
+              <p className="text-[18px] text-muted-foreground">Skriv minst två bokstäver.</p>
+            )}
+            {extraSearch.trim().length >= 2 && extraHits.isLoading && (
+              <p className="text-[18px] text-muted-foreground">Söker …</p>
+            )}
+            {extraSearch.trim().length >= 2 &&
+              !extraHits.isLoading &&
+              (extraHits.data ?? []).length === 0 && (
+                <p className="text-[18px] text-muted-foreground">Ingen vara med det namnet.</p>
+              )}
+            {(extraHits.data ?? []).map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => addExtra(p)}
+                className="flex min-h-[64px] w-full items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left active:bg-muted"
+              >
+                <Plus className="h-6 w-6 shrink-0 text-primary" />
+                <span className="min-w-0">
+                  <span className="block truncate text-[18px] font-semibold">{p.name}</span>
+                  <span className="block truncate text-[16px] text-muted-foreground">
+                    {p.category || "Utan grupp"} · {p.unit || "kg"}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 shrink-0 space-y-3 pb-3">
+            <BigButton
+              variant="plain"
+              onClick={() => {
+                setExtraSearch("");
+                setStep("klarplats");
+              }}
+            >
+              Klar, inget mer
             </BigButton>
           </div>
         </div>
