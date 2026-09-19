@@ -48,6 +48,7 @@ export default function Employees() {
     return (employees ?? []).filter((e) => {
       if (status === "active" && !e.is_active) return false;
       if (status === "inactive" && e.is_active) return false;
+      if (status === "no_login" && e.staff_id && withLogin.has(e.staff_id)) return false;
       const ems = byEmployee.get(e.id) ?? [];
       if (entity !== "all" && !ems.some((em) => em.legal_entity_id === entity)) return false;
       if (!needle) return true;
@@ -57,7 +58,7 @@ export default function Employees() {
       ].join(" ").toLowerCase();
       return hay.includes(needle);
     });
-  }, [employees, byEmployee, q, entity, status]);
+  }, [employees, byEmployee, q, entity, status, withLogin]);
 
   const warningCount = useMemo(
     () => employments.reduce((sum, em) => sum + lasWarnings(em).length, 0),
