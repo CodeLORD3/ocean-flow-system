@@ -24,14 +24,11 @@ export interface PackMode {
 }
 
 /**
- * Burkläge bara i schweiziska bolag (Zollikon, Morges) och bara för såser och
- * röror som väger per burk. Svenska butiker räknar kilo som tidigare.
+ * Burkarna finns som egna varor i varuregistret ("Räksallad 1hg", "… 2hg"),
+ * så räkningen sker alltid i varans egen enhet. Ingen omräkning från kilo.
  */
-export function packMode(item: PackModeInput, country?: string | null): PackMode {
+export function packMode(item: PackModeInput, _country?: string | null): PackMode {
   const packKg = Number(item.weightPerPiece) > 0 ? Number(item.weightPerPiece) : DEFAULT_PACK_KG;
-  const ch = (country || "").trim().toUpperCase() === "CH";
-  const kgVara = (item.unit || "kg").toLowerCase() !== "st";
-  if (ch && kgVara && isSauceCategory(item.category)) return { mode: "burk", packKg };
   return { mode: "kg", packKg };
 }
 
