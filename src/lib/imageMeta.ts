@@ -24,3 +24,10 @@ export function dayLabel(key: string): string {
   if (Number.isNaN(d.getTime())) return key;
   return d.toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" });
 }
+
+/** Veckodag och datum för en datumnyckel, t.ex. "lör 19 sep". */
+export function dayDateLabel(key: string): string {
+  const d = new Date(`${key}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return key;
+  return d.toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" });
+}

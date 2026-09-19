@@ -11,7 +11,8 @@ import { useImageFeed, type FeedImage } from "@/hooks/useImageFeed";
 import { useMyImageFavorites, useToggleImageFavorite } from "@/hooks/useEntityImages";
 import { useAllowedStores, useSwitchStore } from "@/components/StoreSwitcher";
 import { useNavigate } from "react-router-dom";
-import { dayKey, dayLabel, initialsOf } from "@/lib/imageMeta";
+import { dayKey, dayLabel, dayDateLabel, initialsOf } from "@/lib/imageMeta";
+import { dayTone } from "@/lib/dayColor";
 import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { focalStyle } from "@/lib/imageFocal";
 import { cn } from "@/lib/utils";
@@ -298,7 +299,7 @@ export default function ImageFeed() {
       )}
 
       {isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="aspect-[4/3] w-full rounded-lg" />
           ))}
@@ -336,32 +337,42 @@ export default function ImageFeed() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {days.map(([key, items]) => (
-            <Card key={key}>
-              <CardHeader className="py-2.5">
-                <CardTitle className="text-sm font-heading flex items-center gap-2">
-                  {dayLabel(key)}
-                  <Badge variant="secondary" className="text-[10px]">
+        <div className="space-y-6">
+          {days.map(([key, items]) => {
+            const tone = dayTone(key);
+            const groups = groupBySource(items);
+            return (
+            <Card key={key} className="overflow-hidden">
+              <CardHeader
+                className={cn(
+                  "sticky top-0 z-10 border-b px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-opacity-90",
+                  tone.band,
+                )}
+              >
+                <CardTitle className="font-heading flex flex-wrap items-center gap-x-3 gap-y-1 text-xl font-bold sm:text-2xl">
+                  <span>{dayLabel(key)}</span>
+                  <span className="text-base font-semibold opacity-70 sm:text-lg">{dayDateLabel(key)}</span>
+                  <span className={cn("rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums", tone.chip)}>
                     {items.length} bild{items.length === 1 ? "" : "er"}
-                  </Badge>
+                  </span>
                 </CardTitle>
-                <CardDescription className="text-[11px]">
-                  {groupBySource(items).length} ställe
-                  {groupBySource(items).length === 1 ? "" : "n"} har lagt ut
+                <CardDescription className="text-sm font-medium opacity-80">
+                  {groups.length} ställe
+                  {groups.length === 1 ? "" : "n"} har lagt ut
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6 pt-4">
                 {/* En rubrik per ställe i stället för text på varje bild — grupperna blir lätta att skilja på */}
-                {groupBySource(items).map((g) => (
-                  <div key={g.id} className="space-y-2">
-                    <div className="flex items-center justify-between gap-2 border-b border-border pb-1.5">
-                      <div className="flex min-w-0 items-center gap-1.5">
-                        <Store className="h-3.5 w-3.5 shrink-0 text-primary" />
-                        <h3 className="truncate text-sm font-heading font-bold text-foreground">
+                {groups.map((g) => (
+                  <div key={g.id} className="space-y-3">
+                    <div className="flex items-center justify-between gap-2 border-b border-border pb-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className={cn("h-6 w-1.5 shrink-0 rounded-full", tone.bar)} aria-hidden="true" />
+                        <Store className="h-5 w-5 shrink-0 text-primary" />
+                        <h3 className="truncate text-lg font-heading font-bold text-foreground">
                           {g.name}
                         </h3>
-                        <Badge variant="outline" className="shrink-0 text-[10px] tabular-nums">
+                        <Badge variant="outline" className="shrink-0 text-xs tabular-nums">
                           {g.items.length}
                         </Badge>
                       </div>
@@ -369,7 +380,7 @@ export default function ImageFeed() {
                         <button
                           type="button"
                           onClick={() => peek(g.id, g.name)}
-                          className="shrink-0 text-[11px] font-medium text-primary hover:underline"
+                          className="shrink-0 text-sm font-semibold text-primary hover:underline"
                           aria-label={`Kika in hos ${g.name}`}
                         >
                           Kika in
@@ -389,7 +400,8 @@ export default function ImageFeed() {
                 ))}
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -445,7 +457,7 @@ function ImageGrid({
 }) {
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((img) => {
         const isFav = favoriteIds.includes(img.id);
         return (
@@ -475,28 +487,27 @@ function ImageGrid({
                 </div>
               )}
             </div>
-            <div className="p-2 space-y-1">
-              <div className="flex items-center justify-between gap-1.5 min-w-0">
+            <div className="space-y-2 p-3">
+              <div className="flex min-w-0 items-center justify-between gap-2">
                 {!showSource ? (
                   <span className="sr-only">{img.sourceName}</span>
                 ) : img.sourceKind === "store" && allowedIds.has(img.sourceId) ? (
-
                   <button
                     type="button"
                     onClick={() => onPeek(img.sourceId, img.sourceName)}
                     title={`Kika in hos ${img.sourceName}`}
-                    className="flex min-w-0 items-center gap-1 truncate rounded-full border border-border px-1.5 py-0.5 text-[11px] font-semibold hover:border-primary hover:text-primary transition-colors"
+                    className="flex min-w-0 items-center gap-1.5 truncate rounded-full border border-border px-2.5 py-1 text-sm font-semibold transition-colors hover:border-primary hover:text-primary"
                   >
-                    <Store className="h-3 w-3 shrink-0 text-primary" />
+                    <Store className="h-4 w-4 shrink-0 text-primary" />
                     <span className="truncate">{img.sourceName}</span>
                   </button>
                 ) : (
-                  <Badge variant="outline" className="gap-1 text-[11px] font-semibold max-w-full truncate">
-                    <Store className="h-3 w-3 shrink-0 text-primary" />
+                  <Badge variant="outline" className="max-w-full gap-1.5 truncate py-1 text-sm font-semibold">
+                    <Store className="h-4 w-4 shrink-0 text-primary" />
                     <span className="truncate">{img.sourceName}</span>
                   </Badge>
                 )}
-                <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                <span className="shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">
                   {new Date(img.created_at).toLocaleTimeString("sv-SE", {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -504,28 +515,27 @@ function ImageGrid({
                 </span>
               </div>
 
-
-              {img.caption && <p className="text-[11px] text-foreground line-clamp-2">{img.caption}</p>}
+              {img.caption && <p className="line-clamp-2 text-sm text-foreground">{img.caption}</p>}
               <div className="flex items-center justify-between gap-2">
-                <span className="flex min-w-0 items-center gap-1 truncate text-[10px] text-muted-foreground">
+                <span className="flex min-w-0 items-center gap-1.5 truncate text-sm text-muted-foreground">
                   {img.uploaded_by_name ? (
                     <StaffName name={img.uploaded_by_name} />
                   ) : (
                     "Okänd uppladdare"
                   )}
                 </span>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex shrink-0 items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => onToggleFavorite(img.id, !isFav)}
                     aria-label={isFav ? "Ta bort favorit" : "Favoritmarkera"}
                     className={cn(
-                      "h-6 min-w-6 px-1 grid place-items-center rounded-md border border-border",
+                      "grid h-9 min-w-9 place-items-center rounded-md border border-border px-2",
                       isFav ? "text-destructive" : "text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    <span className="flex items-center gap-0.5 text-[10px] tabular-nums">
-                      <Heart className={cn("h-3 w-3", isFav && "fill-current")} />
+                    <span className="flex items-center gap-1 text-sm tabular-nums">
+                      <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
                       {img.favoriteCount || ""}
                     </span>
                   </button>
@@ -533,10 +543,10 @@ function ImageGrid({
                     type="button"
                     onClick={() => onOpen(img.id)}
                     aria-label="Kommentarer"
-                    className="h-6 min-w-6 px-1 grid place-items-center rounded-md border border-border text-muted-foreground hover:text-foreground"
+                    className="grid h-9 min-w-9 place-items-center rounded-md border border-border px-2 text-muted-foreground hover:text-foreground"
                   >
-                    <span className="flex items-center gap-0.5 text-[10px] tabular-nums">
-                      <MessageCircle className="h-3 w-3" />
+                    <span className="flex items-center gap-1 text-sm tabular-nums">
+                      <MessageCircle className="h-4 w-4" />
                       {img.commentCount || ""}
                     </span>
                   </button>
