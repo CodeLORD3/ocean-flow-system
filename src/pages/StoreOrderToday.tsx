@@ -38,7 +38,8 @@ export default function StoreOrderToday() {
   const { activeStoreId: selectedStoreId } = useSite();
   const { activeUser } = useActiveUser();
   const { staff } = useStaffAuth();
-  const wantedDate = useMemo(() => tomorrowSe(), []);
+  const delivery = useNextDeliveryDay(selectedStoreId);
+  const wantedDate = delivery.date;
   const draft = useDraftOrder(selectedStoreId, wantedDate);
   const orders = useStoreOrders(selectedStoreId);
   const settings = useStoreOrderSettings(selectedStoreId);
