@@ -274,6 +274,7 @@ export default function CountMobile() {
   const lines = useCountLines(sessionId);
   const openSession = useOpenCountSession();
   const saveLine = useSaveCountLine();
+  const queue = useCountQueue();
   const removeLine = useRemoveCountLine();
 
   /** Sparade rader från databasen fylls in i räkningen. */
@@ -621,6 +622,14 @@ export default function CountMobile() {
   return (
     <div className="mx-auto flex h-full min-h-0 w-full max-w-[520px] flex-col overflow-x-hidden px-4">
       {header}
+
+      {/* Sparstatus — syns bara när något ligger kvar i telefonen */}
+      {(queue.data ?? 0) > 0 && (
+        <div className="mt-1 rounded-2xl border border-amber-500/60 bg-amber-50 px-4 py-3 text-[17px] font-semibold leading-snug dark:bg-amber-500/10">
+          {queue.data} inmatningar väntar på att sparas. Du kan fortsätta räkna — de skickas
+          automatiskt när telefonen har täckning.
+        </div>
+      )}
 
 
       {/* Steg 2 — välj plats */}
