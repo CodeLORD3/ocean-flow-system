@@ -101,6 +101,19 @@ export function useCountPlaces(storeId?: string | null) {
       const byLocation = new Map<string, any>();
       for (const s of (sessions || []) as any[]) if (s.location_id) byLocation.set(s.location_id, s);
 
+      // Senast godkända räkning per plats — visas som "Senast räknad".
+      const { data: reports } = await supabase
+        .from("inventory_reports")
+        .select("location_id, approved_at")
+        .eq("store_id", storeId!)
+        .eq("status", "godkand")
+        .not("approved_at", "is", null)
+        .order("approved_at", { ascending: false });
+      const lastCounted = new Map<string, string>();
+      for (const r of (reports || []) as any[])
+        if (r.location_id && !lastCounted.has(r.location_id))
+          lastCounted.set(r.location_id, r.approved_at);
+
       return (locs || []).map((l: any) => {
         const s = byLocation.get(l.id);
         return {
@@ -110,6 +123,7 @@ export function useCountPlaces(storeId?: string | null) {
           sessionId: s?.id ?? null,
           startedAt: s?.started_at ?? null,
           lastActivityAt: s?.last_activity_at ?? null,
+          lastCountedAt: lastCounted.get(l.id) ?? null,
           countedRows: Number(s?.stock_count_lines?.[0]?.count ?? 0),
           claimedBy: s?.claimed_by ?? null,
           claimedByName: s?.claimed_by ? names.get(s.claimed_by) ?? null : null,
