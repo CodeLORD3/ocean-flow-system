@@ -858,6 +858,17 @@ export default function CountMobile() {
                 />
               </div>
 
+              {/* Rimlighetskontroll: säger inte vad systemet har, bara att siffran sticker ut */}
+              {current.expectedQty > 0.05 &&
+                values[current.key] !== undefined &&
+                (values[current.key] > current.expectedQty * 5 ||
+                  values[current.key] < current.expectedQty / 5) && (
+                  <p className="mt-3 shrink-0 rounded-xl bg-amber-100 px-4 py-3 text-[17px] font-medium text-amber-900">
+                    Siffran ser ovanlig ut. Kontrollera att du räknat rätt enhet
+                    och rätt hylla innan du går vidare.
+                  </p>
+                )}
+
               {/* En rad med två sekundärknappar */}
               <div className="mt-3 grid shrink-0 grid-cols-2 gap-3">
                 <button
