@@ -135,7 +135,9 @@ export default function SchedulePlanner() {
   const { data: competencies = [] } = useEmployeeCompetencies();
   const { data: attestations = [] } = useAttestations(storeId || null, week[0], week[6]);
   const { data: requests = [] } = useShiftRequests(shifts.map((s) => s.id));
-  const { data: absenceRequests = [] } = useAbsenceRequests(undefined, storeId || null);
+  /* Frånvaron hämtas för alla enheter: personal kan schemaläggas överallt, så en
+     semester registrerad på hemmabutiken måste spärra passet även i en annan butik. */
+  const { data: absenceRequests = [] } = useAbsenceRequests(undefined, null);
   const { data: absenceTypes = [] } = useAbsenceTypes();
   const { data: overheadPct = 0 } = usePayrollOverhead();
   const { data: weekdayRevenue } = useWeekdayRevenue(storeId || null, week[0]);
@@ -157,7 +159,9 @@ export default function SchedulePlanner() {
     () => new Map(employees.map((employee) => [employee.id, `${employee.first_name} ${employee.last_name}`])),
     [employees],
   );
-  const pendingAbsenceRequests = absenceRequests.filter((request) => request.status === "pending");
+  const pendingAbsenceRequests = absenceRequests.filter(
+    (request) => request.status === "pending" && (!storeId || request.store_id === storeId),
+  );
 
   /** Frånvaroblock per anställd — både beslutade och väntande spärrar passet. */
   const absencesByEmployee = useMemo(() => {
@@ -231,6 +235,21 @@ export default function SchedulePlanner() {
     });
   };
 
+  /**
+   * Spärr innan ett pass sparas: frånvaro, överlapp, dygnsvila och övriga
+   * blockerande regler får aldrig passeras tyst, oavsett hur passet skapas.
+   */
+  const blockersFor = (shift: Shift): RuleCheck[] =>
+    checksFor(shift).filter((c) => c.severity === "block");
+
+  const blockedBySchedule = (shift: Shift) => {
+    const blockers = blockersFor(shift);
+    if (blockers.length === 0) return false;
+    const who = shift.employee_id ? nameById.get(shift.employee_id) ?? "Personen" : "Personen";
+    toast.error(`${who}: ${blockers[0].label}`, { description: blockers[0].detail });
+    return true;
+  };
+
   const draftCount = shifts.filter((s) => s.status === "draft").length;
   const openCount = shifts.filter((s) => !s.employee_id && s.status !== "cancelled").length;
   const plannedMinutes = shifts
@@ -251,6 +270,7 @@ export default function SchedulePlanner() {
   const moveShift = async (shift: Shift, employeeKey: string, date: string) => {
     const employeeId = employeeKey === OPEN_ROW ? null : employeeKey;
     if (shift.status === "published" && !confirm("Passet är publicerat. Flytta ändå?")) return;
+    if (blockedBySchedule({ ...shift, employee_id: employeeId, date })) return;
     try {
       await saveShift.mutateAsync({ ...shift, employee_id: employeeId, date, status: "draft", published_at: null });
       toast.success("Passet flyttat och sparat som utkast");
@@ -1488,6 +1508,7 @@ export default function SchedulePlanner() {
                   toast.error("Datum och tider krävs");
                   return;
                 }
+                if (blockedBySchedule(editing as Shift)) return;
                 try {
                   await saveShift.mutateAsync({
                     ...editing,
@@ -1539,6 +1560,7 @@ export default function SchedulePlanner() {
                     <IndustryButton
                       disabled={s.blocked || !suggestFor}
                       onClick={async () => {
+                        if (blockedBySchedule({ ...(suggestFor as Shift), employee_id: s.employee_id })) return;
                         await saveShift.mutateAsync({ ...(suggestFor as Shift), employee_id: s.employee_id });
                         setSuggestFor(null);
                         setEditing(null);
