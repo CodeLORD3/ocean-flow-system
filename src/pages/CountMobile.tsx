@@ -899,6 +899,7 @@ export default function CountMobile() {
                 <CountStepper
                   value={values[current.key] ?? 0}
                   unit={current.unit}
+                  packKg={packFor(current)}
                   onChange={(v) => setValues({ ...values, [current.key]: v })}
                 />
               </div>
@@ -919,10 +920,13 @@ export default function CountMobile() {
                 <button
                   type="button"
                   onClick={() => {
+                    const pack = packFor(current);
                     setPadValue(
-                      values[current.key] !== undefined
-                        ? String(values[current.key]).replace(".", ",")
-                        : "",
+                      values[current.key] === undefined
+                        ? ""
+                        : pack
+                          ? String(kgToJars(values[current.key], pack))
+                          : String(values[current.key]).replace(".", ","),
                     );
                     setPadOpen(true);
                   }}
@@ -933,7 +937,10 @@ export default function CountMobile() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setNoteOpen(true)}
+                  onClick={() => {
+                    setNoteTarget(current);
+                    setNoteOpen(true);
+                  }}
                   className="flex h-14 min-h-[56px] items-center justify-center gap-2 rounded-2xl border border-border bg-card px-2 text-[18px] font-semibold active:bg-muted"
                 >
                   <MessageSquarePlus className="h-6 w-6 shrink-0" />
