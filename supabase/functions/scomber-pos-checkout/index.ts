@@ -159,6 +159,26 @@ Deno.serve(async (req) => {
 
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
 
+/**
+ * Kassaköp drar lager bara i Schweiz (Zollikon och Morges) just nu. De svenska
+ * bolagen stödjer inte funktionen ännu — där bokförs inga rörelser från kassan.
+ */
+async function stockPostingEnabled(sb: any, storeId: string): Promise<boolean> {
+  const { data: store } = await sb
+    .from("stores")
+    .select("legal_entity_id")
+    .eq("id", storeId)
+    .maybeSingle();
+  const entity = store?.legal_entity_id as string | null;
+  if (!entity) return false;
+  const { data: le } = await sb
+    .from("legal_entities")
+    .select("country")
+    .eq("legal_entity_id", entity)
+    .maybeSingle();
+  return String(le?.country ?? "").toUpperCase() === "CH";
+}
+
 /** Butikens försäljningslager — lagerplatsen kvittot drar ifrån. */
 async function salesLocation(sb: any, storeId: string): Promise<string | null> {
   const { data } = await sb
