@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { recordMovement, currentStaffId } from "@/lib/stockLedger";
+import { butikslagerId } from "@/lib/locations";
 
 /**
  * Kundbeställningar (privatpersoner).
