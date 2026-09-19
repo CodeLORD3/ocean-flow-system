@@ -556,6 +556,82 @@ export default function CountMobile() {
         </div>
       )}
 
+      {/* Steg 2b — välj varugrupp: rutor så man ser vad som väntar */}
+      {step === "grupp" && (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto py-4">
+            <p className="text-[16px] text-muted-foreground">{locationName}</p>
+            <h2 className="font-heading text-[22px] font-semibold">Vad räknar du nu?</h2>
+            <p className="text-[17px] leading-snug text-muted-foreground">
+              {countedTotal} av {allItems.length} varor räknade. Välj en grupp — du ser vilka varor
+              som ingår innan du börjar.
+            </p>
+            {items.isLoading && <p className="text-[18px] text-muted-foreground">Hämtar varor…</p>}
+            <div className="grid grid-cols-2 gap-3">
+              {groups.map((g) => {
+                const done = countedInGroup(g);
+                const klar = done >= g.items.length;
+                return (
+                  <button
+                    key={g.key}
+                    type="button"
+                    onClick={() => openGroup(g.key)}
+                    className={`flex min-h-[132px] flex-col justify-between rounded-2xl border p-3 text-left shadow-sm active:bg-muted ${
+                      klar
+                        ? "border-emerald-500/50 bg-emerald-50 dark:bg-emerald-500/10"
+                        : done > 0
+                          ? "border-amber-500/50 bg-amber-50 dark:bg-amber-500/10"
+                          : "border-border bg-card"
+                    }`}
+                  >
+                    <span className="min-w-0">
+                      <span className="block break-words font-heading text-[19px] font-semibold leading-tight">
+                        {g.label}
+                      </span>
+                      <span className="mt-1 block text-[16px] text-muted-foreground">
+                        {g.items.length} varor
+                      </span>
+                    </span>
+                    <span className="mt-2 block min-w-0">
+                      {g.items.slice(0, 3).map((i) => (
+                        <span
+                          key={i.key}
+                          className="block truncate text-[15px] leading-snug text-muted-foreground"
+                        >
+                          {i.productName}
+                        </span>
+                      ))}
+                      {g.items.length > 3 && (
+                        <span className="block text-[15px] text-muted-foreground">
+                          + {g.items.length - 3} till
+                        </span>
+                      )}
+                      <span
+                        className={`mt-1 block text-[16px] font-semibold ${
+                          klar ? "text-emerald-600" : done > 0 ? "text-amber-600" : "text-muted-foreground"
+                        }`}
+                      >
+                        {klar ? "Klar" : done > 0 ? `${done} av ${g.items.length} klara` : "Ej räknad"}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {!items.isLoading && groups.length === 0 && (
+              <p className="text-[18px] text-muted-foreground">
+                Det finns inga varor att räkna på den här platsen.
+              </p>
+            )}
+          </div>
+          <div className="shrink-0 space-y-3 pb-3">
+            <BigButton onClick={() => setStep("klarplats")} disabled={countedTotal === 0}>
+              <Check className="h-6 w-6" /> Klar med hyllan
+            </BigButton>
+          </div>
+        </div>
+      )}
+
       {/* Steg 3 — räkna: allt ryms på en skärm, knappzonen alltid synlig */}
       {step === "rakna" && (
         <div className="flex min-h-0 flex-1 flex-col">
