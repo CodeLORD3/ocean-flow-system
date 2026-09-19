@@ -58,6 +58,62 @@ export function clearDraft(storeId: string, locationId: string, staffId: string 
   }
 }
 
+/**
+ * Var i räkningen personen befann sig senast. Sparas i telefonen så att en
+ * släckt skärm eller omstartad app aldrig kastar bort arbetet — man kommer
+ * tillbaka till samma lagerplats och samma vara.
+ */
+export interface CountPosition {
+  storeId: string;
+  staffId: string | null;
+  locationId: string;
+  locationName: string | null;
+  sessionId: string | null;
+  index: number;
+  step: string;
+  updatedAt: string;
+}
+
+const posKey = (storeId: string, staffId: string | null) =>
+  `count-position:${storeId}:${staffId ?? "okand"}`;
+
+/** Äldre än det här räknas som en avslutad arbetsdag och återupptas inte. */
+const POSITION_MAX_AGE_MS = 12 * 60 * 60 * 1000;
+
+export function readPosition(storeId: string, staffId: string | null): CountPosition | null {
+  try {
+    const raw = localStorage.getItem(posKey(storeId, staffId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CountPosition;
+    if (!parsed?.locationId) return null;
+    if ((parsed.staffId ?? null) !== (staffId ?? null)) return null;
+    const age = Date.now() - new Date(parsed.updatedAt).getTime();
+    if (!Number.isFinite(age) || age > POSITION_MAX_AGE_MS) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function writePosition(pos: Omit<CountPosition, "updatedAt">) {
+  try {
+    localStorage.setItem(
+      posKey(pos.storeId, pos.staffId),
+      JSON.stringify({ ...pos, updatedAt: new Date().toISOString() }),
+    );
+  } catch {
+    /* fullt utrymme får aldrig stoppa räkningen */
+  }
+}
+
+export function clearPosition(storeId: string, staffId: string | null) {
+  try {
+    localStorage.removeItem(posKey(storeId, staffId));
+  } catch {
+    /* ignoreras */
+  }
+}
+
 export interface SubmitRow {
   productId: string;
   productName: string;
