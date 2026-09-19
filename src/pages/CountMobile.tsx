@@ -35,12 +35,15 @@ import {
 import {
   bestBeforeText,
   clearDraft,
+  clearPosition,
   diffText,
   fmtQty,
   readDraft,
+  readPosition,
   submitCount,
   timeText,
   writeDraft,
+  writePosition,
 } from "@/lib/mobileCount";
 import NumberPad from "@/components/inventory/mobile/NumberPad";
 import CountStepper from "@/components/inventory/mobile/CountStepper";
@@ -132,6 +135,36 @@ export default function CountMobile() {
   useEffect(() => {
     if (!hasSeenIntro()) setIntroOpen(true);
   }, []);
+
+  /**
+   * Fortsätt där man var. Släckt skärm eller omstartad app ska aldrig betyda
+   * att man börjar om från noll — lagerplats, vara och siffror plockas upp igen.
+   */
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    if (restored || !storeId || !staffId) return;
+    const pos = readPosition(storeId, staffId);
+    if (!pos) {
+      setRestored(true);
+      return;
+    }
+    const draft = readDraft(storeId, pos.locationId, staffId);
+    setLocationId(pos.locationId);
+    setLocationName(pos.locationName);
+    setSessionId(pos.sessionId);
+    setIndex(pos.index ?? 0);
+    if (draft?.values) setValues(draft.values);
+    setStep((pos.step === "rakna" || pos.step === "sammanfattning" ? pos.step : "rakna") as Step);
+    setRestored(true);
+  }, [restored, storeId, staffId]);
+
+  /** Varje förflyttning sparas direkt, så telefonen alltid vet var man var. */
+  useEffect(() => {
+    if (!restored || !storeId || !locationId) return;
+    if (step !== "rakna" && step !== "sammanfattning") return;
+    writePosition({ storeId, staffId, locationId, locationName, sessionId, index, step });
+  }, [restored, storeId, staffId, locationId, locationName, sessionId, index, step]);
+
 
   /** Butikens beställning till imorgon — samma utkast för alla tryck. */
   const wantedDate = useMemo(() => tomorrowSe(), []);
@@ -310,6 +343,7 @@ export default function CountMobile() {
         rows,
       });
       clearDraft(storeId, locationId, staffId);
+      clearPosition(storeId, staffId);
       setConfirmOpen(false);
       setStep("klar");
       places.refetch();
@@ -325,11 +359,16 @@ export default function CountMobile() {
     <div className="-mx-4 flex shrink-0 items-center justify-between gap-1 border-b border-border bg-background px-2 py-1">
       <button
         type="button"
-        onClick={() =>
-          step === "plats"
-            ? switchTab("/inventory")
-            : setStep(step === "rakna" ? "plats" : step === "sammanfattning" ? "rakna" : "plats")
-        }
+        onClick={() => {
+          if (step === "plats") {
+            switchTab("/inventory");
+            return;
+          }
+          const back = step === "rakna" ? "plats" : step === "sammanfattning" ? "rakna" : "plats";
+          // Lämnar man platsvalet ska nästa öppning inte hoppa tillbaka in igen.
+          if (back === "plats" && storeId) clearPosition(storeId, staffId);
+          setStep(back as Step);
+        }}
         className="flex h-14 min-h-[56px] min-w-[56px] items-center gap-1 rounded-2xl px-2 text-[17px] font-semibold"
       >
         <ArrowLeft className="h-6 w-6 shrink-0" /> Tillbaka
