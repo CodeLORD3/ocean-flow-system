@@ -58,6 +58,9 @@ import CountNoteSheet from "@/components/inventory/mobile/CountNoteSheet";
 import OrderSheet from "@/components/inventory/mobile/OrderSheet";
 import { useDraftOrder } from "@/hooks/useStoreReplenishment";
 import { useNextDeliveryDay } from "@/hooks/useNextDeliveryDay";
+import { useStoreCountry } from "@/hooks/useStoreCountry";
+import { useProductNotes, useSaveProductNote } from "@/hooks/useProductNotes";
+import { jarsText, jarsToKg, kgToJars, packLabel, packMode } from "@/lib/countPack";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 
 type Step = "plats" | "grupp" | "rakna" | "extra" | "klarplats" | "sammanfattning" | "klar";
@@ -300,7 +303,7 @@ export default function CountMobile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, sku, unit, category, cost_price, image_url")
+        .select("id, name, sku, unit, category, cost_price, image_url, weight_per_piece")
         .eq("active", true)
         .ilike("name", `%${extraSearch.trim()}%`)
         .order("name")
@@ -383,6 +386,7 @@ export default function CountMobile() {
       imageUrl: p.image_url ?? null,
       category: p.category ?? null,
       costPrice: Number(p.cost_price) || 0,
+      weightPerPiece: p.weight_per_piece != null ? Number(p.weight_per_piece) : null,
       expectedQty: 0,
       lotNumber: null,
       bestBefore: null,
