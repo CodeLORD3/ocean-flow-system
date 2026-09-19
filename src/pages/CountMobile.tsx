@@ -510,6 +510,12 @@ export default function CountMobile() {
     [allItems, values],
   );
 
+  /** Varor som hoppats över — de måste hanteras innan räkningen skickas in. */
+  const missing = useMemo(
+    () => allItems.filter((i) => values[i.key] === undefined),
+    [allItems, values],
+  );
+
   const sendCount = async () => {
     if (!storeId || !sessionId || !locationId) return;
     setSending(true);
