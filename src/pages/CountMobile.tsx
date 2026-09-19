@@ -583,7 +583,7 @@ export default function CountMobile() {
       >
         <ArrowLeft className="h-6 w-6 shrink-0" />
         <span className="whitespace-nowrap">
-          {step === "rakna" || step === "sammanfattning" ? "Alla varugrupper" : "Tillbaka"}
+          {step === "rakna" || step === "sammanfattning" ? "Varugrupper" : "Tillbaka"}
         </span>
       </button>
       {step === "rakna" && list.length > 0 && (
