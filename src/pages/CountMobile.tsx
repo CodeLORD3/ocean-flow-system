@@ -261,8 +261,9 @@ export default function CountMobile() {
   }, [restored, storeId, staffId, locationId, locationName, sessionId, index, step, groupKey]);
 
 
-  /** Butikens beställning till imorgon — samma utkast för alla tryck. */
-  const wantedDate = useMemo(() => tomorrowSe(), []);
+  /** Butikens nästa leveransdag — samma utkast för alla tryck. */
+  const delivery = useNextDeliveryDay(storeId);
+  const wantedDate = delivery.date;
   const draftOrder = useDraftOrder(storeId, wantedDate);
   const orderedByProduct = useMemo(() => {
     const map = new Map<string, any>();
