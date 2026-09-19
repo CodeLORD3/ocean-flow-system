@@ -71,6 +71,8 @@ export interface CountPosition {
   sessionId: string | null;
   index: number;
   step: string;
+  /** Vilken varugrupp man räknar i, om någon är vald. */
+  groupKey?: string | null;
   updatedAt: string;
 }
 
