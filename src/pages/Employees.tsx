@@ -155,6 +155,15 @@ export default function Employees() {
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-1">
+                    {e.staff_id && withLogin.has(e.staff_id) ? (
+                      <Badge className="gap-1 bg-emerald-600 text-white hover:bg-emerald-600">
+                        <KeyRound className="h-3 w-3" /> Inloggning
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="gap-1 text-muted-foreground">
+                        <KeyRound className="h-3 w-3" /> Ingen inloggning
+                      </Badge>
+                    )}
                     {e.pnr_masked && (
                       <Badge variant="outline" className="gap-1 font-mono tabular-nums">
                         <ShieldCheck className="h-3 w-3" /> {e.pnr_masked}
