@@ -212,7 +212,7 @@ export function StorePhotoStrip({
             {img.uploaded_by_name && (
               <>
                 <span className="shrink-0">·</span>
-                <StaffFace name={img.uploaded_by_name} className="h-4 w-4 ring-1 ring-white/50" />
+                <StaffFace name={img.uploaded_by_name} className="h-7 w-7 ring-1 ring-white/50" />
                 <span className="truncate">{img.uploaded_by_name}</span>
               </>
             )}

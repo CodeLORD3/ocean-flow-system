@@ -150,7 +150,7 @@ export function StaffDetailDialog({ open, onOpenChange, staff }: Props) {
 
         {/* Profile header */}
         <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+          <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
             {staff.profile_image_url ? (
               <img src={thumbUrl(staff.profile_image_url, THUMB_AVATAR)} alt={fullName} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
             ) : (

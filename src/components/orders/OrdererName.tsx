@@ -25,7 +25,7 @@ export function OrdererName({ name, className = "", size = "xs" }: Props) {
     return full === target || norm(s.first_name ?? "") === target;
   });
 
-  const dim = size === "sm" ? "h-5 w-5" : "h-4 w-4";
+  const dim = size === "sm" ? "h-8 w-8" : "h-7 w-7";
   const initials = `${(match?.first_name ?? name)[0] ?? ""}${match?.last_name?.[0] ?? ""}`.toUpperCase();
 
   return (
@@ -33,7 +33,7 @@ export function OrdererName({ name, className = "", size = "xs" }: Props) {
       <span className="truncate">{name}</span>
       <Avatar className={`${dim} shrink-0 border border-grid-line/70`}>
         {match?.profile_image_url && <AvatarImage src={match.profile_image_url} alt={`Profilbild ${name}`} />}
-        <AvatarFallback className="text-[8px] font-semibold">{initials}</AvatarFallback>
+        <AvatarFallback className="text-[10px] font-semibold">{initials}</AvatarFallback>
       </Avatar>
     </span>
   );

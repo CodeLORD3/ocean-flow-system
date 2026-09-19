@@ -37,7 +37,7 @@ export function StaffPicker({ storeId, staffId, onChange, placeholder = "Välj p
           return (
             <SelectItem key={s.id} value={s.id}>
               <span className="flex items-center gap-2">
-                <Avatar className="h-6 w-6 border border-grid-line/70">
+                <Avatar className="h-9 w-9 border border-grid-line/70">
                   {s.profile_image_url && <AvatarImage src={s.profile_image_url} alt={`Profilbild ${name}`} />}
                   <AvatarFallback className="text-[9px] font-semibold">{initials}</AvatarFallback>
                 </Avatar>

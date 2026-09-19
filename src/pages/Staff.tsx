@@ -380,7 +380,7 @@ export default function Staff() {
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
                       {s.profile_image_url ? (
                         <img src={s.profile_image_url} alt={`${s.first_name} ${s.last_name}`} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
                       ) : (
@@ -505,7 +505,7 @@ export default function Staff() {
             {/* Profile image */}
             <div className="flex items-center gap-4">
               <div
-                className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden cursor-pointer shrink-0 relative group"
+                className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden cursor-pointer shrink-0 relative group"
                 onClick={() => fileRef.current?.click()}
               >
                 {previewUrl ? (

@@ -89,7 +89,7 @@ function AccountMenu({ portalItems }: { portalItems?: React.ReactNode }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 gap-2 px-2">
-          <Avatar className="h-6 w-6">
+          <Avatar className="h-9 w-9">
             {staff?.profile_image_url && <AvatarImage src={thumbUrl(staff.profile_image_url, THUMB_AVATAR)} />}
             <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{initials}</AvatarFallback>
           </Avatar>

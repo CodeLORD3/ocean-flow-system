@@ -137,7 +137,7 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
                     <img
                       src={thumbUrl(person.profile_image_url, THUMB_AVATAR)}
                       alt={`${person.first_name} ${person.last_name}`}
-                      className="h-3.5 w-3.5 rounded-full object-cover"
+                      className="h-5 w-5 rounded-full object-cover"
                      loading="lazy" decoding="async" />
                   ) : (
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />

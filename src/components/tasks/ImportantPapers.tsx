@@ -329,7 +329,7 @@ function PersonSelect({
         {hits.map((s) => (
           <SelectItem key={s.id} value={s.id}>
             <span className="flex items-center gap-2">
-              <StaffAvatar name={name(s)} imageUrl={s.profile_image_url ?? null} className="h-7 w-7" />
+              <StaffAvatar name={name(s)} imageUrl={s.profile_image_url ?? null} className="h-9 w-9" />
               {name(s)}
             </span>
           </SelectItem>
