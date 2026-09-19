@@ -547,6 +547,13 @@ export function CustomerOrderCard({
                       · Packad av <OrdererName name={order.packed_by_name} size="sm" />
                     </span>
                   )}
+                  <OrderApprovedBy
+                    approvedBy={(order as any).approved_by}
+                    approvedAt={(order as any).approved_at}
+                  />
+                  {order.packed_at && (
+                    <span>· packad {new Date(order.packed_at).toLocaleString("sv-SE")}</span>
+                  )}
                 </div>
                 <OrderAuditLine
                   stacked
