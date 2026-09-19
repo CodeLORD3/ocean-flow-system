@@ -19,6 +19,7 @@ import { useLegalEntities } from "@/hooks/useLegalEntities";
 import { isValidPnr, maskPnr } from "@/lib/personnummer";
 import { EmploymentForm } from "./EmploymentForm";
 import { EmployeeDocuments } from "./EmployeeDocuments";
+import { EmployeeLoginSection } from "./EmployeeLoginSection";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
