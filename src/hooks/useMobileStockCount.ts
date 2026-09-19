@@ -47,6 +47,8 @@ export interface CountPlace {
   countedRows: number;
   claimedBy: string | null;
   claimedByName: string | null;
+  /** När platsen senast räknades och godkändes. */
+  lastCountedAt: string | null;
 }
 
 /** Butikens lagerplatser med antal varor och ev. påbörjad räkning. */
