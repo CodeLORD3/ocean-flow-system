@@ -5,17 +5,32 @@ import { logActivity } from "@/hooks/useActivityLog";
 
 export type Product = Tables<"products">;
 
+type ProductRow = Product & { suppliers: { name: string } | null; parent_product_id: string | null };
+
+/**
+ * Hämtar ALLA aktiva produkter. Databasen returnerar max 1000 rader per anrop,
+ * därför sidindelas hämtningen — annars försvinner varor i slutet av alfabetet
+ * (t.ex. Rökta räkor, Varmrökt lax) ur butikernas beställningslistor.
+ */
 export function useProducts() {
   return useQuery({
     queryKey: ["products"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*, suppliers(name)")
-        .eq("active", true)
-        .order("name");
-      if (error) throw error;
-      return data as (Product & { suppliers: { name: string } | null; parent_product_id: string | null })[];
+      const PAGE = 1000;
+      const all: ProductRow[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from("products")
+          .select("*, suppliers(name)")
+          .eq("active", true)
+          .order("name")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        const rows = (data ?? []) as ProductRow[];
+        all.push(...rows);
+        if (rows.length < PAGE) break;
+      }
+      return all;
     },
   });
 }
