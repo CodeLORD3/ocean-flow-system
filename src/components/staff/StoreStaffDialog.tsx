@@ -98,7 +98,7 @@ export function StoreStaffDialog({ open, onOpenChange, storeId, storeName }: Pro
                   disabled={locked || savingId === s.id}
                   onCheckedChange={() => toggle(s, explicit || home ? true : false)}
                 />
-                <div className="h-7 w-7 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center shrink-0">
+                <div className="h-9 w-9 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center shrink-0">
                   {s.profile_image_url ? (
                     <img src={thumbUrl(s.profile_image_url, THUMB_AVATAR)} alt={`${s.first_name} ${s.last_name}`} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
                   ) : (

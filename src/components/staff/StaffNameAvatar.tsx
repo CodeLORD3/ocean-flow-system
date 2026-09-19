@@ -41,7 +41,7 @@ export function StaffFace({
     <span
       className={cn(
         "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted font-semibold text-muted-foreground",
-        "h-5 w-5 text-[8px]",
+        "h-7 w-7 text-[11px]",
         className,
       )}
       aria-hidden="true"

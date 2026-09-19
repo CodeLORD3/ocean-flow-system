@@ -175,7 +175,7 @@ export function TaskRow({
             if (!name) return <span className="text-[11px] text-muted-foreground">Ingen tilldelad</span>;
             return (
               <>
-                <StaffAvatar name={name} imageUrl={img} className="h-8 w-8 shrink-0" />
+                <StaffAvatar name={name} imageUrl={img} className="h-9 w-9 shrink-0" />
                 <span className={cn("truncate text-[11px]", task.done ? "text-emerald-600" : "text-muted-foreground")}>
                   {task.done ? "Klar · " : ""}
                   {name}
@@ -284,7 +284,7 @@ export function TaskRow({
                   {staffOptions.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       <span className="inline-flex items-center gap-2">
-                        <StaffAvatar name={p.name} imageUrl={p.imageUrl} className="h-7 w-7" />
+                        <StaffAvatar name={p.name} imageUrl={p.imageUrl} className="h-9 w-9" />
                         {p.name}
                       </span>
                     </SelectItem>

@@ -92,14 +92,14 @@ export function OnDutyAvatars({
               }}
               aria-label={`${p.name} — ${STATUS_LABEL[p.status]}`}
               className={cn(
-                "relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 transition-transform hover:z-10 hover:scale-110",
+                "relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 transition-transform hover:z-10 hover:scale-110",
                 TONE[p.status] ?? TONE.working,
               )}
             >
               {p.imageUrl ? (
                 <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
               ) : (
-                <span className="text-[8px] font-semibold leading-none">{initials(p.name)}</span>
+                <span className="text-[10px] font-semibold leading-none">{initials(p.name)}</span>
               )}
             </button>
           </TooltipTrigger>
@@ -132,7 +132,7 @@ export function OnDutyAvatars({
                 onSelect();
               }}
               aria-label={`Ytterligare ${rest.length} personer`}
-              className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[8px] font-semibold text-muted-foreground ring-2 ring-border transition-transform hover:z-10 hover:scale-110"
+              className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground ring-2 ring-border transition-transform hover:z-10 hover:scale-110"
             >
               +{rest.length}
             </button>

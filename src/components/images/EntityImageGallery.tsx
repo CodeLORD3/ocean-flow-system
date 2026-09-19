@@ -532,7 +532,7 @@ export function EntityImageGallery({
               <span className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-1">
                 <StaffFace
                   name={img.uploaded_by_name}
-                  className="h-5 w-5 bg-primary/10 text-[9px] text-primary sm:h-4 sm:w-4 sm:text-[8px]"
+                  className="h-7 w-7 bg-primary/10 text-[11px] text-primary sm:h-7 sm:w-7"
                 />
                 <span className="truncate text-[11px] text-muted-foreground sm:text-[10px]">
                   {img.uploaded_by_name || "Okänd"}

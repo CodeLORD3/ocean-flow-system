@@ -149,7 +149,7 @@ export default function StaffProfile() {
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center gap-4">
               <div className="relative h-20 w-20 shrink-0">
-                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                <div className="h-28 w-28 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
                   {staff.profile_image_url ? (
                     <img src={staff.profile_image_url} alt={fullName} className="h-full w-full object-cover" loading="lazy" decoding="async" />
                   ) : (
