@@ -844,6 +844,10 @@ export function CustomerOrderRow({
                     <span className="italic">inte packad</span>
                   )}
                 </span>
+                <OrderApprovedBy
+                  approvedBy={(order as any).approved_by}
+                  approvedAt={(order as any).approved_at}
+                />
               </div>
 
               <div className="flex flex-wrap gap-1.5">
