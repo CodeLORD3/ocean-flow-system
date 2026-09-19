@@ -1080,7 +1080,51 @@ export default function CountMobile() {
               <p className="text-[18px] text-muted-foreground">Inget räknat ännu.</p>
             )}
           </div>
-          <BigButton onClick={() => setConfirmOpen(true)} disabled={countedTotal === 0}>
+          {missing.length > 0 && (
+            <div className="rounded-3xl border border-amber-500/60 bg-amber-50 p-4 dark:bg-amber-500/10">
+              <p className="text-[19px] font-semibold leading-tight">
+                {missing.length} varor är inte räknade
+              </p>
+              <p className="mt-1 text-[17px] leading-snug text-muted-foreground">
+                Varje vara måste ha en siffra innan räkningen skickas in. Räkna dem, eller
+                markera dem som att de inte finns i hyllan.
+              </p>
+              <div className="mt-3 space-y-3">
+                <BigButton
+                  onClick={() => {
+                    const first = missing[0];
+                    const g = groups.find((x) => x.items.some((i) => i.key === first.key));
+                    setGroupKey(g?.key ?? null);
+                    setIndex(
+                      g
+                        ? g.items.findIndex((i) => i.key === first.key)
+                        : allItems.findIndex((i) => i.key === first.key),
+                    );
+                    setStep("rakna");
+                  }}
+                >
+                  <ChevronRight className="h-6 w-6" /> Räkna dem nu
+                </BigButton>
+                <BigButton
+                  variant="plain"
+                  onClick={async () => {
+                    const next = { ...values };
+                    for (const item of missing) {
+                      await store(item, 0, "Finns inte här");
+                      next[item.key] = 0;
+                    }
+                    setValues(next);
+                  }}
+                >
+                  <XCircle className="h-6 w-6" /> Finns inte i hyllan
+                </BigButton>
+              </div>
+            </div>
+          )}
+          <BigButton
+            onClick={() => setConfirmOpen(true)}
+            disabled={countedTotal === 0 || missing.length > 0}
+          >
             <Send className="h-6 w-6" /> Skicka in räkningen
           </BigButton>
         </div>
