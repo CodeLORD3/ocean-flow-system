@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
     } else {
       const res = await authAdmin("/users", "POST", {
         email,
-        password: password ?? "Byt123!",
+        password: password ?? `Makrill${crypto.randomUUID().slice(0, 8)}!`,
         email_confirm: true,
         user_metadata: { first_name: staffRow.first_name, last_name: staffRow.last_name },
       });
