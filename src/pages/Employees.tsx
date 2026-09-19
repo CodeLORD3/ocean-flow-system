@@ -19,12 +19,19 @@ export default function Employees() {
   const { data: employees, isLoading } = useEmployees(true);
   const { data: employments = [] } = useAllEmployments();
   const { data: entities = [] } = useLegalEntities();
+  const { data: staffRows = [] } = useStaff();
 
   const [q, setQ] = useState("");
   const [entity, setEntity] = useState("all");
   const [status, setStatus] = useState("active");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<Employee | null>(null);
+
+  // Vilka personalkort har ett riktigt konto? Registret visar det direkt i listan.
+  const withLogin = useMemo(
+    () => new Set(staffRows.filter((s: any) => s.user_id).map((s: any) => s.id as string)),
+    [staffRows],
+  );
 
   const byEmployee = useMemo(() => {
     const m = new Map<string, typeof employments>();
