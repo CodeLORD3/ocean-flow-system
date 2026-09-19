@@ -272,8 +272,9 @@ export default function BugReports() {
                       </Button>
                     )}
                     {state?.updated_by && (
-                      <span className="text-[10px] text-muted-foreground">
-                        Senast ändrad av {state.updated_by}
+                      <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                        Senast ändrad av
+                        <StaffName name={state.updated_by} faceClassName="h-5 w-5 text-[9px]" />
                         {state.updated_at
                           ? ` · ${format(new Date(state.updated_at), "d MMM HH:mm", { locale: sv })}`
                           : ""}

@@ -595,7 +595,11 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
                     </td>
                     <td className="truncate py-2 pr-2 text-xs sm:text-sm">{r.listName}</td>
                     <td className="hidden py-2 text-xs text-muted-foreground md:table-cell">
-                      {r.completed_by_name || r.responsible_name || "–"}
+                      <StaffName
+                        name={r.completed_by_name || r.responsible_name}
+                        faceClassName="h-6 w-6 text-[10px]"
+                        fallback="–"
+                      />
                     </td>
                     <td className="py-2 text-center font-mono tabular-nums text-[11px] sm:text-xs">
                       {r.doneCount}/{r.total}
