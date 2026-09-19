@@ -364,7 +364,8 @@ export default function CountMobile() {
     const already = extraItems.findIndex((i) => i.productId === p.id);
     if (stockItems.some((i) => i.productId === p.id)) {
       toast.info("Varan finns redan i listan");
-      openGroup(nameGroupKey(p.name));
+      const g = groups.find((x) => x.items.some((i) => i.productId === p.id));
+      if (g) openGroup(g.key);
       setExtraSearch("");
       return;
     }
