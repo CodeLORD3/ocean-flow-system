@@ -154,6 +154,7 @@ export default function PortalChooser() {
       setActiveStore(null, null);
     }
     // Landing page is always the overview page
+    sessionStorage.setItem("erp_last_route", "/organisation");
     navigate("/organisation", { replace: true });
   };
 
