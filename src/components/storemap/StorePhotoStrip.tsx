@@ -162,6 +162,13 @@ export function StorePhotoStrip({
     return z ? zoneById[z]?.zone.color ?? null : null;
   };
 
+  const activeFilterLabel = [
+    zoneFilter === "alla" ? null : zoneFilter === "butiken" ? "Butiken" : zoneById[zoneFilter]?.zone.name ?? null,
+    personFilter === "alla" ? null : personFilter,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   const chip = (active: boolean) =>
     cn(
       "flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition",
