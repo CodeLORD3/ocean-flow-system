@@ -107,7 +107,9 @@ export default function OrderSheet({
           className="flex h-14 min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 text-[18px] font-semibold active:bg-muted"
         >
           <ShoppingBasket className="h-6 w-6 shrink-0 text-primary" />
-          <span className="truncate">Beställ till imorgon</span>
+          <span className="truncate">
+            {dayLabel ? `Beställ till ${dayLabel}` : "Beställ till nästa leverans"}
+          </span>
         </button>
       )}
 
