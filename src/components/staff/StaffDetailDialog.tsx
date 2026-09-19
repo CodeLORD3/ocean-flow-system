@@ -113,7 +113,7 @@ export function StaffDetailDialog({ open, onOpenChange, staff }: Props) {
     const rawFirst = String(staff.first_name || "").trim().normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z]/g, "");
     const baseName = rawFirst.length >= 2 ? rawFirst : "Makrill";
-    const password = `${baseName.charAt(0).toUpperCase()}${baseName.slice(1).toLowerCase()}123`;
+    const password = `${baseName.charAt(0).toUpperCase()}${baseName.slice(1).toLowerCase()}Fisk2026!`;
     setLinking(true);
     const { data, error } = await supabase.functions.invoke("staff-account-email", {
       body: { staff_id: staff.id, email, password },
