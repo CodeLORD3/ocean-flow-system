@@ -370,7 +370,8 @@ export default function CountMobile() {
         fresh,
       });
       setSessionId(id);
-      setStep("rakna");
+      setGroupKey(null);
+      setStep("grupp");
     } catch (e: any) {
       toast.error(e?.message || "Kunde inte starta räkningen.");
     }
