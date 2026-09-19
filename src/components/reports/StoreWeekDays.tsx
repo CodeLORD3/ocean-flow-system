@@ -49,15 +49,25 @@ export function StoreWeekDays({
   const rows = dayRowsFrom(days, data ?? []);
   const webWeek = webTotal(web.data, storeId, days);
 
+  const webNoReport = rows.reduce(
+    (acc, d) => {
+      const w = web.data?.get(webKey(storeId, d.date));
+      return w && d.net_sales == null
+        ? { net: acc.net + w.net, orders: acc.orders + w.orders }
+        : acc;
+    },
+    { net: 0, orders: 0 },
+  );
+
   return (
     <div className="mt-2 overflow-x-auto rounded-md border bg-background">
-      <table className="w-full min-w-[700px] text-xs">
+      <table className="w-full min-w-[720px] text-xs">
         <thead className="bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground">
           <tr>
             <th className="px-2 py-1.5 text-left font-medium">Dag</th>
             <th className="px-2 py-1.5 text-right font-medium">Brutto ({cur})</th>
             <th className="px-2 py-1.5 text-right font-medium">Nettoomsättning ({cur})</th>
-            <th className="px-2 py-1.5 text-right font-medium">Webb ({cur})</th>
+            <th className="px-2 py-1.5 text-right font-medium">Varav webbshop ({cur})</th>
             <th className="w-[11rem] px-2 py-1.5 text-left font-medium">Väder</th>
             <th className="px-2 py-1.5 text-right font-medium">Kvitton</th>
             <th className="px-2 py-1.5 text-right font-medium">Timmar</th>
@@ -67,21 +77,27 @@ export function StoreWeekDays({
         <tbody className="divide-y">
           {rows.map((d) => {
             const w = web.data?.get(webKey(storeId, d.date));
+            /* Webben är förbetald och ingår därför i dagens netto. */
+            const net = num(d.net_sales) == null && !w ? null : (num(d.net_sales) ?? 0) + (w?.net ?? 0);
+            const gross = num(d.gross_sales) == null && !w ? null : (num(d.gross_sales) ?? 0) + (w?.gross ?? 0);
             return (
-            <tr key={d.date} className={d.gross_sales == null ? "text-muted-foreground" : ""}>
+            <tr key={d.date} className={d.net_sales == null ? "text-muted-foreground" : ""}>
               <td className="px-2 py-1.5">
                 <span className="font-medium">{d.weekday}</span>{" "}
                 <span className="text-muted-foreground">{String(d.date ?? "").slice(5)}</span>
+                {d.net_sales == null && w ? (
+                  <span className="ml-1 text-[10px] text-muted-foreground">(bara webbshop)</span>
+                ) : null}
               </td>
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">
-                {num(d.gross_sales) == null ? "—" : `${intFmt(d.gross_sales)} ${cur}`}
+                {gross == null ? "—" : `${intFmt(gross)} ${cur}`}
               </td>
               <td className="px-2 py-1.5 text-right font-mono tabular-nums">
-                {num(d.net_sales) == null ? "—" : `${intFmt(d.net_sales)} ${cur}`}
+                {net == null ? "—" : `${intFmt(net)} ${cur}`}
               </td>
-              <td className="px-2 py-1.5 text-right font-mono tabular-nums">
+              <td className="px-2 py-1.5 text-right font-mono tabular-nums text-primary">
                 {w ? (
-                  <span title={`${w.orders} webbordrar`}>{intFmt(w.amount)} {cur}</span>
+                  <span title={`${w.orders} webbordrar`}>{intFmt(w.net)} {cur}</span>
                 ) : (
                   "—"
                 )}
@@ -101,8 +117,11 @@ export function StoreWeekDays({
       </table>
       {webWeek.orders > 0 && (
         <p className="px-2 py-2 text-[10px] text-muted-foreground">
-          Webbförsäljning (fiskskaldjur.se/.ch) denna vecka: {intFmt(webWeek.amount)} {cur} på {webWeek.orders} ordrar,
-          bokförda på leveransdagen. Räknas inte in i kassans dagsrapport.
+          Varav webbshop denna vecka: <span className="font-mono tabular-nums">{intFmt(webWeek.net)} {cur}</span> på{" "}
+          {webWeek.orders} ordrar (netto, bokförda på leveransdagen och inräknade i totalen).
+          {webNoReport.orders > 0 && (
+            <> Av dessa {intFmt(webNoReport.net)} {cur} på dagar utan dagsrapport.</>
+          )}
         </p>
       )}
       {rows.every((d) => d.gross_sales == null) && (

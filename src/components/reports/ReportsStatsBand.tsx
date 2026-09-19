@@ -114,31 +114,66 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
       e.netSek = e.netSek == null || rate == null ? null : e.netSek + (r.net_sales ?? 0) * rate;
       byStore.set(r.store_id, e);
     });
-    /* Webbförsäljning per butik i perioden — egen siffra, aldrig inräknad i kassans netto. */
-    const webByStore = new Map<string, { amount: number; sek: number | null; orders: number }>();
-    (web ?? new Map()).forEach((row: { amount: number; orders: number }, key: string) => {
+    /* Webbshopen är förbetald och räknas in i butikens netto, per butik och period. */
+    const webByStore = new Map<string, { net: number; sek: number | null; orders: number; noReport: number }>();
+    let webNow = 0;
+    let webBefore = 0;
+    const reportDays = new Set(rows.map((r) => `${r.store_id}|${r.report_date}`));
+    (web ?? new Map()).forEach((row: { net: number; orders: number }, key: string) => {
       const [sid, date] = key.split("|");
-      if (!sid || !date || date < cut) return;
+      if (!sid || !date) return;
       const cur = rawCurOf(sid);
       const rate = cur === "SEK" ? 1 : rateFor(fx, cur, date);
-      const e = webByStore.get(sid) ?? { amount: 0, sek: 0 as number | null, orders: 0 };
-      e.amount += row.amount;
+      const asBand = storeId ? row.net : rate == null ? row.net : row.net * rate;
+      if (date < cut) {
+        webBefore += asBand;
+        return;
+      }
+      webNow += asBand;
+      const e = webByStore.get(sid) ?? { net: 0, sek: 0 as number | null, orders: 0, noReport: 0 };
+      e.net += row.net;
       e.orders += row.orders;
-      e.sek = e.sek == null || rate == null ? null : e.sek + row.amount * rate;
+      e.sek = e.sek == null || rate == null ? null : e.sek + row.net * rate;
+      if (!reportDays.has(key)) e.noReport += row.net;
       webByStore.set(sid, e);
     });
 
+    now.net += webNow;
+    before.net += webBefore;
+
     const ranked = [...byStore.entries()]
-      .map(([id, v]) => ({
-        id,
-        name: stores.find((s: any) => s.id === id)?.name ?? "Okänd butik",
-        ...v,
-        web: webByStore.get(id) ?? null,
-      }))
+      .map(([id, v]) => {
+        const w = webByStore.get(id) ?? null;
+        return {
+          id,
+          name: stores.find((s: any) => s.id === id)?.name ?? "Okänd butik",
+          ...v,
+          net: v.net + (w?.net ?? 0),
+          netSek: v.netSek == null || w?.sek == null ? (w ? null : v.netSek) : v.netSek + w.sek,
+          web: w,
+        };
+      })
       .sort((a, b) => (b.netSek ?? b.net) - (a.netSek ?? a.net));
 
-    const webTotalSek = [...webByStore.values()].reduce((s, v) => s + (v.sek ?? v.amount), 0);
+    /* Butiker som bara har webbförsäljning i perioden ska också med i listan. */
+    webByStore.forEach((w, id) => {
+      if (byStore.has(id)) return;
+      ranked.push({
+        id,
+        name: stores.find((s: any) => s.id === id)?.name ?? "Okänd butik",
+        net: w.net,
+        netSek: w.sek,
+        waste: 0,
+        receipts: 0,
+        reports: 0,
+        web: w,
+      });
+    });
+    ranked.sort((a, b) => (b.netSek ?? b.net) - (a.netSek ?? a.net));
+
+    const webTotalSek = [...webByStore.values()].reduce((s, v) => s + (v.sek ?? v.net), 0);
     const webOrders = [...webByStore.values()].reduce((s, v) => s + v.orders, 0);
+    const webNoReport = [...webByStore.values()].reduce((s, v) => s + v.noReport, 0);
 
 
     return {
@@ -153,6 +188,7 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
       ranked,
       webTotalSek,
       webOrders,
+      webNoReport,
       perReceipt: now.receipts > 0 ? now.net / now.receipts : 0,
       perHour: now.hours > 0 ? now.net / now.hours : 0,
       wasteShare: now.net > 0 ? (now.waste / now.net) * 100 : 0,
@@ -230,7 +266,7 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
           </div>
           <div className="space-y-2">
             {stats.ranked.map((r, i) => (
-              <div key={r.id} className="grid grid-cols-[minmax(0,1fr)_120px] items-center gap-3">
+              <div key={r.id} className="grid grid-cols-[minmax(0,1fr)_160px] items-center gap-3">
                 <div>
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate text-xs font-medium">
@@ -248,7 +284,7 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
                     />
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="whitespace-nowrap text-right">
                   <p className="font-mono text-sm font-semibold tabular-nums">{nf(r.net)} {curOf(r.id)}</p>
                   {curOf(r.id) !== "kr" && (
                     <p className="font-mono text-[10px] tabular-nums text-muted-foreground">
@@ -257,7 +293,7 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
                   )}
                   {r.web && (
                     <p className="font-mono text-[10px] tabular-nums text-primary">
-                      webb {nf(r.web.amount)} {curOf(r.id)}
+                      varav webbshop {nf(r.web.net)} {curOf(r.id)}
                     </p>
                   )}
                   <p className="font-mono text-[10px] tabular-nums text-destructive">svinn {nf(r.waste)} {curOf(r.id)}</p>
@@ -267,9 +303,11 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
           </div>
           {stats.webOrders > 0 && (
             <p className="mt-3 border-t pt-2 text-[10px] text-muted-foreground">
-              Webbförsäljning i perioden: <span className="font-mono tabular-nums">{nf(stats.webTotalSek)} kr</span> på{" "}
-              {nf(stats.webOrders)} ordrar, bokförd på leveransdagen och butiken kunden hämtar i. Ligger utanför kassans
-              nettoomsättning.
+              Varav webbshop i perioden: <span className="font-mono tabular-nums">{nf(stats.webTotalSek)} kr</span> på{" "}
+              {nf(stats.webOrders)} förbetalda ordrar (netto), bokförda på leveransdagen och butiken kunden hämtar i.
+              {stats.webNoReport > 0 && (
+                <> Av dessa {nf(stats.webNoReport)} kr på dagar utan dagsrapport.</>
+              )}
             </p>
           )}
         </Card>

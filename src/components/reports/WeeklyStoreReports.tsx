@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ChevronDown, ChevronRight, AlertTriangle, LockKeyhole, Printer, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { currencyLabel } from "@/lib/reportCurrency";
-import { useWebSales, webTotal } from "@/hooks/useWebSales";
+import { useWebSales, webRangeTotal, type WebSalesDay } from "@/hooks/useWebSales";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -69,16 +69,33 @@ function StatusBadge({ status, drift, corrected }: { status: string; drift?: boo
   );
 }
 
-function Metrics({ row, comparison, cur = "kr" }: { row: WeeklyStoreReport | WeeklyRegionReport; comparison?: WeeklyRegionReport; cur?: string }) {
+function Metrics({
+  row, comparison, cur = "kr", web,
+}: {
+  row: WeeklyStoreReport | WeeklyRegionReport;
+  comparison?: WeeklyRegionReport;
+  cur?: string;
+  web?: WebSalesDay | null;
+}) {
+  /* Webbshopen är förbetald och ingår i butikens omsättning. */
+  const webNet = web?.net ?? 0;
+  const total = (num(row.total_sales_sek) ?? 0) + webNet;
+  const days = num(row.daily_reports_count) || num(row.expected_open_days) || 1;
+  const avg = webNet > 0 ? total / days : row.avg_sales_per_day_sek;
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-5">
       <div>
         <p className="text-[10px] text-muted-foreground">Nettoomsättning</p>
-        <p className="font-mono text-sm tabular-nums">{money(row.total_sales_sek, cur)}</p>
+        <p className="font-mono text-sm tabular-nums">{money(total, cur)}</p>
+        {webNet > 0 && (
+          <p className="font-mono text-[10px] tabular-nums text-primary">
+            varav webbshop {money(webNet, cur)}
+          </p>
+        )}
       </div>
       <div>
         <p className="text-[10px] text-muted-foreground">Netto snitt/dag</p>
-        <p className="font-mono text-sm tabular-nums">{money(row.avg_sales_per_day_sek, cur)}</p>
+        <p className="font-mono text-sm tabular-nums">{money(avg, cur)}</p>
       </div>
       <div>
         <p className="text-[10px] text-muted-foreground">Timmar</p>
@@ -108,21 +125,6 @@ function Metrics({ row, comparison, cur = "kr" }: { row: WeeklyStoreReport | Wee
         </div>
       )}
     </div>
-  );
-}
-
-/** Nätförsäljning (fiskskaldjur.se/.ch) för butiken under veckan, bokförd på leveransdagen. */
-function StoreWebWeek({
-  storeId, weekStart, weekEnd, cur,
-}: { storeId: string; weekStart: string; weekEnd: string; cur: string }) {
-  const web = useWebSales(weekStart, weekEnd, storeId);
-  const total = webTotal(web.data, storeId, weekDayList(weekStart, weekEnd));
-  if (web.isLoading || total.orders === 0) return null;
-  return (
-    <p className="mt-2 text-[10px] text-muted-foreground">
-      Varav webbförsäljning: <span className="font-mono tabular-nums">{money(total.amount, cur)}</span> på {total.orders} ordrar
-      — bokförd på leveransdagen, utanför kassans dagsrapport.
-    </p>
   );
 }
 
@@ -197,6 +199,19 @@ export function WeeklyStoreReportsSection() {
     return new Set(stores.filter((store) => store.region).map((store) => store.id));
   }, [stores, groupFilter, storeFilter]);
 
+  /* Webbshopen (fiskskaldjur.se/.ch) är förbetald och räknas in i butikens omsättning. */
+  const webAll = useWebSales(weeks[weeks.length - 1]?.week_start, weeks[0]?.week_end);
+  const idsForGroup = (groupKey: string) => {
+    if (groupKey === "SE_TOTAL") {
+      return stores.filter((s) => s.region === "vast" || s.region === "stockholm").map((s) => s.id);
+    }
+    return stores.filter((s) => s.region === groupKey).map((s) => s.id);
+  };
+  const webForStore = (storeId: string, start: string, end: string): WebSalesDay =>
+    webRangeTotal(webAll.data, [storeId], start, end);
+  const webForGroup = (groupKey: string, start: string, end: string): WebSalesDay =>
+    webRangeTotal(webAll.data, idsForGroup(groupKey), start, end);
+
   if (storeReports.isLoading || regionReports.isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -227,6 +242,13 @@ export function WeeklyStoreReportsSection() {
       ? REGION_LABELS[groupFilter]
       : "Sverige totalt";
 
+  const summaryWeb: WebSalesDay = latestWeek
+    ? storeFilter
+      ? webForStore(storeFilter, latestWeek.week_start, latestWeek.week_end)
+      : webForGroup(groupFilter ?? "SE_TOTAL", latestWeek.week_start, latestWeek.week_end)
+    : { gross: 0, net: 0, orders: 0 };
+
+
   const exportStoreRows = latestWeekForExport
     ? details.filter(
         (row) =>
@@ -240,15 +262,23 @@ export function WeeklyStoreReportsSection() {
     : groupFilter
       ? latestRegions.filter((row) => row.group_key === groupFilter)
       : latestRegions.filter((row) => row.group_key === "SE_TOTAL");
-  const exportRows: ReportRow[] = [...exportRegionRows, ...exportStoreRows].map((row) => ({
-    label: "store_id" in row ? storeName(row.store_id) : row.group_label,
-    total_sales_sek: row.total_sales_sek,
-    avg_sales_per_day_sek: row.avg_sales_per_day_sek,
-    staff_hours: row.staff_hours,
-    staff_shifts: row.staff_shifts,
-    reports: `${row.daily_reports_count} / ${row.expected_open_days}`,
-    status: row.status,
-  }));
+  const exportRows: ReportRow[] = [...exportRegionRows, ...exportStoreRows].map((row) => {
+    const web = latestWeekForExport
+      ? "store_id" in row
+        ? webForStore(row.store_id, latestWeekForExport.week_start, latestWeekForExport.week_end).net
+        : webForGroup(row.group_key, latestWeekForExport.week_start, latestWeekForExport.week_end).net
+      : 0;
+    return {
+      label: "store_id" in row ? storeName(row.store_id) : row.group_label,
+      total_sales_sek: (num(row.total_sales_sek) ?? 0) + web,
+      web_sales: web || null,
+      avg_sales_per_day_sek: row.avg_sales_per_day_sek,
+      staff_hours: row.staff_hours,
+      staff_shifts: row.staff_shifts,
+      reports: `${row.daily_reports_count} / ${row.expected_open_days}`,
+      status: row.status,
+    };
+  });
 
   const exportReport = (format: "pdf" | "xlsx") => {
     if (!latestWeekForExport) return;
@@ -256,7 +286,16 @@ export function WeeklyStoreReportsSection() {
       ? dayRowsFrom(
           weekDayList(latestWeekForExport.week_start, latestWeekForExport.week_end),
           dailyExport.data ?? [],
-        ).map((row) => ({ ...row, weather: weatherLabel(exportWeather.data?.get(row.date)) }))
+        ).map((row) => {
+          const web = webAll.data?.get(`${selectedStoreForExport}|${row.date}`);
+          return {
+            ...row,
+            net_sales: row.net_sales == null && !web ? null : (row.net_sales ?? 0) + (web?.net ?? 0),
+            gross_sales: row.gross_sales == null && !web ? null : (row.gross_sales ?? 0) + (web?.gross ?? 0),
+            web_sales: web?.net ?? null,
+            weather: weatherLabel(exportWeather.data?.get(row.date)),
+          };
+        })
       : undefined;
     const titleLabel = selectedStoreForExport ? storeName(selectedStoreForExport) : summaryLabel;
     const payload = {
@@ -318,7 +357,14 @@ export function WeeklyStoreReportsSection() {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className="rounded-md border bg-muted/20 px-3 py-2.5">
               <p className="text-[10px] text-muted-foreground">Nettoomsättning</p>
-              <p className="mt-1 font-mono text-sm font-semibold tabular-nums">{money(selectedSummary.total_sales_sek)}</p>
+              <p className="mt-1 font-mono text-sm font-semibold tabular-nums">
+                {money((num(selectedSummary.total_sales_sek) ?? 0) + summaryWeb.net)}
+              </p>
+              {summaryWeb.net > 0 && (
+                <p className="font-mono text-[10px] tabular-nums text-primary">
+                  varav webbshop {money(summaryWeb.net)}
+                </p>
+              )}
             </div>
             <div className="rounded-md border bg-muted/20 px-3 py-2.5">
               <p className="text-[10px] text-muted-foreground">Netto snitt/dag</p>
@@ -350,9 +396,12 @@ export function WeeklyStoreReportsSection() {
 
           const headline =
             weekRegions.find((r) => r.group_key === (groupFilter ?? "SE_TOTAL")) ?? weekRegions[0] ?? null;
-          const headlineTotal = headline
-            ? headline.total_sales_sek
-            : weekStores.reduce((sum, r) => sum + (num(r.total_sales_sek) ?? 0), 0);
+          const headlineWeb = headline
+            ? webForGroup(headline.group_key, week.week_start, week.week_end).net
+            : weekStores.reduce((sum, r) => sum + webForStore(r.store_id, r.week_start, r.week_end).net, 0);
+          const headlineTotal = (headline
+            ? (num(headline.total_sales_sek) ?? 0)
+            : weekStores.reduce((sum, r) => sum + (num(r.total_sales_sek) ?? 0), 0)) + headlineWeb;
           const headlineStatus = headline?.status ?? (weekStores.every((r) => r.status !== "pagaende") ? "klar" : "pagaende");
           const open = openWeek === week.key;
 
@@ -395,7 +444,12 @@ export function WeeklyStoreReportsSection() {
                           Saknar låst veckorapport: {row.missing_stores.join(", ")}
                         </p>
                       ) : null}
-                      <Metrics row={row} comparison={row} cur={row.group_key === "schweiz" ? "CHF" : "kr"} />
+                      <Metrics
+                        row={row}
+                        comparison={row}
+                        cur={row.group_key === "schweiz" ? "CHF" : "kr"}
+                        web={webForGroup(row.group_key, week.week_start, week.week_end)}
+                      />
                     </div>
                   ))}
 
@@ -431,12 +485,10 @@ export function WeeklyStoreReportsSection() {
                                   </Button>
                                 </div>
                               </div>
-                              <Metrics row={row} cur={curOf(row.store_id)} />
-                              <StoreWebWeek
-                                storeId={row.store_id}
-                                weekStart={row.week_start}
-                                weekEnd={row.week_end}
+                              <Metrics
+                                row={row}
                                 cur={curOf(row.store_id)}
+                                web={webForStore(row.store_id, row.week_start, row.week_end)}
                               />
                               {row.drift_after_lock && row.drift_note && (
                                 <p className="mt-2 text-[10px] text-destructive">{row.drift_note}</p>

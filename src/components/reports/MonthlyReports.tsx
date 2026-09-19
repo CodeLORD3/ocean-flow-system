@@ -10,6 +10,7 @@ import { StoreWeekDays } from "@/components/reports/StoreWeekDays";
 import { useDailyReportsRange } from "@/hooks/useDailyReportsRange";
 import { dayRowsFrom, weekDayList } from "@/lib/weeklyReportDays";
 import { useStoreWeather, weatherLabel } from "@/hooks/useStoreWeather";
+import { useWebSales, webRangeTotal, type WebSalesDay } from "@/hooks/useWebSales";
 import { Loader2, ChevronDown, ChevronRight, AlertTriangle, PencilLine, Printer, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,11 +37,16 @@ function StatusBadge({ status, corrected }: { status: string; corrected?: boolea
   return <Badge variant="outline" className={cn("text-[10px]", done ? "border-success/40 text-success" : "border-warning/40 text-warning")}>{done ? "Klar" : "Preliminär"}</Badge>;
 }
 
-function Metrics({ row, cur = "kr" }: { row: MonthlyStoreReport | MonthlyRegionReport; cur?: string }) {
+function Metrics({ row, cur = "kr", web }: { row: MonthlyStoreReport | MonthlyRegionReport; cur?: string; web?: WebSalesDay | null }) {
+  /* Förbetald webbshop ingår i butikens omsättning. */
+  const webNet = web?.net ?? 0;
+  const total = (num(row.total_sales_sek) ?? 0) + webNet;
+  const days = num(row.daily_reports_count) || num(row.expected_open_days) || 1;
+  const avg = webNet > 0 ? total / days : row.avg_sales_per_day_sek;
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-5">
-      <div><p className="text-[10px] text-muted-foreground">Nettoomsättning</p><p className="font-mono text-sm tabular-nums">{money(row.total_sales_sek, cur)}</p></div>
-      <div><p className="text-[10px] text-muted-foreground">Netto snitt/dag</p><p className="font-mono text-sm tabular-nums">{money(row.avg_sales_per_day_sek, cur)}</p></div>
+      <div><p className="text-[10px] text-muted-foreground">Nettoomsättning</p><p className="font-mono text-sm tabular-nums">{money(total, cur)}</p>{webNet > 0 && <p className="font-mono text-[10px] tabular-nums text-primary">varav webbshop {money(webNet, cur)}</p>}</div>
+      <div><p className="text-[10px] text-muted-foreground">Netto snitt/dag</p><p className="font-mono text-sm tabular-nums">{money(avg, cur)}</p></div>
       <div><p className="text-[10px] text-muted-foreground">Timmar</p><p className="font-mono text-sm tabular-nums">{decFmt(row.staff_hours)} h</p></div>
       <div><p className="text-[10px] text-muted-foreground">Personpass</p><p className="font-mono text-sm tabular-nums">{intFmt(row.staff_shifts)}</p></div>
       <div><p className="text-[10px] text-muted-foreground">Dagsrapporter</p><p className="font-mono text-sm tabular-nums">{intFmt(row.daily_reports_count)} / {intFmt(row.expected_open_days)}</p></div>
@@ -85,22 +91,39 @@ export function MonthlyReportsSection() {
   const summary = latestStore ?? latestRegion;
   const summaryLabel = storeFilter ? storeName(storeFilter) : groupFilter ? REGION_LABELS[groupFilter] ?? "Region" : filter === "SE_TOTAL" ? "Sverige totalt" : "Alla butiker";
 
+  /* Webbshopen (fiskskaldjur.se/.ch) är förbetald och räknas in i butikens omsättning. */
+  const webAll = useWebSales(months[months.length - 1]?.month_start, months[0]?.month_end);
+  const idsForGroup = (groupKey: string) =>
+    groupKey === "SE_TOTAL"
+      ? stores.filter((s) => s.region === "vast" || s.region === "stockholm").map((s) => s.id)
+      : stores.filter((s) => s.region === groupKey).map((s) => s.id);
+  const webForStore = (storeId: string, start: string, end: string): WebSalesDay =>
+    webRangeTotal(webAll.data, [storeId], start, end);
+  const webForGroup = (groupKey: string, start: string, end: string): WebSalesDay =>
+    webRangeTotal(webAll.data, idsForGroup(groupKey), start, end);
+
   const exportRows: ReportRow[] = useMemo(() => {
     if (!latest) return [];
     const regionRows = storeFilter
       ? []
       : regions.filter((row) => row.year === latest.year && row.month === latest.month && row.group_key === (groupFilter ?? "SE_TOTAL"));
     const storeRows = details.filter((row) => row.year === latest.year && row.month === latest.month && scopeStoreIds.has(row.store_id));
-    return [...regionRows, ...storeRows].map((row) => ({
-      label: "store_id" in row ? storeName(row.store_id) : row.group_label,
-      total_sales_sek: row.total_sales_sek,
-      avg_sales_per_day_sek: row.avg_sales_per_day_sek,
-      staff_hours: row.staff_hours,
-      staff_shifts: row.staff_shifts,
-      reports: `${row.daily_reports_count} / ${row.expected_open_days}`,
-      status: row.status,
-    }));
-  }, [latest, regions, details, scopeStoreIds, groupFilter, storeFilter, stores]);
+    return [...regionRows, ...storeRows].map((row) => {
+      const web = "store_id" in row
+        ? webForStore(row.store_id, latest.month_start, latest.month_end).net
+        : webForGroup(row.group_key, latest.month_start, latest.month_end).net;
+      return {
+        label: "store_id" in row ? storeName(row.store_id) : row.group_label,
+        total_sales_sek: (num(row.total_sales_sek) ?? 0) + web,
+        web_sales: web || null,
+        avg_sales_per_day_sek: row.avg_sales_per_day_sek,
+        staff_hours: row.staff_hours,
+        staff_shifts: row.staff_shifts,
+        reports: `${row.daily_reports_count} / ${row.expected_open_days}`,
+        status: row.status,
+      };
+    });
+  }, [latest, regions, details, scopeStoreIds, groupFilter, storeFilter, stores, webAll.data]);
 
   const exportReport = (format: "pdf" | "xlsx") => {
     if (!latest) return;
@@ -115,7 +138,16 @@ export function MonthlyReportsSection() {
               rows: dayRowsFrom(
                 weekDayList(latest.month_start, latest.month_end),
                 dailyExport.data ?? [],
-              ).map((row) => ({ ...row, weather: weatherLabel(exportWeather.data?.get(row.date)) })),
+              ).map((row) => {
+                const web = storeFilter ? webAll.data?.get(`${storeFilter}|${row.date}`) : undefined;
+                return {
+                  ...row,
+                  net_sales: row.net_sales == null && !web ? null : (row.net_sales ?? 0) + (web?.net ?? 0),
+                  gross_sales: row.gross_sales == null && !web ? null : (row.gross_sales ?? 0) + (web?.gross ?? 0),
+                  web_sales: web?.net ?? null,
+                  weather: weatherLabel(exportWeather.data?.get(row.date)),
+                };
+              }),
             }],
           }
         : {}),
@@ -142,7 +174,7 @@ export function MonthlyReportsSection() {
         </div>
       </div>
 
-      {summary && latest && <div className="border-b pb-4"><div className="mb-3 flex flex-wrap items-end justify-between gap-2"><div><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">Senaste månaden</p><p className="mt-1 text-sm font-semibold">{summaryLabel}</p><p className="text-xs capitalize text-muted-foreground">{monthLabel(latest.month_start)}</p></div><StatusBadge status={summary.status} corrected={summary.corrected} /></div><Metrics row={summary} cur={storeFilter ? curOf(storeFilter) : groupFilter === "schweiz" ? "CHF" : "kr"} /></div>}
+      {summary && latest && <div className="border-b pb-4"><div className="mb-3 flex flex-wrap items-end justify-between gap-2"><div><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">Senaste månaden</p><p className="mt-1 text-sm font-semibold">{summaryLabel}</p><p className="text-xs capitalize text-muted-foreground">{monthLabel(latest.month_start)}</p></div><StatusBadge status={summary.status} corrected={summary.corrected} /></div><Metrics row={summary} cur={storeFilter ? curOf(storeFilter) : groupFilter === "schweiz" ? "CHF" : "kr"} web={storeFilter ? webForStore(storeFilter, latest.month_start, latest.month_end) : webForGroup(groupFilter ?? "SE_TOTAL", latest.month_start, latest.month_end)} /></div>}
 
       <div className="divide-y rounded-md border">{months.map((month) => {
         const monthRegions = regions.filter((row) => row.year === month.year && row.month === month.month &&
@@ -151,13 +183,16 @@ export function MonthlyReportsSection() {
           scopeStoreIds.has(row.store_id));
         if (!monthRegions.length && !monthStores.length) return null;
         const headline = monthRegions.find((row) => row.group_key === (groupFilter ?? "SE_TOTAL")) ?? monthRegions[0];
-        const total = headline?.total_sales_sek ?? monthStores.reduce((sum, row) => sum + (num(row.total_sales_sek) ?? 0), 0);
+        const headlineWeb = headline
+          ? webForGroup(headline.group_key, month.month_start, month.month_end).net
+          : monthStores.reduce((sum, row) => sum + webForStore(row.store_id, month.month_start, month.month_end).net, 0);
+        const total = (headline ? (num(headline.total_sales_sek) ?? 0) : monthStores.reduce((sum, row) => sum + (num(row.total_sales_sek) ?? 0), 0)) + headlineWeb;
         const status = headline?.status ?? (monthStores.length > 0 && monthStores.every((row) => row.status === "klar") ? "klar" : "preliminar");
         const corrected = headline?.corrected ?? monthStores.some((row) => row.corrected);
         const open = openMonth === month.key;
         return <div key={month.key}><button type="button" onClick={() => setOpenMonth(open ? null : month.key)} className="flex w-full items-start gap-2 px-3 py-3 text-left transition-colors hover:bg-muted/40">{open ? <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />}<span className="min-w-0 flex-1"><span className="block text-sm font-medium capitalize">{monthLabel(month.month_start)}</span><span className="mt-0.5 block text-xs text-muted-foreground">{storeFilter ? storeName(storeFilter) : REGION_LABELS[groupFilter ?? "SE_TOTAL"] ?? "Sverige totalt"}</span></span><span className="flex shrink-0 flex-col items-end gap-1"><span className="font-mono text-sm tabular-nums">{money(total, storeFilter ? curOf(storeFilter) : groupFilter === "schweiz" ? "CHF" : "kr")}</span><StatusBadge status={status} corrected={corrected} /></span></button>
-          {open && <div className="space-y-3 bg-muted/20 px-3 pb-4 pt-2">{monthRegions.map((row) => <div key={row.group_key} className="rounded-md border bg-background p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{row.group_label}</span><StatusBadge status={row.status} corrected={row.corrected} /></div>{row.missing_stores?.length ? <p className="mb-2 text-[10px] text-muted-foreground">Saknar månadsrapport: {row.missing_stores.join(", ")}</p> : null}<Metrics row={row} cur={row.group_key === "schweiz" ? "CHF" : "kr"} /></div>)}
-            {monthStores.length > 0 && <div><p className="mb-1.5 text-[11px] text-muted-foreground">Butiksnivå</p><div className="divide-y rounded-md border bg-background">{monthStores.map((row) => <div key={row.store_id} className="p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{storeName(row.store_id)}</span><StatusBadge status={row.status} corrected={row.corrected} /></div><Metrics row={row} cur={curOf(row.store_id)} />{open && storeFilter && <StoreWeekDays storeId={row.store_id} weekStart={month.month_start} weekEnd={month.month_end} />}</div>)}</div></div>}
+          {open && <div className="space-y-3 bg-muted/20 px-3 pb-4 pt-2">{monthRegions.map((row) => <div key={row.group_key} className="rounded-md border bg-background p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{row.group_label}</span><StatusBadge status={row.status} corrected={row.corrected} /></div>{row.missing_stores?.length ? <p className="mb-2 text-[10px] text-muted-foreground">Saknar månadsrapport: {row.missing_stores.join(", ")}</p> : null}<Metrics row={row} cur={row.group_key === "schweiz" ? "CHF" : "kr"} web={webForGroup(row.group_key, month.month_start, month.month_end)} /></div>)}
+            {monthStores.length > 0 && <div><p className="mb-1.5 text-[11px] text-muted-foreground">Butiksnivå</p><div className="divide-y rounded-md border bg-background">{monthStores.map((row) => <div key={row.store_id} className="p-3"><div className="mb-2 flex items-center justify-between gap-2"><span className="text-sm font-medium">{storeName(row.store_id)}</span><StatusBadge status={row.status} corrected={row.corrected} /></div><Metrics row={row} cur={curOf(row.store_id)} web={webForStore(row.store_id, month.month_start, month.month_end)} />{open && storeFilter && <StoreWeekDays storeId={row.store_id} weekStart={month.month_start} weekEnd={month.month_end} />}</div>)}</div></div>}
           </div>}
         </div>;
       })}</div>
