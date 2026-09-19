@@ -1,3 +1,4 @@
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { useEffect, useMemo, useState } from "react";
 import { PackageCheck, Send, ShoppingBasket, Truck, X } from "lucide-react";
 import { toast } from "sonner";
@@ -122,8 +123,14 @@ export default function StoreOrderToday() {
                 <p className="truncate text-[19px] font-semibold leading-tight">
                   {l.products?.name ?? "Vara"}
                 </p>
-                <p className="text-[17px] text-muted-foreground">
-                  {l.created_by_name ? `Lagd av ${l.created_by_name}` : "Lagd i butiken"}
+                <p className="flex flex-wrap items-center gap-1 text-[17px] text-muted-foreground">
+                  {l.created_by_name ? (
+                    <>
+                      Lagd av <StaffName name={l.created_by_name} faceClassName="h-7 w-7 text-[11px]" />
+                    </>
+                  ) : (
+                    "Lagd i butiken"
+                  )}
                   {l.comment ? ` · ${l.comment}` : ""}
                 </p>
               </div>

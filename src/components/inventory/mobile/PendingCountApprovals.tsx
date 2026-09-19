@@ -1,3 +1,4 @@
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, ShieldCheck } from "lucide-react";
@@ -49,8 +50,12 @@ export default function PendingCountApprovals({ storeId }: { storeId?: string | 
             <p className="font-heading text-[20px] font-semibold leading-tight">
               {r.location_name || "Lagerplats"}
             </p>
-            <p className="text-[17px] text-muted-foreground">
-              {r.reported_by ? `${r.reported_by} · ` : ""}
+            <p className="flex flex-wrap items-center gap-1 text-[17px] text-muted-foreground">
+              {r.reported_by && (
+                <>
+                  <StaffName name={r.reported_by} faceClassName="h-7 w-7 text-[11px]" /> ·{" "}
+                </>
+              )}
               {lines.length} varor, {diffs.length} avvikelser
             </p>
             <button

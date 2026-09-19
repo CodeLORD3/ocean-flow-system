@@ -196,8 +196,9 @@ export function MapListViews({
           {versions.map((v) => (
             <div key={v.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
               <span className="font-medium">Version {v.version}</span>
-              <span className="text-[11px] text-muted-foreground">
-                {clock(v.created_at)} · {v.published_by_name ?? "—"}
+              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                {clock(v.created_at)} ·{" "}
+                <StaffName name={v.published_by_name} faceClassName="h-5 w-5 text-[9px]" fallback="—" />
               </span>
             </div>
           ))}

@@ -1,3 +1,4 @@
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -386,7 +387,7 @@ export default function StockTransformation() {
                       {transformKindLabel(r.transform_kind)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="py-1.5 text-[11px]">{r.performed_by_name || "—"}</TableCell>
+                  <TableCell className="py-1.5 text-[11px]"><StaffName name={r.performed_by_name} faceClassName="h-5 w-5 text-[9px]" fallback="—" /></TableCell>
                 </TableRow>
               ))}
             </TableBody>

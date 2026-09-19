@@ -1,3 +1,4 @@
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -951,7 +952,7 @@ export default function Wholesale() {
                 <div><span className="text-muted-foreground">Butik:</span> <span className="font-medium">{(viewedFs as any).stores?.name}</span></div>
                 <div><span className="text-muted-foreground">Leveransdatum:</span> <span className="font-medium">{viewedFs.delivery_date}</span></div>
                 <div><span className="text-muted-foreground">Status:</span> <Badge variant="outline" className={`${statusColor[viewedFs.status] || ""} text-[10px] ml-1`}>{viewedFs.status}</Badge></div>
-                <div><span className="text-muted-foreground">Skapad av:</span> <span className="font-medium">{viewedFs.created_by}</span></div>
+                <div className="flex items-center gap-1"><span className="text-muted-foreground">Skapad av:</span> <StaffName name={viewedFs.created_by} className="font-medium" faceClassName="h-5 w-5 text-[9px]" /></div>
               </div>
               <Separator />
               <table className="w-full text-xs">

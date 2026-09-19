@@ -1,3 +1,4 @@
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { useActorNames } from "@/hooks/useActorNames";
 
 interface Props {
@@ -32,15 +33,13 @@ export function OrderAuditLine({
 }: Props) {
   const { nameOf } = useActorNames();
 
-  const created = createdAt
-    ? `Skapad av ${nameOf(createdBy) || "okänd"} · ${fmt(createdAt)}`
-    : null;
-  const changed =
-    updatedAt && createdAt && new Date(updatedAt).getTime() - new Date(createdAt).getTime() > 60000
-      ? `Senast ändrad av ${nameOf(updatedBy) || "okänd"} · ${fmt(updatedAt)}`
-      : null;
+  const createdName = nameOf(createdBy) || "";
+  const updatedName = nameOf(updatedBy) || "";
+  const showCreated = Boolean(createdAt);
+  const showChanged =
+    updatedAt && createdAt && new Date(updatedAt).getTime() - new Date(createdAt).getTime() > 60000;
 
-  if (!created && !changed) return null;
+  if (!showCreated && !showChanged) return null;
 
   return (
     <div
@@ -48,8 +47,28 @@ export function OrderAuditLine({
         stacked ? "space-y-0.5" : "flex flex-wrap items-center gap-x-2"
       } ${className}`}
     >
-      {created && <span>{created}</span>}
-      {changed && <span>{changed}</span>}
+      {showCreated && (
+        <span className="inline-flex min-w-0 items-center gap-1">
+          Skapad av{" "}
+          {createdName ? (
+            <StaffName name={createdName} faceClassName="h-5 w-5 text-[9px]" />
+          ) : (
+            "okänd"
+          )}{" "}
+          · {fmt(createdAt)}
+        </span>
+      )}
+      {showChanged && (
+        <span className="inline-flex min-w-0 items-center gap-1">
+          Senast ändrad av{" "}
+          {updatedName ? (
+            <StaffName name={updatedName} faceClassName="h-5 w-5 text-[9px]" />
+          ) : (
+            "okänd"
+          )}{" "}
+          · {fmt(updatedAt)}
+        </span>
+      )}
     </div>
   );
 }

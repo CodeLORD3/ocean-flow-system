@@ -1,3 +1,4 @@
+import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { useMemo, useState } from "react";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import { FileText, CheckCircle2, Clock, ChevronDown, ChevronRight, Printer } from "lucide-react";
@@ -227,7 +228,7 @@ export default function Invoices() {
                                 </div>
                                 <div className="grid grid-cols-4 gap-3 mb-3 text-[10px]">
                                   <div><span className="text-muted-foreground">Följesedel-ID:</span> <span className="font-mono font-medium">{order.id?.slice(0, 8).toUpperCase()}</span></div>
-                                  <div><span className="text-muted-foreground">Packad av:</span> <span className="font-medium">{order.packer_name || "–"}</span></div>
+                                  <div className="flex items-center gap-1"><span className="text-muted-foreground">Packad av:</span> <StaffName name={order.packer_name} className="font-medium" faceClassName="h-5 w-5 text-[9px]" fallback="–" /></div>
                                   <div><span className="text-muted-foreground">Leveransdatum:</span> <span className="font-medium">{order.desired_delivery_date || "–"}</span></div>
                                   <div><span className="text-muted-foreground">Orderdatum:</span> <span className="font-medium">{order.created_at ? new Date(order.created_at).toLocaleDateString("sv-SE") : "–"}</span></div>
                                 </div>
