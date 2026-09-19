@@ -217,7 +217,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuItem
                 key={store.id}
                 className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
-                onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/organisation"); }}
+                onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); sessionStorage.setItem("erp_last_route", "/store-map"); switchTab("/store-map"); }}
               >
                 <Store className="h-3 w-3" /> {store.name}
               </DropdownMenuItem>
