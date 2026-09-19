@@ -462,7 +462,7 @@ export default function Uppgifter() {
                       <StaffAvatar
                         name={`${s.first_name} ${s.last_name}`}
                         imageUrl={s.profile_image_url}
-                        className="h-8 w-8"
+                        className="h-10 w-10"
                       />
                       {s.first_name} {s.last_name}
                     </span>
@@ -986,7 +986,7 @@ export default function Uppgifter() {
                             <StaffAvatar
                               name={`${s.first_name} ${s.last_name}`}
                               imageUrl={s.profile_image_url}
-                              className="h-8 w-8"
+                              className="h-10 w-10"
                             />
                             {s.first_name} {s.last_name}
                           </span>

@@ -1433,7 +1433,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                               <StaffAvatar
                                 name={p.paid_by_name}
                                 imageUrl={p.paid_by_image}
-                                className="h-4 w-4"
+                                className="h-7 w-7"
                               />
                               Utlägg
                             </span>
@@ -1513,7 +1513,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                           <StaffAvatar
                             name={p.created_by_name}
                             imageUrl={p.created_by_image}
-                            className="h-6 w-6 shrink-0"
+                            className="h-9 w-9 shrink-0"
                           />
                           <span className="hidden shrink-0 text-[10px] leading-tight text-muted-foreground sm:block">
                             <span className="block max-w-[110px] truncate">{p.created_by_name ?? "Okänd"}</span>
@@ -1804,7 +1804,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                                 <StaffAvatar
                                   name={c.staff_name ?? c.card_holder}
                                   imageUrl={c.staff_image}
-                                  className="h-8 w-8"
+                                  className="h-10 w-10"
                                 />
                                 <span className="min-w-0 flex-1">
                                   <span className="block truncate font-semibold">
@@ -2575,7 +2575,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                       <StaffAvatar
                         name={c.staff_name ?? c.card_holder}
                         imageUrl={c.staff_image}
-                        className="h-7 w-7"
+                        className="h-9 w-9"
                       />
                       <span className="min-w-0 flex-1 truncate">{cardLabel(c)}</span>
                       <Button
