@@ -135,8 +135,8 @@ Deno.serve(async (req) => {
     }
 
     // 4. Lagerrörelser: försäljningen ut ur butikens försäljningslager, FEFO.
-    //    Enda skrivvägen till saldon är stock_movements. Idempotent: rörelser
-    //    skrivs bara om kvittot inte redan har några.
+    //    Enda skrivvägen till saldon är stock_movements. Idempotent per kvitto.
+    //    Gäller bara schweiziska butiker — svenska bolag stödjer det inte ännu.
     const movements = await postSaleMovements(sb, tx.id, lines, insertedItems);
 
     return jsonResponse({
@@ -149,6 +149,7 @@ Deno.serve(async (req) => {
       allocations: allocations.length,
       movements: movements.written,
       unposted_lines: movements.unposted,
+      stock_skipped: movements.skipped ?? null,
     });
   } catch (e) {
     if (e instanceof ValidationError) return errorResponse(e.message, 400);
@@ -158,6 +159,26 @@ Deno.serve(async (req) => {
 });
 
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
+
+/**
+ * Kassaköp drar lager bara i Schweiz (Zollikon och Morges) just nu. De svenska
+ * bolagen stödjer inte funktionen ännu — där bokförs inga rörelser från kassan.
+ */
+async function stockPostingEnabled(sb: any, storeId: string): Promise<boolean> {
+  const { data: store } = await sb
+    .from("stores")
+    .select("legal_entity_id")
+    .eq("id", storeId)
+    .maybeSingle();
+  const entity = store?.legal_entity_id as string | null;
+  if (!entity) return false;
+  const { data: le } = await sb
+    .from("legal_entities")
+    .select("country")
+    .eq("legal_entity_id", entity)
+    .maybeSingle();
+  return String(le?.country ?? "").toUpperCase() === "CH";
+}
 
 /** Butikens försäljningslager — lagerplatsen kvittot drar ifrån. */
 async function salesLocation(sb: any, storeId: string): Promise<string | null> {
@@ -211,7 +232,7 @@ async function postSaleMovements(
   transactionId: string,
   lines: CheckoutLine[],
   items: Array<{ id: string }>,
-): Promise<{ written: number; unposted: number }> {
+): Promise<{ written: number; unposted: number; skipped?: string }> {
   const { data: tx } = await sb
     .from("pos_transactions")
     .select("store_id, receipt_no")
@@ -219,6 +240,12 @@ async function postSaleMovements(
     .maybeSingle();
   const storeId = tx?.store_id as string | null;
   if (!storeId) return { written: 0, unposted: lines.length };
+
+  if (!(await stockPostingEnabled(sb, storeId))) {
+    return { written: 0, unposted: 0, skipped: "lagerdrag_ej_aktivt_i_bolaget" };
+  }
+
+
 
   const itemIds = items.map((i) => i.id);
   const { data: already } = await sb
