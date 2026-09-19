@@ -289,6 +289,7 @@ export default function CountMobile() {
 
   const goNext = () => {
     if (index + 1 < list.length) setIndex(index + 1);
+    else if (activeGroup) setStep("grupp");
     else setStep("klarplats");
   };
 
