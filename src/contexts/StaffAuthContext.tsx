@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
+import { checkForUpdateNow } from "@/lib/appUpdate";
 
 export type PortalKey = "shop" | "wholesale" | "production" | "admin";
 
@@ -114,6 +115,8 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
       setUser(sess?.user ?? null);
       // Defer Supabase call out of the auth callback
       setTimeout(() => loadStaff(sess?.user?.id), 0);
+      // Vid inloggning: se till att enheten kör senaste publicerade versionen
+      if (_event === "SIGNED_IN") setTimeout(() => void checkForUpdateNow(), 0);
       // Aldrig fastna i evig snurra — även misslyckad förnyelse släpper laddning
       setSessionLoading(false);
       if (!sess?.user) setStaffLoading(false);
