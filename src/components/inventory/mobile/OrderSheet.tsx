@@ -20,6 +20,7 @@ export default function OrderSheet({
   productName,
   unit,
   wantedDate,
+  dayLabel,
   existing,
   editable,
 }: {
@@ -29,6 +30,8 @@ export default function OrderSheet({
   productName: string;
   unit: string;
   wantedDate: string;
+  /** Butikens nästa leveransdag i text, t.ex. "tisdag 23/9". */
+  dayLabel?: string;
   existing?: ReplenishLine | null;
   editable: boolean;
 }) {
