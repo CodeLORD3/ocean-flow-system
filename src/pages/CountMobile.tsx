@@ -57,7 +57,7 @@ import PendingCountApprovals from "@/components/inventory/mobile/PendingCountApp
 import CountNoteSheet from "@/components/inventory/mobile/CountNoteSheet";
 import OrderSheet from "@/components/inventory/mobile/OrderSheet";
 import { useDraftOrder } from "@/hooks/useStoreReplenishment";
-import { tomorrowSe } from "@/lib/storeReplenishment";
+import { useNextDeliveryDay } from "@/hooks/useNextDeliveryDay";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 
 type Step = "plats" | "grupp" | "rakna" | "extra" | "klarplats" | "sammanfattning" | "klar";
