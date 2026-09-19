@@ -5,6 +5,7 @@ import { useStoreWeather } from "@/hooks/useStoreWeather";
 import { WeatherCell } from "./WeatherCell";
 import { useStores } from "@/hooks/useStores";
 import { currencyLabel } from "@/lib/reportCurrency";
+import { useWebSales, webKey, webTotal } from "@/hooks/useWebSales";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
