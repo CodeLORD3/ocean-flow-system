@@ -38,6 +38,7 @@ import {
 } from "@/hooks/useMobileStockCount";
 import {
   bestBeforeText,
+  expiryTone,
   clearDraft,
   clearPosition,
   diffText,
