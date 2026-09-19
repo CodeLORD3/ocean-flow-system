@@ -1,3 +1,4 @@
+import { versionLabel } from "@/lib/appVersion";
 import {
   Map,
   Images,
@@ -322,6 +323,9 @@ export function AppSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "o
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
+        {!collapsed && (
+          <p className="px-2 pb-1 text-[10px] leading-tight text-muted-foreground">{versionLabel()}</p>
+        )}
       </SidebarFooter>
     </Sidebar>
   );
