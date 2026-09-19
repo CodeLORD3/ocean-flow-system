@@ -199,6 +199,12 @@ export default function CountMobile() {
     else setStep("klarplats");
   };
 
+  /** Backa till varan innan — siffran som redan matats in ligger kvar. */
+  const goPrev = () => {
+    if (index > 0) setIndex(index - 1);
+  };
+
+
   const saveAndNext = async () => {
     if (!current) return;
     await store(current, values[current.key] ?? 0, notes[current.key] || undefined);
