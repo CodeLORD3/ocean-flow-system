@@ -402,6 +402,22 @@ export function bestBeforeText(date?: string | null) {
   return `Bäst före ${d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" })}`;
 }
 
+/**
+ * Färgläge för bäst före: passerat datum är rött, inom två dygn gult.
+ * Används för att den som räknar ska se gamla varor direkt i hyllan.
+ */
+export function expiryTone(date?: string | null): "passerad" | "snart" | "ok" {
+  if (!date) return "ok";
+  const d = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return "ok";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.round((d.getTime() - today.getTime()) / 86400000);
+  if (days < 0) return "passerad";
+  if (days <= 2) return "snart";
+  return "ok";
+}
+
 /** Klockslag i klartext för "Fortsätt räkningen från 14:32?". */
 export function timeText(iso?: string | null) {
   if (!iso) return null;
