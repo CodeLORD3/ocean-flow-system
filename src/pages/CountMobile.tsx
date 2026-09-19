@@ -782,7 +782,8 @@ export default function CountMobile() {
 
       {/* Steg 3 — räkna: allt ryms på en skärm, knappzonen alltid synlig */}
       {step === "rakna" && (
-        <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+
           <div className="mt-2 h-2 w-full shrink-0 overflow-hidden rounded-full bg-muted">
             <div
               className="h-full rounded-full bg-emerald-500 transition-all"
@@ -797,7 +798,7 @@ export default function CountMobile() {
           {current && (
             <>
               {/* Produktrad — liten bild till vänster, namnet stort */}
-              <div className="mt-3 flex min-h-0 shrink items-start gap-3">
+              <div className="mt-3 flex shrink-0 items-start gap-3">
                 <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-muted">
                   {current.imageUrl ? (
                     <img
@@ -843,7 +844,7 @@ export default function CountMobile() {
                     </p>
                   )}
                   {notes[current.key] && (
-                    <p className="truncate text-[16px] italic text-muted-foreground">
+                    <p className="break-words text-[16px] italic text-muted-foreground">
                       {notes[current.key]}
                     </p>
                   )}
@@ -915,7 +916,7 @@ export default function CountMobile() {
               )}
 
               {/* Knappzon — alltid längst ner, aldrig under vecket */}
-              <div className="mt-auto shrink-0 space-y-3 pb-3 pt-3">
+              <div className="sticky bottom-0 mt-auto shrink-0 space-y-3 bg-background pb-3 pt-3">
                 <BigButton onClick={saveAndNext}>
                   <Check className="h-6 w-6" /> Spara och nästa
                 </BigButton>
@@ -924,18 +925,18 @@ export default function CountMobile() {
                     type="button"
                     onClick={goPrev}
                     disabled={index === 0}
-                    className="flex h-14 min-h-[56px] items-center justify-center gap-1 rounded-2xl border border-border bg-card px-2 text-[18px] font-semibold active:bg-muted disabled:opacity-40"
+                    className="flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card px-1 py-2 text-[15px] font-semibold leading-tight active:bg-muted disabled:opacity-40"
                   >
                     <ArrowLeft className="h-6 w-6 shrink-0" />
-                    <span className="truncate">Föregående</span>
+                    <span>Föregående</span>
                   </button>
                   <button
                     type="button"
                     onClick={goNext}
-                    className="flex h-14 min-h-[56px] items-center justify-center gap-1 rounded-2xl border border-border bg-card px-2 text-[18px] font-semibold active:bg-muted"
+                    className="flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card px-1 py-2 text-[15px] font-semibold leading-tight active:bg-muted"
                   >
                     <SkipForward className="h-6 w-6 shrink-0" />
-                    <span className="truncate">Hoppa över</span>
+                    <span>Hoppa över</span>
                   </button>
                   <button
                     type="button"
@@ -943,10 +944,10 @@ export default function CountMobile() {
                       await store(current, 0, "Finns inte här");
                       goNext();
                     }}
-                    className="flex h-14 min-h-[56px] items-center justify-center gap-1 rounded-2xl border border-border bg-card px-2 text-[18px] font-semibold active:bg-muted"
+                    className="flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card px-1 py-2 text-[15px] font-semibold leading-tight active:bg-muted"
                   >
                     <XCircle className="h-6 w-6 shrink-0" />
-                    <span className="truncate">Finns inte</span>
+                    <span>Finns inte</span>
                   </button>
                 </div>
 
