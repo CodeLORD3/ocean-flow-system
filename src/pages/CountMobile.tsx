@@ -216,10 +216,50 @@ export default function CountMobile() {
     });
   }, [lines.data]);
 
-  const list = items.data ?? [];
+  const allItems = items.data ?? [];
+
+  /** Varorna samlade i grupper, så man ser vad som väntar innan man börjar. */
+  const groups = useMemo(() => {
+    const byKey = new Map<string, CountItem[]>();
+    for (const i of allItems) {
+      const k = nameGroupKey(i.productName);
+      if (!byKey.has(k)) byKey.set(k, []);
+      byKey.get(k)!.push(i);
+    }
+    const out: { key: string; label: string; items: CountItem[] }[] = [];
+    const singles: CountItem[] = [];
+    for (const [k, arr] of byKey) {
+      if (arr.length >= 2) out.push({ key: k, label: nameGroupLabel(arr[0].productName), items: arr });
+      else singles.push(...arr);
+    }
+    // Ensamma varor samlas under sin varugrupp så inget hamnar utanför.
+    const byCategory = new Map<string, CountItem[]>();
+    for (const i of singles) {
+      const c = i.category || "Övriga varor";
+      if (!byCategory.has(c)) byCategory.set(c, []);
+      byCategory.get(c)!.push(i);
+    }
+    for (const [c, arr] of byCategory) out.push({ key: `kat:${c}`, label: c, items: arr });
+    return out.sort((a, b) => a.label.localeCompare(b.label, "sv"));
+  }, [allItems]);
+
+  const [groupKey, setGroupKey] = useState<string | null>(null);
+  const activeGroup = groupKey ? groups.find((g) => g.key === groupKey) ?? null : null;
+  const list = activeGroup ? activeGroup.items : allItems;
   const current: CountItem | undefined = list[index];
   const countedKeys = Object.keys(values);
   const countedTotal = countedKeys.length;
+  const countedInGroup = (g: { items: CountItem[] }) =>
+    g.items.filter((i) => values[i.key] !== undefined).length;
+
+  /** Öppnar en grupp och startar på första varan som inte är räknad. */
+  const openGroup = (key: string) => {
+    const g = groups.find((x) => x.key === key);
+    setGroupKey(key);
+    const first = g ? g.items.findIndex((i) => values[i.key] === undefined) : -1;
+    setIndex(first >= 0 ? first : 0);
+    setStep("rakna");
+  };
 
   const setBlindMode = (v: boolean) => {
     setBlind(v);
