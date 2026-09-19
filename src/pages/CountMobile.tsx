@@ -380,18 +380,18 @@ export default function CountMobile() {
   /** Rader att visa i sammanfattningen, med avvikelse mot systemets saldo. */
   const summary = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return list
+    return allItems
       .filter((i) => values[i.key] !== undefined)
       .filter((i) => !q || i.productName.toLowerCase().includes(q))
       .map((i) => ({ item: i, counted: values[i.key], diff: values[i.key] - i.expectedQty }));
-  }, [list, values, search]);
+  }, [allItems, values, search]);
 
   const diffCount = useMemo(
     () =>
-      list.filter(
+      allItems.filter(
         (i) => values[i.key] !== undefined && Math.abs(values[i.key] - i.expectedQty) >= 0.05,
       ).length,
-    [list, values],
+    [allItems, values],
   );
 
   const sendCount = async () => {
