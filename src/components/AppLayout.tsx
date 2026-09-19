@@ -8,6 +8,7 @@ import { StoreHero } from "@/components/StoreHero";
 import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
 
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { versionLabel } from "@/lib/appVersion";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 
 
@@ -366,7 +367,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <span>FiskHandel AB © 2026</span>
             <div className="flex items-center gap-3">
               <span>Databas: Ansluten</span>
-              <span>API: v2.4</span>
+              <span>{versionLabel()}</span>
             </div>
           </div>
         </div>
