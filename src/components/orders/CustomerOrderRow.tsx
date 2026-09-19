@@ -59,7 +59,7 @@ import { InlineOrderPacking } from "./InlineOrderPacking";
 import { InlineOrderEdit } from "./InlineOrderEdit";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
-import { OrderAuditLine } from "./OrderAuditLine";
+import { OrderAuditLine, OrderApprovedBy } from "./OrderAuditLine";
 import { getStoreCurrency } from "@/lib/currency";
 import { OrderTypeIcon } from "@/components/orders/OrderTypeIcon";
 import { CurrencyAmount } from "@/components/orders/CurrencyAmount";

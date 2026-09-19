@@ -46,7 +46,7 @@ import { printQuote } from "@/lib/customerQuotePdf";
 import { printConfirmation, confirmationText } from "@/lib/customerOrderConfirmation";
 import { printPackList } from "@/lib/customerOrderPackListPdf";
 import { allergenLabel, scaleQuantity } from "@/lib/catering";
-import { OrderAuditLine } from "./OrderAuditLine";
+import { OrderAuditLine, OrderApprovedBy } from "./OrderAuditLine";
 import { CurrencyAmount, useSekRate } from "@/components/orders/CurrencyAmount";
 import { getStoreCurrency } from "@/lib/currency";
 
