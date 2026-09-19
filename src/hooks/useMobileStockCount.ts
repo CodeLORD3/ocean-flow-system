@@ -1,7 +1,15 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { todayStockholm } from "@/hooks/useStockReport";
+import {
+  dequeueLine,
+  enqueueLine,
+  flushQueue,
+  readQueue,
+  saveCountLine,
+  type QueuedLine,
+} from "@/lib/mobileCount";
 
 /**
  * Räkning på telefon — data för det guidade inventeringsflödet.
