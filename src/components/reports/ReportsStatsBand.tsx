@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Banknote, Receipt, Users, Trash2, TrendingUp, Store as StoreIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { currencyLabel } from "@/lib/reportCurrency";
+import { useFxRates } from "@/hooks/useFxRates";
+import { rateFor, type FxRateMap } from "@/lib/fxRates";
 import type { DailyReport, StaffEntry, WasteItem } from "@/hooks/useDailyReport";
 
 const nf = (v: number) => v.toLocaleString("sv-SE", { maximumFractionDigits: 0 }).replace(/\u00a0/g, " ");
