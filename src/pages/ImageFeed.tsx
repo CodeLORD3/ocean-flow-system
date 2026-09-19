@@ -11,7 +11,8 @@ import { useImageFeed, type FeedImage } from "@/hooks/useImageFeed";
 import { useMyImageFavorites, useToggleImageFavorite } from "@/hooks/useEntityImages";
 import { useAllowedStores, useSwitchStore } from "@/components/StoreSwitcher";
 import { useNavigate } from "react-router-dom";
-import { dayKey, dayLabel, initialsOf } from "@/lib/imageMeta";
+import { dayKey, dayLabel, dayDateLabel, initialsOf } from "@/lib/imageMeta";
+import { dayTone } from "@/lib/dayColor";
 import { StaffName } from "@/components/staff/StaffNameAvatar";
 import { focalStyle } from "@/lib/imageFocal";
 import { cn } from "@/lib/utils";
@@ -399,7 +400,8 @@ export default function ImageFeed() {
                 ))}
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 
