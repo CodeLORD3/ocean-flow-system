@@ -287,6 +287,23 @@ export default function CountMobile() {
     });
   }, [lines.data]);
 
+  /** Sökning i varuregistret för varor som saknades i hyllans lista. */
+  const extraHits = useQuery({
+    queryKey: ["count-extra-search", extraSearch.trim().toLowerCase()],
+    enabled: extraSearch.trim().length >= 2,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, sku, unit, category, cost_price, image_url")
+        .eq("active", true)
+        .ilike("name", `%${extraSearch.trim()}%`)
+        .order("name")
+        .limit(30);
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
   const stockItems = items.data ?? [];
   /** Varor som stod i hyllan men saknades i listan — läggs till i slutet. */
   const extraItems = useMemo(
