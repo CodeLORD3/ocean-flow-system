@@ -48,6 +48,8 @@ export function ReportsStatsBand({ storeId }: { storeId?: string | null }) {
   const from = isoDaysAgo(days * 2);
   const { data: stores = [] } = useStores();
   const { data: fx = new Map() as FxRateMap } = useFxRates(from);
+  /* Nätförsäljningen (fiskskaldjur.se/.ch) på leveransdagen, per butik. */
+  const { data: web } = useWebSales(from, isoDaysAgo(-1), storeId ?? null);
 
   /* Valutan följer butiken; utan valt butik visas kr som gemensam etikett. */
   const curOf = (id: string) => currencyLabel(stores.find((s) => s.id === id)?.currency);
