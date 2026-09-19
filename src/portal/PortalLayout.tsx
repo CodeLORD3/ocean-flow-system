@@ -238,6 +238,8 @@ function PortalInner() {
       }
       setUser(session.user);
       loadProfile(session.user.id);
+      // Vid inloggning: se till att enheten kör senaste publicerade versionen
+      if (event === "SIGNED_IN") void checkForUpdateNow();
     });
 
     return () => {
