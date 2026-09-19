@@ -64,18 +64,70 @@ const BLIND_KEY = "count-blind";
  * "Gravad lax lösvikt" hör ihop i gruppen "Gravad lax". Två första orden räcker
  * för hur varorna heter i registret; hittas ingen granne används varugruppen.
  */
-function nameGroupKey(name: string) {
-  const words = name
-    .toLowerCase()
+/** Ord som bara beskriver storlek eller styckning – de ska inte dela upp en varugrupp. */
+const VARIANT_WORDS = new Set([
+  "vikt",
+  "styck",
+  "st",
+  "hg",
+  "g",
+  "gr",
+  "kg",
+  "ml",
+  "cl",
+  "dl",
+  "l",
+  "liter",
+  "pack",
+  "förp",
+  "burk",
+  "bit",
+  "bitar",
+  "skiva",
+  "skivad",
+  "skivat",
+  "skivor",
+  "sida",
+  "sidor",
+  "helsida",
+  "hel",
+  "halv",
+  "portion",
+  "portionsbit",
+  "i",
+  "à",
+  "a",
+  "av",
+  "ca",
+  "per",
+  "med",
+  "och",
+]);
+
+/** Ordens stomme i varunamnet, utan siffror, mått och styckningsord. */
+function coreWords(name: string) {
+  return name
     .replace(/[(),.]/g, " ")
     .split(/\s+/)
-    .filter(Boolean);
-  if (words.length < 2) return words[0] ?? "";
+    .filter(Boolean)
+    .filter((w) => {
+      const l = w.toLowerCase();
+      if (/^\d+([.,]\d+)?$/.test(l)) return false;
+      if (/^\d+([.,]\d+)?(hg|g|gr|kg|ml|cl|dl|l|st)$/.test(l)) return false;
+      return !VARIANT_WORDS.has(l);
+    });
+}
+
+function nameGroupKey(name: string) {
+  const words = coreWords(name).map((w) => w.toLowerCase());
+  if (words.length === 0) return name.trim().toLowerCase();
+  if (words.length === 1) return words[0];
   return `${words[0]} ${words[1]}`;
 }
 
 function nameGroupLabel(name: string) {
-  const words = name.replace(/[(),.]/g, " ").split(/\s+/).filter(Boolean);
+  const words = coreWords(name);
+  if (words.length === 0) return name.trim();
   return words.slice(0, 2).join(" ");
 }
 
