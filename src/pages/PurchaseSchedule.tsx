@@ -27,6 +27,7 @@ import { useCreateChangeRequest } from "@/hooks/useOrderChangeRequests";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useManualScheduleEntries } from "@/hooks/useManualScheduleEntries";
+import { useProducts } from "@/hooks/useProducts";
 
 const WEEKDAYS = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 const WEEKDAY_OPTIONS = WEEKDAYS.map((name, i) => ({ value: i + 1, label: name }));

@@ -1331,6 +1331,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
   const { toast } = useToast();
   const createChange = useCreateChangeRequest();
   const updateLineStatus = useUpdateOrderLineStatus();
+  const { data: allProducts = [] } = useProducts();
   // Djuplänk från lagret: ?line=<produkt> markerar och skrollar till raden.
   const detailLocation = useLocation();
   const detailParams = new URLSearchParams(detailLocation.search);
@@ -1389,9 +1390,6 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
     );
   };
   const { data: allStock = [] } = useAllStockByLocation();
-  // Återanvänd den sidindelade produktlistan. En direkt hämtning kapades vid
-  // 1 000 rader och dolde därför produkter sent i alfabetet, t.ex. Varmrökt.
-  const allProducts = products;
 
   /**
    * Syskonvaror: samma produktgrupp, annars samma namn frånsett storleks-
