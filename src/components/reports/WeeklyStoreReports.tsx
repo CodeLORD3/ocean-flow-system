@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ChevronDown, ChevronRight, AlertTriangle, LockKeyhole, Printer, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { currencyLabel } from "@/lib/reportCurrency";
+import { useWebSales, webTotal } from "@/hooks/useWebSales";
 
 const int = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
