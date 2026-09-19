@@ -29,6 +29,7 @@ import {
   useCountItems,
   useCountLines,
   useCountPlaces,
+  useCountQueue,
   useOpenCountSession,
   useRemoveCountLine,
   useSaveCountLine,
@@ -37,6 +38,7 @@ import {
 } from "@/hooks/useMobileStockCount";
 import {
   bestBeforeText,
+  expiryTone,
   clearDraft,
   clearPosition,
   diffText,
@@ -273,6 +275,7 @@ export default function CountMobile() {
   const lines = useCountLines(sessionId);
   const openSession = useOpenCountSession();
   const saveLine = useSaveCountLine();
+  const queue = useCountQueue();
   const removeLine = useRemoveCountLine();
 
   /** Sparade rader från databasen fylls in i räkningen. */
@@ -510,6 +513,12 @@ export default function CountMobile() {
     [allItems, values],
   );
 
+  /** Varor som hoppats över — de måste hanteras innan räkningen skickas in. */
+  const missing = useMemo(
+    () => allItems.filter((i) => values[i.key] === undefined),
+    [allItems, values],
+  );
+
   const sendCount = async () => {
     if (!storeId || !sessionId || !locationId) return;
     setSending(true);
@@ -615,6 +624,14 @@ export default function CountMobile() {
     <div className="mx-auto flex h-full min-h-0 w-full max-w-[520px] flex-col overflow-x-hidden px-4">
       {header}
 
+      {/* Sparstatus — syns bara när något ligger kvar i telefonen */}
+      {(queue.data ?? 0) > 0 && (
+        <div className="mt-1 rounded-2xl border border-amber-500/60 bg-amber-50 px-4 py-3 text-[17px] font-semibold leading-snug dark:bg-amber-500/10">
+          {queue.data} inmatningar väntar på att sparas. Du kan fortsätta räkna — de skickas
+          automatiskt när telefonen har täckning.
+        </div>
+      )}
+
 
       {/* Steg 2 — välj plats */}
       {step === "plats" && (
@@ -657,6 +674,14 @@ export default function CountMobile() {
                     {timeText(p.lastActivityAt) ? ` — ${timeText(p.lastActivityAt)}` : ""}
                   </span>
                 )}
+                <span className="block text-[16px] text-muted-foreground">
+                  {p.lastCountedAt
+                    ? `Senast räknad ${new Date(p.lastCountedAt).toLocaleDateString("sv-SE", {
+                        day: "numeric",
+                        month: "short",
+                      })}`
+                    : "Aldrig räknad"}
+                </span>
                 {p.claimedBy && staffId && p.claimedBy !== staffId && p.countedRows > 0 && (
                   <span className="block text-[16px] text-muted-foreground">
                     {p.claimedByName || "En kollega"} räknar här
@@ -791,11 +816,24 @@ export default function CountMobile() {
                     Räknas i {current.unit === "st" ? "stycken" : "kg"}
                   </p>
                   {current.lotNumber && (
-                    <p className="text-[17px] font-medium leading-snug">
+                    <p
+                      className={`text-[17px] font-medium leading-snug ${
+                        expiryTone(current.bestBefore) === "passerad"
+                          ? "text-rose-600"
+                          : expiryTone(current.bestBefore) === "snart"
+                            ? "text-amber-600"
+                            : ""
+                      }`}
+                    >
                       Parti {current.lotNumber}
                       {bestBeforeText(current.bestBefore)
                         ? ` · ${bestBeforeText(current.bestBefore)}`
                         : ""}
+                      {expiryTone(current.bestBefore) === "passerad"
+                        ? " · bäst före har passerat"
+                        : expiryTone(current.bestBefore) === "snart"
+                          ? " · går ut snart"
+                          : ""}
                     </p>
                   )}
                   {!blind && (
@@ -819,6 +857,17 @@ export default function CountMobile() {
                   onChange={(v) => setValues({ ...values, [current.key]: v })}
                 />
               </div>
+
+              {/* Rimlighetskontroll: säger inte vad systemet har, bara att siffran sticker ut */}
+              {current.expectedQty > 0.05 &&
+                values[current.key] !== undefined &&
+                (values[current.key] > current.expectedQty * 5 ||
+                  values[current.key] < current.expectedQty / 5) && (
+                  <p className="mt-3 shrink-0 rounded-xl bg-amber-100 px-4 py-3 text-[17px] font-medium text-amber-900">
+                    Siffran ser ovanlig ut. Kontrollera att du räknat rätt enhet
+                    och rätt hylla innan du går vidare.
+                  </p>
+                )}
 
               {/* En rad med två sekundärknappar */}
               <div className="mt-3 grid shrink-0 grid-cols-2 gap-3">
@@ -1080,7 +1129,51 @@ export default function CountMobile() {
               <p className="text-[18px] text-muted-foreground">Inget räknat ännu.</p>
             )}
           </div>
-          <BigButton onClick={() => setConfirmOpen(true)} disabled={countedTotal === 0}>
+          {missing.length > 0 && (
+            <div className="rounded-3xl border border-amber-500/60 bg-amber-50 p-4 dark:bg-amber-500/10">
+              <p className="text-[19px] font-semibold leading-tight">
+                {missing.length} varor är inte räknade
+              </p>
+              <p className="mt-1 text-[17px] leading-snug text-muted-foreground">
+                Varje vara måste ha en siffra innan räkningen skickas in. Räkna dem, eller
+                markera dem som att de inte finns i hyllan.
+              </p>
+              <div className="mt-3 space-y-3">
+                <BigButton
+                  onClick={() => {
+                    const first = missing[0];
+                    const g = groups.find((x) => x.items.some((i) => i.key === first.key));
+                    setGroupKey(g?.key ?? null);
+                    setIndex(
+                      g
+                        ? g.items.findIndex((i) => i.key === first.key)
+                        : allItems.findIndex((i) => i.key === first.key),
+                    );
+                    setStep("rakna");
+                  }}
+                >
+                  <ChevronRight className="h-6 w-6" /> Räkna dem nu
+                </BigButton>
+                <BigButton
+                  variant="plain"
+                  onClick={async () => {
+                    const next = { ...values };
+                    for (const item of missing) {
+                      await store(item, 0, "Finns inte här");
+                      next[item.key] = 0;
+                    }
+                    setValues(next);
+                  }}
+                >
+                  <XCircle className="h-6 w-6" /> Finns inte i hyllan
+                </BigButton>
+              </div>
+            </div>
+          )}
+          <BigButton
+            onClick={() => setConfirmOpen(true)}
+            disabled={countedTotal === 0 || missing.length > 0}
+          >
             <Send className="h-6 w-6" /> Skicka in räkningen
           </BigButton>
         </div>

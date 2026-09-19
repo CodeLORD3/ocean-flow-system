@@ -116,6 +116,111 @@ export function clearPosition(storeId: string, staffId: string | null) {
   }
 }
 
+/* --------------------------------------------------------- kö för sparningar */
+
+/**
+ * En räknad rad som ännu inte kommit fram till databasen. Kön ligger i
+ * telefonen så att dålig täckning i frysrummet aldrig tappar en räkning:
+ * raden läggs i kön först, skickas sedan, och tas ur kön när den är sparad.
+ */
+export interface QueuedLine {
+  sessionId: string;
+  productId: string;
+  locationId: string;
+  lotId: string | null;
+  quantity: number | null;
+  systemQty: number;
+  unit: string;
+  comment: string | null;
+  at: string;
+}
+
+const QUEUE_KEY = "count-queue";
+const queueId = (r: Pick<QueuedLine, "sessionId" | "productId" | "lotId">) =>
+  `${r.sessionId}:${r.productId}:${r.lotId ?? ""}`;
+
+export function readQueue(): QueuedLine[] {
+  try {
+    const raw = localStorage.getItem(QUEUE_KEY);
+    const parsed = raw ? (JSON.parse(raw) as QueuedLine[]) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeQueue(rows: QueuedLine[]) {
+  try {
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(rows));
+  } catch {
+    /* fullt utrymme får aldrig stoppa räkningen */
+  }
+}
+
+/** Lägger raden i kön (en rad per produkt och parti — senaste gäller). */
+export function enqueueLine(row: QueuedLine) {
+  const rest = readQueue().filter((r) => queueId(r) !== queueId(row));
+  writeQueue([...rest, row]);
+}
+
+export function dequeueLine(row: Pick<QueuedLine, "sessionId" | "productId" | "lotId">) {
+  writeQueue(readQueue().filter((r) => queueId(r) !== queueId(row)));
+}
+
+/** Skriver en räknad rad till databasen. Samma väg från kön som direkt. */
+export async function saveCountLine(row: QueuedLine) {
+  const values = {
+    session_id: row.sessionId,
+    product_id: row.productId,
+    location_id: row.locationId,
+    lot_id: row.lotId,
+    counted_qty: row.quantity,
+    system_qty: row.systemQty,
+    unit: row.unit,
+    comment: row.comment,
+    counted_at: row.at,
+  };
+  // Unika raden i databasen bygger på COALESCE, så ON CONFLICT går inte att
+  // använda. Vi letar upp raden först och uppdaterar den, annars skapas den.
+  let find = supabase
+    .from("stock_count_lines")
+    .select("id")
+    .eq("session_id", row.sessionId)
+    .eq("product_id", row.productId)
+    .eq("location_id", row.locationId);
+  find = row.lotId ? find.eq("lot_id", row.lotId) : find.is("lot_id", null);
+  const { data: existing, error: findErr } = await find.maybeSingle();
+  if (findErr) throw findErr;
+  if (existing) {
+    const { error } = await supabase
+      .from("stock_count_lines")
+      .update(values as any)
+      .eq("id", (existing as any).id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from("stock_count_lines").insert(values as any);
+    if (error) throw error;
+  }
+  await supabase
+    .from("stock_count_sessions")
+    .update({ last_activity_at: new Date().toISOString() } as any)
+    .eq("id", row.sessionId);
+}
+
+/** Skickar allt som ligger kvar i kön. Returnerar antal kvar efter försöket. */
+export async function flushQueue(): Promise<number> {
+  for (const row of readQueue()) {
+    try {
+      await saveCountLine(row);
+      dequeueLine(row);
+    } catch {
+      // Nätet är fortfarande borta — raden ligger kvar och försöks igen.
+      break;
+    }
+  }
+  return readQueue().length;
+}
+
 export interface SubmitRow {
   productId: string;
   productName: string;
@@ -295,6 +400,22 @@ export function bestBeforeText(date?: string | null) {
   const d = new Date(`${date}T00:00:00`);
   if (Number.isNaN(d.getTime())) return null;
   return `Bäst före ${d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" })}`;
+}
+
+/**
+ * Färgläge för bäst före: passerat datum är rött, inom två dygn gult.
+ * Används för att den som räknar ska se gamla varor direkt i hyllan.
+ */
+export function expiryTone(date?: string | null): "passerad" | "snart" | "ok" {
+  if (!date) return "ok";
+  const d = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return "ok";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.round((d.getTime() - today.getTime()) / 86400000);
+  if (days < 0) return "passerad";
+  if (days <= 2) return "snart";
+  return "ok";
 }
 
 /** Klockslag i klartext för "Fortsätt räkningen från 14:32?". */

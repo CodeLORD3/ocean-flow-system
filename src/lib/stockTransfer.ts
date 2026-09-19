@@ -199,24 +199,7 @@ export async function moveStockToTransport(orderId: string) {
 
 
     if (remaining > 0) {
-      // Uppstartsläge: lagret är obegränsat, så bristen bokförs som en
-      // justering in på leveranslagret istället för att stoppa leveransen.
-      if (await isInfiniteStock()) {
-        await recordMovements([
-          {
-            productId: line.product_id,
-            locationId: transportId,
-            quantityKg: remaining,
-            movementType: "justering",
-            referenceType: REF_TYPE,
-            referenceId: orderId,
-            note: "Obegränsat lager (uppstartsläge)",
-          },
-        ]);
-        remaining = 0;
-      } else {
-        shortages.push({ productId: line.product_id as string, missing: remaining });
-      }
+      shortages.push({ productId: line.product_id as string, missing: remaining });
     }
   }
 

@@ -1,7 +1,15 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { todayStockholm } from "@/hooks/useStockReport";
+import {
+  dequeueLine,
+  enqueueLine,
+  flushQueue,
+  readQueue,
+  saveCountLine,
+  type QueuedLine,
+} from "@/lib/mobileCount";
 
 /**
  * Räkning på telefon — data för det guidade inventeringsflödet.
@@ -39,6 +47,8 @@ export interface CountPlace {
   countedRows: number;
   claimedBy: string | null;
   claimedByName: string | null;
+  /** När platsen senast räknades och godkändes. */
+  lastCountedAt: string | null;
 }
 
 /** Butikens lagerplatser med antal varor och ev. påbörjad räkning. */
@@ -91,6 +101,19 @@ export function useCountPlaces(storeId?: string | null) {
       const byLocation = new Map<string, any>();
       for (const s of (sessions || []) as any[]) if (s.location_id) byLocation.set(s.location_id, s);
 
+      // Senast godkända räkning per plats — visas som "Senast räknad".
+      const { data: reports } = await supabase
+        .from("inventory_reports")
+        .select("location_id, approved_at")
+        .eq("store_id", storeId!)
+        .eq("status", "godkand")
+        .not("approved_at", "is", null)
+        .order("approved_at", { ascending: false });
+      const lastCounted = new Map<string, string>();
+      for (const r of (reports || []) as any[])
+        if (r.location_id && !lastCounted.has(r.location_id))
+          lastCounted.set(r.location_id, r.approved_at);
+
       return (locs || []).map((l: any) => {
         const s = byLocation.get(l.id);
         return {
@@ -100,6 +123,7 @@ export function useCountPlaces(storeId?: string | null) {
           sessionId: s?.id ?? null,
           startedAt: s?.started_at ?? null,
           lastActivityAt: s?.last_activity_at ?? null,
+          lastCountedAt: lastCounted.get(l.id) ?? null,
           countedRows: Number(s?.stock_count_lines?.[0]?.count ?? 0),
           claimedBy: s?.claimed_by ?? null,
           claimedByName: s?.claimed_by ? names.get(s.claimed_by) ?? null : null,
@@ -297,7 +321,11 @@ export function useOpenCountSession() {
   });
 }
 
-/** Sparar en räknad rad. Anropas efter varje inmatning. */
+/**
+ * Sparar en räknad rad. Anropas efter varje inmatning. Raden läggs först i
+ * telefonens kö och tas ur kön när databasen bekräftat — tappad täckning
+ * tappar därför aldrig en räkning.
+ */
 export function useSaveCountLine() {
   const qc = useQueryClient();
   return useMutation({
@@ -314,48 +342,57 @@ export function useSaveCountLine() {
       quantity: number | null;
       comment?: string | null;
     }) => {
-      // Unika raden i databasen bygger på COALESCE, så ON CONFLICT går inte att
-      // använda. Vi letar upp raden först och uppdaterar den, annars skapas den.
-      const row = {
-        session_id: sessionId,
-        product_id: item.productId,
-        location_id: locationId,
-        lot_id: item.lotId,
-        counted_qty: quantity,
-        system_qty: item.expectedQty,
+      const row: QueuedLine = {
+        sessionId,
+        productId: item.productId,
+        locationId,
+        lotId: item.lotId,
+        quantity,
+        systemQty: item.expectedQty,
         unit: item.unit,
         comment: comment ?? null,
-        counted_at: new Date().toISOString(),
+        at: new Date().toISOString(),
       };
-      let find = supabase
-        .from("stock_count_lines")
-        .select("id")
-        .eq("session_id", sessionId)
-        .eq("product_id", item.productId)
-        .eq("location_id", locationId);
-      find = item.lotId ? find.eq("lot_id", item.lotId) : find.is("lot_id", null);
-      const { data: existing, error: findErr } = await find.maybeSingle();
-      if (findErr) throw findErr;
-      if (existing) {
-        const { error } = await supabase
-          .from("stock_count_lines")
-          .update(row as any)
-          .eq("id", (existing as any).id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("stock_count_lines").insert(row as any);
-        if (error) throw error;
-      }
-      await supabase
-        .from("stock_count_sessions")
-        .update({ last_activity_at: new Date().toISOString() } as any)
-        .eq("id", sessionId);
+      enqueueLine(row);
+      await saveCountLine(row);
+      dequeueLine(row);
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["count-lines", vars.sessionId] });
       qc.invalidateQueries({ queryKey: ["count-places"] });
+      qc.invalidateQueries({ queryKey: ["count-queue"] });
+    },
+    onError: () => {
+      qc.invalidateQueries({ queryKey: ["count-queue"] });
     },
   });
+}
+
+/**
+ * Antal räknade rader som väntar på att komma fram. Försöker skicka dem igen
+ * när telefonen får nät och visas som "sparas …" i räkningen.
+ */
+export function useCountQueue() {
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ["count-queue"],
+    queryFn: async () => flushQueue(),
+    refetchInterval: 15000,
+    initialData: readQueue().length,
+  });
+
+  useEffect(() => {
+    const retry = () => {
+      void flushQueue().then(() => {
+        qc.invalidateQueries({ queryKey: ["count-queue"] });
+        qc.invalidateQueries({ queryKey: ["count-lines"] });
+      });
+    };
+    window.addEventListener("online", retry);
+    return () => window.removeEventListener("online", retry);
+  }, [qc]);
+
+  return query;
 }
 
 /** Tar bort en räknad rad — "Ångra" på senaste inmatning. */
