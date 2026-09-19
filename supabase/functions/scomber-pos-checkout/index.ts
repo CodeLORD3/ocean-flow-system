@@ -134,6 +134,11 @@ Deno.serve(async (req) => {
       if (allocErr) throw allocErr;
     }
 
+    // 4. Lagerrörelser: försäljningen ut ur butikens försäljningslager, FEFO.
+    //    Enda skrivvägen till saldon är stock_movements. Idempotent: rörelser
+    //    skrivs bara om kvittot inte redan har några.
+    const movements = await postSaleMovements(sb, tx.id, lines, insertedItems);
+
     return jsonResponse({
       ok: true,
       transaction: {
@@ -142,6 +147,8 @@ Deno.serve(async (req) => {
         occurred_at: tx.occurred_at,
       },
       allocations: allocations.length,
+      movements: movements.written,
+      unposted_lines: movements.unposted,
     });
   } catch (e) {
     if (e instanceof ValidationError) return errorResponse(e.message, 400);
