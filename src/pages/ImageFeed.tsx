@@ -450,7 +450,7 @@ function PostCard({
       {/* Underkant: bildtext, hjärtan, kommentarer och plats */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 space-y-2 bg-gradient-to-t from-black/70 via-black/25 to-transparent p-3 pt-10">
         {img.caption && (
-          <p className="line-clamp-2 text-sm text-white drop-shadow">{img.caption}</p>
+          <p className="whitespace-pre-wrap break-words text-sm text-white drop-shadow">{img.caption}</p>
         )}
         <div className="flex items-end justify-between gap-2">
           <div className="pointer-events-auto flex items-center gap-1">
@@ -493,10 +493,10 @@ function PostCard({
             <button
               type="button"
               onClick={() => onSource(img.sourceId)}
-              className="pointer-events-auto flex max-w-[60%] items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur transition-colors hover:bg-black/60"
+              className="pointer-events-auto flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur transition-colors hover:bg-black/60"
             >
               <MapPin className="h-3 w-3 shrink-0" />
-              <span className="truncate">{img.sourceName}</span>
+              <span className="whitespace-normal text-left leading-tight">{img.sourceName}</span>
             </button>
           </div>
         </div>
