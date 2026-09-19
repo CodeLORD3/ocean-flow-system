@@ -1,3 +1,4 @@
+import { versionLabel } from "@/lib/appVersion";
 import {
   Map,
   CalendarOff,
@@ -247,6 +248,9 @@ export function ShopSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        {!collapsed && (
+          <p className="px-2 pb-1 text-[10px] leading-tight text-muted-foreground">{versionLabel()}</p>
+        )}
       </SidebarFooter>
 
       <SidebarVisibilityDialog
