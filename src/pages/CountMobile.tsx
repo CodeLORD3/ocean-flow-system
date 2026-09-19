@@ -359,6 +359,37 @@ export default function CountMobile() {
     setStep("rakna");
   };
 
+  /** Lägger till en vara som stod i hyllan men saknades i listan, och räknar den. */
+  const addExtra = (p: any) => {
+    const already = extraItems.findIndex((i) => i.productId === p.id);
+    if (stockItems.some((i) => i.productId === p.id)) {
+      toast.info("Varan finns redan i listan");
+      openGroup(nameGroupKey(p.name));
+      setExtraSearch("");
+      return;
+    }
+    const item: CountItem = {
+      key: `${p.id}:`,
+      productId: p.id,
+      lotId: null,
+      productName: p.name || "Okänd vara",
+      sku: p.sku ?? null,
+      unit: p.unit || "kg",
+      imageUrl: p.image_url ?? null,
+      category: p.category ?? null,
+      costPrice: Number(p.cost_price) || 0,
+      expectedQty: 0,
+      lotNumber: null,
+      bestBefore: null,
+    };
+    const nextIndex = already >= 0 ? already : extraItems.length;
+    if (already < 0) setExtras((prev) => [...prev, item]);
+    setGroupKey("extra");
+    setIndex(nextIndex);
+    setExtraSearch("");
+    setStep("rakna");
+  };
+
   const setBlindMode = (v: boolean) => {
     setBlind(v);
     try {
