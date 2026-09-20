@@ -9,6 +9,7 @@ import {
   type AuctionPurchaseRow,
   type NewAuctionPurchase,
 } from "@/lib/auctionPurchases";
+import { splitAuctionLot, type SplitPart } from "@/lib/auctionLotSplit";
 
 /** Dagens auktionsinköp med partiets uppgifter och tolkade förslag. */
 export function useAuctionDay(date?: string) {
@@ -76,5 +77,18 @@ export function useUpdateAuctionPurchase() {
     mutationFn: ({ id, ...patch }: { id: string; pricePerKg?: number; colli?: number }) =>
       updateAuctionPurchase(id, patch),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["auction_purchases"] }),
+  });
+}
+
+/** Delar en låda i delpartier med egna destinationer. */
+export function useSplitAuctionLot() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ row, parts }: { row: AuctionPurchaseRow; parts: SplitPart[] }) =>
+      splitAuctionLot(row, parts),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["auction_purchases"] });
+      qc.invalidateQueries({ queryKey: ["lot_split_children", vars.row.lot_id] });
+    },
   });
 }
