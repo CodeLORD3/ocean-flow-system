@@ -482,6 +482,12 @@ export default function Clock() {
             {receipt.offline && (
               <p className="ind-muted text-sm">Sparad i offline-kön och syncas när nätet är tillbaka.</p>
             )}
+            {receipt.reminder && (
+              <div className="ind-row ind-row--edge-warning">
+                <StatusLabel tone="warn">Kom ihåg</StatusLabel>
+                <span className="text-sm">{receipt.reminder} Gör det innan du går hem.</span>
+              </div>
+            )}
             {/* På telefon måste man kunna gå tillbaka till appen direkt. */}
             <IndustryButton variant="primary" size="touch" className="w-full" onClick={leaveClock}>
               Klar — tillbaka till appen
