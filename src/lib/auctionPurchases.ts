@@ -275,14 +275,15 @@ export async function cancelAuctionPurchase(row: AuctionPurchaseRow, reason: str
   if (error) throw error;
 
   if (row.lot_id) {
-    await supabase
+    const { error: lotError } = await supabase
       .from("lots")
       .update({
         auction_status: "makulerat",
-        status: "terminerat",
+        status: "terminerad",
         terminated_reason: `Makulerat auktionsinköp: ${reason}`,
       } as any)
       .eq("id", row.lot_id);
+    if (lotError) throw lotError;
   }
 }
 
@@ -297,9 +298,24 @@ export async function updateAuctionPurchase(
   if (!Object.keys(update).length) return;
   const { error } = await supabase.from("auction_purchases").update(update as any).eq("id", id);
   if (error) throw error;
-  if (patch.colli != null) {
-    const { data } = await supabase.from("auction_purchases").select("lot_id").eq("id", id).maybeSingle();
+  // Partiet bär samma uppgifter som köpet — kolli och det preliminära
+  // kilopriset måste därför följa med rättningen.
+  const lotPatch: Record<string, unknown> = {};
+  if (patch.colli != null) lotPatch.colli_count = patch.colli;
+  if (patch.pricePerKg != null) lotPatch.preliminary_unit_cost = patch.pricePerKg;
+  if (Object.keys(lotPatch).length) {
+    const { data } = await supabase
+      .from("auction_purchases")
+      .select("lot_id")
+      .eq("id", id)
+      .maybeSingle();
     const lotId = (data as any)?.lot_id;
-    if (lotId) await supabase.from("lots").update({ colli_count: patch.colli } as any).eq("id", lotId);
+    if (lotId) {
+      const { error: lotError } = await supabase
+        .from("lots")
+        .update(lotPatch as any)
+        .eq("id", lotId);
+      if (lotError) throw lotError;
+    }
   }
 }
