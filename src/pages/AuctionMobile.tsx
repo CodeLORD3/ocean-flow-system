@@ -550,7 +550,15 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function PurchaseCard({ row, onCancel }: { row: AuctionPurchaseRow; onCancel: () => void }) {
+function PurchaseCard({
+  row,
+  onCancel,
+  onEdit,
+}: {
+  row: AuctionPurchaseRow;
+  onCancel: () => void;
+  onEdit: () => void;
+}) {
   const weight = nominalWeight(row);
   const amount = preliminaryAmount(row);
   const cancelled = row.status === "makulerat";
