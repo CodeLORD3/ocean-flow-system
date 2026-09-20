@@ -483,8 +483,8 @@ export default function Clock() {
               <p className="ind-muted text-sm">Sparad i offline-kön och syncas när nätet är tillbaka.</p>
             )}
             {receipt.reminder && (
-              <div className="ind-row ind-row--edge-warning">
-                <StatusLabel tone="warn">Kom ihåg</StatusLabel>
+              <div className="ind-row ind-row--edge-alert">
+                <StatusLabel tone="alert">Kom ihåg</StatusLabel>
                 <span className="text-sm">{receipt.reminder} Gör det innan du går hem.</span>
               </div>
             )}
