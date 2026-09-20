@@ -637,6 +637,8 @@ function PurchaseCard({
   const weight = nominalWeight(row);
   const amount = preliminaryAmount(row);
   const cancelled = row.status === "makulerat";
+  const photos = boxPhotos(row);
+  const missing = cancelled ? 0 : missingPhotoCount(row);
   const unconfirmed =
     !cancelled && !row.suggestions_confirmed_at && Object.keys(row.suggestions ?? {}).length > 0;
 
@@ -646,13 +648,7 @@ function PurchaseCard({
         cancelled ? "opacity-60" : ""
       }`}
     >
-      <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted">
-        <StorageImage
-          url={row.box_photo_url}
-          alt="Lådans lapp"
-          className="h-full w-full object-cover"
-        />
-      </div>
+      <AuctionPhotoStrip photos={photos} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="truncate font-heading text-[19px] font-semibold leading-tight">
@@ -666,6 +662,12 @@ function PurchaseCard({
         <p className="text-[17px] leading-snug text-muted-foreground">
           {weight === null ? "Vikt saknas" : `${kg(weight)} · ${num(amount ?? 0)} kr`}
         </p>
+        {missing > 0 && (
+          <p className="mt-1 text-[16px] font-semibold text-warning">
+            Bilder saknas: {missing}
+          </p>
+        )}
+
         <p className="mt-1 text-[16px] font-semibold text-foreground">
           {AUCTION_STATUS_LABEL[row.status] ?? row.status}
           {cancelled && row.cancelled_reason ? ` · ${row.cancelled_reason}` : ""}
