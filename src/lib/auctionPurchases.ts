@@ -38,6 +38,7 @@ export interface AuctionPurchaseRow {
   price_per_kg: number;
   colli: number;
   box_photo_url: string | null;
+  box_photo_urls: string[] | null;
   status: AuctionStatus;
   destination: string | null;
   suggestions: Record<string, unknown>;
@@ -110,30 +111,53 @@ export function parseDecimal(raw: string): number | null {
 export interface NewAuctionPurchase {
   pricePerKg: number;
   colli: number;
-  photo: File;
+  /** Ett foto per kolli — lika många bilder som lådor. */
+  photos: File[];
   /** Egen nyckel per köp så samma köp aldrig kan sparas två gånger. */
   clientKey: string;
   purchaseDate?: string;
 }
 
-/** Laddar upp lådlappens foto och returnerar adressen som sparas på partiet. */
-async function uploadBoxPhoto(photo: File, date: string): Promise<string> {
-  const { file, ext, contentType } = await prepareUpload(photo, COMPRESS_PHOTO);
-  const path = `auktion/${date}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage
-    .from(PHOTO_BUCKET)
-    .upload(path, file, { contentType, upsert: false });
-  if (error) throw error;
-  return supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
+/** Laddar upp lådlapparnas foton och returnerar adresserna som sparas på partiet. */
+async function uploadBoxPhotos(photos: File[], date: string): Promise<string[]> {
+  return Promise.all(
+    photos.map(async (photo) => {
+      const { file, ext, contentType } = await prepareUpload(photo, COMPRESS_PHOTO);
+      const path = `auktion/${date}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from(PHOTO_BUCKET)
+        .upload(path, file, { contentType, upsert: false });
+      if (error) throw error;
+      return supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
+    }),
+  );
+}
+
+/** Bilderna på ett köp — nya köp har en per kolli, äldre köp har en enda. */
+export function boxPhotos(row: AuctionPurchaseRow): string[] {
+  const list = (row.box_photo_urls ?? []).filter(Boolean);
+  if (list.length) return list;
+  return row.box_photo_url ? [row.box_photo_url] : [];
+}
+
+/** Hur många bilder som saknas mot antalet kolli. */
+export function missingPhotoCount(row: AuctionPurchaseRow): number {
+  return Math.max(0, row.colli - boxPhotos(row).length);
 }
 
 /**
  * Registrerar ett vunnet bud. Skapar partiet med status preliminärt och
- * fotot bifogat. Idempotent på klientnyckeln — ett köat köp som synkas två
+ * fotona bifogade. Idempotent på klientnyckeln — ett köat köp som synkas två
  * gånger blir aldrig två partier.
  */
 export async function createAuctionPurchase(input: NewAuctionPurchase): Promise<AuctionPurchaseRow> {
   const date = input.purchaseDate ?? swedishToday();
+
+  if (input.photos.length !== input.colli) {
+    throw new Error(
+      `Ta en bild per kolli: ${input.photos.length} av ${input.colli} bilder är tagna.`,
+    );
+  }
 
   const { data: existing } = await supabase
     .from("auction_purchases")
@@ -142,10 +166,10 @@ export async function createAuctionPurchase(input: NewAuctionPurchase): Promise<
     .maybeSingle();
   if (existing) return existing as unknown as AuctionPurchaseRow;
 
-  const [locationId, staffId, photoUrl] = await Promise.all([
+  const [locationId, staffId, photoUrls] = await Promise.all([
     auctionLocationId(),
     currentStaffId(),
-    uploadBoxPhoto(input.photo, date),
+    uploadBoxPhotos(input.photos, date),
   ]);
 
   const ringRef = ringReference(date);
@@ -157,7 +181,8 @@ export async function createAuctionPurchase(input: NewAuctionPurchase): Promise<
       ring_reference: ringRef,
       quantity_kg: 0,
       colli_count: input.colli,
-      box_photo_url: photoUrl,
+      box_photo_url: photoUrls[0],
+      box_photo_urls: photoUrls,
       auction_status: "preliminart",
       preliminary_unit_cost: input.pricePerKg,
       cost_pending_settlement: true,
@@ -177,7 +202,8 @@ export async function createAuctionPurchase(input: NewAuctionPurchase): Promise<
       lot_id: (lot as any).id,
       price_per_kg: input.pricePerKg,
       colli: input.colli,
-      box_photo_url: photoUrl,
+      box_photo_url: photoUrls[0],
+      box_photo_urls: photoUrls,
       status: "preliminart",
       client_key: input.clientKey,
       created_by: staffId,
