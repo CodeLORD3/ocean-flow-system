@@ -133,8 +133,14 @@
     /* iOS safe area support so chrome bars don't overlap content */
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
     position: relative;
     touch-action: pan-y pinch-zoom;
+  }
+
+  /* Fasta toppytor (menyer, rubriker) ska aldrig ligga under statusraden */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
   }
 
   /* Inre ytor som faktiskt ska kunna skrollas i sidled (breda tabeller) får det */
