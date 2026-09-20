@@ -24,6 +24,7 @@ import storeHero from "@/assets/store-hero.jpg";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import CountEntryButton from "@/components/inventory/mobile/CountEntryButton";
+import AuctionEntryCard from "@/components/auction/AuctionEntryCard";
 import { useSite } from "@/contexts/SiteContext";
 import { useTabs } from "@/contexts/TabsContext";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
@@ -287,6 +288,13 @@ export default function OrganisationOverview() {
       {isShop && (
         <div className="md:hidden">
           <CountEntryButton variant="card" />
+        </div>
+      )}
+
+      {/* Ingång till auktionsinköpen — grossist och admin köper vid ringen */}
+      {!isShop && (
+        <div className="md:hidden">
+          <AuctionEntryCard />
         </div>
       )}
 
