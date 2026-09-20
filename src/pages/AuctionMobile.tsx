@@ -203,7 +203,7 @@ export default function AuctionMobile() {
 
   if (step === "klart") {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-success p-6 text-success-foreground">
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-success p-6 pt-[env(safe-area-inset-top)] text-success-foreground">
         <Check className="h-24 w-24" />
         <p className="font-heading text-[30px] font-semibold">Köpet är sparat</p>
       </div>
@@ -212,7 +212,7 @@ export default function AuctionMobile() {
 
   if (step === "belopp") {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-background">
+      <div className="fixed inset-0 z-50 flex flex-col bg-background pt-[env(safe-area-inset-top)]">
         <header className="flex items-center gap-2 border-b border-border px-3 py-3">
           <button
             type="button"
@@ -296,7 +296,7 @@ export default function AuctionMobile() {
     const shown = Math.min(photos.length + (missing > 0 ? 1 : 0), colliCount);
     const lastUrl = photoUrls[photoUrls.length - 1] ?? null;
     return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-background">
+      <div className="fixed inset-0 z-50 flex flex-col bg-background pt-[env(safe-area-inset-top)]">
         <header className="flex items-center gap-2 border-b border-border px-3 py-3">
           <button
             type="button"

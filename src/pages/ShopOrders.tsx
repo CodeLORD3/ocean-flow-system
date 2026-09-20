@@ -6,7 +6,7 @@ function CreatePanelShell({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   if (!isMobile) return <>{children}</>;
   return createPortal(
-    <div className="fixed inset-0 z-[70] flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">{children}</div>,
+    <div className="fixed inset-0 z-[70] flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">{children}</div>,
     document.body,
   );
 }
