@@ -7262,6 +7262,7 @@ export type Database = {
           nominal_weight_per_colli: number | null
           origin_lot_id: string | null
           parasite_treatment_required: boolean
+          parent_lot_id: string | null
           preliminary_unit_cost: number | null
           presentation: string | null
           price_finalized_at: string | null
@@ -7278,6 +7279,7 @@ export type Database = {
           seal_number: string | null
           source_currency: string | null
           species_fao_code: string | null
+          split_index: number | null
           statistical_doc: string | null
           status: string
           supplier_id: string | null
@@ -7340,6 +7342,7 @@ export type Database = {
           nominal_weight_per_colli?: number | null
           origin_lot_id?: string | null
           parasite_treatment_required?: boolean
+          parent_lot_id?: string | null
           preliminary_unit_cost?: number | null
           presentation?: string | null
           price_finalized_at?: string | null
@@ -7356,6 +7359,7 @@ export type Database = {
           seal_number?: string | null
           source_currency?: string | null
           species_fao_code?: string | null
+          split_index?: number | null
           statistical_doc?: string | null
           status?: string
           supplier_id?: string | null
@@ -7418,6 +7422,7 @@ export type Database = {
           nominal_weight_per_colli?: number | null
           origin_lot_id?: string | null
           parasite_treatment_required?: boolean
+          parent_lot_id?: string | null
           preliminary_unit_cost?: number | null
           presentation?: string | null
           price_finalized_at?: string | null
@@ -7434,6 +7439,7 @@ export type Database = {
           seal_number?: string | null
           source_currency?: string | null
           species_fao_code?: string | null
+          split_index?: number | null
           statistical_doc?: string | null
           status?: string
           supplier_id?: string | null
@@ -7482,6 +7488,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "legal_entities"
             referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "lots_parent_lot_id_fkey"
+            columns: ["parent_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "lots_parent_lot_id_fkey"
+            columns: ["parent_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "lots_product_id_fkey"
