@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Camera, Check, ChevronLeft, Gavel, Loader2, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
-import { StorageImage } from "@/components/storage/StorageMedia";
+import AuctionPhotoStrip from "@/components/auction/AuctionPhotoStrip";
 import {
   auctionDaySummary,
   useAuctionDay,
@@ -11,6 +11,8 @@ import {
 } from "@/hooks/useAuctionPurchases";
 import {
   AUCTION_STATUS_LABEL,
+  boxPhotos,
+  missingPhotoCount,
   nominalWeight,
   parseDecimal,
   preliminaryAmount,
