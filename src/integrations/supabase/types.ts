@@ -727,6 +727,7 @@ export type Database = {
       auction_purchases: {
         Row: {
           box_photo_url: string | null
+          box_photo_urls: string[] | null
           cancelled_at: string | null
           cancelled_by: string | null
           cancelled_reason: string | null
@@ -750,6 +751,7 @@ export type Database = {
         }
         Insert: {
           box_photo_url?: string | null
+          box_photo_urls?: string[] | null
           cancelled_at?: string | null
           cancelled_by?: string | null
           cancelled_reason?: string | null
@@ -773,6 +775,7 @@ export type Database = {
         }
         Update: {
           box_photo_url?: string | null
+          box_photo_urls?: string[] | null
           cancelled_at?: string | null
           cancelled_by?: string | null
           cancelled_reason?: string | null
@@ -7221,6 +7224,7 @@ export type Database = {
           bivalve_heat_treated: boolean
           bivalve_registration_doc: string | null
           box_photo_url: string | null
+          box_photo_urls: string[] | null
           catch_area: string | null
           catch_date_from: string | null
           catch_date_to: string | null
@@ -7298,6 +7302,7 @@ export type Database = {
           bivalve_heat_treated?: boolean
           bivalve_registration_doc?: string | null
           box_photo_url?: string | null
+          box_photo_urls?: string[] | null
           catch_area?: string | null
           catch_date_from?: string | null
           catch_date_to?: string | null
@@ -7375,6 +7380,7 @@ export type Database = {
           bivalve_heat_treated?: boolean
           bivalve_registration_doc?: string | null
           box_photo_url?: string | null
+          box_photo_urls?: string[] | null
           catch_area?: string | null
           catch_date_from?: string | null
           catch_date_to?: string | null
