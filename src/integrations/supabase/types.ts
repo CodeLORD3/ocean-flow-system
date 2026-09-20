@@ -19107,6 +19107,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      dagsavslut_status: {
+        Args: { _day?: string; _store_id: string }
+        Returns: Json
+      }
       decide_absence_request: {
         Args: {
           _conflict_action?: string
