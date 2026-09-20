@@ -158,6 +158,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const isCountFlow =
     location.pathname === "/m/inventering" ||
     location.pathname === "/rakna" ||
+    // Auktionsinköpen är samma slags helskärmsverktyg vid ringen.
+    location.pathname === "/auktion" ||
     (isNarrow && location.pathname === "/inventory");
   const page = pageTitles[location.pathname] || { title: fallbackTitle, breadcrumb: ["Hem", fallbackTitle] };
   const allowedStores = useAllowedStores();
