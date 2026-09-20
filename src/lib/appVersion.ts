@@ -3,7 +3,7 @@
  * samt byggtiden så man ser när versionen skapades.
  */
 export const VERSION_NAME = "Wanderson do Carmo";
-export const VERSION_NUMBER = 2;
+export const VERSION_NUMBER = 3;
 
 const BUILD_TIME: string =
   typeof __BUILD_TIME__ === "string" ? __BUILD_TIME__ : new Date().toISOString();
