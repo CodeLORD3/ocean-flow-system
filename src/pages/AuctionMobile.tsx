@@ -38,8 +38,8 @@ export default function AuctionMobile() {
   const [step, setStep] = useState<Step>("lista");
   const [price, setPrice] = useState("");
   const [colli, setColli] = useState("1");
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [cancelRow, setCancelRow] = useState<AuctionPurchaseRow | null>(null);
   const [cancelReason, setCancelReason] = useState("");
@@ -54,6 +54,10 @@ export default function AuctionMobile() {
   const rows = purchases.data ?? [];
   const summary = useMemo(() => auctionDaySummary(rows), [rows]);
 
+  /** Antal kolli styr hur många bilder som ska tas. */
+  const colliCount = Math.max(1, Math.trunc(parseDecimal(colli) ?? 0) || 1);
+  const missing = Math.max(0, colliCount - photos.length);
+
   // Tangentbordet ska upp direkt när skärmen öppnas.
   useEffect(() => {
     if (step === "belopp") {
@@ -62,28 +66,24 @@ export default function AuctionMobile() {
     }
   }, [step]);
 
-  // Kameran öppnas av sig själv i fotosteget.
+  // Kameran öppnas av sig själv så länge det saknas bilder.
   useEffect(() => {
-    if (step === "foto" && !photo) {
+    if (step === "foto" && photos.length === 0) {
       const t = setTimeout(() => cameraRef.current?.click(), 80);
       return () => clearTimeout(t);
     }
-  }, [step, photo]);
+  }, [step, photos.length]);
 
   useEffect(() => {
-    if (!photo) {
-      setPhotoUrl(null);
-      return;
-    }
-    const url = URL.createObjectURL(photo);
-    setPhotoUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [photo]);
+    const urls = photos.map((p) => URL.createObjectURL(p));
+    setPhotoUrls(urls);
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
+  }, [photos]);
 
   const resetFlow = () => {
     setPrice("");
     setColli("1");
-    setPhoto(null);
+    setPhotos([]);
     setError(null);
   };
 
@@ -110,18 +110,29 @@ export default function AuctionMobile() {
   };
 
   const toCamera = () => {
-    if (!validated()) return;
+    const valid = validated();
+    if (!valid) return;
+    // Sänks antalet kolli tas de överskjutande bilderna bort.
+    setPhotos((prev) => prev.slice(0, valid.colli));
     setStep("foto");
   };
 
   const save = async () => {
     const valid = validated();
-    if (!valid || !photo) return;
+    if (!valid) return;
+    if (photos.length !== valid.colli) {
+      setError(
+        `Ta en bild per kolli — ${valid.colli - photos.length} ${
+          valid.colli - photos.length === 1 ? "bild" : "bilder"
+        } kvar.`,
+      );
+      return;
+    }
     try {
       await create.mutateAsync({
         pricePerKg: valid.pricePerKg,
         colli: valid.colli,
-        photo,
+        photos,
         clientKey: crypto.randomUUID(),
         purchaseDate: day,
       });
