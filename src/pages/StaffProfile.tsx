@@ -48,7 +48,29 @@ export default function StaffProfile() {
   }, [staff, stores, isAdmin]);
 
   const [selectedStore, setSelectedStore] = useState<string>("");
-  const effectiveStore = selectedStore || allowedStores[0]?.id || "";
+
+  /**
+   * Förvalet måste vara personens egen arbetsplats — annars hamnade stämplingen
+   * på första enheten i listan (Administration) och personen syntes inte i butiken.
+   * Ordning: senast valda på enheten → egen arbetsplats → första tillåtna.
+   */
+  const lastKey = staff ? `clock-last-store-${staff.id}` : "";
+  const defaultStore = useMemo(() => {
+    const ok = (id?: string | null) => !!id && allowedStores.some((s) => s.id === id);
+    let remembered: string | null = null;
+    try {
+      remembered = lastKey ? localStorage.getItem(lastKey) : null;
+    } catch {
+      remembered = null;
+    }
+    if (ok(remembered)) return remembered as string;
+    if (ok(staff?.store_id)) return staff!.store_id as string;
+    const byName = allowedStores.find((s) => s.name === staff?.workplace)?.id;
+    if (ok(byName)) return byName as string;
+    return allowedStores[0]?.id ?? "";
+  }, [allowedStores, staff, lastKey]);
+
+  const effectiveStore = selectedStore || defaultStore;
 
   /** Personalen byter sin egen profilbild direkt här — bilden komprimeras före uppladdning. */
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -107,6 +129,11 @@ export default function StaffProfile() {
       {
         onSuccess: (res) => {
           const target = stores.find((s) => s.id === effectiveStore)?.name ?? "";
+          try {
+            localStorage.setItem(`clock-last-store-${staff.id}`, effectiveStore);
+          } catch {
+            /* ignore */
+          }
           if (res.outcome === "already") {
             toast({ title: "Redan instämplad", description: `Du är redan instämplad i ${target}.` });
           } else if (res.outcome === "moved") {

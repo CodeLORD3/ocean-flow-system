@@ -18,6 +18,9 @@ export interface StaffProfile {
   portal_access: PortalKey[];
   allowed_store_id?: string | null;
   allowed_store_ids: string[];
+  /** Personens egen arbetsplats — förval vid stämpling. */
+  store_id?: string | null;
+  store_name?: string | null;
   must_change_password: boolean;
   /** Rollen styr vad kontot får göra inom personalmodulen. */
   primary_role: string | null;
@@ -75,7 +78,7 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     for (let attempt = 0; attempt < waits.length + 1; attempt++) {
       const { data, error } = await supabase
         .from("staff_access")
-        .select("id, user_id, first_name, last_name, email, phone, age, workplace, profile_image_url, portal_access, allowed_store_ids, must_change_password, primary_role, is_platform_admin")
+        .select("id, user_id, first_name, last_name, email, phone, age, workplace, profile_image_url, portal_access, allowed_store_ids, store_id, store_name, must_change_password, primary_role, is_platform_admin")
         .eq("user_id", uid)
         .maybeSingle();
 
