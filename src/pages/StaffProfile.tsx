@@ -129,6 +129,11 @@ export default function StaffProfile() {
       {
         onSuccess: (res) => {
           const target = stores.find((s) => s.id === effectiveStore)?.name ?? "";
+          try {
+            localStorage.setItem(`clock-last-store-${staff.id}`, effectiveStore);
+          } catch {
+            /* ignore */
+          }
           if (res.outcome === "already") {
             toast({ title: "Redan instämplad", description: `Du är redan instämplad i ${target}.` });
           } else if (res.outcome === "moved") {
