@@ -7,6 +7,7 @@ import {
   useAuctionDay,
   useCancelAuctionPurchase,
   useCreateAuctionPurchase,
+  useUpdateAuctionPurchase,
 } from "@/hooks/useAuctionPurchases";
 import {
   AUCTION_STATUS_LABEL,
@@ -32,6 +33,7 @@ export default function AuctionMobile() {
   const purchases = useAuctionDay(day);
   const create = useCreateAuctionPurchase();
   const cancel = useCancelAuctionPurchase();
+  const update = useUpdateAuctionPurchase();
 
   const [step, setStep] = useState<Step>("lista");
   const [price, setPrice] = useState("");
@@ -39,6 +41,11 @@ export default function AuctionMobile() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cancelRow, setCancelRow] = useState<AuctionPurchaseRow | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [editRow, setEditRow] = useState<AuctionPurchaseRow | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const [editColli, setEditColli] = useState("1");
 
   const priceRef = useRef<HTMLInputElement>(null);
   const colliRef = useRef<HTMLInputElement>(null);
