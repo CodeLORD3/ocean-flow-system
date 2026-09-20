@@ -279,9 +279,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Main header — taller tap targets on mobile */}
-          <header className="h-12 flex items-center justify-between border-b border-border bg-card px-2 sm:px-4 shrink-0">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <SidebarTrigger className="h-9 w-9 sm:h-7 sm:w-7 shrink-0" />
+          <header className="min-h-14 sm:min-h-12 pt-[env(safe-area-inset-top)] flex items-center justify-between border-b border-border bg-card px-2 sm:px-4 shrink-0">
+            <div className="flex items-center gap-3 sm:gap-3 min-w-0">
+              <SidebarTrigger className="h-10 w-10 sm:h-7 sm:w-7 shrink-0" />
 
               <nav className="hidden md:flex items-center gap-1 text-xs text-muted-foreground">
                 {page.breadcrumb.map((crumb, i) => (
@@ -292,7 +292,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 ))}
               </nav>
               {/* On mobile show only the current page title */}
-              <span className="md:hidden text-sm font-semibold text-foreground truncate">
+              <span className="md:hidden text-base sm:text-sm font-semibold text-foreground truncate">
                 {page.title}
               </span>
             </div>
