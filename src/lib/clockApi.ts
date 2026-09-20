@@ -76,6 +76,8 @@ export interface PunchResult {
   message?: string;
   entry?: { id: string; type: string; occurred_at: string; registered_at: string; work_site_id?: string | null; cost_center?: string | null; geofence_ok?: boolean | null };
   employee?: { first_name: string; pnr_masked: string | null };
+  /** Vid utstämpling: saknas dagsrapport eller inventering för butiken i dag? */
+  dagsavslut?: { dagsrapport_klar: boolean; inventering_klar: boolean } | null;
 }
 
 export interface PunchContext {

@@ -24,7 +24,9 @@ export async function dagsavslutStatus(
 }
 
 /** Klartext om något saknas för dagen — annars null. */
-export function dagsavslutText(status: DagsavslutStatus | null | undefined): string | null {
+export function dagsavslutText(
+  status: { dagsrapport_klar: boolean; inventering_klar: boolean } | null | undefined,
+): string | null {
   if (!status) return null;
   const saknas: string[] = [];
   if (!status.dagsrapport_klar) saknas.push("dagsrapport");
