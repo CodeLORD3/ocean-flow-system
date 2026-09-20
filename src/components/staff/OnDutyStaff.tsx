@@ -85,7 +85,19 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
     <div className="flex items-stretch gap-2 sm:justify-end">
       {/* Stämpelklockan — till vänster om kortet */}
       {staff && mayClockDirectly && (
-        <div className="flex shrink-0 items-stretch">
+        <div className="flex shrink-0 items-stretch gap-2">
+          {myShift && elsewhere && (
+            // Instämplad på annan arbetsplats: säg det och gör det enkelt att flytta hit,
+            // annars ser det ut som att man inte är på plats någonstans.
+            <Button
+              variant="outline"
+              className="h-auto gap-1.5 px-3 py-1.5 text-xs font-semibold"
+              onClick={() => setConfirm("in")}
+              disabled={clockIn.isPending}
+            >
+              <LogIn className="h-3.5 w-3.5" /> Flytta hit
+            </Button>
+          )}
           {myShift ? (
             <Button
               variant="outline"
