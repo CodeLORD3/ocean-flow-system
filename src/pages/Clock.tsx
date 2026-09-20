@@ -32,6 +32,7 @@ import {
   type OnSitePerson,
 } from "@/lib/clockApi";
 import { enqueuePunch, queuedCount, syncQueue } from "@/lib/clockQueue";
+import { dagsavslutText } from "@/lib/dagsavslut";
 
 type Action = "in" | "ut" | "rast_start" | "rast_slut";
 
