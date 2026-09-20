@@ -78,3 +78,16 @@ export function useUpdateAuctionPurchase() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["auction_purchases"] }),
   });
 }
+
+/** Delar en låda i delpartier med egna destinationer. */
+export function useSplitAuctionLot() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ row, parts }: { row: AuctionPurchaseRow; parts: SplitPart[] }) =>
+      splitAuctionLot(row, parts),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["auction_purchases"] });
+      qc.invalidateQueries({ queryKey: ["lot_split_children", vars.row.lot_id] });
+    },
+  });
+}
