@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Check, ChevronLeft, Gavel, Loader2, Pencil, Plus, X } from "lucide-react";
+import { Camera, Check, ChevronLeft, Gavel, Loader2, Pencil, Plus, Scissors, X } from "lucide-react";
 import { toast } from "sonner";
 import AuctionPhotoStrip from "@/components/auction/AuctionPhotoStrip";
+import SplitLotSheet from "@/components/auction/SplitLotSheet";
+import { splittableWeight } from "@/lib/auctionLotSplit";
 import {
   auctionDaySummary,
   useAuctionDay,
@@ -48,6 +50,7 @@ export default function AuctionMobile() {
   const [editRow, setEditRow] = useState<AuctionPurchaseRow | null>(null);
   const [editPrice, setEditPrice] = useState("");
   const [editColli, setEditColli] = useState("1");
+  const [splitRow, setSplitRow] = useState<AuctionPurchaseRow | null>(null);
 
   const priceRef = useRef<HTMLInputElement>(null);
   const colliRef = useRef<HTMLInputElement>(null);
@@ -475,9 +478,12 @@ export default function AuctionMobile() {
               setError(null);
             }}
             onEdit={() => openEdit(row)}
+            onSplit={() => setSplitRow(row)}
           />
         ))}
       </div>
+
+      {splitRow && <SplitLotSheet row={splitRow} onClose={() => setSplitRow(null)} />}
 
       {/* Rätta pris eller kolli */}
       {editRow && (
@@ -629,10 +635,12 @@ function PurchaseCard({
   row,
   onCancel,
   onEdit,
+  onSplit,
 }: {
   row: AuctionPurchaseRow;
   onCancel: () => void;
   onEdit: () => void;
+  onSplit: () => void;
 }) {
   const weight = nominalWeight(row);
   const amount = preliminaryAmount(row);
