@@ -691,6 +691,16 @@ function PurchaseCard({
           >
             <Pencil className="h-6 w-6" />
           </button>
+          {splittableWeight(row) > 0 && (
+            <button
+              type="button"
+              onClick={onSplit}
+              aria-label="Dela partiet"
+              className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border text-muted-foreground"
+            >
+              <Scissors className="h-6 w-6" />
+            </button>
+          )}
           <button
             type="button"
             onClick={onCancel}
