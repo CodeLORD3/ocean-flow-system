@@ -19269,6 +19269,7 @@ export type Database = {
           name: string
         }[]
       }
+      inventering_paminnelse: { Args: never; Returns: number }
       is_investor: { Args: never; Returns: boolean }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
