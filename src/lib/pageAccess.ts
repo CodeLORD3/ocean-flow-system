@@ -58,6 +58,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   // Lager och spårbarhet — butik ser sin egen enhet, grossist och admin allt
   "/inventory": all(BUTIK, GROSSIST, ADMIN),
   "/rakna": all(BUTIK, GROSSIST, ADMIN),
+  "/auktion": all(GROSSIST, ADMIN),
   "/m/inventering": all(BUTIK, GROSSIST, ADMIN),
   "/dagens-bestallning": all(BUTIK, GROSSIST, ADMIN),
   "/inkomna-bestallningar": all(GROSSIST, ADMIN),

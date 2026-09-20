@@ -6,6 +6,7 @@ import { useTabs } from "@/contexts/TabsContext";
 import Dashboard from "@/pages/Dashboard";
 import Inventory from "@/pages/Inventory";
 import InventoryRouter from "@/pages/InventoryRouter";
+import AuctionMobile from "@/pages/AuctionMobile";
 import ProductionRouter from "@/pages/ProductionRouter";
 import OrdersRouter from "@/pages/OrdersRouter";
 import Receiving from "@/pages/Receiving";
@@ -122,6 +123,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/": { component: <Dashboard /> },
   "/inventory": { component: <InventoryRouter /> },
   "/rakna": { component: <CountMobile /> },
+  "/auktion": { component: <AuctionMobile /> },
   "/m/inventering": { component: <CountMobile /> },
   "/dagens-bestallning": { component: <StoreOrderToday /> },
   "/inkomna-bestallningar": { component: <IncomingStoreOrders /> },
