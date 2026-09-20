@@ -8,7 +8,8 @@ export const VERSION_NUMBER = 3;
 const BUILD_TIME: string =
   typeof __BUILD_TIME__ === "string" ? __BUILD_TIME__ : new Date().toISOString();
 
-/** T.ex. "Wanderson do Carmo 1 · 19 sep 10:22" (svensk tid). */
+/** T.ex. "Wanderson do Carmo 3 · uppdaterad 19 sep 10:22" (svensk tid).
+ *  Tiden är när versionen skapades — inte klockan just nu. */
 export function versionLabel(): string {
   let when = "";
   try {
@@ -22,5 +23,5 @@ export function versionLabel(): string {
   } catch {
     when = "";
   }
-  return `${VERSION_NAME} ${VERSION_NUMBER}${when ? ` · ${when}` : ""}`;
+  return `${VERSION_NAME} ${VERSION_NUMBER}${when ? ` · uppdaterad ${when}` : ""}`;
 }
