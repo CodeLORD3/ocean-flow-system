@@ -404,5 +404,15 @@ Deno.serve(async (req) => {
     const { data: existing } = await db.from("time_entries").select("id, type, occurred_at, registered_at, work_site_id, cost_center, geofence_ok").eq("employee_id", hit.id).eq("client_punch_id", clientPunchId).maybeSingle();
     return duplicateResponse(existing);
   }
-  return json(req, { status: "punched", entry: inserted, employee: { first_name: hit.first_name, pnr_masked: hit.pnr_masked }, expires_at: expiresAt });
+  // Vid utstämpling påminner klockan om dagens avslut för butiken: saknas
+  // dagsrapport eller godkänd inventering ska personalen se det innan de går.
+  let dagsavslut: { dagsrapport_klar: boolean; inventering_klar: boolean } | null = null;
+  if (action === "ut" && station.store_id) {
+    const { data: st } = await db.rpc("dagsavslut_status", { _store_id: station.store_id, _day: null });
+    if (st) {
+      const s = st as { dagsrapport_klar?: boolean; inventering_klar?: boolean };
+      dagsavslut = { dagsrapport_klar: !!s.dagsrapport_klar, inventering_klar: !!s.inventering_klar };
+    }
+  }
+  return json(req, { status: "punched", entry: inserted, employee: { first_name: hit.first_name, pnr_masked: hit.pnr_masked }, dagsavslut, expires_at: expiresAt });
 });
