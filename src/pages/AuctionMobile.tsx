@@ -326,7 +326,7 @@ export default function AuctionMobile() {
         <Stat label="Preliminärt" value={summary.amount ? `${num(summary.amount)} kr` : "—"} />
       </div>
       {summary.missingWeight > 0 && (
-        <p className="mt-2 rounded-2xl bg-warning/15 px-4 py-3 text-[17px] font-semibold text-warning-foreground">
+        <p className="mt-2 rounded-2xl bg-warning/15 px-4 py-3 text-[17px] font-semibold text-warning">
           {summary.missingWeight} {summary.missingWeight === 1 ? "parti" : "partier"} saknar vikt
           ännu.
         </p>
