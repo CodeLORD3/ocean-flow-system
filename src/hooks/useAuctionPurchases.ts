@@ -9,6 +9,7 @@ import {
   type AuctionPurchaseRow,
   type NewAuctionPurchase,
 } from "@/lib/auctionPurchases";
+import { splitAuctionLot, type SplitPart } from "@/lib/auctionLotSplit";
 
 /** Dagens auktionsinköp med partiets uppgifter och tolkade förslag. */
 export function useAuctionDay(date?: string) {
