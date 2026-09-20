@@ -32,6 +32,7 @@ import {
   type OnSitePerson,
 } from "@/lib/clockApi";
 import { enqueuePunch, queuedCount, syncQueue } from "@/lib/clockQueue";
+import { dagsavslutText } from "@/lib/dagsavslut";
 
 type Action = "in" | "ut" | "rast_start" | "rast_slut";
 
@@ -90,7 +91,7 @@ export default function Clock() {
   const [error, setError] = useState<string | null>(null);
   const [identifier, setIdentifier] = useState("");
   const [found, setFound] = useState<{ id: string; first_name: string; pnr_masked: string | null; suggested: Action } | null>(null);
-  const [receipt, setReceipt] = useState<{ name: string; action: Action; at: string; offline?: boolean } | null>(null);
+  const [receipt, setReceipt] = useState<{ name: string; action: Action; at: string; offline?: boolean; reminder?: string | null } | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   const [online, setOnline] = useState(navigator.onLine);
   const [queued, setQueued] = useState(0);
@@ -224,10 +225,12 @@ export default function Clock() {
   const pressBackspace = () => setIdentifier((v) => v.slice(0, -1));
   const pressClear = () => setIdentifier("");
 
-  const showReceipt = (name: string, action: Action, at: string, offline = false) => {
-    setReceipt({ name, action, at, offline });
+  const showReceipt = (name: string, action: Action, at: string, offline = false, reminder: string | null = null) => {
+    setReceipt({ name, action, at, offline, reminder });
     reset();
-    setTimeout(() => setReceipt(null), 6000);
+    // Med påminnelse om dagens avslut får kvittot stå kvar längre så att den
+    // som stämplar ut hinner läsa vad som saknas.
+    setTimeout(() => setReceipt(null), reminder ? 14000 : 6000);
   };
 
   const handleLookup = async () => {
@@ -303,7 +306,7 @@ export default function Clock() {
         setIdentifier("");
         return;
       }
-      showReceipt(res.employee?.first_name ?? name, action, res.entry.occurred_at);
+      showReceipt(res.employee?.first_name ?? name, action, res.entry.occurred_at, false, dagsavslutText(res.dagsavslut));
       void refreshOnSite();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stämplingen misslyckades";
@@ -478,6 +481,12 @@ export default function Clock() {
             </p>
             {receipt.offline && (
               <p className="ind-muted text-sm">Sparad i offline-kön och syncas när nätet är tillbaka.</p>
+            )}
+            {receipt.reminder && (
+              <div className="ind-row ind-row--edge-alert">
+                <StatusLabel tone="alert">Kom ihåg</StatusLabel>
+                <span className="text-sm">{receipt.reminder} Gör det innan du går hem.</span>
+              </div>
             )}
             {/* På telefon måste man kunna gå tillbaka till appen direkt. */}
             <IndustryButton variant="primary" size="touch" className="w-full" onClick={leaveClock}>

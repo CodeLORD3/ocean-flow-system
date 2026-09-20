@@ -21,6 +21,7 @@ import { PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
 import {
   useMyOpenShift, useShiftHistory, useClockIn, useClockOut, useDirectClockAccess, shiftClock, shiftDuration,
 } from "@/hooks/useStaffShifts";
+import { dagsavslutStatus, dagsavslutText } from "@/lib/dagsavslut";
 
 export default function StaffProfile() {
   const { toast } = useToast();
@@ -152,10 +153,22 @@ export default function StaffProfile() {
   };
 
   const handleClockOut = () => {
+    const shiftStore = openShift?.store_id ?? effectiveStore;
     clockOut.mutate(
       { staffId: staff.id },
       {
-        onSuccess: () => toast({ title: "Utstämplad", description: openShift ? shiftDuration(openShift.clocked_in_at) : undefined }),
+        onSuccess: async () => {
+          toast({ title: "Utstämplad", description: openShift ? shiftDuration(openShift.clocked_in_at) : undefined });
+          // Påminn om dagens avslut för butiken innan personalen går hem.
+          const saknas = dagsavslutText(await dagsavslutStatus(shiftStore));
+          if (saknas) {
+            toast({
+              title: "Kom ihåg innan du går",
+              description: `${saknas} ${stores.find((s) => s.id === shiftStore)?.name ?? ""}`.trim(),
+              variant: "destructive",
+            });
+          }
+        },
         onError: (err: any) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
       },
     );

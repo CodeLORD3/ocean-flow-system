@@ -7,6 +7,7 @@ import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useStores } from "@/hooks/useStores";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { dagsavslutStatus, dagsavslutText } from "@/lib/dagsavslut";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -72,10 +73,22 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
         },
       );
     } else if (confirm === "out") {
+      const shiftStore = myShift?.store_id ?? effectiveStoreId;
       clockOut.mutate(
         { staffId: staff.id },
         {
-          onSuccess: () => toast({ title: "Utstämplad", description: myShift ? shiftDuration(myShift.clocked_in_at) : undefined }),
+          onSuccess: async () => {
+            toast({ title: "Utstämplad", description: myShift ? shiftDuration(myShift.clocked_in_at) : undefined });
+            // Saknas dagsrapport eller inventering för butiken påminner vi direkt.
+            const saknas = dagsavslutText(await dagsavslutStatus(shiftStore));
+            if (saknas) {
+              toast({
+                title: "Kom ihåg innan du går",
+                description: `${saknas} ${stores.find((s) => s.id === shiftStore)?.name ?? ""}`.trim(),
+                variant: "destructive",
+              });
+            }
+          },
           onError: (err: any) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
         },
       );
