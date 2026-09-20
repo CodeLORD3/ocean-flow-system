@@ -129,11 +129,53 @@ export default function AuctionMobile() {
     }
   };
 
-  const makulera = async (row: AuctionPurchaseRow) => {
-    const reason = window.prompt("Varför makuleras köpet?");
-    if (!reason?.trim()) return;
-    await cancel.mutateAsync({ row, reason: reason.trim() });
-    toast.success("Köpet är makulerat");
+  /** Makulering sker i en egen skärm med orsak — aldrig i en systemruta. */
+  const makulera = async () => {
+    if (!cancelRow) return;
+    const reason = cancelReason.trim();
+    if (!reason) {
+      setError("Skriv varför köpet makuleras.");
+      return;
+    }
+    try {
+      await cancel.mutateAsync({ row: cancelRow, reason });
+      setCancelRow(null);
+      setCancelReason("");
+      setError(null);
+      toast.success("Köpet är makulerat");
+    } catch (e: any) {
+      setError(e?.message ?? "Köpet kunde inte makuleras.");
+    }
+  };
+
+  /** Rättar pris eller kolli på ett köp som redan sparats. */
+  const sparaAndring = async () => {
+    if (!editRow) return;
+    const p = parseDecimal(editPrice);
+    const c = Math.trunc(parseDecimal(editColli) ?? 0);
+    if (!p || p <= 0) {
+      setError("Ange ett pris per kg över noll.");
+      return;
+    }
+    if (!c || c < 1) {
+      setError("Antal kolli måste vara minst 1.");
+      return;
+    }
+    try {
+      await update.mutateAsync({ id: editRow.id, pricePerKg: p, colli: c });
+      setEditRow(null);
+      setError(null);
+      toast.success("Köpet är rättat");
+    } catch (e: any) {
+      setError(e?.message ?? "Ändringen kunde inte sparas.");
+    }
+  };
+
+  const openEdit = (row: AuctionPurchaseRow) => {
+    setEditRow(row);
+    setEditPrice(String(row.price_per_kg).replace(".", ","));
+    setEditColli(String(row.colli));
+    setError(null);
   };
 
   if (step === "klart") {
