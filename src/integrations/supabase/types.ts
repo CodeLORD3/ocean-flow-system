@@ -724,6 +724,114 @@ export type Database = {
         }
         Relationships: []
       }
+      auction_purchases: {
+        Row: {
+          box_photo_url: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          cancelled_reason: string | null
+          client_key: string
+          colli: number
+          created_at: string
+          created_by: string | null
+          destination: string | null
+          id: string
+          location_id: string | null
+          lot_id: string | null
+          movement_id: string | null
+          note: string | null
+          price_per_kg: number
+          purchase_date: string
+          status: string
+          suggestions: Json
+          suggestions_confirmed_at: string | null
+          suggestions_confirmed_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          box_photo_url?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          cancelled_reason?: string | null
+          client_key: string
+          colli?: number
+          created_at?: string
+          created_by?: string | null
+          destination?: string | null
+          id?: string
+          location_id?: string | null
+          lot_id?: string | null
+          movement_id?: string | null
+          note?: string | null
+          price_per_kg: number
+          purchase_date?: string
+          status?: string
+          suggestions?: Json
+          suggestions_confirmed_at?: string | null
+          suggestions_confirmed_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          box_photo_url?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          cancelled_reason?: string | null
+          client_key?: string
+          colli?: number
+          created_at?: string
+          created_by?: string | null
+          destination?: string | null
+          id?: string
+          location_id?: string | null
+          lot_id?: string | null
+          movement_id?: string | null
+          note?: string | null
+          price_per_kg?: number
+          purchase_date?: string
+          status?: string
+          suggestions?: Json
+          suggestions_confirmed_at?: string | null
+          suggestions_confirmed_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_purchases_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "auction_purchases_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_purchases_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "auction_purchases_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_purchases_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       availability: {
         Row: {
           created_at: string
@@ -7103,23 +7211,31 @@ export type Database = {
       }
       lots: {
         Row: {
+          auction_destination: string | null
+          auction_lot_number: string | null
+          auction_status: string | null
           best_before: string | null
           bivalve_doc_issuer: string | null
           bivalve_doc_number: string | null
           bivalve_doc_valid_to: string | null
           bivalve_heat_treated: boolean
           bivalve_registration_doc: string | null
+          box_photo_url: string | null
           catch_area: string | null
           catch_date_from: string | null
           catch_date_to: string | null
           certificate: string | null
           certified_program: string | null
+          colli_count: number | null
           commercial_name: string | null
+          cost_pending_settlement: boolean
           created_at: string
           created_by: string | null
           exempt_until: string | null
           exemption_reason: string | null
           exemption_source: string | null
+          field_sources: Json
+          final_unit_cost: number | null
           fishing_gear: string | null
           fishing_gear_code: string | null
           fishing_trip_id: string | null
@@ -7139,6 +7255,7 @@ export type Database = {
           latin_name: string | null
           legal_entity_id: string | null
           lot_number: string
+          nominal_weight_per_colli: number | null
           origin_lot_id: string | null
           parasite_treatment_required: boolean
           preliminary_unit_cost: number | null
@@ -7153,6 +7270,7 @@ export type Database = {
           quantity_kg: number
           receiving_temp_c: number | null
           receiving_temp_deviation_reason: string | null
+          ring_reference: string | null
           seal_number: string | null
           source_currency: string | null
           species_fao_code: string | null
@@ -7170,23 +7288,31 @@ export type Database = {
           vessel_reg: string | null
         }
         Insert: {
+          auction_destination?: string | null
+          auction_lot_number?: string | null
+          auction_status?: string | null
           best_before?: string | null
           bivalve_doc_issuer?: string | null
           bivalve_doc_number?: string | null
           bivalve_doc_valid_to?: string | null
           bivalve_heat_treated?: boolean
           bivalve_registration_doc?: string | null
+          box_photo_url?: string | null
           catch_area?: string | null
           catch_date_from?: string | null
           catch_date_to?: string | null
           certificate?: string | null
           certified_program?: string | null
+          colli_count?: number | null
           commercial_name?: string | null
+          cost_pending_settlement?: boolean
           created_at?: string
           created_by?: string | null
           exempt_until?: string | null
           exemption_reason?: string | null
           exemption_source?: string | null
+          field_sources?: Json
+          final_unit_cost?: number | null
           fishing_gear?: string | null
           fishing_gear_code?: string | null
           fishing_trip_id?: string | null
@@ -7206,6 +7332,7 @@ export type Database = {
           latin_name?: string | null
           legal_entity_id?: string | null
           lot_number?: string
+          nominal_weight_per_colli?: number | null
           origin_lot_id?: string | null
           parasite_treatment_required?: boolean
           preliminary_unit_cost?: number | null
@@ -7220,6 +7347,7 @@ export type Database = {
           quantity_kg?: number
           receiving_temp_c?: number | null
           receiving_temp_deviation_reason?: string | null
+          ring_reference?: string | null
           seal_number?: string | null
           source_currency?: string | null
           species_fao_code?: string | null
@@ -7237,23 +7365,31 @@ export type Database = {
           vessel_reg?: string | null
         }
         Update: {
+          auction_destination?: string | null
+          auction_lot_number?: string | null
+          auction_status?: string | null
           best_before?: string | null
           bivalve_doc_issuer?: string | null
           bivalve_doc_number?: string | null
           bivalve_doc_valid_to?: string | null
           bivalve_heat_treated?: boolean
           bivalve_registration_doc?: string | null
+          box_photo_url?: string | null
           catch_area?: string | null
           catch_date_from?: string | null
           catch_date_to?: string | null
           certificate?: string | null
           certified_program?: string | null
+          colli_count?: number | null
           commercial_name?: string | null
+          cost_pending_settlement?: boolean
           created_at?: string
           created_by?: string | null
           exempt_until?: string | null
           exemption_reason?: string | null
           exemption_source?: string | null
+          field_sources?: Json
+          final_unit_cost?: number | null
           fishing_gear?: string | null
           fishing_gear_code?: string | null
           fishing_trip_id?: string | null
@@ -7273,6 +7409,7 @@ export type Database = {
           latin_name?: string | null
           legal_entity_id?: string | null
           lot_number?: string
+          nominal_weight_per_colli?: number | null
           origin_lot_id?: string | null
           parasite_treatment_required?: boolean
           preliminary_unit_cost?: number | null
@@ -7287,6 +7424,7 @@ export type Database = {
           quantity_kg?: number
           receiving_temp_c?: number | null
           receiving_temp_deviation_reason?: string | null
+          ring_reference?: string | null
           seal_number?: string | null
           source_currency?: string | null
           species_fao_code?: string | null
