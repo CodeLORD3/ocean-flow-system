@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Check, ChevronLeft, Gavel, Loader2, Plus, X } from "lucide-react";
+import { Camera, Check, ChevronLeft, Gavel, Loader2, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { StorageImage } from "@/components/storage/StorageMedia";
 import {
@@ -597,14 +597,24 @@ function PurchaseCard({
         </p>
       </div>
       {!cancelled && (
-        <button
-          type="button"
-          onClick={onCancel}
-          aria-label="Makulera köpet"
-          className="flex h-14 w-14 shrink-0 items-center justify-center self-start rounded-2xl border border-border text-muted-foreground"
-        >
-          <X className="h-6 w-6" />
-        </button>
+        <div className="flex shrink-0 flex-col gap-2 self-start">
+          <button
+            type="button"
+            onClick={onEdit}
+            aria-label="Rätta köpet"
+            className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border text-muted-foreground"
+          >
+            <Pencil className="h-6 w-6" />
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            aria-label="Makulera köpet"
+            className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border text-muted-foreground"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
       )}
     </div>
   );
