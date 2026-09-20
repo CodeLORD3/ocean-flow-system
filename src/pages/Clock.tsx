@@ -224,10 +224,12 @@ export default function Clock() {
   const pressBackspace = () => setIdentifier((v) => v.slice(0, -1));
   const pressClear = () => setIdentifier("");
 
-  const showReceipt = (name: string, action: Action, at: string, offline = false) => {
-    setReceipt({ name, action, at, offline });
+  const showReceipt = (name: string, action: Action, at: string, offline = false, reminder: string | null = null) => {
+    setReceipt({ name, action, at, offline, reminder });
     reset();
-    setTimeout(() => setReceipt(null), 6000);
+    // Med påminnelse om dagens avslut får kvittot stå kvar längre så att den
+    // som stämplar ut hinner läsa vad som saknas.
+    setTimeout(() => setReceipt(null), reminder ? 14000 : 6000);
   };
 
   const handleLookup = async () => {
@@ -303,7 +305,7 @@ export default function Clock() {
         setIdentifier("");
         return;
       }
-      showReceipt(res.employee?.first_name ?? name, action, res.entry.occurred_at);
+      showReceipt(res.employee?.first_name ?? name, action, res.entry.occurred_at, false, dagsavslutText(res.dagsavslut));
       void refreshOnSite();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stämplingen misslyckades";
