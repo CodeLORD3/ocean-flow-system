@@ -90,7 +90,7 @@ export default function Clock() {
   const [error, setError] = useState<string | null>(null);
   const [identifier, setIdentifier] = useState("");
   const [found, setFound] = useState<{ id: string; first_name: string; pnr_masked: string | null; suggested: Action } | null>(null);
-  const [receipt, setReceipt] = useState<{ name: string; action: Action; at: string; offline?: boolean } | null>(null);
+  const [receipt, setReceipt] = useState<{ name: string; action: Action; at: string; offline?: boolean; reminder?: string | null } | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   const [online, setOnline] = useState(navigator.onLine);
   const [queued, setQueued] = useState(0);
