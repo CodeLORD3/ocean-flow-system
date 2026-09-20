@@ -288,6 +288,8 @@ export default function AuctionMobile() {
   }
 
   if (step === "foto") {
+    const shown = Math.min(photos.length + (missing > 0 ? 1 : 0), colliCount);
+    const lastUrl = photoUrls[photoUrls.length - 1] ?? null;
     return (
       <div className="fixed inset-0 z-50 flex flex-col bg-background">
         <header className="flex items-center gap-2 border-b border-border px-3 py-3">
@@ -299,7 +301,9 @@ export default function AuctionMobile() {
           >
             <ChevronLeft className="h-7 w-7" />
           </button>
-          <span className="font-heading text-[22px] font-semibold">Fota lappen</span>
+          <span className="font-heading text-[22px] font-semibold">
+            Bild {shown} av {colliCount}
+          </span>
         </header>
 
         <input
@@ -310,32 +314,67 @@ export default function AuctionMobile() {
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) setPhoto(file);
+            if (file) {
+              setPhotos((prev) => (prev.length >= colliCount ? prev : [...prev, file]));
+              setError(null);
+            }
             e.target.value = "";
           }}
         />
 
-        <div className="flex-1 overflow-hidden px-4 pt-4">
-          {photoUrl ? (
+        <div className="flex-1 overflow-y-auto px-4 pt-3">
+          {/* En ruta per kolli, fylls i takt med bilderna */}
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: colliCount }).map((_, i) => (
+              <span
+                key={i}
+                className={`h-4 w-9 rounded-full ${
+                  i < photos.length ? "bg-primary" : "bg-muted"
+                }`}
+              />
+            ))}
+          </div>
+
+          {lastUrl ? (
             <img
-              src={photoUrl}
-              alt="Lådans informationslapp"
-              className="mx-auto max-h-[46vh] w-full rounded-2xl object-contain"
+              src={lastUrl}
+              alt={`Lådans informationslapp, bild ${photos.length}`}
+              className="mx-auto mt-3 max-h-[40vh] w-full rounded-2xl object-contain"
             />
           ) : (
             <button
               type="button"
               onClick={() => cameraRef.current?.click()}
-              className="flex h-[46vh] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-muted/40 text-[19px] font-semibold text-muted-foreground"
+              className="mt-3 flex h-[40vh] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-muted/40 text-[19px] font-semibold text-muted-foreground"
             >
               <Camera className="h-12 w-12" />
               Öppna kameran
             </button>
           )}
+
           <p className="mt-3 text-[18px] leading-snug text-muted-foreground">
-            {num(Number(parseDecimal(price) ?? 0))} kr per kg, {colli} kolli. Flera lådor med samma
-            lapp är ett parti.
+            {num(Number(parseDecimal(price) ?? 0))} kr per kg, {colliCount} kolli. Ta en bild på
+            varje låda — appen räknar själv.
           </p>
+
+          {photos.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {photoUrls.map((url, i) => (
+                <div key={url} className="relative h-20 w-20 overflow-hidden rounded-xl bg-muted">
+                  <img src={url} alt={`Bild ${i + 1}`} className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    aria-label={`Ta bort bild ${i + 1}`}
+                    onClick={() => setPhotos((prev) => prev.filter((_, j) => j !== i))}
+                    className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-bl-xl bg-foreground/70 text-background"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           {error && (
             <p className="mt-3 rounded-2xl bg-destructive/10 px-4 py-3 text-[18px] font-semibold text-destructive">
               {error}
@@ -347,26 +386,49 @@ export default function AuctionMobile() {
           className="flex gap-3 border-t border-border bg-background px-4 py-3"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
         >
-          <button
-            type="button"
-            onClick={() => cameraRef.current?.click()}
-            className="h-16 min-h-[56px] flex-1 rounded-2xl border border-border bg-card text-[19px] font-semibold"
-          >
-            Ta om
-          </button>
-          <button
-            type="button"
-            disabled={!photo || create.isPending}
-            onClick={save}
-            className="flex h-16 min-h-[56px] flex-[1.4] items-center justify-center gap-2 rounded-2xl bg-primary text-[20px] font-semibold text-primary-foreground disabled:opacity-50"
-          >
-            {create.isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : <Check className="h-7 w-7" />}
-            Klar
-          </button>
+          {missing > 0 ? (
+            <button
+              type="button"
+              onClick={() => cameraRef.current?.click()}
+              className="flex h-16 min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-primary text-[20px] font-semibold text-primary-foreground active:brightness-110"
+            >
+              <Camera className="h-7 w-7" />
+              {photos.length === 0
+                ? "Ta första bilden"
+                : `Nästa bild (${missing} ${missing === 1 ? "kvar" : "kvar"})`}
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setPhotos((prev) => prev.slice(0, -1));
+                  setTimeout(() => cameraRef.current?.click(), 60);
+                }}
+                className="h-16 min-h-[56px] flex-1 rounded-2xl border border-border bg-card text-[19px] font-semibold"
+              >
+                Ta om
+              </button>
+              <button
+                type="button"
+                disabled={create.isPending}
+                onClick={save}
+                className="flex h-16 min-h-[56px] flex-[1.4] items-center justify-center gap-2 rounded-2xl bg-primary text-[20px] font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                {create.isPending ? (
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                ) : (
+                  <Check className="h-7 w-7" />
+                )}
+                Klar ({colliCount} {colliCount === 1 ? "bild" : "bilder"})
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
   }
+
 
   return (
     <div className="pb-28">
