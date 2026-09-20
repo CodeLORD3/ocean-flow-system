@@ -1,0 +1,1 @@
+revoke execute on function public.inventering_paminnelse() from anon, authenticated;
