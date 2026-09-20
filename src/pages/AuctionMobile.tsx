@@ -391,9 +391,138 @@ export default function AuctionMobile() {
           </p>
         )}
         {rows.map((row) => (
-          <PurchaseCard key={row.id} row={row} onCancel={() => makulera(row)} />
+          <PurchaseCard
+            key={row.id}
+            row={row}
+            onCancel={() => {
+              setCancelRow(row);
+              setCancelReason("");
+              setError(null);
+            }}
+            onEdit={() => openEdit(row)}
+          />
         ))}
       </div>
+
+      {/* Rätta pris eller kolli */}
+      {editRow && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-foreground/40">
+          <div className="rounded-t-3xl bg-background p-4 pb-8">
+            <p className="font-heading text-[22px] font-semibold">Rätta köpet</p>
+            <label className="mt-4 block text-[15px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Pris per kg
+            </label>
+            <input
+              value={editPrice}
+              onChange={(e) => setEditPrice(e.target.value)}
+              inputMode="decimal"
+              type="text"
+              pattern="[0-9.,]*"
+              className="mt-2 h-16 w-full rounded-2xl border border-border bg-card px-4 text-[32px] font-semibold tabular-nums outline-none focus:border-primary"
+            />
+            <label className="mt-4 block text-[15px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Antal kolli
+            </label>
+            <input
+              value={editColli}
+              onChange={(e) => setEditColli(e.target.value.replace(/\D/g, ""))}
+              inputMode="numeric"
+              type="text"
+              pattern="[0-9]*"
+              className="mt-2 h-16 w-full rounded-2xl border border-border bg-card px-4 text-[32px] font-semibold tabular-nums outline-none focus:border-primary"
+            />
+            {error && (
+              <p className="mt-3 rounded-2xl bg-destructive/10 px-4 py-3 text-[18px] font-semibold text-destructive">
+                {error}
+              </p>
+            )}
+            <div className="mt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditRow(null);
+                  setError(null);
+                }}
+                className="h-16 flex-1 rounded-2xl border border-border bg-card text-[19px] font-semibold"
+              >
+                Avbryt
+              </button>
+              <button
+                type="button"
+                onClick={sparaAndring}
+                disabled={update.isPending}
+                className="flex h-16 flex-[1.4] items-center justify-center gap-2 rounded-2xl bg-primary text-[20px] font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                {update.isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : null}
+                Spara
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Makulering med orsak */}
+      {cancelRow && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-foreground/40">
+          <div className="rounded-t-3xl bg-background p-4 pb-8">
+            <p className="font-heading text-[22px] font-semibold">Makulera köpet</p>
+            <p className="mt-1 text-[17px] text-muted-foreground">
+              {cancelRow.colli} kolli · {num(Number(cancelRow.price_per_kg))} kr per kg. Köpet tas
+              bort ur dagens lista med en motbokning — inget raderas.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {["Fel pris", "Fel antal kolli", "Budet gick till annan", "Dubbelregistrerat"].map(
+                (r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setCancelReason(r)}
+                    className={`min-h-[56px] rounded-2xl border px-4 text-[17px] font-semibold ${
+                      cancelReason === r
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-card"
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ),
+              )}
+            </div>
+            <input
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Orsak"
+              className="mt-3 h-16 w-full rounded-2xl border border-border bg-card px-4 text-[19px] outline-none focus:border-primary"
+            />
+            {error && (
+              <p className="mt-3 rounded-2xl bg-destructive/10 px-4 py-3 text-[18px] font-semibold text-destructive">
+                {error}
+              </p>
+            )}
+            <div className="mt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setCancelRow(null);
+                  setError(null);
+                }}
+                className="h-16 flex-1 rounded-2xl border border-border bg-card text-[19px] font-semibold"
+              >
+                Behåll
+              </button>
+              <button
+                type="button"
+                onClick={makulera}
+                disabled={cancel.isPending}
+                className="flex h-16 flex-[1.4] items-center justify-center gap-2 rounded-2xl bg-destructive text-[20px] font-semibold text-destructive-foreground disabled:opacity-50"
+              >
+                {cancel.isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : null}
+                Makulera
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div
         className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-3 py-3 backdrop-blur"
