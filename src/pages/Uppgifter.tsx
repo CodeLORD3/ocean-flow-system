@@ -38,6 +38,7 @@ import {
 import { DAYPARTS, durationText, groupByDaypart, remainingMinutes } from "@/lib/taskTime";
 import { TaskRow, type TaskRowArea } from "@/components/tasks/TaskRow";
 import { TaskZoneMap, type ZoneTaskCount } from "@/components/tasks/TaskZoneMap";
+import StoreMap from "@/pages/StoreMap";
 import { TaskCalendar } from "@/components/tasks/TaskCalendar";
 import { TaskRegister } from "@/components/tasks/TaskRegister";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
