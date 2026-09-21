@@ -21,6 +21,8 @@ import { thumbUrl, THUMB_FULL } from "@/lib/imageThumb";
 import { dayBadgeClass } from "@/lib/dayColor";
 import { AnnotatableImage, type ImageRegion } from "@/components/images/AnnotatableImage";
 import { useCreateCutout } from "@/hooks/useImageCutouts";
+import { useLibraryImage } from "@/hooks/useImageLibrary";
+import ImageClassifySheet from "@/components/images/ImageClassifySheet";
 import { toast } from "sonner";
 
 type Props = {
@@ -89,6 +91,8 @@ export function ImageLightbox({
   const createCutout = useCreateCutout();
   /** Den markerade delen man just tittar på, så rutan lyser upp i bilden. */
   const [activeMark, setActiveMark] = useState<string | null>(null);
+  /** Redigera bildens namn, beskrivning, taggar och var den hör hemma. */
+  const [editOpen, setEditOpen] = useState(false);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const draftRef = useRef<HTMLInputElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -99,6 +103,7 @@ export function ImageLightbox({
   const editComment = useUpdateImageComment();
   const delComment = useDeleteImageComment();
   const listRef = useRef<HTMLDivElement>(null);
+  const { data: libraryImage } = useLibraryImage(editOpen ? current?.id : null);
 
   useEffect(() => {
     setCaption(current?.caption || "");
@@ -174,25 +179,36 @@ export function ImageLightbox({
     setCommentsOpen(true);
   };
 
-  /** Knappen som slår på rutnätet över bilden. */
-  const markButton = (
-    <button
-      type="button"
-      aria-label={markMode ? "Avbryt markering i bilden" : "Markera en del av bilden"}
-      onClick={() => {
-        setPendingRegion(null);
-        setMarkMode((v) => !v);
-      }}
-      className={cn(
-        "absolute top-2 left-2 z-20 flex h-10 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold backdrop-blur",
-        markMode
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-background/85 text-foreground",
-      )}
-    >
-      <Square className="h-4 w-4" />
-      {markMode ? "Tryck eller dra i bilden" : "Markera i bilden"}
-    </button>
+  /** Knapparna nedtill i bilden: markera en del, och redigera bildens uppgifter. */
+  const markButton = !pendingRegion && (
+    <div className="absolute bottom-2 left-2 z-20 flex max-w-[calc(100%-5rem)] flex-wrap items-center gap-1.5">
+      <button
+        type="button"
+        aria-label={markMode ? "Avbryt markering i bilden" : "Markera en del av bilden"}
+        onClick={() => {
+          setPendingRegion(null);
+          setMarkMode((v) => !v);
+        }}
+        className={cn(
+          "flex h-9 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold shadow backdrop-blur",
+          markMode
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-border bg-background/85 text-foreground",
+        )}
+      >
+        <Square className="h-4 w-4" />
+        {markMode ? "Tryck eller dra i bilden" : "Markera i bilden"}
+      </button>
+      <button
+        type="button"
+        aria-label="Redigera bilden och uppgifterna om den"
+        onClick={() => setEditOpen(true)}
+        className="flex h-9 items-center gap-1.5 rounded-full border border-border bg-background/85 px-3 text-[11px] font-semibold text-foreground shadow backdrop-blur"
+      >
+        <Pencil className="h-4 w-4" />
+        Redigera
+      </button>
+    </div>
   );
 
   /**
@@ -775,7 +791,7 @@ export function ImageLightbox({
                 </div>
 
                 {images.length > 1 && (
-                  <div className="pointer-events-none absolute bottom-2 left-0 right-0 flex items-center justify-center gap-1.5">
+                  <div className="pointer-events-none absolute bottom-14 left-0 right-0 flex items-center justify-center gap-1.5">
                     {images.slice(0, 12).map((img, i) => (
                       <span
                         key={img.id}
@@ -1038,6 +1054,9 @@ export function ImageLightbox({
           </div>
         )}
       </DialogContent>
+
+      {/* Redigera bildens namn, beskrivning, taggar och var den hör hemma */}
+      <ImageClassifySheet image={libraryImage ?? null} open={editOpen} onOpenChange={setEditOpen} />
     </Dialog>
   );
 }
