@@ -38,6 +38,7 @@ export function ZoneAreaPage({
   canManage,
   zoneNumber,
   areaLabel,
+  mapSlot,
   onBack,
 }: {
   storeId: string;
@@ -49,6 +50,8 @@ export function ZoneAreaPage({
   canManage: boolean;
   zoneNumber?: number;
   areaLabel?: string | null;
+  /** Kartan över just den här ytan, visas högst upp på sidan. */
+  mapSlot?: React.ReactNode;
   onBack: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
@@ -137,6 +140,10 @@ export function ZoneAreaPage({
           </Badge>
         </div>
       </div>
+
+      {mapSlot && (
+        <div className="overflow-hidden rounded-xl border border-border bg-card">{mapSlot}</div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-4">
         {stat(<ListChecks className="h-3.5 w-3.5" />, `${progress.done}/${progress.total}`, "Uppgifter klara")}

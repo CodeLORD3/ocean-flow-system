@@ -262,6 +262,9 @@ export default function StoreMap() {
     if (!next) return;
     setAreaPage(next);
     setSelected(null);
+    setDrawerOpen(false);
+    /* Kartan följer med in på områdets sida och står kvar på just den ytan */
+    setFocus(next);
     setView("omrade");
   };
 
@@ -570,6 +573,39 @@ export default function StoreMap() {
               canManage={canManage}
               zoneNumber={pageZone ? zoneNumbers[pageZone.id] : undefined}
               areaLabel={area?.sqm != null ? `${area.exact ? "" : "≈ "}${formatSqm(area.sqm)}` : null}
+              mapSlot={
+                <FloorPlanCanvas
+                  plan={plan}
+                  zones={zones}
+                  objects={objects}
+                  walls={walls}
+                  types={typeById}
+                  zoneProgress={zoneProgress}
+                  objectProgress={objectProgress}
+                  selected={areaPage}
+                  onSelect={() => {}}
+                  focus={areaPage}
+                  editMode={editMode}
+                  showBackground
+                  showGrid={layers.grid || editMode}
+                  showObjects={editMode}
+                  showPins={editMode}
+                  zoneNumbers={zoneNumbers}
+                  photoSpots={photoSpots}
+                  showPhotos={layers.photos}
+                  pins={pins}
+                  pxPerMeter={pxPerMeter}
+                  onZonePointsCommit={(id, points) => {
+                    const b = bbox(points);
+                    saveZone.mutate({ id, points, x: Math.round(b.x), y: Math.round(b.y), width: Math.round(b.width), height: Math.round(b.height) });
+                  }}
+                  onCommit={({ kind, id, x, y, width, height }) =>
+                    kind === "zone"
+                      ? saveZone.mutate({ id, x, y, width, height })
+                      : saveObject.mutate({ id, x, y, width, height })
+                  }
+                />
+              }
               onBack={() => {
                 setAreaPage(null);
                 setView("karta");
@@ -1140,7 +1176,6 @@ export default function StoreMap() {
                 onOpenChange={(v) => {
                   if (!v) {
                     setSelected(null);
-                    setFocus(null);
                     setDrawerOpen(false);
                   }
                 }}
@@ -1265,8 +1300,8 @@ export default function StoreMap() {
           open
           onOpenChange={(v) => {
             if (!v) {
+              /* Panelen stängs — kartan ligger kvar på samma yta man kom från */
               setSelected(null);
-              setFocus(null);
               setDrawerOpen(false);
             }
           }}
