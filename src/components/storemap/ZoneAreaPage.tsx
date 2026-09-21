@@ -194,10 +194,33 @@ export function ZoneAreaPage({
             {openIssues.length > 0 ? ` · ${openIssues.length} anm.` : ""}
           </p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
           {zone && canManage && onEditZone && (
             <Button size="sm" variant="outline" className="h-9 gap-1.5" onClick={() => onEditZone(zone.id)}>
               <Pencil className="h-4 w-4" /> Namn &amp; färg
+            </Button>
+          )}
+          {zone && canManage && onEditShape && (
+            <Button size="sm" variant="outline" className="h-9 gap-1.5" onClick={() => onEditShape(zone.id)}>
+              <Move className="h-4 w-4" /> Flytta / storlek
+            </Button>
+          )}
+          {zone && canManage && onAddChild && (
+            <Button size="sm" variant="outline" className="h-9 gap-1.5" onClick={() => onAddChild(zone.id)}>
+              <Plus className="h-4 w-4" /> Yta inuti
+            </Button>
+          )}
+          {zone && canManage && onDeleteZone && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-9 gap-1.5 text-destructive"
+              onClick={() => {
+                if (!confirm(`Ta bort ${zone.name}?`)) return;
+                onDeleteZone(zone.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4" /> Ta bort
             </Button>
           )}
           <StatusRing percent={progress.percent} status={progress.status} size={40} label={`${progress.percent}%`} />
