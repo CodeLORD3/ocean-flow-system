@@ -739,7 +739,7 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
                     onClick={() => setPinMode((v) => !v)}
                   >
                     <PinIcon className="h-3 w-3" />
-                    {pinMode ? "Tryck på kartan…" : "Ny punkt"}
+                    {pinMode ? "Tryck — eller dra ut en yta…" : "Ny punkt"}
                   </Button>
                 </div>
               )}
