@@ -500,7 +500,14 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
         const departureDate = deliveryDate;
         const isoWeekday = deliveryDate.getDay() === 0 ? 7 : deliveryDate.getDay();
         const matchingSchedule = schedules.find(s => s.departure_weekday === isoWeekday) || schedules[0];
-        const purchaseDate = line.order_date ? parseISO(line.order_date) : departureDate;
+        // Varan bestämmer inköpsdagen: kokas/filéas den köps dagen innan leverans.
+        const leadDays = purchaseLeadDays(line.products as any);
+        const autoPurchase = purchaseDateFor(deliveryDateStr, leadDays);
+        const purchaseDate = line.order_date
+          ? parseISO(line.order_date)
+          : autoPurchase
+          ? parseISO(autoPurchase)
+          : departureDate;
 
         rawItems.push({
           storeName: store.name,
