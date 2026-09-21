@@ -403,9 +403,13 @@ export default function StaffProfile() {
           )}
         </CardContent>
       </Card>
-      {/* Allt jag gjort i systemet */}
-      <MyActivityCard staffId={staff.id} userId={(staff as any).user_id ?? null} fullName={fullName} />
+      </Section>
+
+      <Section title="Det här har jag gjort" icon={HistoryIcon} note="Allt jag gjort i systemet — tryck på en rad för att komma dit">
+        <MyActivityCard staffId={staff.id} userId={(staff as any).user_id ?? null} fullName={fullName} />
+      </Section>
     </motion.div>
+
   );
 }
 
