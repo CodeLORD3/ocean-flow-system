@@ -74,7 +74,7 @@ export function TaskZoneMap({ plan, zones, areas, counts, selected, onSelect, on
         </div>
       </div>
 
-      <div className="bg-muted/30">
+      <div className={cn("bg-muted/30", chipsOnly && "hidden")}>
         <svg
           viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
           className="h-[240px] w-full sm:h-[320px]"
