@@ -221,48 +221,91 @@ export function NewTaskDialog({
                 <p className="flex items-center gap-1 text-sm font-medium">
                   <User className="h-4 w-4" /> Vem ska göra det?
                 </p>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={personSearch}
-                    onChange={(e) => setPersonSearch(e.target.value)}
-                    placeholder="Skriv namnet …"
-                    className="h-12 rounded-full pl-9"
-                  />
-                </div>
-                <div className="max-h-52 space-y-1 overflow-y-auto">
-                  <button
-                    type="button"
-                    onClick={() => setPerson(null)}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-sm",
-                      person === null ? "border-primary bg-primary/10 font-semibold" : "hover:bg-muted",
-                    )}
-                  >
-                    Ingen — vem som helst kan ta den
-                  </button>
-                  {people.map((s) => (
+                {chosenPerson ? (
+                  <div className="flex items-center gap-3 rounded-full border border-primary bg-primary/10 px-3 py-2">
+                    <StaffAvatar
+                      name={`${chosenPerson.first_name} ${chosenPerson.last_name}`}
+                      imageUrl={chosenPerson.profile_image_url}
+                      className="h-10 w-10"
+                    />
+                    <span className="flex-1 truncate text-sm font-semibold">
+                      {chosenPerson.first_name} {chosenPerson.last_name}
+                    </span>
                     <button
-                      key={s.id}
                       type="button"
-                      onClick={() => setPerson(s.id)}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-sm",
-                        person === s.id ? "border-primary bg-primary/10 font-semibold" : "hover:bg-muted",
-                      )}
+                      onClick={() => {
+                        setPerson(null);
+                        setPersonSearch("");
+                      }}
+                      className="rounded-full px-3 py-1 text-xs font-medium underline"
                     >
-                      <StaffAvatar
-                        name={`${s.first_name} ${s.last_name}`}
-                        imageUrl={s.profile_image_url}
-                        className="h-10 w-10"
-                      />
-                      {s.first_name} {s.last_name}
+                      Byt person
                     </button>
-                  ))}
-                  {people.length === 0 && (
-                    <p className="px-1 py-2 text-sm text-muted-foreground">Ingen med det namnet.</p>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        value={personSearch}
+                        onChange={(e) => setPersonSearch(e.target.value)}
+                        placeholder="Skriv de första bokstäverna i namnet …"
+                        className="h-12 rounded-full pl-9 text-base"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && people.length > 0) {
+                            e.preventDefault();
+                            setPerson(people[0].id);
+                            setPersonSearch("");
+                          }
+                        }}
+                      />
+                    </div>
+                    {personSearch.trim() && (
+                      <p className="px-1 text-xs text-muted-foreground">
+                        {people.length === 0
+                          ? "Ingen med det namnet."
+                          : `${people.length} träff${people.length === 1 ? "" : "ar"} – tryck på namnet eller Enter för den första.`}
+                      </p>
+                    )}
+                    <div className="max-h-60 space-y-1 overflow-y-auto">
+                      {people.map((s, i) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            setPerson(s.id);
+                            setPersonSearch("");
+                          }}
+                          className={cn(
+                            "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-base",
+                            personSearch.trim() && i === 0
+                              ? "border-primary bg-primary/10 font-semibold"
+                              : "hover:bg-muted",
+                          )}
+                        >
+                          <StaffAvatar
+                            name={`${s.first_name} ${s.last_name}`}
+                            imageUrl={s.profile_image_url}
+                            className="h-10 w-10"
+                          />
+                          <span className="truncate">
+                            {s.first_name} {s.last_name}
+                          </span>
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setPerson(null)}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-sm",
+                          person === null ? "border-primary bg-primary/10 font-semibold" : "hover:bg-muted",
+                        )}
+                      >
+                        Ingen — vem som helst kan ta den
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
