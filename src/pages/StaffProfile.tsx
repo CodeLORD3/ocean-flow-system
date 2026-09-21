@@ -414,6 +414,17 @@ export default function StaffProfile() {
   );
 }
 
+/**
+ * Lägger på en tydlig väg tillbaka till min sida. Sidan man landar på visar då
+ * raden "Tillbaka till min sida" högst upp, precis som när man går tillbaka
+ * från en enskild kundbeställning till listan.
+ */
+function withReturn(route: string) {
+  const sep = route.includes("?") ? "&" : "?";
+  return `${route}${sep}retur=${encodeURIComponent("/profile")}&returtext=${encodeURIComponent("min sida")}`;
+}
+
+
 /** Överrubrik som delar sidan i tydliga avsnitt. */
 function Section({
   title,
@@ -488,7 +499,7 @@ function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string
                     <button
                       key={it.id}
                       type="button"
-                      onClick={() => navigate(`/uppgifter?markera=${it.id}`)}
+                      onClick={() => navigate(withReturn(`/uppgifter?markera=${it.id}`))}
                       className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-muted/40"
                     >
                       <div className="min-w-0">
@@ -580,7 +591,7 @@ function MyActivityCard({
               <div
                 key={it.id}
                 className={`flex items-start justify-between gap-3 py-2 ${it.route ? "cursor-pointer hover:bg-muted/40" : ""}`}
-                onClick={() => it.route && navigate(it.route)}
+                onClick={() => it.route && navigate(withReturn(it.route))}
               >
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-foreground line-clamp-2">{it.text}</p>

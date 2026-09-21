@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check, Printer, CheckSquare, Truck, ChevronDown, ChevronRight, Undo2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -341,6 +342,33 @@ export default function CustomerOrders() {
     return [...set];
   }, [searching, viewOrders]);
 
+  /**
+   * Kommer man hit från min sida eller en bild (?markera=<order>) fälls
+   * beställningen ut, rullas fram och lyser upp en stund så man ser exakt
+   * vilken rad det gäller.
+   */
+  const [searchParams] = useSearchParams();
+  const markeraId = searchParams.get("markera");
+  const [highlightOrder, setHighlightOrder] = useState<string | null>(null);
+  useEffect(() => {
+    if (!markeraId) return;
+    setHighlightOrder(markeraId);
+    setOpenRows((cur) => (cur.includes(markeraId) ? cur : [...cur, markeraId]));
+    const timers = [400, 1200].map((ms) =>
+      setTimeout(() => {
+        document
+          .getElementById(`kundorder-${markeraId}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, ms),
+    );
+    const clear = setTimeout(() => setHighlightOrder(null), 6000);
+    return () => {
+      timers.forEach(clearTimeout);
+      clearTimeout(clear);
+    };
+  }, [markeraId]);
+
+
 
 
   const markedOrders = viewOrders.filter((o) => marked.includes(o.id));
@@ -377,6 +405,7 @@ export default function CustomerOrders() {
   const renderOrderRow = (o: CustomerOrder, day: string) => (
     <div
       key={o.id}
+      id={`kundorder-${o.id}`}
       draggable={canEdit && !rowReadOnly(o) && marked.includes(o.id)}
       onDragStart={(e) => {
         if (!marked.includes(o.id)) {
@@ -394,7 +423,11 @@ export default function CustomerOrders() {
         setDragIds([]);
         setDragOverDay(null);
       }}
-      className={dragIds.includes(o.id) ? "opacity-50" : ""}
+      className={`${dragIds.includes(o.id) ? "opacity-50" : ""} ${
+        highlightOrder === o.id
+          ? "rounded-xl ring-2 ring-primary ring-offset-2 ring-offset-background transition"
+          : ""
+      }`}
     >
       <CustomerOrderRow
         order={o}
