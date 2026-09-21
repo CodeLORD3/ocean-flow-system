@@ -31,7 +31,6 @@ export function setChatSoundEnabled(on: boolean) {
 }
 
 function unlockAudio() {
-  if (!isChatSoundEnabled()) return;
   const audio = getContext();
   if (!audio) return;
 
@@ -111,7 +110,6 @@ function scheduleTaskAlert(audio: AudioContext, repeats: number) {
 
 /** Ny uppgift: "blopp–ding" — mjuk lägre ton följd av en ljusare ren ton, upprepad några gånger. */
 export function playTaskAlert(repeats = 3) {
-  if (!isChatSoundEnabled()) return;
   const audio = getContext();
   if (!audio) return;
   const safeRepeats = Math.max(1, repeats);
