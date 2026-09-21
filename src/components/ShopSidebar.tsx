@@ -95,6 +95,7 @@ type NavItem = { title: string; url: string; icon: any };
 type NavSection = { label: string; items: NavItem[]; collapsible?: boolean };
 
 const sections: NavSection[] = [
+  { label: "Butikskarta", items: mapNav },
   { label: "Översikt", items: overviewNav },
   { label: "Inköp", items: salesNav },
   { label: "Lagerstyrning", items: inventoryNav },
