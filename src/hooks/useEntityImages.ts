@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { prepareUpload, COMPRESS_PHOTO, COMPRESS_AVATAR } from "@/lib/imageCompress";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyImageComment } from "@/lib/personNotify";
 
 export type EntityImage = {
   id: string;
@@ -507,6 +508,8 @@ export function useAddImageComment() {
           region_h: region ? region.h : null,
         });
       if (error) throw error;
+      // Uppladdaren och tidigare kommentatorer får en personlig notis.
+      await notifyImageComment(imageId, name, body);
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["entity-image-comments", vars.imageId] });

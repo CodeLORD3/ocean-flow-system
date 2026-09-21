@@ -17,6 +17,7 @@ import { ChatBubble } from "@/components/chat/ChatBubble";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronRight, Search, UserRound, ArrowLeftRight, Factory, Store, ChevronDown, X, LogOut, Shield } from "lucide-react";
 import { HrNotificationCenter } from "@/components/HrNotificationCenter";
+import { MyNoticeCenter } from "@/components/MyNoticeCenter";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -305,7 +306,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
 
 
-               <HrNotificationCenter />
+               <MyNoticeCenter />
+              <HrNotificationCenter />
 
 
               <AccountMenu portalItems={portalItems} />

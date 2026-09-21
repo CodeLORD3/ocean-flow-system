@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyImageEdited } from "@/lib/personNotify";
 import { prepareUpload, COMPRESS_PHOTO } from "@/lib/imageCompress";
 import { deriveImageStatus, type ImageStatus, type MediaKind } from "@/lib/imageStatus";
 import type { EntityImage } from "@/hooks/useEntityImages";
@@ -445,6 +446,8 @@ export async function classifyImage(input: ClassifyInput) {
       new_value: c.next,
     }));
     await supabase.from("image_activity").insert(rows);
+    // Den som lagt ut bilden (och de som kommenterat) får veta om ändringen.
+    await notifyImageEdited(input.mediaId, name, changes.map((c) => c.field).join(", "));
   }
 
   return status;
