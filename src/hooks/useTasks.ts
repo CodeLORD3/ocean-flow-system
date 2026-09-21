@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyTaskAssigned } from "@/lib/personNotify";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { staffInitials, todayIso, DEFAULT_CHECKLIST_TEMPLATE_ID } from "@/hooks/useChecklist";
 import type { EntityImage } from "@/hooks/useEntityImages";
@@ -181,10 +182,25 @@ export function useSetTaskDone() {
 /** Uppdaterar valfria fält på dagens uppgift (tilldelning, tid, fotokrav …). */
 export function useUpdateTask() {
   const qc = useQueryClient();
+  const { staff } = useStaffAuth();
   return useMutation({
     mutationFn: async ({ id, ...patch }: { id: string } & Record<string, unknown>) => {
       const { error } = await supabase.from("checklist_items").update(patch).eq("id", id);
       if (error) throw error;
+      // Den som blir tilldelad uppgiften får en personlig notis.
+      if ("assigned_staff_id" in patch && patch.assigned_staff_id) {
+        const { data: row } = await supabase
+          .from("checklist_items")
+          .select("task")
+          .eq("id", id)
+          .maybeSingle();
+        await notifyTaskAssigned(
+          id,
+          patch.assigned_staff_id as string,
+          (row as any)?.task ?? "en uppgift",
+          [staff?.first_name, staff?.last_name].filter(Boolean).join(" ") || null,
+        );
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["day-tasks"] });
