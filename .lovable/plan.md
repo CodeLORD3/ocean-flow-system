@@ -50,7 +50,17 @@ Samma bild (samma media_id, aldrig kopior) visas automatiskt på områdessidan, 
 
 Tas Lax bort från en bild som också hör till Fiskdisk och Bygga fiskdisk försvinner bara den kopplingen — bilden och övriga kopplingar ligger kvar. Att radera själva bilden är en egen handling med bekräftelse, för chef och administration.
 
-Varje bild visar neutralt hur långt sorteringen kommit: **Oplacerad**, **Delvis klar** eller **Klar**. Det är arbetsstatus, inte fel. Profilbilderna hålls tillräckligt stora för att man direkt ser vem som gjort vad, både på korten och i aktiviteten.
+Profilbilderna hålls tillräckligt stora för att man direkt ser vem som gjort vad, både på korten och i aktiviteten.
+
+## Oplacerad, delvis klar, klar
+
+Varje bild visar diskret hur långt sorteringen kommit, och systemet räknar ut det själv — ingen väljer status för hand. Det är arbetsstatus, aldrig ett betyg, och visas neutralt utan röd markering.
+
+- **Oplacerad**: bilden finns, inget mer behövs för att spara. Anna kan ta 15 bilder och trycka Spara.
+- **Delvis klar**: klassificeringen är påbörjad men något krävs ännu — t.ex. butik valt men inte område, eller Sak/verktyg valt utan vald sak. Helt okej att lämna och fortsätta senare.
+- **Klar**: minimikravet för vald typ finns — butik + område, vald sak, vald produkt, vald uppgift, eller en iakttagelse med sin plats. Titel, beskrivning, taggar och exakt position krävs aldrig.
+
+Biblioteket visar "23 oplacerade — Sortera" och "8 delvis klara — Fortsätt", som startar snabbläget direkt i just de bilderna. Status räknas om automatiskt när en koppling läggs till, ändras eller tas bort, och massklassificering gör samma sak: 37 oplacerade bilder som får Zollikon → Fiskdisk → Område/plats blir klara i ett svep. I aktiviteten står den mänskliga händelsen — "Robin klassificerade bilden · Fiskdisk · Zollikon" — inte den tekniska statusändringen.
 
 ## Teknisk lösning
 
