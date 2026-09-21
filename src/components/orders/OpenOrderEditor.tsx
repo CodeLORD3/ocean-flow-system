@@ -153,6 +153,8 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
       quantity_ordered: 1,
       unit: p.unit,
       delivery_date: order.desired_delivery_date || null,
+      // Inköpsdag: dagen innan för varor som kokas/filéas, annars samma dag.
+      order_date: purchaseDateFor(order.desired_delivery_date, p),
     } as any);
     setSearch("");
     if (error) {

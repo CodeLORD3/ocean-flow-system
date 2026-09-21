@@ -663,12 +663,15 @@ export default function ShopOrders() {
     }
 
     const deliveryDateStr = desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : null;
+    // Varje rad blir ett inköpsbehov: kokas/filéas varan köps den dagen innan leverans.
+    const leadMap = await fetchPurchaseLeadDays(validLines.map(l => l.product_id));
     const lines = validLines.map(l => ({
       shop_order_id: order.id,
       product_id: l.product_id,
       quantity_ordered: Number(l.quantity),
       unit: l.unit,
       delivery_date: deliveryDateStr,
+      order_date: purchaseDateFor(deliveryDateStr, leadMap.get(l.product_id) ?? 0),
       priority: l.priority,
       // Kritisk mängd får aldrig överstiga det som faktiskt beställts.
       priority_qty:
