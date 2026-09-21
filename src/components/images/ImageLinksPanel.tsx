@@ -55,7 +55,7 @@ export default function ImageLinksPanel({
               className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm"
             >
               <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                {TYPE_LABEL[l.entity_type] ?? l.entity_type}
+                {linkTypeLabel(l.entity_type)}
               </span>
               <span className="min-w-0 flex-1 truncate">
                 {names[`${l.entity_type}:${l.entity_id}`] || "Okänt namn"}
