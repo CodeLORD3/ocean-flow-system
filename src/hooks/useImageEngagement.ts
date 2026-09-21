@@ -57,6 +57,7 @@ export function useRecordImageView() {
     },
     onSuccess: (_d, mediaId) => {
       qc.invalidateQueries({ queryKey: ["image-engagement", mediaId] });
+      qc.invalidateQueries({ queryKey: ["image-viewers", mediaId] });
     },
   });
 }
