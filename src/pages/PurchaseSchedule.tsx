@@ -542,6 +542,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
       shops: { name: string; zoneKey: string; quantity: number; deliveryDate: Date; packed?: boolean }[];
       departureDate: Date;
       purchaseDate: Date;
+      leadDays?: number;
       earliestDelivery: Date;
       departureTime: string;
       category: string;
@@ -576,6 +577,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
           shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate, packed: item.packed }],
           departureDate: item.departureDate,
           purchaseDate: item.purchaseDate,
+          leadDays: item.leadDays,
           earliestDelivery: item.deliveryDate,
           departureTime: item.departureTime,
           category: item.category,
