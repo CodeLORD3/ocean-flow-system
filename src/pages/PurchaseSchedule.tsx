@@ -1294,6 +1294,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
                             </TableBody>
                           </Table>
                           </div>
+                          </>
                         )}
                       </CollapsibleContent>
                     </Collapsible>
