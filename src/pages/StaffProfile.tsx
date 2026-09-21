@@ -373,6 +373,97 @@ export default function StaffProfile() {
           )}
         </CardContent>
       </Card>
+      {/* Allt jag gjort i systemet */}
+      <MyActivityCard staffId={staff.id} userId={(staff as any).user_id ?? null} fullName={fullName} />
     </motion.div>
+  );
+}
+
+/** Egen aktivitet: samlade spår från beställningar, uppgifter, lager, bilder och händelseloggen. */
+function MyActivityCard({
+  staffId,
+  userId,
+  fullName,
+}: {
+  staffId: string;
+  userId: string | null;
+  fullName: string;
+}) {
+  const navigate = useNavigate();
+  const { data: items = [], isLoading } = useMyActivity(staffId, userId, fullName);
+  const [kind, setKind] = useState<string>("alla");
+
+  const kinds = useMemo(() => Array.from(new Set(items.map((i) => i.kind))).sort(), [items]);
+  const shown = useMemo(
+    () => (kind === "alla" ? items : items.filter((i) => i.kind === kind)).slice(0, 150),
+    [items, kind],
+  );
+
+  return (
+    <Card className="shadow-card">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-heading flex items-center gap-2">
+          <History className="h-4 w-4 text-primary" /> Det här har jag gjort
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {kinds.length > 1 && (
+          <div className="flex flex-wrap gap-1">
+            {["alla", ...kinds].map((k) => (
+              <Button
+                key={k}
+                size="sm"
+                variant={kind === k ? "default" : "outline"}
+                className="h-7 rounded-full px-3 text-[11px]"
+                onClick={() => setKind(k)}
+              >
+                {k === "alla" ? "Allt" : k}
+              </Button>
+            ))}
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-10" />
+            <Skeleton className="h-10" />
+            <Skeleton className="h-10" />
+          </div>
+        ) : shown.length === 0 ? (
+          <p className="py-4 text-center text-xs text-muted-foreground">
+            Inget registrerat på dig ännu.
+          </p>
+        ) : (
+          <div className="divide-y divide-border">
+            {shown.map((it) => (
+              <div
+                key={it.id}
+                className={`flex items-start justify-between gap-3 py-2 ${it.route ? "cursor-pointer hover:bg-muted/40" : ""}`}
+                onClick={() => it.route && navigate(it.route)}
+              >
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-foreground line-clamp-2">{it.text}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">
+                    {it.kind}
+                    {it.detail ? ` · ${it.detail}` : ""}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5 text-right">
+                  <span className="text-[10px] tabular-nums text-muted-foreground">
+                    {new Date(it.at).toLocaleString("sv-SE", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                  {it.route && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
