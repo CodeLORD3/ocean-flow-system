@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { thumbUrl, THUMB_FULL } from "@/lib/imageThumb";
 import { Search } from "lucide-react";
+import { StaffFace } from "@/components/staff/StaffNameAvatar";
+import { dayKey, dayLabel } from "@/lib/imageMeta";
 import ImageLibraryGrid from "./ImageLibraryGrid";
 import ImageBulkBar from "./ImageBulkBar";
 import ImageClassifySheet from "./ImageClassifySheet";
