@@ -15,7 +15,7 @@ import {
   useMyImageFavorites,
   useToggleImageFavorite,
 } from "@/hooks/useEntityImages";
-import { useImageEngagement, useRecordImageView } from "@/hooks/useImageEngagement";
+import { useImageEngagement, useImageViewers, useRecordImageView } from "@/hooks/useImageEngagement";
 
 /** Klockslag i svensk form, t.ex. "11:54". */
 const timeOf = (iso: string) =>
@@ -260,6 +260,7 @@ function ImageDetail({
   onTag: (tag: string) => void;
 }) {
   const { data: counts } = useImageEngagement(image.id);
+  const { data: viewers = [] } = useImageViewers(image.id);
   const { data: comments = [] } = useImageComments(image.id);
   const { data: favoriteIds = [] } = useMyImageFavorites();
   const toggleFavorite = useToggleImageFavorite();
@@ -311,9 +312,25 @@ function ImageDetail({
         </span>
         <span className="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-sm text-muted-foreground">
           <Eye className="h-4 w-4" />
-          <span className="tabular-nums">{counts?.views ?? 0}</span> har sett bilden
+          <span className="tabular-nums">{counts?.views ?? viewers.length}</span> har sett bilden
         </span>
       </div>
+
+      {viewers.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground">Sett av</span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {viewers.slice(0, 12).map((v) => (
+              <span key={v.id} title={v.viewer_name ?? "Okänd person"} className="inline-flex items-center">
+                <StaffFace name={v.viewer_name} className="h-7 w-7 text-[10px] ring-1 ring-background" />
+              </span>
+            ))}
+            {viewers.length > 12 && (
+              <span className="text-xs text-muted-foreground">+{viewers.length - 12} till</span>
+            )}
+          </div>
+        </div>
+      )}
 
       {image.description && <p className="text-sm">{image.description}</p>}
       {image.caption && <p className="text-sm text-muted-foreground">{image.caption}</p>}
