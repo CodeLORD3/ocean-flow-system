@@ -32,7 +32,8 @@ import { PORTAL_IMAGE_ENTITY_TYPE, portalImageEntityId } from "@/lib/portalImage
 
 import { ActivityIcon } from "@/components/dashboard/ActivityIcon";
 import { useStoreActivity } from "@/hooks/useStoreActivity";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ChecklistCard } from "@/components/checklist/ChecklistCard";
 import { useChecklistTemplates, templateAppliesOn, todayIso } from "@/hooks/useChecklist";
 import { DailyReportCard } from "@/components/dashboard/DailyReportCard";
@@ -105,6 +106,23 @@ function KpiCard({
 
 
 export default function OrganisationOverview() {
+  /** Kommer man från en bild markeras butikens rad en stund. */
+  const [markeraParams] = useSearchParams();
+  const [markedStoreId, setMarkedStoreId] = useState<string | null>(null);
+  useEffect(() => {
+    const id = markeraParams.get("markera");
+    if (!id) return;
+    setMarkedStoreId(id);
+    const t = window.setTimeout(() => {
+      document.getElementById(`butik-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 350);
+    const clear = window.setTimeout(() => setMarkedStoreId(null), 8000);
+    return () => {
+      window.clearTimeout(t);
+      window.clearTimeout(clear);
+    };
+  }, [markeraParams]);
+
   const { site, activeStoreId, activeStoreName } = useSite();
   const isShop = site === "shop" && !!activeStoreId;
   const { switchTab } = useTabs();
@@ -370,7 +388,13 @@ export default function OrganisationOverview() {
                     const act =
                       activity?.get(store.id) ?? { messages: 0, orders: 0, wishes: 0 };
                     return (
-                      <div key={store.id} className="flex items-center gap-2 sm:gap-3 py-1.5 border-b border-border/30 last:border-0">
+                      <div
+                        key={store.id}
+                        id={`butik-${store.id}`}
+                        className={`flex items-center gap-2 sm:gap-3 py-1.5 border-b border-border/30 last:border-0 ${
+                          markedStoreId === store.id ? "rounded-md bg-primary/15 ring-2 ring-primary" : ""
+                        }`}
+                      >
                         <div className="h-9 w-12 sm:h-11 sm:w-16 shrink-0 overflow-hidden rounded-md bg-muted">
                           <img
                             src={thumbUrl(covers[store.id]?.url || store.logo_url, THUMB_CARD) || storeHero}
