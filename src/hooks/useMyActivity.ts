@@ -84,17 +84,17 @@ export function useMyActivity(
           (async () => {
             const { data } = await supabase
               .from("shop_orders")
-              .select("id, created_at, order_number, delivery_date, status")
+              .select("id, created_at, order_week, desired_delivery_date, status")
               .eq("created_by", fullName)
               .order("created_at", { ascending: false })
               .limit(50);
             for (const r of data ?? []) {
               out.push({
                 id: `so-${r.id}`,
-                at: r.created_at,
+                at: r.created_at ?? "",
                 kind: "Beställning till grossist",
-                text: `Beställning ${r.order_number ?? ""}`.trim(),
-                detail: [r.delivery_date, r.status].filter(Boolean).join(" · "),
+                text: `Beställning ${r.order_week ?? ""}`.trim(),
+                detail: [r.desired_delivery_date, r.status].filter(Boolean).join(" · "),
                 route: "/orders",
               });
             }
@@ -228,7 +228,7 @@ export function useMyActivity(
           (async () => {
             const { data } = await supabase
               .from("stock_movements")
-              .select("id, created_at, movement_type, quantity, note")
+              .select("id, created_at, movement_type, quantity_kg, note")
               .eq("created_by", userId)
               .order("created_at", { ascending: false })
               .limit(100);
@@ -237,7 +237,7 @@ export function useMyActivity(
                 id: `sm-${r.id}`,
                 at: r.created_at,
                 kind: "Lagerrörelse",
-                text: `${r.movement_type} ${Number(r.quantity ?? 0).toFixed(1)} kg`,
+                text: `${r.movement_type} ${Number(r.quantity_kg ?? 0).toFixed(1)} kg`,
                 detail: r.note,
                 route: "/inventory",
               });
@@ -248,7 +248,7 @@ export function useMyActivity(
           (async () => {
             const { data } = await supabase
               .from("auction_purchases")
-              .select("id, created_at, species, nominal_weight_kg")
+              .select("id, created_at, note, colli, purchase_date")
               .eq("created_by", userId)
               .order("created_at", { ascending: false })
               .limit(50);
@@ -257,7 +257,8 @@ export function useMyActivity(
                 id: `auk-${r.id}`,
                 at: r.created_at,
                 kind: "Auktionsinköp",
-                text: `${(r as any).species ?? "Inköp"} ${Number((r as any).nominal_weight_kg ?? 0).toFixed(1)} kg`,
+                text: `${r.note ?? "Inköp"} · ${r.colli ?? 0} kolli`,
+                detail: r.purchase_date,
                 route: "/auktion",
               });
             }
