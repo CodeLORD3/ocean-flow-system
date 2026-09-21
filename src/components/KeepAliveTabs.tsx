@@ -190,6 +190,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/store-wishes": { component: <WholesaleWishes /> },
   "/meetings": { component: <MeetingProtocols /> },
   "/tasks": { component: <Tasks /> },
+  "/utrustning": { component: <ResourceRegister /> },
   "/landing-settings": { component: <LandingSettings /> },
   "/vehicles": { component: <Vehicles /> },
   "/establishments": { component: <Establishments /> },
