@@ -1140,7 +1140,6 @@ export default function StoreMap() {
                 onOpenChange={(v) => {
                   if (!v) {
                     setSelected(null);
-                    setFocus(null);
                     setDrawerOpen(false);
                   }
                 }}
