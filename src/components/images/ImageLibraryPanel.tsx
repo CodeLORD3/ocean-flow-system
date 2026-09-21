@@ -6,7 +6,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { thumbUrl, THUMB_FULL } from "@/lib/imageThumb";
-import { Search, Heart, MessageCircle, Eye } from "lucide-react";
+import {
+  Search,
+  Heart,
+  MessageCircle,
+  Eye,
+  SlidersHorizontal,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useZonesByStore } from "@/hooks/useImagePickers";
 import { StaffFace } from "@/components/staff/StaffNameAvatar";
 import { dayKey, dayLabel, dayDateLabel } from "@/lib/imageMeta";
 import {
@@ -27,7 +38,14 @@ import ImageQuickClassify from "./ImageQuickClassify";
 import ImageLinksPanel from "./ImageLinksPanel";
 import ImageActivityTimeline from "./ImageActivityTimeline";
 import AddImageFlow from "./AddImageFlow";
-import { useImageLibrary, useImageStatusCounts, useLibraryImage, type LibraryImage } from "@/hooks/useImageLibrary";
+import {
+  useImageLibrary,
+  useImageStatusCounts,
+  useLibraryImage,
+  type LibraryImage,
+  type LibraryFilter,
+  type LibrarySort,
+} from "@/hooks/useImageLibrary";
 import { STATUS_LABEL, type ImageStatus, type MediaKind } from "@/lib/imageStatus";
 
 type TabKey = "all" | MediaKind | "unplaced" | "partial";
@@ -41,6 +59,26 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "observation", label: "Iakttagelser" },
   { key: "unplaced", label: "Oplacerade" },
 ];
+
+const SORTS: { key: LibrarySort; label: string }[] = [
+  { key: "newest", label: "Nyast tillagda" },
+  { key: "commented", label: "Mest kommenterade" },
+  { key: "viewed", label: "Flest sett" },
+  { key: "hearts", label: "Flest hjärtan" },
+];
+
+/** Butikerna, för det gömda filtret. */
+function useStoreOptions() {
+  return useQuery({
+    queryKey: ["library-filter-stores"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("stores").select("id, name").order("name");
+      if (error) throw error;
+      return (data || []) as { id: string; name: string }[];
+    },
+    staleTime: 60_000,
+  });
+}
 
 /**
  * Bildbiblioteket: alla bilder på ett ställe, sökbara och sorterbara.
@@ -66,6 +104,12 @@ export default function ImageLibraryPanel({
   const [editing, setEditing] = useState<LibraryImage | null>(null);
   const [quick, setQuick] = useState<ImageStatus | null>(null);
   const [tag, setTag] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sort, setSort] = useState<LibrarySort>("newest");
+  const [filterStoreId, setFilterStoreId] = useState<string | null>(null);
+  const [filterZoneId, setFilterZoneId] = useState<string | null>(null);
+  const { data: stores = [] } = useStoreOptions();
+  const { data: zones = [] } = useZonesByStore(filterStoreId);
 
   const { data: linked } = useLibraryImage(openImageId);
   useEffect(() => {
@@ -82,20 +126,23 @@ export default function ImageLibraryPanel({
   }, [search]);
 
   const filter = useMemo(() => {
-    const base: {
-      status?: ImageStatus | "all";
-      mediaKind?: MediaKind | "all";
-      search?: string;
-      tag?: string;
-    } = {
+    const base: LibraryFilter = {
       search: debounced || undefined,
       tag: tag || undefined,
+      sort,
     };
+    if (filterZoneId) {
+      base.entityType = "zone";
+      base.entityId = filterZoneId;
+    } else if (filterStoreId) {
+      base.entityType = "store";
+      base.entityId = filterStoreId;
+    }
     if (tab === "unplaced") base.status = "unclassified";
     else if (tab === "partial") base.status = "partial";
     else if (tab !== "all") base.mediaKind = tab;
     return base;
-  }, [tab, debounced, tag]);
+  }, [tab, debounced, tag, sort, filterStoreId, filterZoneId]);
 
   const { data, isLoading, isFetching } = useImageLibrary(filter, page);
   const { data: counts } = useImageStatusCounts();
@@ -104,7 +151,7 @@ export default function ImageLibraryPanel({
     setPage(0);
     setRows([]);
     setSelected([]);
-  }, [tab, debounced, tag]);
+  }, [tab, debounced, tag, sort, filterStoreId, filterZoneId]);
 
   useEffect(() => {
     if (!data) return;
@@ -136,13 +183,100 @@ export default function ImageLibraryPanel({
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-8"
-            placeholder="Sök namn, beskrivning eller bildtext"
+            placeholder="Sök butik, område, vara, sak, uppgift eller namn"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <Button
+          variant={showFilters ? "default" : "outline"}
+          onClick={() => setShowFilters((v) => !v)}
+          className="gap-1.5"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          Filter
+          {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
         <AddImageFlow storeId={storeId} label="Lägg till bild" />
       </div>
+
+      {showFilters && (
+        <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">Visa först</p>
+            <div className="flex flex-wrap gap-1.5">
+              {SORTS.map((s) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setSort(s.key)}
+                  className={cn(
+                    "inline-flex h-8 items-center rounded-full border px-3 text-xs font-medium transition-colors",
+                    sort === s.key
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="space-y-1 text-xs font-medium text-muted-foreground">
+              Butik
+              <select
+                className="h-9 w-full rounded-md border bg-background px-2 text-sm text-foreground"
+                value={filterStoreId ?? ""}
+                onChange={(e) => {
+                  setFilterStoreId(e.target.value || null);
+                  setFilterZoneId(null);
+                }}
+              >
+                <option value="">Alla butiker</option>
+                {stores.map((st) => (
+                  <option key={st.id} value={st.id}>
+                    {st.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="space-y-1 text-xs font-medium text-muted-foreground">
+              Område
+              <select
+                className="h-9 w-full rounded-md border bg-background px-2 text-sm text-foreground disabled:opacity-50"
+                value={filterZoneId ?? ""}
+                disabled={!filterStoreId}
+                onChange={(e) => setFilterZoneId(e.target.value || null)}
+              >
+                <option value="">Alla områden</option>
+                {zones.map((z) => (
+                  <option key={z.id} value={z.id}>
+                    {z.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {(sort !== "newest" || filterStoreId || filterZoneId) && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7"
+              onClick={() => {
+                setSort("newest");
+                setFilterStoreId(null);
+                setFilterZoneId(null);
+              }}
+            >
+              Rensa filter
+            </Button>
+          )}
+        </div>
+      )}
+
 
       <div className="flex flex-wrap items-center gap-1.5">
         {TABS.map((t) => (

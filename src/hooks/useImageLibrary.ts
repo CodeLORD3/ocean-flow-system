@@ -49,7 +49,11 @@ export type ImageActivity = {
   created_at: string;
 };
 
+/** Vad som ska visas först i biblioteket. */
+export type LibrarySort = "newest" | "commented" | "viewed" | "hearts";
+
 export type LibraryFilter = {
+  sort?: LibrarySort;
   status?: ImageStatus | "all";
   mediaKind?: MediaKind | "all";
   /** Fritext på titel, beskrivning och bildtext. */
@@ -82,11 +86,59 @@ async function actor() {
   return { uid, staffId, name };
 }
 
+/**
+ * Söker fram bilder via det de hör till: butik, område, sak, vara eller
+ * uppgift. Namnen hämtas alltid från källtabellerna, inget dupliceras.
+ */
+async function placeMediaIds(search: string): Promise<string[]> {
+  const like = `%${search}%`;
+  const [stores, zones, resources, products, tasks] = await Promise.all([
+    supabase.from("stores").select("id").ilike("name", like).limit(50),
+    supabase.from("map_zones").select("id").ilike("name", like).limit(300),
+    supabase.from("resource_items").select("id").ilike("name", like).limit(300),
+    supabase.from("products").select("id").ilike("name", like).limit(300),
+    supabase.from("checklist_items").select("id").ilike("task", like).limit(300),
+  ]);
+  const ids = [stores, zones, resources, products, tasks]
+    .flatMap((r) => (r.data || []) as { id: string }[])
+    .map((r) => r.id);
+  if (!ids.length) return [];
+  const out = new Set<string>();
+  const CHUNK = 150;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const { data } = await supabase
+      .from("image_links")
+      .select("media_id")
+      .in("entity_id", ids.slice(i, i + CHUNK));
+    for (const row of (data || []) as { media_id: string }[]) out.add(row.media_id);
+  }
+  return [...out].slice(0, 600);
+}
+
+/** Bilderna i ordning efter hur mycket personalen gjort med dem. */
+async function idsBySort(sort: LibrarySort): Promise<string[]> {
+  const table =
+    sort === "commented" ? "entity_image_comments" : sort === "hearts" ? "entity_image_favorites" : "image_views";
+  const col = sort === "viewed" ? "media_id" : "image_id";
+  const { data, error } = await supabase.from(table as never).select(col).limit(20000);
+  if (error) throw error;
+  const counts: Record<string, number> = {};
+  for (const row of (data || []) as unknown as Record<string, string>[]) {
+    const id = row[col];
+    if (id) counts[id] = (counts[id] ?? 0) + 1;
+  }
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([id]) => id)
+    .slice(0, 600);
+}
+
 /** Bibliotekets bilder, sidvis så att tusentals bilder inte hämtas på en gång. */
 export function useImageLibrary(filter: LibraryFilter, page = 0) {
   return useQuery({
     queryKey: ["image-library", filter, page],
     queryFn: async () => {
+      const empty = { rows: [] as LibraryImage[], hasMore: false };
       let ids: string[] | null = null;
       if (filter.entityType && filter.entityId) {
         const { data, error } = await supabase
@@ -96,34 +148,62 @@ export function useImageLibrary(filter: LibraryFilter, page = 0) {
           .eq("entity_id", filter.entityId);
         if (error) throw error;
         ids = (data || []).map((r) => r.media_id as string);
-        if (ids.length === 0) return { rows: [] as LibraryImage[], hasMore: false };
+        if (ids.length === 0) return empty;
       }
 
-      let q = supabase
-        .from("entity_images")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+      const sort: LibrarySort = filter.sort ?? "newest";
+      let order: string[] | null = null;
+      if (sort !== "newest") {
+        order = await idsBySort(sort);
+        if (!order.length) return empty;
+        ids = ids ? ids.filter((id) => order!.includes(id)) : order;
+        if (!ids.length) return empty;
+      }
+
+      const s = filter.search?.trim();
+      let placeIds: string[] = [];
+      if (s) placeIds = await placeMediaIds(s);
+
+      let q = supabase.from("entity_images").select("*");
+      if (sort === "newest") {
+        q = q.order("created_at", { ascending: false }).range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+      } else {
+        q = q.limit(600);
+      }
       if (ids) q = q.in("id", ids);
       if (filter.status && filter.status !== "all") q = q.eq("status", filter.status);
       if (filter.mediaKind && filter.mediaKind !== "all") q = q.eq("media_kind", filter.mediaKind);
       if (filter.uploaderStaffId) q = q.eq("uploaded_by_staff_id", filter.uploaderStaffId);
       if (filter.tag) q = q.contains("tags", [filter.tag]);
-      const s = filter.search?.trim();
-      // Sökningen tar även taggar, så att man hittar bilder via taggen.
-      if (s)
-        q = q.or(
-          `title.ilike.%${s}%,description.ilike.%${s}%,caption.ilike.%${s}%,tags.cs.{"${s.replace(/"/g, "")}"}`,
-        );
+      // Sökningen tar namn, beskrivning, bildtext, taggar och det bilden hör till.
+      if (s) {
+        const parts = [
+          `title.ilike.%${s}%`,
+          `description.ilike.%${s}%`,
+          `caption.ilike.%${s}%`,
+          `tags.cs.{"${s.replace(/"/g, "")}"}`,
+        ];
+        if (placeIds.length) parts.push(`id.in.(${placeIds.join(",")})`);
+        q = q.or(parts.join(","));
+      }
 
       const { data, error } = await q;
       if (error) throw error;
-      const all = (data || []) as unknown as LibraryImage[];
+      let all = (data || []) as unknown as LibraryImage[];
+
+      if (order) {
+        const rank = new Map(order.map((id, i) => [id, i]));
+        all = all.sort((a, b) => (rank.get(a.id) ?? 1e9) - (rank.get(b.id) ?? 1e9));
+        const start = page * PAGE_SIZE;
+        return { rows: all.slice(start, start + PAGE_SIZE), hasMore: all.length > start + PAGE_SIZE };
+      }
       return { rows: all.slice(0, PAGE_SIZE), hasMore: all.length > PAGE_SIZE };
     },
     staleTime: 20_000,
   });
 }
+
+
 
 /** Hur många bilder som ligger i varje arbetsstatus. */
 export function useImageStatusCounts() {
