@@ -131,6 +131,18 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
         ))}
       </div>
 
+      {/* Vald tagg — visar alla bilder med samma tagg */}
+      {tag && (
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Tagg:</span>
+          <Badge variant="secondary">{tag}</Badge>
+          <Button size="sm" variant="ghost" className="h-7" onClick={() => setTag(null)}>
+            Rensa
+          </Button>
+        </div>
+      )}
+
+
       {/* Diskret arbetsstatus — ingen felmarkering, bara vad som återstår */}
       {(unplaced > 0 || partial > 0) && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 px-3 py-2 text-sm">
