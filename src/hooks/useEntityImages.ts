@@ -602,8 +602,13 @@ export function useLinkImageToProduct() {
 }
 
 export type ProductPhoto = EntityImage & {
-  /** "product" = kopplad till produkten, "order_line" = ligger bara på en orderrad */
-  source: "product" | "order_line";
+  /**
+   * "product" = kopplad till produkten, "library" = kopplad via bildbiblioteket,
+   * "order_line" = ligger bara på en orderrad
+   */
+  source: "product" | "library" | "order_line";
+  /** Kopplingen i bildbiblioteket, om bilden ligger på produkten den vägen */
+  link_id?: string | null;
 };
 
 /**
@@ -643,16 +648,111 @@ export function useProductPhotos(productId?: string | null) {
         fromOrders = (data || []) as EntityImage[];
       }
 
+      /* Bilder som kopplats till varan i bildbiblioteket — samma bild kan
+         ligga på flera ställen, kopplingen är sanningen. */
+      const { data: links, error: linkErr } = await supabase
+        .from("image_links")
+        .select("id, media_id, created_at")
+        .eq("entity_type", PRODUCT_PHOTO_ENTITY)
+        .eq("entity_id", productId!)
+        .order("created_at");
+      if (linkErr) throw linkErr;
+
+      let fromLibrary: { link_id: string; image: EntityImage }[] = [];
+      const mediaIds = Array.from(new Set((links || []).map((l) => l.media_id).filter(Boolean)));
+      if (mediaIds.length) {
+        const { data, error } = await supabase.from("entity_images").select("*").in("id", mediaIds);
+        if (error) throw error;
+        const byId = new Map((data || []).map((i) => [i.id as string, i as EntityImage]));
+        fromLibrary = (links || [])
+          .map((l) => ({ link_id: l.id as string, image: byId.get(l.media_id as string) }))
+          .filter((x): x is { link_id: string; image: EntityImage } => !!x.image);
+      }
+
       const byUrl = new Map<string, ProductPhoto>();
       for (const img of (own || []) as EntityImage[]) {
-        byUrl.set(img.url, { ...img, source: "product" });
+        byUrl.set(img.url, { ...img, source: "product", link_id: null });
+      }
+      for (const { link_id, image } of fromLibrary) {
+        const existing = byUrl.get(image.url);
+        if (existing) byUrl.set(image.url, { ...existing, link_id });
+        else byUrl.set(image.url, { ...image, source: "library", link_id });
       }
       for (const img of fromOrders) {
-        if (!byUrl.has(img.url)) byUrl.set(img.url, { ...img, source: "order_line" });
+        if (!byUrl.has(img.url)) byUrl.set(img.url, { ...img, source: "order_line", link_id: null });
       }
       return Array.from(byUrl.values());
     },
     enabled: !!productId,
+  });
+}
+
+/** Gör en bild till varans förstabild — den som syns i listor och beställningar. */
+export function useSetProductCover() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ productId, url }: { productId: string; url: string | null }) => {
+      const { error } = await supabase
+        .from("products")
+        .update({ image_url: url || null })
+        .eq("id", productId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["product-photos", vars.productId] });
+    },
+  });
+}
+
+/**
+ * Tar bort en bild från varan. Bilden raderas aldrig — den ligger kvar i
+ * bildbiblioteket, bara kopplingen till varan försvinner.
+ */
+export function useRemoveProductImage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      productId,
+      photo,
+      isCover,
+    }: {
+      productId: string;
+      photo: ProductPhoto;
+      isCover: boolean;
+    }) => {
+      if (photo.link_id) {
+        const { error } = await supabase.from("image_links").delete().eq("id", photo.link_id);
+        if (error) throw error;
+      }
+      if (photo.source === "product" && photo.entity_id === productId) {
+        /* Gammal hemvist: bilden lämnar varan men finns kvar i biblioteket */
+        const { error } = await supabase
+          .from("entity_images")
+          .update({ entity_id: null, status: "unclassified" })
+          .eq("id", photo.id);
+        if (error) throw error;
+      }
+      if (isCover) {
+        const { error } = await supabase.from("products").update({ image_url: null }).eq("id", productId);
+        if (error) throw error;
+      }
+      const { name } = await currentActorName();
+      await supabase.from("image_activity").insert({
+        media_id: photo.id,
+        actor_name: name,
+        action_type: "unlinked",
+        change_group_id: crypto.randomUUID(),
+        field_name: `koppling:${PRODUCT_PHOTO_ENTITY}`,
+        old_value: productId,
+        new_value: null,
+      });
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["product-photos", vars.productId] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["image-library"] });
+    },
   });
 }
 
