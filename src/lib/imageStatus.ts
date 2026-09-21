@@ -41,6 +41,23 @@ export function relationLabel(value: string | null | undefined) {
   return RELATION_TYPES.find((r) => r.value === value)?.label ?? "Dokumentation";
 }
 
+/** Vad ett ställe i systemet kallas där bilden ligger. */
+export const LINK_TYPE_LABEL: Record<string, string> = {
+  store: "Butik",
+  zone: "Område",
+  resource: "Sak",
+  product: "Produkt",
+  task: "Uppgift",
+  observation: "Iakttagelse",
+  location: "Plats",
+  shop_order_line: "Orderrad",
+  map_zone: "Område",
+};
+
+export function linkTypeLabel(value: string | null | undefined) {
+  return LINK_TYPE_LABEL[value ?? ""] ?? (value || "Annat");
+}
+
 export const STATUS_LABEL: Record<ImageStatus, string> = {
   unclassified: "Oplacerad",
   partial: "Delvis klar",

@@ -3,18 +3,14 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useImageLinks, useRemoveImageLink, type LibraryImage } from "@/hooks/useImageLibrary";
 import { useLinkTargetNames } from "@/hooks/useImagePickers";
-import { relationLabel, STATUS_CLASS, STATUS_LABEL, mediaKindLabel } from "@/lib/imageStatus";
+import {
+  relationLabel,
+  STATUS_CLASS,
+  STATUS_LABEL,
+  mediaKindLabel,
+  linkTypeLabel,
+} from "@/lib/imageStatus";
 import { toast } from "sonner";
-
-const TYPE_LABEL: Record<string, string> = {
-  store: "Butik",
-  zone: "Område",
-  resource: "Sak",
-  product: "Produkt",
-  task: "Uppgift",
-  observation: "Iakttagelse",
-  location: "Plats",
-};
 
 /**
  * Visar vad bilden hör till och låter någon ta bort en koppling. Att ta bort
@@ -50,6 +46,8 @@ export default function ImageLinksPanel({
           Bilden är ännu inte kopplad till något. Tryck Ändra för att sortera den.
         </p>
       ) : (
+        <>
+        <h3 className="text-sm font-semibold">Ligger på dessa ställen</h3>
         <ul className="space-y-1.5">
           {links.map((l) => (
             <li
@@ -57,7 +55,7 @@ export default function ImageLinksPanel({
               className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm"
             >
               <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                {TYPE_LABEL[l.entity_type] ?? l.entity_type}
+                {linkTypeLabel(l.entity_type)}
               </span>
               <span className="min-w-0 flex-1 truncate">
                 {names[`${l.entity_type}:${l.entity_id}`] || "Okänt namn"}
@@ -82,6 +80,7 @@ export default function ImageLinksPanel({
             </li>
           ))}
         </ul>
+        </>
       )}
     </div>
   );

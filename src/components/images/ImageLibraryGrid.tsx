@@ -1,7 +1,7 @@
 import { useMemo, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
-import { STATUS_CLASS, STATUS_LABEL, mediaKindLabel } from "@/lib/imageStatus";
+import { STATUS_CLASS, STATUS_LABEL, mediaKindLabel, linkTypeLabel } from "@/lib/imageStatus";
 import { StaffFace } from "@/components/staff/StaffNameAvatar";
 import { dayLabel, dayKey } from "@/lib/imageMeta";
 import { useImageLinksFor } from "@/hooks/useImageLibrary";
@@ -38,14 +38,21 @@ export default function ImageLibraryGrid({
   );
   const { data: names } = useLinkTargetNames(allLinks);
 
-  /** Område i första hand, annars butiken bilden hör till. */
-  function placeOf(id: string): string | null {
+  /** Alla ställen i systemet där bilden ligger — område/butik först. */
+  function placesOf(id: string): { key: string; type: string; name: string }[] {
     const links = linkMap?.[id] ?? [];
-    const zone = links.find((l) => l.entity_type === "zone");
-    if (zone) return names?.[`zone:${zone.entity_id}`] || null;
-    const store = links.find((l) => l.entity_type === "store");
-    if (store) return names?.[`store:${store.entity_id}`] || null;
-    return null;
+    const order = ["zone", "store", "resource", "product", "task", "observation", "location"];
+    return links
+      .map((l) => ({
+        key: l.id,
+        type: l.entity_type,
+        name: names?.[`${l.entity_type}:${l.entity_id}`] || "Okänt namn",
+      }))
+      .sort((a, b) => {
+        const ia = order.indexOf(a.type);
+        const ib = order.indexOf(b.type);
+        return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+      });
   }
 
   function click(e: React.MouseEvent, index: number) {
@@ -87,7 +94,7 @@ export default function ImageLibraryGrid({
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
       {images.map((img, i) => {
         const selected = selectedIds.includes(img.id);
-        const place = placeOf(img.id);
+        const places = placesOf(img.id);
         const taken = img.captured_at || img.created_at;
         return (
           <div
@@ -133,9 +140,27 @@ export default function ImageLibraryGrid({
                 </span>
                 <span className="whitespace-nowrap tabular-nums">{dayLabel(dayKey(taken))}</span>
               </div>
-              <p className="truncate text-[11px] text-muted-foreground">
-                {place ? `📍 ${place}` : "📍 Plats saknas"}
-              </p>
+              {/* Alla ställen i systemet där bilden ligger */}
+              {places.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground">Ligger inte på något ställe än</p>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {places.slice(0, 3).map((p) => (
+                    <span
+                      key={p.key}
+                      className="max-w-full truncate rounded-md border px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                      title={`${linkTypeLabel(p.type)}: ${p.name}`}
+                    >
+                      {linkTypeLabel(p.type)}: {p.name}
+                    </span>
+                  ))}
+                  {places.length > 3 && (
+                    <span className="text-[10px] text-muted-foreground">
+                      +{places.length - 3} till
+                    </span>
+                  )}
+                </div>
+              )}
               {img.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {img.tags.slice(0, 3).map((t) => (
