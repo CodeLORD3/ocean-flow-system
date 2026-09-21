@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Check, Plus, Trash2 } from "lucide-react";
-
-const STEPS = [
-  { n: 1, label: "Vad" },
-  { n: 2, label: "Var & vem" },
-  { n: 3, label: "Krav" },
-] as const;
+import { Plus, Trash2 } from "lucide-react";
+import { NewTaskDialog } from "@/components/tasks/NewTaskDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -204,69 +199,13 @@ export default function Uppgifter() {
   const catOf = (t: Task) => categories.find((c) => c.id === t.category_id) ?? null;
 
   const [newOpen, setNewOpen] = useState(false);
-  const [step, setStep] = useState(1);
-  const [nTask, setNTask] = useState("");
-  const [nZone, setNZone] = useState("none");
-  const [nCat, setNCat] = useState("none");
-  const [nPerson, setNPerson] = useState("none");
-  const [nTime, setNTime] = useState("");
-  const [nMinutes, setNMinutes] = useState("");
-  const [nNote, setNNote] = useState("");
-  const [nRecurring, setNRecurring] = useState(false);
-  const [nReqPhoto, setNReqPhoto] = useState(false);
-  const [nReqNote, setNReqNote] = useState(false);
-  const [nReqValue, setNReqValue] = useState(false);
-  const [nValueLabel, setNValueLabel] = useState("");
-  const [nLink, setNLink] = useState("none");
-  const [nRecipe, setNRecipe] = useState("none");
   const updateTask = useUpdateTask();
 
-  const createAdhoc = async () => {
-    if (!storeId) return;
-    let newId: string | null = null;
-    try {
-      const payload = {
-        storeId,
-        date: day,
-        task: nTask,
-        zoneId: nZone === "none" ? null : nZone,
-        categoryId: nCat === "none" ? null : nCat,
-        assignedStaffId: nPerson === "none" ? null : nPerson,
-        specificTime: nTime || null,
-        estimatedMinutes: nMinutes ? Number(nMinutes) : null,
-        note: nNote,
-        requiresPhoto: nReqPhoto,
-        requiresNote: nReqNote,
-        requiresValue: nReqValue,
-        valueLabel: nReqValue ? nValueLabel || "Värde" : null,
-        linkUrl: nLink === "none" ? null : nLink,
-        recipeId: nRecipe === "none" ? null : nRecipe,
-      };
-      if (nRecurring) {
-        await addStandard.mutateAsync(payload);
-        toast({ title: "Standarduppgift tillagd", description: "Den återkommer varje dag." });
-      } else {
-        const id = await addAdhoc.mutateAsync(payload);
-        toast({ title: "Tillfällig uppgift tillagd", description: "Den gäller bara valt datum." });
-        newId = id;
-      }
-      setNewOpen(false);
-      setStep(1);
-      setNTask("");
-      setNNote("");
-      setNTime("");
-      setNMinutes("");
-      setNReqPhoto(false);
-      setNReqNote(false);
-      setNReqValue(false);
-      setNValueLabel("");
-      setNLink("none");
-      setNRecipe("none");
-      if (newId) switchTab(`/uppgift/${newId}`);
-    } catch (e: any) {
-      toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
-    }
-  };
+  /** Områdena som kan väljas när en ny uppgift skapas. */
+  const newTaskAreas = useMemo(
+    () => [...areaOf.values()].map((a) => ({ id: a.id, name: a.name, number: a.number })),
+    [areaOf],
+  );
 
   const addPhoto = async (task: Task, file: File) => {
     const zoneId = task.zone_id;
