@@ -511,6 +511,13 @@ function PostCard({
               <MessageCircle className="h-[18px] w-[18px]" />
               <span className="tabular-nums">{img.commentCount || 0}</span>
             </button>
+            <span
+              className="flex h-9 items-center gap-1.5 rounded-full px-2 text-sm font-medium text-white"
+              title={`${viewCounts[img.id] ?? 0} har sett bilden`}
+            >
+              <Eye className="h-[18px] w-[18px]" />
+              <span className="tabular-nums">{viewCounts[img.id] ?? 0}</span>
+            </span>
           </div>
           <div className="flex flex-col items-end gap-1.5">
             {count > 1 && (
