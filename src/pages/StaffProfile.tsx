@@ -414,6 +414,17 @@ export default function StaffProfile() {
   );
 }
 
+/**
+ * Lägger på en tydlig väg tillbaka till min sida. Sidan man landar på visar då
+ * raden "Tillbaka till min sida" högst upp, precis som när man går tillbaka
+ * från en enskild kundbeställning till listan.
+ */
+function withReturn(route: string) {
+  const sep = route.includes("?") ? "&" : "?";
+  return `${route}${sep}retur=${encodeURIComponent("/profile")}&returtext=${encodeURIComponent("min sida")}`;
+}
+
+
 /** Överrubrik som delar sidan i tydliga avsnitt. */
 function Section({
   title,
