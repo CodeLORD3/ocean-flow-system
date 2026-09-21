@@ -423,8 +423,17 @@ export default function Uppgifter() {
               counts={zoneCounts}
               selected={fArea}
               onSelect={setFArea}
-              onOpenMap={() => switchTab("/store-map")}
+              chipsOnly={mapOpen}
+              onOpenMap={() => setMapOpen((v) => !v)}
+              openLabel={mapOpen ? "Dölj kartan" : "Visa hela kartan"}
             />
+          )}
+
+          {/* Butikskartan med alla funktioner — samma karta som i Översikt */}
+          {mapOpen && (
+            <Card className="p-4">
+              <StoreMap embedded />
+            </Card>
           )}
 
           <Card className="p-4">
