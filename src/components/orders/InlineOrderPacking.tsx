@@ -1,3 +1,4 @@
+import { sortLinesByCategory } from "@/lib/productCategories";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CheckCircle2, RotateCcw, PlayCircle } from "lucide-react";
@@ -89,7 +90,7 @@ export function InlineOrderPacking({
   const [openLine, setOpenLine] = useState<string | null>(null);
 
   const lines = useMemo(
-    () => [...(order.customer_order_lines || [])].sort((a, b) => a.sort_order - b.sort_order),
+    () => sortLinesByCategory(order.customer_order_lines || []),
     [order],
   );
 

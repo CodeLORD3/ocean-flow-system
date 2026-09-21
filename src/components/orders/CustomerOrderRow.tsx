@@ -1,3 +1,4 @@
+import { sortLinesByCategory } from "@/lib/productCategories";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ImageIcon, Camera, Star } from "lucide-react";
@@ -226,7 +227,7 @@ export function CustomerOrderRow({
   const isOpen = !!open;
   const name = order.customers_retail?.name || order.customer_name_snapshot || "Kund";
   const phone = order.customers_retail?.phone || order.customer_phone_snapshot;
-  const lines = [...(order.customer_order_lines || [])].sort((a, b) => a.sort_order - b.sort_order);
+  const lines = sortLinesByCategory(order.customer_order_lines || []);
   const active = lines.filter((l) => l.pack_status !== "struken");
 
   /* Kommentarer: orderns egen not och eventuella noteringar på raderna. */

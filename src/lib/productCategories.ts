@@ -116,3 +116,38 @@ export function isWildCaught(origin?: string | null): boolean {
   if (!o) return true;
   return !/odlad|odling|vattenbruk|farmed|aquacult/.test(o);
 }
+
+/** Kategori utan namn hamnar sist under "Övrigt". */
+export const OTHER_CATEGORY = "Övrigt";
+
+/** Kanonisk kategoriordning: skaldjur för sig, fisk för sig osv. Okända sist. */
+export function categoryRank(name: string | null | undefined): number {
+  const i = (PRODUCT_CATEGORIES as readonly string[]).findIndex(
+    (c) => normalizeCategoryKey(c) === normalizeCategoryKey(name),
+  );
+  return i === -1 ? 999 : i;
+}
+
+/** Jämför två kategorinamn i samma ordning som totallistan använder. */
+export function compareCategory(a: string | null | undefined, b: string | null | undefined): number {
+  return (
+    categoryRank(a) - categoryRank(b) ||
+    String(a ?? "").localeCompare(String(b ?? ""), "sv")
+  );
+}
+
+/**
+ * Sorterar beställningens produktrader kategori för kategori, precis som
+ * totallistan. Inom samma kategori behålls radernas egen ordning.
+ */
+export function sortLinesByCategory<
+  T extends { sort_order?: number | null; products?: { category?: string | null } | null },
+>(lines: readonly T[]): T[] {
+  return [...lines].sort(
+    (a, b) =>
+      compareCategory(
+        a.products?.category || OTHER_CATEGORY,
+        b.products?.category || OTHER_CATEGORY,
+      ) || (a.sort_order ?? 0) - (b.sort_order ?? 0),
+  );
+}
