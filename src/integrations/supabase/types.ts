@@ -1728,6 +1728,7 @@ export type Database = {
           value_label: string | null
           variant_note: string | null
           variant_of: string | null
+          weekdays: number[] | null
           work_type: string | null
           zone_id: string | null
         }
@@ -1769,6 +1770,7 @@ export type Database = {
           value_label?: string | null
           variant_note?: string | null
           variant_of?: string | null
+          weekdays?: number[] | null
           work_type?: string | null
           zone_id?: string | null
         }
@@ -1810,6 +1812,7 @@ export type Database = {
           value_label?: string | null
           variant_note?: string | null
           variant_of?: string | null
+          weekdays?: number[] | null
           work_type?: string | null
           zone_id?: string | null
         }
