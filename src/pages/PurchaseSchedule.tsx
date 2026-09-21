@@ -151,9 +151,22 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
   }, [grossistStock]);
 
   const [useStockLoading, setUseStockLoading] = useState<string | null>(null);
+  // Rader som just tagits ur inköpslistan – försvinner direkt medan databasen uppdateras
+  const [removedLineIds, setRemovedLineIds] = useState<Set<string>>(new Set());
+  const markRemoved = (lineIds: string[]) =>
+    setRemovedLineIds((prev) => new Set([...prev, ...lineIds]));
+  const unmarkRemoved = (lineIds: string[]) =>
+    setRemovedLineIds((prev) => {
+      const next = new Set(prev);
+      lineIds.forEach((id) => next.delete(id));
+      return next;
+    });
+  const isRemoved = (lineIds?: string[]) =>
+    !!lineIds && lineIds.length > 0 && lineIds.every((id) => removedLineIds.has(id));
 
   const handleUseStock = async (lineIds: string[], _shopOrderIds: string[], productName: string) => {
     setUseStockLoading(productName);
+    markRemoved(lineIds);
     try {
       for (const lineId of lineIds) {
         await supabase.from("shop_order_lines").update({ ordered_elsewhere: "Lager" }).eq("id", lineId);
@@ -161,6 +174,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast.success(`"${productName}" borttagen från inköpsschema (använder befintligt lager).`);
     } catch (err) {
+      unmarkRemoved(lineIds);
       toast.error("Kunde inte uppdatera orderrader.");
     } finally {
       setUseStockLoading(null);
@@ -758,12 +772,14 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
   const totalsByCategory = useMemo(() => {
     const map = new Map<string, typeof weeklyTotals>();
     for (const item of weeklyTotals) {
+      const ids = (item as any).lines?.map((l: any) => l.lineId) || [];
+      if (ids.length > 0 && ids.every((id: string) => removedLineIds.has(id))) continue;
       const arr = map.get(item.category) || [];
       arr.push(item);
       map.set(item.category, arr);
     }
     return map;
-  }, [weeklyTotals]);
+  }, [weeklyTotals, removedLineIds]);
 
   const filteredAltProducts = useMemo(() => {
     if (!allProducts) return [];
@@ -851,13 +867,15 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
   // ── "Köpt" handler ──
   const handleMarkBought = async (lineIds: string[], shopOrderIds: string[], productName: string) => {
     setBoughtLoading(productName);
+    markRemoved(lineIds);
     try {
       for (const lineId of lineIds) {
         await supabase.from("shop_order_lines").update({ ordered_elsewhere: "Köpt" }).eq("id", lineId);
       }
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
-      toast.success(`"${productName}" markerad som köpt.`);
+      toast.success(`"${productName}" köpt in och struken ur inköpslistan.`);
     } catch (err) {
+      unmarkRemoved(lineIds);
       toast.error("Kunde inte uppdatera.");
     } finally {
       setBoughtLoading(null);
@@ -885,6 +903,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
   const [undoBoughtLoading, setUndoBoughtLoading] = useState<string | null>(null);
   const handleUndoBought = async (lineIds: string[], productName: string) => {
     setUndoBoughtLoading(productName);
+    unmarkRemoved(lineIds);
     try {
       for (const lineId of lineIds) {
         await supabase.from("shop_order_lines").update({ ordered_elsewhere: null }).eq("id", lineId);
@@ -1014,7 +1033,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
           ) : (
             <div className="space-y-1">
               {weekDates.map((date, dayIndex) => {
-                const items = activeMap.get(dayIndex) || [];
+                const items = (activeMap.get(dayIndex) || []).filter((it: any) => !isRemoved(it.lineIds));
                 const isToday = isSameDay(date, new Date());
                 const isPast = date < new Date() && !isToday;
                 const dayLabel = `${WEEKDAYS[dayIndex]} ${format(date, "d/M")}`;
@@ -1043,6 +1062,76 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
                         {items.length === 0 ? (
                           <p className="pl-10 py-1 text-[10px] text-muted-foreground italic">Inga produkter</p>
                         ) : (
+                          <>
+                          {/* Mobil: kort med stora knappar för inköp i handen */}
+                          <div className="md:hidden space-y-2 px-2 pb-2">
+                            {items.map((item, mi) => {
+                              const stock = stockMap.get(item.productId) || 0;
+                              const hasSufficientStock = stock >= item.totalQuantity;
+                              return (
+                                <div key={`m-${dayIndex}-${item.productName}-${mi}`} className="rounded-lg border bg-card p-3 space-y-2">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-medium leading-tight break-words">{item.productName}</p>
+                                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                                        {item.isManual ? "Manuell rad" : `${item.shops.length} butik${item.shops.length !== 1 ? "er" : ""}`}
+                                        {stock > 0 && ` · lager ${stock} ${item.unit}`}
+                                      </p>
+                                    </div>
+                                    <span className="font-mono tabular-nums text-base font-semibold whitespace-nowrap">
+                                      {item.totalQuantity} {item.unit}
+                                    </span>
+                                  </div>
+                                  {!item.isManual && (item.leadDays ?? 0) > 0 && (
+                                    <Badge variant="outline" className="text-[9px] py-0 px-1 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10">
+                                      Dagen innan
+                                    </Badge>
+                                  )}
+                                  {!item.isManual && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {item.shops.map((shop, si) => (
+                                        <Badge key={`${shop.name}-${si}`} variant="outline" className="text-[10px] py-0">
+                                          {shop.name} {shop.quantity} {item.unit}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <div className="flex gap-2">
+                                    {item.isManual ? (
+                                      <Button
+                                        variant="outline"
+                                        className="h-10 flex-1 text-xs gap-1 text-destructive border-destructive/30"
+                                        onClick={() => handleDeleteManualEntry(item.manualEntryId!, item.productName)}
+                                      >
+                                        <Trash2 className="h-4 w-4" /> Ta bort
+                                      </Button>
+                                    ) : (
+                                      <>
+                                        <Button
+                                          className="h-11 flex-1 text-sm gap-1.5"
+                                          onClick={() => handleMarkBought(item.lineIds, item.shopOrderIds, item.productName)}
+                                          disabled={boughtLoading === item.productName}
+                                        >
+                                          <Check className="h-4 w-4" /> Köpt in
+                                        </Button>
+                                        {hasSufficientStock && (
+                                          <Button
+                                            variant="outline"
+                                            className="h-11 text-xs gap-1 text-yellow-700 dark:text-yellow-400 border-yellow-500/30"
+                                            onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
+                                            disabled={useStockLoading === item.productName}
+                                          >
+                                            <PackageCheck className="h-4 w-4" /> Lager
+                                          </Button>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="hidden md:block">
                           <Table>
                             <TableHeader>
                               <TableRow>
@@ -1166,16 +1255,6 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
                                                   >
                                                     <Check className="h-3 w-3" /> Bekräfta
                                                   </Button>
-                                                   <Button
-                                                     variant="outline"
-                                                     size="sm"
-                                                     className="h-6 text-[10px] gap-1 text-sky-700 dark:text-sky-400 border-sky-500/30 hover:bg-sky-500/10"
-                                                     onClick={() => handleMarkPreordered(item.lineIds, item.productName)}
-                                                     disabled={preorderLoading === item.productName}
-                                                     title="Redan beställd hos leverantör – stryks ur inköpslistan"
-                                                   >
-                                                     <Truck className="h-3 w-3" /> Beställd
-                                                   </Button>
                                                    {hasSufficientStock && (
                                                     <Button
                                                       variant="outline"
@@ -1233,6 +1312,8 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
                               })}
                             </TableBody>
                           </Table>
+                          </div>
+                          </>
                         )}
                       </CollapsibleContent>
                     </Collapsible>
