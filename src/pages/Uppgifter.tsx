@@ -403,6 +403,18 @@ export default function Uppgifter() {
         </TabsList>
 
         <TabsContent value="dag" className="space-y-4">
+          {plan && zones.length > 0 && (
+            <TaskZoneMap
+              plan={plan}
+              zones={zones}
+              areas={areaOf}
+              counts={zoneCounts}
+              selected={fArea}
+              onSelect={setFArea}
+              onOpenMap={() => switchTab("/store-map")}
+            />
+          )}
+
           <Card className="p-4">
             <Progress done={doneCount} total={tasks.length} />
             {left > 0 && (
