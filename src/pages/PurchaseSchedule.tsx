@@ -1420,7 +1420,17 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
                                           >
                                             <Check className="h-3 w-3" /> Bekräfta
                                           </Button>
-                                          {hasSufficientStock && (
+                                           <Button
+                                             variant="outline"
+                                             size="sm"
+                                             className="h-6 text-[10px] gap-1 text-sky-700 dark:text-sky-400 border-sky-500/30 hover:bg-sky-500/10"
+                                             onClick={() => handleMarkPreordered(item.lines.map(l => l.lineId), item.productName)}
+                                             disabled={preorderLoading === item.productName}
+                                             title="Redan beställd hos leverantör – stryks ur inköpslistan"
+                                           >
+                                             <Truck className="h-3 w-3" /> Beställd
+                                           </Button>
+                                           {hasSufficientStock && (
                                             <Button
                                               variant="outline"
                                               size="sm"
