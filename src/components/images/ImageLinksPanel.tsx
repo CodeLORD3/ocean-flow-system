@@ -66,7 +66,7 @@ export default function ImageLinksPanel({
         <span className="text-xs text-muted-foreground">{mediaKindLabel(image.media_kind)}</span>
         {onEdit && (
           <Button size="sm" variant="outline" className="ml-auto" onClick={onEdit}>
-            Ändra
+            Kategorisera bilden
           </Button>
         )}
       </div>
