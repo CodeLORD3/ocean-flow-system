@@ -56,6 +56,7 @@ import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
 import ZoneDetailsSheet from "@/components/storemap/ZoneDetailsSheet";
 import { ZONE_PALETTE, nextZoneColor } from "@/lib/mapPalette";
 import { bbox, zonePoints } from "@/lib/mapGeometry";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   useEntityImages,
   useFloorPlanImages,
@@ -175,6 +176,8 @@ export default function StoreMap({
   const [placing, setPlacing] = useState<{ zoneId: string; file: File } | null>(null);
   const [selected, setSelected] = useState<Selection>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  /** Verktygspanelen ligger utanför sidan och dras ut när man vill ändra. */
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [pinMode, setPinMode] = useState(false);
   const [focus, setFocus] = useState<Selection>(null);
   /** Områdets egna sida ligger som en egen flik i butikskartan. */
@@ -705,7 +708,7 @@ export default function StoreMap({
           }}
         />
       ) : (
-        <div className={`grid gap-4 ${editMode ? "lg:grid-cols-[1fr_340px]" : ""}`}>
+        <div className="grid gap-4">
           <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
             {/* Kartans egen rad: bara det man behöver, resten ligger i redigeringsläget */}
             <div className="flex flex-wrap items-center gap-3 border-b border-border px-3 py-2">
@@ -1031,9 +1034,24 @@ export default function StoreMap({
             </div>
           </div>
 
-          {/* Höger panel: bara i redigeringsläget, annars ligger kartan i full bredd */}
+          {/* Verktygen ligger utanför sidan i redigeringsläget och dras ut med knappen */}
           {editMode && (
-          <div className="space-y-3">
+            <Button
+              size="sm"
+              className="fixed right-0 top-1/3 z-40 h-11 gap-1 rounded-l-full rounded-r-none px-4 shadow-lg"
+              onClick={() => setToolsOpen(true)}
+            >
+              <Pencil className="h-4 w-4" /> Verktyg
+            </Button>
+          )}
+
+          {editMode && (
+          <Sheet open={toolsOpen} onOpenChange={setToolsOpen}>
+            <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
+              <SheetHeader>
+                <SheetTitle className="text-base">Verktyg för kartan</SheetTitle>
+              </SheetHeader>
+          <div className="mt-3 space-y-3">
             {editMode ? (
               <>
                 <ZoneTagsPanel
@@ -1437,6 +1455,8 @@ export default function StoreMap({
               </Card>
             )}
           </div>
+            </SheetContent>
+          </Sheet>
           )}
         </div>
       )}
