@@ -16,6 +16,7 @@ import {
   type EntityImage,
 } from "@/hooks/useEntityImages";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import { useImageViewers, useRecordImageView } from "@/hooks/useImageEngagement";
 import { thumbUrl, THUMB_FULL } from "@/lib/imageThumb";
 import { dayBadgeClass } from "@/lib/dayColor";
 import { AnnotatableImage, type ImageRegion } from "@/components/images/AnnotatableImage";
@@ -279,6 +280,30 @@ export function ImageLightbox({
   };
 
   const isFav = !!current && favoriteIds.includes(current.id);
+
+  // Registrera att personen sett bilden, och visa ansiktena på alla som sett den.
+  const recordView = useRecordImageView();
+  const { data: viewers = [] } = useImageViewers(current?.id);
+  const seenId = current?.id;
+  useEffect(() => {
+    if (!open || !seenId) return;
+    recordView.mutate(seenId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, seenId]);
+
+  const seenBy = viewers.length > 0 && (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="text-[11px] text-muted-foreground">Sett av</span>
+      {viewers.slice(0, 10).map((v) => (
+        <span key={v.id} title={v.viewer_name ?? "Okänd person"} className="inline-flex items-center">
+          <StaffFace name={v.viewer_name} className="h-6 w-6 text-[9px] ring-1 ring-background" />
+        </span>
+      ))}
+      {viewers.length > 10 && (
+        <span className="text-[11px] text-muted-foreground">+{viewers.length - 10} till</span>
+      )}
+    </div>
+  );
 
   const commentList = (
     <>
@@ -705,6 +730,7 @@ export function ImageLightbox({
                   </div>
                 </div>
                 {captionMeta}
+                {seenBy}
               </div>
 
               {/* Kommentarer som Instagram-sheet över bilden */}
@@ -871,6 +897,7 @@ export function ImageLightbox({
               <div className="p-3 space-y-2 border-t">
                 {uploaderMeta}
                 {captionMeta}
+                {seenBy}
                 <p className="text-[10px] text-muted-foreground">
                   Bläddra med piltangenterna eller swipa på mobil.
                 </p>
