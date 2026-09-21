@@ -1008,6 +1008,8 @@ export default function Uppgifter() {
         day={day}
         areas={newTaskAreas}
         staff={staffList}
+        plan={plan}
+        zones={zones}
         onCreated={(id) => switchTab(`/uppgift/${id}`)}
       />
     </div>
