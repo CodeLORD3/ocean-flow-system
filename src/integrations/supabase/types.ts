@@ -5209,8 +5209,10 @@ export type Database = {
           caption_edited_at: string | null
           caption_edited_by: string | null
           caption_edited_by_name: string | null
+          captured_at: string | null
           checklist_item_id: string | null
           created_at: string
+          description: string | null
           entity_id: string
           entity_type: string
           floor_plan_id: string | null
@@ -5219,12 +5221,18 @@ export type Database = {
           image_kind: string | null
           is_cover: boolean
           is_featured: boolean
+          last_edited_at: string | null
+          last_edited_by_staff_id: string | null
+          media_kind: string | null
           norm_x: number | null
           norm_y: number | null
           sort_order: number
+          status: string
+          tags: string[]
           title: string | null
           uploaded_by: string | null
           uploaded_by_name: string | null
+          uploaded_by_staff_id: string | null
           url: string
         }
         Insert: {
@@ -5232,8 +5240,10 @@ export type Database = {
           caption_edited_at?: string | null
           caption_edited_by?: string | null
           caption_edited_by_name?: string | null
+          captured_at?: string | null
           checklist_item_id?: string | null
           created_at?: string
+          description?: string | null
           entity_id: string
           entity_type: string
           floor_plan_id?: string | null
@@ -5242,12 +5252,18 @@ export type Database = {
           image_kind?: string | null
           is_cover?: boolean
           is_featured?: boolean
+          last_edited_at?: string | null
+          last_edited_by_staff_id?: string | null
+          media_kind?: string | null
           norm_x?: number | null
           norm_y?: number | null
           sort_order?: number
+          status?: string
+          tags?: string[]
           title?: string | null
           uploaded_by?: string | null
           uploaded_by_name?: string | null
+          uploaded_by_staff_id?: string | null
           url: string
         }
         Update: {
@@ -5255,8 +5271,10 @@ export type Database = {
           caption_edited_at?: string | null
           caption_edited_by?: string | null
           caption_edited_by_name?: string | null
+          captured_at?: string | null
           checklist_item_id?: string | null
           created_at?: string
+          description?: string | null
           entity_id?: string
           entity_type?: string
           floor_plan_id?: string | null
@@ -5265,12 +5283,18 @@ export type Database = {
           image_kind?: string | null
           is_cover?: boolean
           is_featured?: boolean
+          last_edited_at?: string | null
+          last_edited_by_staff_id?: string | null
+          media_kind?: string | null
           norm_x?: number | null
           norm_y?: number | null
           sort_order?: number
+          status?: string
+          tags?: string[]
           title?: string | null
           uploaded_by?: string | null
           uploaded_by_name?: string | null
+          uploaded_by_staff_id?: string | null
           url?: string
         }
         Relationships: [
@@ -5286,6 +5310,34 @@ export type Database = {
             columns: ["floor_plan_id"]
             isOneToOne: false
             referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_images_last_edited_by_staff_id_fkey"
+            columns: ["last_edited_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_images_last_edited_by_staff_id_fkey"
+            columns: ["last_edited_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_images_uploaded_by_staff_id_fkey"
+            columns: ["uploaded_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_images_uploaded_by_staff_id_fkey"
+            columns: ["uploaded_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
         ]
@@ -6078,6 +6130,67 @@ export type Database = {
           },
         ]
       }
+      image_activity: {
+        Row: {
+          action_type: string
+          actor_name: string | null
+          change_group_id: string | null
+          created_at: string
+          field_name: string | null
+          id: string
+          media_id: string
+          new_value: string | null
+          old_value: string | null
+          staff_id: string | null
+        }
+        Insert: {
+          action_type: string
+          actor_name?: string | null
+          change_group_id?: string | null
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          media_id: string
+          new_value?: string | null
+          old_value?: string | null
+          staff_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          actor_name?: string | null
+          change_group_id?: string | null
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          media_id?: string
+          new_value?: string | null
+          old_value?: string | null
+          staff_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_activity_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "entity_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_activity_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_activity_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       image_feature_runs: {
         Row: {
           created_at: string
@@ -6191,6 +6304,119 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      image_links: {
+        Row: {
+          created_at: string
+          created_by_staff_id: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          media_id: string
+          relation_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_staff_id?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          media_id: string
+          relation_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_staff_id?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          media_id?: string
+          relation_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_links_created_by_staff_id_fkey"
+            columns: ["created_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_links_created_by_staff_id_fkey"
+            columns: ["created_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_links_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "entity_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      image_observations: {
+        Row: {
+          comment: string | null
+          created_at: string
+          created_by_staff_id: string | null
+          id: string
+          observation_type: string
+          resource_location_id: string | null
+          store_id: string | null
+          updated_at: string
+          zone_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          created_by_staff_id?: string | null
+          id?: string
+          observation_type: string
+          resource_location_id?: string | null
+          store_id?: string | null
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          created_by_staff_id?: string | null
+          id?: string
+          observation_type?: string
+          resource_location_id?: string | null
+          store_id?: string | null
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_observations_created_by_staff_id_fkey"
+            columns: ["created_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_observations_created_by_staff_id_fkey"
+            columns: ["created_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_observations_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "map_zones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       important_papers: {
         Row: {
