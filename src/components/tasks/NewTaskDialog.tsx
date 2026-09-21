@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Clock, Map, MapPin, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,6 +68,7 @@ export function NewTaskDialog({
   const [ownMinutes, setOwnMinutes] = useState("");
   const [note, setNote] = useState("");
   const [pickOnMap, setPickOnMap] = useState(false);
+  const personRef = useRef<HTMLDivElement>(null);
   const [reqPhoto, setReqPhoto] = useState(false);
   const [reqNote, setReqNote] = useState(false);
 
@@ -236,14 +237,20 @@ export function NewTaskDialog({
                         value={zone}
                         onChange={setZone}
                         numberOf={(id) => areas.find((a) => a.id === id)?.number ?? null}
-                        onNext={() => setStep(3)}
+                        onNext={() => {
+                          setPickOnMap(false);
+                          setTimeout(() => {
+                            personRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                            personRef.current?.querySelector("input")?.focus();
+                          }, 60);
+                        }}
                       />
                     )}
                   </>
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div ref={personRef} className="space-y-2">
                 <p className="flex items-center gap-1 text-sm font-medium">
                   <User className="h-4 w-4" /> Vem ska göra det?
                 </p>
