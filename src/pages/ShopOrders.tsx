@@ -497,6 +497,66 @@ export default function ShopOrders() {
   const { data: customerCommitted = new Map() } = useCustomerCommitted(activeStoreId);
   const [productSearch, setProductSearch] = useState("");
   const [desiredDeliveryDate, setDesiredDeliveryDate] = useState<Date | undefined>(undefined);
+  /** Kundbeställningar till och med valt leveransdatum som ännu inte beställts in. */
+  const desiredDeliveryKey = desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : null;
+  const { data: customerDemand } = useCustomerDemand(activeStoreId, desiredDeliveryKey);
+
+  /**
+   * Fyller butikens beställning med kundernas varor så fort en leveransdag är vald.
+   * Befintlig påfyllning behålls; kundmängden ligger alltid låst på raden.
+   */
+  useEffect(() => {
+    if (!customerDemand || customerDemand.size === 0) return;
+    setOrderLines(prev => {
+      const next = [...prev];
+      let changed = false;
+      for (const d of customerDemand.values()) {
+        const idx = next.findIndex(l => l.product_id === d.productId);
+        const names = d.customers.slice(0, 5);
+        if (idx >= 0) {
+          const l = next[idx];
+          if (l.customerQty === d.quantity && l.source === "customer") continue;
+          const top =
+            l.source === "customer"
+              ? Number(String(l.topUpQty ?? "").replace(",", ".")) || 0
+              : Number(String(l.quantity ?? "").replace(",", ".")) || 0;
+          const total = d.quantity + top;
+          next[idx] = {
+            ...l,
+            source: "customer",
+            customerQty: d.quantity,
+            customerNames: names,
+            late: d.late,
+            topUpQty: top > 0 ? String(Number(top.toFixed(1))) : "",
+            quantity: String(Number(total.toFixed(1))),
+            priority: "must",
+            priorityQty: String(d.quantity),
+            priorityNote: l.priorityNote || names.join(", "),
+          };
+          changed = true;
+        } else {
+          next.push({
+            product_id: d.productId,
+            product_name: d.productName,
+            unit: d.unit,
+            quantity: String(Number(d.quantity.toFixed(1))),
+            category: d.category,
+            image_url: d.imageUrl,
+            priority: "must",
+            priorityQty: String(d.quantity),
+            priorityNote: names.join(", "),
+            source: "customer",
+            customerQty: d.quantity,
+            customerNames: names,
+            topUpQty: "",
+            late: d.late,
+          });
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [customerDemand]);
 
   // Fetch shop orders with lines
   const { data: orders = [], isLoading } = useQuery({
