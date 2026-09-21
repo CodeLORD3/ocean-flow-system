@@ -416,20 +416,10 @@ export default function Uppgifter() {
           ))}
         </TabsList>
 
-        <TabsContent value="mina" className="space-y-4">
-          {plan && zones.length > 0 && (
-            <TaskZoneMap
-              plan={plan}
-              zones={zones}
-              areas={areaOf}
-              counts={zoneCounts}
-              selected={fArea}
-              onSelect={setFArea}
-              onOpenZone={openZoneHere}
-              onOpenMap={() => setTab("dag")}
-              openLabel="Alla dagens uppgifter"
-            />
-          )}
+        <TabsContent value="mina">
+          <div className="grid gap-4 lg:grid-cols-[1fr_380px] lg:items-start">
+            <div className="min-w-0 space-y-4">
+
           {!meId ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
               Logga in med din personalprofil för att se dina uppgifter.
