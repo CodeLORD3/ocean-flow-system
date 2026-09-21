@@ -642,6 +642,9 @@ export function ImageLightbox({
                   </div>
                 )}
 
+                {markButton}
+                {regionComposer}
+
                 <DialogClose asChild>
                   <button
                     type="button"
@@ -797,6 +800,9 @@ export function ImageLightbox({
                   onRegion={(r) => setPendingRegion(r)}
                   onOpenMark={openMark}
                 />
+
+                {markButton}
+                {regionComposer}
 
                 {images.length > 1 && (
                   <>
