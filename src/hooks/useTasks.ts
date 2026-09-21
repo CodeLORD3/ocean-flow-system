@@ -695,6 +695,23 @@ export function useStandardTasks(storeId?: string | null) {
   });
 }
 
+/** Veckodagarna som är sparade på en återkommande uppgift. */
+export function useStandardWeekdays(templateItemId?: string | null) {
+  return useQuery({
+    queryKey: ["standard-weekdays", templateItemId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("checklist_template_items")
+        .select("weekdays")
+        .eq("id", templateItemId!)
+        .maybeSingle();
+      if (error) throw error;
+      return ((data as any)?.weekdays ?? []) as number[];
+    },
+    enabled: !!templateItemId,
+  });
+}
+
 export function useUpdateStandardTask() {
   const qc = useQueryClient();
   return useMutation({
