@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /** En markerad del av bilden, angiven som andel av bildens bredd och höjd (0–1). */
