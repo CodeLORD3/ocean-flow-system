@@ -60,3 +60,22 @@ export function useRecordImageView() {
     },
   });
 }
+
+/** Personerna som sett bilden, senast först. */
+export function useImageViewers(mediaId?: string | null) {
+  return useQuery({
+    queryKey: ["image-viewers", mediaId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("image_views")
+        .select("id, viewer_name, created_at")
+        .eq("media_id", mediaId!)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return (data ?? []) as { id: string; viewer_name: string | null; created_at: string }[];
+    },
+    enabled: !!mediaId,
+    staleTime: 15_000,
+  });
+}
