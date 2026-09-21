@@ -767,22 +767,17 @@ export function FloorPlanCanvas({
                             onZonePointsCommit(z.id, out);
                           }}
                         >
-                          <circle
-                            cx={mid.x}
-                            cy={mid.y}
-                            r={5.5}
-                            fill="hsl(var(--primary))"
-                            stroke="hsl(var(--card))"
-                            strokeWidth={1.5}
-                            opacity={0.9}
-                          />
-                          <path
-                            d={`M ${mid.x - 2.6} ${mid.y} H ${mid.x + 2.6} M ${mid.x} ${mid.y - 2.6} V ${mid.y + 2.6}`}
-                            stroke="hsl(var(--card))"
-                            strokeWidth={1.6}
-                            strokeLinecap="round"
-                            style={{ pointerEvents: "none" }}
-                          />
+                          {/* Plusset är alltid lika stort, oavsett hur mycket man zoomat. */}
+                          <g transform={`translate(${mid.x} ${mid.y}) scale(${1 / zoom})`}>
+                            <circle r={9} fill="hsl(var(--primary))" stroke="hsl(var(--card))" strokeWidth={2} />
+                            <path
+                              d="M -4.2 0 H 4.2 M 0 -4.2 V 4.2"
+                              stroke="hsl(var(--card))"
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              style={{ pointerEvents: "none" }}
+                            />
+                          </g>
                         </g>
                       );
                     })}
