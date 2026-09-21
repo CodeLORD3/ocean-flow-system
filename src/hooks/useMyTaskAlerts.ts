@@ -15,19 +15,33 @@ export type TaskAlert = {
 };
 
 const SEEN_KEY = "task-alerts-seen";
+const DISMISSED_KEY = "task-alerts-dismissed";
 
-function seenIds(): Set<string> {
-  if (typeof window === "undefined") return new Set();
+function readIds(store: Storage | undefined, key: string): Set<string> {
+  if (!store) return new Set();
   try {
-    return new Set(JSON.parse(window.sessionStorage.getItem(SEEN_KEY) || "[]") as string[]);
+    return new Set(JSON.parse(store.getItem(key) || "[]") as string[]);
   } catch {
     return new Set();
   }
 }
 
+function seenIds(): Set<string> {
+  return readIds(typeof window === "undefined" ? undefined : window.sessionStorage, SEEN_KEY);
+}
+
 function remember(id: string) {
   const all = [...seenIds(), id].slice(-100);
   window.sessionStorage.setItem(SEEN_KEY, JSON.stringify(all));
+}
+
+function dismissedIds(): Set<string> {
+  return readIds(typeof window === "undefined" ? undefined : window.localStorage, DISMISSED_KEY);
+}
+
+function rememberDismissed(ids: string[]) {
+  const all = [...dismissedIds(), ...ids].slice(-200);
+  window.localStorage.setItem(DISMISSED_KEY, JSON.stringify(all));
 }
 
 export function useMyTaskAlerts() {
@@ -36,21 +50,49 @@ export function useMyTaskAlerts() {
   const [alerts, setAlerts] = useState<TaskAlert[]>([]);
 
   const dismiss = useCallback((id: string) => {
+    rememberDismissed([id]);
     setAlerts((list) => list.filter((a) => a.id !== id));
   }, []);
 
-  const dismissAll = useCallback(() => setAlerts([]), []);
+  const dismissAll = useCallback(() => {
+    setAlerts((list) => {
+      rememberDismissed(list.map((a) => a.id));
+      return [];
+    });
+  }, []);
 
   useEffect(() => {
     if (!staffId) return;
+    let alive = true;
 
-    const add = (row: { id: string; task: string | null; done: boolean | null; assigned_staff_id: string | null }) => {
+    const add = (
+      row: { id: string; task: string | null; done: boolean | null; assigned_staff_id: string | null },
+      sound = true,
+    ) => {
       if (row.assigned_staff_id !== staffId || row.done) return;
-      if (seenIds().has(row.id)) return;
+      if (dismissedIds().has(row.id)) return;
+      const firstTime = !seenIds().has(row.id);
       remember(row.id);
-      setAlerts((list) => (list.some((a) => a.id === row.id) ? list : [...list, { id: row.id, task: row.task ?? "Ny uppgift", at: Date.now() }]));
-      playTaskAlert();
+      setAlerts((list) =>
+        list.some((a) => a.id === row.id)
+          ? list
+          : [...list, { id: row.id, task: row.task ?? "Ny uppgift", at: Date.now() }],
+      );
+      if (sound && firstTime) playTaskAlert();
     };
+
+    /* Öppna uppgifter som redan ligger på mig ska lysa direkt vid inloggning */
+    void (async () => {
+      const { data } = await supabase
+        .from("checklist_items")
+        .select("id, task, done, assigned_staff_id")
+        .eq("assigned_staff_id", staffId)
+        .eq("done", false)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (!alive || !data) return;
+      data.forEach((row) => add(row as never, false));
+    })();
 
     const channel = supabase
       .channel("my-task-alerts")
@@ -64,9 +106,11 @@ export function useMyTaskAlerts() {
       .subscribe();
 
     return () => {
+      alive = false;
       supabase.removeChannel(channel);
     };
   }, [staffId]);
 
   return { alerts, dismiss, dismissAll };
 }
+
