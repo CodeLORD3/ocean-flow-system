@@ -6,9 +6,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { thumbUrl, THUMB_FULL } from "@/lib/imageThumb";
-import { Search } from "lucide-react";
+import { Search, Heart, MessageCircle, Eye } from "lucide-react";
 import { StaffFace } from "@/components/staff/StaffNameAvatar";
-import { dayKey, dayLabel } from "@/lib/imageMeta";
+import { dayKey, dayLabel, dayDateLabel } from "@/lib/imageMeta";
+import {
+  useImageComments,
+  useAddImageComment,
+  useMyImageFavorites,
+  useToggleImageFavorite,
+} from "@/hooks/useEntityImages";
+import { useImageEngagement, useRecordImageView } from "@/hooks/useImageEngagement";
+
+/** Klockslag i svensk form, t.ex. "11:54". */
+const timeOf = (iso: string) =>
+  new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
 import ImageLibraryGrid from "./ImageLibraryGrid";
 import ImageBulkBar from "./ImageBulkBar";
 import ImageClassifySheet from "./ImageClassifySheet";
@@ -206,46 +217,16 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
             </DialogTitle>
           </DialogHeader>
           {detail && (
-            <div className="space-y-4">
-              <img
-                src={thumbUrl(detail.url, THUMB_FULL)}
-                alt={detail.title || "Bild"}
-                className="max-h-[50vh] w-full rounded-lg object-contain"
-              />
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <StaffFace name={detail.uploaded_by_name} className="h-6 w-6 text-[10px]" />
-                <span>{detail.uploaded_by_name || "Äldre bild"}</span>
-                <span>·</span>
-                <span className="tabular-nums">
-                  {dayLabel(dayKey(detail.captured_at || detail.created_at))}
-                </span>
-              </div>
-              {detail.description && <p className="text-sm">{detail.description}</p>}
-              {detail.tags?.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {detail.tags.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => {
-                        setTag(t);
-                        setTab("all");
-                        setDetail(null);
-                      }}
-                    >
-                      <Badge variant="secondary" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
-                        {t}
-                      </Badge>
-                    </button>
-                  ))}
-                </div>
-              )}
-              <ImageLinksPanel image={detail} onEdit={() => setEditing(detail)} />
-              <div>
-                <h3 className="mb-2 text-sm font-semibold">Historik</h3>
-                <ImageActivityTimeline mediaId={detail.id} />
-              </div>
-            </div>
+            <ImageDetail
+              image={detail}
+              onEdit={() => setEditing(detail)}
+              onClose={() => setDetail(null)}
+              onTag={(t) => {
+                setTag(t);
+                setTab("all");
+                setDetail(null);
+              }}
+            />
           )}
         </DialogContent>
       </Dialog>
@@ -258,6 +239,150 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
       />
 
       <QuickRunner status={quick} onClose={() => setQuick(null)} storeId={storeId} />
+    </div>
+  );
+}
+
+/**
+ * All information om en bild: vem som lagt ut den, när, vad den heter,
+ * var i systemet den ligger (tryck för att gå dit), hjärtan, kommentarer
+ * och hur många personer som sett den.
+ */
+function ImageDetail({
+  image,
+  onEdit,
+  onClose,
+  onTag,
+}: {
+  image: LibraryImage;
+  onEdit: () => void;
+  onClose: () => void;
+  onTag: (tag: string) => void;
+}) {
+  const { data: counts } = useImageEngagement(image.id);
+  const { data: comments = [] } = useImageComments(image.id);
+  const { data: favoriteIds = [] } = useMyImageFavorites();
+  const toggleFavorite = useToggleImageFavorite();
+  const addComment = useAddImageComment();
+  const recordView = useRecordImageView();
+  const [body, setBody] = useState("");
+  const isFav = favoriteIds.includes(image.id);
+  const taken = image.captured_at || image.created_at;
+
+  // Visningen registreras en gång per person och bild.
+  useEffect(() => {
+    recordView.mutate(image.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [image.id]);
+
+  return (
+    <div className="space-y-4">
+      <img
+        src={thumbUrl(image.url, THUMB_FULL)}
+        alt={image.title || "Bild"}
+        className="max-h-[50vh] w-full rounded-lg object-contain"
+      />
+
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        <StaffFace name={image.uploaded_by_name} className="h-7 w-7 text-[10px]" />
+        <span className="font-medium text-foreground">
+          {image.uploaded_by_name || "Äldre bild"}
+        </span>
+        <span>·</span>
+        <span className="tabular-nums">
+          {dayLabel(dayKey(taken))} {dayDateLabel(dayKey(taken))} {timeOf(taken)}
+        </span>
+      </div>
+
+      {/* Hjärtan, kommentarer och sedda */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          size="sm"
+          variant={isFav ? "default" : "outline"}
+          className="h-8"
+          onClick={() => toggleFavorite.mutate({ imageId: image.id, favorite: !isFav })}
+        >
+          <Heart className={cn("mr-1.5 h-4 w-4", isFav && "fill-current")} />
+          <span className="tabular-nums">{counts?.hearts ?? 0}</span>
+        </Button>
+        <span className="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-sm text-muted-foreground">
+          <MessageCircle className="h-4 w-4" />
+          <span className="tabular-nums">{counts?.comments ?? comments.length}</span> kommentarer
+        </span>
+        <span className="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-sm text-muted-foreground">
+          <Eye className="h-4 w-4" />
+          <span className="tabular-nums">{counts?.views ?? 0}</span> har sett bilden
+        </span>
+      </div>
+
+      {image.description && <p className="text-sm">{image.description}</p>}
+      {image.caption && <p className="text-sm text-muted-foreground">{image.caption}</p>}
+
+      {image.tags?.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {image.tags.map((t) => (
+            <button key={t} type="button" onClick={() => onTag(t)}>
+              <Badge
+                variant="secondary"
+                className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
+              >
+                {t}
+              </Badge>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <ImageLinksPanel image={image} onEdit={onEdit} onNavigate={onClose} />
+
+      {/* Kommentarer på bilden */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold">Kommentarer</h3>
+        {comments.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Ingen har kommenterat bilden än.</p>
+        ) : (
+          <ul className="space-y-2">
+            {comments.map((c) => (
+              <li key={c.id} className="flex gap-2 rounded-md border px-2 py-1.5 text-sm">
+                <StaffFace name={c.author_name} className="h-6 w-6 shrink-0 text-[9px]" />
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">
+                    {c.author_name || "Okänd"} · {dayLabel(dayKey(c.created_at))} {timeOf(c.created_at)}
+                  </p>
+                  <p className="whitespace-pre-wrap break-words">{c.body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="flex gap-2">
+          <Input
+            placeholder="Skriv en kommentar"
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && body.trim()) {
+                addComment.mutate({ imageId: image.id, body: body.trim() });
+                setBody("");
+              }
+            }}
+          />
+          <Button
+            disabled={!body.trim() || addComment.isPending}
+            onClick={() => {
+              addComment.mutate({ imageId: image.id, body: body.trim() });
+              setBody("");
+            }}
+          >
+            Skicka
+          </Button>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-2 text-sm font-semibold">Historik</h3>
+        <ImageActivityTimeline mediaId={image.id} />
+      </div>
     </div>
   );
 }

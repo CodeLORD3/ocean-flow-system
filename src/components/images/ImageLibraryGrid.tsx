@@ -3,14 +3,19 @@ import { Badge } from "@/components/ui/badge";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 import { STATUS_CLASS, STATUS_LABEL, mediaKindLabel, linkTypeLabel } from "@/lib/imageStatus";
 import { StaffFace } from "@/components/staff/StaffNameAvatar";
-import { dayLabel, dayKey } from "@/lib/imageMeta";
+import { dayLabel, dayKey, dayDateLabel } from "@/lib/imageMeta";
 import { useImageLinksFor } from "@/hooks/useImageLibrary";
 import { useLinkTargetNames } from "@/hooks/useImagePickers";
 import type { LibraryImage } from "@/hooks/useImageLibrary";
 
+/** Klockslag i svensk form, t.ex. "11:54". */
+const timeOf = (iso: string) =>
+  new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+
 /**
- * Rutnät med miniatyrer. Varje bild visar vem som lagt ut den, vilken dag,
- * vilket område den är tagen i, vad den heter och dess taggar.
+ * Rutnät med miniatyrer, dag för dag. Varje dag får en rubrik till vänster
+ * ("Idag", "Igår", datum) och ett streck ut till kanten. Texten ligger i bilden:
+ * namn, tid, plats och taggar.
  * Markering: klick öppnar, Skift+klick markerar intervall, Ctrl/Cmd+klick enstaka.
  */
 export default function ImageLibraryGrid({
@@ -37,6 +42,18 @@ export default function ImageLibraryGrid({
     [linkMap],
   );
   const { data: names } = useLinkTargetNames(allLinks);
+
+  /** Bilderna grupperade per dag, senaste dagen först. */
+  const days = useMemo(() => {
+    const map = new Map<string, { img: LibraryImage; index: number }[]>();
+    images.forEach((img, index) => {
+      const key = dayKey(img.captured_at || img.created_at);
+      const list = map.get(key);
+      if (list) list.push({ img, index });
+      else map.set(key, [{ img, index }]);
+    });
+    return Array.from(map.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [images]);
 
   /** Alla ställen i systemet där bilden ligger — område/butik först. */
   function placesOf(id: string): { key: string; type: string; name: string }[] {
@@ -91,102 +108,110 @@ export default function ImageLibraryGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-      {images.map((img, i) => {
-        const selected = selectedIds.includes(img.id);
-        const places = placesOf(img.id);
-        const taken = img.captured_at || img.created_at;
-        return (
-          <div
-            key={img.id}
-            role="button"
-            tabIndex={0}
-            onClick={(e) => click(e, i)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") onOpen(i);
-            }}
-            className={`group relative cursor-pointer overflow-hidden rounded-lg border bg-card text-left transition ${
-              selected ? "ring-2 ring-primary" : "hover:border-primary/40"
-            }`}
-          >
-            <div className="relative">
-              <img
-                src={thumbUrl(img.url, THUMB_TILE)}
-                alt={img.title || img.caption || "Bild"}
-                className="aspect-[4/5] w-full object-cover"
-                loading="lazy"
-                decoding="async"
-              />
-              <span className="absolute left-1.5 top-1.5">
-                <Badge className={`${STATUS_CLASS[img.status]} text-[10px]`}>
-                  {STATUS_LABEL[img.status]}
-                </Badge>
-              </span>
-              {selected && (
-                <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
-                  ✓
-                </span>
-              )}
-            </div>
-
-            <div className="space-y-1.5 px-2 py-2">
-              <p className="truncate text-sm font-medium">
-                {img.title || img.caption || mediaKindLabel(img.media_kind)}
-              </p>
-              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <StaffFace name={img.uploaded_by_name} className="h-5 w-5 text-[9px]" />
-                <span className="min-w-0 flex-1 truncate">
-                  {img.uploaded_by_name || "Äldre bild"}
-                </span>
-                <span className="whitespace-nowrap tabular-nums">{dayLabel(dayKey(taken))}</span>
-              </div>
-              {/* Alla ställen i systemet där bilden ligger */}
-              {places.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground">Ligger inte på något ställe än</p>
-              ) : (
-                <div className="flex flex-wrap gap-1">
-                  {places.slice(0, 3).map((p) => (
-                    <span
-                      key={p.key}
-                      className="max-w-full truncate rounded-md border px-1.5 py-0.5 text-[10px] text-muted-foreground"
-                      title={`${linkTypeLabel(p.type)}: ${p.name}`}
-                    >
-                      {linkTypeLabel(p.type)}: {p.name}
-                    </span>
-                  ))}
-                  {places.length > 3 && (
-                    <span className="text-[10px] text-muted-foreground">
-                      +{places.length - 3} till
-                    </span>
-                  )}
-                </div>
-              )}
-              {img.tags?.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {img.tags.slice(0, 3).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onTagClick?.(t);
-                      }}
-                      className="rounded-full bg-secondary px-2 py-0.5 text-[10px] text-secondary-foreground hover:bg-primary hover:text-primary-foreground"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                  {img.tags.length > 3 && (
-                    <span className="text-[10px] text-muted-foreground">
-                      +{img.tags.length - 3}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
+    <div className="space-y-6">
+      {days.map(([key, items]) => (
+        <section key={key || "utan-datum"} className="space-y-3">
+          {/* Dagsrubrik till vänster, streck ut till kanten */}
+          <div className="sticky top-0 z-10 flex items-center gap-3 bg-background/90 py-2 backdrop-blur">
+            <h3 className="font-heading text-sm font-bold text-foreground">{dayLabel(key)}</h3>
+            <span className="whitespace-nowrap text-xs text-muted-foreground">
+              {dayDateLabel(key)}
+            </span>
+            <span className="h-px flex-1 bg-border" />
+            <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
+              {items.length} bild{items.length === 1 ? "" : "er"}
+            </span>
           </div>
-        );
-      })}
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {items.map(({ img, index }) => {
+              const selected = selectedIds.includes(img.id);
+              const places = placesOf(img.id);
+              const taken = img.captured_at || img.created_at;
+              const place = places[0];
+              return (
+                <div
+                  key={img.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => click(e, index)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") onOpen(index);
+                  }}
+                  className={`group relative cursor-pointer overflow-hidden rounded-xl bg-muted ring-1 transition ${
+                    selected ? "ring-2 ring-primary" : "ring-border/60 hover:ring-primary/40"
+                  }`}
+                >
+                  <img
+                    src={thumbUrl(img.url, THUMB_TILE)}
+                    alt={img.title || img.caption || "Bild"}
+                    className="aspect-[4/5] w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                    loading="lazy"
+                    decoding="async"
+                  />
+
+                  <span className="absolute left-1.5 top-1.5">
+                    <Badge className={`${STATUS_CLASS[img.status]} text-[10px]`}>
+                      {STATUS_LABEL[img.status]}
+                    </Badge>
+                  </span>
+                  {selected && (
+                    <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
+                      ✓
+                    </span>
+                  )}
+
+                  {/* Texten ligger i bilden: namn, tid, plats och namnet på bilden */}
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 space-y-1 bg-gradient-to-t from-black/80 via-black/35 to-transparent p-2 pt-8">
+                    <div className="flex items-center gap-1.5">
+                      <StaffFace
+                        name={img.uploaded_by_name}
+                        className="h-6 w-6 border border-white/60 text-[9px]"
+                      />
+                      <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white drop-shadow">
+                        {img.uploaded_by_name || "Äldre bild"}
+                      </span>
+                      <span className="shrink-0 text-[10px] tabular-nums text-white/80">
+                        {timeOf(taken)}
+                      </span>
+                    </div>
+                    <p className="truncate text-sm font-semibold text-white drop-shadow">
+                      {img.title || img.caption || mediaKindLabel(img.media_kind)}
+                    </p>
+                    <p className="truncate text-[11px] text-white/85">
+                      {place
+                        ? `${linkTypeLabel(place.type)}: ${place.name}${
+                            places.length > 1 ? ` +${places.length - 1}` : ""
+                          }`
+                        : "Ligger inte på något ställe än"}
+                    </p>
+                    {img.tags?.length > 0 && (
+                      <div className="pointer-events-auto flex flex-wrap gap-1 pt-0.5">
+                        {img.tags.slice(0, 2).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onTagClick?.(t);
+                            }}
+                            className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] text-white backdrop-blur hover:bg-white/35"
+                          >
+                            {t}
+                          </button>
+                        ))}
+                        {img.tags.length > 2 && (
+                          <span className="text-[10px] text-white/80">+{img.tags.length - 2}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
