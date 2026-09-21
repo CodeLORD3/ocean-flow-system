@@ -44,6 +44,7 @@ import { ZoneTagsPanel } from "@/components/storemap/ZoneTagsPanel";
 import { childZones, tagsOf, zoneMatches, zonePath } from "@/lib/zoneTree";
 import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog";
 import { MapListViews } from "@/components/storemap/MapListViews";
+import { StoreMapHeader } from "@/components/storemap/StoreMapHeader";
 import { OverviewStatsBar } from "@/components/storemap/OverviewStatsBar";
 import { StorePhotoStrip } from "@/components/storemap/StorePhotoStrip";
 import { OverviewQuickBar } from "@/components/storemap/OverviewQuickBar";
@@ -124,6 +125,12 @@ export default function StoreMap({
   const { data: types = [] } = useMapObjectTypes();
   /** Vald dag — styr uppgifterna och historiken i alla vyer. */
   const [day, setDay] = useState(todayIso());
+  /** Imorgon i svensk tid — används av snabbvalen i rubriken. */
+  const tomorrowIso = useMemo(() => {
+    const d = new Date(`${todayIso()}T12:00:00`);
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }, []);
   const { data: tasks = [] } = useMapTasks(storeId, day);
   const { data: deviations = [] } = useDeviations(false);
   const { data: versions = [] } = useFloorPlanVersions(plan?.id ?? null);
@@ -482,117 +489,41 @@ export default function StoreMap({
         </>
       )}
 
-      {/* Rubrikrad — stor titel, butik under, läge till höger */}
-      <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-            <MapIcon className="h-5 w-5 text-primary" />
-            {embedded ? "Butikskartan" : "Översikt"}
-          </h1>
-          {site !== "shop" && stores.length > 0 ? (
-            <Select value={storeId} onValueChange={(v) => { setPickedStore(v); setPlanId(null); }}>
-              <SelectTrigger className="h-7 border-0 px-0 text-sm text-muted-foreground shadow-none focus:ring-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {stores.map((s) => (
-                  <SelectItem key={s.id} value={s.id} className="text-xs">
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <p className="text-sm text-muted-foreground">{stores.find((s) => s.id === storeId)?.name ?? ""}</p>
-          )}
-        </div>
-        {plans.length > 1 && (
-          <Select value={plan?.id ?? ""} onValueChange={setPlanId}>
-            <SelectTrigger className="h-8 w-40 rounded-full text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {plans.map((p) => (
-                <SelectItem key={p.id} value={p.id} className="text-xs">
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-        {/* Vyväljare — samma fem vyer för hela butiken */}
-        <Tabs value={view} onValueChange={setView}>
-          <TabsList className="h-10 rounded-xl bg-muted p-1">
-            {(
-              [
-                ["karta", "Karta"],
-                ["uppgifter", "Uppgifter"],
-                ["bilder", "Bilder"],
-                ["avvikelser", "Avvikelser"],
-                ["historik", "Historik"],
-              ] as const
-            ).map(([key, label]) => (
-              <TabsTrigger
-                key={key}
-                value={key}
-                className="h-8 rounded-lg px-4 text-xs font-medium text-muted-foreground transition-colors data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
-              >
-                {label}
-              </TabsTrigger>
-            ))}
-            {areaPage && (
-              <TabsTrigger
-                value="omrade"
-                className="h-8 max-w-[180px] gap-2 rounded-lg px-4 text-xs data-[state=active]:text-white"
-                style={
-                  areaPageColor && view === "omrade"
-                    ? { background: areaPageColor, boxShadow: `0 0 0 2px ${areaPageColor}33` }
-                    : undefined
-                }
-              >
-                {areaPageColor && (
-                  <span
-                    className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ background: view === "omrade" ? "#fff" : areaPageColor }}
-                  />
-                )}
-                <span className="truncate">{areaPageLabel}</span>
-              </TabsTrigger>
-            )}
-          </TabsList>
-        </Tabs>
-        <div className="ml-auto flex items-center gap-3">
-          {/* Dagväljare — styr vilka uppgifter och vilken historik som visas */}
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5">
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            <input
-              type="date"
-              value={day}
-              onChange={(e) => setDay(e.target.value || todayIso())}
-              className="bg-transparent text-xs outline-none tabular-nums"
-            />
-          </div>
-          <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
-            <StatusRing percent={dayProgress.percent} status={dayProgress.status} label={`${dayProgress.percent}%`} />
-            <div className="leading-tight">
-              <p className="text-[11px] font-medium">{STATUS_LABEL[dayProgress.status]}</p>
-              <p className="text-[10px] text-muted-foreground tabular-nums">
-                {dayProgress.done}/{dayProgress.total} uppgifter
-              </p>
-            </div>
-          </div>
-          {canManage && (
-            <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
-              <TabsList className="h-9 rounded-full bg-muted p-1">
-                <TabsTrigger value="drift" className="h-7 rounded-full px-4 text-xs">Visa</TabsTrigger>
-                <TabsTrigger value="redigera" className="h-7 gap-1 rounded-full px-4 text-xs">
-                  <Pencil className="h-3 w-3" /> Redigera
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          )}
-        </div>
-      </div>
+      {/* Butikskartans topp — plats, vy, dag, sök och nytt område */}
+      <StoreMapHeader
+        storeName={stores.find((s) => s.id === storeId)?.name ?? ""}
+        storeId={storeId}
+        stores={stores.map((s) => ({ id: s.id, name: s.name }))}
+        onPickStore={
+          site !== "shop" ? (v) => { setPickedStore(v); setPlanId(null); } : undefined
+        }
+        plans={plans.map((p) => ({ id: p.id, name: p.name }))}
+        planId={plan?.id ?? null}
+        onPickPlan={setPlanId}
+        view={view}
+        onView={setView}
+        areaTab={areaPage ? { label: areaPageLabel, color: areaPageColor } : null}
+        counts={{
+          tasks: tasks.filter((t) => !t.done).length,
+          images: allImages.length,
+          deviations: Object.values(issuesByEntity).reduce((a, b) => a + b, 0),
+        }}
+        day={day}
+        onDay={setDay}
+        today={todayIso()}
+        tomorrow={tomorrowIso}
+        progress={dayProgress}
+        canManage={canManage}
+        mode={mode}
+        onMode={setMode}
+        zones={zones}
+        tasks={tasks}
+        onOpenZone={(id) => { setAreaPage({ kind: "zone", id }); setView("omrade"); }}
+        onOpenTask={(id) => switchTab(`/uppgift/${id}`)}
+        onNewZone={() => addZone()}
+        newZoneDisabled={saveZone.isPending}
+        embedded={embedded}
+      />
 
 
       {routeStops.length > 0 && (
@@ -774,16 +705,6 @@ export default function StoreMap({
               ))}
               {canManage && (
                 <div className="ml-auto flex items-center gap-1.5">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-[11px] gap-1"
-                    onClick={() => addZone()}
-                    disabled={saveZone.isPending}
-                  >
-                    <Plus className="h-3 w-3" />
-                    Nytt område
-                  </Button>
                   <Button
                     size="sm"
                     variant={pinMode ? "default" : "outline"}
