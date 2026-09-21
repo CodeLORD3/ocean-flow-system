@@ -122,7 +122,10 @@ export function ZonePickMap({
       <div ref={boxRef} className="relative overflow-hidden rounded-lg border bg-muted/30">
         <svg
           viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-          className={cn("h-[300px] w-full touch-none", zoom > 1 && "cursor-grab")}
+          className={cn(
+            "h-[64vh] min-h-[420px] max-h-[760px] w-full touch-none",
+            zoom > 1 && "cursor-grab",
+          )}
           role="img"
           aria-label="Välj område på butikskartan"
           onPointerDown={(e) => {
