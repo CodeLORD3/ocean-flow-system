@@ -864,6 +864,23 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
     }
   };
 
+  // ── "Beställd hos leverantör" handler: förbeställt hos t.ex. Savolax → stryks ur inköpslistan ──
+  const [preorderLoading, setPreorderLoading] = useState<string | null>(null);
+  const handleMarkPreordered = async (lineIds: string[], productName: string) => {
+    setPreorderLoading(productName);
+    try {
+      for (const lineId of lineIds) {
+        await supabase.from("shop_order_lines").update({ status: "Beställd" }).eq("id", lineId);
+      }
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+      toast.success(`"${productName}" markerad som beställd hos leverantör och struken ur inköpslistan.`);
+    } catch (err) {
+      toast.error("Kunde inte uppdatera.");
+    } finally {
+      setPreorderLoading(null);
+    }
+  };
+
   // ── "Ångra köpt" handler ──
   const [undoBoughtLoading, setUndoBoughtLoading] = useState<string | null>(null);
   const handleUndoBought = async (lineIds: string[], productName: string) => {
