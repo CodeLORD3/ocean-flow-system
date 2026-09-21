@@ -66,10 +66,18 @@ export type CutoutInput = {
   region: ImageRegion;
   /** Vad saken heter — blir bildens namn och tagg. */
   title: string;
+  /** Vad utsnittet är: en sak, en vara, eller bara en egen bild. */
+  target?: "resource" | "product" | "none";
   /** Skapa saken i registret Utrustning & material av utsnittet. */
   createResource?: boolean;
   /** Koppla utsnittet till en sak som redan finns. */
   resourceId?: string | null;
+  /** Koppla utsnittet till en vara som redan finns. */
+  productId?: string | null;
+  /** Skapa varan i produktlistan av utsnittet. */
+  createProduct?: boolean;
+  /** Kategori för en ny vara. */
+  productCategory?: string | null;
 };
 
 export function useCreateCutout() {
