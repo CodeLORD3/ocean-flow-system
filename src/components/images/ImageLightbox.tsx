@@ -1054,6 +1054,9 @@ export function ImageLightbox({
           </div>
         )}
       </DialogContent>
+
+      {/* Redigera bildens namn, beskrivning, taggar och var den hör hemma */}
+      <ImageClassifySheet image={libraryImage ?? null} open={editOpen} onOpenChange={setEditOpen} />
     </Dialog>
   );
 }
