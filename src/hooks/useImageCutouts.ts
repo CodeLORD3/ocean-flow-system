@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { classifyImage } from "@/hooks/useImageLibrary";
+import { createProductTarget, createResourceTarget } from "@/lib/linkTargets";
 import type { ImageRegion } from "@/components/images/AnnotatableImage";
 
 /**
@@ -66,10 +67,18 @@ export type CutoutInput = {
   region: ImageRegion;
   /** Vad saken heter — blir bildens namn och tagg. */
   title: string;
+  /** Vad utsnittet är: en sak, en vara, eller bara en egen bild. */
+  target?: "resource" | "product" | "none";
   /** Skapa saken i registret Utrustning & material av utsnittet. */
   createResource?: boolean;
   /** Koppla utsnittet till en sak som redan finns. */
   resourceId?: string | null;
+  /** Koppla utsnittet till en vara som redan finns. */
+  productId?: string | null;
+  /** Skapa varan i produktlistan av utsnittet. */
+  createProduct?: boolean;
+  /** Kategori för en ny vara. */
+  productCategory?: string | null;
 };
 
 export function useCreateCutout() {
@@ -120,16 +129,12 @@ export function useCreateCutout() {
       if (error) throw error;
       const mediaId = inserted?.id as string;
 
+      const target = input.target ?? (input.createResource || input.resourceId ? "resource" : "none");
+
       // Saken i registret: skapas av utsnittet om den inte redan finns.
-      let resourceId = input.resourceId ?? null;
-      if (!resourceId && input.createResource) {
-        const { data: created, error: rErr } = await supabase
-          .from("resource_items")
-          .insert({ name: title, image: url })
-          .select("id")
-          .single();
-        if (rErr) throw rErr;
-        resourceId = created?.id as string;
+      let resourceId = target === "resource" ? input.resourceId ?? null : null;
+      if (target === "resource" && !resourceId && input.createResource) {
+        resourceId = await createResourceTarget(title, url);
       } else if (resourceId) {
         const { data: item } = await supabase
           .from("resource_items")
@@ -141,13 +146,29 @@ export function useCreateCutout() {
         }
       }
 
+      // Varan i produktlistan: samma sak för en produktbild.
+      let productId = target === "product" ? input.productId ?? null : null;
+      if (target === "product" && !productId && input.createProduct) {
+        productId = await createProductTarget(title, input.productCategory || "Övrigt", url);
+      } else if (productId) {
+        const { data: prod } = await supabase
+          .from("products")
+          .select("id, image_url")
+          .eq("id", productId)
+          .maybeSingle();
+        if (prod && !prod.image_url) {
+          await supabase.from("products").update({ image_url: url }).eq("id", productId);
+        }
+      }
+
       const links = inherited.map((l) => ({ entityType: l.entity_type, entityId: l.entity_id }));
       if (resourceId) links.push({ entityType: "resource", entityId: resourceId });
+      if (productId) links.push({ entityType: "product", entityId: productId });
 
       await classifyImage({
         mediaId,
         title,
-        mediaKind: resourceId ? "resource" : null,
+        mediaKind: resourceId ? "resource" : productId ? "product" : null,
         links,
         note: "Utsnitt ur bild",
       });
@@ -171,6 +192,8 @@ export function useCreateCutout() {
       qc.invalidateQueries({ queryKey: ["image-feed"] });
       qc.invalidateQueries({ queryKey: ["entity-images"] });
       qc.invalidateQueries({ queryKey: ["resource-items"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["pick-products"] });
       qc.invalidateQueries({ queryKey: ["resource-item-photos"] });
     },
   });

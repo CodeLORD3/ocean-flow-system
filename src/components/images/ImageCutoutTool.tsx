@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AnnotatableImage, type ImageRegion } from "@/components/images/AnnotatableImage";
-import { usePickResources } from "@/hooks/useImagePickers";
+import { usePickProducts, usePickResources } from "@/hooks/useImagePickers";
 import { useCreateCutout } from "@/hooks/useImageCutouts";
+import { useCategories } from "@/hooks/useCategories";
 
 /**
  * Klipp ut en del av bilden till en egen bild.
@@ -32,11 +33,15 @@ export default function ImageCutoutTool({
   const [markMode, setMarkMode] = useState(false);
   const [region, setRegion] = useState<ImageRegion | null>(null);
   const [title, setTitle] = useState("");
-  const [asResource, setAsResource] = useState(true);
+  const [target, setTarget] = useState<"resource" | "product" | "none">("resource");
   const [search, setSearch] = useState("");
   const [existingId, setExistingId] = useState<string | null>(null);
-  const { data: matches = [] } = usePickResources(search);
+  const [category, setCategory] = useState("");
+  const { data: resourceMatches = [] } = usePickResources(target === "resource" ? search : undefined);
+  const { data: productMatches = [] } = usePickProducts(target === "product" ? search : undefined);
+  const { data: categories = [] } = useCategories();
   const create = useCreateCutout();
+  const matches = target === "product" ? productMatches : resourceMatches;
 
   const reset = () => {
     setRegion(null);
@@ -48,17 +53,29 @@ export default function ImageCutoutTool({
 
   const save = async () => {
     if (!region || !title.trim()) return;
+    if (target === "product" && !existingId && !category) {
+      toast.error("Välj kategori för den nya varan");
+      return;
+    }
     try {
       const res = await create.mutateAsync({
         sourceMediaId: mediaId,
         sourceUrl: url,
         region,
         title: title.trim(),
-        createResource: asResource && !existingId,
-        resourceId: existingId,
+        target,
+        createResource: target === "resource" && !existingId,
+        resourceId: target === "resource" ? existingId : null,
+        createProduct: target === "product" && !existingId,
+        productId: target === "product" ? existingId : null,
+        productCategory: category || null,
       });
       toast.success(
-        asResource || existingId ? `${title.trim()} finns nu som sak med bild` : "Utsnittet är sparat som egen bild",
+        target === "resource"
+          ? `${title.trim()} finns nu som sak med bild`
+          : target === "product"
+            ? `${title.trim()} finns nu som vara med bild`
+            : "Utsnittet är sparat som egen bild",
       );
       onCreated?.(res.mediaId);
       reset();
@@ -66,6 +83,7 @@ export default function ImageCutoutTool({
       toast.error(e instanceof Error ? e.message : "Kunde inte klippa ut bilden");
     }
   };
+
 
   return (
     <div className="space-y-3">
@@ -118,32 +136,34 @@ export default function ImageCutoutTool({
           />
 
           <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant={asResource ? "default" : "outline"}
-              className="h-8 text-[11px]"
-              onClick={() => setAsResource(true)}
-            >
-              Skapa saken i registret
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={asResource ? "outline" : "default"}
-              className="h-8 text-[11px]"
-              onClick={() => {
-                setAsResource(false);
-                setExistingId(null);
-              }}
-            >
-              Bara en egen bild
-            </Button>
+            {(
+              [
+                { value: "resource", label: "Sak (utrustning & material)" },
+                { value: "product", label: "Vara (produktlistan)" },
+                { value: "none", label: "Bara en egen bild" },
+              ] as const
+            ).map((t) => (
+              <Button
+                key={t.value}
+                type="button"
+                size="sm"
+                variant={target === t.value ? "default" : "outline"}
+                className="h-8 text-[11px]"
+                onClick={() => {
+                  setTarget(t.value);
+                  setExistingId(null);
+                }}
+              >
+                {t.label}
+              </Button>
+            ))}
           </div>
 
-          {asResource && title.trim().length > 1 && matches.length > 0 && (
+          {target !== "none" && title.trim().length > 1 && matches.length > 0 && (
             <div className="space-y-1">
-              <p className="text-[11px] text-muted-foreground">Finns redan — koppla till:</p>
+              <p className="text-[11px] text-muted-foreground">
+                {target === "product" ? "Varan finns redan — lägg bilden här:" : "Finns redan — koppla till:"}
+              </p>
               <div className="flex flex-wrap gap-1.5">
                 {matches.slice(0, 8).map((m) => (
                   <Button
@@ -163,6 +183,25 @@ export default function ImageCutoutTool({
               </div>
             </div>
           )}
+
+          {target === "product" && !existingId && (
+            <div className="space-y-1">
+              <p className="text-[11px] text-muted-foreground">Kategori för den nya varan</p>
+              <select
+                className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="">Välj kategori</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" className="h-8 text-[11px]" onClick={reset}>

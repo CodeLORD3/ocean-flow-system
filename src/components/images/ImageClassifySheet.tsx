@@ -28,6 +28,9 @@ import {
   type LibraryImage,
 } from "@/hooks/useImageLibrary";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCategories } from "@/hooks/useCategories";
+import { createProductTarget, createResourceTarget } from "@/lib/linkTargets";
 
 const OBSERVATION_TYPES = ["Fel", "Slitage", "Saknas", "Bra exempel", "Behöver åtgärd", "Annat"];
 
@@ -70,6 +73,40 @@ export default function ImageClassifySheet({
   const [obsType, setObsType] = useState(OBSERVATION_TYPES[0]);
   const [obsComment, setObsComment] = useState("");
   const [search, setSearch] = useState("");
+  const [newCategory, setNewCategory] = useState("");
+  const [creating, setCreating] = useState(false);
+  const { data: categories = [] } = useCategories();
+  const qc = useQueryClient();
+
+  /** Saken eller varan finns inte ännu — den skapas här och kopplas direkt. */
+  async function createNew() {
+    const name = search.trim();
+    if (!name) return;
+    setCreating(true);
+    try {
+      if (kind === "product") {
+        if (!newCategory) {
+          toast.error("Välj kategori för den nya varan");
+          return;
+        }
+        const id = await createProductTarget(name, newCategory, image?.url ?? null);
+        setProductId(id);
+      } else {
+        const id = await createResourceTarget(name, image?.url ?? null);
+        setResourceId(id);
+      }
+      if (!title.trim()) setTitle(name);
+      qc.invalidateQueries({ queryKey: ["pick-resources"] });
+      qc.invalidateQueries({ queryKey: ["pick-products"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["resource-items"] });
+      toast.success(kind === "product" ? `Varan ${name} är skapad` : `Saken ${name} är skapad`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte skapa");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   const { data: zones = [] } = useZonesByStore(storeId);
   const { data: resources = [] } = usePickResources(kind === "resource" ? search : undefined);
@@ -270,6 +307,38 @@ export default function ImageClassifySheet({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
+                {(kind === "resource" || kind === "product") && search.trim().length > 1 && (
+                  <div className="mt-2 space-y-2 rounded-md border border-dashed p-2">
+                    {kind === "product" && (
+                      <select
+                        className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                        value={newCategory}
+                        onChange={(e) => setNewCategory(e.target.value)}
+                      >
+                        <option value="">Välj kategori för ny vara</option>
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.name}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      disabled={creating}
+                      onClick={() => void createNew()}
+                    >
+                      {creating
+                        ? "Skapar…"
+                        : kind === "product"
+                          ? `Skapa ny vara "${search.trim()}"`
+                          : `Skapa ny sak "${search.trim()}"`}
+                    </Button>
+                  </div>
+                )}
                 <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border p-1">
                   {options.list.length === 0 && (
                     <p className="p-2 text-sm text-muted-foreground">Inget att välja här ännu.</p>
