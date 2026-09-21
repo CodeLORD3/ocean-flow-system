@@ -21,6 +21,7 @@ import { ImageLightbox } from "@/components/images/ImageLightbox";
 import ImageLibraryPanel from "@/components/images/ImageLibraryPanel";
 import { useImageFeed, type FeedImage } from "@/hooks/useImageFeed";
 import { useMyImageFavorites, useToggleImageFavorite } from "@/hooks/useEntityImages";
+import { useImageViewCounts } from "@/hooks/useImageEngagement";
 import { useAllowedStores, useSwitchStore } from "@/components/StoreSwitcher";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { dayKey, dayLabel, dayDateLabel } from "@/lib/imageMeta";
