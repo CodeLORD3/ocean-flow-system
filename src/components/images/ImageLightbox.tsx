@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Heart, MessageCircle, Pencil, Send, Store, Trash2, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Heart, MessageCircle, Pencil, Send, Square, Store, Trash2, X } from "lucide-react";
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import {
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { thumbUrl, THUMB_FULL } from "@/lib/imageThumb";
 import { dayBadgeClass } from "@/lib/dayColor";
+import { AnnotatableImage, type ImageRegion } from "@/components/images/AnnotatableImage";
 
 type Props = {
   images: EntityImage[];
@@ -74,6 +75,12 @@ export function ImageLightbox({
   const [editId, setEditId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
   const [commentsOpen, setCommentsOpen] = useState(false);
+  /** Markeringsläge: rutnätet ligger över bilden och man väljer en del av den. */
+  const [markMode, setMarkMode] = useState(false);
+  const [pendingRegion, setPendingRegion] = useState<ImageRegion | null>(null);
+  const [regionDraft, setRegionDraft] = useState("");
+  /** Den markerade delen man just tittar på, så rutan lyser upp i bilden. */
+  const [activeMark, setActiveMark] = useState<string | null>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const draftRef = useRef<HTMLInputElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -94,6 +101,104 @@ export function ImageLightbox({
   useEffect(() => {
     if (!open) setCommentsOpen(false);
   }, [open]);
+
+  useEffect(() => {
+    setMarkMode(false);
+    setPendingRegion(null);
+    setRegionDraft("");
+    setActiveMark(null);
+  }, [current?.id]);
+
+  /** Kommentarer som pekar på en del av bilden, numrerade i den ordning de skrevs. */
+  const marks = useMemo(
+    () =>
+      comments
+        .filter((c) => c.region_w != null && c.region_h != null)
+        .map((c, i) => ({
+          id: c.id,
+          number: i + 1,
+          label: `${c.author_name}: ${c.body}`,
+          region: {
+            x: Number(c.region_x ?? 0),
+            y: Number(c.region_y ?? 0),
+            w: Number(c.region_w ?? 0),
+            h: Number(c.region_h ?? 0),
+          },
+        })),
+    [comments],
+  );
+  const markNumber = useMemo(() => new Map(marks.map((m) => [m.id, m.number])), [marks]);
+
+  const saveRegionComment = async () => {
+    const v = regionDraft.trim();
+    if (!v || !current || !pendingRegion) return;
+    await addComment.mutateAsync({ imageId: current.id, body: v, region: pendingRegion });
+    setRegionDraft("");
+    setPendingRegion(null);
+    setMarkMode(false);
+    setCommentsOpen(true);
+  };
+
+  const openMark = (id: string) => {
+    setActiveMark(id);
+    setCommentsOpen(true);
+  };
+
+  /** Knappen som slår på rutnätet över bilden. */
+  const markButton = (
+    <button
+      type="button"
+      aria-label={markMode ? "Avbryt markering i bilden" : "Markera en del av bilden"}
+      onClick={() => {
+        setPendingRegion(null);
+        setMarkMode((v) => !v);
+      }}
+      className={cn(
+        "absolute top-2 left-2 z-20 flex h-10 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold backdrop-blur",
+        markMode
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border bg-background/85 text-foreground",
+      )}
+    >
+      <Square className="h-4 w-4" />
+      {markMode ? "Tryck eller dra i bilden" : "Markera i bilden"}
+    </button>
+  );
+
+  /** Liten ruta där man skriver kommentaren till den markerade delen. */
+  const regionComposer = pendingRegion && (
+    <div className="absolute inset-x-2 bottom-2 z-30 rounded-xl border border-border bg-background/95 p-2.5 shadow-lg backdrop-blur">
+      <p className="pb-1.5 text-[11px] font-semibold text-foreground">Kommentar på markerad del</p>
+      <Textarea
+        autoFocus
+        value={regionDraft}
+        onChange={(e) => setRegionDraft(e.target.value)}
+        placeholder="Vad gäller det här i bilden?"
+        className="min-h-[60px] text-sm"
+      />
+      <div className="flex justify-end gap-2 pt-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-[11px]"
+          onClick={() => {
+            setPendingRegion(null);
+            setRegionDraft("");
+          }}
+        >
+          Avbryt
+        </Button>
+        <Button
+          size="sm"
+          className="h-8 text-[11px]"
+          disabled={!regionDraft.trim() || addComment.isPending}
+          onClick={() => void saveRegionComment()}
+        >
+          Spara kommentar
+        </Button>
+      </div>
+    </div>
+  );
 
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
@@ -244,6 +349,16 @@ export function ImageLightbox({
                         </div>
                       ) : (
                         <>
+                          {markNumber.has(c.id) && (
+                            <button
+                              type="button"
+                              onClick={() => setActiveMark(c.id)}
+                              className="mr-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary align-middle text-[9px] font-semibold text-primary-foreground"
+                              aria-label="Visa markeringen i bilden"
+                            >
+                              {markNumber.get(c.id)}
+                            </button>
+                          )}
                           {c.body}
                           <span className="block mt-0.5 text-[9px] text-muted-foreground font-mono tabular-nums">
                             {new Date(c.created_at).toLocaleTimeString("sv-SE", {
@@ -488,12 +603,27 @@ export function ImageLightbox({
                 >
                   {images.map((img) => (
                     <div key={img.id} className="h-full w-full shrink-0 snap-center flex items-center justify-center">
-                      <img
-                        src={thumbUrl(img.url, THUMB_FULL)}
-                        alt={img.caption || title}
-                        className="max-h-full w-full object-contain select-none"
-                        draggable={false}
-                       loading="lazy" decoding="async" />
+                      {img.id === current.id ? (
+                        <AnnotatableImage
+                          src={thumbUrl(img.url, THUMB_FULL)}
+                          alt={img.caption || title}
+                          imgClassName="max-h-full max-w-full object-contain"
+                          marks={marks}
+                          markMode={markMode}
+                          activeId={activeMark}
+                          onRegion={(r) => setPendingRegion(r)}
+                          onOpenMark={openMark}
+                        />
+                      ) : (
+                        <img
+                          src={thumbUrl(img.url, THUMB_FULL)}
+                          alt={img.caption || title}
+                          className="max-h-full w-full object-contain select-none"
+                          draggable={false}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -657,11 +787,16 @@ export function ImageLightbox({
                   if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? 1 : -1);
                 }}
               >
-                <img
+                <AnnotatableImage
                   src={thumbUrl(current.url, THUMB_FULL)}
                   alt={current.caption || title}
-                  className="max-h-[70vh] w-full object-contain"
-                 loading="lazy" decoding="async" />
+                  imgClassName="max-h-[70vh] max-w-full object-contain"
+                  marks={marks}
+                  markMode={markMode}
+                  activeId={activeMark}
+                  onRegion={(r) => setPendingRegion(r)}
+                  onOpenMark={openMark}
+                />
 
                 {images.length > 1 && (
                   <>
