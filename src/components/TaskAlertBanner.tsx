@@ -55,10 +55,11 @@ export function TaskAlertBanner() {
       ))}
 
       {alerts.length > 1 && (
-        <Button size="sm" variant="outline" className="h-8 text-xs" onClick={dismissAll}>
+        <Button size="sm" variant="outline" className="h-9 bg-card text-xs font-semibold" onClick={dismissAll}>
           Jag har sett alla
         </Button>
       )}
+
     </div>
   );
 }
