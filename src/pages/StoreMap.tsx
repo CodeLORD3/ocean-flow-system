@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { todayIso } from "@/hooks/useChecklist";
 import { FloorPlanCanvas, type Selection } from "@/components/storemap/FloorPlanCanvas";
+import { ZoneConnectionsPanel } from "@/components/storemap/ZoneConnectionsPanel";
 import { MapDetailDrawer } from "@/components/storemap/MapDetailDrawer";
 import { ZoneAreaPage } from "@/components/storemap/ZoneAreaPage";
 import { AreaMiniMap } from "@/components/storemap/AreaMiniMap";
@@ -226,6 +227,24 @@ export default function StoreMap() {
   }, [fromZoneId, zones]);
 
   const fromZone = fromZoneId ? zones.find((z) => z.id === fromZoneId) ?? null : null;
+
+  /** Arbetsvägen från en uppgift: stoppen i ordning, ritas som brickor i kartan. */
+  const routeStops = useMemo(() => {
+    const raw = searchParams.get("route");
+    if (!raw) return [] as { zoneId: string }[];
+    return raw
+      .split(",")
+      .filter((id) => zones.some((z) => z.id === id))
+      .map((zoneId) => ({ zoneId }));
+  }, [searchParams, zones]);
+
+  /** Kommer man hit för att se en arbetsväg öppnas kartan direkt, hela butiken. */
+  useEffect(() => {
+    if (routeStops.length === 0) return;
+    setView("karta");
+    setAreaPage(null);
+    setFocus(null);
+  }, [routeStops.length]);
 
   const backToTask = () => {
     setSearchParams({}, { replace: true });
@@ -527,6 +546,22 @@ export default function StoreMap() {
       </div>
 
 
+      {routeStops.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border-2 border-primary/40 bg-primary/5 px-4 py-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">Arbetsväg{fromTaskName ? `: ${fromTaskName}` : ""}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {routeStops
+                .map((s, i) => `${i + 1}. ${zones.find((z) => z.id === s.zoneId)?.name ?? "Område"}`)
+                .join("  →  ")}
+            </p>
+          </div>
+          <Button size="lg" className="ml-auto gap-2" onClick={backToTask}>
+            <ArrowLeft className="h-4 w-4" /> Tillbaka till uppgiften
+          </Button>
+        </div>
+      )}
+
       {fromZone && (
         <div
           className="flex flex-wrap items-center gap-3 rounded-xl border-2 px-4 py-3"
@@ -736,6 +771,7 @@ export default function StoreMap() {
               showObjects={editMode}
               showPins={editMode || pinMode}
               zoneNumbers={zoneNumbers}
+              route={routeStops}
               photoSpots={photoSpots}
               showPhotos={layers.photos}
               placeZoneId={placing?.zoneId ?? null}
@@ -920,6 +956,13 @@ export default function StoreMap() {
                     <ObjectLibrary types={types} onAdd={addObject} />
                   </CardContent>
                 </Card>
+
+                <ZoneConnectionsPanel
+                  storeId={storeId}
+                  floorPlanId={plan.id}
+                  zones={zones}
+                  selectedZoneId={selectedZone?.id ?? null}
+                />
 
                 {selectedObject && (
                   <Card>

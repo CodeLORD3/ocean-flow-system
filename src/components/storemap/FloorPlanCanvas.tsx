@@ -66,6 +66,7 @@ export function FloorPlanCanvas({
   showObjects = true,
   showPins = true,
   onOpenArea,
+  route = [],
 }: {
   plan: FloorPlan;
   zones: MapZone[];
@@ -109,6 +110,8 @@ export function FloorPlanCanvas({
   /** Inventarier ritas bara i redigeringsläget — normalvyn ska vara ren. */
   showObjects?: boolean;
   showPins?: boolean;
+  /** Arbetsvägens stopp i ordning — ritas som numrerade brickor med linje emellan. */
+  route?: { zoneId: string | null }[];
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -795,6 +798,56 @@ export function FloorPlanCanvas({
                   </g>
                 );
               })}
+            {/* Lager 7b — arbetsvägen: numrerade stopp i ordning, kopplade med en linje */}
+            {route.length > 0 && (
+              <g style={{ pointerEvents: "none" }}>
+                {(() => {
+                  const pointsFor = route
+                    .map((s) => zones.find((z) => z.id === s.zoneId))
+                    .map((z) => (z ? centroid(ptsOf(z)) : null));
+                  const r = 13 / Math.max(zoom, 0.5);
+                  return (
+                    <>
+                      {pointsFor.map((pt, i) => {
+                        const next = pointsFor[i + 1];
+                        if (!pt || !next) return null;
+                        return (
+                          <line
+                            key={`leg${i}`}
+                            x1={pt.x}
+                            y1={pt.y}
+                            x2={next.x}
+                            y2={next.y}
+                            stroke="hsl(var(--primary))"
+                            strokeWidth={r / 4}
+                            strokeDasharray={`${r / 1.5} ${r / 2}`}
+                            strokeLinecap="round"
+                          />
+                        );
+                      })}
+                      {pointsFor.map((pt, i) =>
+                        pt ? (
+                          <g key={`stop${i}`}>
+                            <circle cx={pt.x} cy={pt.y} r={r} fill="hsl(var(--primary))" stroke="hsl(var(--card))" strokeWidth={r / 5} />
+                            <text
+                              x={pt.x}
+                              y={pt.y + r / 2.6}
+                              textAnchor="middle"
+                              fontSize={r * 1.2}
+                              fontWeight={700}
+                              fill="hsl(var(--primary-foreground))"
+                            >
+                              {i + 1}
+                            </text>
+                          </g>
+                        ) : null,
+                      )}
+                    </>
+                  );
+                })()}
+              </g>
+            )}
+
             {/* Lager 8 — området man drar ut för att zooma dit */}
             {marqueeBox && (
               <rect

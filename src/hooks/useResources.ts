@@ -54,6 +54,10 @@ export type ResourceLocation = {
   location_text: string | null;
   position_code: string | null;
   quantity: number | null;
+  /** Normal plats enligt 5S — dit saken ska tillbaka efter arbetet. */
+  is_normal_location: boolean;
+  /** Saken förvaras på en annan sak, t.ex. moppen på städvagnen. */
+  attached_to_resource_id: string | null;
 };
 
 export type TaskRequirement = {
@@ -150,6 +154,8 @@ export function useSaveResourceLocation() {
       locationText?: string | null;
       positionCode?: string | null;
       quantity?: number | null;
+      isNormalLocation?: boolean;
+      attachedToResourceId?: string | null;
     }) => {
       const { error } = await supabase.from("resource_locations").upsert(
         {
@@ -159,6 +165,8 @@ export function useSaveResourceLocation() {
           location_text: input.locationText?.trim() || null,
           position_code: input.positionCode?.trim() || null,
           quantity: input.quantity ?? null,
+          is_normal_location: input.isNormalLocation ?? true,
+          attached_to_resource_id: input.attachedToResourceId ?? null,
         },
         { onConflict: "resource_id,store_id" },
       );
@@ -291,6 +299,9 @@ export type ResolvedNeed = {
   resource: ResourceItem | null;
   zoneId: string | null;
   place: string | null;
+  /** Saken förvaras på en annan sak och hämtas samtidigt som den. */
+  carriedBy: string | null;
+  carrierName: string | null;
 };
 
 /**
@@ -307,8 +318,24 @@ export function resolveNeeds(
     const mapped = mappings.find((m) => m.requirement_id === requirement.id);
     const resource = mapped ? resources.find((r) => r.id === mapped.resource_id) ?? null : null;
     const loc = resource ? locations.find((l) => l.resource_id === resource.id) ?? null : null;
-    const place = loc ? [loc.location_text, loc.position_code].filter(Boolean).join(" · ") || null : null;
-    return { requirement, resource, zoneId: loc?.map_zone_id ?? null, place };
+    const carriedBy = loc?.attached_to_resource_id ?? null;
+    // Hör saken till en annan sak gäller bärarens plats.
+    const carrierLoc = carriedBy ? locations.find((l) => l.resource_id === carriedBy) ?? null : null;
+    const effective = carrierLoc ?? loc;
+    const place = loc
+      ? [loc.location_text, loc.position_code].filter(Boolean).join(" · ") || null
+      : null;
+    const carrierPlace = carrierLoc
+      ? [carrierLoc.location_text, carrierLoc.position_code].filter(Boolean).join(" · ") || null
+      : null;
+    return {
+      requirement,
+      resource,
+      zoneId: effective?.map_zone_id ?? null,
+      place: place ?? carrierPlace,
+      carriedBy,
+      carrierName: carriedBy ? resources.find((r) => r.id === carriedBy)?.name ?? null : null,
+    };
   });
 }
 

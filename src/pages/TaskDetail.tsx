@@ -51,6 +51,10 @@ import { workTypeLabel } from "@/lib/workType";
 import { TASK_LINKS, taskTarget } from "@/lib/taskLink";
 import { useProductionRecipes } from "@/hooks/useProductionRecipes";
 import { TaskPerformPanel } from "@/components/tasks/TaskPerformPanel";
+import { useTaskCheckpoints } from "@/hooks/useTaskRun";
+import { useTaskRoute } from "@/hooks/useTaskRoute";
+import { useFreezeRoute } from "@/hooks/useStandardRoute";
+import { standardParts } from "@/lib/taskStandardTime";
 import { TaskPlanningPanel } from "@/components/tasks/TaskPlanningPanel";
 import { CheckpointEditor, RequirementEditor, StandardTimeEditor } from "@/components/tasks/TaskSetupPanels";
 import {
@@ -117,6 +121,33 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
         .map((z, i) => ({ id: z.id, name: z.name, number: i + 1 })),
     [zones],
   );
+
+  /** Arbetsvägen som gäller — används för kartlänk och för att frysa historiken. */
+  const { data: runCheckpoints = [] } = useTaskCheckpoints(task?.template_item_id ?? null);
+  const parts = standardParts(task);
+  const { route, usingStandard, standard } = useTaskRoute({
+    storeId,
+    templateItemId: task?.template_item_id ?? null,
+    area: area ? { id: area.id, name: `${area.number}. ${area.name}` } : null,
+    taskName: task?.task ?? "",
+    needs,
+    checkpoints: runCheckpoints.map((c) => c.label),
+    minutes: { do: parts.doWork, check: parts.check },
+  });
+  const routeZoneIds = route.stops.map((s) => s.zoneId).filter((z): z is string => !!z);
+  const routeUrl = `/store-map?route=${routeZoneIds.join(",")}${task ? `&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}` : ""}`;
+  const freeze = useFreezeRoute();
+  const freezeCurrentRoute = () => {
+    if (!task || route.stops.length === 0) return;
+    freeze.mutate({
+      checklistItemId: task.id,
+      templateItemId: task.template_item_id ?? null,
+      storeId,
+      route,
+      source: usingStandard ? "standard" : "calculated",
+      version: standard?.version ?? null,
+    });
+  };
 
   const [issueOpen, setIssueOpen] = useState(false);
   const [issuePreset, setIssuePreset] = useState<string | null>(null);
@@ -324,13 +355,11 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             areaName={area ? `${area.number}. ${area.name}` : null}
             photoCount={images.length}
             needs={needs}
-            onShowNeeds={() => {
-              const el = document.querySelector<HTMLButtonElement>('[role="tab"][value="planering"]');
-              el?.click();
-            }}
             onShowOnMap={(zoneId) =>
               switchTab(`/store-map?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
             }
+            onShowAllOnMap={() => switchTab(routeUrl)}
+            onStarted={freezeCurrentRoute}
             onUpdate={(patch) => update.mutate({ id: task.id, ...patch })}
             onAddPhoto={addPhoto}
             onReopen={() => setDone.mutate({ id: task.id, done: false })}
@@ -341,11 +370,16 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           <TaskPlanningPanel
             task={task}
             storeId={storeId}
-            areaName={area ? `${area.number}. ${area.name}` : null}
+            area={area ? { id: area.id, name: `${area.number}. ${area.name}` } : null}
             needs={needs}
             zoneName={(zoneId) => guideZones.find((z) => z.id === zoneId)?.name ?? null}
             onShowOnMap={(zoneId) =>
               switchTab(`/store-map?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
+            }
+            onShowRoute={(zoneIds) =>
+              switchTab(
+                `/store-map?route=${zoneIds.join(",")}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`,
+              )
             }
           />
         </TabsContent>

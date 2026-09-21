@@ -21,6 +21,7 @@ import {
   useTaskCheckpoints,
 } from "@/hooks/useTaskRun";
 import type { ResolvedNeed } from "@/hooks/useResources";
+import { NeedsSheet } from "@/components/tasks/NeedsSheet";
 
 type PerformTask = {
   id: string;
@@ -53,19 +54,23 @@ export function TaskPerformPanel({
   areaName,
   photoCount,
   needs,
-  onShowNeeds,
   onShowOnMap,
+  onShowAllOnMap,
   onUpdate,
   onAddPhoto,
   onReopen,
+  onStarted,
 }: {
   task: PerformTask;
   timeLabel?: string | null;
   areaName?: string | null;
   photoCount: number;
   needs: ResolvedNeed[];
-  onShowNeeds: () => void;
   onShowOnMap?: (zoneId: string) => void;
+  /** Hela vägen på butikskartan. */
+  onShowAllOnMap?: () => void;
+  /** Vägen som gällde fryses när arbetet startas. */
+  onStarted?: () => void;
   onUpdate: (patch: Record<string, unknown>) => void;
   onAddPhoto: (file: File) => Promise<void> | void;
   onReopen: () => void;
@@ -81,6 +86,7 @@ export function TaskPerformPanel({
   const logAfter = useLogTaskAfterwards();
 
   const [pauseReason, setPauseReason] = useState("kund");
+  const [needsOpen, setNeedsOpen] = useState(false);
   const [afterOpen, setAfterOpen] = useState(false);
   const [afterMinutes, setAfterMinutes] = useState("");
 
@@ -145,9 +151,16 @@ export function TaskPerformPanel({
             <p className="text-sm">
               Behövs: {needs.map((n) => n.requirement.requirement_name).join(", ")}
             </p>
-            <Button variant="outline" size="sm" className="mt-2" onClick={onShowNeeds}>
-              <MapPin className="mr-1 h-4 w-4" /> Var finns det?
+            <Button variant="outline" size="lg" className="mt-2 h-14" onClick={() => setNeedsOpen(true)}>
+              <MapPin className="mr-1 h-4 w-4" /> VAR FINNS DET?
             </Button>
+            <NeedsSheet
+              open={needsOpen}
+              onOpenChange={setNeedsOpen}
+              needs={needs}
+              onShowOnMap={onShowOnMap}
+              onShowAll={onShowAllOnMap}
+            />
           </div>
         )}
 
@@ -158,6 +171,7 @@ export function TaskPerformPanel({
               className="h-16 w-full text-base"
               onClick={async () => {
                 await start.mutateAsync(task.id);
+                onStarted?.();
                 toast({ title: "Uppgiften är startad" });
               }}
             >
