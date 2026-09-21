@@ -241,6 +241,15 @@ export default function Products() {
     const id = searchParams.get("markera");
     if (!id) return;
     setMarkedId(id);
+    // Se till att raden verkligen syns: sök fram varan och fäll ut moderprodukten.
+    const hit = (allProducts as any[]).find((x) => x.id === id);
+    if (hit) {
+      setFilterCategory("all");
+      setSearch(hit.name);
+      if (hit.parent_product_id) {
+        setExpandedProducts((prev) => new Set(prev).add(hit.parent_product_id));
+      }
+    }
     const t = window.setTimeout(() => {
       document.getElementById(`produkt-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 350);
@@ -249,7 +258,7 @@ export default function Products() {
       window.clearTimeout(t);
       window.clearTimeout(clear);
     };
-  }, [searchParams]);
+  }, [searchParams, allProducts]);
   /** Detaljläge: visar sekundära kolumner (HS, producent, hållbarhet, EAN, marginal, rek. butikspris). */
   const [showDetails, setShowDetails] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
