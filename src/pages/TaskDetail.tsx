@@ -174,6 +174,29 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const time = taskTime(task);
   const target = taskTarget(task, recipes.find((r) => r.id === task.recipe_id)?.name ?? null);
   const missing = missingRequirements(task, { photoCount: images.length, checkPhoto: true });
+  /** Alla som gjort uppgiften, med hur många gånger var. */
+  const doers = useMemo(() => {
+    const map = new Map<string, { key: string; name: string; image: string | null; times: number }>();
+    history
+      .filter((h) => h.done)
+      .forEach((h) => {
+        const name = staffName(h.completed_by_staff_id) ?? h.signature ?? null;
+        if (!name) return;
+        const key = h.completed_by_staff_id ?? `sig:${name}`;
+        const prev = map.get(key);
+        if (prev) prev.times += 1;
+        else
+          map.set(key, {
+            key,
+            name,
+            image: staffImage(h.completed_by_staff_id) ?? null,
+            times: 1,
+          });
+      });
+    return [...map.values()].sort((a, b) => b.times - a.times);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [history, staffList]);
+
   const doneRatio = history.length > 0 ? Math.round((history.filter((h) => h.done).length / history.length) * 100) : null;
 
   const addPhoto = async (file: File) => {
@@ -459,6 +482,28 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
         </TabsContent>
 
         <TabsContent value="historik" className="space-y-2">
+          {doers.length > 0 && (
+            <Card className="space-y-2 p-4">
+              <p className="text-sm font-semibold">
+                Gjord {history.filter((h) => h.done).length} gånger — av {doers.length}{" "}
+                {doers.length === 1 ? "person" : "personer"}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {doers.map((d) => (
+                  <span
+                    key={d.key}
+                    className="flex items-center gap-2 rounded-full border bg-card px-2 py-1 text-sm"
+                  >
+                    <StaffAvatar name={d.name} imageUrl={d.image} className="h-8 w-8" />
+                    <span className="font-medium">{d.name}</span>
+                    <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                      {d.times} ggr
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </Card>
+          )}
           {doneRatio !== null && (
             <p className="text-sm text-muted-foreground">
               Klar {doneRatio}% av de senaste {history.length} tillfällena.
