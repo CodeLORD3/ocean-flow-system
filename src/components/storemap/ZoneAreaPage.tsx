@@ -85,6 +85,10 @@ export function ZoneAreaPage({
   onSaveTags?: (tags: string[]) => void;
   /** Öppnar rutan där ytans namn och färg ändras. */
   onEditZone?: (zoneId: string) => void;
+  /** Öppnar kartan så ytan kan flyttas och ändra storlek. */
+  onEditShape?: (zoneId: string) => void;
+  /** Tar bort ytan. */
+  onDeleteZone?: (zoneId: string) => void;
   onBack: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
