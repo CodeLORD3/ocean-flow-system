@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Heart,
@@ -21,7 +21,7 @@ import ImageLibraryPanel from "@/components/images/ImageLibraryPanel";
 import { useImageFeed, type FeedImage } from "@/hooks/useImageFeed";
 import { useMyImageFavorites, useToggleImageFavorite } from "@/hooks/useEntityImages";
 import { useAllowedStores, useSwitchStore } from "@/components/StoreSwitcher";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { dayKey, dayLabel, dayDateLabel } from "@/lib/imageMeta";
 import { StaffFace } from "@/components/staff/StaffNameAvatar";
 import { focalStyle } from "@/lib/imageFocal";
@@ -61,6 +61,12 @@ export default function ImageFeed() {
   const [lightboxId, setLightboxId] = useState<string | null>(null);
   /** Flöde = tidslinjen. Bibliotek = alla bilder, sökbara och sorterbara. */
   const [view, setView] = useState<"feed" | "library">("feed");
+  // ?bild=<id> öppnar bilden i biblioteket, t.ex. när man kommer tillbaka från ett ställe.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const backToImage = searchParams.get("bild");
+  useEffect(() => {
+    if (backToImage) setView("library");
+  }, [backToImage]);
 
   const visible = useMemo(() => {
     const list = rows.filter((r) => {
@@ -209,7 +215,12 @@ export default function ImageFeed() {
         )}
       </div>
 
-      {view === "library" && <ImageLibraryPanel />}
+      {view === "library" && (
+        <ImageLibraryPanel
+          openImageId={backToImage}
+          onOpenedImage={() => setSearchParams({}, { replace: true })}
+        />
+      )}
 
       {view === "feed" && (
       <>

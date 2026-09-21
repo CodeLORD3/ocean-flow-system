@@ -27,7 +27,7 @@ import ImageQuickClassify from "./ImageQuickClassify";
 import ImageLinksPanel from "./ImageLinksPanel";
 import ImageActivityTimeline from "./ImageActivityTimeline";
 import AddImageFlow from "./AddImageFlow";
-import { useImageLibrary, useImageStatusCounts, type LibraryImage } from "@/hooks/useImageLibrary";
+import { useImageLibrary, useImageStatusCounts, useLibraryImage, type LibraryImage } from "@/hooks/useImageLibrary";
 import { STATUS_LABEL, type ImageStatus, type MediaKind } from "@/lib/imageStatus";
 
 type TabKey = "all" | MediaKind | "unplaced" | "partial";
