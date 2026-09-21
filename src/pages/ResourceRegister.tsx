@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Boxes, Camera, ChevronDown, ChevronRight, MapPin, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -58,6 +59,23 @@ export default function ResourceRegister() {
   const [type, setType] = useState("alla");
   const [scope, setScope] = useState(storeId ? `butik:${storeId}` : "allt");
   const [open, setOpen] = useState<string | null>(null);
+  /** Kommer man från en bild öppnas och markeras saken. */
+  const [searchParams] = useSearchParams();
+  const [markedId, setMarkedId] = useState<string | null>(null);
+  useEffect(() => {
+    const id = searchParams.get("markera");
+    if (!id) return;
+    setOpen(id);
+    setMarkedId(id);
+    const t = window.setTimeout(() => {
+      document.getElementById(`sak-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 350);
+    const clear = window.setTimeout(() => setMarkedId(null), 8000);
+    return () => {
+      window.clearTimeout(t);
+      window.clearTimeout(clear);
+    };
+  }, [searchParams]);
   const [edit, setEdit] = useState<Partial<ResourceItem> | null>(null);
 
   const zoneName = (id: string | null) => zones.find((z) => z.id === id)?.name ?? null;
@@ -172,7 +190,14 @@ export default function ResourceRegister() {
                 const isOpen = open === item.id;
                 const img = item.image ?? photoOf(item.id);
                 return (
-                  <div key={item.id} className="border-x border-b border-grid-line bg-card">
+                  <div
+                    key={item.id}
+                    id={`sak-${item.id}`}
+                    className={cn(
+                      "border-x border-b border-grid-line bg-card",
+                      markedId === item.id && "bg-primary/15 ring-2 ring-primary",
+                    )}
+                  >
                     <button
                       type="button"
                       onClick={() => setOpen(isOpen ? null : item.id)}
