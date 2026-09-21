@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { thumbUrl, THUMB_FULL } from "@/lib/imageThumb";
 import { Search } from "lucide-react";
+import { StaffFace } from "@/components/staff/StaffNameAvatar";
+import { dayKey, dayLabel } from "@/lib/imageMeta";
 import ImageLibraryGrid from "./ImageLibraryGrid";
 import ImageBulkBar from "./ImageBulkBar";
 import ImageClassifySheet from "./ImageClassifySheet";
@@ -43,6 +45,7 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
   const [detail, setDetail] = useState<LibraryImage | null>(null);
   const [editing, setEditing] = useState<LibraryImage | null>(null);
   const [quick, setQuick] = useState<ImageStatus | null>(null);
+  const [tag, setTag] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search), 300);
@@ -50,14 +53,20 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
   }, [search]);
 
   const filter = useMemo(() => {
-    const base: { status?: ImageStatus | "all"; mediaKind?: MediaKind | "all"; search?: string } = {
+    const base: {
+      status?: ImageStatus | "all";
+      mediaKind?: MediaKind | "all";
+      search?: string;
+      tag?: string;
+    } = {
       search: debounced || undefined,
+      tag: tag || undefined,
     };
     if (tab === "unplaced") base.status = "unclassified";
     else if (tab === "partial") base.status = "partial";
     else if (tab !== "all") base.mediaKind = tab;
     return base;
-  }, [tab, debounced]);
+  }, [tab, debounced, tag]);
 
   const { data, isLoading, isFetching } = useImageLibrary(filter, page);
   const { data: counts } = useImageStatusCounts();
@@ -66,7 +75,7 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
     setPage(0);
     setRows([]);
     setSelected([]);
-  }, [tab, debounced]);
+  }, [tab, debounced, tag]);
 
   useEffect(() => {
     if (!data) return;
@@ -124,6 +133,18 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
         ))}
       </div>
 
+      {/* Vald tagg — visar alla bilder med samma tagg */}
+      {tag && (
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Tagg:</span>
+          <Badge variant="secondary">{tag}</Badge>
+          <Button size="sm" variant="ghost" className="h-7" onClick={() => setTag(null)}>
+            Rensa
+          </Button>
+        </div>
+      )}
+
+
       {/* Diskret arbetsstatus — ingen felmarkering, bara vad som återstår */}
       {(unplaced > 0 || partial > 0) && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 px-3 py-2 text-sm">
@@ -158,6 +179,10 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
           selectedIds={selected}
           onSelectedChange={setSelected}
           onOpen={(i) => setDetail(rows[i])}
+          onTagClick={(t) => {
+            setTag(t);
+            setTab("all");
+          }}
         />
       )}
 
@@ -187,13 +212,31 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
                 alt={detail.title || "Bild"}
                 className="max-h-[50vh] w-full rounded-lg object-contain"
               />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <StaffFace name={detail.uploaded_by_name} className="h-6 w-6 text-[10px]" />
+                <span>{detail.uploaded_by_name || "Äldre bild"}</span>
+                <span>·</span>
+                <span className="tabular-nums">
+                  {dayLabel(dayKey(detail.captured_at || detail.created_at))}
+                </span>
+              </div>
               {detail.description && <p className="text-sm">{detail.description}</p>}
               {detail.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {detail.tags.map((t) => (
-                    <Badge key={t} variant="secondary">
-                      {t}
-                    </Badge>
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        setTag(t);
+                        setTab("all");
+                        setDetail(null);
+                      }}
+                    >
+                      <Badge variant="secondary" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
+                        {t}
+                      </Badge>
+                    </button>
                   ))}
                 </div>
               )}

@@ -58,6 +58,8 @@ export type LibraryFilter = {
   entityType?: string;
   entityId?: string;
   uploaderStaffId?: string;
+  /** Endast bilder med denna tagg. */
+  tag?: string;
 };
 
 /** Namnet på det inloggade kontot, för historiken. */
@@ -106,8 +108,13 @@ export function useImageLibrary(filter: LibraryFilter, page = 0) {
       if (filter.status && filter.status !== "all") q = q.eq("status", filter.status);
       if (filter.mediaKind && filter.mediaKind !== "all") q = q.eq("media_kind", filter.mediaKind);
       if (filter.uploaderStaffId) q = q.eq("uploaded_by_staff_id", filter.uploaderStaffId);
+      if (filter.tag) q = q.contains("tags", [filter.tag]);
       const s = filter.search?.trim();
-      if (s) q = q.or(`title.ilike.%${s}%,description.ilike.%${s}%,caption.ilike.%${s}%`);
+      // Sökningen tar även taggar, så att man hittar bilder via taggen.
+      if (s)
+        q = q.or(
+          `title.ilike.%${s}%,description.ilike.%${s}%,caption.ilike.%${s}%,tags.cs.{"${s.replace(/"/g, "")}"}`,
+        );
 
       const { data, error } = await q;
       if (error) throw error;
@@ -309,11 +316,19 @@ export async function classifyImage(input: ClassifyInput) {
     patch.media_kind = input.mediaKind || null;
     changes.push({ field: "vad bilden visar", old: prev.media_kind, next: input.mediaKind || null });
   }
-  if (input.tags) {
+  // Namnet blir automatiskt en tagg, så att bilder med samma namn hittar
+  // varandra och kan sökas fram via taggen.
+  const baseTags = input.tags ?? prev.tags ?? [];
+  const nextTags = [...baseTags];
+  const titleTag = (input.title ?? prev.title ?? "").trim();
+  if (titleTag && !nextTags.some((t) => t.toLowerCase() === titleTag.toLowerCase())) {
+    nextTags.push(titleTag);
+  }
+  {
     const oldTags = (prev.tags || []).join(", ");
-    const newTags = input.tags.join(", ");
+    const newTags = nextTags.join(", ");
     if (oldTags !== newTags) {
-      patch.tags = input.tags;
+      patch.tags = nextTags;
       changes.push({ field: "taggar", old: oldTags || null, next: newTags || null });
     }
   }
