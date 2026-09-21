@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Minus, Plus, RotateCcw } from "lucide-react";
+import { ArrowRight, Minus, Plus, RotateCcw } from "lucide-react";
 import type { FloorPlan, MapZone } from "@/hooks/useStoreMap";
 import { centroid, toPath, zonePoints } from "@/lib/mapGeometry";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ export function ZonePickMap({
   onChange,
   numberOf,
   colorOf,
+  onNext,
 }: {
   plan: FloorPlan;
   zones: MapZone[];
@@ -27,6 +28,7 @@ export function ZonePickMap({
   onChange: (zoneId: string | null) => void;
   numberOf?: (zoneId: string) => number | null;
   colorOf?: (zoneId: string) => string | null;
+  onNext?: () => void;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -61,6 +63,8 @@ export function ZonePickMap({
         }),
     [zones, depthOf],
   );
+
+  const selected = useMemo(() => zones.find((z) => z.id === value) ?? null, [zones, value]);
 
   const children = useMemo(
     () => (value ? zones.filter((z) => z.parent_zone_id === value) : []),
