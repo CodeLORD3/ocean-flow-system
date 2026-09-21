@@ -164,6 +164,9 @@ export function ZonePickMap({
               const isChild = !!zone.parent_zone_id;
               const color = colorOf?.(zone.id) ?? "hsl(var(--primary))";
               const num = numberOf?.(zone.id) ?? null;
+              /** Textstorlek i kartans egna mått så namnen alltid går att läsa. */
+              const u = view.w / 640 / zoom;
+              const label = num !== null ? `${num}. ${zone.name}` : zone.name;
               return (
                 <g
                   key={zone.id}
@@ -176,32 +179,30 @@ export function ZonePickMap({
                   <polygon
                     points={path}
                     fill={color}
-                    fillOpacity={isSel ? 0.5 : isChild ? 0.22 : 0.14}
+                    fillOpacity={isSel ? 0.55 : isChild ? 0.34 : 0.26}
                     stroke={color}
-                    strokeWidth={(isSel ? 4 : 2) / zoom}
+                    strokeWidth={(isSel ? 5 : 2.5) * u}
                   />
-                  {num !== null && (
-                    <>
-                      <circle cx={mid.x} cy={mid.y - 18 / zoom} r={16 / zoom} fill={color} />
-                      <text
-                        x={mid.x}
-                        y={mid.y - 12 / zoom}
-                        textAnchor="middle"
-                        fontSize={15 / zoom}
-                        className="fill-white font-semibold"
-                      >
-                        {num}
-                      </text>
-                    </>
+                  {isSel && (
+                    <polygon
+                      points={path}
+                      fill="none"
+                      stroke="hsl(var(--foreground))"
+                      strokeWidth={2 * u}
+                      strokeDasharray={`${8 * u} ${6 * u}`}
+                    />
                   )}
                   <text
                     x={mid.x}
-                    y={mid.y + 14 / zoom}
+                    y={mid.y + 5 * u}
                     textAnchor="middle"
-                    fontSize={14 / zoom}
-                    className="fill-foreground"
+                    fontSize={15 * u}
+                    stroke="hsl(var(--card))"
+                    strokeWidth={5 * u}
+                    paintOrder="stroke"
+                    className={cn("fill-foreground", isSel ? "font-bold" : "font-semibold")}
                   >
-                    {zone.name}
+                    {label}
                   </text>
                 </g>
               );
