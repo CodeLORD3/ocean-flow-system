@@ -80,6 +80,7 @@ export default function ImageLinksPanel({
             </li>
           ))}
         </ul>
+        </>
       )}
     </div>
   );
