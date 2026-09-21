@@ -45,6 +45,28 @@ export function AnnotatableImage({
   const [from, setFrom] = useState<{ c: number; r: number } | null>(null);
   const [to, setTo] = useState<{ c: number; r: number } | null>(null);
   const dragging = useRef(false);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const [grid, setGrid] = useState({ cols: 12, rows: 16 });
+  const COLS = grid.cols;
+  const ROWS = grid.rows;
+
+  // Rutorna ska vara små och kvadratiska, oavsett bildens format.
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const measure = () => {
+      const { width, height } = el.getBoundingClientRect();
+      if (!width || !height) return;
+      setGrid({
+        cols: Math.max(4, Math.round(width / CELL)),
+        rows: Math.max(4, Math.round(height / CELL)),
+      });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const cells = from && to
     ? {
