@@ -50,11 +50,22 @@ Samma bild (samma media_id, aldrig kopior) visas automatiskt på områdessidan, 
 
 Tas Lax bort från en bild som också hör till Fiskdisk och Bygga fiskdisk försvinner bara den kopplingen — bilden och övriga kopplingar ligger kvar. Att radera själva bilden är en egen handling med bekräftelse, för chef och administration.
 
-Varje bild visar neutralt hur långt sorteringen kommit: **Oplacerad**, **Delvis klar** eller **Klar**. Det är arbetsstatus, inte fel. Profilbilderna hålls tillräckligt stora för att man direkt ser vem som gjort vad, både på korten och i aktiviteten.
+Profilbilderna hålls tillräckligt stora för att man direkt ser vem som gjort vad, både på korten och i aktiviteten.
+
+## Oplacerad, delvis klar, klar
+
+Varje bild visar diskret hur långt sorteringen kommit, och systemet räknar ut det själv — ingen väljer status för hand. Det är arbetsstatus, aldrig ett betyg, och visas neutralt utan röd markering.
+
+- **Oplacerad**: bilden finns, inget mer behövs för att spara. Anna kan ta 15 bilder och trycka Spara.
+- **Delvis klar**: klassificeringen är påbörjad men något krävs ännu — t.ex. butik valt men inte område, eller Sak/verktyg valt utan vald sak. Helt okej att lämna och fortsätta senare.
+- **Klar**: minimikravet för vald typ finns — butik + område, vald sak, vald produkt, vald uppgift, eller en iakttagelse med sin plats. Titel, beskrivning, taggar och exakt position krävs aldrig.
+
+Biblioteket visar "23 oplacerade — Sortera" och "8 delvis klara — Fortsätt", som startar snabbläget direkt i just de bilderna. Status räknas om automatiskt när en koppling läggs till, ändras eller tas bort, och massklassificering gör samma sak: 37 oplacerade bilder som får Zollikon → Fiskdisk → Område/plats blir klara i ett svep. I aktiviteten står den mänskliga händelsen — "Robin klassificerade bilden · Fiskdisk · Zollikon" — inte den tekniska statusändringen.
 
 ## Teknisk lösning
 
-- **Utöka `entity_images`** i stället för en ny media-tabell: nya kolumner `description`, `media_kind` (område/sak/produkt/iakttagelse/uppgift/annat), `status` (`classified`/`unclassified`), `captured_at`, `tags text[]`, `uploaded_by_staff_id`, `last_edited_by_staff_id`, `last_edited_at`. Nuvarande `entity_type`/`entity_id` behålls som bildens hemvist så allt befintligt fortsätter fungera.
+- **Utöka `entity_images`** i stället för en ny media-tabell: nya kolumner `description`, `media_kind` (område/sak/produkt/iakttagelse/uppgift/annat), `status` (`unclassified`/`partial`/`classified`), `captured_at`, `tags text[]`, `uploaded_by_staff_id`, `last_edited_by_staff_id`, `last_edited_at`. Nuvarande `entity_type`/`entity_id` behålls som bildens hemvist så allt befintligt fortsätter fungera.
+- **En gemensam statusfunktion** (`deriveImageStatus(image, links, observation)`) används överallt — ingen komponent definierar själv vad "Klar" betyder. Den körs vid uppladdning, klassificering, massredigering, snabbläge och när en länk läggs till eller tas bort, och skriver `status` på bilden. Statusfältet lagras för snabb filtrering men är alltid härlett, aldrig manuellt satt. Ren statusändring loggas inte som egen händelse utan ingår i den mänskliga klassificeringshändelsen.
 - **`image_links`** (media_id → entity_images, `entity_type`: store, zone, location, resource, product, task, task_template, observation; `entity_id`, `relation_type`: overview, reference, before, after, proof, instruction, documentation, contains; `created_by_staff_id`, unik per media+entity+relation) är den primära sanningen om vad en bild hör till. `entity_type`/`entity_id` på bilden är hemvist för bakåtkompatibilitet och skrivs aldrig om automatiskt när en ny länk skapas. Frontend läser i första hand länkarna; befintliga vyer fortsätter läsa hemvisten under övergången.
 - Ingen dubbellagring: område sparas som `zone_id`, sak som `resource_id`, produkt som `product_id`, person som `staff_id`. Namn och profilbilder hämtas alltid från källan, så ett namnbyte på Fiskdisk syns direkt på bilderna.
 - Att ändra område rör bara områdeskopplingen — produkt-, uppgifts- och sakkopplingar ligger kvar. `uploaded_by_staff_id` är permanent; bara `last_edited_by_staff_id`/`last_edited_at` uppdateras.
@@ -64,6 +75,7 @@ Varje bild visar neutralt hur långt sorteringen kommit: **Oplacerad**, **Delvis
 - Frontend: nya hookar `useImageLibrary`, `useImageLinks`, `useImageActivity`, `useBulkClassify`; nya komponenter `AddImageFlow`, `ImageClassifySheet`, `ImageLibraryGrid`, `ImageBulkBar`, `ImageQuickClassify`, `ImageActivityTimeline`, `ImageLinksPanel` som byggs in i `src/pages/ImageFeed.tsx`, `ImageLightbox.tsx`, `ZoneAreaPage.tsx`, `ResourceRegister.tsx`, `TaskDetail.tsx` och produktbilderna. `StaffFace`/`StaffName` används för alla profilbilder, `thumbUrl` för snabba miniatyrer.
 - Befintlig bucket, komprimering (`prepareUpload`), kommentarer, hjärtan, bildmarkeringar, favoriter och kartmarkörer rörs inte.
 - **Säker migration av de 1 249 befintliga bilderna**: backfillen skapar bara den nya strukturen — fil, bucket-path, hemvist, kommentarer, hjärtan, favoriter, markeringar, kartkopplingar och tidsstämplar lämnas orörda. Varje bild får sin första `image_link` från nuvarande hemvist. Uppladdaren kopplas till `staff_id` bara när matchningen är säker; annars visas neutralt "äldre bild" utan gissning.
+- Status för befintliga bilder härleds med samma funktion från det som faktiskt finns: en bild med giltig identifierbar hemvist (butiksbild, produktbild, områdesbild) blir klar, en med ofullständig information blir delvis klar eller oplacerad. Ingen befintlig bild markeras oplacerad bara för att modellen är ny, och inga relationer gissas fram.
 - **Prestanda**: rutnätet använder `thumbUrl`, lazy-load och sidvis inläsning (infinite scroll), filtrering och sök körs i databasen, kopplingar hämtas för synliga bilder och aktivitet först när en bild öppnas. Originalbilden laddas bara i stor visning. Ska kännas snabbt vid 10 000+ bilder.
 - Strukturen lämnar plats för framtida förslag (föreslaget område, produkt, taggar, jämförelse mot referensbild) i ett eget förslagsfält — ingen automatisk klassificering byggs nu, människan bekräftar informationen.
 
@@ -71,4 +83,4 @@ Varje bild visar neutralt hur långt sorteringen kommit: **Oplacerad**, **Delvis
 
 Först kontrolleras att befintliga bilder fungerar precis som förut efter migrationen: en gammal butiksbild, portalbild, produktbild, orderradsbild och områdesbild — och att en gammal bild kan få en ny koppling utan att dess gamla användning slutar fungera.
 
-Därefter provkörs på 390 px och 1280 px: ta foto → klassificera → spara; spara som oplacerad och låt en annan person klassificera; massuppladdning med flervalsredigering; Spara & nästa med Enter; rättning av område som visas i tidslinjen med gammalt → nytt värde; samma bild syns på områdessidan, saken och uppgiften. Provdata städas bort efteråt.
+Därefter provkörs på 390 px och 1280 px: ta foto → klassificera → spara; spara som oplacerad och låt en annan person klassificera; massuppladdning med flervalsredigering; Spara & nästa med Enter; rättning av område som visas i tidslinjen med gammalt → nytt värde; samma bild syns på områdessidan, saken och uppgiften. Statusen kontrolleras hela vägen: oplacerad vid ren uppladdning, delvis klar när bara butik är vald, klar när område läggs till, tillbaka till delvis klar när området tas bort, och klar i ett svep vid massklassificering. Provdata städas bort efteråt.
