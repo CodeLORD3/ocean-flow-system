@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   User, Mail, Phone, MapPin, LogIn, LogOut, Clock, Store as StoreIcon, ShieldCheck, IdCard,
-  History as HistoryIcon, ChevronRight,
+  History as HistoryIcon, ChevronRight, ListChecks, AlertTriangle, CalendarDays,
 } from "lucide-react";
 import { useMyActivity } from "@/hooks/useMyActivity";
+import { useMyWork, type MyWorkItem } from "@/hooks/useMyWork";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
