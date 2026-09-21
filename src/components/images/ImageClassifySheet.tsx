@@ -28,6 +28,9 @@ import {
   type LibraryImage,
 } from "@/hooks/useImageLibrary";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCategories } from "@/hooks/useCategories";
+import { createProductTarget, createResourceTarget } from "@/lib/linkTargets";
 
 const OBSERVATION_TYPES = ["Fel", "Slitage", "Saknas", "Bra exempel", "Behöver åtgärd", "Annat"];
 
@@ -70,6 +73,39 @@ export default function ImageClassifySheet({
   const [obsType, setObsType] = useState(OBSERVATION_TYPES[0]);
   const [obsComment, setObsComment] = useState("");
   const [search, setSearch] = useState("");
+  const [newCategory, setNewCategory] = useState("");
+  const [creating, setCreating] = useState(false);
+  const { data: categories = [] } = useCategories();
+
+  /** Saken eller varan finns inte ännu — den skapas här och kopplas direkt. */
+  async function createNew() {
+    const name = search.trim();
+    if (!name) return;
+    setCreating(true);
+    try {
+      if (kind === "product") {
+        if (!newCategory) {
+          toast.error("Välj kategori för den nya varan");
+          return;
+        }
+        const id = await createProductTarget(name, newCategory, image?.url ?? null);
+        setProductId(id);
+      } else {
+        const id = await createResourceTarget(name, image?.url ?? null);
+        setResourceId(id);
+      }
+      if (!title.trim()) setTitle(name);
+      qc.invalidateQueries({ queryKey: ["pick-resources"] });
+      qc.invalidateQueries({ queryKey: ["pick-products"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["resource-items"] });
+      toast.success(kind === "product" ? `Varan ${name} är skapad` : `Saken ${name} är skapad`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte skapa");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   const { data: zones = [] } = useZonesByStore(storeId);
   const { data: resources = [] } = usePickResources(kind === "resource" ? search : undefined);
