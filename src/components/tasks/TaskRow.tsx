@@ -215,7 +215,7 @@ export function TaskRow({
       </div>
 
       {open && (
-        <div className="space-y-3 border-t px-4 py-3 text-sm">
+        <div className="space-y-3 border-t border-primary/20 px-3 pb-3 pt-2.5 text-sm">
           {task.important_note && (
             <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[13px] text-amber-700">{task.important_note}</p>
           )}
