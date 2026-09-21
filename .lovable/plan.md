@@ -70,16 +70,30 @@ Väntetid         8 min  → varför?
 
 Detta används aldrig för att bedöma personer, bara för att hitta problem i processen.
 
-## Register över utrustning och material
+## Register "Utrustning & material" (generell resursmodell)
 
-Nytt register som admin sköter, gemensamt för alla butiker:
+Registret heter "Utrustning & material" för personalen, men under ytan hanterar det alla slags resurser: utrustning, redskap, verktyg, maskiner, förbrukningsmaterial, skyddsutrustning, mätinstrument, behållare och dokument.
 
-- Namn, bild, kategori, antal totalt, antal per butik, inköpspris/värde och var man köper det (leverantör + artikelnummer).
-- Plats per butik: område på butikskartan + exakt plats i klartext (ST-01, hylla S-1).
-- Söklista med filter på kategori och butik, samt "vad används den till" (uppgifterna som kräver saken).
-- Rapportera trasigt/slut finns kvar och landar på registerposten.
+Fyra saker hålls isär:
 
-Uppgiften pekar bara på saken, inte på platsen: "jag behöver städvagnen". Platsen finns på ett enda ställe i registret — flyttas städvagnen till ST-04 får alla uppgifter automatiskt rätt plats. Det är kopplingen till 5S. Fri text går fortfarande att skriva.
+```text
+STANDARDENS KRAV        Golvmopp (vad arbetet kräver)
+ ↓
+BUTIKENS RESURS         Zollikon: Vileda Professional Mop
+ ↓                      annan butik: Mopp Modell B
+PLATS                   Städstation · ST-01
+ ↓
+DAGENS UPPGIFT          vad som ska hämtas idag
+```
+
+Standarduppgiften säger bara vad som behövs — aldrig fabrikat eller plats. Varje butik kopplar kravet till sin egen sak. Därför kan alla butiker köra samma centrala arbetsstandard trots olika utrustning.
+
+Registret innehåller: namn, bild, typ, kategori, enhet, antal totalt, antal per butik, värde, leverantör och artikelnummer, om saken återanvänds, samt plats per butik (område på butikskartan + exakt plats som ST-01). Söklista med filter på typ, kategori och butik, plus "vad används den till". Rapportera trasigt/slut landar på registerposten.
+
+Platsen finns bara på ett ställe. Flyttas moppen från ST-01 till ST-04 ändras det i registret och alla uppgifter, kartor och planeringsvyer visar direkt ST-04. Det är kopplingen till 5S.
+
+Personalen ser aldrig strukturen. I Genomför står bara "Behövs: städvagn, mopp, golvmedel, varningsskylt" med knappen **Var finns det?** — då hämtas butikens faktiska saker och deras aktuella platser, med **Visa på kartan**.
+
 
 ## Väg i butiken
 
