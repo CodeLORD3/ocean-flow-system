@@ -912,7 +912,13 @@ export default function ShopOrders() {
                           const cur = tp?.currency || activeStore?.currency || "SEK";
                           const qty = Number(String(line.quantity).replace(",", ".")) || 0;
                           const committed = customerCommitted.get(line.product_id);
-                          const setQty = (v: number) => updateLine(idx, v <= 0 ? "" : String(Number(v.toFixed(1))));
+                          const isCustomerLine = line.source === "customer";
+                          const custQty = line.customerQty ?? 0;
+                          const topUp = Number(String(line.topUpQty ?? "").replace(",", ".")) || 0;
+                          const setQty = (v: number) =>
+                            isCustomerLine
+                              ? setTopUp(idx, v - custQty <= 0 ? "" : String(Number((v - custQty).toFixed(1))))
+                              : updateLine(idx, v <= 0 ? "" : String(Number(v.toFixed(1))));
                           return (
                             <div key={line.product_id} className="rounded-xl border border-border bg-background p-3 space-y-3">
                               <div className="flex items-start gap-2">
