@@ -586,9 +586,10 @@ export default function Uppgifter() {
                         onDelete={() => deleteTask(t)}
                       />
                     </div>
-                  ))}
-                </div>
-              ))}
+                   ))}
+                  </div>
+                 </div>
+               ))}
             </div>
           )}
         </TabsContent>
