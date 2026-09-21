@@ -169,7 +169,7 @@ export function ZonePickMap({
             {shapes.map(({ zone, path, mid }) => {
               const isSel = value === zone.id;
               const isChild = !!zone.parent_zone_id;
-              const color = colorOf?.(zone.id) ?? "hsl(var(--primary))";
+              const color = colorOf?.(zone.id) ?? zone.color ?? "hsl(var(--primary))";
               const num = numberOf?.(zone.id) ?? null;
               /** Textstorlek i kartans egna mått så namnen alltid går att läsa. */
               const u = view.w / 640 / zoom;
@@ -271,7 +271,7 @@ export function ZonePickMap({
       )}
 
       {selected && (
-        <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-2 rounded-lg border-2 border-primary bg-card p-3 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border-2 border-primary bg-card p-3 shadow-sm">
           <p className="text-sm">
             Valt område: <span className="font-semibold">{selected.name}</span>
           </p>
@@ -289,7 +289,7 @@ export function ZonePickMap({
                 onClick={onNext}
                 className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
               >
-                Nästa <ArrowRight className="h-4 w-4" />
+                Välj person <ArrowRight className="h-4 w-4" />
               </button>
             )}
           </div>
