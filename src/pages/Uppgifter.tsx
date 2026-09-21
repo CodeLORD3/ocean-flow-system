@@ -484,30 +484,29 @@ export default function Uppgifter() {
               )}
             </>
           )}
+            </div>
+            {plan && zones.length > 0 && (
+              <div className="lg:sticky lg:top-4">
+                <TaskZoneMap
+                  plan={plan}
+                  zones={zones}
+                  areas={areaOf}
+                  counts={zoneCounts}
+                  selected={fArea}
+                  onSelect={setFArea}
+                  onOpenZone={openZoneHere}
+                  onOpenMap={() => setTab("dag")}
+                  openLabel="Alla dagens uppgifter"
+                />
+              </div>
+            )}
+          </div>
         </TabsContent>
 
-        <TabsContent value="dag" className="space-y-4">
-          {plan && zones.length > 0 && (
-            <TaskZoneMap
-              plan={plan}
-              zones={zones}
-              areas={areaOf}
-              counts={zoneCounts}
-              selected={fArea}
-              onSelect={setFArea}
-              onOpenZone={openZoneHere}
-              chipsOnly={mapOpen}
-              onOpenMap={() => setMapOpen((v) => !v)}
-              openLabel={mapOpen ? "Dölj kartan" : "Visa hela kartan"}
-            />
-          )}
+        <TabsContent value="dag">
+          <div className="grid gap-4 lg:grid-cols-[1fr_380px] lg:items-start">
+            <div className="min-w-0 space-y-4">
 
-          {/* Butikskartan med alla funktioner — samma karta som i Översikt */}
-          {mapOpen && (
-            <Card className="p-4">
-              <StoreMap embedded openZoneId={openZoneId} onOpenZoneChange={setOpenZoneId} />
-            </Card>
-          )}
 
           <Card className="p-4">
             <Progress done={doneCount} total={tasks.length} />
