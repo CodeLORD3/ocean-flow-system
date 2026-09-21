@@ -1043,6 +1043,76 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
                         {items.length === 0 ? (
                           <p className="pl-10 py-1 text-[10px] text-muted-foreground italic">Inga produkter</p>
                         ) : (
+                          <>
+                          {/* Mobil: kort med stora knappar för inköp i handen */}
+                          <div className="md:hidden space-y-2 px-2 pb-2">
+                            {items.map((item, mi) => {
+                              const stock = stockMap.get(item.productId) || 0;
+                              const hasSufficientStock = stock >= item.totalQuantity;
+                              return (
+                                <div key={`m-${dayIndex}-${item.productName}-${mi}`} className="rounded-lg border bg-card p-3 space-y-2">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-medium leading-tight break-words">{item.productName}</p>
+                                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                                        {item.isManual ? "Manuell rad" : `${item.shops.length} butik${item.shops.length !== 1 ? "er" : ""}`}
+                                        {stock > 0 && ` · lager ${stock} ${item.unit}`}
+                                      </p>
+                                    </div>
+                                    <span className="font-mono tabular-nums text-base font-semibold whitespace-nowrap">
+                                      {item.totalQuantity} {item.unit}
+                                    </span>
+                                  </div>
+                                  {!item.isManual && (item.leadDays ?? 0) > 0 && (
+                                    <Badge variant="outline" className="text-[9px] py-0 px-1 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10">
+                                      Dagen innan
+                                    </Badge>
+                                  )}
+                                  {!item.isManual && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {item.shops.map((shop, si) => (
+                                        <Badge key={`${shop.name}-${si}`} variant="outline" className="text-[10px] py-0">
+                                          {shop.name} {shop.quantity} {item.unit}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <div className="flex gap-2">
+                                    {item.isManual ? (
+                                      <Button
+                                        variant="outline"
+                                        className="h-10 flex-1 text-xs gap-1 text-destructive border-destructive/30"
+                                        onClick={() => handleDeleteManualEntry(item.manualEntryId!, item.productName)}
+                                      >
+                                        <Trash2 className="h-4 w-4" /> Ta bort
+                                      </Button>
+                                    ) : (
+                                      <>
+                                        <Button
+                                          className="h-11 flex-1 text-sm gap-1.5"
+                                          onClick={() => handleMarkBought(item.lineIds, item.shopOrderIds, item.productName)}
+                                          disabled={boughtLoading === item.productName}
+                                        >
+                                          <Check className="h-4 w-4" /> Köpt in
+                                        </Button>
+                                        {hasSufficientStock && (
+                                          <Button
+                                            variant="outline"
+                                            className="h-11 text-xs gap-1 text-yellow-700 dark:text-yellow-400 border-yellow-500/30"
+                                            onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
+                                            disabled={useStockLoading === item.productName}
+                                          >
+                                            <PackageCheck className="h-4 w-4" /> Lager
+                                          </Button>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="hidden md:block">
                           <Table>
                             <TableHeader>
                               <TableRow>
