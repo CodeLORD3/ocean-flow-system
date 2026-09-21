@@ -901,6 +901,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
   const [undoBoughtLoading, setUndoBoughtLoading] = useState<string | null>(null);
   const handleUndoBought = async (lineIds: string[], productName: string) => {
     setUndoBoughtLoading(productName);
+    unmarkRemoved(lineIds);
     try {
       for (const lineId of lineIds) {
         await supabase.from("shop_order_lines").update({ ordered_elsewhere: null }).eq("id", lineId);
