@@ -21,6 +21,8 @@ import { thumbUrl, THUMB_FULL } from "@/lib/imageThumb";
 import { dayBadgeClass } from "@/lib/dayColor";
 import { AnnotatableImage, type ImageRegion } from "@/components/images/AnnotatableImage";
 import { useCreateCutout } from "@/hooks/useImageCutouts";
+import { useLibraryImage } from "@/hooks/useImageLibrary";
+import ImageClassifySheet from "@/components/images/ImageClassifySheet";
 import { toast } from "sonner";
 
 type Props = {
