@@ -1,7 +1,7 @@
 import { useMemo, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
-import { STATUS_CLASS, STATUS_LABEL, mediaKindLabel } from "@/lib/imageStatus";
+import { STATUS_CLASS, STATUS_LABEL, mediaKindLabel, linkTypeLabel } from "@/lib/imageStatus";
 import { StaffFace } from "@/components/staff/StaffNameAvatar";
 import { dayLabel, dayKey } from "@/lib/imageMeta";
 import { useImageLinksFor } from "@/hooks/useImageLibrary";
