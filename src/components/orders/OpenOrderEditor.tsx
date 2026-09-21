@@ -147,6 +147,56 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
       .slice(0, 8);
   }, [search, products, onOrderIds]);
 
+  /* --- Kundbeställningar som ännu inte ligger i beställningen --- */
+  const { data: customerDemand } = useCustomerDemand(order.store_id, order.desired_delivery_date || null);
+  const missingDemand = useMemo(
+    () => (customerDemand ? Array.from(customerDemand.values()) : []),
+    [customerDemand],
+  );
+  const [fillingDemand, setFillingDemand] = useState(false);
+
+  /** Lägger in kundernas varor som rader med kundmängden låst som kritisk mängd. */
+  const fillCustomerDemand = async () => {
+    if (missingDemand.length === 0) return;
+    setFillingDemand(true);
+    const now = new Date().toISOString();
+    for (const d of missingDemand) {
+      const existing = lines.find((l) => l.product_id === d.productId);
+      const product = products.find((p: any) => p.id === d.productId);
+      if (existing) {
+        await supabase
+          .from("shop_order_lines")
+          .update({
+            quantity_ordered: Number(existing.quantity_ordered || 0) + d.quantity,
+            priority: "must",
+            priority_qty: d.quantity,
+            priority_note: d.customers.slice(0, 5).join(", ") || null,
+            priority_set_by: myName,
+            priority_set_at: now,
+          } as any)
+          .eq("id", existing.id);
+      } else {
+        await supabase.from("shop_order_lines").insert({
+          shop_order_id: order.id,
+          product_id: d.productId,
+          quantity_ordered: d.quantity,
+          unit: d.unit,
+          delivery_date: order.desired_delivery_date || null,
+          order_date: purchaseDateFor(order.desired_delivery_date, product),
+          priority: "must",
+          priority_qty: d.quantity,
+          priority_note: d.customers.slice(0, 5).join(", ") || null,
+          priority_set_by: myName,
+          priority_set_at: now,
+        } as any);
+      }
+    }
+    setFillingDemand(false);
+    announce(`${myName} fyllde i kundbeställningarna`);
+    qc.invalidateQueries({ queryKey: ["customer-demand"] });
+    refresh();
+  };
+
   const addProduct = async (p: any) => {
     const { error } = await supabase.from("shop_order_lines").insert({
       shop_order_id: order.id,
