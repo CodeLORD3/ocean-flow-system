@@ -1088,6 +1088,15 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
                                                   <User className="h-2.5 w-2.5 mr-0.5" />Manuell
                                                 </Badge>
                                               )}
+                                              {!item.isManual && (item.leadDays ?? 0) > 0 && (
+                                                <Badge
+                                                  variant="outline"
+                                                  className="text-[8px] py-0 px-1 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10"
+                                                  title={`Levereras ${format(item.earliestDelivery, "EEE d/M", { locale: sv })} – ${purchaseLeadLabel(item.leadDays ?? 0)}`}
+                                                >
+                                                  Dagen innan
+                                                </Badge>
+                                              )}
                                             </span>
                                           </TableCell>
                                           <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
