@@ -133,7 +133,7 @@ const financeNav = [
   { title: "Kassa live", url: "/pos-live", icon: Radio },
   { title: "Uppgifter", url: "/uppgifter", icon: ListTodo },
   
-  { title: "Butikskarta", url: "/store-map", icon: Map },
+  { title: "Butikskarta", url: "/butikskarta", icon: Map },
 
   { title: "Datakvalitet", url: "/coverage", icon: Shield },
   { title: "Systemstatus", url: "/system-status", icon: Activity },

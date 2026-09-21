@@ -204,6 +204,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/checklist": { component: <Checklist /> },
   "/uppgifter": { component: <Uppgifter /> },
   "/store-map": { component: <StoreMap /> },
+  "/butikskarta": { component: <StoreMap mapOnly /> },
 
   "/manual": { component: <Manual /> },
   "/dagsrapport": { component: <DailyReport /> },

@@ -28,6 +28,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   "/uppgifter": all(BUTIK, GROSSIST, ADMIN),
   "/utrustning": all(BUTIK, GROSSIST, ADMIN),
   "/store-map": all(BUTIK, GROSSIST, ADMIN),
+  "/butikskarta": all(BUTIK, GROSSIST, ADMIN),
   "/schedule": all(BUTIK, GROSSIST, ADMIN),
   "/meetings": all(BUTIK, GROSSIST, ADMIN),
   "/tasks": all(BUTIK, GROSSIST, ADMIN),

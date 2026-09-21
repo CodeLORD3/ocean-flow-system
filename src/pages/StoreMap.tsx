@@ -96,10 +96,13 @@ import {
  */
 export default function StoreMap({
   embedded = false,
+  mapOnly = false,
   openZoneId = null,
   onOpenZoneChange,
 }: {
   embedded?: boolean;
+  /** Bara kartmodulen — utan översiktens knappar, statistik och bildrad. */
+  mapOnly?: boolean;
   /** Yta som föräldrasidan vill visa — kartan stannar då kvar i samma flik. */
   openZoneId?: string | null;
   onOpenZoneChange?: (zoneId: string | null) => void;
@@ -468,7 +471,7 @@ export default function StoreMap({
 
   return (
     <div className="space-y-4">
-      {!embedded && (
+      {!embedded && !mapOnly && (
         <>
           {/* Ingång till räkningen — det första en butiksanställd ser på telefon */}
           <div className="md:hidden">

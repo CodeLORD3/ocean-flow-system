@@ -37,7 +37,7 @@ import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 
 /** Butikskartan är en egen flik i menyn — hela modulen med områden, ytor och redigering. */
-const mapNav = [{ title: "Butikskarta", url: "/store-map", icon: Map }];
+const mapNav = [{ title: "Butikskarta", url: "/butikskarta", icon: Map }];
 
 const overviewNav = [
   { title: "Översikt", url: "/store-map", icon: LayoutDashboard },
@@ -124,7 +124,7 @@ export function ShopSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "
 
   const { hiddenUrls, itemOrder, sectionLabels, sectionOrder } = useStoreSidebarPrefs();
   const [customizeOpen, setCustomizeOpen] = useState(false);
-  const LOCKED_URLS = ["/store-map"];
+  const LOCKED_URLS = ["/store-map", "/butikskarta"];
 
   const visibleSections = sections
     .map((section, sIdx) => ({

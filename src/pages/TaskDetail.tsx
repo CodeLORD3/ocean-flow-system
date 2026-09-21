@@ -139,7 +139,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
     minutes: { do: parts.doWork, check: parts.check },
   });
   const routeZoneIds = route.stops.map((s) => s.zoneId).filter((z): z is string => !!z);
-  const routeUrl = `/store-map?route=${routeZoneIds.join(",")}${task ? `&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}` : ""}`;
+  const routeUrl = `/butikskarta?route=${routeZoneIds.join(",")}${task ? `&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}` : ""}`;
   const freeze = useFreezeRoute();
   const freezeCurrentRoute = () => {
     if (!task || route.stops.length === 0) return;
@@ -231,8 +231,8 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                   onClick={() =>
                     switchTab(
                       task.zone_id
-                        ? `/store-map?zone=${task.zone_id}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`
-                        : "/store-map",
+                        ? `/butikskarta?zone=${task.zone_id}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`
+                        : "/butikskarta",
                     )
                   }
                   className="inline-flex items-center gap-1 hover:text-foreground"
@@ -360,7 +360,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             photoCount={images.length}
             needs={needs}
             onShowOnMap={(zoneId) =>
-              switchTab(`/store-map?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
+              switchTab(`/butikskarta?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
             }
             onShowAllOnMap={() => switchTab(routeUrl)}
             onStarted={freezeCurrentRoute}
@@ -378,11 +378,11 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             needs={needs}
             zoneName={(zoneId) => guideZones.find((z) => z.id === zoneId)?.name ?? null}
             onShowOnMap={(zoneId) =>
-              switchTab(`/store-map?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
+              switchTab(`/butikskarta?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
             }
             onShowRoute={(zoneIds) =>
               switchTab(
-                `/store-map?route=${zoneIds.join(",")}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`,
+                `/butikskarta?route=${zoneIds.join(",")}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`,
               )
             }
           />
@@ -397,7 +397,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
               guide={guide}
               zones={guideZones}
               onShowOnMap={(zoneId) =>
-                switchTab(`/store-map?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
+                switchTab(`/butikskarta?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
               }
               onReport={(name) => {
                 setIssuePreset(name ?? null);
