@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /** En markerad del av bilden, angiven som andel av bildens bredd och höjd (0–1). */
@@ -12,8 +12,8 @@ export type RegionMark = {
   label?: string | null;
 };
 
-const COLS = 8;
-const ROWS = 6;
+/** Önskad storlek på en ruta i bildens rutnät (bildpunkter på skärmen). */
+const CELL = 34;
 
 /**
  * Bilden med ett genomskinligt rutnät ovanpå. I markeringsläget trycker man på
@@ -45,6 +45,28 @@ export function AnnotatableImage({
   const [from, setFrom] = useState<{ c: number; r: number } | null>(null);
   const [to, setTo] = useState<{ c: number; r: number } | null>(null);
   const dragging = useRef(false);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const [grid, setGrid] = useState({ cols: 12, rows: 16 });
+  const COLS = grid.cols;
+  const ROWS = grid.rows;
+
+  // Rutorna ska vara små och kvadratiska, oavsett bildens format.
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const measure = () => {
+      const { width, height } = el.getBoundingClientRect();
+      if (!width || !height) return;
+      setGrid({
+        cols: Math.max(4, Math.round(width / CELL)),
+        rows: Math.max(4, Math.round(height / CELL)),
+      });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const cells = from && to
     ? {
@@ -72,7 +94,7 @@ export function AnnotatableImage({
   const pct = (v: number) => `${v * 100}%`;
 
   return (
-    <div className="relative inline-block max-w-full align-middle">
+    <div ref={boxRef} className="relative inline-block max-w-full align-middle">
       <img
         src={src}
         alt={alt}
