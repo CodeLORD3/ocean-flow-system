@@ -8274,6 +8274,10 @@ export type Database = {
       }
       map_pins: {
         Row: {
+          area_height: number | null
+          area_width: number | null
+          area_x: number | null
+          area_y: number | null
           assigned_name: string | null
           assigned_staff_id: string | null
           body: string | null
@@ -8296,6 +8300,10 @@ export type Database = {
           zone_id: string | null
         }
         Insert: {
+          area_height?: number | null
+          area_width?: number | null
+          area_x?: number | null
+          area_y?: number | null
           assigned_name?: string | null
           assigned_staff_id?: string | null
           body?: string | null
@@ -8318,6 +8326,10 @@ export type Database = {
           zone_id?: string | null
         }
         Update: {
+          area_height?: number | null
+          area_width?: number | null
+          area_x?: number | null
+          area_y?: number | null
           assigned_name?: string | null
           assigned_staff_id?: string | null
           body?: string | null
