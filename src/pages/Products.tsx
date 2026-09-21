@@ -1612,6 +1612,26 @@ export default function Products() {
               </span>
             </label>
 
+            {/* Inköpsdag: hela färdiga varor köps samma dag, kokas/filéas den köps dagen innan */}
+            <div className="space-y-1.5 rounded-md border p-2">
+              <Label className="text-xs text-muted-foreground">Köps in innan leveransdagen</Label>
+              <Select
+                value={String(Number(form.purchase_lead_days) || 0)}
+                onValueChange={(v) => setField("purchase_lead_days", v)}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Samma dag – hel vara, klar för försäljning</SelectItem>
+                  <SelectItem value="1">Dagen innan – kokas eller filéas</SelectItem>
+                  <SelectItem value="2">Två dagar innan</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">
+                Styr vilken dag butikens beställning hamnar på i inköpsschemat. Havskräftor till onsdag köps då på tisdag.
+              </p>
+            </div>
 
             {editId ? (
               <>
