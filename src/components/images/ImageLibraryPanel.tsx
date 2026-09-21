@@ -43,6 +43,7 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
   const [detail, setDetail] = useState<LibraryImage | null>(null);
   const [editing, setEditing] = useState<LibraryImage | null>(null);
   const [quick, setQuick] = useState<ImageStatus | null>(null);
+  const [tag, setTag] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search), 300);
