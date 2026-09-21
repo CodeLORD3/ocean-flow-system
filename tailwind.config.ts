@@ -158,6 +158,8 @@ export default {
         "fade-in": "fade-in 0.4s ease-out forwards",
         "notice-flash": "notice-flash 5s ease-in-out 1 both",
         "task-alert": "task-alert 1.1s ease-in-out infinite",
+        "alert-dot": "alert-dot 1s ease-in-out infinite",
+
       },
 
     },
