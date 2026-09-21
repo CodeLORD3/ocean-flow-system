@@ -380,11 +380,20 @@ export default function StoreMap({
       },
       {
         onSuccess: (id) => {
+          const newId = id as string;
+          /* Den nya ytan visas direkt i hela kartan, markerad och redo att dras på plats. */
           setMode("redigera");
+          setAreaPage(null);
+          onOpenZoneChange?.(null);
           setView("karta");
-          setSelected({ kind: "zone", id: id as string });
-          setDraftZoneId(id as string);
+          setSelected({ kind: "zone", id: newId });
+          setFocus(parent ? { kind: "zone", id: parent.id } : { kind: "zone", id: newId });
+          setDraftZoneId(newId);
           setSheetZoneId(null);
+          toast({
+            title: parent ? `Ny yta inuti ${parent.name}` : "Nytt område skapat",
+            description: "Den är markerad i kartan — dra den på plats och tryck Spara området.",
+          });
         },
         onError: (e) =>
           toast({ title: "Kunde inte skapa området", description: (e as Error).message, variant: "destructive" }),
