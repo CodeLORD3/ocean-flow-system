@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Minus, Plus, RotateCcw } from "lucide-react";
+import { ArrowRight, Minus, Plus, RotateCcw } from "lucide-react";
 import type { FloorPlan, MapZone } from "@/hooks/useStoreMap";
 import { centroid, toPath, zonePoints } from "@/lib/mapGeometry";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ export function ZonePickMap({
   onChange,
   numberOf,
   colorOf,
+  onNext,
 }: {
   plan: FloorPlan;
   zones: MapZone[];
@@ -27,6 +28,7 @@ export function ZonePickMap({
   onChange: (zoneId: string | null) => void;
   numberOf?: (zoneId: string) => number | null;
   colorOf?: (zoneId: string) => string | null;
+  onNext?: () => void;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -61,6 +63,8 @@ export function ZonePickMap({
         }),
     [zones, depthOf],
   );
+
+  const selected = useMemo(() => zones.find((z) => z.id === value) ?? null, [zones, value]);
 
   const children = useMemo(
     () => (value ? zones.filter((z) => z.parent_zone_id === value) : []),
@@ -122,7 +126,10 @@ export function ZonePickMap({
       <div ref={boxRef} className="relative overflow-hidden rounded-lg border bg-muted/30">
         <svg
           viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-          className={cn("h-[300px] w-full touch-none", zoom > 1 && "cursor-grab")}
+          className={cn(
+            "h-[64vh] min-h-[420px] max-h-[760px] w-full touch-none",
+            zoom > 1 && "cursor-grab",
+          )}
           role="img"
           aria-label="Välj område på butikskartan"
           onPointerDown={(e) => {
@@ -164,6 +171,9 @@ export function ZonePickMap({
               const isChild = !!zone.parent_zone_id;
               const color = colorOf?.(zone.id) ?? "hsl(var(--primary))";
               const num = numberOf?.(zone.id) ?? null;
+              /** Textstorlek i kartans egna mått så namnen alltid går att läsa. */
+              const u = view.w / 640 / zoom;
+              const label = num !== null ? `${num}. ${zone.name}` : zone.name;
               return (
                 <g
                   key={zone.id}
@@ -176,32 +186,30 @@ export function ZonePickMap({
                   <polygon
                     points={path}
                     fill={color}
-                    fillOpacity={isSel ? 0.5 : isChild ? 0.22 : 0.14}
+                    fillOpacity={isSel ? 0.55 : isChild ? 0.34 : 0.26}
                     stroke={color}
-                    strokeWidth={(isSel ? 4 : 2) / zoom}
+                    strokeWidth={(isSel ? 5 : 2.5) * u}
                   />
-                  {num !== null && (
-                    <>
-                      <circle cx={mid.x} cy={mid.y - 18 / zoom} r={16 / zoom} fill={color} />
-                      <text
-                        x={mid.x}
-                        y={mid.y - 12 / zoom}
-                        textAnchor="middle"
-                        fontSize={15 / zoom}
-                        className="fill-white font-semibold"
-                      >
-                        {num}
-                      </text>
-                    </>
+                  {isSel && (
+                    <polygon
+                      points={path}
+                      fill="none"
+                      stroke="hsl(var(--foreground))"
+                      strokeWidth={2 * u}
+                      strokeDasharray={`${8 * u} ${6 * u}`}
+                    />
                   )}
                   <text
                     x={mid.x}
-                    y={mid.y + 14 / zoom}
+                    y={mid.y + 5 * u}
                     textAnchor="middle"
-                    fontSize={14 / zoom}
-                    className="fill-foreground"
+                    fontSize={15 * u}
+                    stroke="hsl(var(--card))"
+                    strokeWidth={5 * u}
+                    paintOrder="stroke"
+                    className={cn("fill-foreground", isSel ? "font-bold" : "font-semibold")}
                   >
-                    {zone.name}
+                    {label}
                   </text>
                 </g>
               );
@@ -258,6 +266,32 @@ export function ZonePickMap({
                 {c.name}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {selected && (
+        <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-2 rounded-lg border-2 border-primary bg-card p-3 shadow-sm">
+          <p className="text-sm">
+            Valt område: <span className="font-semibold">{selected.name}</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onChange(null)}
+              className="rounded-full border px-3 py-2 text-sm hover:bg-muted"
+            >
+              Ta bort valet
+            </button>
+            {onNext && (
+              <button
+                type="button"
+                onClick={onNext}
+                className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+              >
+                Nästa <ArrowRight className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
       )}
