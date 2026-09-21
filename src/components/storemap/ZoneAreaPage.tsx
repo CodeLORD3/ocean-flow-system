@@ -11,8 +11,10 @@ import {
   ChevronRight,
   Image as ImageIcon,
   ListChecks,
+  Move,
   Pencil,
   Plus,
+  Trash2,
   Tag as TagIcon,
   TriangleAlert,
   Wrench,
@@ -62,6 +64,8 @@ export function ZoneAreaPage({
   onAddChild,
   onSaveTags,
   onEditZone,
+  onEditShape,
+  onDeleteZone,
   onBack,
 }: {
   storeId: string;
@@ -85,6 +89,10 @@ export function ZoneAreaPage({
   onSaveTags?: (tags: string[]) => void;
   /** Öppnar rutan där ytans namn och färg ändras. */
   onEditZone?: (zoneId: string) => void;
+  /** Öppnar kartan så ytan kan flyttas och ändra storlek. */
+  onEditShape?: (zoneId: string) => void;
+  /** Tar bort ytan. */
+  onDeleteZone?: (zoneId: string) => void;
   onBack: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
@@ -146,8 +154,8 @@ export function ZoneAreaPage({
     <div className="space-y-3">
       {/* Vägen in: butiken → yta → underyta. Alltid synlig, alltid tryckbar. */}
       <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-        <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={onBack}>
-          <ArrowLeft className="h-3.5 w-3.5" /> Kartan
+        <Button size="sm" className="h-10 gap-2 px-4 text-sm font-semibold" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4" /> Alla områden
         </Button>
         {path.map((p, i) => (
           <span key={p.id} className="flex items-center gap-1">
@@ -188,10 +196,33 @@ export function ZoneAreaPage({
             {openIssues.length > 0 ? ` · ${openIssues.length} anm.` : ""}
           </p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
           {zone && canManage && onEditZone && (
             <Button size="sm" variant="outline" className="h-9 gap-1.5" onClick={() => onEditZone(zone.id)}>
               <Pencil className="h-4 w-4" /> Namn &amp; färg
+            </Button>
+          )}
+          {zone && canManage && onEditShape && (
+            <Button size="sm" variant="outline" className="h-9 gap-1.5" onClick={() => onEditShape(zone.id)}>
+              <Move className="h-4 w-4" /> Flytta / storlek
+            </Button>
+          )}
+          {zone && canManage && onAddChild && (
+            <Button size="sm" variant="outline" className="h-9 gap-1.5" onClick={() => onAddChild(zone.id)}>
+              <Plus className="h-4 w-4" /> Yta inuti
+            </Button>
+          )}
+          {zone && canManage && onDeleteZone && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-9 gap-1.5 text-destructive"
+              onClick={() => {
+                if (!confirm(`Ta bort ${zone.name}?`)) return;
+                onDeleteZone(zone.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4" /> Ta bort
             </Button>
           )}
           <StatusRing percent={progress.percent} status={progress.status} size={40} label={`${progress.percent}%`} />

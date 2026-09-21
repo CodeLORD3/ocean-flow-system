@@ -380,11 +380,20 @@ export default function StoreMap({
       },
       {
         onSuccess: (id) => {
+          const newId = id as string;
+          /* Den nya ytan visas direkt i hela kartan, markerad och redo att dras på plats. */
           setMode("redigera");
+          setAreaPage(null);
+          onOpenZoneChange?.(null);
           setView("karta");
-          setSelected({ kind: "zone", id: id as string });
-          setDraftZoneId(id as string);
+          setSelected({ kind: "zone", id: newId });
+          setFocus(parent ? { kind: "zone", id: parent.id } : { kind: "zone", id: newId });
+          setDraftZoneId(newId);
           setSheetZoneId(null);
+          toast({
+            title: parent ? `Ny yta inuti ${parent.name}` : "Nytt område skapat",
+            description: "Den är markerad i kartan — dra den på plats och tryck Spara området.",
+          });
         },
         onError: (e) =>
           toast({ title: "Kunde inte skapa området", description: (e as Error).message, variant: "destructive" }),
@@ -598,6 +607,25 @@ export default function StoreMap({
                 canManage && pageZone ? (tags) => saveZone.mutate({ id: pageZone.id, tags }) : undefined
               }
               onEditZone={canManage ? (id) => setSheetZoneId(id) : undefined}
+              onEditShape={canManage ? (id) => editZoneShape(id) : undefined}
+              onDeleteZone={
+                canManage
+                  ? (id) =>
+                      deleteZone.mutate(id, {
+                        onSuccess: () => {
+                          closeAreaPage();
+                          setSelected(null);
+                          toast({ title: "Ytan är borttagen" });
+                        },
+                        onError: (e) =>
+                          toast({
+                            title: "Kunde inte ta bort ytan",
+                            description: (e as Error).message,
+                            variant: "destructive",
+                          }),
+                      })
+                  : undefined
+              }
               mapSlot={
                 <div className="relative">
                 <FloorPlanCanvas
