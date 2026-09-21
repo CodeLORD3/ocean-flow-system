@@ -56,6 +56,7 @@ import { areaOf, derivePxPerMeter, formatSqm } from "@/lib/mapScale";
 import ZoneDetailsSheet from "@/components/storemap/ZoneDetailsSheet";
 import { ZONE_PALETTE, nextZoneColor } from "@/lib/mapPalette";
 import { bbox, zonePoints } from "@/lib/mapGeometry";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   useEntityImages,
   useFloorPlanImages,
