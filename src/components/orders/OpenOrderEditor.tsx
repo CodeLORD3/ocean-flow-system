@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { purchaseDateFor } from "@/lib/purchaseLead";
+import { useCustomerDemand, type CustomerDemand } from "@/hooks/useCustomerDemand";
 import { Search, X, Send, Trash2, CalendarIcon, Radio, Users, Lock, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
@@ -146,6 +147,56 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
       .filter((p: any) => !onOrderIds.has(p.id) && ((p.name || "").toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q)))
       .slice(0, 8);
   }, [search, products, onOrderIds]);
+
+  /* --- Kundbeställningar som ännu inte ligger i beställningen --- */
+  const { data: customerDemand } = useCustomerDemand(order.store_id, order.desired_delivery_date || null);
+  const missingDemand = useMemo<CustomerDemand[]>(
+    () => (customerDemand ? Array.from(customerDemand.values()) : []),
+    [customerDemand],
+  );
+  const [fillingDemand, setFillingDemand] = useState(false);
+
+  /** Lägger in kundernas varor som rader med kundmängden låst som kritisk mängd. */
+  const fillCustomerDemand = async () => {
+    if (missingDemand.length === 0) return;
+    setFillingDemand(true);
+    const now = new Date().toISOString();
+    for (const d of missingDemand) {
+      const existing = lines.find((l) => l.product_id === d.productId);
+      const product = products.find((p: any) => p.id === d.productId);
+      if (existing) {
+        await supabase
+          .from("shop_order_lines")
+          .update({
+            quantity_ordered: Number(existing.quantity_ordered || 0) + d.quantity,
+            priority: "must",
+            priority_qty: d.quantity,
+            priority_note: d.customers.slice(0, 5).join(", ") || null,
+            priority_set_by: myName,
+            priority_set_at: now,
+          } as any)
+          .eq("id", existing.id);
+      } else {
+        await supabase.from("shop_order_lines").insert({
+          shop_order_id: order.id,
+          product_id: d.productId,
+          quantity_ordered: d.quantity,
+          unit: d.unit,
+          delivery_date: order.desired_delivery_date || null,
+          order_date: purchaseDateFor(order.desired_delivery_date, product),
+          priority: "must",
+          priority_qty: d.quantity,
+          priority_note: d.customers.slice(0, 5).join(", ") || null,
+          priority_set_by: myName,
+          priority_set_at: now,
+        } as any);
+      }
+    }
+    setFillingDemand(false);
+    announce(`${myName} fyllde i kundbeställningarna`);
+    qc.invalidateQueries({ queryKey: ["customer-demand"] });
+    refresh();
+  };
 
   const addProduct = async (p: any) => {
     const { error } = await supabase.from("shop_order_lines").insert({
@@ -362,6 +413,33 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
           </div>
         )}
       </div>
+
+      {/* Kundbeställningar som ännu inte lagts in i beställningen */}
+      {!isLocked && missingDemand.length > 0 && (
+        <div className="rounded-lg border border-success/40 bg-success/10 p-3 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-success">
+              {missingDemand.length} kundbeställd {missingDemand.length === 1 ? "vara" : "varor"} saknas i beställningen
+            </p>
+            <Button size="sm" className="h-7 text-xs" disabled={fillingDemand} onClick={fillCustomerDemand}>
+              Fyll i kundbeställningarna
+            </Button>
+          </div>
+          <ul className="space-y-0.5 text-[11px] text-foreground">
+            {missingDemand.slice(0, 8).map((d) => (
+              <li key={d.productId} className="flex items-center justify-between gap-2">
+                <span className="truncate">
+                  {d.productName}
+                  {d.customers.length > 0 && <span className="text-muted-foreground"> · {d.customers.slice(0, 3).join(", ")}</span>}
+                </span>
+                <span className="font-mono tabular-nums">
+                  {d.quantity.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {d.unit}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <Separator />
 

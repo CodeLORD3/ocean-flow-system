@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { fetchPurchaseLeadDays, purchaseDateFor } from "@/lib/purchaseLead";
+import { useCustomerDemand } from "@/hooks/useCustomerDemand";
 import { createPortal } from "react-dom";
 
 /** På telefon läggs beställningsvyn som egen helskärm ovanpå allt; på dator ligger den kvar i sidan. */
@@ -78,6 +79,15 @@ type OrderLine = {
   /** Hur mycket av raden som är låst till kund (endast vid "måste med"). */
   priorityQty: string;
   priorityNote: string;
+  /** "customer" = raden kommer ur butikens kundbeställningar, annars butikens egen rad. */
+  source?: "customer" | "manual";
+  /** Mängd låst till riktig kund (ur kundbeställningarna). */
+  customerQty?: number;
+  customerNames?: string[];
+  /** Butikens egen påfyllning till kyldisken, ovanpå kundmängden. */
+  topUpQty?: string;
+  /** Sant när någon kundbeställning har en önskad dag före valt leveransdatum. */
+  late?: boolean;
 };
 
 
@@ -488,6 +498,66 @@ export default function ShopOrders() {
   const { data: customerCommitted = new Map() } = useCustomerCommitted(activeStoreId);
   const [productSearch, setProductSearch] = useState("");
   const [desiredDeliveryDate, setDesiredDeliveryDate] = useState<Date | undefined>(undefined);
+  /** Kundbeställningar till och med valt leveransdatum som ännu inte beställts in. */
+  const desiredDeliveryKey = desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : null;
+  const { data: customerDemand } = useCustomerDemand(activeStoreId, desiredDeliveryKey);
+
+  /**
+   * Fyller butikens beställning med kundernas varor så fort en leveransdag är vald.
+   * Befintlig påfyllning behålls; kundmängden ligger alltid låst på raden.
+   */
+  useEffect(() => {
+    if (!customerDemand || customerDemand.size === 0) return;
+    setOrderLines(prev => {
+      const next = [...prev];
+      let changed = false;
+      for (const d of customerDemand.values()) {
+        const idx = next.findIndex(l => l.product_id === d.productId);
+        const names = d.customers.slice(0, 5);
+        if (idx >= 0) {
+          const l = next[idx];
+          if (l.customerQty === d.quantity && l.source === "customer") continue;
+          const top =
+            l.source === "customer"
+              ? Number(String(l.topUpQty ?? "").replace(",", ".")) || 0
+              : Number(String(l.quantity ?? "").replace(",", ".")) || 0;
+          const total = d.quantity + top;
+          next[idx] = {
+            ...l,
+            source: "customer",
+            customerQty: d.quantity,
+            customerNames: names,
+            late: d.late,
+            topUpQty: top > 0 ? String(Number(top.toFixed(1))) : "",
+            quantity: String(Number(total.toFixed(1))),
+            priority: "must",
+            priorityQty: String(d.quantity),
+            priorityNote: l.priorityNote || names.join(", "),
+          };
+          changed = true;
+        } else {
+          next.push({
+            product_id: d.productId,
+            product_name: d.productName,
+            unit: d.unit,
+            quantity: String(Number(d.quantity.toFixed(1))),
+            category: d.category,
+            image_url: d.imageUrl,
+            priority: "must",
+            priorityQty: String(d.quantity),
+            priorityNote: names.join(", "),
+            source: "customer",
+            customerQty: d.quantity,
+            customerNames: names,
+            topUpQty: "",
+            late: d.late,
+          });
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [customerDemand]);
 
   // Fetch shop orders with lines
   const { data: orders = [], isLoading } = useQuery({
@@ -598,6 +668,21 @@ export default function ShopOrders() {
 
   const updateLine = (idx: number, qty: string) => {
     setOrderLines(prev => prev.map((l, i) => i === idx ? { ...l, quantity: qty } : l));
+  };
+
+  /**
+   * Butikens egen påfyllning på en kundrad. Radens totala mängd är alltid
+   * kundbeställd mängd + påfyllning, så kundens del kan aldrig skrivas bort.
+   */
+  const setTopUp = (idx: number, value: string) => {
+    setOrderLines(prev =>
+      prev.map((l, i) => {
+        if (i !== idx) return l;
+        const top = Number(String(value).replace(",", ".")) || 0;
+        const total = (l.customerQty ?? 0) + Math.max(0, top);
+        return { ...l, topUpQty: value, quantity: total > 0 ? String(Number(total.toFixed(1))) : "" };
+      }),
+    );
   };
 
   /** Sätter prioritet på en rad. "Måste med" förifylls med hela raden som kritisk mängd. */
@@ -912,7 +997,13 @@ export default function ShopOrders() {
                           const cur = tp?.currency || activeStore?.currency || "SEK";
                           const qty = Number(String(line.quantity).replace(",", ".")) || 0;
                           const committed = customerCommitted.get(line.product_id);
-                          const setQty = (v: number) => updateLine(idx, v <= 0 ? "" : String(Number(v.toFixed(1))));
+                          const isCustomerLine = line.source === "customer";
+                          const custQty = line.customerQty ?? 0;
+                          const topUp = Number(String(line.topUpQty ?? "").replace(",", ".")) || 0;
+                          const setQty = (v: number) =>
+                            isCustomerLine
+                              ? setTopUp(idx, v - custQty <= 0 ? "" : String(Number((v - custQty).toFixed(1))))
+                              : updateLine(idx, v <= 0 ? "" : String(Number(v.toFixed(1))));
                           return (
                             <div key={line.product_id} className="rounded-xl border border-border bg-background p-3 space-y-3">
                               <div className="flex items-start gap-2">
@@ -1020,7 +1111,19 @@ export default function ShopOrders() {
                                   />
                                 </div>
                               )}
-                              {committed && committed.quantity > 0 && (
+                              {isCustomerLine && (
+                                <div className="rounded-lg border border-success/40 bg-success/10 px-2.5 py-2 text-xs text-foreground space-y-1">
+                                  <p className="font-semibold text-success">
+                                    Kundbeställt {custQty.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {line.unit}
+                                    {line.customerNames && line.customerNames.length > 0 && ` – ${line.customerNames.slice(0, 3).join(", ")}`}
+                                  </p>
+                                  <p className="text-muted-foreground">
+                                    Påfyllning till kyldisken: {topUp.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {line.unit}
+                                    {line.late && " · försenad kundbeställning"}
+                                  </p>
+                                </div>
+                              )}
+                              {!isCustomerLine && committed && committed.quantity > 0 && (
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1071,6 +1174,27 @@ export default function ShopOrders() {
                               </td>
                               <td className="py-2 text-muted-foreground">{line.unit}</td>
                               <td className="py-2 text-right">
+                                {line.source === "customer" ? (
+                                  <div className="flex flex-col items-end gap-1">
+                                    <span className="font-mono tabular-nums text-sm font-semibold text-foreground">
+                                      {(Number(line.quantity) || 0).toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {line.unit}
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-[10px] text-muted-foreground">Påfyllning</span>
+                                      <Input
+                                        ref={el => { qtyRefs.current[line.product_id] = el; }}
+                                        type="number"
+                                        inputMode="decimal"
+                                        step="0.1"
+                                        value={line.topUpQty ?? ""}
+                                        onChange={e => setTopUp(idx, e.target.value)}
+                                        onFocus={e => e.currentTarget.select()}
+                                        className="h-8 w-16 text-right text-xs"
+                                        placeholder="0"
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
                                 <Input
                                   ref={el => { qtyRefs.current[line.product_id] = el; }}
                                   type="number"
@@ -1089,7 +1213,7 @@ export default function ShopOrders() {
                                   className="h-9 text-sm w-24 ml-auto text-right"
                                   placeholder="0"
                                 />
-
+                                )}
                               </td>
                               {(() => {
                                 const tp = tierPrices?.get(line.product_id);
