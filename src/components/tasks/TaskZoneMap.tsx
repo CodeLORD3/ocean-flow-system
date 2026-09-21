@@ -74,7 +74,7 @@ export function TaskZoneMap({ plan, zones, areas, counts, selected, onSelect, on
 
       <div className="bg-muted/30">
         <svg
-          viewBox={`0 0 ${plan.width} ${plan.height}`}
+          viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
           className="h-[240px] w-full sm:h-[320px]"
           role="img"
           aria-label="Butikskartan med dagens uppgifter"
