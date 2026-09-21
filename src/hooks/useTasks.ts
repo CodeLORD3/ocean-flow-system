@@ -285,7 +285,16 @@ export function useAddAdhocTask() {
         .select("id")
         .single();
       if (error) throw error;
+      if (input.assignedStaffId) {
+        await notifyTaskAssigned(
+          data.id as string,
+          input.assignedStaffId,
+          task,
+          staff ? `${staff.first_name ?? ""} ${staff.last_name ?? ""}`.trim() || null : null,
+        );
+      }
       return data.id as string;
+
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["day-tasks"] });
