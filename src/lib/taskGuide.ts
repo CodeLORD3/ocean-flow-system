@@ -5,7 +5,22 @@
  * Sparas i kolumnen guide på checklist_items och checklist_template_items.
  */
 
-export type GuideStep = { text: string; image?: string | null };
+export type GuideStep = {
+  text: string;
+  image?: string | null;
+  /** Kort videoklipp, högst ett halvt minut. */
+  video?: string | null;
+  /** Viktig punkt: det som avgör om resultatet blir rätt. */
+  keyPoint?: string;
+  /** Varför steget görs. */
+  why?: string;
+  /** Uppskattad tid för steget. */
+  minutes?: number | null;
+  /** Säkerhet att tänka på. */
+  safety?: string;
+  /** HACCP när det är relevant. */
+  haccp?: string;
+};
 export type GuideMaterial = {
   name: string;
   image?: string | null;
@@ -55,7 +70,16 @@ export function parseGuide(raw: unknown, fallbackSteps?: string[] | null): TaskG
         .map((s) =>
           typeof s === "string"
             ? { text: s, image: null }
-            : { text: str((s as any)?.text), image: str((s as any)?.image) || null },
+            : {
+                text: str((s as any)?.text),
+                image: str((s as any)?.image) || null,
+                video: str((s as any)?.video) || null,
+                keyPoint: str((s as any)?.keyPoint),
+                why: str((s as any)?.why),
+                minutes: typeof (s as any)?.minutes === "number" ? (s as any).minutes : null,
+                safety: str((s as any)?.safety),
+                haccp: str((s as any)?.haccp),
+              },
         )
         .filter((s) => s.text.trim().length > 0 || s.image)
     : (fallbackSteps ?? []).map((t) => ({ text: t, image: null }));
@@ -110,7 +134,18 @@ export function cleanGuide(g: TaskGuide): TaskGuide | null {
         zoneId: m.zoneId ?? null,
         place: (m.place ?? "").trim(),
       })),
-    steps: g.steps.filter((s) => s.text.trim() || s.image).map((s) => ({ text: s.text.trim(), image: s.image ?? null })),
+    steps: g.steps
+      .filter((s) => s.text.trim() || s.image || s.video)
+      .map((s) => ({
+        text: s.text.trim(),
+        image: s.image ?? null,
+        video: s.video ?? null,
+        keyPoint: (s.keyPoint ?? "").trim(),
+        why: (s.why ?? "").trim(),
+        minutes: s.minutes ?? null,
+        safety: (s.safety ?? "").trim(),
+        haccp: (s.haccp ?? "").trim(),
+      })),
     putBack: g.putBack.trim(),
     putBackImages: g.putBackImages.filter(Boolean),
   };
