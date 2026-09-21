@@ -18,6 +18,8 @@ type Props = {
   selected: string;
   onSelect: (zoneId: string) => void;
   onOpenMap?: () => void;
+  /** Visas kartan i egen ruta nedanför döljs den lilla översiktsbilden. */
+  chipsOnly?: boolean;
 };
 
 /**
