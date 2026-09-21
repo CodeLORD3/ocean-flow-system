@@ -136,32 +136,34 @@ export default function ImageCutoutTool({
           />
 
           <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant={asResource ? "default" : "outline"}
-              className="h-8 text-[11px]"
-              onClick={() => setAsResource(true)}
-            >
-              Skapa saken i registret
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={asResource ? "outline" : "default"}
-              className="h-8 text-[11px]"
-              onClick={() => {
-                setAsResource(false);
-                setExistingId(null);
-              }}
-            >
-              Bara en egen bild
-            </Button>
+            {(
+              [
+                { value: "resource", label: "Sak (utrustning & material)" },
+                { value: "product", label: "Vara (produktlistan)" },
+                { value: "none", label: "Bara en egen bild" },
+              ] as const
+            ).map((t) => (
+              <Button
+                key={t.value}
+                type="button"
+                size="sm"
+                variant={target === t.value ? "default" : "outline"}
+                className="h-8 text-[11px]"
+                onClick={() => {
+                  setTarget(t.value);
+                  setExistingId(null);
+                }}
+              >
+                {t.label}
+              </Button>
+            ))}
           </div>
 
-          {asResource && title.trim().length > 1 && matches.length > 0 && (
+          {target !== "none" && title.trim().length > 1 && matches.length > 0 && (
             <div className="space-y-1">
-              <p className="text-[11px] text-muted-foreground">Finns redan — koppla till:</p>
+              <p className="text-[11px] text-muted-foreground">
+                {target === "product" ? "Varan finns redan — lägg bilden här:" : "Finns redan — koppla till:"}
+              </p>
               <div className="flex flex-wrap gap-1.5">
                 {matches.slice(0, 8).map((m) => (
                   <Button
@@ -181,6 +183,25 @@ export default function ImageCutoutTool({
               </div>
             </div>
           )}
+
+          {target === "product" && !existingId && (
+            <div className="space-y-1">
+              <p className="text-[11px] text-muted-foreground">Kategori för den nya varan</p>
+              <select
+                className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="">Välj kategori</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" className="h-8 text-[11px]" onClick={reset}>
