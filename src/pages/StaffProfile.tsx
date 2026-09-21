@@ -406,7 +406,7 @@ function MyActivityCard({
     <Card className="shadow-card">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-heading flex items-center gap-2">
-          <History className="h-4 w-4 text-primary" /> Det här har jag gjort
+          <HistoryIcon className="h-4 w-4 text-primary" /> Det här har jag gjort
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
