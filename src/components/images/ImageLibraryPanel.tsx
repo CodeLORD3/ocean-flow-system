@@ -36,6 +36,7 @@ import ImageBulkBar from "./ImageBulkBar";
 import ImageClassifySheet from "./ImageClassifySheet";
 import ImageQuickClassify from "./ImageQuickClassify";
 import ImageLinksPanel from "./ImageLinksPanel";
+import ImageCutoutTool from "./ImageCutoutTool";
 import ImageActivityTimeline from "./ImageActivityTimeline";
 import AddImageFlow from "./AddImageFlow";
 import {
@@ -430,11 +431,8 @@ function ImageDetail({
 
   return (
     <div className="space-y-4">
-      <img
-        src={thumbUrl(image.url, THUMB_FULL)}
-        alt={image.title || "Bild"}
-        className="max-h-[50vh] w-full rounded-lg object-contain"
-      />
+      {/* Bilden med möjlighet att klippa ut en del till en egen bild */}
+      <ImageCutoutTool mediaId={image.id} url={image.url} alt={image.title || "Bild"} />
 
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
         <StaffFace name={image.uploaded_by_name} className="h-7 w-7 text-[10px]" />
