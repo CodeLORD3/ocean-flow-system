@@ -116,6 +116,7 @@ import { canAccessRoute } from "@/lib/pageAccess";
 import { canOpenStaffPage, staffLevelOf } from "@/lib/staffModuleAccess";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import ReturnToImageBar from "@/components/images/ReturnToImageBar";
+import PersonPage from "@/pages/PersonPage";
 
 interface RouteEntry {
   component: React.ReactNode;
@@ -244,11 +245,14 @@ export function KeepAliveTabs() {
       {tabs.map((tab) => {
         const kund = tab.path.match(/^\/customer-orders\/kund\/([^/]+)$/);
         const uppgift = tab.path.match(/^\/uppgift\/([^/]+)$/);
+        const person = tab.path.match(/^\/person\/([^/]+)$/);
         const route: RouteEntry | undefined = kund
           ? { component: <RetailCustomerProfile customerId={kund[1]} /> }
           : uppgift
             ? { component: <TaskDetail taskId={uppgift[1]} /> }
-            : ROUTE_MAP[tab.path];
+            : person
+              ? { component: <PersonPage staffId={person[1]} /> }
+              : ROUTE_MAP[tab.path];
         if (!route) return null;
 
         const isActive = tab.path === activeTab;

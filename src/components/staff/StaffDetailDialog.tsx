@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { User, Phone, Mail, MapPin, Link2, Unlink, Activity, KeyRound } from "lucide-react";
+import { User, Phone, Mail, MapPin, Link2, Unlink, Activity, KeyRound, ArrowUpRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -21,6 +22,7 @@ interface Props {
 
 export function StaffDetailDialog({ open, onOpenChange, staff }: Props) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const updateStaff = useUpdateStaff();
   const [linkEmail, setLinkEmail] = useState("");
   const [linking, setLinking] = useState(false);
@@ -164,7 +166,7 @@ export function StaffDetailDialog({ open, onOpenChange, staff }: Props) {
               {staff.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {staff.phone}</span>}
               {staff.workplace && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {staff.workplace}</span>}
             </div>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex flex-wrap items-center gap-2 mt-2">
               {staff.user_id ? (
                 <Badge className="bg-success/15 text-success border-success/30 text-[10px]">
                   <Link2 className="h-3 w-3 mr-1" /> Konto länkat
@@ -174,7 +176,19 @@ export function StaffDetailDialog({ open, onOpenChange, staff }: Props) {
                   <Unlink className="h-3 w-3 mr-1" /> Inget inloggningskonto
                 </Badge>
               )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate(`/person/${staff.id}`);
+                }}
+              >
+                <ArrowUpRight className="h-3 w-3 mr-1" /> Öppna personens sida
+              </Button>
             </div>
+
           </div>
         </div>
 

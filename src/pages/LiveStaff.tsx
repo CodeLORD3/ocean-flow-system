@@ -23,6 +23,7 @@ import { useLiveStaffDay, staffName } from "@/hooks/useLiveStaff";
 import { dateKey, formatDayHours, isToday } from "@/lib/liveStaff";
 import { buildAxis, NowLine, OpeningHoursBackdrop, TimeAxisHeader } from "@/components/livestaff/TimeAxis";
 import { StaffSegments } from "@/components/livestaff/StaffSegments";
+import { PersonLink } from "@/components/staff/StaffNameAvatar";
 import { StatusLegend } from "@/components/livestaff/StatusChip";
 import { StoreDetail } from "@/components/livestaff/StoreDetail";
 import { OnDutyAvatars } from "@/components/livestaff/OnDutyAvatars";
@@ -244,7 +245,7 @@ export default function LiveStaff() {
             <div className="space-y-1">
               {unassignedShifts.map((s) => (
                 <div key={s.id} className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="font-medium">{staffName(staffById, s.staff_id)}</span>
+                  <PersonLink name={staffName(staffById, s.staff_id)} className="font-medium" faceClassName="h-5 w-5 text-[9px]" />
                   <Badge variant="outline" className="text-[10px]">Okänd butik</Badge>
                   <span className="font-mono tabular-nums text-muted-foreground">
                     {new Date(s.clocked_in_at).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}

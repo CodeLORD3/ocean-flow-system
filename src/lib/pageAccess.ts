@@ -34,6 +34,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   "/profile": all(BUTIK, GROSSIST, ADMIN),
   "/personal": all(BUTIK, GROSSIST, ADMIN),
   "/staff": all(BUTIK, GROSSIST, ADMIN),
+  "/person": all(BUTIK, GROSSIST, ADMIN),
   "/employees": ADMIN,
   "/clock-stations": ADMIN,
   "/time-entries": ADMIN,
@@ -147,7 +148,9 @@ export function canAccessRoute(site: SiteMode, pathWithQuery: string): boolean {
     ? "/customer-orders"
     : path.startsWith("/uppgift/")
       ? "/uppgifter"
-      : path;
+      : path.startsWith("/person/")
+        ? "/person"
+        : path;
   const allowed = ROUTE_ACCESS[key];
   if (!allowed) return site === "wholesale";
   return allowed.includes(site);

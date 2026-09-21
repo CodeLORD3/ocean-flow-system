@@ -18,7 +18,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useZonesByStore } from "@/hooks/useImagePickers";
-import { StaffFace } from "@/components/staff/StaffNameAvatar";
+import { StaffFace, PersonLink } from "@/components/staff/StaffNameAvatar";
 import { dayKey, dayLabel, dayDateLabel } from "@/lib/imageMeta";
 import {
   useImageComments,
@@ -435,10 +435,13 @@ function ImageDetail({
       <ImageCutoutTool mediaId={image.id} url={image.url} alt={image.title || "Bild"} />
 
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-        <StaffFace name={image.uploaded_by_name} className="h-7 w-7 text-[10px]" />
-        <span className="font-medium text-foreground">
-          {image.uploaded_by_name || "Äldre bild"}
-        </span>
+        <PersonLink
+          name={image.uploaded_by_name}
+          className="font-medium text-foreground"
+          faceClassName="h-7 w-7 text-[10px]"
+          fallback="Äldre bild"
+        />
+
         <span>·</span>
         <span className="tabular-nums">
           {dayLabel(dayKey(taken))} {dayDateLabel(dayKey(taken))} {timeOf(taken)}

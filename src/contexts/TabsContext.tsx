@@ -76,6 +76,7 @@ const PAGE_TITLES: Record<string, string> = {
 export function getTitleForPath(path: string): string {
   if (path.startsWith("/customer-orders/kund/")) return "Kundkort";
   if (path.startsWith("/uppgift/")) return "Uppgift";
+  if (path.startsWith("/person/")) return "Person";
   return PAGE_TITLES[path] || "Sida";
 }
 

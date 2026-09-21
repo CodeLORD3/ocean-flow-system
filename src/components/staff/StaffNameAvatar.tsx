@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useStaff } from "@/hooks/useStaff";
 import { cn } from "@/lib/utils";
 
@@ -70,6 +71,46 @@ export function StaffName({
   if (!name) return <span className={className}>{fallback}</span>;
   return (
     <span className={cn("inline-flex min-w-0 items-center gap-1", className)}>
+      <StaffFace name={name} className={faceClassName} />
+      <span className="truncate">{name}</span>
+    </span>
+  );
+}
+
+/** Namn med profilbild som länkar till personens egen sida, när personen finns. */
+export function PersonLink({
+  name,
+  className,
+  faceClassName,
+  fallback = "—",
+}: {
+  name?: string | null;
+  className?: string;
+  faceClassName?: string;
+  fallback?: string;
+}) {
+  const match = useStaffByName(name);
+  const navigate = useNavigate();
+  if (!name) return <span className={className}>{fallback}</span>;
+  if (!match) return <StaffName name={name} className={className} faceClassName={faceClassName} />;
+  return (
+    <span
+      role="link"
+      tabIndex={0}
+      onClick={(e) => {
+        e.stopPropagation();
+        navigate(`/person/${match.id}`);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          navigate(`/person/${match.id}`);
+        }
+      }}
+      className={cn("inline-flex min-w-0 cursor-pointer items-center gap-1 hover:underline", className)}
+      title={`Öppna ${name}s sida`}
+    >
       <StaffFace name={name} className={faceClassName} />
       <span className="truncate">{name}</span>
     </span>
