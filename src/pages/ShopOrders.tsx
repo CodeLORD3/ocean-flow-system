@@ -1071,6 +1071,27 @@ export default function ShopOrders() {
                               </td>
                               <td className="py-2 text-muted-foreground">{line.unit}</td>
                               <td className="py-2 text-right">
+                                {line.source === "customer" ? (
+                                  <div className="flex flex-col items-end gap-1">
+                                    <span className="font-mono tabular-nums text-sm font-semibold text-foreground">
+                                      {(Number(line.quantity) || 0).toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {line.unit}
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-[10px] text-muted-foreground">Påfyllning</span>
+                                      <Input
+                                        ref={el => { qtyRefs.current[line.product_id] = el; }}
+                                        type="number"
+                                        inputMode="decimal"
+                                        step="0.1"
+                                        value={line.topUpQty ?? ""}
+                                        onChange={e => setTopUp(idx, e.target.value)}
+                                        onFocus={e => e.currentTarget.select()}
+                                        className="h-8 w-16 text-right text-xs"
+                                        placeholder="0"
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
                                 <Input
                                   ref={el => { qtyRefs.current[line.product_id] = el; }}
                                   type="number"
@@ -1089,7 +1110,7 @@ export default function ShopOrders() {
                                   className="h-9 text-sm w-24 ml-auto text-right"
                                   placeholder="0"
                                 />
-
+                                )}
                               </td>
                               {(() => {
                                 const tp = tierPrices?.get(line.product_id);
