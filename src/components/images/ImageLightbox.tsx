@@ -80,6 +80,11 @@ export function ImageLightbox({
   const [markMode, setMarkMode] = useState(false);
   const [pendingRegion, setPendingRegion] = useState<ImageRegion | null>(null);
   const [regionDraft, setRegionDraft] = useState("");
+  /** Utklipp: den markerade delen sparas som en egen bild, med eget namn. */
+  const [cutMode, setCutMode] = useState(false);
+  const [cutTitle, setCutTitle] = useState("");
+  const [cutAsResource, setCutAsResource] = useState(true);
+  const createCutout = useCreateCutout();
   /** Den markerade delen man just tittar på, så rutan lyser upp i bilden. */
   const [activeMark, setActiveMark] = useState<string | null>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
