@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import {
   Heart,
   MessageCircle,
+  Eye,
   Star,
   Trophy,
   Clock,
@@ -20,6 +21,7 @@ import { ImageLightbox } from "@/components/images/ImageLightbox";
 import ImageLibraryPanel from "@/components/images/ImageLibraryPanel";
 import { useImageFeed, type FeedImage } from "@/hooks/useImageFeed";
 import { useMyImageFavorites, useToggleImageFavorite } from "@/hooks/useEntityImages";
+import { useImageViewCounts } from "@/hooks/useImageEngagement";
 import { useAllowedStores, useSwitchStore } from "@/components/StoreSwitcher";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { dayKey, dayLabel, dayDateLabel } from "@/lib/imageMeta";
@@ -85,6 +87,10 @@ export default function ImageFeed() {
     }
     return list;
   }, [rows, source, person, onlyFavorites, favoriteIds, sort]);
+
+  /** Hur många personer som sett varje bild i flödet. */
+  const visibleIds = useMemo(() => visible.map((v) => v.id), [visible]);
+  const { data: viewCounts = {} } = useImageViewCounts(visibleIds);
 
   /** Dagar med inlägg. I "Populärast" visas allt i ett svep utan dagsindelning. */
   const days = useMemo(() => {
@@ -293,6 +299,7 @@ export default function ImageFeed() {
                     key={post.id}
                     post={post}
                     favoriteIds={favoriteIds}
+                    viewCounts={viewCounts}
                     onOpen={setLightboxId}
                     onToggleFavorite={(id, favorite) =>
                       toggleFavorite.mutate({ imageId: id, favorite })
@@ -378,6 +385,7 @@ function toPosts(items: FeedImage[], group: boolean): FeedPost[] {
 function PostCard({
   post,
   favoriteIds,
+  viewCounts,
   onOpen,
   onToggleFavorite,
   onPerson,
@@ -385,6 +393,7 @@ function PostCard({
 }: {
   post: FeedPost;
   favoriteIds: string[];
+  viewCounts: Record<string, number>;
   onOpen: (id: string) => void;
   onToggleFavorite: (id: string, favorite: boolean) => void;
   onPerson: (name: string) => void;
@@ -502,6 +511,13 @@ function PostCard({
               <MessageCircle className="h-[18px] w-[18px]" />
               <span className="tabular-nums">{img.commentCount || 0}</span>
             </button>
+            <span
+              className="flex h-9 items-center gap-1.5 rounded-full px-2 text-sm font-medium text-white"
+              title={`${viewCounts[img.id] ?? 0} har sett bilden`}
+            >
+              <Eye className="h-[18px] w-[18px]" />
+              <span className="tabular-nums">{viewCounts[img.id] ?? 0}</span>
+            </span>
           </div>
           <div className="flex flex-col items-end gap-1.5">
             {count > 1 && (

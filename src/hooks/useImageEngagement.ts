@@ -34,6 +34,33 @@ export function useImageEngagement(mediaId?: string | null) {
   });
 }
 
+/** Antal personer som sett var och en av bilderna i listan. */
+export function useImageViewCounts(mediaIds: string[]) {
+  const key = [...mediaIds].sort().join(",");
+  return useQuery({
+    queryKey: ["image-view-counts", key],
+    queryFn: async () => {
+      const counts: Record<string, number> = {};
+      if (!mediaIds.length) return counts;
+      const chunkSize = 200;
+      for (let i = 0; i < mediaIds.length; i += chunkSize) {
+        const chunk = mediaIds.slice(i, i + chunkSize);
+        const { data, error } = await supabase
+          .from("image_views")
+          .select("media_id")
+          .in("media_id", chunk);
+        if (error) throw error;
+        (data ?? []).forEach((r) => {
+          counts[r.media_id] = (counts[r.media_id] ?? 0) + 1;
+        });
+      }
+      return counts;
+    },
+    enabled: mediaIds.length > 0,
+    staleTime: 30_000,
+  });
+}
+
 /** Registrerar att den inloggade personen har sett bilden. Räknas bara en gång. */
 export function useRecordImageView() {
   const qc = useQueryClient();
