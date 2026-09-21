@@ -144,6 +144,11 @@ export function ImageLightbox({
     [comments],
   );
   const markNumber = useMemo(() => new Map(marks.map((m) => [m.id, m.number])), [marks]);
+  /** Rutorna som ritas i bilden: alla när man valt det, annars bara den man tryckt på. */
+  const visibleMarks = useMemo(
+    () => (showMarks ? marks : marks.filter((m) => m.id === activeMark)),
+    [marks, showMarks, activeMark],
+  );
 
   const saveRegionComment = async () => {
     const v = regionDraft.trim();
