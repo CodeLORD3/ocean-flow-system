@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AnnotatableImage, type ImageRegion } from "@/components/images/AnnotatableImage";
-import { usePickResources } from "@/hooks/useImagePickers";
+import { usePickProducts, usePickResources } from "@/hooks/useImagePickers";
 import { useCreateCutout } from "@/hooks/useImageCutouts";
+import { useCategories } from "@/hooks/useCategories";
 
 /**
  * Klipp ut en del av bilden till en egen bild.

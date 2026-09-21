@@ -192,6 +192,8 @@ export function useCreateCutout() {
       qc.invalidateQueries({ queryKey: ["image-feed"] });
       qc.invalidateQueries({ queryKey: ["entity-images"] });
       qc.invalidateQueries({ queryKey: ["resource-items"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["pick-products"] });
       qc.invalidateQueries({ queryKey: ["resource-item-photos"] });
     },
   });
