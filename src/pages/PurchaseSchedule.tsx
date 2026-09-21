@@ -865,13 +865,15 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
   // ── "Köpt" handler ──
   const handleMarkBought = async (lineIds: string[], shopOrderIds: string[], productName: string) => {
     setBoughtLoading(productName);
+    markRemoved(lineIds);
     try {
       for (const lineId of lineIds) {
         await supabase.from("shop_order_lines").update({ ordered_elsewhere: "Köpt" }).eq("id", lineId);
       }
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
-      toast.success(`"${productName}" markerad som köpt.`);
+      toast.success(`"${productName}" köpt in och struken ur inköpslistan.`);
     } catch (err) {
+      unmarkRemoved(lineIds);
       toast.error("Kunde inte uppdatera.");
     } finally {
       setBoughtLoading(null);
