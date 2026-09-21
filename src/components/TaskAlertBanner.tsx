@@ -12,6 +12,7 @@ import { getTitleForPath } from "@/contexts/TabsContext";
 export function TaskAlertBanner() {
   const { alerts, dismiss, dismissAll } = useMyTaskAlerts();
   const navigate = useNavigate();
+  const location = useLocation();
   if (!alerts.length) return null;
 
   return (
@@ -31,7 +32,13 @@ export function TaskAlertBanner() {
             className="h-9 text-xs"
             onClick={() => {
               dismiss(a.id);
-              navigate(`/uppgifter?markera=${a.id}`);
+              navigate(
+                withReturn(
+                  `/uppgifter?markera=${a.id}`,
+                  `${location.pathname}${location.search}`,
+                  getTitleForPath(location.pathname),
+                ),
+              );
             }}
           >
             Öppna uppgiften
