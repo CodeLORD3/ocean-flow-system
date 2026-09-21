@@ -177,6 +177,10 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
           selectedIds={selected}
           onSelectedChange={setSelected}
           onOpen={(i) => setDetail(rows[i])}
+          onTagClick={(t) => {
+            setTag(t);
+            setTab("all");
+          }}
         />
       )}
 
