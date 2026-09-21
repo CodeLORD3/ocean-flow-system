@@ -38,6 +38,7 @@ export function ZoneAreaPage({
   canManage,
   zoneNumber,
   areaLabel,
+  mapSlot,
   onBack,
 }: {
   storeId: string;
