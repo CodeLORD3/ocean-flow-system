@@ -409,6 +409,7 @@ export default function Products() {
     image_url: "",
     latin_name: "",
     requires_processing: false,
+    purchase_lead_days: "0",
     allergens: [] as string[],
     may_contain: [] as string[],
     allergens_checked: false,
@@ -489,6 +490,7 @@ export default function Products() {
       image_url: "",
       latin_name: "",
       requires_processing: false,
+      purchase_lead_days: "0",
       allergens: [],
       may_contain: [],
       allergens_checked: false,
@@ -517,6 +519,7 @@ export default function Products() {
       image_url: (p as any).image_url || "",
       latin_name: (p as any).latin_name || "",
       requires_processing: Boolean((p as any).requires_processing),
+      purchase_lead_days: String((p as any).purchase_lead_days ?? 0),
       allergens: ((p as any).allergens || []) as string[],
       may_contain: ((p as any).may_contain || []) as string[],
       allergens_checked: Boolean((p as any).allergens_checked),
@@ -576,6 +579,8 @@ export default function Products() {
       image_url: form.image_url.trim() || null,
       latin_name: form.latin_name.trim() || null,
       requires_processing: form.requires_processing,
+      // 0 = köps samma dag som leverans, 1 = kokas/filéas och köps dagen innan.
+      purchase_lead_days: Math.max(0, Number(form.purchase_lead_days) || 0),
       allergens: form.allergens || [],
       may_contain: form.may_contain || [],
       allergens_checked: true,
@@ -1607,6 +1612,26 @@ export default function Products() {
               </span>
             </label>
 
+            {/* Inköpsdag: hela färdiga varor köps samma dag, kokas/filéas den köps dagen innan */}
+            <div className="space-y-1.5 rounded-md border p-2">
+              <Label className="text-xs text-muted-foreground">Köps in innan leveransdagen</Label>
+              <Select
+                value={String(Number(form.purchase_lead_days) || 0)}
+                onValueChange={(v) => setField("purchase_lead_days", v)}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Samma dag – hel vara, klar för försäljning</SelectItem>
+                  <SelectItem value="1">Dagen innan – kokas eller filéas</SelectItem>
+                  <SelectItem value="2">Två dagar innan</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">
+                Styr vilken dag butikens beställning hamnar på i inköpsschemat. Havskräftor till onsdag köps då på tisdag.
+              </p>
+            </div>
 
             {editId ? (
               <>

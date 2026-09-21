@@ -28,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useManualScheduleEntries } from "@/hooks/useManualScheduleEntries";
 import { useProducts } from "@/hooks/useProducts";
+import { purchaseDateFor, purchaseLeadDays, purchaseLeadLabel } from "@/lib/purchaseLead";
 
 const WEEKDAYS = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 const WEEKDAY_OPTIONS = WEEKDAYS.map((name, i) => ({ value: i + 1, label: name }));
@@ -467,6 +468,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
       deliveryDate: Date;
       departureDate: Date;
       purchaseDate: Date;
+      leadDays: number;
       departureTime: string;
       category: string;
       lineId: string;
@@ -500,7 +502,14 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
         const departureDate = deliveryDate;
         const isoWeekday = deliveryDate.getDay() === 0 ? 7 : deliveryDate.getDay();
         const matchingSchedule = schedules.find(s => s.departure_weekday === isoWeekday) || schedules[0];
-        const purchaseDate = line.order_date ? parseISO(line.order_date) : departureDate;
+        // Varan bestämmer inköpsdagen: kokas/filéas den köps dagen innan leverans.
+        const leadDays = purchaseLeadDays(line.products as any);
+        const autoPurchase = purchaseDateFor(deliveryDateStr, leadDays);
+        const purchaseDate = line.order_date
+          ? parseISO(line.order_date)
+          : autoPurchase
+          ? parseISO(autoPurchase)
+          : departureDate;
 
         rawItems.push({
           storeName: store.name,
@@ -513,6 +522,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
           deliveryDate,
           departureDate,
           purchaseDate,
+          leadDays,
           departureTime: matchingSchedule.departure_time,
           category: line.products?.category || "Övrigt",
           lineId: line.id,
@@ -532,6 +542,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
       shops: { name: string; zoneKey: string; quantity: number; deliveryDate: Date; packed?: boolean }[];
       departureDate: Date;
       purchaseDate: Date;
+      leadDays?: number;
       earliestDelivery: Date;
       departureTime: string;
       category: string;
@@ -566,6 +577,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
           shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate, packed: item.packed }],
           departureDate: item.departureDate,
           purchaseDate: item.purchaseDate,
+          leadDays: item.leadDays,
           earliestDelivery: item.deliveryDate,
           departureTime: item.departureTime,
           category: item.category,
@@ -1074,6 +1086,15 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
                                               {item.isManual && (
                                                 <Badge variant="outline" className="text-[8px] py-0 px-1 border-primary/40 text-primary bg-primary/5">
                                                   <User className="h-2.5 w-2.5 mr-0.5" />Manuell
+                                                </Badge>
+                                              )}
+                                              {!item.isManual && (item.leadDays ?? 0) > 0 && (
+                                                <Badge
+                                                  variant="outline"
+                                                  className="text-[8px] py-0 px-1 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10"
+                                                  title={`Levereras ${format(item.earliestDelivery, "EEE d/M", { locale: sv })} – ${purchaseLeadLabel(item.leadDays ?? 0)}`}
+                                                >
+                                                  Dagen innan
                                                 </Badge>
                                               )}
                                             </span>
