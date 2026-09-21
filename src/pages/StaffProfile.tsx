@@ -353,8 +353,14 @@ export default function StaffProfile() {
           </CardContent>
         </Card>
       </div>
+      </Section>
 
-      {/* Historik */}
+      <Section title="Det här ska jag göra" icon={ListChecks} note="Uppgifter som är tilldelade mig">
+        <MyWorkCard staffId={staff.id} stores={stores} />
+      </Section>
+
+      <Section title="Min tid" icon={Clock} note="Stämplingar de senaste dagarna">
+
       <Card className="shadow-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-heading flex items-center gap-2">
