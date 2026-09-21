@@ -342,6 +342,33 @@ export default function CustomerOrders() {
     return [...set];
   }, [searching, viewOrders]);
 
+  /**
+   * Kommer man hit från min sida eller en bild (?markera=<order>) fälls
+   * beställningen ut, rullas fram och lyser upp en stund så man ser exakt
+   * vilken rad det gäller.
+   */
+  const [searchParams] = useSearchParams();
+  const markeraId = searchParams.get("markera");
+  const [highlightOrder, setHighlightOrder] = useState<string | null>(null);
+  useEffect(() => {
+    if (!markeraId) return;
+    setHighlightOrder(markeraId);
+    setOpenRows((cur) => (cur.includes(markeraId) ? cur : [...cur, markeraId]));
+    const timers = [400, 1200].map((ms) =>
+      setTimeout(() => {
+        document
+          .getElementById(`kundorder-${markeraId}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, ms),
+    );
+    const clear = setTimeout(() => setHighlightOrder(null), 6000);
+    return () => {
+      timers.forEach(clearTimeout);
+      clearTimeout(clear);
+    };
+  }, [markeraId]);
+
+
 
 
   const markedOrders = viewOrders.filter((o) => marked.includes(o.id));
