@@ -6418,6 +6418,38 @@ export type Database = {
           },
         ]
       }
+      image_views: {
+        Row: {
+          created_at: string
+          id: string
+          media_id: string
+          user_id: string | null
+          viewer_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          media_id: string
+          user_id?: string | null
+          viewer_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          media_id?: string
+          user_id?: string | null
+          viewer_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_views_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "entity_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       important_papers: {
         Row: {
           card_brand: string | null
