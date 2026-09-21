@@ -117,6 +117,14 @@ export default function Uppgifter() {
 
   /** Hela butikskartan kan fällas ut i uppgiftslistan. */
   const [mapOpen, setMapOpen] = useState(false);
+  /** Ytan som visas i kartan här inne — kartan lämnar aldrig Uppgifter. */
+  const [openZoneId, setOpenZoneId] = useState<string | null>(null);
+  /** Öppnar ytans egen sida inne i uppgiftsfliken i stället för att byta flik. */
+  const openZoneHere = (zoneId: string) => {
+    setOpenZoneId(zoneId);
+    setMapOpen(true);
+    setTab("dag");
+  };
 
   const [tab, setTab] = useState("mina");
   const { data: checklists = [] } = useChecklistTemplates(storeId);
@@ -478,7 +486,7 @@ export default function Uppgifter() {
               counts={zoneCounts}
               selected={fArea}
               onSelect={setFArea}
-              onOpenZone={(id) => switchTab(`/store-map?zone=${id}`)}
+              onOpenZone={openZoneHere}
               onOpenMap={() => setTab("dag")}
               openLabel="Alla dagens uppgifter"
             />
@@ -558,7 +566,7 @@ export default function Uppgifter() {
               counts={zoneCounts}
               selected={fArea}
               onSelect={setFArea}
-              onOpenZone={(id) => switchTab(`/store-map?zone=${id}`)}
+              onOpenZone={openZoneHere}
               chipsOnly={mapOpen}
               onOpenMap={() => setMapOpen((v) => !v)}
               openLabel={mapOpen ? "Dölj kartan" : "Visa hela kartan"}
@@ -568,7 +576,7 @@ export default function Uppgifter() {
           {/* Butikskartan med alla funktioner — samma karta som i Översikt */}
           {mapOpen && (
             <Card className="p-4">
-              <StoreMap embedded />
+              <StoreMap embedded openZoneId={openZoneId} onOpenZoneChange={setOpenZoneId} />
             </Card>
           )}
 

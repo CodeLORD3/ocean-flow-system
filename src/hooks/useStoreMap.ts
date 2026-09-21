@@ -50,6 +50,10 @@ export type MapZone = {
   description: string | null;
   /** Polygon i planens koordinater. Saknas den används rektangeln ovan. */
   points: { x: number; y: number }[] | null;
+  /** Ytan ligger inuti den här ytan. Tom betyder att den ligger direkt i butiken. */
+  parent_zone_id: string | null;
+  /** Egna taggar i fritext, t.ex. fiskdisk, kyla, vakuum. */
+  tags: string[] | null;
 };
 
 export type MapObjectType = {
@@ -365,6 +369,9 @@ export function useSaveZone() {
           y: input.y ?? 40,
           width: input.width ?? 200,
           height: input.height ?? 150,
+          points: (input.points ?? null) as never,
+          parent_zone_id: input.parent_zone_id ?? null,
+          tags: input.tags ?? [],
         })
         .select("id")
         .single();
