@@ -265,6 +265,32 @@ export function ZonePickMap({
           </div>
         </div>
       )}
+
+      {selected && (
+        <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-2 rounded-lg border-2 border-primary bg-card p-3 shadow-sm">
+          <p className="text-sm">
+            Valt område: <span className="font-semibold">{selected.name}</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onChange(null)}
+              className="rounded-full border px-3 py-2 text-sm hover:bg-muted"
+            >
+              Ta bort valet
+            </button>
+            {onNext && (
+              <button
+                type="button"
+                onClick={onNext}
+                className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+              >
+                Nästa <ArrowRight className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
