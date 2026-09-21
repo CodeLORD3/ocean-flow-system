@@ -617,9 +617,13 @@ export function NewTaskDialog({
             variant="outline"
             size="lg"
             className="h-12"
-            onClick={() => (step === 1 ? onOpenChange(false) : setStep(step - 1))}
+            onClick={() => {
+              if (step > 1) return setStep(step - 1);
+              if (mode !== null) return setMode(null);
+              onOpenChange(false);
+            }}
           >
-            <ArrowLeft className="mr-1 h-5 w-5" /> {step === 1 ? "Avbryt" : "Tillbaka"}
+            <ArrowLeft className="mr-1 h-5 w-5" /> {step === 1 && mode === null ? "Avbryt" : "Tillbaka"}
           </Button>
           {step < 3 ? (
             <Button size="lg" className="h-12" onClick={() => setStep(step + 1)} disabled={!task.trim()}>
