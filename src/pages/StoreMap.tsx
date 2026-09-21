@@ -43,6 +43,7 @@ import { AreaMiniMap } from "@/components/storemap/AreaMiniMap";
 import { ZoneTagsPanel } from "@/components/storemap/ZoneTagsPanel";
 import { childZones, tagsOf, zoneMatches, zonePath } from "@/lib/zoneTree";
 import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MapListViews } from "@/components/storemap/MapListViews";
 import { StoreMapHeader } from "@/components/storemap/StoreMapHeader";
 import { OverviewStatsBar } from "@/components/storemap/OverviewStatsBar";
