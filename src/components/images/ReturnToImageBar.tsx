@@ -1,23 +1,40 @@
 import { ArrowLeft } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { previousNav, popNav, subscribeNav, type NavEntry } from "@/lib/navHistory";
 
 /**
- * Tydlig väg tillbaka dit man kom ifrån. Visas överst på sidan så länge
- * adressen har ?frombild=<bild-id> (tillbaka till bilden) eller
- * ?retur=<sökväg>&returtext=<namn> (tillbaka till t.ex. min sida), på samma
- * sätt som man går tillbaka från en enskild kundbeställning till listan.
+ * Tydlig väg tillbaka dit man kom ifrån — på varje sida i systemet.
+ *
+ * Tre fall, i den ordningen:
+ *  1. ?frombild=<bild-id> — tillbaka till bilden man tryckte sig vidare från
+ *  2. ?retur=<sökväg>&returtext=<namn> — en väg tillbaka som länken bestämt
+ *  3. annars sidan man senast stod på (navigeringskedjan)
  */
 export default function ReturnToImageBar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [prev, setPrev] = useState<NavEntry | null>(() => previousNav());
+
+  useEffect(() => {
+    const update = () => setPrev(previousNav());
+    update();
+    return subscribeNav(update);
+  }, [location.pathname, location.search]);
+
   const params = new URLSearchParams(location.search);
   const bildId = params.get("frombild");
   const retur = params.get("retur");
-  if (!bildId && !retur) return null;
 
-  const to = bildId ? `/image-feed?bild=${bildId}` : retur!;
-  const label = bildId ? "Tillbaka till bilden" : `Tillbaka till ${params.get("returtext") || "föregående sida"}`;
+  const to = bildId ? `/image-feed?bild=${bildId}` : retur || prev?.url;
+  if (!to) return null;
+
+  const label = bildId
+    ? "Tillbaka till bilden"
+    : retur
+      ? `Tillbaka till ${params.get("returtext") || "föregående sida"}`
+      : `Tillbaka till ${prev?.title || "föregående sida"}`;
 
   return (
     <div className="sticky top-0 z-40 border-b bg-background/95 px-3 py-1.5 backdrop-blur">
@@ -25,7 +42,10 @@ export default function ReturnToImageBar() {
         variant="ghost"
         size="sm"
         className="h-8 gap-1.5 px-2 text-sm font-medium"
-        onClick={() => navigate(to)}
+        onClick={() => {
+          if (!bildId && !retur) popNav();
+          navigate(to);
+        }}
       >
         <ArrowLeft className="h-4 w-4" />
         {label}
