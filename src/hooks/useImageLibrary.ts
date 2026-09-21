@@ -316,11 +316,19 @@ export async function classifyImage(input: ClassifyInput) {
     patch.media_kind = input.mediaKind || null;
     changes.push({ field: "vad bilden visar", old: prev.media_kind, next: input.mediaKind || null });
   }
-  if (input.tags) {
+  // Namnet blir automatiskt en tagg, så att bilder med samma namn hittar
+  // varandra och kan sökas fram via taggen.
+  const baseTags = input.tags ?? prev.tags ?? [];
+  const nextTags = [...baseTags];
+  const titleTag = (input.title ?? prev.title ?? "").trim();
+  if (titleTag && !nextTags.some((t) => t.toLowerCase() === titleTag.toLowerCase())) {
+    nextTags.push(titleTag);
+  }
+  {
     const oldTags = (prev.tags || []).join(", ");
-    const newTags = input.tags.join(", ");
+    const newTags = nextTags.join(", ");
     if (oldTags !== newTags) {
-      patch.tags = input.tags;
+      patch.tags = nextTags;
       changes.push({ field: "taggar", old: oldTags || null, next: newTags || null });
     }
   }
