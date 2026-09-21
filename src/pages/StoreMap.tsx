@@ -229,7 +229,6 @@ export default function StoreMap() {
   const fromZone = fromZoneId ? zones.find((z) => z.id === fromZoneId) ?? null : null;
 
   /** Arbetsvägen från en uppgift: stoppen i ordning, ritas som brickor i kartan. */
-  // (definieras nedan, och kartan öppnas direkt när en väg ska visas)
   const routeStops = useMemo(() => {
     const raw = searchParams.get("route");
     if (!raw) return [] as { zoneId: string }[];
