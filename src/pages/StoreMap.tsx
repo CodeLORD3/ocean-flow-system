@@ -1034,7 +1034,17 @@ export default function StoreMap({
             </div>
           </div>
 
-          {/* Höger panel: bara i redigeringsläget, annars ligger kartan i full bredd */}
+          {/* Verktygen ligger utanför sidan i redigeringsläget och dras ut med knappen */}
+          {editMode && (
+            <Button
+              size="sm"
+              className="fixed right-0 top-1/3 z-40 h-11 gap-1 rounded-l-full rounded-r-none px-4 shadow-lg"
+              onClick={() => setToolsOpen(true)}
+            >
+              <Pencil className="h-4 w-4" /> Verktyg
+            </Button>
+          )}
+
           {editMode && (
           <Sheet open={toolsOpen} onOpenChange={setToolsOpen}>
             <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
