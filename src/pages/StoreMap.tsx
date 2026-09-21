@@ -705,7 +705,7 @@ export default function StoreMap({
           }}
         />
       ) : (
-        <div className={`grid gap-4 ${editMode ? "lg:grid-cols-[1fr_340px]" : ""}`}>
+        <div className="grid gap-4">
           <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
             {/* Kartans egen rad: bara det man behöver, resten ligger i redigeringsläget */}
             <div className="flex flex-wrap items-center gap-3 border-b border-border px-3 py-2">
