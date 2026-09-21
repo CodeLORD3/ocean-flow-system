@@ -91,6 +91,8 @@ export function ImageLightbox({
   const createCutout = useCreateCutout();
   /** Den markerade delen man just tittar på, så rutan lyser upp i bilden. */
   const [activeMark, setActiveMark] = useState<string | null>(null);
+  /** Redigera bildens namn, beskrivning, taggar och var den hör hemma. */
+  const [editOpen, setEditOpen] = useState(false);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const draftRef = useRef<HTMLInputElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
