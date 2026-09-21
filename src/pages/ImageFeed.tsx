@@ -88,6 +88,10 @@ export default function ImageFeed() {
     return list;
   }, [rows, source, person, onlyFavorites, favoriteIds, sort]);
 
+  /** Hur många personer som sett varje bild i flödet. */
+  const visibleIds = useMemo(() => visible.map((v) => v.id), [visible]);
+  const { data: viewCounts = {} } = useImageViewCounts(visibleIds);
+
   /** Dagar med inlägg. I "Populärast" visas allt i ett svep utan dagsindelning. */
   const days = useMemo(() => {
     if (sort === "popular") return [["", toPosts(visible, false)]] as [string, FeedPost[]][];
