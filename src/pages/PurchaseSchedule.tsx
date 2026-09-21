@@ -468,6 +468,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
       deliveryDate: Date;
       departureDate: Date;
       purchaseDate: Date;
+      leadDays: number;
       departureTime: string;
       category: string;
       lineId: string;
