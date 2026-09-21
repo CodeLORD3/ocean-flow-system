@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check, Printer, CheckSquare, Truck, ChevronDown, ChevronRight, Undo2 } from "lucide-react";
+import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check, Printer, CheckSquare, Truck, ChevronDown, ChevronRight, Undo2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,6 +26,8 @@ import {
   useCustomerOrderTabCounts,
   useMoveCustomerOrders,
   useSetDeliveryRun,
+  useDuplicateCustomerOrders,
+
 } from "@/hooks/useCustomerOrders";
 import { toast } from "sonner";
 import {
@@ -243,6 +245,31 @@ export default function CustomerOrders() {
     );
   };
 
+  /* Kopiera beställningar till ett nytt datum. Kopian är en ny, aktuell
+     beställning — originalet ligger kvar där det låg, t.ex. i arkivet. */
+  const duplicateOrders = useDuplicateCustomerOrders();
+  const copyTo = (date: string) => {
+    const list = marked.filter(Boolean);
+    if (list.length === 0) return;
+    duplicateOrders.mutate(
+      { ids: list, date },
+      {
+        onSuccess: () => {
+          toast.success(
+            list.length === 1
+              ? `Kopian lades in på ${dayLabel(date)}`
+              : `${list.length} kopior lades in på ${dayLabel(date)}`,
+          );
+          setMarked([]);
+          setTab("alla");
+        },
+        onError: (e: any) => toast.error(e?.message ?? "Kunde inte kopiera beställningen"),
+      },
+    );
+  };
+
+
+
   /* Utkörning: beställningar som är lastade på bilen samlas i en egen,
      ihopfällbar grupp per dag så butikspersonalen bara ser sitt eget kvar. */
   const setDeliveryRun = useSetDeliveryRun();
@@ -442,7 +469,7 @@ export default function CustomerOrders() {
           </Button>
         )}
         {/* Flytta markerade till ett annat datum — fungerar även på mobil där man inte kan dra. */}
-        {canEdit && marked.length > 0 && (
+        {canEdit && marked.length > 0 && !isArchiveView && tab !== "borttagna" && (
           <div className="flex items-center gap-2 rounded-sm border border-grid-line bg-card px-3 py-1.5">
             <span className="whitespace-nowrap text-xs font-semibold">
               Flytta {marked.length} till
@@ -455,6 +482,22 @@ export default function CustomerOrders() {
             />
           </div>
         )}
+        {/* Kopiera markerade beställningar till ett nytt datum. Originalet ligger kvar. */}
+        {canEdit && marked.length > 0 && (
+          <div className="flex items-center gap-2 rounded-sm border border-grid-line bg-card px-3 py-1.5">
+            <Copy className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="whitespace-nowrap text-xs font-semibold">
+              Kopiera {marked.length} till
+            </span>
+            <Input
+              type="date"
+              className="h-10 w-[9.5rem] text-sm"
+              disabled={duplicateOrders.isPending}
+              onChange={(e) => e.target.value && copyTo(e.target.value)}
+            />
+          </div>
+        )}
+
         {/* Bulkutskrift: markera alla (eller några) och skriv ut packlistan i ett svep. */}
         {panel === "orders" && viewOrders.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
