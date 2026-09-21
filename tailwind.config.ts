@@ -137,9 +137,14 @@ export default {
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "task-alert": {
-          "0%, 100%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0.15)", borderColor: "hsl(var(--primary) / 0.5)" },
-          "50%": { boxShadow: "0 0 0 6px hsl(var(--primary) / 0.28)", borderColor: "hsl(var(--primary))" },
+          "0%, 100%": { boxShadow: "0 0 0 0 hsl(var(--destructive) / 0.2)", borderColor: "hsl(var(--destructive) / 0.55)" },
+          "50%": { boxShadow: "0 0 0 8px hsl(var(--destructive) / 0.35)", borderColor: "hsl(var(--destructive))" },
         },
+        "alert-dot": {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.35", transform: "scale(1.25)" },
+        },
+
         "notice-flash": {
           "0%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0)", backgroundColor: "hsl(var(--primary) / 0)" },
           "12%": { boxShadow: "0 0 0 3px hsl(var(--primary) / 0.55)", backgroundColor: "hsl(var(--primary) / 0.12)" },
@@ -153,6 +158,8 @@ export default {
         "fade-in": "fade-in 0.4s ease-out forwards",
         "notice-flash": "notice-flash 5s ease-in-out 1 both",
         "task-alert": "task-alert 1.1s ease-in-out infinite",
+        "alert-dot": "alert-dot 1s ease-in-out infinite",
+
       },
 
     },
