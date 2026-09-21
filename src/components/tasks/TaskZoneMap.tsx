@@ -80,7 +80,7 @@ export function TaskZoneMap({
           )}
           {onOpenMap && (
             <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onOpenMap}>
-              Öppna butikskartan
+              {openLabel ?? "Öppna butikskartan"}
             </Button>
           )}
         </div>
