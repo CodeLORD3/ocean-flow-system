@@ -40,6 +40,7 @@ import { useStaffAuth } from "@/contexts/StaffAuthContext";
 const mapNav = [{ title: "Butikskarta", url: "/store-map", icon: Map }];
 
 const overviewNav = [
+  { title: "Översikt", url: "/store-map", icon: LayoutDashboard },
   { title: "Bildflöde", url: "/image-feed", icon: Images },
 
   { title: "Uppgifter", url: "/uppgifter", icon: ListTodo },
