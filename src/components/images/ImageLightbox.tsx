@@ -91,6 +91,8 @@ export function ImageLightbox({
   const createCutout = useCreateCutout();
   /** Den markerade delen man just tittar på, så rutan lyser upp i bilden. */
   const [activeMark, setActiveMark] = useState<string | null>(null);
+  /** Alla markeringar syns bara när man bett om det; annars visas bara den man tryckt på. */
+  const [showMarks, setShowMarks] = useState(false);
   /** Redigera bildens namn, beskrivning, taggar och var den hör hemma. */
   const [editOpen, setEditOpen] = useState(false);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -120,6 +122,7 @@ export function ImageLightbox({
     setPendingRegion(null);
     setRegionDraft("");
     setActiveMark(null);
+    setShowMarks(false);
   }, [current?.id]);
 
   /** Kommentarer som pekar på en del av bilden, numrerade i den ordning de skrevs. */
