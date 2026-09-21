@@ -78,6 +78,15 @@ type OrderLine = {
   /** Hur mycket av raden som är låst till kund (endast vid "måste med"). */
   priorityQty: string;
   priorityNote: string;
+  /** "customer" = raden kommer ur butikens kundbeställningar, annars butikens egen rad. */
+  source?: "customer" | "manual";
+  /** Mängd låst till riktig kund (ur kundbeställningarna). */
+  customerQty?: number;
+  customerNames?: string[];
+  /** Butikens egen påfyllning till kyldisken, ovanpå kundmängden. */
+  topUpQty?: string;
+  /** Sant när någon kundbeställning har en önskad dag före valt leveransdatum. */
+  late?: boolean;
 };
 
 
