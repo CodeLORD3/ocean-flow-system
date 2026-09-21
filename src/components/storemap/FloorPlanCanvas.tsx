@@ -180,6 +180,8 @@ export function FloorPlanCanvas({
   }, [plan.width, plan.height, zones]);
 
   useEffect(() => {
+    /* Har man zoomat eller dragit själv rör vi inte vyn när ytorna ritas om. */
+    if (touched.current) return;
     fit();
   }, [fit]);
 
