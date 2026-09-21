@@ -1033,7 +1033,12 @@ export default function StoreMap({
 
           {/* Höger panel: bara i redigeringsläget, annars ligger kartan i full bredd */}
           {editMode && (
-          <div className="space-y-3">
+          <Sheet open={toolsOpen} onOpenChange={setToolsOpen}>
+            <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
+              <SheetHeader>
+                <SheetTitle className="text-base">Verktyg för kartan</SheetTitle>
+              </SheetHeader>
+          <div className="mt-3 space-y-3">
             {editMode ? (
               <>
                 <ZoneTagsPanel
