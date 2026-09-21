@@ -1,4 +1,5 @@
-import { versionLabel } from "@/lib/appVersion";
+import { Boxes,
+  versionLabel } from "@/lib/appVersion";
 import {
   Map,
   CalendarOff,
@@ -72,6 +73,7 @@ const inventoryNav = [
 
 const orgNav = [
   { title: "Personal & Schema", url: "/personal", icon: UserCheck },
+  { title: "Utrustning & material", url: "/utrustning", icon: Boxes },
   { title: "Viktiga papper", url: "/viktiga-papper", icon: Receipt },
   { title: "Aktivitetslogg", url: "/audit", icon: ClipboardList },
 ];
