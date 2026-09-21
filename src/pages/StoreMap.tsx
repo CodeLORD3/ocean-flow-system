@@ -1265,8 +1265,8 @@ export default function StoreMap() {
           open
           onOpenChange={(v) => {
             if (!v) {
+              /* Panelen stängs — kartan ligger kvar på samma yta man kom från */
               setSelected(null);
-              setFocus(null);
               setDrawerOpen(false);
             }
           }}
