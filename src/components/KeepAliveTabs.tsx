@@ -262,6 +262,7 @@ export function KeepAliveTabs() {
             className="h-full w-full"
             style={{ display: isActive ? "block" : "none" }}
           >
+            {isActive && <ReturnToImageBar />}
             {allowed ? content : <NoAccessView site={site} path={tab.path} />}
           </div>
         );
