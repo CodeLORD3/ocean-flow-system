@@ -114,6 +114,9 @@ export default function Uppgifter() {
     return map;
   }, [tasks]);
 
+  /** Hela butikskartan kan fällas ut i uppgiftslistan. */
+  const [mapOpen, setMapOpen] = useState(false);
+
   const [tab, setTab] = useState("dag");
   const { data: checklists = [] } = useChecklistTemplates(storeId);
   const createChecklist = useCreateChecklistTemplate();
