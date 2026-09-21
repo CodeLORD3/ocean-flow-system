@@ -57,10 +57,18 @@ export type TaskRow = {
   recipe_id: string | null;
   /** Arbetsbeskrivning: mål, varor och steg med bilder. */
   guide: unknown;
+  /** Genomförandet: när arbetet startade, slutade och hur lång tid det tog. */
+  run_status: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+  actual_minutes: number | null;
+  active_minutes: number | null;
+  paused_minutes: number | null;
+  time_source: string | null;
 };
 
 const TASK_FIELDS =
-  "id, day_id, task, section, note, sort_order, done, done_at, signature, category, category_id, work_type, zone_id, map_object_id, assigned_staff_id, completed_by_staff_id, specific_time, time_from, time_to, daypart, estimated_minutes, instructions, important_note, requires_photo, requires_note, requires_value, value_label, completion_note, completion_value, template_item_id, time_label, link_url, recipe_id, guide";
+  "id, day_id, task, section, note, sort_order, done, done_at, signature, category, category_id, work_type, zone_id, map_object_id, assigned_staff_id, completed_by_staff_id, specific_time, time_from, time_to, daypart, estimated_minutes, instructions, important_note, requires_photo, requires_note, requires_value, value_label, completion_note, completion_value, template_item_id, time_label, link_url, recipe_id, guide, run_status, started_at, finished_at, actual_minutes, active_minutes, paused_minutes, time_source";
 
 function normalize<T = TaskRow>(row: any): T {
   const raw = row.instructions;

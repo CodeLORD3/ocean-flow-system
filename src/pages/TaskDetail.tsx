@@ -50,6 +50,16 @@ import { DAYPARTS, durationText, taskTime } from "@/lib/taskTime";
 import { workTypeLabel } from "@/lib/workType";
 import { TASK_LINKS, taskTarget } from "@/lib/taskLink";
 import { useProductionRecipes } from "@/hooks/useProductionRecipes";
+import { TaskPerformPanel } from "@/components/tasks/TaskPerformPanel";
+import { TaskPlanningPanel } from "@/components/tasks/TaskPlanningPanel";
+import { CheckpointEditor, RequirementEditor, StandardTimeEditor } from "@/components/tasks/TaskSetupPanels";
+import {
+  resolveNeeds,
+  useResourceItems,
+  useResourceLocations,
+  useStoreResourceMappings,
+  useTaskRequirements,
+} from "@/hooks/useResources";
 
 /** En uppgifts egen sida: allt om just den här uppgiften, samma rad som i listan. */
 export default function TaskDetail({ taskId }: { taskId: string }) {
@@ -80,6 +90,16 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const { data: recipes = [] } = useProductionRecipes();
   const saveGuide = useSaveTaskGuide();
   const guide = useMemo(() => parseGuide(task?.guide, task?.instructions ?? null), [task?.guide, task?.instructions]);
+
+  /** Vad arbetet kräver → butikens sak → var den finns. Platsen bor i registret. */
+  const { data: requirements = [] } = useTaskRequirements(task?.template_item_id ?? null, taskId);
+  const { data: resourceItems = [] } = useResourceItems();
+  const { data: resourceLocations = [] } = useResourceLocations(storeId);
+  const { data: resourceMappings = [] } = useStoreResourceMappings(storeId);
+  const needs = useMemo(
+    () => resolveNeeds(requirements, resourceMappings, resourceItems, resourceLocations),
+    [requirements, resourceMappings, resourceItems, resourceLocations],
+  );
 
   const area = useMemo(() => {
     const sorted = [...zones].sort((a, b) => a.sort_order - b.sort_order);
@@ -199,32 +219,6 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                 <ArrowUpRight className="mr-1 h-4 w-4" /> {target.label}
               </Button>
             )}
-            <Button
-              size="lg"
-              disabled={!task.done && missing.length > 0}
-              title={!task.done && missing.length > 0 ? missingText(task, missing) : undefined}
-              variant={task.done ? "outline" : "default"}
-              className={cn(!task.done && "bg-emerald-600 text-white hover:bg-emerald-700")}
-              onClick={async () => {
-                if (task.done) {
-                  setDone.mutate({ id: task.id, done: false });
-                  return;
-                }
-                try {
-                  await setDone.mutateAsync({ id: task.id, done: true });
-                  toast({ title: "Uppgiften är klar" });
-                  switchTab("/uppgifter");
-                } catch (e: any) {
-                  toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
-                }
-              }}
-            >
-              {task.done ? "Återöppna" : (
-                <>
-                  <Check className="mr-1 h-5 w-5" /> Klar
-                </>
-              )}
-            </Button>
             <label className="inline-flex">
               <input
                 type="file"
@@ -313,13 +307,48 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
         )}
       </Card>
 
-      <Tabs defaultValue="instruktion">
-        <TabsList>
-          <TabsTrigger value="instruktion">Instruktion</TabsTrigger>
+      <Tabs defaultValue="genomfor">
+        <TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:flex sm:w-auto">
+          <TabsTrigger value="genomfor">Genomför</TabsTrigger>
+          <TabsTrigger value="instruktion">Hur gör vi?</TabsTrigger>
+          <TabsTrigger value="planering">Planering</TabsTrigger>
           <TabsTrigger value="bilder">Bilder</TabsTrigger>
           <TabsTrigger value="historik">Historik</TabsTrigger>
           <TabsTrigger value="inst">Inställningar</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="genomfor">
+          <TaskPerformPanel
+            task={task}
+            timeLabel={time.label}
+            areaName={area ? `${area.number}. ${area.name}` : null}
+            photoCount={images.length}
+            needs={needs}
+            onShowNeeds={() => {
+              const el = document.querySelector<HTMLButtonElement>('[role="tab"][value="planering"]');
+              el?.click();
+            }}
+            onShowOnMap={(zoneId) =>
+              switchTab(`/store-map?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
+            }
+            onUpdate={(patch) => update.mutate({ id: task.id, ...patch })}
+            onAddPhoto={addPhoto}
+            onReopen={() => setDone.mutate({ id: task.id, done: false })}
+          />
+        </TabsContent>
+
+        <TabsContent value="planering">
+          <TaskPlanningPanel
+            task={task}
+            storeId={storeId}
+            areaName={area ? `${area.number}. ${area.name}` : null}
+            needs={needs}
+            zoneName={(zoneId) => guideZones.find((z) => z.id === zoneId)?.name ?? null}
+            onShowOnMap={(zoneId) =>
+              switchTab(`/store-map?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
+            }
+          />
+        </TabsContent>
 
         <TabsContent value="instruktion" className="space-y-3">
           {task.important_note && (
@@ -654,6 +683,35 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                 />
               )}
             </div>
+          </div>
+
+          <div className="space-y-2 rounded-md border p-3">
+            <p className="text-sm font-medium">Kontrollpunkter i Genomför</p>
+            {task.template_item_id ? (
+              <CheckpointEditor templateItemId={task.template_item_id} />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Kontrollpunkter läggs in på standarduppgiften. Den här uppgiften är bara skapad för dagen.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2 rounded-md border p-3">
+            <p className="text-sm font-medium">Standardtid</p>
+            {task.template_item_id ? (
+              <StandardTimeEditor templateItemId={task.template_item_id} />
+            ) : (
+              <p className="text-sm text-muted-foreground">Standardtiden läggs in på standarduppgiften.</p>
+            )}
+          </div>
+
+          <div className="space-y-2 rounded-md border p-3">
+            <p className="text-sm font-medium">Utrustning &amp; material som arbetet kräver</p>
+            <RequirementEditor
+              templateItemId={task.template_item_id ?? null}
+              checklistItemId={task.id}
+              storeId={storeId}
+            />
           </div>
           <div className="border-t pt-4">
             <Button

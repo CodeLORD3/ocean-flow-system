@@ -71,6 +71,7 @@ import ShopWishes from "@/pages/ShopWishes";
 import WholesaleWishes from "@/pages/WholesaleWishes";
 import MeetingProtocols from "@/pages/MeetingProtocols";
 import Tasks from "@/pages/Tasks";
+import ResourceRegister from "@/pages/ResourceRegister";
 import LandingSettings from "@/pages/LandingSettings";
 import Vehicles from "@/pages/Vehicles";
 import Establishments from "@/pages/Establishments";
@@ -190,6 +191,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/store-wishes": { component: <WholesaleWishes /> },
   "/meetings": { component: <MeetingProtocols /> },
   "/tasks": { component: <Tasks /> },
+  "/utrustning": { component: <ResourceRegister /> },
   "/landing-settings": { component: <LandingSettings /> },
   "/vehicles": { component: <Vehicles /> },
   "/establishments": { component: <Establishments /> },
