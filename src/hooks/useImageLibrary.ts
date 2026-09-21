@@ -58,6 +58,8 @@ export type LibraryFilter = {
   entityType?: string;
   entityId?: string;
   uploaderStaffId?: string;
+  /** Endast bilder med denna tagg. */
+  tag?: string;
 };
 
 /** Namnet på det inloggade kontot, för historiken. */
@@ -106,8 +108,13 @@ export function useImageLibrary(filter: LibraryFilter, page = 0) {
       if (filter.status && filter.status !== "all") q = q.eq("status", filter.status);
       if (filter.mediaKind && filter.mediaKind !== "all") q = q.eq("media_kind", filter.mediaKind);
       if (filter.uploaderStaffId) q = q.eq("uploaded_by_staff_id", filter.uploaderStaffId);
+      if (filter.tag) q = q.contains("tags", [filter.tag]);
       const s = filter.search?.trim();
-      if (s) q = q.or(`title.ilike.%${s}%,description.ilike.%${s}%,caption.ilike.%${s}%`);
+      // Sökningen tar även taggar, så att man hittar bilder via taggen.
+      if (s)
+        q = q.or(
+          `title.ilike.%${s}%,description.ilike.%${s}%,caption.ilike.%${s}%,tags.cs.{"${s.replace(/"/g, "")}"}`,
+        );
 
       const { data, error } = await q;
       if (error) throw error;
