@@ -178,29 +178,42 @@ export default function StaffProfile() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      <div>
-        <h2 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mx-auto w-full max-w-5xl space-y-5"
+    >
+      <div className="text-center sm:text-left">
+        <h2 className="text-xl font-heading font-bold text-foreground flex items-center justify-center gap-2 sm:justify-start">
           <IdCard className="h-5 w-5 text-primary" /> Min profil
         </h2>
         <p className="text-xs text-muted-foreground mt-0.5">Dina uppgifter, behörigheter och stämpelklocka</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* Profil */}
-        <Card className="shadow-card lg:col-span-2">
-          <CardContent className="p-4 space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="relative h-20 w-20 shrink-0">
-                <div className="h-28 w-28 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+        <Card className="shadow-card overflow-hidden lg:col-span-2">
+          <div className="h-20 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent" />
+          <CardContent className="-mt-12 space-y-6 p-6">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="relative h-24 w-24">
+                <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-background bg-primary/10 shadow-md">
                   {staff.profile_image_url ? (
-                    <img src={staff.profile_image_url} alt={fullName} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                    <img
+                      src={staff.profile_image_url}
+                      alt={fullName}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   ) : (
-                    <User className="h-8 w-8 text-primary" />
+                    <div className="grid h-full w-full place-items-center">
+                      <User className="h-9 w-9 text-primary" />
+                    </div>
                   )}
                 </div>
                 <label
-                  className="absolute -bottom-1 -right-1 grid h-8 w-8 cursor-pointer place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm"
+                  className="absolute bottom-0 right-0 grid h-8 w-8 cursor-pointer place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm transition hover:opacity-90"
                   title="Byt profilbild"
                 >
                   <Camera className="h-4 w-4" />
@@ -215,10 +228,10 @@ export default function StaffProfile() {
                   />
                 </label>
               </div>
-              <div className="min-w-0">
-                <h3 className="font-heading font-semibold text-foreground text-lg">{fullName}</h3>
-                <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                  <span className={`h-2 w-2 rounded-full ${openShift ? "bg-emerald-500" : "bg-red-500"}`} />
+              <div>
+                <h3 className="font-heading text-xl font-semibold text-foreground">{fullName}</h3>
+                <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/60 px-3 py-1 text-[11px] text-muted-foreground">
+                  <span className={`h-2 w-2 rounded-full ${openShift ? "bg-emerald-500" : "bg-muted-foreground/50"}`} />
                   {openShift
                     ? `Instämplad ${shiftClock(openShift.clocked_in_at)} · ${shiftDuration(openShift.clocked_in_at)}${openStoreName ? ` · ${openStoreName}` : ""}`
                     : "Ej instämplad"}
@@ -226,41 +239,46 @@ export default function StaffProfile() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Mail className="h-3.5 w-3.5 text-primary/70 shrink-0" />
-                <span className="truncate">{staff.email || "—"}</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Phone className="h-3.5 w-3.5 text-primary/70 shrink-0" />
-                <span>{(staff as any).phone || "—"}</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-3.5 w-3.5 text-primary/70 shrink-0" />
-                <span>{staff.workplace || "—"}</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <StoreIcon className="h-3.5 w-3.5 text-primary/70 shrink-0" />
-                <span>
-                  {isAdmin
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {[
+                { icon: Mail, label: "E-post", value: staff.email || "—" },
+                { icon: Phone, label: "Telefon", value: (staff as any).phone || "—" },
+                { icon: MapPin, label: "Arbetsplats", value: staff.workplace || "—" },
+                {
+                  icon: StoreIcon,
+                  label: "Behörig i",
+                  value: isAdmin
                     ? "Alla arbetsplatser"
                     : allowedStores.length === stores.length
                       ? "Alla butiker"
-                      : `${allowedStores.length} arbetsplats(er)`}
-                </span>
-              </div>
+                      : `${allowedStores.length} arbetsplatser`,
+                },
+              ].map((f) => (
+                <div
+                  key={f.label}
+                  className="flex items-center gap-3 rounded-xl border border-border bg-muted/30 px-3.5 py-3"
+                >
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10">
+                    <f.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{f.label}</p>
+                    <p className="truncate text-xs font-medium text-foreground">{f.value}</p>
+                  </div>
+                </div>
+              ))}
             </div>
 
-            <div>
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1 mb-1.5">
+            <div className="rounded-xl border border-border bg-muted/30 px-3.5 py-3">
+              <p className="mb-2 flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
                 <ShieldCheck className="h-3 w-3" /> Behörigheter
               </p>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1.5">
                 {portalAccess.length === 0 ? (
                   <Badge variant="outline" className="text-[10px]">Ingen portalåtkomst</Badge>
                 ) : (
                   portalAccess.map((p) => (
-                    <Badge key={p} variant="secondary" className="text-[10px]">
+                    <Badge key={p} variant="secondary" className="rounded-full px-2.5 text-[10px]">
                       {PORTAL_OPTIONS.find((o) => o.key === p)?.label ?? p}
                     </Badge>
                   ))
@@ -270,14 +288,15 @@ export default function StaffProfile() {
           </CardContent>
         </Card>
 
+
         {/* Stämpelklocka */}
-        <Card className="shadow-card">
+        <Card className="shadow-card flex h-full flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-heading flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" /> Stämpelklocka
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="flex-1 space-y-3">
             {!mayClockDirectly ? (
               <div className="rounded-md border border-border bg-muted p-3">
                 <p className="text-sm font-medium text-foreground">Stämpling sker i stämpelklockan</p>
@@ -352,7 +371,7 @@ export default function StaffProfile() {
                   ? Math.max(0, Math.round((new Date(out).getTime() - new Date(sh.clocked_in_at).getTime()) / 60000))
                   : null;
                 return (
-                  <div key={sh.id} className="flex items-center justify-between py-2 text-xs">
+                  <div key={sh.id} className="flex items-center justify-between py-2.5 text-xs">
                     <div>
                       <p className="text-foreground font-medium">
                         {new Date(sh.clocked_in_at).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })}
