@@ -136,6 +136,10 @@ export default {
           from: { opacity: "0", transform: "translateY(8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "task-alert": {
+          "0%, 100%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0.15)", borderColor: "hsl(var(--primary) / 0.5)" },
+          "50%": { boxShadow: "0 0 0 6px hsl(var(--primary) / 0.28)", borderColor: "hsl(var(--primary))" },
+        },
         "notice-flash": {
           "0%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0)", backgroundColor: "hsl(var(--primary) / 0)" },
           "12%": { boxShadow: "0 0 0 3px hsl(var(--primary) / 0.55)", backgroundColor: "hsl(var(--primary) / 0.12)" },
@@ -148,6 +152,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.4s ease-out forwards",
         "notice-flash": "notice-flash 5s ease-in-out 1 both",
+        "task-alert": "task-alert 1.1s ease-in-out infinite",
       },
 
     },
