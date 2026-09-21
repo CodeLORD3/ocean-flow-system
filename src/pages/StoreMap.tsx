@@ -1442,6 +1442,8 @@ export default function StoreMap({
               </Card>
             )}
           </div>
+            </SheetContent>
+          </Sheet>
           )}
         </div>
       )}
