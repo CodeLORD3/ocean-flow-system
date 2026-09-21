@@ -734,13 +734,15 @@ export function useRemoveProductImage() {
         const { error } = await supabase.from("products").update({ image_url: null }).eq("id", productId);
         if (error) throw error;
       }
-      const { uid, name } = await currentActorName();
+      const { name } = await currentActorName();
       await supabase.from("image_activity").insert({
         media_id: photo.id,
-        action: "unlinked",
-        staff_name: name,
-        user_id: uid,
-        detail: { entity_type: PRODUCT_PHOTO_ENTITY, entity_id: productId },
+        actor_name: name,
+        action_type: "unlinked",
+        change_group_id: crypto.randomUUID(),
+        field_name: `koppling:${PRODUCT_PHOTO_ENTITY}`,
+        old_value: productId,
+        new_value: null,
       });
     },
     onSuccess: (_d, vars) => {
