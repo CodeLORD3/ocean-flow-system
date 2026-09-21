@@ -16,12 +16,13 @@ export function TaskAlertBanner() {
   if (!alerts.length) return null;
 
   return (
-    <div className="sticky top-0 z-40 mb-3 space-y-2">
+    <div className="sticky top-0 z-40 mb-3 space-y-2 rounded-xl bg-background p-1">
       {alerts.map((a) => (
         <div
           key={a.id}
-          className="animate-task-alert flex items-center gap-3 rounded-xl border-2 border-destructive bg-destructive/15 px-3 py-3 shadow-card"
+          className="animate-task-alert flex items-center gap-3 rounded-xl border-2 border-destructive bg-card px-3 py-3 shadow-card"
         >
+
           <span className="relative flex h-6 w-6 shrink-0 items-center justify-center">
             <span className="animate-alert-dot absolute inset-0 rounded-full bg-destructive/30" />
             <BellRing className="relative h-5 w-5 text-destructive" />
