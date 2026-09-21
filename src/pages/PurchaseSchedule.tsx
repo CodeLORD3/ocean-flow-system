@@ -864,6 +864,23 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
     }
   };
 
+  // ── "Beställd hos leverantör" handler: förbeställt hos t.ex. Savolax → stryks ur inköpslistan ──
+  const [preorderLoading, setPreorderLoading] = useState<string | null>(null);
+  const handleMarkPreordered = async (lineIds: string[], productName: string) => {
+    setPreorderLoading(productName);
+    try {
+      for (const lineId of lineIds) {
+        await supabase.from("shop_order_lines").update({ status: "Beställd" }).eq("id", lineId);
+      }
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+      toast.success(`"${productName}" markerad som beställd hos leverantör och struken ur inköpslistan.`);
+    } catch (err) {
+      toast.error("Kunde inte uppdatera.");
+    } finally {
+      setPreorderLoading(null);
+    }
+  };
+
   // ── "Ångra köpt" handler ──
   const [undoBoughtLoading, setUndoBoughtLoading] = useState<string | null>(null);
   const handleUndoBought = async (lineIds: string[], productName: string) => {
@@ -1149,7 +1166,17 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
                                                   >
                                                     <Check className="h-3 w-3" /> Bekräfta
                                                   </Button>
-                                                  {hasSufficientStock && (
+                                                   <Button
+                                                     variant="outline"
+                                                     size="sm"
+                                                     className="h-6 text-[10px] gap-1 text-sky-700 dark:text-sky-400 border-sky-500/30 hover:bg-sky-500/10"
+                                                     onClick={() => handleMarkPreordered(item.lineIds, item.productName)}
+                                                     disabled={preorderLoading === item.productName}
+                                                     title="Redan beställd hos leverantör – stryks ur inköpslistan"
+                                                   >
+                                                     <Truck className="h-3 w-3" /> Beställd
+                                                   </Button>
+                                                   {hasSufficientStock && (
                                                     <Button
                                                       variant="outline"
                                                       size="sm"
@@ -1393,7 +1420,17 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
                                           >
                                             <Check className="h-3 w-3" /> Bekräfta
                                           </Button>
-                                          {hasSufficientStock && (
+                                           <Button
+                                             variant="outline"
+                                             size="sm"
+                                             className="h-6 text-[10px] gap-1 text-sky-700 dark:text-sky-400 border-sky-500/30 hover:bg-sky-500/10"
+                                             onClick={() => handleMarkPreordered(item.lines.map(l => l.lineId), item.productName)}
+                                             disabled={preorderLoading === item.productName}
+                                             title="Redan beställd hos leverantör – stryks ur inköpslistan"
+                                           >
+                                             <Truck className="h-3 w-3" /> Beställd
+                                           </Button>
+                                           {hasSufficientStock && (
                                             <Button
                                               variant="outline"
                                               size="sm"
