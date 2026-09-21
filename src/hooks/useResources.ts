@@ -100,6 +100,22 @@ export function useResourceLocations(storeId?: string | null) {
   });
 }
 
+/** Butikerna som kan hålla utrustning — används för totaler per region. */
+export function useResourceStores() {
+  return useQuery({
+    queryKey: ["resource-stores"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stores")
+        .select("id, name, city, legal_entity_id")
+        .eq("active", true)
+        .order("name");
+      if (error) throw error;
+      return (data || []) as { id: string; name: string; city: string | null; legal_entity_id: string | null }[];
+    },
+  });
+}
+
 export function useSaveResourceItem() {
   const qc = useQueryClient();
   return useMutation({

@@ -6,6 +6,7 @@ import {
   LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText, SlidersHorizontal, MessageSquare, ClipboardCheck, History, ShieldCheck, ArrowLeftRight, Trash2,
 
   Receipt,
+  Boxes,
   CalendarRange,
   CookingPot,
 } from "lucide-react";
@@ -72,6 +73,7 @@ const inventoryNav = [
 
 const orgNav = [
   { title: "Personal & Schema", url: "/personal", icon: UserCheck },
+  { title: "Utrustning & material", url: "/utrustning", icon: Boxes },
   { title: "Viktiga papper", url: "/viktiga-papper", icon: Receipt },
   { title: "Aktivitetslogg", url: "/audit", icon: ClipboardList },
 ];
