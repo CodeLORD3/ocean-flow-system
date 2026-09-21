@@ -385,6 +385,7 @@ function toPosts(items: FeedImage[], group: boolean): FeedPost[] {
 function PostCard({
   post,
   favoriteIds,
+  viewCounts,
   onOpen,
   onToggleFavorite,
   onPerson,
@@ -392,6 +393,7 @@ function PostCard({
 }: {
   post: FeedPost;
   favoriteIds: string[];
+  viewCounts: Record<string, number>;
   onOpen: (id: string) => void;
   onToggleFavorite: (id: string, favorite: boolean) => void;
   onPerson: (name: string) => void;
