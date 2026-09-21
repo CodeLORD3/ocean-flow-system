@@ -76,6 +76,7 @@ export default function ImageClassifySheet({
   const [newCategory, setNewCategory] = useState("");
   const [creating, setCreating] = useState(false);
   const { data: categories = [] } = useCategories();
+  const qc = useQueryClient();
 
   /** Saken eller varan finns inte ännu — den skapas här och kopplas direkt. */
   async function createNew() {
