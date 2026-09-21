@@ -40,7 +40,8 @@ import { ZoneConnectionsPanel } from "@/components/storemap/ZoneConnectionsPanel
 import { MapDetailDrawer } from "@/components/storemap/MapDetailDrawer";
 import { ZoneAreaPage } from "@/components/storemap/ZoneAreaPage";
 import { AreaMiniMap } from "@/components/storemap/AreaMiniMap";
-import { ObjectLibrary } from "@/components/storemap/ObjectLibrary";
+import { ZoneTagsPanel } from "@/components/storemap/ZoneTagsPanel";
+import { childZones, tagsOf, zoneMatches, zonePath } from "@/lib/zoneTree";
 import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog";
 import { MapListViews } from "@/components/storemap/MapListViews";
 import { OverviewStatsBar } from "@/components/storemap/OverviewStatsBar";
@@ -92,7 +93,16 @@ import {
  * men utan sidans egen rubrik, stora knappar, statistik och bildrad — så den
  * kan ligga inuti en annan sida, t.ex. Uppgifter.
  */
-export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
+export default function StoreMap({
+  embedded = false,
+  openZoneId = null,
+  onOpenZoneChange,
+}: {
+  embedded?: boolean;
+  /** Yta som föräldrasidan vill visa — kartan stannar då kvar i samma flik. */
+  openZoneId?: string | null;
+  onOpenZoneChange?: (zoneId: string | null) => void;
+}) {
   const { site, activeStoreId } = useSite();
   const { staff } = useStaffAuth();
   const stores = useAllowedStores();
@@ -164,6 +174,10 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
   const [sheetZoneId, setSheetZoneId] = useState<string | null>(null);
   /** Befintligt område som just nu ritas om i kartan. */
   const [shapeZoneId, setShapeZoneId] = useState<string | null>(null);
+  /** Vald tagg — visar bara ytorna som har den taggen. */
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  /** Sökning på namn och tagg i ytförteckningen. */
+  const [zoneSearch, setZoneSearch] = useState("");
   const [pinDialog, setPinDialog] = useState<{
     point: { x: number; y: number } | null;
     zoneId: string | null;
@@ -293,6 +307,24 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
     /* Kartan följer med in på områdets sida och står kvar på just den ytan */
     setFocus(next);
     setView("omrade");
+    if (next.kind === "zone") onOpenZoneChange?.(next.id);
+  };
+
+  /** Ber föräldrasidan (t.ex. Uppgifter) om en yta? Då öppnas den här inne. */
+  useEffect(() => {
+    if (!openZoneId || !zones.some((z) => z.id === openZoneId)) return;
+    setAreaPage({ kind: "zone", id: openZoneId });
+    setFocus({ kind: "zone", id: openZoneId });
+    setSelected(null);
+    setDrawerOpen(false);
+    setView("omrade");
+  }, [openZoneId, zones]);
+
+  /** Stänger ytans sida och lämnar beskedet vidare till föräldrasidan. */
+  const closeAreaPage = () => {
+    setAreaPage(null);
+    setView("karta");
+    onOpenZoneChange?.(null);
   };
 
   /**
@@ -316,20 +348,28 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
   /**
    * Nytt område: läggs som en ruta på en ledig plats i kartan, får nästa färg
    * i paletten och öppnas direkt i redigeringsläget så namn och form kan sättas.
+   * Anges en förälder ritas ytan inuti den — område i område.
    */
-  const addZone = () => {
+  const addZone = (parentZoneId?: string | null) => {
     if (!plan || !storeId) return;
+    const parent = parentZoneId ? zones.find((z) => z.id === parentZoneId) ?? null : null;
     const step = 24 * (zones.length % 6);
+    const inside = parent
+      ? {
+          x: Math.round(parent.x + parent.width * 0.15),
+          y: Math.round(parent.y + parent.height * 0.15),
+          width: Math.max(60, Math.round(parent.width * 0.45)),
+          height: Math.max(60, Math.round(parent.height * 0.45)),
+        }
+      : { x: 60 + step, y: 60 + step, width: 220, height: 160 };
     saveZone.mutate(
       {
         floor_plan_id: plan.id,
         store_id: storeId,
-        name: `Nytt område ${zones.length + 1}`,
-        color: nextZoneColor(zones.map((z) => z.color)),
-        x: 60 + step,
-        y: 60 + step,
-        width: 220,
-        height: 160,
+        name: parent ? `Ny yta i ${parent.name}` : `Nytt område ${zones.length + 1}`,
+        color: parent?.color ?? nextZoneColor(zones.map((z) => z.color)),
+        parent_zone_id: parent?.id ?? null,
+        ...inside,
       },
       {
         onSuccess: (id) => {
@@ -618,11 +658,23 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
               canManage={canManage}
               zoneNumber={pageZone ? zoneNumbers[pageZone.id] : undefined}
               areaLabel={area?.sqm != null ? `${area.exact ? "" : "≈ "}${formatSqm(area.sqm)}` : null}
+              path={pageZone ? zonePath(zones, pageZone.id) : []}
+              childAreas={pageZone ? childZones(zones, pageZone.id) : []}
+              childTasks={(id) => tasksForZone(id)}
+              onOpenZone={(id) => openAreaPage({ kind: "zone", id })}
+              onAddChild={canManage ? (parentId) => addZone(parentId) : undefined}
+              onSaveTags={
+                canManage && pageZone ? (tags) => saveZone.mutate({ id: pageZone.id, tags }) : undefined
+              }
               mapSlot={
                 <div className="relative">
                 <FloorPlanCanvas
                   plan={plan}
-                  zones={pageZone ? [pageZone] : zones.filter((z) => z.id === pageObject?.zone_id)}
+                  zones={
+                    pageZone
+                      ? [pageZone, ...childZones(zones, pageZone.id)]
+                      : zones.filter((z) => z.id === pageObject?.zone_id)
+                  }
                   objects={
                     pageObject
                       ? [pageObject]
@@ -633,7 +685,9 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
                   zoneProgress={zoneProgress}
                   objectProgress={objectProgress}
                   selected={areaPage}
-                  onSelect={() => {}}
+                  onSelect={(s) => {
+                    if (s?.kind === "zone" && s.id !== pageZone?.id) openAreaPage(s);
+                  }}
                   focus={areaPage}
                   editMode={editMode}
                   showBackground
@@ -665,10 +719,7 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
                 </div>
                 </div>
               }
-              onBack={() => {
-                setAreaPage(null);
-                setView("karta");
-              }}
+              onBack={closeAreaPage}
             />
           );
         })()
@@ -961,14 +1012,15 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
           <div className="space-y-3">
             {editMode ? (
               <>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xs">Objektbibliotek</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ObjectLibrary types={types} onAdd={addObject} />
-                  </CardContent>
-                </Card>
+                <ZoneTagsPanel
+                  zones={zones}
+                  zone={selectedZone}
+                  onSaveName={(name) => selectedZone && saveZone.mutate({ id: selectedZone.id, name })}
+                  onSaveTags={(tags) => selectedZone && saveZone.mutate({ id: selectedZone.id, tags })}
+                  onAddChild={(parentId) => addZone(parentId)}
+                  onOpenZone={(id) => openAreaPage({ kind: "zone", id })}
+                  onPickTag={(tag) => setTagFilter(tag)}
+                />
 
                 <ZoneConnectionsPanel
                   storeId={storeId}

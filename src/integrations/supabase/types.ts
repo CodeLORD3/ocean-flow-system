@@ -8743,9 +8743,11 @@ export type Database = {
           height: number
           id: string
           name: string
+          parent_zone_id: string | null
           points: Json | null
           sort_order: number
           store_id: string
+          tags: string[]
           updated_at: string
           width: number
           x: number
@@ -8762,9 +8764,11 @@ export type Database = {
           height?: number
           id?: string
           name: string
+          parent_zone_id?: string | null
           points?: Json | null
           sort_order?: number
           store_id: string
+          tags?: string[]
           updated_at?: string
           width?: number
           x?: number
@@ -8781,9 +8785,11 @@ export type Database = {
           height?: number
           id?: string
           name?: string
+          parent_zone_id?: string | null
           points?: Json | null
           sort_order?: number
           store_id?: string
+          tags?: string[]
           updated_at?: string
           width?: number
           x?: number
@@ -8797,6 +8803,13 @@ export type Database = {
             columns: ["floor_plan_id"]
             isOneToOne: false
             referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "map_zones_parent_zone_id_fkey"
+            columns: ["parent_zone_id"]
+            isOneToOne: false
+            referencedRelation: "map_zones"
             referencedColumns: ["id"]
           },
           {
