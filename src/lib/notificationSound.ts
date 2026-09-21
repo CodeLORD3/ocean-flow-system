@@ -51,7 +51,7 @@ export function playChatPing() {
   tone(1170, 0.13);
 }
 
-/** Tydligare larm när jag får en ny uppgift: tre stigande toner, upprepade tre gånger. */
+/** Ny uppgift: "blopp–ding" — mjuk lägre ton följd av en ljusare ren ton, upprepad några gånger. */
 export function playTaskAlert(repeats = 3) {
   if (!isChatSoundEnabled()) return;
   const audio = getContext();
@@ -59,13 +59,19 @@ export function playTaskAlert(repeats = 3) {
   if (audio.state === "suspended") void audio.resume();
 
   const now = audio.currentTime;
-  const tone = (freq: number, at: number, dur = 0.18) => {
+  const tone = (
+    freq: number,
+    at: number,
+    dur: number,
+    type: OscillatorType,
+    peak: number,
+  ) => {
     const osc = audio.createOscillator();
     const gain = audio.createGain();
-    osc.type = "triangle";
-    osc.frequency.value = freq;
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, now + at);
     gain.gain.setValueAtTime(0.0001, now + at);
-    gain.gain.exponentialRampToValueAtTime(0.25, now + at + 0.02);
+    gain.gain.exponentialRampToValueAtTime(peak, now + at + 0.03);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + at + dur);
     osc.connect(gain).connect(audio.destination);
     osc.start(now + at);
@@ -74,10 +80,12 @@ export function playTaskAlert(repeats = 3) {
 
   /* Signalen upprepas några gånger så man hör den även om man tittar bort */
   for (let i = 0; i < Math.max(1, repeats); i++) {
-    const at = i * 0.9;
-    tone(660, at);
-    tone(880, at + 0.17);
-    tone(1175, at + 0.34, 0.24);
+    const at = i * 1.1;
+    /* "blopp": mjuk och lite lägre */
+    tone(587.33, at, 0.2, "sine", 0.22);
+    /* "ding": ljusare och ren */
+    tone(987.77, at + 0.17, 0.38, "sine", 0.26);
   }
 }
+
 
