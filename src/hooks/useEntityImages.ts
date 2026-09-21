@@ -602,8 +602,13 @@ export function useLinkImageToProduct() {
 }
 
 export type ProductPhoto = EntityImage & {
-  /** "product" = kopplad till produkten, "order_line" = ligger bara på en orderrad */
-  source: "product" | "order_line";
+  /**
+   * "product" = kopplad till produkten, "library" = kopplad via bildbiblioteket,
+   * "order_line" = ligger bara på en orderrad
+   */
+  source: "product" | "library" | "order_line";
+  /** Kopplingen i bildbiblioteket, om bilden ligger på produkten den vägen */
+  link_id?: string | null;
 };
 
 /**
