@@ -20,11 +20,11 @@ export function placeRoute(entityType: string, entityId: string): string | null 
     case "map_zone":
       return `/store-map?zone=${entityId}`;
     case "store":
-      return "/organisation";
+      return `/organisation?markera=${entityId}`;
     case "resource":
-      return "/utrustning";
+      return `/utrustning?markera=${entityId}`;
     case "product":
-      return "/products";
+      return `/products?markera=${entityId}`;
     case "task":
       return `/uppgifter?markera=${entityId}`;
     default:
