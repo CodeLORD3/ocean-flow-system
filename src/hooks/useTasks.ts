@@ -128,12 +128,17 @@ export function useDayTasks(storeId?: string | null, date?: string) {
     queryFn: async () => {
       const { data: days, error: dErr } = await supabase
         .from("checklist_days")
-        .select("id, template_id, checklist_templates(name)")
+        .select("id, template_id, responsible_staff_id, checklist_templates(name)")
         .eq("store_id", storeId!)
         .eq("checklist_date", iso);
       if (dErr) throw dErr;
       const ids = (days || []).map((d: any) => d.id);
-      if (ids.length === 0) return { tasks: [] as TaskRow[], dayIds: [] as string[] };
+      /** Dagens ansvariga, så "Mina uppgifter" vet om man är ansvarig. */
+      const responsibleStaffIds = (days || [])
+        .map((d: any) => d.responsible_staff_id as string | null)
+        .filter((x): x is string => !!x);
+      if (ids.length === 0)
+        return { tasks: [] as TaskRow[], dayIds: [] as string[], responsibleStaffIds };
 
       const { data, error } = await supabase
         .from("checklist_items")
@@ -141,7 +146,7 @@ export function useDayTasks(storeId?: string | null, date?: string) {
         .in("day_id", ids)
         .order("sort_order");
       if (error) throw error;
-      return { tasks: (data || []).map(normalize), dayIds: ids };
+      return { tasks: (data || []).map(normalize), dayIds: ids, responsibleStaffIds };
     },
     enabled: !!storeId,
   });
