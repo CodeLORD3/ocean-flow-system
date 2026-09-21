@@ -20,6 +20,8 @@ type Props = {
   onOpenMap?: () => void;
   /** Visas kartan i egen ruta nedanför döljs den lilla översiktsbilden. */
   chipsOnly?: boolean;
+  /** Texten på knappen som öppnar hela kartan. */
+  openLabel?: string;
 };
 
 /**
