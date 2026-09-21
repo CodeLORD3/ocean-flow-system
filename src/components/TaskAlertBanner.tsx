@@ -1,7 +1,9 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { BellRing, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMyTaskAlerts } from "@/hooks/useMyTaskAlerts";
+import { withReturn } from "@/lib/navHistory";
+import { getTitleForPath } from "@/contexts/TabsContext";
 
 /**
  * Blinkande rad högst upp på sidan när jag får en ny uppgift. Ljudet spelas av
@@ -10,6 +12,7 @@ import { useMyTaskAlerts } from "@/hooks/useMyTaskAlerts";
 export function TaskAlertBanner() {
   const { alerts, dismiss, dismissAll } = useMyTaskAlerts();
   const navigate = useNavigate();
+  const location = useLocation();
   if (!alerts.length) return null;
 
   return (
@@ -29,7 +32,13 @@ export function TaskAlertBanner() {
             className="h-9 text-xs"
             onClick={() => {
               dismiss(a.id);
-              navigate(`/uppgifter?markera=${a.id}`);
+              navigate(
+                withReturn(
+                  `/uppgifter?markera=${a.id}`,
+                  `${location.pathname}${location.search}`,
+                  getTitleForPath(location.pathname),
+                ),
+              );
             }}
           >
             Öppna uppgiften
