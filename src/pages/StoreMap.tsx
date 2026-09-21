@@ -262,6 +262,9 @@ export default function StoreMap() {
     if (!next) return;
     setAreaPage(next);
     setSelected(null);
+    setDrawerOpen(false);
+    /* Kartan följer med in på områdets sida och står kvar på just den ytan */
+    setFocus(next);
     setView("omrade");
   };
 
