@@ -87,13 +87,28 @@ export function TaskRow({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card transition-colors",
-        task.done && "border-emerald-500/40 bg-emerald-500/10",
-        photoMissing && !task.done && "border-amber-500/40",
+        "relative overflow-hidden border-x border-b border-grid-line bg-card transition-all duration-200",
+        task.done && "bg-emerald-500/10",
+        photoMissing && !task.done && "bg-amber-500/5",
+        open &&
+          "z-10 my-3 rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] pl-2.5 shadow-[0_10px_30px_-18px_hsl(var(--primary)/0.55)]",
       )}
-      style={{ borderLeft: `3px solid ${task.done ? "hsl(152 60% 42%)" : accent}` }}
     >
-      <div className="flex items-center gap-2 px-2 py-1.5 min-h-[44px]">
+      {/* Öppen uppgift: mjuk accentlinje längs hela kortets vänsterkant. */}
+      {open && (
+        <span
+          className="pointer-events-none absolute bottom-2 left-1.5 top-2 w-1.5 rounded-full bg-primary/80"
+          aria-hidden
+        />
+      )}
+      <div className={cn("flex items-center gap-2 px-2.5", open ? "py-2.5" : "py-1.5 min-h-[44px]")}>
+        {!open && (
+          <span
+            className="pointer-events-none absolute bottom-0 left-0 top-0 w-1"
+            style={{ background: task.done ? "hsl(152 60% 42%)" : accent }}
+            aria-hidden
+          />
+        )}
         {/* Kolumn 1: bocka av */}
         <button
           type="button"
@@ -117,13 +132,16 @@ export function TaskRow({
         <button type="button" onClick={() => setOpen((v) => !v)} className="min-w-0 flex-1 py-0.5 text-left">
           <span
             className={cn(
-              "block break-words text-[13px] font-medium leading-snug",
+              "block break-words leading-snug",
+              open
+                ? "text-[17px] font-bold sm:text-[13px]"
+                : "text-[15px] font-semibold sm:text-xs sm:font-semibold",
               task.done && "text-muted-foreground line-through",
             )}
           >
             {task.task}
           </span>
-          <span className="mt-0.5 block text-[10px] leading-snug text-muted-foreground sm:hidden">
+          <span className="mt-0.5 block font-mono text-[11px] leading-snug tabular-nums text-muted-foreground sm:hidden">
             {[time.label, area && `${area.number}. ${area.name}`, categoryName, assigneeName]
               .filter(Boolean)
               .join(" · ")}
@@ -197,7 +215,7 @@ export function TaskRow({
       </div>
 
       {open && (
-        <div className="space-y-3 border-t px-4 py-3 text-sm">
+        <div className="space-y-3 border-t border-primary/20 px-3 pb-3 pt-2.5 text-sm">
           {task.important_note && (
             <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[13px] text-amber-700">{task.important_note}</p>
           )}
