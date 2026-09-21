@@ -691,8 +691,11 @@ export function useProductPhotos(productId?: string | null) {
 export function useSetProductCover() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ productId, url }: { productId: string; url: string }) => {
-      const { error } = await supabase.from("products").update({ image_url: url }).eq("id", productId);
+    mutationFn: async ({ productId, url }: { productId: string; url: string | null }) => {
+      const { error } = await supabase
+        .from("products")
+        .update({ image_url: url || null })
+        .eq("id", productId);
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
