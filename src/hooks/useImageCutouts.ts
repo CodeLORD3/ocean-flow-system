@@ -128,16 +128,12 @@ export function useCreateCutout() {
       if (error) throw error;
       const mediaId = inserted?.id as string;
 
+      const target = input.target ?? (input.createResource || input.resourceId ? "resource" : "none");
+
       // Saken i registret: skapas av utsnittet om den inte redan finns.
-      let resourceId = input.resourceId ?? null;
-      if (!resourceId && input.createResource) {
-        const { data: created, error: rErr } = await supabase
-          .from("resource_items")
-          .insert({ name: title, image: url })
-          .select("id")
-          .single();
-        if (rErr) throw rErr;
-        resourceId = created?.id as string;
+      let resourceId = target === "resource" ? input.resourceId ?? null : null;
+      if (target === "resource" && !resourceId && input.createResource) {
+        resourceId = await createResourceTarget(title, url);
       } else if (resourceId) {
         const { data: item } = await supabase
           .from("resource_items")
@@ -149,13 +145,29 @@ export function useCreateCutout() {
         }
       }
 
+      // Varan i produktlistan: samma sak för en produktbild.
+      let productId = target === "product" ? input.productId ?? null : null;
+      if (target === "product" && !productId && input.createProduct) {
+        productId = await createProductTarget(title, input.productCategory || "Övrigt", url);
+      } else if (productId) {
+        const { data: prod } = await supabase
+          .from("products")
+          .select("id, image_url")
+          .eq("id", productId)
+          .maybeSingle();
+        if (prod && !prod.image_url) {
+          await supabase.from("products").update({ image_url: url }).eq("id", productId);
+        }
+      }
+
       const links = inherited.map((l) => ({ entityType: l.entity_type, entityId: l.entity_id }));
       if (resourceId) links.push({ entityType: "resource", entityId: resourceId });
+      if (productId) links.push({ entityType: "product", entityId: productId });
 
       await classifyImage({
         mediaId,
         title,
-        mediaKind: resourceId ? "resource" : null,
+        mediaKind: resourceId ? "resource" : productId ? "product" : null,
         links,
         note: "Utsnitt ur bild",
       });
