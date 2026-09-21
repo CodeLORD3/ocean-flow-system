@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
-import { useAddAdhocTask } from "@/hooks/useTasks";
+import { useAddAdhocTask, useTaskRegister } from "@/hooks/useTasks";
 import { ZonePickMap } from "@/components/tasks/ZonePickMap";
 import type { FloorPlan, MapZone } from "@/hooks/useStoreMap";
 
@@ -57,7 +57,13 @@ export function NewTaskDialog({
   onCreated?: (taskId: string) => void;
 }) {
   const addAdhoc = useAddAdhocTask();
+  const { data: register = [] } = useTaskRegister(storeId);
   const [step, setStep] = useState(1);
+  /** Först väljer man om uppgiften finns sedan tidigare eller är helt ny. */
+  const [mode, setMode] = useState<"ny" | "finns" | null>(null);
+  const [existingSearch, setExistingSearch] = useState("");
+  const [existingZone, setExistingZone] = useState<string | null>(null);
+  const [existingMap, setExistingMap] = useState(false);
   const [task, setTask] = useState("");
   const [zone, setZone] = useState<string | null>(null);
   const [person, setPerson] = useState<string | null>(null);
@@ -75,6 +81,10 @@ export function NewTaskDialog({
   useEffect(() => {
     if (!open) return;
     setStep(1);
+    setMode(null);
+    setExistingSearch("");
+    setExistingZone(null);
+    setExistingMap(false);
     setTask("");
     setZone(null);
     setPerson(null);
@@ -102,6 +112,21 @@ export function NewTaskDialog({
   const chosenArea = areas.find((a) => a.id === zone) ?? null;
   const finalMinutes = minutes ?? (ownMinutes ? Number(ownMinutes) : null);
   const finalTime = timeMode === "now" ? nowTime() : time;
+
+  const existingList = useMemo(() => {
+    const q = existingSearch.trim().toLowerCase();
+    return register
+      .filter((r) => (existingZone ? r.zoneId === existingZone : true))
+      .filter((r) => (q ? r.task.toLowerCase().includes(q) : true))
+      .sort((a, b) => b.doneTimes - a.doneTimes || a.task.localeCompare(b.task, "sv"))
+      .slice(0, 60);
+  }, [register, existingSearch, existingZone]);
+
+  const pickExisting = (r: { task: string; zoneId: string | null }) => {
+    setTask(r.task);
+    if (r.zoneId) setZone(r.zoneId);
+    setStep(2);
+  };
 
   const save = async () => {
     if (!storeId || !task.trim()) return;
@@ -164,7 +189,128 @@ export function NewTaskDialog({
         </div>
 
         <div className="min-h-[260px] space-y-4 pt-1">
-          {step === 1 && (
+          {step === 1 && mode === null && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium">Är det en uppgift som redan finns?</p>
+              <button
+                type="button"
+                onClick={() => setMode("finns")}
+                className="w-full rounded-xl border-2 p-4 text-left hover:bg-muted"
+              >
+                <span className="block text-base font-semibold">Välj en uppgift som finns</span>
+                <span className="block text-sm text-muted-foreground">
+                  Sök i listan eller välj område på kartan — du ser hur många gånger den gjorts.
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("ny")}
+                className="w-full rounded-xl border-2 p-4 text-left hover:bg-muted"
+              >
+                <span className="block text-base font-semibold">Skapa en ny uppgift</span>
+                <span className="block text-sm text-muted-foreground">
+                  Skriv med egna ord och fyll i var, vem och när.
+                </span>
+              </button>
+            </div>
+          )}
+
+          {step === 1 && mode === "finns" && (
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={existingSearch}
+                  onChange={(e) => setExistingSearch(e.target.value)}
+                  placeholder="Sök uppgift …"
+                  autoFocus
+                  className="h-12 rounded-full pl-9 text-base"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setExistingZone(null)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-sm",
+                    existingZone === null ? "border-primary bg-primary/10 font-semibold text-primary" : "hover:bg-muted",
+                  )}
+                >
+                  Alla områden
+                </button>
+                {areas.map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => setExistingZone(a.id)}
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 text-sm",
+                      existingZone === a.id
+                        ? "border-primary bg-primary/10 font-semibold text-primary"
+                        : "hover:bg-muted",
+                    )}
+                  >
+                    {a.number}. {a.name}
+                  </button>
+                ))}
+              </div>
+              {plan && (zones?.length ?? 0) > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setExistingMap((v) => !v)}
+                    className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium hover:bg-muted"
+                  >
+                    <Map className="h-4 w-4" />
+                    {existingMap ? "Stäng kartan" : "Välj område på kartan"}
+                  </button>
+                  {existingMap && (
+                    <ZonePickMap
+                      plan={plan}
+                      zones={zones ?? []}
+                      value={existingZone}
+                      onChange={setExistingZone}
+                      numberOf={(id) => areas.find((a) => a.id === id)?.number ?? null}
+                      onNext={() => setExistingMap(false)}
+                    />
+                  )}
+                </>
+              )}
+              <div className="max-h-72 space-y-1 overflow-y-auto">
+                {existingList.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Ingen uppgift matchar.</p>
+                ) : (
+                  existingList.map((r) => (
+                    <button
+                      key={r.key}
+                      type="button"
+                      onClick={() => pickExisting(r)}
+                      className="flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left hover:bg-muted"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium">{r.task}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {areas.find((a) => a.id === r.zoneId)?.name ?? "Inget område"}
+                        </span>
+                      </span>
+                      <span className="whitespace-nowrap font-mono text-xs tabular-nums text-muted-foreground">
+                        gjord {r.doneTimes} ggr
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setMode("ny")}
+                className="text-sm underline"
+              >
+                Finns den inte? Skapa en ny uppgift
+              </button>
+            </div>
+          )}
+
+          {step === 1 && mode === "ny" && (
             <div className="space-y-2">
               <label className="text-sm font-medium">Vad ska göras?</label>
               <Input
