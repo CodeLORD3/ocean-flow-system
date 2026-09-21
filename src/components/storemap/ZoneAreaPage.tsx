@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Image as ImageIcon,
   ListChecks,
+  Pencil,
   Plus,
   Tag as TagIcon,
   TriangleAlert,
