@@ -36,8 +36,10 @@ import { canOpenStaffPage, staffLevelOf } from "@/lib/staffModuleAccess";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 
+/** Butikskartan är en egen flik i menyn — hela modulen med områden, ytor och redigering. */
+const mapNav = [{ title: "Butikskarta", url: "/store-map", icon: Map }];
+
 const overviewNav = [
-  { title: "Översikt", url: "/store-map", icon: Map },
   { title: "Bildflöde", url: "/image-feed", icon: Images },
 
   { title: "Uppgifter", url: "/uppgifter", icon: ListTodo },
