@@ -178,25 +178,36 @@ export function ImageLightbox({
     setCommentsOpen(true);
   };
 
-  /** Knappen som slår på rutnätet över bilden. Ligger nedtill så den inte täcker informationen. */
+  /** Knapparna nedtill i bilden: markera en del, och redigera bildens uppgifter. */
   const markButton = !pendingRegion && (
-    <button
-      type="button"
-      aria-label={markMode ? "Avbryt markering i bilden" : "Markera en del av bilden"}
-      onClick={() => {
-        setPendingRegion(null);
-        setMarkMode((v) => !v);
-      }}
-      className={cn(
-        "absolute bottom-2 left-2 z-20 flex h-9 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold shadow backdrop-blur",
-        markMode
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-background/85 text-foreground",
-      )}
-    >
-      <Square className="h-4 w-4" />
-      {markMode ? "Tryck eller dra i bilden" : "Markera i bilden"}
-    </button>
+    <div className="absolute bottom-2 left-2 z-20 flex max-w-[calc(100%-5rem)] flex-wrap items-center gap-1.5">
+      <button
+        type="button"
+        aria-label={markMode ? "Avbryt markering i bilden" : "Markera en del av bilden"}
+        onClick={() => {
+          setPendingRegion(null);
+          setMarkMode((v) => !v);
+        }}
+        className={cn(
+          "flex h-9 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold shadow backdrop-blur",
+          markMode
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-border bg-background/85 text-foreground",
+        )}
+      >
+        <Square className="h-4 w-4" />
+        {markMode ? "Tryck eller dra i bilden" : "Markera i bilden"}
+      </button>
+      <button
+        type="button"
+        aria-label="Redigera bilden och uppgifterna om den"
+        onClick={() => setEditOpen(true)}
+        className="flex h-9 items-center gap-1.5 rounded-full border border-border bg-background/85 px-3 text-[11px] font-semibold text-foreground shadow backdrop-blur"
+      >
+        <Pencil className="h-4 w-4" />
+        Redigera
+      </button>
+    </div>
   );
 
   /**
