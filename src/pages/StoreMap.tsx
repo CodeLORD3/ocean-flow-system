@@ -607,6 +607,25 @@ export default function StoreMap({
                 canManage && pageZone ? (tags) => saveZone.mutate({ id: pageZone.id, tags }) : undefined
               }
               onEditZone={canManage ? (id) => setSheetZoneId(id) : undefined}
+              onEditShape={canManage ? (id) => editZoneShape(id) : undefined}
+              onDeleteZone={
+                canManage
+                  ? (id) =>
+                      deleteZone.mutate(id, {
+                        onSuccess: () => {
+                          closeAreaPage();
+                          setSelected(null);
+                          toast({ title: "Ytan är borttagen" });
+                        },
+                        onError: (e) =>
+                          toast({
+                            title: "Kunde inte ta bort ytan",
+                            description: (e as Error).message,
+                            variant: "destructive",
+                          }),
+                      })
+                  : undefined
+              }
               mapSlot={
                 <div className="relative">
                 <FloorPlanCanvas
