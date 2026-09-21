@@ -68,7 +68,7 @@ Genomför förblir lika kort. Knappen **Var finns det?** öppnar en kompakt list
 
 ## 6. Förberedd för att hitta slöseri
 
-Varje gång vägen räknas fram sparas den som en ögonblicksbild: stoppen i ordning, totalt antal meter och beräknad gångtid. Då kan en framtida 5S-ändring jämföras mot dagens standard (−42 meter, −1 min 35 sek per genomförande). Ingen automatisk analys byggs nu, bara datan.
+När dagens uppgift startas fryses den väg som gällde: stoppen i ordning, totalt antal meter, beräknad gångtid, om vägen var beräknad, standard eller manuellt ändrad, och vilken version av standardvägen det var. En senare 5S-ändring skriver därför aldrig om historiken. Då kan en framtida ändring jämföras mot dagens standard (−42 meter, −1 min 35 sek per genomförande). Ingen automatisk förbättringsanalys byggs nu, bara datan.
 
 ## Teknisk sammanfattning
 
