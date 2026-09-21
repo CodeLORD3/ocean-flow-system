@@ -141,6 +141,10 @@ export function ZoneAreaPage({
         </div>
       </div>
 
+      {mapSlot && (
+        <div className="overflow-hidden rounded-xl border border-border bg-card">{mapSlot}</div>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-4">
         {stat(<ListChecks className="h-3.5 w-3.5" />, `${progress.done}/${progress.total}`, "Uppgifter klara")}
         {stat(<ImageIcon className="h-3.5 w-3.5" />, String(images.length), "Bilder")}
