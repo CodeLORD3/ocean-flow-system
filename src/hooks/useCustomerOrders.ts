@@ -322,7 +322,14 @@ export async function createCustomerOrder(input: NewOrderInput) {
       });
 
       return order as CustomerOrder;
-    },
+    }
+  }
+}
+
+export function useCreateCustomerOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: createCustomerOrder,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["customer_orders"] });
       qc.invalidateQueries({ queryKey: ["customer_purchase_needs"] });
@@ -330,6 +337,78 @@ export async function createCustomerOrder(input: NewOrderInput) {
     },
   });
 }
+
+/**
+ * Kopierar en eller flera beställningar till ett nytt önskat datum. Kopian är
+ * en helt ny beställning: nytt ordernummer, status "ny", inget packat, inget
+ * betalt och inte arkiverad — den hamnar därför i de aktuella listorna.
+ * Originalet i arkivet rörs inte.
+ */
+export function useDuplicateCustomerOrders() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, date }: { ids: string[]; date: string }) => {
+      if (ids.length === 0) return [] as CustomerOrder[];
+      const { data, error } = await db
+        .from("customer_orders")
+        .select(ORDER_SELECT)
+        .in("id", ids);
+      if (error) throw error;
+      const created: CustomerOrder[] = [];
+      for (const src of ((data || []) as unknown as CustomerOrder[])) {
+        const lines = [...((src as any).customer_order_lines ?? [])].sort(
+          (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
+        );
+        const copy = await createCustomerOrder({
+          store_id: src.store_id,
+          customer_id: src.customer_id ?? null,
+          customer_name_snapshot: (src as any).customer_name_snapshot ?? null,
+          customer_phone_snapshot: (src as any).customer_phone_snapshot ?? null,
+          order_type: src.order_type,
+          category: (src as any).category,
+          wanted_date: date,
+          wanted_time: (src as any).wanted_time ?? null,
+          delivery_street: (src as any).delivery_street ?? null,
+          delivery_postal_code: (src as any).delivery_postal_code ?? null,
+          delivery_city: (src as any).delivery_city ?? null,
+          guest_count: (src as any).guest_count ?? null,
+          allergy_note: (src as any).allergy_note ?? null,
+          excluded_allergens: (src as any).excluded_allergens ?? [],
+          source: (src as any).source ?? "butik",
+          received_by_name: (src as any).received_by_name ?? null,
+          received_by_staff_id: (src as any).received_by_staff_id ?? null,
+          status: "ny",
+          note: (src as any).note ?? null,
+          lines: lines.map((l: any) => ({
+            product_id: l.product_id ?? null,
+            free_text_name: l.free_text_name ?? null,
+            is_free_text: !!l.is_free_text,
+            quantity_ordered: Number(l.quantity_ordered || 0),
+            unit: l.unit || "kg",
+            estimated_price_per_unit: l.estimated_price_per_unit ?? null,
+            price_override_reason: l.price_override_reason ?? null,
+            note: l.note ?? null,
+            portion_per_guest: l.portion_per_guest ?? null,
+          })),
+        });
+        created.push(copy);
+        await logOrderEvent({
+          orderId: copy.id,
+          eventType: "skapad",
+          description: `Kopia av beställning ${(src as any).order_number} — nytt datum ${date}`,
+        });
+      }
+      return created;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customer_orders"] });
+      qc.invalidateQueries({ queryKey: ["customer_purchase_needs"] });
+      qc.invalidateQueries({ queryKey: ["customer_reservations"] });
+      qc.invalidateQueries({ queryKey: ["customer_order_events"] });
+    },
+  });
+}
+
 
 /**
  * Godkänner webbupphämtningar som kräver ett extra steg (t.ex. Zollikon).
