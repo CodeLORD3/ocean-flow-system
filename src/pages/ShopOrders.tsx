@@ -1026,7 +1026,19 @@ export default function ShopOrders() {
                                   />
                                 </div>
                               )}
-                              {committed && committed.quantity > 0 && (
+                              {isCustomerLine && (
+                                <div className="rounded-lg border border-success/40 bg-success/10 px-2.5 py-2 text-xs text-foreground space-y-1">
+                                  <p className="font-semibold text-success">
+                                    Kundbeställt {custQty.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {line.unit}
+                                    {line.customerNames && line.customerNames.length > 0 && ` – ${line.customerNames.slice(0, 3).join(", ")}`}
+                                  </p>
+                                  <p className="text-muted-foreground">
+                                    Påfyllning till kyldisken: {topUp.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} {line.unit}
+                                    {line.late && " · försenad kundbeställning"}
+                                  </p>
+                                </div>
+                              )}
+                              {!isCustomerLine && committed && committed.quantity > 0 && (
                                 <button
                                   type="button"
                                   onClick={() => {
