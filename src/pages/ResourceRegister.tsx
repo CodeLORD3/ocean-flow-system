@@ -418,6 +418,7 @@ function ResourceInbox({
   const [pickedStore, setPickedStore] = useState<string | null>(null);
   const targetStore = storeId ?? pickedStore ?? stores[0]?.id ?? null;
   const { data: inbox = [] } = useResourceInbox(null);
+  const { data: allLocations = [] } = useResourceLocations(null);
   const upload = useUploadEntityImage();
   const rename = useNameResourcePhoto();
   const link = useLinkPhotoToResource();
@@ -519,7 +520,11 @@ function ResourceInbox({
                           title: name,
                         });
                         const item = items.find((i) => i.id === v);
-                        if (photo.entity_id)
+                        // Har butiken redan en plats för saken lämnas antalet orört.
+                        const hasPlace = allLocations.some(
+                          (l) => l.resource_id === v && l.store_id === photo.entity_id,
+                        );
+                        if (photo.entity_id && !hasPlace)
                           saveLocation.mutate({ resourceId: v, storeId: photo.entity_id, quantity: 1 });
                         toast({ title: "Bilden är kopplad", description: item?.name });
                       } catch (e: any) {
