@@ -580,3 +580,20 @@ export function useCreateObservation() {
     onSuccess: () => invalidate(qc),
   });
 }
+
+/** En enskild bild, t.ex. när man kommer tillbaka till den via en länk. */
+export function useLibraryImage(mediaId?: string | null) {
+  return useQuery({
+    queryKey: ["library-image", mediaId],
+    enabled: !!mediaId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entity_images")
+        .select("*")
+        .eq("id", mediaId as string)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as unknown as LibraryImage) || null;
+    },
+  });
+}

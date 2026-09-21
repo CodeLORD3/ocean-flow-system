@@ -115,6 +115,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { canAccessRoute } from "@/lib/pageAccess";
 import { canOpenStaffPage, staffLevelOf } from "@/lib/staffModuleAccess";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import ReturnToImageBar from "@/components/images/ReturnToImageBar";
 
 interface RouteEntry {
   component: React.ReactNode;
@@ -262,6 +263,7 @@ export function KeepAliveTabs() {
             className="h-full w-full"
             style={{ display: isActive ? "block" : "none" }}
           >
+            {isActive && <ReturnToImageBar />}
             {allowed ? content : <NoAccessView site={site} path={tab.path} />}
           </div>
         );

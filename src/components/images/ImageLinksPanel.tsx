@@ -14,19 +14,24 @@ import {
 import { toast } from "sonner";
 
 /** Adressen till stället där bilden ligger, om det finns en sida att gå till. */
-export function placeRoute(entityType: string, entityId: string): string | null {
+export function placeRoute(
+  entityType: string,
+  entityId: string,
+  fromImageId?: string,
+): string | null {
+  const back = fromImageId ? `&frombild=${fromImageId}` : "";
   switch (entityType) {
     case "zone":
     case "map_zone":
-      return `/store-map?zone=${entityId}`;
+      return `/store-map?zone=${entityId}${back}`;
     case "store":
-      return `/organisation?markera=${entityId}`;
+      return `/organisation?markera=${entityId}${back}`;
     case "resource":
-      return `/utrustning?markera=${entityId}`;
+      return `/utrustning?markera=${entityId}${back}`;
     case "product":
-      return `/products?markera=${entityId}`;
+      return `/products?markera=${entityId}${back}`;
     case "task":
-      return `/uppgifter?markera=${entityId}`;
+      return `/uppgifter?markera=${entityId}${back}`;
     default:
       return null;
   }
@@ -75,7 +80,7 @@ export default function ImageLinksPanel({
         <h3 className="text-sm font-semibold">Ligger på dessa ställen</h3>
         <ul className="space-y-1.5">
           {links.map((l) => {
-            const route = placeRoute(l.entity_type, l.entity_id);
+            const route = placeRoute(l.entity_type, l.entity_id, image.id);
             const name = names[`${l.entity_type}:${l.entity_id}`] || "Okänt namn";
             return (
               <li

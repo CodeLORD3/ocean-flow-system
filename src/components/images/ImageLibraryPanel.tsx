@@ -27,7 +27,7 @@ import ImageQuickClassify from "./ImageQuickClassify";
 import ImageLinksPanel from "./ImageLinksPanel";
 import ImageActivityTimeline from "./ImageActivityTimeline";
 import AddImageFlow from "./AddImageFlow";
-import { useImageLibrary, useImageStatusCounts, type LibraryImage } from "@/hooks/useImageLibrary";
+import { useImageLibrary, useImageStatusCounts, useLibraryImage, type LibraryImage } from "@/hooks/useImageLibrary";
 import { STATUS_LABEL, type ImageStatus, type MediaKind } from "@/lib/imageStatus";
 
 type TabKey = "all" | MediaKind | "unplaced" | "partial";
@@ -46,7 +46,16 @@ const TABS: { key: TabKey; label: string }[] = [
  * Bildbiblioteket: alla bilder på ett ställe, sökbara och sorterbara.
  * En bild laddas upp en gång och kan höra till flera ställen.
  */
-export default function ImageLibraryPanel({ storeId }: { storeId?: string | null }) {
+export default function ImageLibraryPanel({
+  storeId,
+  openImageId,
+  onOpenedImage,
+}: {
+  storeId?: string | null;
+  /** Bild som ska öppnas direkt, t.ex. när man kommer tillbaka från ett ställe. */
+  openImageId?: string | null;
+  onOpenedImage?: () => void;
+}) {
   const [tab, setTab] = useState<TabKey>("all");
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -57,6 +66,15 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
   const [editing, setEditing] = useState<LibraryImage | null>(null);
   const [quick, setQuick] = useState<ImageStatus | null>(null);
   const [tag, setTag] = useState<string | null>(null);
+
+  const { data: linked } = useLibraryImage(openImageId);
+  useEffect(() => {
+    if (linked) {
+      setDetail(linked);
+      onOpenedImage?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linked?.id]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search), 300);
