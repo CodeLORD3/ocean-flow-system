@@ -3,18 +3,14 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useImageLinks, useRemoveImageLink, type LibraryImage } from "@/hooks/useImageLibrary";
 import { useLinkTargetNames } from "@/hooks/useImagePickers";
-import { relationLabel, STATUS_CLASS, STATUS_LABEL, mediaKindLabel } from "@/lib/imageStatus";
+import {
+  relationLabel,
+  STATUS_CLASS,
+  STATUS_LABEL,
+  mediaKindLabel,
+  linkTypeLabel,
+} from "@/lib/imageStatus";
 import { toast } from "sonner";
-
-const TYPE_LABEL: Record<string, string> = {
-  store: "Butik",
-  zone: "Område",
-  resource: "Sak",
-  product: "Produkt",
-  task: "Uppgift",
-  observation: "Iakttagelse",
-  location: "Plats",
-};
 
 /**
  * Visar vad bilden hör till och låter någon ta bort en koppling. Att ta bort
