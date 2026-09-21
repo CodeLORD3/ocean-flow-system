@@ -38,6 +38,7 @@ import { todayIso } from "@/hooks/useChecklist";
 import { FloorPlanCanvas, type Selection } from "@/components/storemap/FloorPlanCanvas";
 import { MapDetailDrawer } from "@/components/storemap/MapDetailDrawer";
 import { ZoneAreaPage } from "@/components/storemap/ZoneAreaPage";
+import { AreaMiniMap } from "@/components/storemap/AreaMiniMap";
 import { ObjectLibrary } from "@/components/storemap/ObjectLibrary";
 import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog";
 import { MapListViews } from "@/components/storemap/MapListViews";
@@ -574,10 +575,15 @@ export default function StoreMap() {
               zoneNumber={pageZone ? zoneNumbers[pageZone.id] : undefined}
               areaLabel={area?.sqm != null ? `${area.exact ? "" : "≈ "}${formatSqm(area.sqm)}` : null}
               mapSlot={
+                <div className="relative">
                 <FloorPlanCanvas
                   plan={plan}
-                  zones={zones}
-                  objects={objects}
+                  zones={pageZone ? [pageZone] : zones.filter((z) => z.id === pageObject?.zone_id)}
+                  objects={
+                    pageObject
+                      ? [pageObject]
+                      : objects.filter((o) => o.zone_id === pageZone?.id)
+                  }
                   walls={walls}
                   types={typeById}
                   zoneProgress={zoneProgress}
@@ -605,6 +611,15 @@ export default function StoreMap() {
                       : saveObject.mutate({ id, x, y, width, height })
                   }
                 />
+                <div className="pointer-events-none absolute right-2 top-2 w-24 overflow-hidden rounded-md border border-border bg-card/95 p-1 shadow-sm sm:w-32">
+                  <AreaMiniMap
+                    plan={plan}
+                    zones={zones}
+                    activeZoneId={pageZone?.id ?? pageObject?.zone_id ?? null}
+                    className="h-auto w-full"
+                  />
+                </div>
+                </div>
               }
               onBack={() => {
                 setAreaPage(null);
