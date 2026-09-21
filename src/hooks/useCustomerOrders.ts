@@ -240,10 +240,11 @@ export interface NewOrderInput {
   lines: NewOrderLineInput[];
 }
 
-export function useCreateCustomerOrder() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: NewOrderInput) => {
+/** Skapar en kundbeställning med rader, reservationer och händelselogg. */
+export async function createCustomerOrder(input: NewOrderInput) {
+  {
+    {
+
       const orderNumber = await nextOrderNumber(input.store_id);
       const isRequest = input.status === "forfragan";
 
