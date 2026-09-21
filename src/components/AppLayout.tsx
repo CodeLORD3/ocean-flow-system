@@ -8,6 +8,7 @@ import { StoreHero } from "@/components/StoreHero";
 import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
 
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { TaskAlertBanner } from "@/components/TaskAlertBanner";
 import { versionLabel } from "@/lib/appVersion";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 
@@ -354,6 +355,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 : "app-main flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 lg:p-6"
             }
           >
+            {!isCountFlow && <TaskAlertBanner />}
             {!isStaffModule && !isCountFlow && <StoreHero />}
             {children}
           </main>
