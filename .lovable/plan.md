@@ -38,22 +38,37 @@ Varje bild får en mänsklig tidslinje med profilbilder: "Anna lade upp bilden",
 
 Efter uppladdning: "47 bilder uppladda" i rutnät med flervalsrutor. Markera t.ex. 12 och sätt butik, område, typ, bildroll och taggar i ett svep — varje bild får en egen historikhändelse märkt "Via massredigering".
 
-**Snabbläge** klassificerar en bild i taget med *Spara & nästa*, där föregående val ligger kvar som förslag. På dator: Enter sparar och går vidare, vänster/höger byter bild. Gjort för hundratals bilder.
+Uppladdningen kräver ingen klassificering: bilderna skapas direkt som oplacerade med rätt uppladdare och syns omedelbart i massvyn. På dator markerar du med Skift+klick för intervall, Ctrl/Cmd+klick för enstaka, Ctrl/Cmd+A för alla synliga och Esc för att avmarkera. Längst ned visas "37 markerade" med Placera, Koppla, Taggar, Bildroll och Mer — små val, inga stora formulär.
+
+**Snabbläge** klassificerar en bild i taget med *Spara & nästa*, där föregående val ligger kvar som förslag, och styrs nästan helt från tangentbordet: vänster/höger byter bild, Enter sparar och går vidare, Esc stänger, 1–6 väljer vad bilden visar. Kortkommandona visas diskret. Gjort för hundratals bilder.
 
 ## Bilderna syns där de hör hemma
 
 Samma bild (samma media_id, aldrig kopior) visas automatiskt på områdessidan, på sakens kort i Utrustning & material, på uppgiften, under "Så ska det se ut" när den är referensbild, och tillsammans med iakttagelsen.
 
+## Ta bort koppling är inte att radera bilden
+
+Tas Lax bort från en bild som också hör till Fiskdisk och Bygga fiskdisk försvinner bara den kopplingen — bilden och övriga kopplingar ligger kvar. Att radera själva bilden är en egen handling med bekräftelse, för chef och administration.
+
+Varje bild visar neutralt hur långt sorteringen kommit: **Oplacerad**, **Delvis klar** eller **Klar**. Det är arbetsstatus, inte fel. Profilbilderna hålls tillräckligt stora för att man direkt ser vem som gjort vad, både på korten och i aktiviteten.
+
 ## Teknisk lösning
 
 - **Utöka `entity_images`** i stället för en ny media-tabell: nya kolumner `description`, `media_kind` (område/sak/produkt/iakttagelse/uppgift/annat), `status` (`classified`/`unclassified`), `captured_at`, `tags text[]`, `uploaded_by_staff_id`, `last_edited_by_staff_id`, `last_edited_at`. Nuvarande `entity_type`/`entity_id` behålls som bildens hemvist så allt befintligt fortsätter fungera.
-- **`image_links`** (media_id → entity_images, `entity_type`: store, zone, location, resource, product, task, task_template, observation; `entity_id`, `relation_type`: overview, reference, before, after, proof, instruction, documentation, contains; `created_by_staff_id`, unik per media+entity+relation). En backfill lägger in varje befintlig bilds nuvarande tillhörighet som första länk.
+- **`image_links`** (media_id → entity_images, `entity_type`: store, zone, location, resource, product, task, task_template, observation; `entity_id`, `relation_type`: overview, reference, before, after, proof, instruction, documentation, contains; `created_by_staff_id`, unik per media+entity+relation) är den primära sanningen om vad en bild hör till. `entity_type`/`entity_id` på bilden är hemvist för bakåtkompatibilitet och skrivs aldrig om automatiskt när en ny länk skapas. Frontend läser i första hand länkarna; befintliga vyer fortsätter läsa hemvisten under övergången.
+- Ingen dubbellagring: område sparas som `zone_id`, sak som `resource_id`, produkt som `product_id`, person som `staff_id`. Namn och profilbilder hämtas alltid från källan, så ett namnbyte på Fiskdisk syns direkt på bilderna.
+- Att ändra område rör bara områdeskopplingen — produkt-, uppgifts- och sakkopplingar ligger kvar. `uploaded_by_staff_id` är permanent; bara `last_edited_by_staff_id`/`last_edited_at` uppdateras.
 - **`image_activity`** (media_id, staff_id, `action_type`: uploaded, edited, classified, reclassified, linked, unlinked, set_as_reference, `change_group_id`, `field_name`, `old_value`, `new_value`, created_at). Endast insert; ingen update/delete-policy.
 - **`image_observations`** för iakttagelser (butik, område, plats, typ, kommentar, staff) kopplas via `image_links` med entity_type `observation`. Ingen Kaizen-logik byggs nu.
 - GRANT + RLS enligt befintligt mönster: personal (authenticated) får läsa och skriva bilder, länkar och aktivitet; aktivitet kan inte ändras eller raderas.
 - Frontend: nya hookar `useImageLibrary`, `useImageLinks`, `useImageActivity`, `useBulkClassify`; nya komponenter `AddImageFlow`, `ImageClassifySheet`, `ImageLibraryGrid`, `ImageBulkBar`, `ImageQuickClassify`, `ImageActivityTimeline`, `ImageLinksPanel` som byggs in i `src/pages/ImageFeed.tsx`, `ImageLightbox.tsx`, `ZoneAreaPage.tsx`, `ResourceRegister.tsx`, `TaskDetail.tsx` och produktbilderna. `StaffFace`/`StaffName` används för alla profilbilder, `thumbUrl` för snabba miniatyrer.
 - Befintlig bucket, komprimering (`prepareUpload`), kommentarer, hjärtan, bildmarkeringar, favoriter och kartmarkörer rörs inte.
+- **Säker migration av de 1 249 befintliga bilderna**: backfillen skapar bara den nya strukturen — fil, bucket-path, hemvist, kommentarer, hjärtan, favoriter, markeringar, kartkopplingar och tidsstämplar lämnas orörda. Varje bild får sin första `image_link` från nuvarande hemvist. Uppladdaren kopplas till `staff_id` bara när matchningen är säker; annars visas neutralt "äldre bild" utan gissning.
+- **Prestanda**: rutnätet använder `thumbUrl`, lazy-load och sidvis inläsning (infinite scroll), filtrering och sök körs i databasen, kopplingar hämtas för synliga bilder och aktivitet först när en bild öppnas. Originalbilden laddas bara i stor visning. Ska kännas snabbt vid 10 000+ bilder.
+- Strukturen lämnar plats för framtida förslag (föreslaget område, produkt, taggar, jämförelse mot referensbild) i ett eget förslagsfält — ingen automatisk klassificering byggs nu, människan bekräftar informationen.
 
 ## Kontroll före leverans
 
-Provkörs på 390 px och 1280 px: ta foto → klassificera → spara; spara som oplacerad och låt en annan person klassificera; massuppladdning med flervalsredigering; Spara & nästa med Enter; rättning av område som visas i tidslinjen med gammalt → nytt värde; samma bild syns på områdessidan, saken och uppgiften. Provdata städas bort efteråt.
+Först kontrolleras att befintliga bilder fungerar precis som förut efter migrationen: en gammal butiksbild, portalbild, produktbild, orderradsbild och områdesbild — och att en gammal bild kan få en ny koppling utan att dess gamla användning slutar fungera.
+
+Därefter provkörs på 390 px och 1280 px: ta foto → klassificera → spara; spara som oplacerad och låt en annan person klassificera; massuppladdning med flervalsredigering; Spara & nästa med Enter; rättning av område som visas i tidslinjen med gammalt → nytt värde; samma bild syns på områdessidan, saken och uppgiften. Provdata städas bort efteråt.
