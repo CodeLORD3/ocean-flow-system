@@ -134,7 +134,7 @@ Det gör det enkelt att söka i registret och förbättra arbetssättet både i 
 
 1. **Genomför** med Starta uppgift, kontrollpunkter som sparas som bevis, Markera som klar och Registrera i efterhand.
 2. **Tre lägen** på uppgiftens sida och samma tre lägen i rulldownen i dagens lista, med standardtid i fem delar.
-3. **Utrustningsregistret** med antal, värde, inköpsställe och plats per butik (5S), samt kopplingen från uppgifternas beskrivning och vägen i butiken.
+3. **Resursregistret "Utrustning & material"** med typer, antal, värde, inköpsställe, butikens egen resurs per standardkrav och plats per butik (5S), samt vägen i butiken.
 4. **Hur gör vi?** utökat per steg: kort video, viktig punkt, varför, tid, säkerhet, HACCP.
 5. **Pauser, uppföljning och Kaizen** — väntetid med orsak, snitt mot standardtid, förbättringsförslag.
 6. **Standard och varianter** med jämförelse och förslag till ny standard.
@@ -143,11 +143,15 @@ Det gör det enkelt att söka i registret och förbättra arbetssättet både i 
 
 - Migration: `task_checkpoints` (per standarduppgift: text, ordning, krav) och `task_checkpoint_results` (per utförande: bockad av, tid) — bock sparas som rad, tas aldrig bort utan loggas.
 - `checklist_items` utökas med `started_at`, `finished_at`, `actual_minutes`, `active_minutes`, `paused_minutes`, `time_source` (timer/efterhand), `run_status` (ej startad/pågår/pausad/klar). Ny tabell `task_pauses` (uppgift, orsak, från, till). `checklist_template_items` får `std_fetch_minutes`, `std_prepare_minutes`, `std_do_minutes`, `std_check_minutes`, `std_restore_minutes`, `auto_start`, `standard_id`, `variant_of`, `variant_note`.
-- Nya tabeller `equipment_items` (namn, bild, kategori, total_count, unit_value, supplier, supplier_article_no) och `equipment_locations` (butik, `map_zone_id`, exakt plats, antal) med GRANT + RLS enligt befintligt mönster (admin skriver, personal läser). Platsen bor bara här — uppgiften sparar `equipment_id`, aldrig plats.
+- Generell resursmodell i fyra tabeller, alla med GRANT + RLS enligt befintligt mönster (admin skriver, personal i butiken läser):
+  - `resource_items` (name, image, resource_type, category, unit, total_count, unit_value, supplier, supplier_article_no, reusable, active)
+  - `resource_locations` (resource_id, store_id, map_zone_id, location_text, position_code, quantity) — enda stället platsen lagras
+  - `task_resource_requirements` (task_template_id, requirement_type, requirement_name, quantity_required, required, usage_note) — standardens krav, utan fabrikat eller plats
+  - `store_resource_mappings` (requirement_id, store_id, resource_id) — vad just den butiken använder
 - Förberedd för gångtid: `map_zones` kompletteras med valfri `walk_seconds_from` (grannområden) så vägen senare kan räknas; första versionen visar stegen i ordning utan automatisk ruttberäkning.
-- Ny tabell `improvement_suggestions` (uppgift, utrustning, butik, iakttagelse, föreslagen ändring, status, beslutad av) — systemet ändrar aldrig placering eller standard automatiskt.
-
-- `guide` i `src/lib/taskGuide.ts` utökas per steg med `video`, `keyPoint`, `why`, `minutes`, `safety`, `haccp`; material får `equipmentId`. Tolerant läsning behålls så befintliga beskrivningar fungerar.
+- Ny tabell `improvement_suggestions` (uppgift, resurs, butik, iakttagelse, föreslagen ändring, status, beslutad av) — systemet ändrar aldrig placering eller standard automatiskt.
+- `guide` i `src/lib/taskGuide.ts` utökas per steg med `video`, `keyPoint`, `why`, `minutes`, `safety`, `haccp`; material pekar på `requirementId` i stället för inskriven plats. Tolerant läsning behålls så befintliga beskrivningar fungerar.
 - Video laddas upp komprimerat till samma bucket som guidebilder, max ca 30 sekunder.
-- Frontend: `TaskDetail.tsx` får lägesväxlare (Genomför/Hur gör vi?/Planering), ny `TaskPerformPanel`, `TaskPlanningPanel`, utökad `TaskGuideView`/`TaskGuideEditor`, nytt register `src/pages/EquipmentRegister.tsx`. Befintlig lista, kalender, kartkoppling och behörigheter rörs inte.
+- Frontend: `TaskDetail.tsx` får lägesväxlare (Genomför/Hur gör vi?/Planering), ny `TaskPerformPanel`, `TaskPlanningPanel`, utökad `TaskGuideView`/`TaskGuideEditor`, nytt register `src/pages/ResourceRegister.tsx` (rubrik "Utrustning & material"). Befintlig lista, kalender, kartkoppling och behörigheter rörs inte.
+
 - Verifiering: typecheck, test för tidsberäkning och kontrollpunkter, samt inloggad genomgång i telefonbredd (390 px) av Genomför → bild → klar med tidmätning.
