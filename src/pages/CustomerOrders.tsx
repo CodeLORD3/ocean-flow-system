@@ -405,6 +405,7 @@ export default function CustomerOrders() {
   const renderOrderRow = (o: CustomerOrder, day: string) => (
     <div
       key={o.id}
+      id={`kundorder-${o.id}`}
       draggable={canEdit && !rowReadOnly(o) && marked.includes(o.id)}
       onDragStart={(e) => {
         if (!marked.includes(o.id)) {
@@ -422,7 +423,11 @@ export default function CustomerOrders() {
         setDragIds([]);
         setDragOverDay(null);
       }}
-      className={dragIds.includes(o.id) ? "opacity-50" : ""}
+      className={`${dragIds.includes(o.id) ? "opacity-50" : ""} ${
+        highlightOrder === o.id
+          ? "rounded-xl ring-2 ring-primary ring-offset-2 ring-offset-background transition"
+          : ""
+      }`}
     >
       <CustomerOrderRow
         order={o}
