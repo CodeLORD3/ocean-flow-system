@@ -81,6 +81,8 @@ export function ZoneAreaPage({
   onOpenZone?: (zoneId: string) => void;
   onAddChild?: (parentZoneId: string) => void;
   onSaveTags?: (tags: string[]) => void;
+  /** Öppnar rutan där ytans namn och färg ändras. */
+  onEditZone?: (zoneId: string) => void;
   onBack: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
