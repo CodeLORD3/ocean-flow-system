@@ -813,8 +813,8 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
               pins={pins}
               pinMode={pinMode}
               pxPerMeter={pxPerMeter}
-              onPinPlace={({ x, y, zoneId }) => {
-                setPinDialog({ point: { x, y }, zoneId, existing: null });
+              onPinPlace={({ x, y, zoneId, area }) => {
+                setPinDialog({ point: { x, y }, zoneId, existing: null, area: area ?? null });
                 setPinMode(false);
               }}
               onPinSelect={(pin) => setPinDialog({ point: null, zoneId: pin.zone_id, existing: pin })}
