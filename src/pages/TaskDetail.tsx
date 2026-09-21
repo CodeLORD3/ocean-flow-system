@@ -86,6 +86,8 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const removeTask = useDeleteTask();
   const upload = useUploadEntityImage();
 
+  const { data: itemWeekdays = [] } = useStandardWeekdays(task?.template_item_id ?? null);
+
   const [note, setNote] = useState<string | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const attachArchive = useAttachArchiveImages();
