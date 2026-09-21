@@ -730,8 +730,56 @@ export function FloorPlanCanvas({
                           e.stopPropagation();
                           setVDrag({ zoneId: z.id, index: i, base: pts, startX: e.clientX, startY: e.clientY });
                         }}
+                        onDoubleClick={(e) => {
+                          // Dubbelklick tar bort hörnet — en yta måste ha minst tre hörn.
+                          e.stopPropagation();
+                          if (pts.length <= 3 || !onZonePointsCommit) return;
+                          onZonePointsCommit(
+                            z.id,
+                            pts.filter((_, k) => k !== i),
+                          );
+                        }}
                       />
                     ))}
+
+                  {/* Nytt hörn: tryck på plusset mitt på en sida så får ytan en punkt mer */}
+                  {editMode &&
+                    isSel &&
+                    pts.map((pt, i) => {
+                      const next = pts[(i + 1) % pts.length];
+                      const mid = { x: (pt.x + next.x) / 2, y: (pt.y + next.y) / 2 };
+                      return (
+                        <g
+                          key={`m${i}`}
+                          className="cursor-copy"
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!onZonePointsCommit) return;
+                            const out = [...pts];
+                            out.splice(i + 1, 0, { x: Math.round(mid.x), y: Math.round(mid.y) });
+                            onZonePointsCommit(z.id, out);
+                          }}
+                        >
+                          <circle
+                            cx={mid.x}
+                            cy={mid.y}
+                            r={5.5}
+                            fill="hsl(var(--primary))"
+                            stroke="hsl(var(--card))"
+                            strokeWidth={1.5}
+                            opacity={0.9}
+                          />
+                          <path
+                            d={`M ${mid.x - 2.6} ${mid.y} H ${mid.x + 2.6} M ${mid.x} ${mid.y - 2.6} V ${mid.y + 2.6}`}
+                            stroke="hsl(var(--card))"
+                            strokeWidth={1.6}
+                            strokeLinecap="round"
+                            style={{ pointerEvents: "none" }}
+                          />
+                        </g>
+                      );
+                    })}
                 </g>
               );
             })}
@@ -1034,6 +1082,14 @@ export function FloorPlanCanvas({
           </svg>
           <span className="block text-[9px] text-muted-foreground pt-0.5">Hela kartan</span>
         </button>
+      )}
+
+      {/* Hjälptext när man formar en yta: fler hörn eller ta bort ett */}
+      {editMode && selected?.kind === "zone" && (
+        <div className="pointer-events-none absolute bottom-3 right-3 max-w-[15rem] rounded-xl border border-border bg-card px-3 py-2 text-[11px] leading-snug text-muted-foreground shadow-sm">
+          Dra i hörnen för att forma ytan. Tryck på <span className="font-semibold text-foreground">+</span> mitt på en
+          sida för ett nytt hörn, dubbelklicka på ett hörn för att ta bort det.
+        </div>
       )}
 
       {/* Rullhjulet zoomar först när kartan är aktiv — annars skrollar sidan */}
