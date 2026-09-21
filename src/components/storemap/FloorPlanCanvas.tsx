@@ -447,6 +447,34 @@ export function FloorPlanCanvas({
 
   const ptsOf = (z: MapZone) => ghostPts[z.id] ?? zonePoints(z);
 
+  /*
+    Ytor inuti ytor: föräldern ska alltid synas genomskinlig bakom barnet.
+    Barnen ritas sist (ovanpå), de får ingen vit botten som täcker föräldern,
+    och en förälder tonas aldrig ner när barnet är valt.
+  */
+  const parentOf = (id: string) => zones.find((z) => z.id === id)?.parent_zone_id ?? null;
+  const zoneDepth = (z: MapZone) => {
+    let d = 0;
+    let p = z.parent_zone_id ?? null;
+    while (p && d < 10) {
+      d += 1;
+      p = parentOf(p);
+    }
+    return d;
+  };
+  const isAncestorOf = (maybeAncestorId: string, zoneId: string | null | undefined) => {
+    let p = zoneId ? parentOf(zoneId) : null;
+    let guard = 0;
+    while (p && guard < 10) {
+      if (p === maybeAncestorId) return true;
+      p = parentOf(p);
+      guard += 1;
+    }
+    return false;
+  };
+  const drawZones = [...zones].sort((a, b) => zoneDepth(a) - zoneDepth(b));
+
+
   /* Nålläge: tryck var som helst på ritningen och punkten hamnar exakt där. */
   const placePin = (e: React.MouseEvent) => {
     if (!pinMode || !onPinPlace) return;
@@ -535,14 +563,22 @@ export function FloorPlanCanvas({
             ))}
 
             {/* Lager 3 — zoner som riktiga polygoner efter planritningen */}
-            {zones.map((z) => {
+            {drawZones.map((z) => {
               const pts = ptsOf(z);
               const b = bbox(pts);
               const c = centroid(pts);
               const p = zoneProgress[z.id];
               const isSel = selected?.kind === "zone" && selected.id === z.id;
               const isHover = hover?.id === z.id;
-              const dim = (hover && !isHover) || (selected && !isSel) || (placeZoneId && placeZoneId !== z.id);
+              const inside = !!z.parent_zone_id;
+              /* Ytan runt om tonas inte ner — den ska synas genomskinlig bakom */
+              const keepsFull =
+                isAncestorOf(z.id, selected?.kind === "zone" ? selected.id : null) ||
+                isAncestorOf(z.id, hover?.id) ||
+                isAncestorOf(z.id, placeZoneId);
+              const dim =
+                !keepsFull &&
+                ((hover && !isHover) || (selected && !isSel) || (placeZoneId && placeZoneId !== z.id));
               const identity = z.color ?? "hsl(var(--primary))";
               const status = p ? STATUS_COLOR[p.status] : identity;
               const area = areaOf({ width: b.width, height: b.height, area_sqm: z.area_sqm }, pxPerMeter);
@@ -559,13 +595,17 @@ export function FloorPlanCanvas({
                     setVDrag({ zoneId: z.id, index: -1, base: pts, startX: e.clientX, startY: e.clientY });
                   }}
                 >
-                  {/* Vit botten gör zonfärgen pastellig även över ritningen */}
-                  <polygon
-                    points={toPath(pts)}
-                    fill="hsl(var(--card))"
-                    fillOpacity={0.82}
-                    style={{ pointerEvents: "none" }}
-                  />
+                  {/* Vit botten gör zonfärgen pastellig även över ritningen.
+                      Ytor inuti en yta får ingen botten — då syns ytan bakom. */}
+                  {!inside && (
+                    <polygon
+                      points={toPath(pts)}
+                      fill="hsl(var(--card))"
+                      fillOpacity={0.82}
+                      style={{ pointerEvents: "none" }}
+                    />
+                  )}
+
                   <polygon
                     points={toPath(pts)}
                     fill={identity}
