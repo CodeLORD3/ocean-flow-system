@@ -40,6 +40,11 @@ export type EntityImageComment = {
   edited_by: string | null;
   edited_by_name: string | null;
   edited_at: string | null;
+  /** Markerad del av bilden, andel av bredd och höjd (0–1). */
+  region_x: number | null;
+  region_y: number | null;
+  region_w: number | null;
+  region_h: number | null;
 };
 
 /** Namnet på det inloggade kontot (personal om möjligt), för redigeringsspår. */
@@ -468,7 +473,16 @@ export function useImageComments(imageId?: string | null) {
 export function useAddImageComment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ imageId, body }: { imageId: string; body: string }) => {
+    mutationFn: async ({
+      imageId,
+      body,
+      region,
+    }: {
+      imageId: string;
+      body: string;
+      /** Den markerade delen av bilden, om kommentaren gäller en yta. */
+      region?: { x: number; y: number; w: number; h: number } | null;
+    }) => {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth?.user?.id ?? null;
       let name = auth?.user?.email ?? "Okänd";
@@ -482,7 +496,16 @@ export function useAddImageComment() {
       }
       const { error } = await supabase
         .from("entity_image_comments")
-        .insert({ image_id: imageId, user_id: uid, author_name: name, body });
+        .insert({
+          image_id: imageId,
+          user_id: uid,
+          author_name: name,
+          body,
+          region_x: region ? region.x : null,
+          region_y: region ? region.y : null,
+          region_w: region ? region.w : null,
+          region_h: region ? region.h : null,
+        });
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {

@@ -5128,6 +5128,10 @@ export type Database = {
           edited_by_name: string | null
           id: string
           image_id: string
+          region_h: number | null
+          region_w: number | null
+          region_x: number | null
+          region_y: number | null
           user_id: string | null
         }
         Insert: {
@@ -5139,6 +5143,10 @@ export type Database = {
           edited_by_name?: string | null
           id?: string
           image_id: string
+          region_h?: number | null
+          region_w?: number | null
+          region_x?: number | null
+          region_y?: number | null
           user_id?: string | null
         }
         Update: {
@@ -5150,6 +5158,10 @@ export type Database = {
           edited_by_name?: string | null
           id?: string
           image_id?: string
+          region_h?: number | null
+          region_w?: number | null
+          region_x?: number | null
+          region_y?: number | null
           user_id?: string | null
         }
         Relationships: [
