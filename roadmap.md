@@ -36,3 +36,6 @@ Dator lämnas oförändrad (allt görs med `sm:`-brytpunkten eller separata mobi
 
 ## Steg 5 — Kontroll
 - [ ] Genomgång vid 360×800 och 390×844: inget sidoscroll, alla ytor ≥56 px
+
+## Layout — mindre skrollning
+- [ ] Min sida och områdessidor: tydliga rubriker, kompakta avsnitt, inget långt skrollande

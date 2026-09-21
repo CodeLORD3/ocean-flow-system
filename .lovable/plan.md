@@ -15,7 +15,10 @@ Befintliga objekt på kartorna ligger kvar och fungerar som förut. Inget radera
 **2. Så navigerar man**
 Helbild av butiken → tryck på en yta → ytans egen sida med en brödsmulerad väg (`Butiken › Beredning › Vask`). På ytans sida ligger kartan över just den ytan högst upp, under den de ytor som finns inuti som tryckbara kort, och därunder allt innehåll. Ett tryck på en underyta går in ett steg djupare; vägen tillbaka syns alltid.
 
-**3. Taggarna blir sökbara**
+**3. Sidorna blir kompakta — inget långt skrollande**
+Ytans sida och Min sida delas upp i tydliga rubriker som man hoppar mellan i stället för att skrolla: en rad med avsnitt (Bilder, Checklistor, Uppgifter, Utrustning, Avvikelser, Historik) högst upp, bara ett avsnitt öppet i taget, och det viktigaste — karta, underytor och det som ska göras — alltid synligt utan att skrolla. Långa listor visas förkortade med "Visa fler".
+
+**4. Taggarna blir sökbara**
 Taggar visas som chips på ytan och i ytlistan. Tryck på en tagg för att se alla ytor med samma tagg. Sökrutan i kartan söker på namn och tagg.
 
 **4. Kartan stannar kvar i Uppgifter**
