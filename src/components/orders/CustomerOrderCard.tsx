@@ -1,3 +1,4 @@
+import { sortLinesByCategory } from "@/lib/productCategories";
 import { OrdererName } from "@/components/orders/OrdererName";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -92,7 +93,7 @@ export function CustomerOrderCard({
   const [notes, setNotes] = useState<Record<string, string>>({});
 
   const lines = useMemo(
-    () => [...(order?.customer_order_lines || [])].sort((a, b) => a.sort_order - b.sort_order),
+    () => sortLinesByCategory(order?.customer_order_lines || []),
     [order],
   );
 
