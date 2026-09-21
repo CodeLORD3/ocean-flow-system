@@ -736,10 +736,11 @@ export function FloorPlanCanvas({
                           // Dubbelklick tar bort hörnet — en yta måste ha minst tre hörn.
                           e.stopPropagation();
                           if (pts.length <= 3 || !onZonePointsCommit) return;
-                          onZonePointsCommit(
-                            z.id,
-                            pts.filter((_, k) => k !== i),
-                          );
+                          const out = pts.filter((_, k) => k !== i);
+                          /* Visa ändringen direkt och behåll inzoomningen. */
+                          touched.current = true;
+                          setGhostPts((m) => ({ ...m, [z.id]: out }));
+                          onZonePointsCommit(z.id, out);
                         }}
                       />
                     ))}
