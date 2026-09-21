@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Clock, MapPin, Search, User } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Clock, Map, MapPin, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
-import { TASK_LINKS } from "@/lib/taskLink";
 import { useAddAdhocTask } from "@/hooks/useTasks";
+import { ZonePickMap } from "@/components/tasks/ZonePickMap";
+import type { FloorPlan, MapZone } from "@/hooks/useStoreMap";
 
 const STEPS = [
   { n: 1, label: "Vad ska göras?" },
@@ -41,6 +41,8 @@ export function NewTaskDialog({
   day,
   areas,
   staff,
+  plan,
+  zones,
   onCreated,
 }: {
   open: boolean;
@@ -49,6 +51,9 @@ export function NewTaskDialog({
   day: string;
   areas: NewTaskArea[];
   staff: NewTaskStaff[];
+  /** Butikens karta, så man kan peka ut området istället för att minnas namnet. */
+  plan?: FloorPlan | null;
+  zones?: MapZone[];
   onCreated?: (taskId: string) => void;
 }) {
   const addAdhoc = useAddAdhocTask();
@@ -62,7 +67,7 @@ export function NewTaskDialog({
   const [minutes, setMinutes] = useState<number | null>(null);
   const [ownMinutes, setOwnMinutes] = useState("");
   const [note, setNote] = useState("");
-  const [link, setLink] = useState("none");
+  const [pickOnMap, setPickOnMap] = useState(false);
   const [reqPhoto, setReqPhoto] = useState(false);
   const [reqNote, setReqNote] = useState(false);
 
@@ -78,7 +83,7 @@ export function NewTaskDialog({
     setMinutes(null);
     setOwnMinutes("");
     setNote("");
-    setLink("none");
+    setPickOnMap(false);
     setReqPhoto(false);
     setReqNote(false);
   }, [open]);
@@ -111,7 +116,6 @@ export function NewTaskDialog({
         note,
         requiresPhoto: reqPhoto,
         requiresNote: reqNote,
-        linkUrl: link === "none" ? null : link,
       });
       toast({ title: "Uppgiften är skapad" });
       onOpenChange(false);
@@ -214,6 +218,27 @@ export function NewTaskDialog({
                       </button>
                     ))}
                   </div>
+                )}
+                {plan && (zones?.length ?? 0) > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setPickOnMap((v) => !v)}
+                      className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium hover:bg-muted"
+                    >
+                      <Map className="h-4 w-4" />
+                      {pickOnMap ? "Stäng kartan" : "Välj på kartan"}
+                    </button>
+                    {pickOnMap && (
+                      <ZonePickMap
+                        plan={plan}
+                        zones={zones ?? []}
+                        value={zone}
+                        onChange={setZone}
+                        numberOf={(id) => areas.find((a) => a.id === id)?.number ?? null}
+                      />
+                    )}
+                  </>
                 )}
               </div>
 
@@ -417,23 +442,6 @@ export function NewTaskDialog({
                   />
                   Kommentar krävs
                 </label>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Genväg (valfritt)</label>
-                <Select value={link} onValueChange={setLink}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Ingen genväg" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Ingen genväg</SelectItem>
-                    {TASK_LINKS.map((l) => (
-                      <SelectItem key={l.url} value={l.url}>
-                        {l.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="space-y-2">
