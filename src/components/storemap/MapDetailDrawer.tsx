@@ -708,7 +708,7 @@ export function MapDetailDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-sm overflow-y-auto">
+      <SheetContent side="left" className="w-full sm:max-w-sm overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="sr-only">{label}</SheetTitle>
           {head}
