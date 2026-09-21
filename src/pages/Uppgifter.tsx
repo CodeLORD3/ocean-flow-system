@@ -547,6 +547,7 @@ export default function Uppgifter() {
                       {g.tasks.filter((t) => t.done).length}/{g.tasks.length}
                     </span>
                   </div>
+                  <div className="border-t border-grid-line">
                   {g.tasks.map((t) => (
                     <div
                       key={t.id}
