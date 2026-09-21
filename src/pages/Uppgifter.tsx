@@ -37,6 +37,7 @@ import {
 } from "@/hooks/useTasks";
 import { DAYPARTS, durationText, groupByDaypart, remainingMinutes } from "@/lib/taskTime";
 import { TaskRow, type TaskRowArea } from "@/components/tasks/TaskRow";
+import { TaskZoneMap, type ZoneTaskCount } from "@/components/tasks/TaskZoneMap";
 import { TaskCalendar } from "@/components/tasks/TaskCalendar";
 import { TaskRegister } from "@/components/tasks/TaskRegister";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
@@ -100,6 +101,17 @@ export default function Uppgifter() {
     );
     return map;
   }, [zones]);
+
+  /** Dagens uppgifter per område, så kartan visar vad som är kvar var. */
+  const zoneCounts = useMemo(() => {
+    const map = new Map<string, ZoneTaskCount>();
+    tasks.forEach((t) => {
+      if (!t.zone_id) return;
+      const cur = map.get(t.zone_id) ?? { total: 0, left: 0 };
+      map.set(t.zone_id, { total: cur.total + 1, left: cur.left + (t.done ? 0 : 1) });
+    });
+    return map;
+  }, [tasks]);
 
   const [tab, setTab] = useState("dag");
   const { data: checklists = [] } = useChecklistTemplates(storeId);
@@ -403,6 +415,18 @@ export default function Uppgifter() {
         </TabsList>
 
         <TabsContent value="dag" className="space-y-4">
+          {plan && zones.length > 0 && (
+            <TaskZoneMap
+              plan={plan}
+              zones={zones}
+              areas={areaOf}
+              counts={zoneCounts}
+              selected={fArea}
+              onSelect={setFArea}
+              onOpenMap={() => switchTab("/store-map")}
+            />
+          )}
+
           <Card className="p-4">
             <Progress done={doneCount} total={tasks.length} />
             {left > 0 && (
