@@ -609,6 +609,21 @@ export default function ShopOrders() {
     setOrderLines(prev => prev.map((l, i) => i === idx ? { ...l, quantity: qty } : l));
   };
 
+  /**
+   * Butikens egen påfyllning på en kundrad. Radens totala mängd är alltid
+   * kundbeställd mängd + påfyllning, så kundens del kan aldrig skrivas bort.
+   */
+  const setTopUp = (idx: number, value: string) => {
+    setOrderLines(prev =>
+      prev.map((l, i) => {
+        if (i !== idx) return l;
+        const top = Number(String(value).replace(",", ".")) || 0;
+        const total = (l.customerQty ?? 0) + Math.max(0, top);
+        return { ...l, topUpQty: value, quantity: total > 0 ? String(Number(total.toFixed(1))) : "" };
+      }),
+    );
+  };
+
   /** Sätter prioritet på en rad. "Måste med" förifylls med hela raden som kritisk mängd. */
   const setLinePriority = (idx: number, priority: LinePriority) => {
     setOrderLines(prev =>
