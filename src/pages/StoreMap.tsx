@@ -707,16 +707,6 @@ export default function StoreMap({
                 <div className="ml-auto flex items-center gap-1.5">
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="h-7 text-[11px] gap-1"
-                    onClick={() => addZone()}
-                    disabled={saveZone.isPending}
-                  >
-                    <Plus className="h-3 w-3" />
-                    Nytt område
-                  </Button>
-                  <Button
-                    size="sm"
                     variant={pinMode ? "default" : "outline"}
                     className="h-7 text-[11px] gap-1"
                     onClick={() => setPinMode((v) => !v)}
