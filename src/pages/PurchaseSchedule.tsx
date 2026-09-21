@@ -1028,7 +1028,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
           ) : (
             <div className="space-y-1">
               {weekDates.map((date, dayIndex) => {
-                const items = activeMap.get(dayIndex) || [];
+                const items = (activeMap.get(dayIndex) || []).filter((it: any) => !isRemoved(it.lineIds));
                 const isToday = isSameDay(date, new Date());
                 const isPast = date < new Date() && !isToday;
                 const dayLabel = `${WEEKDAYS[dayIndex]} ${format(date, "d/M")}`;
