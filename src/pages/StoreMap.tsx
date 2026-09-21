@@ -610,6 +610,15 @@ export default function StoreMap() {
                       : saveObject.mutate({ id, x, y, width, height })
                   }
                 />
+                <div className="pointer-events-none absolute right-2 top-2 w-24 overflow-hidden rounded-md border border-border bg-card/95 p-1 shadow-sm sm:w-32">
+                  <AreaMiniMap
+                    plan={plan}
+                    zones={zones}
+                    activeZoneId={pageZone?.id ?? pageObject?.zone_id ?? null}
+                    className="h-auto w-full"
+                  />
+                </div>
+                </div>
               }
               onBack={() => {
                 setAreaPage(null);
