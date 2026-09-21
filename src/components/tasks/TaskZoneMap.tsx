@@ -29,7 +29,17 @@ type Props = {
  * kvar idag och ett klick filtrerar listan på området. Kartan och listan visar
  * samma nummer, så "2. Kundyta" i listan är område 2 på kartan.
  */
-export function TaskZoneMap({ plan, zones, areas, counts, selected, onSelect, onOpenMap, chipsOnly }: Props) {
+export function TaskZoneMap({
+  plan,
+  zones,
+  areas,
+  counts,
+  selected,
+  onSelect,
+  onOpenMap,
+  chipsOnly,
+  openLabel,
+}: Props) {
   const shapes = useMemo(
     () =>
       [...zones]
