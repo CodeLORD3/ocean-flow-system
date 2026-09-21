@@ -1,7 +1,9 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { BellRing, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMyTaskAlerts } from "@/hooks/useMyTaskAlerts";
+import { withReturn } from "@/lib/navHistory";
+import { getTitleForPath } from "@/contexts/TabsContext";
 
 /**
  * Blinkande rad högst upp på sidan när jag får en ny uppgift. Ljudet spelas av
