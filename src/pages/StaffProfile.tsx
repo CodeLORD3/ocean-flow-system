@@ -290,13 +290,13 @@ export default function StaffProfile() {
 
 
         {/* Stämpelklocka */}
-        <Card className="shadow-card">
+        <Card className="shadow-card flex h-full flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-heading flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" /> Stämpelklocka
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="flex-1 space-y-3">
             {!mayClockDirectly ? (
               <div className="rounded-md border border-border bg-muted p-3">
                 <p className="text-sm font-medium text-foreground">Stämpling sker i stämpelklockan</p>
@@ -371,7 +371,7 @@ export default function StaffProfile() {
                   ? Math.max(0, Math.round((new Date(out).getTime() - new Date(sh.clocked_in_at).getTime()) / 60000))
                   : null;
                 return (
-                  <div key={sh.id} className="flex items-center justify-between py-2 text-xs">
+                  <div key={sh.id} className="flex items-center justify-between py-2.5 text-xs">
                     <div>
                       <p className="text-foreground font-medium">
                         {new Date(sh.clocked_in_at).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })}
