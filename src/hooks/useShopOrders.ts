@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { syncBehandlasFromStock } from "@/lib/orderStatusSync";
 import { logActivity } from "@/hooks/useActivityLog";
 import { fetchEffectiveCosts } from "@/lib/effectiveCost";
+import { fetchPurchaseLeadDays, purchaseDateFor } from "@/lib/purchaseLead";
 
 export function useShopOrders(storeId?: string) {
   return useQuery({
@@ -39,6 +40,8 @@ export function useCreateShopOrder() {
 
       // Gällande pris låses på raden vid ordertillfället och räknas aldrig om.
       const costMap = await fetchEffectiveCosts(params.lines.map((l) => l.product_id));
+      // Inköpsdagen följer varan: kokas/filéas den köps dagen innan, annars samma dag.
+      const leadMap = await fetchPurchaseLeadDays(params.lines.map((l) => l.product_id));
       const lines = params.lines.map((l) => {
         const eff = costMap.get(l.product_id);
         return {
@@ -46,7 +49,10 @@ export function useCreateShopOrder() {
           product_id: l.product_id,
           quantity_ordered: l.quantity_ordered,
           unit: l.unit,
-          order_date: l.order_date || new Date().toISOString().slice(0, 10),
+          order_date:
+            l.order_date ||
+            purchaseDateFor(l.delivery_date, leadMap.get(l.product_id) ?? 0) ||
+            new Date().toISOString().slice(0, 10),
           delivery_date: l.delivery_date,
           category_section: l.category_section,
           cost_at_order: eff ? eff.value : null,
