@@ -1,3 +1,4 @@
+import { SidebarProfile } from "@/components/SidebarProfile";
 import { versionLabel } from "@/lib/appVersion";
 import {
   Images,
@@ -118,7 +119,8 @@ export function ProductionSidebar({ collapsible = "icon" }: { collapsible?: "ico
 
   return (
     <Sidebar collapsible={collapsible} className="border-r-2 border-r-amber-700/30 bg-gradient-to-b from-sidebar-background to-amber-950/10">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 space-y-2">
+        <SidebarProfile collapsed={collapsed} />
         <PortalLogo
           portalName="production"
           fallbackIcon={Factory}

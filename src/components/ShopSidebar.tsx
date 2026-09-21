@@ -1,3 +1,4 @@
+import { SidebarProfile } from "@/components/SidebarProfile";
 import { versionLabel } from "@/lib/appVersion";
 import {
   Map,
@@ -216,6 +217,7 @@ export function ShopSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "
   return (
     <Sidebar collapsible={collapsible} className="border-r-2 border-r-emerald-700/30" style={{ background: 'hsl(160 30% 12%)' }}>
       <SidebarHeader className="p-4 space-y-2">
+        <SidebarProfile collapsed={collapsed} />
         <PortalLogo
           portalName="shop"
           fallbackIcon={Store}
