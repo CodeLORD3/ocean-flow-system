@@ -447,6 +447,34 @@ export function FloorPlanCanvas({
 
   const ptsOf = (z: MapZone) => ghostPts[z.id] ?? zonePoints(z);
 
+  /*
+    Ytor inuti ytor: föräldern ska alltid synas genomskinlig bakom barnet.
+    Barnen ritas sist (ovanpå), de får ingen vit botten som täcker föräldern,
+    och en förälder tonas aldrig ner när barnet är valt.
+  */
+  const parentOf = (id: string) => zones.find((z) => z.id === id)?.parent_zone_id ?? null;
+  const zoneDepth = (z: MapZone) => {
+    let d = 0;
+    let p = z.parent_zone_id ?? null;
+    while (p && d < 10) {
+      d += 1;
+      p = parentOf(p);
+    }
+    return d;
+  };
+  const isAncestorOf = (maybeAncestorId: string, zoneId: string | null | undefined) => {
+    let p = zoneId ? parentOf(zoneId) : null;
+    let guard = 0;
+    while (p && guard < 10) {
+      if (p === maybeAncestorId) return true;
+      p = parentOf(p);
+      guard += 1;
+    }
+    return false;
+  };
+  const drawZones = [...zones].sort((a, b) => zoneDepth(a) - zoneDepth(b));
+
+
   /* Nålläge: tryck var som helst på ritningen och punkten hamnar exakt där. */
   const placePin = (e: React.MouseEvent) => {
     if (!pinMode || !onPinPlace) return;
