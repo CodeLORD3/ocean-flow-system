@@ -325,22 +325,46 @@ export function ImageLightbox({
           groups.map((g, gi) => {
             const mine = !!staff && g.userId === staff.user_id;
             return (
-              <div key={gi} className={cn("flex gap-2", mine && "flex-row-reverse")}>
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
-                  {initialsOf(g.author)}
-                </span>
-                <div className={cn("min-w-0 space-y-1", mine && "items-end flex flex-col")}>
-                  <p className="text-[10px] font-medium text-muted-foreground">{g.author}</p>
-                  {g.items.map((c) => (
-                    <div
-                      key={c.id}
-                      className={cn(
-                        "group relative rounded-lg px-2.5 py-1.5 text-xs break-words max-w-[220px]",
-                        mine ? "bg-primary/10 text-foreground" : "bg-muted text-foreground"
+              <div key={gi} className="space-y-1.5">
+                {g.items.map((c, ci) => (
+                  <div
+                    key={c.id}
+                    role={markNumber.has(c.id) ? "button" : undefined}
+                    tabIndex={markNumber.has(c.id) ? 0 : undefined}
+                    onClick={() => {
+                      if (editId === c.id) return;
+                      if (markNumber.has(c.id)) setActiveMark(c.id);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && markNumber.has(c.id)) setActiveMark(c.id);
+                    }}
+                    className={cn(
+                      "group flex w-full items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-colors",
+                      activeMark === c.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border/60 bg-card hover:bg-muted/60",
+                      markNumber.has(c.id) && "cursor-pointer",
+                    )}
+                  >
+                    {ci === 0 ? (
+                      <StaffFace name={g.author} className="mt-0.5 h-8 w-8 shrink-0 text-[10px]" />
+                    ) : (
+                      <span className="mt-0.5 h-8 w-8 shrink-0" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      {ci === 0 && (
+                        <div className="flex items-baseline justify-between gap-2">
+                          <p className="truncate text-xs font-semibold text-foreground">{g.author}</p>
+                          <span className="shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
+                            {new Date(c.created_at).toLocaleTimeString("sv-SE", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
                       )}
-                    >
                       {editId === c.id ? (
-                        <div className="flex items-center gap-1">
+                        <div className="mt-1 flex items-center gap-1">
                           <Input
                             value={editDraft}
                             autoFocus
@@ -353,7 +377,7 @@ export function ImageLightbox({
                                 setEditId(null);
                               }
                             }}
-                            className="h-7 text-xs"
+                            className="h-8 text-xs"
                           />
                           <button
                             type="button"
@@ -361,7 +385,7 @@ export function ImageLightbox({
                             onClick={() => void saveEdit(c.id)}
                             className="text-primary"
                           >
-                            <Check className="h-3.5 w-3.5" />
+                            <Check className="h-4 w-4" />
                           </button>
                           <button
                             type="button"
@@ -369,30 +393,29 @@ export function ImageLightbox({
                             onClick={() => setEditId(null)}
                             className="text-muted-foreground"
                           >
-                            <X className="h-3.5 w-3.5" />
+                            <X className="h-4 w-4" />
                           </button>
                         </div>
                       ) : (
                         <>
-                          {markNumber.has(c.id) && (
-                            <button
-                              type="button"
-                              onClick={() => setActiveMark(c.id)}
-                              className="mr-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary align-middle text-[9px] font-semibold text-primary-foreground"
-                              aria-label="Visa markeringen i bilden"
-                            >
-                              {markNumber.get(c.id)}
-                            </button>
+                          <p className="mt-0.5 break-words text-sm leading-snug text-foreground">
+                            {markNumber.has(c.id) && (
+                              <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary align-middle text-[10px] font-semibold text-primary-foreground">
+                                {markNumber.get(c.id)}
+                              </span>
+                            )}
+                            {c.body}
+                          </p>
+                          {ci > 0 && (
+                            <span className="mt-0.5 block font-mono text-[10px] tabular-nums text-muted-foreground">
+                              {new Date(c.created_at).toLocaleTimeString("sv-SE", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
                           )}
-                          {c.body}
-                          <span className="block mt-0.5 text-[9px] text-muted-foreground font-mono tabular-nums">
-                            {new Date(c.created_at).toLocaleTimeString("sv-SE", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
                           {c.edited_at && (
-                            <span className="block text-[9px] italic text-muted-foreground">
+                            <span className="mt-0.5 block text-[10px] italic text-muted-foreground">
                               Redigerad av {c.edited_by_name || "okänd"}{" "}
                               <span className="font-mono tabular-nums not-italic">
                                 {new Date(c.edited_at).toLocaleString("sv-SE", {
@@ -406,37 +429,41 @@ export function ImageLightbox({
                           )}
                         </>
                       )}
-                      {mine && editId !== c.id && (
-                        <div
-                          className={cn(
-                            "absolute -left-5 top-1 flex-col gap-1",
-                            isMobile ? "flex" : "hidden group-hover:flex"
-                          )}
-                        >
-                          <button
-                            type="button"
-                            aria-label="Redigera kommentar"
-                            onClick={() => {
-                              setEditId(c.id);
-                              setEditDraft(c.body);
-                            }}
-                            className="text-muted-foreground hover:text-foreground"
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </button>
-                          <button
-                            type="button"
-                            aria-label="Ta bort kommentar"
-                            onClick={() => current && delComment.mutate({ id: c.id, imageId: current.id })}
-                            className="text-muted-foreground hover:text-destructive"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
-                      )}
                     </div>
-                  ))}
-                </div>
+                    {mine && editId !== c.id && (
+                      <div
+                        className={cn(
+                          "shrink-0 flex-col gap-1.5 pt-0.5",
+                          isMobile ? "flex" : "hidden group-hover:flex",
+                        )}
+                      >
+                        <button
+                          type="button"
+                          aria-label="Redigera kommentar"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditId(c.id);
+                            setEditDraft(c.body);
+                          }}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Ta bort kommentar"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (current) delComment.mutate({ id: c.id, imageId: current.id });
+                          }}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             );
           })
