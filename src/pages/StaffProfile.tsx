@@ -181,16 +181,18 @@ export default function StaffProfile() {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto w-full max-w-5xl space-y-5"
+      className="mx-auto w-full max-w-5xl space-y-8"
     >
       <div className="text-center sm:text-left">
         <h2 className="text-xl font-heading font-bold text-foreground flex items-center justify-center gap-2 sm:justify-start">
-          <IdCard className="h-5 w-5 text-primary" /> Min profil
+          <IdCard className="h-5 w-5 text-primary" /> Min sida
         </h2>
-        <p className="text-xs text-muted-foreground mt-0.5">Dina uppgifter, behörigheter och stämpelklocka</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Allt som är mitt: mina uppgifter, min tid och allt jag gjort</p>
       </div>
 
+      <Section title="Min profil" icon={User} note="Dina uppgifter och behörigheter">
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+
         {/* Profil */}
         <Card className="shadow-card overflow-hidden lg:col-span-2">
           <div className="h-20 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent" />
