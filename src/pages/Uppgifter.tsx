@@ -17,6 +17,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useSite } from "@/contexts/SiteContext";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useAllowedStores } from "@/components/StoreSwitcher";
 import { useStaff } from "@/hooks/useStaff";
 import { useTabs } from "@/contexts/TabsContext";
@@ -117,7 +118,7 @@ export default function Uppgifter() {
   /** Hela butikskartan kan fällas ut i uppgiftslistan. */
   const [mapOpen, setMapOpen] = useState(false);
 
-  const [tab, setTab] = useState("dag");
+  const [tab, setTab] = useState("mina");
   const { data: checklists = [] } = useChecklistTemplates(storeId);
   const createChecklist = useCreateChecklistTemplate();
   const [newListName, setNewListName] = useState("");
@@ -366,6 +367,55 @@ export default function Uppgifter() {
     return { groups, unassigned };
   }, [staffOptions, tasks]);
 
+  /** Inloggad person — "Mina uppgifter" utgår från profilen man är inne i. */
+  const { staff } = useStaffAuth();
+  const meId = staff?.id ?? null;
+  /** Ansvarig: dagens ansvarige, chefsroll eller full insyn. */
+  const isResponsible = useMemo(() => {
+    if (!staff) return false;
+    if (staff.is_platform_admin) return true;
+    if (meId && (dayData?.responsibleStaffIds ?? []).includes(meId)) return true;
+    return /chef|ansvarig|manager|ledare|butikschef/i.test(staff.primary_role || "");
+  }, [staff, meId, dayData?.responsibleStaffIds]);
+
+  const myTasks = useMemo(() => {
+    if (!meId) return { mine: [] as Task[], unassigned: [] as Task[], doneByMe: [] as Task[] };
+    const mine = tasks.filter((t) => t.assigned_staff_id === meId && !t.done);
+    const doneByMe = tasks.filter(
+      (t) => t.done && (t.completed_by_staff_id === meId || t.assigned_staff_id === meId),
+    );
+    const unassigned = isResponsible ? tasks.filter((t) => !t.assigned_staff_id && !t.done) : [];
+    return { mine, unassigned, doneByMe };
+  }, [tasks, meId, isResponsible]);
+
+  /** Samma uppgiftsrad som i dagens lista, återanvänd i Mina uppgifter. */
+  const renderTaskRow = (t: Task) => (
+    <TaskRow
+      key={t.id}
+      task={t}
+      area={t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null}
+      categoryName={catOf(t)?.name ?? null}
+      categoryColor={catOf(t)?.color ?? null}
+      assigneeName={staffName(t.assigned_staff_id)}
+      assigneeImage={staffList.find((p) => p.id === t.assigned_staff_id)?.profile_image_url ?? null}
+      completedByName={staffName(t.completed_by_staff_id)}
+      completedByImage={staffList.find((p) => p.id === t.completed_by_staff_id)?.profile_image_url ?? null}
+      onToggle={(done) => setDone.mutate({ id: t.id, done })}
+      onSaveRequirement={(patch) => updateTask.mutate({ id: t.id, ...patch })}
+      staffOptions={staffOptions}
+      onAssign={(staffId) => assign(t, staffId)}
+      onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
+      onAddPhoto={(file) => addPhoto(t, file)}
+      onOpenArea={(areaId) => openOnMap(t, areaId)}
+      linkLabel={targetOf(t)?.label ?? null}
+      onOpenLink={() => {
+        const target = targetOf(t);
+        if (target) switchTab(target.url);
+      }}
+      onDelete={() => deleteTask(t)}
+    />
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -398,6 +448,7 @@ export default function Uppgifter() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="h-auto flex-wrap gap-1 p-1">
           {[
+            ["mina", "Mina uppgifter"],
             ["dag", "Dagens uppgifter"],
             ["alla", "Alla uppgifter"],
             ["personer", "Personer"],
@@ -417,6 +468,73 @@ export default function Uppgifter() {
             </TabsTrigger>
           ))}
         </TabsList>
+
+        <TabsContent value="mina" className="space-y-4">
+          {!meId ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              Logga in med din personalprofil för att se dina uppgifter.
+            </p>
+          ) : (
+            <>
+              <Card className="p-4">
+                <div className="flex items-center gap-3">
+                  <StaffAvatar
+                    name={`${staff?.first_name ?? ""} ${staff?.last_name ?? ""}`.trim()}
+                    imageUrl={staff?.profile_image_url ?? null}
+                    className="h-12 w-12"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {staff?.first_name} {staff?.last_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {myTasks.mine.length} kvar att göra
+                      {isResponsible && myTasks.unassigned.length > 0
+                        ? ` · ${myTasks.unassigned.length} utan tilldelad person`
+                        : ""}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
+              <div className="space-y-2">
+                <h2 className="text-sm font-semibold">Tilldelade dig</h2>
+                {myTasks.mine.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    Inga uppgifter är tilldelade dig för valt datum.
+                  </p>
+                ) : (
+                  <div className="border-t border-grid-line">{myTasks.mine.map(renderTaskRow)}</div>
+                )}
+              </div>
+
+              {isResponsible && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold">Du är ansvarig — ingen tilldelad</h2>
+                    <span className="text-xs text-muted-foreground">{myTasks.unassigned.length}</span>
+                  </div>
+                  {myTasks.unassigned.length === 0 ? (
+                    <p className="py-6 text-center text-sm text-muted-foreground">
+                      Allt är tilldelat eller klart.
+                    </p>
+                  ) : (
+                    <div className="border-t border-grid-line">
+                      {myTasks.unassigned.map(renderTaskRow)}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {myTasks.doneByMe.length > 0 && (
+                <div className="space-y-2">
+                  <h2 className="text-sm font-semibold">Klara av dig</h2>
+                  <div className="border-t border-grid-line">{myTasks.doneByMe.map(renderTaskRow)}</div>
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
 
         <TabsContent value="dag" className="space-y-4">
           {plan && zones.length > 0 && (
