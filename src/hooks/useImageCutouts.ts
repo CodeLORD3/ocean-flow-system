@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { classifyImage } from "@/hooks/useImageLibrary";
+import { createProductTarget, createResourceTarget } from "@/lib/linkTargets";
 import type { ImageRegion } from "@/components/images/AnnotatableImage";
 
 /**
