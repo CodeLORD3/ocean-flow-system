@@ -176,6 +176,8 @@ export default function StoreMap({
   const [placing, setPlacing] = useState<{ zoneId: string; file: File } | null>(null);
   const [selected, setSelected] = useState<Selection>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  /** Verktygspanelen ligger utanför sidan och dras ut när man vill ändra. */
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [pinMode, setPinMode] = useState(false);
   const [focus, setFocus] = useState<Selection>(null);
   /** Områdets egna sida ligger som en egen flik i butikskartan. */
