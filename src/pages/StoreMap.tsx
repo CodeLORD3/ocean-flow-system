@@ -168,6 +168,8 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
     point: { x: number; y: number } | null;
     zoneId: string | null;
     existing: MapPin | null;
+    /** Rutan man drog på kartan — den yta punkten gäller. */
+    area?: { x: number; y: number; width: number; height: number } | null;
   } | null>(null);
 
   /** Kom man hit från en uppgift? Då markeras ytan och man kan gå direkt tillbaka. */
