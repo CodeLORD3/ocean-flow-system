@@ -470,6 +470,19 @@ export default function Uppgifter() {
         </TabsList>
 
         <TabsContent value="mina" className="space-y-4">
+          {plan && zones.length > 0 && (
+            <TaskZoneMap
+              plan={plan}
+              zones={zones}
+              areas={areaOf}
+              counts={zoneCounts}
+              selected={fArea}
+              onSelect={setFArea}
+              onOpenZone={(id) => switchTab(`/store-map?zone=${id}`)}
+              onOpenMap={() => setTab("dag")}
+              openLabel="Alla dagens uppgifter"
+            />
+          )}
           {!meId ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
               Logga in med din personalprofil för att se dina uppgifter.
