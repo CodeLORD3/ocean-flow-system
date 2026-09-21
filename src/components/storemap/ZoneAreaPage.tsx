@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Image as ImageIcon,
   ListChecks,
+  Pencil,
   Plus,
   Tag as TagIcon,
   TriangleAlert,
@@ -60,6 +61,7 @@ export function ZoneAreaPage({
   onOpenZone,
   onAddChild,
   onSaveTags,
+  onEditZone,
   onBack,
 }: {
   storeId: string;
@@ -81,6 +83,8 @@ export function ZoneAreaPage({
   onOpenZone?: (zoneId: string) => void;
   onAddChild?: (parentZoneId: string) => void;
   onSaveTags?: (tags: string[]) => void;
+  /** Öppnar rutan där ytans namn och färg ändras. */
+  onEditZone?: (zoneId: string) => void;
   onBack: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
@@ -185,6 +189,11 @@ export function ZoneAreaPage({
           </p>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          {zone && canManage && onEditZone && (
+            <Button size="sm" variant="outline" className="h-9 gap-1.5" onClick={() => onEditZone(zone.id)}>
+              <Pencil className="h-4 w-4" /> Namn &amp; färg
+            </Button>
+          )}
           <StatusRing percent={progress.percent} status={progress.status} size={40} label={`${progress.percent}%`} />
           <Badge variant="outline" className="text-[10px]" style={{ borderColor: STATUS_COLOR[progress.status], color: STATUS_COLOR[progress.status] }}>
             {STATUS_LABEL[progress.status]}

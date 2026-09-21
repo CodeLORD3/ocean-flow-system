@@ -666,6 +666,7 @@ export default function StoreMap({
               onSaveTags={
                 canManage && pageZone ? (tags) => saveZone.mutate({ id: pageZone.id, tags }) : undefined
               }
+              onEditZone={canManage ? (id) => setSheetZoneId(id) : undefined}
               mapSlot={
                 <div className="relative">
                 <FloorPlanCanvas
