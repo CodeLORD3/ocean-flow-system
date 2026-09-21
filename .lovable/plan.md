@@ -21,7 +21,7 @@ Ytans sida och Min sida delas upp i tydliga rubriker som man hoppar mellan i st�
 **4. Taggarna blir sökbara**
 Taggar visas som chips på ytan och i ytlistan. Tryck på en tagg för att se alla ytor med samma tagg. Sökrutan i kartan söker på namn och tagg.
 
-**4. Kartan stannar kvar i Uppgifter**
+**5. Kartan stannar kvar i Uppgifter**
 I dag hoppar "Gå vidare"/"Öppna området" från Uppgifter över till fliken Översikt. Det ändras: är du i Uppgifter stannar du i Uppgifter. Områdets sida, hela kartan, ytlistorna och redigeringen visas inne i uppgiftsfliken — samma funktioner som i Översikt, ingen flikbyte, och tillbakavägen leder tillbaka till dina uppgifter.
 
 ## Teknisk del
