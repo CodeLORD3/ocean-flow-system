@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Heart, MessageCircle, Pencil, Send, Square, Store, Trash2, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Heart, MessageCircle, Pencil, Scissors, Send, Square, Store, Trash2, X } from "lucide-react";
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,8 @@ import { useImageViewers, useRecordImageView } from "@/hooks/useImageEngagement"
 import { thumbUrl, THUMB_FULL } from "@/lib/imageThumb";
 import { dayBadgeClass } from "@/lib/dayColor";
 import { AnnotatableImage, type ImageRegion } from "@/components/images/AnnotatableImage";
+import { useCreateCutout } from "@/hooks/useImageCutouts";
+import { toast } from "sonner";
 
 type Props = {
   images: EntityImage[];
@@ -143,6 +145,28 @@ export function ImageLightbox({
     setPendingRegion(null);
     setMarkMode(false);
     setCommentsOpen(true);
+  };
+
+  /** Sparar den markerade delen som en egen bild, och saken om man vill. */
+  const saveCutout = async () => {
+    const name = cutTitle.trim();
+    if (!name || !current || !pendingRegion) return;
+    try {
+      await createCutout.mutateAsync({
+        sourceMediaId: current.id,
+        sourceUrl: current.url,
+        region: pendingRegion,
+        title: name,
+        createResource: cutAsResource,
+      });
+      toast.success(cutAsResource ? `${name} finns nu som sak med bild` : "Utsnittet är sparat som egen bild");
+      setCutTitle("");
+      setPendingRegion(null);
+      setMarkMode(false);
+      setCutMode(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte klippa ut bilden");
+    }
   };
 
   const openMark = (id: string) => {
