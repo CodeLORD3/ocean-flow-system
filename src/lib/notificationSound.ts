@@ -50,3 +50,29 @@ export function playChatPing() {
   tone(880, 0);
   tone(1170, 0.13);
 }
+
+/** Tydligare larm när jag får en ny uppgift: tre stigande toner. */
+export function playTaskAlert() {
+  if (!isChatSoundEnabled()) return;
+  const audio = getContext();
+  if (!audio) return;
+  if (audio.state === "suspended") void audio.resume();
+
+  const now = audio.currentTime;
+  const tone = (freq: number, at: number, dur = 0.18) => {
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    osc.type = "triangle";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, now + at);
+    gain.gain.exponentialRampToValueAtTime(0.25, now + at + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + at + dur);
+    osc.connect(gain).connect(audio.destination);
+    osc.start(now + at);
+    osc.stop(now + at + dur + 0.02);
+  };
+
+  tone(660, 0);
+  tone(880, 0.17);
+  tone(1175, 0.34, 0.24);
+}
