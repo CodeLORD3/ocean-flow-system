@@ -51,14 +51,20 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
   }, [search]);
 
   const filter = useMemo(() => {
-    const base: { status?: ImageStatus | "all"; mediaKind?: MediaKind | "all"; search?: string } = {
+    const base: {
+      status?: ImageStatus | "all";
+      mediaKind?: MediaKind | "all";
+      search?: string;
+      tag?: string;
+    } = {
       search: debounced || undefined,
+      tag: tag || undefined,
     };
     if (tab === "unplaced") base.status = "unclassified";
     else if (tab === "partial") base.status = "partial";
     else if (tab !== "all") base.mediaKind = tab;
     return base;
-  }, [tab, debounced]);
+  }, [tab, debounced, tag]);
 
   const { data, isLoading, isFetching } = useImageLibrary(filter, page);
   const { data: counts } = useImageStatusCounts();
@@ -67,7 +73,7 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
     setPage(0);
     setRows([]);
     setSelected([]);
-  }, [tab, debounced]);
+  }, [tab, debounced, tag]);
 
   useEffect(() => {
     if (!data) return;
