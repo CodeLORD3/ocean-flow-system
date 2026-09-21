@@ -580,7 +580,7 @@ function MyActivityCard({
               <div
                 key={it.id}
                 className={`flex items-start justify-between gap-3 py-2 ${it.route ? "cursor-pointer hover:bg-muted/40" : ""}`}
-                onClick={() => it.route && navigate(it.route)}
+                onClick={() => it.route && navigate(withReturn(it.route))}
               >
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-foreground line-clamp-2">{it.text}</p>
