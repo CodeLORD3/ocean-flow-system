@@ -791,7 +791,7 @@ export function ImageLightbox({
                 </div>
 
                 {images.length > 1 && (
-                  <div className="pointer-events-none absolute bottom-2 left-0 right-0 flex items-center justify-center gap-1.5">
+                  <div className="pointer-events-none absolute bottom-14 left-0 right-0 flex items-center justify-center gap-1.5">
                     {images.slice(0, 12).map((img, i) => (
                       <span
                         key={img.id}
