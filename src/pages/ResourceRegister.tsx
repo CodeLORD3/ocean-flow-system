@@ -394,6 +394,16 @@ export default function ResourceRegister() {
               >
                 Spara
               </Button>
+
+              {/* Bilder på saken, hämtade från det gemensamma bildbiblioteket */}
+              {edit.id && (
+                <LinkedImages
+                  entityType="resource"
+                  entityId={edit.id}
+                  title="Bilder på saken"
+                  mediaKind="resource"
+                />
+              )}
             </div>
           )}
         </DialogContent>
