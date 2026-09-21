@@ -299,6 +299,7 @@ export default function ImageFeed() {
                     key={post.id}
                     post={post}
                     favoriteIds={favoriteIds}
+                    viewCounts={viewCounts}
                     onOpen={setLightboxId}
                     onToggleFavorite={(id, favorite) =>
                       toggleFavorite.mutate({ imageId: id, favorite })
