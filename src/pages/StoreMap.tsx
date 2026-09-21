@@ -43,6 +43,7 @@ import { AreaMiniMap } from "@/components/storemap/AreaMiniMap";
 import { ZoneTagsPanel } from "@/components/storemap/ZoneTagsPanel";
 import { childZones, tagsOf, zoneMatches, zonePath } from "@/lib/zoneTree";
 import { MapPinDialog, PIN_KIND_LABEL } from "@/components/storemap/MapPinDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MapListViews } from "@/components/storemap/MapListViews";
 import { StoreMapHeader } from "@/components/storemap/StoreMapHeader";
 import { OverviewStatsBar } from "@/components/storemap/OverviewStatsBar";
@@ -831,19 +832,18 @@ export default function StoreMap({
 
             {/* Snabbmeny: tryck på en yta i kartan och välj direkt vad du vill göra */}
             {editMode && selectedZone && !draftZoneId && !shapeZoneId && (
-              <div className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
-                <div className="mx-auto max-w-3xl rounded-xl border border-border bg-card/95 p-3 shadow-[0_-8px_24px_hsl(var(--foreground)/0.12)] backdrop-blur">
-                  <div className="mb-2 flex items-center gap-2">
-                    <span
-                      className="h-3 w-3 shrink-0 rounded-sm"
-                      style={{ background: selectedZone.color ?? "hsl(var(--primary))" }}
-                    />
-                    <p className="min-w-0 flex-1 truncate text-sm font-semibold">{selectedZone.name}</p>
-                    <Button size="sm" variant="ghost" className="h-8 text-[11px]" onClick={() => setSelected(null)}>
-                      Stäng
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              <Dialog open onOpenChange={(o) => !o && setSelected(null)}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <span
+                        className="h-3.5 w-3.5 shrink-0 rounded-sm"
+                        style={{ background: selectedZone.color ?? "hsl(var(--primary))" }}
+                      />
+                      <span className="min-w-0 flex-1 truncate">{selectedZone.name}</span>
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <Button className="h-11 text-xs" onClick={() => openAreaPage({ kind: "zone", id: selectedZone.id })}>
                       Öppna ytan
                     </Button>
@@ -895,8 +895,8 @@ export default function StoreMap({
                       </Button>
                     )}
                   </div>
-                </div>
-              </div>
+                </DialogContent>
+              </Dialog>
             )}
 
 
