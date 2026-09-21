@@ -660,7 +660,32 @@ export default function Uppgifter() {
                ))}
             </div>
           )}
+            </div>
+            {plan && zones.length > 0 && (
+              <div className="space-y-3 lg:sticky lg:top-4">
+                <TaskZoneMap
+                  plan={plan}
+                  zones={zones}
+                  areas={areaOf}
+                  counts={zoneCounts}
+                  selected={fArea}
+                  onSelect={setFArea}
+                  onOpenZone={openZoneHere}
+                  chipsOnly={mapOpen}
+                  onOpenMap={() => setMapOpen((v) => !v)}
+                  openLabel={mapOpen ? "Dölj kartan" : "Visa hela kartan"}
+                />
+                {/* Butikskartan med alla funktioner — samma karta som i Översikt */}
+                {mapOpen && (
+                  <Card className="p-4">
+                    <StoreMap embedded openZoneId={openZoneId} onOpenZoneChange={setOpenZoneId} />
+                  </Card>
+                )}
+              </div>
+            )}
+          </div>
         </TabsContent>
+
 
         <TabsContent value="personer" className="space-y-3">
           {perPerson.groups.length === 0 && perPerson.unassigned.length === 0 ? (
