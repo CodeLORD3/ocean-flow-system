@@ -535,28 +535,6 @@ export function useTaskImages(taskId?: string | null) {
   });
 }
 
-/** Antal bilder per uppgift, så en uppgift som kräver bild inte kan bockas av utan bild. */
-export function useTaskImageCounts(taskIds: string[]) {
-  const key = [...taskIds].sort().join(",");
-  return useQuery({
-    queryKey: ["task-image-counts", key],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("entity_images")
-        .select("checklist_item_id")
-        .in("checklist_item_id", taskIds);
-      if (error) throw error;
-      const map = new Map<string, number>();
-      for (const r of data || []) {
-        const id = (r as { checklist_item_id: string | null }).checklist_item_id;
-        if (id) map.set(id, (map.get(id) ?? 0) + 1);
-      }
-      return map;
-    },
-    enabled: taskIds.length > 0,
-  });
-}
-
 export type StandardTask = {
   id: string;
   template_id: string;
