@@ -174,8 +174,8 @@ export function ImageLightbox({
     setCommentsOpen(true);
   };
 
-  /** Knappen som slår på rutnätet över bilden. */
-  const markButton = (
+  /** Knappen som slår på rutnätet över bilden. Ligger nedtill så den inte täcker informationen. */
+  const markButton = !pendingRegion && (
     <button
       type="button"
       aria-label={markMode ? "Avbryt markering i bilden" : "Markera en del av bilden"}
@@ -184,7 +184,7 @@ export function ImageLightbox({
         setMarkMode((v) => !v);
       }}
       className={cn(
-        "absolute top-2 left-2 z-20 flex h-10 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold backdrop-blur",
+        "absolute bottom-2 left-2 z-20 flex h-9 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold shadow backdrop-blur",
         markMode
           ? "border-primary bg-primary text-primary-foreground"
           : "border-border bg-background/85 text-foreground",
