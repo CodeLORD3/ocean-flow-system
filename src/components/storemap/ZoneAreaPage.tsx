@@ -50,6 +50,8 @@ export function ZoneAreaPage({
   canManage: boolean;
   zoneNumber?: number;
   areaLabel?: string | null;
+  /** Kartan över just den här ytan, visas högst upp på sidan. */
+  mapSlot?: React.ReactNode;
   onBack: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
