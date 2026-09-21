@@ -103,6 +103,7 @@ export function ImageLightbox({
   const editComment = useUpdateImageComment();
   const delComment = useDeleteImageComment();
   const listRef = useRef<HTMLDivElement>(null);
+  const { data: libraryImage } = useLibraryImage(editOpen ? current?.id : null);
 
   useEffect(() => {
     setCaption(current?.caption || "");
