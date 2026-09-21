@@ -23,7 +23,7 @@ export function placeRoute(
   switch (entityType) {
     case "zone":
     case "map_zone":
-      return `/store-map?zone=${entityId}${back}`;
+      return `/butikskarta?zone=${entityId}${back}`;
     case "store":
       return `/organisation?markera=${entityId}${back}`;
     case "resource":

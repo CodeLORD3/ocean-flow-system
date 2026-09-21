@@ -13,7 +13,7 @@ export const TASK_LINKS: { url: string; label: string }[] = [
   { url: "/receiving", label: "Inleveranser" },
   { url: "/produktion-recept", label: "Produktion — recept" },
   { url: "/reports", label: "Rapporter" },
-  { url: "/store-map", label: "Butikskartan" },
+  { url: "/butikskarta", label: "Butikskartan" },
   { url: "/schedule", label: "Kalender" },
 ];
 

@@ -287,7 +287,7 @@ export default function Uppgifter() {
 
   /** Öppnar kartan med ytan markerad och med väg tillbaka till uppgiften. */
   const openOnMap = (t: Task, areaId: string) => {
-    switchTab(`/store-map?zone=${areaId}&fromTask=${t.id}&taskName=${encodeURIComponent(t.task)}`);
+    switchTab(`/butikskarta?zone=${areaId}&fromTask=${t.id}&taskName=${encodeURIComponent(t.task)}`);
   };
 
   const assign = (t: Task, staffId: string | null) => {
