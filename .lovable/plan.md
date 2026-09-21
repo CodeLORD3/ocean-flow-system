@@ -63,7 +63,12 @@ Varje bild visar neutralt hur långt sorteringen kommit: **Oplacerad**, **Delvis
 - GRANT + RLS enligt befintligt mönster: personal (authenticated) får läsa och skriva bilder, länkar och aktivitet; aktivitet kan inte ändras eller raderas.
 - Frontend: nya hookar `useImageLibrary`, `useImageLinks`, `useImageActivity`, `useBulkClassify`; nya komponenter `AddImageFlow`, `ImageClassifySheet`, `ImageLibraryGrid`, `ImageBulkBar`, `ImageQuickClassify`, `ImageActivityTimeline`, `ImageLinksPanel` som byggs in i `src/pages/ImageFeed.tsx`, `ImageLightbox.tsx`, `ZoneAreaPage.tsx`, `ResourceRegister.tsx`, `TaskDetail.tsx` och produktbilderna. `StaffFace`/`StaffName` används för alla profilbilder, `thumbUrl` för snabba miniatyrer.
 - Befintlig bucket, komprimering (`prepareUpload`), kommentarer, hjärtan, bildmarkeringar, favoriter och kartmarkörer rörs inte.
+- **Säker migration av de 1 249 befintliga bilderna**: backfillen skapar bara den nya strukturen — fil, bucket-path, hemvist, kommentarer, hjärtan, favoriter, markeringar, kartkopplingar och tidsstämplar lämnas orörda. Varje bild får sin första `image_link` från nuvarande hemvist. Uppladdaren kopplas till `staff_id` bara när matchningen är säker; annars visas neutralt "äldre bild" utan gissning.
+- **Prestanda**: rutnätet använder `thumbUrl`, lazy-load och sidvis inläsning (infinite scroll), filtrering och sök körs i databasen, kopplingar hämtas för synliga bilder och aktivitet först när en bild öppnas. Originalbilden laddas bara i stor visning. Ska kännas snabbt vid 10 000+ bilder.
+- Strukturen lämnar plats för framtida förslag (föreslaget område, produkt, taggar, jämförelse mot referensbild) i ett eget förslagsfält — ingen automatisk klassificering byggs nu, människan bekräftar informationen.
 
 ## Kontroll före leverans
 
-Provkörs på 390 px och 1280 px: ta foto → klassificera → spara; spara som oplacerad och låt en annan person klassificera; massuppladdning med flervalsredigering; Spara & nästa med Enter; rättning av område som visas i tidslinjen med gammalt → nytt värde; samma bild syns på områdessidan, saken och uppgiften. Provdata städas bort efteråt.
+Först kontrolleras att befintliga bilder fungerar precis som förut efter migrationen: en gammal butiksbild, portalbild, produktbild, orderradsbild och områdesbild — och att en gammal bild kan få en ny koppling utan att dess gamla användning slutar fungera.
+
+Därefter provkörs på 390 px och 1280 px: ta foto → klassificera → spara; spara som oplacerad och låt en annan person klassificera; massuppladdning med flervalsredigering; Spara & nästa med Enter; rättning av område som visas i tidslinjen med gammalt → nytt värde; samma bild syns på områdessidan, saken och uppgiften. Provdata städas bort efteråt.
