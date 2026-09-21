@@ -45,7 +45,9 @@ export function popNav() {
 
 export function subscribeNav(listener: () => void) {
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 /**

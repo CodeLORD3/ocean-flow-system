@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, lazy, Suspense, ComponentType } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { recordNav } from "@/lib/navHistory";
 
 export interface TabItem {
   path: string;
