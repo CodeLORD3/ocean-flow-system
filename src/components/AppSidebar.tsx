@@ -1,3 +1,4 @@
+import { SidebarProfile } from "@/components/SidebarProfile";
 import { versionLabel } from "@/lib/appVersion";
 import {
   Map,
