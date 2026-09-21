@@ -488,7 +488,7 @@ function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string
                     <button
                       key={it.id}
                       type="button"
-                      onClick={() => navigate(`/uppgifter?markera=${it.id}`)}
+                      onClick={() => navigate(withReturn(`/uppgifter?markera=${it.id}`))}
                       className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-muted/40"
                     >
                       <div className="min-w-0">
