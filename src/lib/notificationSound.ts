@@ -51,8 +51,8 @@ export function playChatPing() {
   tone(1170, 0.13);
 }
 
-/** Tydligare larm när jag får en ny uppgift: tre stigande toner. */
-export function playTaskAlert() {
+/** Tydligare larm när jag får en ny uppgift: tre stigande toner, upprepade tre gånger. */
+export function playTaskAlert(repeats = 3) {
   if (!isChatSoundEnabled()) return;
   const audio = getContext();
   if (!audio) return;
@@ -72,7 +72,12 @@ export function playTaskAlert() {
     osc.stop(now + at + dur + 0.02);
   };
 
-  tone(660, 0);
-  tone(880, 0.17);
-  tone(1175, 0.34, 0.24);
+  /* Signalen upprepas några gånger så man hör den även om man tittar bort */
+  for (let i = 0; i < Math.max(1, repeats); i++) {
+    const at = i * 0.9;
+    tone(660, at);
+    tone(880, at + 0.17);
+    tone(1175, at + 0.34, 0.24);
+  }
 }
+
