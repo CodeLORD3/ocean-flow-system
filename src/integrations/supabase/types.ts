@@ -8387,6 +8387,67 @@ export type Database = {
         }
         Relationships: []
       }
+      map_zone_connections: {
+        Row: {
+          active: boolean
+          created_at: string
+          distance_meters: number | null
+          floor_plan_id: string | null
+          from_zone_id: string
+          id: string
+          store_id: string
+          to_zone_id: string
+          updated_at: string
+          walk_seconds: number | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          distance_meters?: number | null
+          floor_plan_id?: string | null
+          from_zone_id: string
+          id?: string
+          store_id: string
+          to_zone_id: string
+          updated_at?: string
+          walk_seconds?: number | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          distance_meters?: number | null
+          floor_plan_id?: string | null
+          from_zone_id?: string
+          id?: string
+          store_id?: string
+          to_zone_id?: string
+          updated_at?: string
+          walk_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "map_zone_connections_floor_plan_id_fkey"
+            columns: ["floor_plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "map_zone_connections_from_zone_id_fkey"
+            columns: ["from_zone_id"]
+            isOneToOne: false
+            referencedRelation: "map_zones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "map_zone_connections_to_zone_id_fkey"
+            columns: ["to_zone_id"]
+            isOneToOne: false
+            referencedRelation: "map_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       map_zones: {
         Row: {
           area_sqm: number | null
@@ -12657,8 +12718,10 @@ export type Database = {
       }
       resource_locations: {
         Row: {
+          attached_to_resource_id: string | null
           created_at: string
           id: string
+          is_normal_location: boolean
           location_text: string | null
           map_zone_id: string | null
           position_code: string | null
@@ -12668,8 +12731,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          attached_to_resource_id?: string | null
           created_at?: string
           id?: string
+          is_normal_location?: boolean
           location_text?: string | null
           map_zone_id?: string | null
           position_code?: string | null
@@ -12679,8 +12744,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          attached_to_resource_id?: string | null
           created_at?: string
           id?: string
+          is_normal_location?: boolean
           location_text?: string | null
           map_zone_id?: string | null
           position_code?: string | null
@@ -12690,6 +12757,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "resource_locations_attached_to_resource_id_fkey"
+            columns: ["attached_to_resource_id"]
+            isOneToOne: false
+            referencedRelation: "resource_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "resource_locations_map_zone_id_fkey"
             columns: ["map_zone_id"]
@@ -16968,6 +17042,113 @@ export type Database = {
           {
             foreignKeyName: "task_resource_requirements_task_template_id_fkey"
             columns: ["task_template_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_template_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_route_snapshots: {
+        Row: {
+          checklist_item_id: string | null
+          created_at: string
+          created_by_staff_id: string | null
+          id: string
+          route_source: string
+          route_version: number | null
+          stops: Json
+          store_id: string | null
+          template_item_id: string | null
+          total_meters: number | null
+          walk_seconds: number | null
+        }
+        Insert: {
+          checklist_item_id?: string | null
+          created_at?: string
+          created_by_staff_id?: string | null
+          id?: string
+          route_source?: string
+          route_version?: number | null
+          stops?: Json
+          store_id?: string | null
+          template_item_id?: string | null
+          total_meters?: number | null
+          walk_seconds?: number | null
+        }
+        Update: {
+          checklist_item_id?: string | null
+          created_at?: string
+          created_by_staff_id?: string | null
+          id?: string
+          route_source?: string
+          route_version?: number | null
+          stops?: Json
+          store_id?: string | null
+          template_item_id?: string | null
+          total_meters?: number | null
+          walk_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_route_snapshots_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_route_snapshots_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_template_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_standard_routes: {
+        Row: {
+          created_at: string
+          created_by_staff_id: string | null
+          id: string
+          route_mode: string
+          stops: Json
+          store_id: string
+          template_item_id: string
+          total_meters: number | null
+          updated_at: string
+          version: number
+          walk_seconds: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by_staff_id?: string | null
+          id?: string
+          route_mode?: string
+          stops?: Json
+          store_id: string
+          template_item_id: string
+          total_meters?: number | null
+          updated_at?: string
+          version?: number
+          walk_seconds?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by_staff_id?: string | null
+          id?: string
+          route_mode?: string
+          stops?: Json
+          store_id?: string
+          template_item_id?: string
+          total_meters?: number | null
+          updated_at?: string
+          version?: number
+          walk_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_standard_routes_template_item_id_fkey"
+            columns: ["template_item_id"]
             isOneToOne: false
             referencedRelation: "checklist_template_items"
             referencedColumns: ["id"]

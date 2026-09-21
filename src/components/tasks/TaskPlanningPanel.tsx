@@ -5,9 +5,12 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { minutesText, PART_LABELS, partsSum, standardParts } from "@/lib/taskStandardTime";
-import { useTaskTimeStats } from "@/hooks/useTaskRun";
+import { useTaskCheckpoints, useTaskTimeStats } from "@/hooks/useTaskRun";
 import { useCreateImprovement, type ResolvedNeed } from "@/hooks/useResources";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import { useTaskRoute } from "@/hooks/useTaskRoute";
+import { TaskRoute } from "@/components/tasks/TaskRoute";
+import { StandardRouteEditor } from "@/components/tasks/StandardRouteEditor";
 
 type PlanningTask = {
   id: string;
@@ -29,17 +32,19 @@ type PlanningTask = {
 export function TaskPlanningPanel({
   task,
   storeId,
-  areaName,
+  area,
   needs,
   zoneName,
   onShowOnMap,
+  onShowRoute,
 }: {
   task: PlanningTask;
   storeId: string | null;
-  areaName?: string | null;
+  area?: { id: string; name: string } | null;
   needs: ResolvedNeed[];
   zoneName: (zoneId: string | null) => string | null;
   onShowOnMap?: (zoneId: string) => void;
+  onShowRoute?: (zoneIds: string[]) => void;
 }) {
   const parts = standardParts(task);
   const sum = partsSum(parts);
@@ -52,10 +57,16 @@ export function TaskPlanningPanel({
   const std = sum ?? task.estimated_minutes ?? null;
   const slower = std !== null && stats.data?.average ? stats.data.average > std * 1.1 : false;
 
-  /** Vägen: hämta där sakerna står, arbeta i området, ställ tillbaka. */
-  const pickupZones = Array.from(
-    new Set(needs.map((n) => n.zoneId).filter((z): z is string => !!z)),
-  );
+  const { data: checkpoints = [] } = useTaskCheckpoints(task.template_item_id ?? null);
+  const { route, calculated, standard, usingStandard, drift } = useTaskRoute({
+    storeId,
+    templateItemId: task.template_item_id ?? null,
+    area: area ?? null,
+    taskName: task.task,
+    needs,
+    checkpoints: checkpoints.map((c) => c.label),
+    minutes: { do: parts.doWork, check: parts.check },
+  });
 
   return (
     <div className="space-y-3">
@@ -84,34 +95,25 @@ export function TaskPlanningPanel({
         )}
       </Card>
 
-      {(pickupZones.length > 0 || areaName) && (
-        <Card className="p-4">
-          <h3 className="mb-2 text-sm font-semibold">Vägen i butiken</h3>
-          <ol className="space-y-2 text-sm">
-            {pickupZones.map((z) => (
-              <li key={z} className="flex items-center gap-2">
-                <span className="rounded bg-muted px-2 py-0.5 text-xs">Hämta</span>
-                <span>{zoneName(z) ?? "Okänt område"}</span>
-                <span className="text-muted-foreground">
-                  {needs.filter((n) => n.zoneId === z).map((n) => n.resource?.name ?? n.requirement.requirement_name).join(", ")}
-                </span>
-              </li>
-            ))}
-            {areaName && (
-              <li className="flex items-center gap-2">
-                <span className="rounded bg-primary/10 px-2 py-0.5 text-xs">Utför</span>
-                <span>{areaName}</span>
-              </li>
-            )}
-            {pickupZones.map((z) => (
-              <li key={`back-${z}`} className="flex items-center gap-2">
-                <span className="rounded bg-muted px-2 py-0.5 text-xs">Tillbaka</span>
-                <span>{zoneName(z) ?? "Okänt område"}</span>
-              </li>
-            ))}
-          </ol>
-        </Card>
-      )}
+      <TaskRoute
+        route={route}
+        alternative={calculated}
+        usingStandard={usingStandard}
+        drift={drift}
+        totals={{ work: parts.doWork, prepare: parts.prepare, check: parts.check, restore: parts.restore }}
+        onShowOnMap={
+          onShowRoute
+            ? () => onShowRoute(route.stops.map((s) => s.zoneId).filter((z): z is string => !!z))
+            : undefined
+        }
+      />
+
+      <StandardRouteEditor
+        route={calculated}
+        standard={standard}
+        templateItemId={task.template_item_id ?? null}
+        storeId={storeId}
+      />
 
       <Card className="p-4">
         <h3 className="mb-2 text-sm font-semibold">Standardtid</h3>
