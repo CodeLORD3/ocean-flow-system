@@ -414,6 +414,112 @@ export default function StaffProfile() {
   );
 }
 
+/** Överrubrik som delar sidan i tydliga avsnitt. */
+function Section({
+  title,
+  note,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  note?: string;
+  icon: any;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-2.5 border-b border-border pb-2">
+        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10">
+          <Icon className="h-4 w-4 text-primary" />
+        </div>
+        <div className="min-w-0">
+          <h3 className="font-heading text-sm font-semibold text-foreground">{title}</h3>
+          {note && <p className="truncate text-[11px] text-muted-foreground">{note}</p>}
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** Mina tilldelade uppgifter: försenade, idag och kommande — läses live från uppgifterna. */
+function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string; name: string }[] }) {
+  const navigate = useNavigate();
+  const { data: items = [], isLoading } = useMyWork(staffId);
+
+  const groups: { key: string; label: string; icon: any; tone: string; rows: MyWorkItem[] }[] = useMemo(
+    () => [
+      { key: "late", label: "Försenat", icon: AlertTriangle, tone: "text-destructive", rows: items.filter((i) => i.late) },
+      { key: "today", label: "Idag", icon: ListChecks, tone: "text-primary", rows: items.filter((i) => i.today) },
+      {
+        key: "next",
+        label: "Kommande",
+        icon: CalendarDays,
+        tone: "text-muted-foreground",
+        rows: items.filter((i) => !i.late && !i.today),
+      },
+    ],
+    [items],
+  );
+
+  return (
+    <Card className="shadow-card">
+      <CardContent className="space-y-4 p-4">
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-10" />
+            <Skeleton className="h-10" />
+          </div>
+        ) : items.length === 0 ? (
+          <p className="py-4 text-center text-xs text-muted-foreground">
+            Inga uppgifter är tilldelade dig just nu. Så fort någon delar ut en uppgift till dig hamnar den här.
+          </p>
+        ) : (
+          groups
+            .filter((g) => g.rows.length > 0)
+            .map((g) => (
+              <div key={g.key} className="space-y-1.5">
+                <p className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide ${g.tone}`}>
+                  <g.icon className="h-3.5 w-3.5" /> {g.label}
+                  <span className="tabular-nums text-muted-foreground">({g.rows.length})</span>
+                </p>
+                <div className="divide-y divide-border rounded-xl border border-border">
+                  {g.rows.map((it) => (
+                    <button
+                      key={it.id}
+                      type="button"
+                      onClick={() => navigate(`/uppgifter?markera=${it.id}`)}
+                      className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-muted/40"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-medium text-foreground">{it.task}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {new Date(it.date).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })}
+                          {it.time ? ` · ${it.time}` : ""}
+                          {stores.find((s) => s.id === it.storeId)?.name
+                            ? ` · ${stores.find((s) => s.id === it.storeId)!.name}`
+                            : ""}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        {it.minutes ? (
+                          <span className="text-[10px] tabular-nums text-muted-foreground">{it.minutes} min</span>
+                        ) : null}
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+
+
 /** Egen aktivitet: samlade spår från beställningar, uppgifter, lager, bilder och händelseloggen. */
 function MyActivityCard({
   staffId,
