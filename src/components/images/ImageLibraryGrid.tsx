@@ -94,7 +94,7 @@ export default function ImageLibraryGrid({
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
       {images.map((img, i) => {
         const selected = selectedIds.includes(img.id);
-        const place = placeOf(img.id);
+        const places = placesOf(img.id);
         const taken = img.captured_at || img.created_at;
         return (
           <div
