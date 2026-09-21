@@ -219,32 +219,6 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                 <ArrowUpRight className="mr-1 h-4 w-4" /> {target.label}
               </Button>
             )}
-            <Button
-              size="lg"
-              disabled={!task.done && missing.length > 0}
-              title={!task.done && missing.length > 0 ? missingText(task, missing) : undefined}
-              variant={task.done ? "outline" : "default"}
-              className={cn(!task.done && "bg-emerald-600 text-white hover:bg-emerald-700")}
-              onClick={async () => {
-                if (task.done) {
-                  setDone.mutate({ id: task.id, done: false });
-                  return;
-                }
-                try {
-                  await setDone.mutateAsync({ id: task.id, done: true });
-                  toast({ title: "Uppgiften är klar" });
-                  switchTab("/uppgifter");
-                } catch (e: any) {
-                  toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
-                }
-              }}
-            >
-              {task.done ? "Återöppna" : (
-                <>
-                  <Check className="mr-1 h-5 w-5" /> Klar
-                </>
-              )}
-            </Button>
             <label className="inline-flex">
               <input
                 type="file"
