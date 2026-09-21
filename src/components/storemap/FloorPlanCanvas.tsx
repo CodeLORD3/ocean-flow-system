@@ -756,11 +756,14 @@ export function FloorPlanCanvas({
                           key={`m${i}`}
                           className="cursor-copy"
                           onPointerDown={(e) => e.stopPropagation()}
-                          onClick={(e) => {
+                          onPointerUp={(e) => {
+                            /* Tryck ska ge nytt hörn direkt, både med mus och finger. */
                             e.stopPropagation();
                             if (!onZonePointsCommit) return;
                             const out = [...pts];
                             out.splice(i + 1, 0, { x: Math.round(mid.x), y: Math.round(mid.y) });
+                            touched.current = true;
+                            setGhostPts((m) => ({ ...m, [z.id]: out }));
                             onZonePointsCommit(z.id, out);
                           }}
                         >
