@@ -57,6 +57,8 @@ import { useFreezeRoute } from "@/hooks/useStandardRoute";
 import { standardParts } from "@/lib/taskStandardTime";
 import { TaskPlanningPanel } from "@/components/tasks/TaskPlanningPanel";
 import { CheckpointEditor, RequirementEditor, StandardTimeEditor } from "@/components/tasks/TaskSetupPanels";
+import { TaskRecurrencePanel } from "@/components/tasks/TaskRecurrencePanel";
+import { useStandardWeekdays } from "@/hooks/useTasks";
 import {
   resolveNeeds,
   useResourceItems,
@@ -83,6 +85,8 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const update = useUpdateTask();
   const removeTask = useDeleteTask();
   const upload = useUploadEntityImage();
+
+  const { data: itemWeekdays = [] } = useStandardWeekdays(task?.template_item_id ?? null);
 
   const [note, setNote] = useState<string | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
@@ -717,6 +721,11 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                 />
               )}
             </div>
+          </div>
+
+          <div className="space-y-2 rounded-md border p-3">
+            <p className="text-sm font-medium">Återkommande / checklista</p>
+            <TaskRecurrencePanel task={task} storeId={storeId} currentWeekdays={itemWeekdays} />
           </div>
 
           <div className="space-y-2 rounded-md border p-3">

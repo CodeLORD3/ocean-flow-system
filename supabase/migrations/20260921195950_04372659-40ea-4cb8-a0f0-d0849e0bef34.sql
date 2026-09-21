@@ -1,0 +1,2 @@
+ALTER TABLE public.checklist_template_items ADD COLUMN IF NOT EXISTS weekdays smallint[];
+COMMENT ON COLUMN public.checklist_template_items.weekdays IS 'Veckodagar (ISO 1-7, tom/null = alla dagar) som den återkommande uppgiften gäller.';

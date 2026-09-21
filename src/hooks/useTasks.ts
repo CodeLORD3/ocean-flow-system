@@ -412,6 +412,112 @@ export function useAddStandardTask() {
   });
 }
 
+/**
+ * Gör en befintlig dagsuppgift återkommande: lägger den som mallrad i en
+ * checklista och kopplar dagens rad till mallraden. Veckodagarna (ISO 1-7,
+ * tomt = varje dag) sparas på mallraden.
+ */
+export function useMakeTaskRecurring() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      taskId: string;
+      storeId: string;
+      templateId?: string | null;
+      weekdays?: number[];
+    }) => {
+      const { data: item, error: iErr } = await supabase
+        .from("checklist_items")
+        .select("*")
+        .eq("id", input.taskId)
+        .single();
+      if (iErr) throw iErr;
+      const row = item as any;
+      if (row.template_item_id) return row.template_item_id as string;
+
+      let templateId = input.templateId ?? null;
+      if (!templateId) {
+        const { data: day } = await supabase
+          .from("checklist_days")
+          .select("template_id")
+          .eq("store_id", input.storeId)
+          .order("checklist_date", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        templateId = (day as any)?.template_id || DEFAULT_CHECKLIST_TEMPLATE_ID;
+      }
+
+      const weekdays = Array.from(new Set(input.weekdays ?? []))
+        .filter((d) => d >= 1 && d <= 7)
+        .sort();
+
+      const { data: tpl, error } = await supabase
+        .from("checklist_template_items")
+        .insert({
+          template_id: templateId,
+          store_id: input.storeId,
+          section: row.section || "Övrigt",
+          task: row.task,
+          active: true,
+          sort_order: row.sort_order ?? 900,
+          zone_id: row.zone_id ?? null,
+          category_id: row.category_id ?? null,
+          assigned_staff_id: row.assigned_staff_id ?? null,
+          specific_time: row.specific_time || null,
+          time_label: row.time_label || null,
+          daypart: row.daypart || null,
+          estimated_minutes: row.estimated_minutes ?? null,
+          important_note: row.important_note || row.note || null,
+          requires_photo: !!row.requires_photo,
+          requires_note: !!row.requires_note,
+          requires_value: !!row.requires_value,
+          value_label: row.value_label ?? null,
+          link_url: row.link_url ?? null,
+          recipe_id: row.recipe_id ?? null,
+          weekdays: weekdays.length > 0 ? weekdays : null,
+        } as never)
+        .select("id")
+        .single();
+      if (error) throw error;
+
+      const { error: uErr } = await supabase
+        .from("checklist_items")
+        .update({ template_item_id: (tpl as any).id } as never)
+        .eq("id", input.taskId);
+      if (uErr) throw uErr;
+      return (tpl as any).id as string;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["task-item"] });
+      qc.invalidateQueries({ queryKey: ["day-tasks"] });
+      qc.invalidateQueries({ queryKey: ["standard-tasks"] });
+      qc.invalidateQueries({ queryKey: ["checklist-day"] });
+    },
+  });
+}
+
+/** Vilka veckodagar en återkommande uppgift gäller (tomt = varje dag). */
+export function useSetStandardWeekdays() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ templateItemId, weekdays }: { templateItemId: string; weekdays: number[] }) => {
+      const clean = Array.from(new Set(weekdays))
+        .filter((d) => d >= 1 && d <= 7)
+        .sort();
+      const { error } = await supabase
+        .from("checklist_template_items")
+        .update({ weekdays: clean.length > 0 ? clean : null } as never)
+        .eq("id", templateItemId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["standard-tasks"] });
+      qc.invalidateQueries({ queryKey: ["task-item"] });
+      qc.invalidateQueries({ queryKey: ["checklist-day"] });
+    },
+  });
+}
+
 export function useDeleteTask() {
   const qc = useQueryClient();
   return useMutation({
@@ -586,6 +692,23 @@ export function useStandardTasks(storeId?: string | null) {
         })) as StandardTask[];
     },
     enabled: !!storeId,
+  });
+}
+
+/** Veckodagarna som är sparade på en återkommande uppgift. */
+export function useStandardWeekdays(templateItemId?: string | null) {
+  return useQuery({
+    queryKey: ["standard-weekdays", templateItemId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("checklist_template_items")
+        .select("weekdays")
+        .eq("id", templateItemId!)
+        .maybeSingle();
+      if (error) throw error;
+      return ((data as any)?.weekdays ?? []) as number[];
+    },
+    enabled: !!templateItemId,
   });
 }
 

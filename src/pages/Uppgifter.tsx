@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Check, Plus, Trash2 } from "lucide-react";
-
-const STEPS = [
-  { n: 1, label: "Vad" },
-  { n: 2, label: "Var & vem" },
-  { n: 3, label: "Krav" },
-] as const;
+import { Plus, Trash2 } from "lucide-react";
+import { NewTaskDialog } from "@/components/tasks/NewTaskDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -204,69 +199,13 @@ export default function Uppgifter() {
   const catOf = (t: Task) => categories.find((c) => c.id === t.category_id) ?? null;
 
   const [newOpen, setNewOpen] = useState(false);
-  const [step, setStep] = useState(1);
-  const [nTask, setNTask] = useState("");
-  const [nZone, setNZone] = useState("none");
-  const [nCat, setNCat] = useState("none");
-  const [nPerson, setNPerson] = useState("none");
-  const [nTime, setNTime] = useState("");
-  const [nMinutes, setNMinutes] = useState("");
-  const [nNote, setNNote] = useState("");
-  const [nRecurring, setNRecurring] = useState(false);
-  const [nReqPhoto, setNReqPhoto] = useState(false);
-  const [nReqNote, setNReqNote] = useState(false);
-  const [nReqValue, setNReqValue] = useState(false);
-  const [nValueLabel, setNValueLabel] = useState("");
-  const [nLink, setNLink] = useState("none");
-  const [nRecipe, setNRecipe] = useState("none");
   const updateTask = useUpdateTask();
 
-  const createAdhoc = async () => {
-    if (!storeId) return;
-    let newId: string | null = null;
-    try {
-      const payload = {
-        storeId,
-        date: day,
-        task: nTask,
-        zoneId: nZone === "none" ? null : nZone,
-        categoryId: nCat === "none" ? null : nCat,
-        assignedStaffId: nPerson === "none" ? null : nPerson,
-        specificTime: nTime || null,
-        estimatedMinutes: nMinutes ? Number(nMinutes) : null,
-        note: nNote,
-        requiresPhoto: nReqPhoto,
-        requiresNote: nReqNote,
-        requiresValue: nReqValue,
-        valueLabel: nReqValue ? nValueLabel || "Värde" : null,
-        linkUrl: nLink === "none" ? null : nLink,
-        recipeId: nRecipe === "none" ? null : nRecipe,
-      };
-      if (nRecurring) {
-        await addStandard.mutateAsync(payload);
-        toast({ title: "Standarduppgift tillagd", description: "Den återkommer varje dag." });
-      } else {
-        const id = await addAdhoc.mutateAsync(payload);
-        toast({ title: "Tillfällig uppgift tillagd", description: "Den gäller bara valt datum." });
-        newId = id;
-      }
-      setNewOpen(false);
-      setStep(1);
-      setNTask("");
-      setNNote("");
-      setNTime("");
-      setNMinutes("");
-      setNReqPhoto(false);
-      setNReqNote(false);
-      setNReqValue(false);
-      setNValueLabel("");
-      setNLink("none");
-      setNRecipe("none");
-      if (newId) switchTab(`/uppgift/${newId}`);
-    } catch (e: any) {
-      toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
-    }
-  };
+  /** Områdena som kan väljas när en ny uppgift skapas. */
+  const newTaskAreas = useMemo(
+    () => [...areaOf.values()].map((a) => ({ id: a.id, name: a.name, number: a.number })),
+    [areaOf],
+  );
 
   const addPhoto = async (task: Task, file: File) => {
     const zoneId = task.zone_id;
@@ -1048,229 +987,15 @@ export default function Uppgifter() {
         </TabsContent>
       </Tabs>
 
-      <Dialog
+      <NewTaskDialog
         open={newOpen}
-        onOpenChange={(o) => {
-          setNewOpen(o);
-          if (!o) setStep(1);
-        }}
-      >
-        <DialogContent className="sm:max-w-[520px]">
-          <DialogHeader>
-            <DialogTitle>Ny uppgift</DialogTitle>
-          </DialogHeader>
-
-          <div className="flex items-center gap-2">
-            {STEPS.map((s, i) => (
-              <div key={s.n} className="flex flex-1 items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => (s.n < step || nTask.trim()) && setStep(s.n)}
-                  className={cn(
-                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors",
-                    step === s.n
-                      ? "bg-primary text-primary-foreground"
-                      : step > s.n
-                        ? "bg-emerald-500 text-white"
-                        : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {step > s.n ? <Check className="h-4 w-4" /> : s.n}
-                </button>
-                <span className={cn("hidden text-xs sm:block", step === s.n ? "font-semibold" : "text-muted-foreground")}>
-                  {s.label}
-                </span>
-                {i < STEPS.length - 1 && <span className="h-px flex-1 bg-border" />}
-              </div>
-            ))}
-          </div>
-
-          <div className="min-h-[240px] space-y-3 pt-1">
-            {step === 1 && (
-              <>
-                <div>
-                  <label className="text-sm font-medium">Vad ska göras?</label>
-                  <Input
-                    value={nTask}
-                    onChange={(e) => setNTask(e.target.value)}
-                    placeholder="T.ex. Rengör fiskdisken"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && nTask.trim()) setStep(2);
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Kategori</label>
-                  <Select value={nCat} onValueChange={setNCat}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Ingen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Ingen kategori</SelectItem>
-                      {categories.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <label className="flex items-center gap-2 rounded-md border p-3 text-sm">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4"
-                    checked={nRecurring}
-                    onChange={(e) => setNRecurring(e.target.checked)}
-                  />
-                  <span>
-                    Återkommande uppgift
-                    <span className="block text-xs text-muted-foreground">
-                      {nRecurring ? "Kommer tillbaka varje dag." : "Gäller bara valt datum."}
-                    </span>
-                  </span>
-                </label>
-              </>
-            )}
-
-            {step === 2 && (
-              <>
-                <div>
-                  <label className="text-sm font-medium">Område</label>
-                  <Select value={nZone} onValueChange={setNZone}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Inget" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Inget område</SelectItem>
-                      {[...areaOf.values()].map((a) => (
-                        <SelectItem key={a!.id} value={a!.id}>
-                          {a!.number}. {a!.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Ansvarig</label>
-                  <Select value={nPerson} onValueChange={setNPerson}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Ingen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Ingen tilldelad</SelectItem>
-                      {staffList.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          <span className="inline-flex items-center gap-2">
-                            <StaffAvatar
-                              name={`${s.first_name} ${s.last_name}`}
-                              imageUrl={s.profile_image_url}
-                              className="h-10 w-10"
-                            />
-                            {s.first_name} {s.last_name}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-sm font-medium">Tid (valfri)</label>
-                    <Input type="time" value={nTime} onChange={(e) => setNTime(e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Beräknad tid (min)</label>
-                    <Input type="number" min={0} value={nMinutes} onChange={(e) => setNMinutes(e.target.value)} />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Leder till (valfritt)</label>
-                  <Select value={nLink} onValueChange={setNLink}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Ingen genväg" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Ingen genväg</SelectItem>
-                      {TASK_LINKS.map((l) => (
-                        <SelectItem key={l.url} value={l.url}>
-                          {l.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    T.ex. dagsrapporten eller stängningschecklistan — då öppnas den direkt från uppgiften.
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Recept (för produktion)</label>
-                  <Select value={nRecipe} onValueChange={setNRecipe}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Inget recept" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Inget recept</SelectItem>
-                      {recipes.map((r) => (
-                        <SelectItem key={r.id} value={r.id}>
-                          {r.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
-            )}
-
-            {step === 3 && (
-              <>
-                <div className="space-y-2 rounded-md border p-3">
-                  <p className="text-sm font-medium">Krav för att få bocka av</p>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" className="h-4 w-4" checked={nReqPhoto} onChange={(e) => setNReqPhoto(e.target.checked)} />
-                    Bild krävs
-                  </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" className="h-4 w-4" checked={nReqNote} onChange={(e) => setNReqNote(e.target.checked)} />
-                    Kommentar krävs
-                  </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" className="h-4 w-4" checked={nReqValue} onChange={(e) => setNReqValue(e.target.checked)} />
-                    Mätvärde krävs
-                  </label>
-                  {nReqValue && (
-                    <Input
-                      placeholder="Vad mäts? T.ex. Temperatur °C"
-                      value={nValueLabel}
-                      onChange={(e) => setNValueLabel(e.target.value)}
-                    />
-                  )}
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Anteckning</label>
-                  <Textarea value={nNote} onChange={(e) => setNNote(e.target.value)} className="min-h-[60px]" />
-                </div>
-                <p className="text-xs text-muted-foreground">Uppgiften öppnas efteråt för beskrivning och bilder.</p>
-              </>
-            )}
-          </div>
-
-          <DialogFooter className="sm:justify-between">
-            <Button variant="outline" onClick={() => (step === 1 ? setNewOpen(false) : setStep(step - 1))}>
-              {step === 1 ? "Avbryt" : "Tillbaka"}
-            </Button>
-            {step < 3 ? (
-              <Button onClick={() => setStep(step + 1)} disabled={step === 1 && !nTask.trim()}>
-                Nästa
-              </Button>
-            ) : (
-              <Button onClick={createAdhoc} disabled={!nTask.trim() || !storeId}>
-                Skapa uppgift
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setNewOpen}
+        storeId={storeId}
+        day={day}
+        areas={newTaskAreas}
+        staff={staffList}
+        onCreated={(id) => switchTab(`/uppgift/${id}`)}
+      />
     </div>
   );
 }

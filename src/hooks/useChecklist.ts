@@ -464,8 +464,14 @@ export function useDailyChecklist(storeId?: string | null, date?: string, templa
             .filter((t: any) => t.store_id === storeId && !t.active)
             .map((t: any) => `${t.section}|${t.task}`)
         );
+        // Återkommande rader kan gälla bara vissa veckodagar (ISO 1-7, tomt = alla).
+        const jsDay = new Date(`${iso}T12:00:00`).getDay();
+        const isoWeekday = jsDay === 0 ? 7 : jsDay;
         const usable = (tpl || []).filter(
-          (t: any) => t.active && !suppressed.has(`${t.section}|${t.task}`)
+          (t: any) =>
+            t.active &&
+            !suppressed.has(`${t.section}|${t.task}`) &&
+            (!Array.isArray(t.weekdays) || t.weekdays.length === 0 || t.weekdays.includes(isoWeekday))
         );
 
         if (usable.length > 0) {
