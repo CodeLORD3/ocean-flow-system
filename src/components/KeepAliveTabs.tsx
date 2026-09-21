@@ -115,6 +115,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { canAccessRoute } from "@/lib/pageAccess";
 import { canOpenStaffPage, staffLevelOf } from "@/lib/staffModuleAccess";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import ReturnToImageBar from "@/components/images/ReturnToImageBar";
 
 interface RouteEntry {
   component: React.ReactNode;
