@@ -31,6 +31,7 @@ export function MapPinDialog({
   point,
   zoneId,
   existing,
+  area,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -39,6 +40,8 @@ export function MapPinDialog({
   point: { x: number; y: number } | null;
   zoneId?: string | null;
   existing?: MapPin | null;
+  /** Rutan man drog på kartan — den yta punkten gäller. */
+  area?: { x: number; y: number; width: number; height: number } | null;
 }) {
   const { data: staff = [] } = useStaff(storeId);
   const save = useSaveMapPin();
@@ -67,6 +70,10 @@ export function MapPinDialog({
         zone_id: existing?.zone_id ?? zoneId ?? null,
         x: existing?.x ?? point?.x ?? 0,
         y: existing?.y ?? point?.y ?? 0,
+        area_x: area ? area.x : (existing?.area_x ?? null),
+        area_y: area ? area.y : (existing?.area_y ?? null),
+        area_width: area ? area.width : (existing?.area_width ?? null),
+        area_height: area ? area.height : (existing?.area_height ?? null),
         kind,
         title: title.trim() || PIN_KIND_LABEL[kind],
         body: body.trim() || null,
@@ -88,6 +95,11 @@ export function MapPinDialog({
           <DialogTitle className="text-sm">{existing ? "Ändra punkt" : "Ny punkt på kartan"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
+          {(area || existing?.area_width) && (
+            <p className="rounded-md bg-primary/10 px-2 py-1.5 text-[11px] text-primary">
+              Ytan du drog på kartan är markerad för punkten.
+            </p>
+          )}
           <div className="space-y-1">
             <Label className="text-[11px]">Vad ska göras</Label>
             <Select value={kind} onValueChange={setKind}>

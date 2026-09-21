@@ -93,7 +93,13 @@ export function FloorPlanCanvas({
   pins?: MapPin[];
   pinMode?: boolean;
   pxPerMeter?: number | null;
-  onPinPlace?: (point: { x: number; y: number; zoneId: string | null }) => void;
+  onPinPlace?: (point: {
+    x: number;
+    y: number;
+    zoneId: string | null;
+    /** Rutan man drog på kartan, om man markerade en yta i stället för bara en punkt. */
+    area?: { x: number; y: number; width: number; height: number } | null;
+  }) => void;
   onPinSelect?: (pin: MapPin) => void;
   focus?: { kind: "zone" | "object"; id: string } | null;
   onExitFocus?: () => void;
@@ -287,6 +293,18 @@ export function FloorPlanCanvas({
   const [marquee, setMarquee] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
   const [marqueeMode, setMarqueeMode] = useState(false);
 
+  /** Ny punkt: tryck för en punkt, eller dra för att markera den yta punkten gäller. */
+  const [pinBox, setPinBox] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const pinHandled = useRef(false);
+  const pinBoxRect = pinBox
+    ? {
+        x: Math.min(pinBox.x0, pinBox.x1),
+        y: Math.min(pinBox.y0, pinBox.y1),
+        width: Math.abs(pinBox.x1 - pinBox.x0),
+        height: Math.abs(pinBox.y1 - pinBox.y0),
+      }
+    : null;
+
   const zoomToBox = (box: { x: number; y: number; width: number; height: number }) => {
     const el = wrapRef.current;
     if (!el || box.width < 4 || box.height < 4) return;
@@ -331,6 +349,11 @@ export function FloorPlanCanvas({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    if (pinBox) {
+      const pt = planPoint(e);
+      if (pt) setPinBox((b) => (b ? { ...b, x1: pt.x, y1: pt.y } : b));
+      return;
+    }
     if (marquee) {
       const pt = planPoint(e);
       if (pt) setMarquee((m) => (m ? { ...m, x1: pt.x, y1: pt.y } : m));
@@ -373,6 +396,28 @@ export function FloorPlanCanvas({
 
   const endPointer = () => {
     panRef.current = null;
+    if (pinBox) {
+      const box = pinBoxRect;
+      const drawn = !!box && box.width > 8 && box.height > 8;
+      const center = drawn && box ? { x: box.x + box.width / 2, y: box.y + box.height / 2 } : { x: pinBox.x0, y: pinBox.y0 };
+      const hit = [...zones].reverse().find((z) => pointInPolygon(center, ptsOf(z)));
+      onPinPlace?.({
+        x: Math.round(center.x),
+        y: Math.round(center.y),
+        zoneId: hit?.id ?? null,
+        area:
+          drawn && box
+            ? {
+                x: Math.round(box.x),
+                y: Math.round(box.y),
+                width: Math.round(box.width),
+                height: Math.round(box.height),
+              }
+            : null,
+      });
+      setPinBox(null);
+      return;
+    }
     if (marquee) {
       if (marqueeBox) zoomToBox(marqueeBox);
       setMarquee(null);
@@ -405,6 +450,11 @@ export function FloorPlanCanvas({
   /* Nålläge: tryck var som helst på ritningen och punkten hamnar exakt där. */
   const placePin = (e: React.MouseEvent) => {
     if (!pinMode || !onPinPlace) return;
+    if (pinHandled.current) {
+      pinHandled.current = false;
+      e.stopPropagation();
+      return;
+    }
     const pt = planPoint(e);
     if (!pt) return;
     e.stopPropagation();
@@ -434,7 +484,15 @@ export function FloorPlanCanvas({
         ref={wrapRef}
         className={`h-[56vh] min-h-[320px] max-h-[560px] w-full ${active || marquee ? "touch-none" : ""} ${pinMode || placeZoneId || marqueeMode ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}`}
         onClickCapture={pinMode ? placePin : placeZoneId ? placePhoto : undefined}
-        onPointerDownCapture={() => setActive(true)}
+        onPointerDownCapture={(e) => {
+          setActive(true);
+          if (!pinMode || !onPinPlace || e.button !== 0) return;
+          const pt = planPoint(e);
+          if (!pt) return;
+          e.stopPropagation();
+          pinHandled.current = true;
+          setPinBox({ x0: pt.x, y0: pt.y, x1: pt.x, y1: pt.y });
+        }}
         onPointerDown={onBackgroundDown}
         onPointerMove={(e) => {
           onPointerMove(e);
@@ -731,6 +789,20 @@ export function FloorPlanCanvas({
                     onPinSelect?.(pin);
                   }}
                 >
+                  {pin.area_width && pin.area_height ? (
+                    <rect
+                      x={Number(pin.area_x)}
+                      y={Number(pin.area_y)}
+                      width={Number(pin.area_width)}
+                      height={Number(pin.area_height)}
+                      fill={c}
+                      fillOpacity={done ? 0.06 : 0.14}
+                      stroke={c}
+                      strokeWidth={2 / Math.max(zoom, 0.5)}
+                      strokeDasharray="6 4"
+                      rx={4}
+                    />
+                  ) : null}
                   <circle cx={pin.x} cy={pin.y} r={r} fill={c} fillOpacity={done ? 0.45 : 0.95} stroke="hsl(var(--card))" strokeWidth={r / 4} />
                   <text
                     x={pin.x}
@@ -849,6 +921,19 @@ export function FloorPlanCanvas({
             )}
 
             {/* Lager 8 — området man drar ut för att zooma dit */}
+            {pinBoxRect && pinBoxRect.width > 2 && (
+              <rect
+                x={pinBoxRect.x}
+                y={pinBoxRect.y}
+                width={pinBoxRect.width}
+                height={pinBoxRect.height}
+                fill="hsl(var(--primary))"
+                fillOpacity={0.12}
+                stroke="hsl(var(--primary))"
+                strokeWidth={2 / Math.max(zoom, 0.5)}
+                strokeDasharray="6 4"
+              />
+            )}
             {marqueeBox && (
               <rect
                 x={marqueeBox.x}

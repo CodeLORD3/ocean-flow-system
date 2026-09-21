@@ -104,6 +104,11 @@ export type MapPin = {
   done_at: string | null;
   done_by_name: string | null;
   created_at: string;
+  /** Rutan punkten gäller, markerad genom att dra på kartan. */
+  area_x: number | null;
+  area_y: number | null;
+  area_width: number | null;
+  area_height: number | null;
 };
 
 export type MapWall = {
@@ -536,6 +541,10 @@ export function useSaveMapPin() {
           map_object_id: input.map_object_id ?? null,
           x: input.x ?? 0,
           y: input.y ?? 0,
+          area_x: input.area_x ?? null,
+          area_y: input.area_y ?? null,
+          area_width: input.area_width ?? null,
+          area_height: input.area_height ?? null,
           kind: input.kind ?? "note",
           title: input.title || "Anteckning",
           body: input.body ?? null,

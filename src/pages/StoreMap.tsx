@@ -168,6 +168,8 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
     point: { x: number; y: number } | null;
     zoneId: string | null;
     existing: MapPin | null;
+    /** Rutan man drog på kartan — den yta punkten gäller. */
+    area?: { x: number; y: number; width: number; height: number } | null;
   } | null>(null);
 
   /** Kom man hit från en uppgift? Då markeras ytan och man kan gå direkt tillbaka. */
@@ -737,7 +739,7 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
                     onClick={() => setPinMode((v) => !v)}
                   >
                     <PinIcon className="h-3 w-3" />
-                    {pinMode ? "Tryck på kartan…" : "Ny punkt"}
+                    {pinMode ? "Tryck — eller dra ut en yta…" : "Ny punkt"}
                   </Button>
                 </div>
               )}
@@ -811,8 +813,8 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
               pins={pins}
               pinMode={pinMode}
               pxPerMeter={pxPerMeter}
-              onPinPlace={({ x, y, zoneId }) => {
-                setPinDialog({ point: { x, y }, zoneId, existing: null });
+              onPinPlace={({ x, y, zoneId, area }) => {
+                setPinDialog({ point: { x, y }, zoneId, existing: null, area: area ?? null });
                 setPinMode(false);
               }}
               onPinSelect={(pin) => setPinDialog({ point: null, zoneId: pin.zone_id, existing: pin })}
@@ -1413,6 +1415,7 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
           point={pinDialog.point}
           zoneId={pinDialog.zoneId}
           existing={pinDialog.existing}
+          area={pinDialog.area ?? null}
         />
       )}
 
