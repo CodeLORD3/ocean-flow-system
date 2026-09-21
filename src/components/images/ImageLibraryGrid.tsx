@@ -38,14 +38,21 @@ export default function ImageLibraryGrid({
   );
   const { data: names } = useLinkTargetNames(allLinks);
 
-  /** Område i första hand, annars butiken bilden hör till. */
-  function placeOf(id: string): string | null {
+  /** Alla ställen i systemet där bilden ligger — område/butik först. */
+  function placesOf(id: string): { key: string; type: string; name: string }[] {
     const links = linkMap?.[id] ?? [];
-    const zone = links.find((l) => l.entity_type === "zone");
-    if (zone) return names?.[`zone:${zone.entity_id}`] || null;
-    const store = links.find((l) => l.entity_type === "store");
-    if (store) return names?.[`store:${store.entity_id}`] || null;
-    return null;
+    const order = ["zone", "store", "resource", "product", "task", "observation", "location"];
+    return links
+      .map((l) => ({
+        key: l.id,
+        type: l.entity_type,
+        name: names?.[`${l.entity_type}:${l.entity_id}`] || "Okänt namn",
+      }))
+      .sort((a, b) => {
+        const ia = order.indexOf(a.type);
+        const ib = order.indexOf(b.type);
+        return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+      });
   }
 
   function click(e: React.MouseEvent, index: number) {
