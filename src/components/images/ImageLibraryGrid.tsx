@@ -140,9 +140,27 @@ export default function ImageLibraryGrid({
                 </span>
                 <span className="whitespace-nowrap tabular-nums">{dayLabel(dayKey(taken))}</span>
               </div>
-              <p className="truncate text-[11px] text-muted-foreground">
-                {place ? `📍 ${place}` : "📍 Plats saknas"}
-              </p>
+              {/* Alla ställen i systemet där bilden ligger */}
+              {places.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground">Ligger inte på något ställe än</p>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {places.slice(0, 3).map((p) => (
+                    <span
+                      key={p.key}
+                      className="max-w-full truncate rounded-md border px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                      title={`${linkTypeLabel(p.type)}: ${p.name}`}
+                    >
+                      {linkTypeLabel(p.type)}: {p.name}
+                    </span>
+                  ))}
+                  {places.length > 3 && (
+                    <span className="text-[10px] text-muted-foreground">
+                      +{places.length - 3} till
+                    </span>
+                  )}
+                </div>
+              )}
               {img.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {img.tags.slice(0, 3).map((t) => (
