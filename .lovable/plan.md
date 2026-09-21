@@ -38,11 +38,19 @@ Varje bild får en mänsklig tidslinje med profilbilder: "Anna lade upp bilden",
 
 Efter uppladdning: "47 bilder uppladda" i rutnät med flervalsrutor. Markera t.ex. 12 och sätt butik, område, typ, bildroll och taggar i ett svep — varje bild får en egen historikhändelse märkt "Via massredigering".
 
-**Snabbläge** klassificerar en bild i taget med *Spara & nästa*, där föregående val ligger kvar som förslag. På dator: Enter sparar och går vidare, vänster/höger byter bild. Gjort för hundratals bilder.
+Uppladdningen kräver ingen klassificering: bilderna skapas direkt som oplacerade med rätt uppladdare och syns omedelbart i massvyn. På dator markerar du med Skift+klick för intervall, Ctrl/Cmd+klick för enstaka, Ctrl/Cmd+A för alla synliga och Esc för att avmarkera. Längst ned visas "37 markerade" med Placera, Koppla, Taggar, Bildroll och Mer — små val, inga stora formulär.
+
+**Snabbläge** klassificerar en bild i taget med *Spara & nästa*, där föregående val ligger kvar som förslag, och styrs nästan helt från tangentbordet: vänster/höger byter bild, Enter sparar och går vidare, Esc stänger, 1–6 väljer vad bilden visar. Kortkommandona visas diskret. Gjort för hundratals bilder.
 
 ## Bilderna syns där de hör hemma
 
 Samma bild (samma media_id, aldrig kopior) visas automatiskt på områdessidan, på sakens kort i Utrustning & material, på uppgiften, under "Så ska det se ut" när den är referensbild, och tillsammans med iakttagelsen.
+
+## Ta bort koppling är inte att radera bilden
+
+Tas Lax bort från en bild som också hör till Fiskdisk och Bygga fiskdisk försvinner bara den kopplingen — bilden och övriga kopplingar ligger kvar. Att radera själva bilden är en egen handling med bekräftelse, för chef och administration.
+
+Varje bild visar neutralt hur långt sorteringen kommit: **Oplacerad**, **Delvis klar** eller **Klar**. Det är arbetsstatus, inte fel. Profilbilderna hålls tillräckligt stora för att man direkt ser vem som gjort vad, både på korten och i aktiviteten.
 
 ## Teknisk lösning
 
