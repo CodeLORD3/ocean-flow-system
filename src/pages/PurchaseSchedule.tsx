@@ -522,6 +522,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
           deliveryDate,
           departureDate,
           purchaseDate,
+          leadDays,
           departureTime: matchingSchedule.departure_time,
           category: line.products?.category || "Övrigt",
           lineId: line.id,
