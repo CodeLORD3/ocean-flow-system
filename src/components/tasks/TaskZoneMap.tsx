@@ -73,9 +73,9 @@ export function TaskZoneMap({
 
   return (
     <Card className="overflow-hidden">
-      <div className="flex items-center justify-between gap-2 border-b px-4 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2">
         <p className="text-sm font-semibold">Var i butiken</p>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {onOpenZone && selected !== "all" && selected !== "none" && (
             <Button size="sm" className="h-7 text-xs" onClick={() => onOpenZone(selected)}>
               Öppna området
