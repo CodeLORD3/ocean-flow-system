@@ -151,9 +151,22 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
   }, [grossistStock]);
 
   const [useStockLoading, setUseStockLoading] = useState<string | null>(null);
+  // Rader som just tagits ur inköpslistan – försvinner direkt medan databasen uppdateras
+  const [removedLineIds, setRemovedLineIds] = useState<Set<string>>(new Set());
+  const markRemoved = (lineIds: string[]) =>
+    setRemovedLineIds((prev) => new Set([...prev, ...lineIds]));
+  const unmarkRemoved = (lineIds: string[]) =>
+    setRemovedLineIds((prev) => {
+      const next = new Set(prev);
+      lineIds.forEach((id) => next.delete(id));
+      return next;
+    });
+  const isRemoved = (lineIds?: string[]) =>
+    !!lineIds && lineIds.length > 0 && lineIds.every((id) => removedLineIds.has(id));
 
   const handleUseStock = async (lineIds: string[], _shopOrderIds: string[], productName: string) => {
     setUseStockLoading(productName);
+    markRemoved(lineIds);
     try {
       for (const lineId of lineIds) {
         await supabase.from("shop_order_lines").update({ ordered_elsewhere: "Lager" }).eq("id", lineId);
@@ -161,6 +174,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast.success(`"${productName}" borttagen från inköpsschema (använder befintligt lager).`);
     } catch (err) {
+      unmarkRemoved(lineIds);
       toast.error("Kunde inte uppdatera orderrader.");
     } finally {
       setUseStockLoading(null);
