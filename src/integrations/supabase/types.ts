@@ -12418,6 +12418,7 @@ export type Database = {
           parent_product_id: string | null
           producer: string | null
           purchasable: boolean
+          purchase_lead_days: number
           requires_processing: boolean
           retail_suggested: number | null
           shelf_life_days: number | null
@@ -12470,6 +12471,7 @@ export type Database = {
           parent_product_id?: string | null
           producer?: string | null
           purchasable?: boolean
+          purchase_lead_days?: number
           requires_processing?: boolean
           retail_suggested?: number | null
           shelf_life_days?: number | null
@@ -12522,6 +12524,7 @@ export type Database = {
           parent_product_id?: string | null
           producer?: string | null
           purchasable?: boolean
+          purchase_lead_days?: number
           requires_processing?: boolean
           retail_suggested?: number | null
           shelf_life_days?: number | null

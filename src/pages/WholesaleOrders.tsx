@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { fetchPurchaseLeadDays, purchaseDateFor } from "@/lib/purchaseLead";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -499,12 +500,15 @@ export default function WholesaleOrders() {
     }
 
     const deliveryDateStr = format(newOrderDeliveryDate, "yyyy-MM-dd");
+    // Inköpsdagen sätts per vara: kokas/filéas den köps dagen innan leverans.
+    const leadMap = await fetchPurchaseLeadDays(validLines.map(l => l.product_id));
     const lines = validLines.map(l => ({
       shop_order_id: order.id,
       product_id: l.product_id,
       quantity_ordered: Number(l.quantity),
       unit: l.unit,
       delivery_date: deliveryDateStr,
+      order_date: purchaseDateFor(deliveryDateStr, leadMap.get(l.product_id) ?? 0),
     }));
 
     const { error: lineError } = await supabase.from("shop_order_lines").insert(lines);
