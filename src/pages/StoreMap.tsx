@@ -574,10 +574,15 @@ export default function StoreMap() {
               zoneNumber={pageZone ? zoneNumbers[pageZone.id] : undefined}
               areaLabel={area?.sqm != null ? `${area.exact ? "" : "≈ "}${formatSqm(area.sqm)}` : null}
               mapSlot={
+                <div className="relative">
                 <FloorPlanCanvas
                   plan={plan}
-                  zones={zones}
-                  objects={objects}
+                  zones={pageZone ? [pageZone] : zones.filter((z) => z.id === pageObject?.zone_id)}
+                  objects={
+                    pageObject
+                      ? [pageObject]
+                      : objects.filter((o) => o.zone_id === pageZone?.id)
+                  }
                   walls={walls}
                   types={typeById}
                   zoneProgress={zoneProgress}
