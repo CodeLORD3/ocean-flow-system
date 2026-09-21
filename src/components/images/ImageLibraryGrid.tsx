@@ -1,26 +1,52 @@
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 import { STATUS_CLASS, STATUS_LABEL, mediaKindLabel } from "@/lib/imageStatus";
 import { StaffFace } from "@/components/staff/StaffNameAvatar";
+import { dayLabel, dayKey } from "@/lib/imageMeta";
+import { useImageLinksFor } from "@/hooks/useImageLibrary";
+import { useLinkTargetNames } from "@/hooks/useImagePickers";
 import type { LibraryImage } from "@/hooks/useImageLibrary";
 
 /**
- * Rutnät med miniatyrer. Markering: klick öppnar, Skift+klick markerar intervall,
- * Ctrl/Cmd+klick markerar enstaka.
+ * Rutnät med miniatyrer. Varje bild visar vem som lagt ut den, vilken dag,
+ * vilket område den är tagen i, vad den heter och dess taggar.
+ * Markering: klick öppnar, Skift+klick markerar intervall, Ctrl/Cmd+klick enstaka.
  */
 export default function ImageLibraryGrid({
   images,
   selectedIds,
   onSelectedChange,
   onOpen,
+  onTagClick,
 }: {
   images: LibraryImage[];
   selectedIds: string[];
   onSelectedChange: (ids: string[]) => void;
   onOpen: (index: number) => void;
+  onTagClick?: (tag: string) => void;
 }) {
   const lastIndex = useRef<number | null>(null);
+  const ids = useMemo(() => images.map((i) => i.id), [images]);
+  const { data: linkMap } = useImageLinksFor(ids);
+  const allLinks = useMemo(
+    () =>
+      Object.values(linkMap ?? {})
+        .flat()
+        .map((l) => ({ entity_type: l.entity_type, entity_id: l.entity_id })),
+    [linkMap],
+  );
+  const { data: names } = useLinkTargetNames(allLinks);
+
+  /** Område i första hand, annars butiken bilden hör till. */
+  function placeOf(id: string): string | null {
+    const links = linkMap?.[id] ?? [];
+    const zone = links.find((l) => l.entity_type === "zone");
+    if (zone) return names?.[`zone:${zone.entity_id}`] || null;
+    const store = links.find((l) => l.entity_type === "store");
+    if (store) return names?.[`store:${store.entity_id}`] || null;
+    return null;
+  }
 
   function click(e: React.MouseEvent, index: number) {
     const id = images[index].id;
@@ -58,42 +84,82 @@ export default function ImageLibraryGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
       {images.map((img, i) => {
         const selected = selectedIds.includes(img.id);
+        const place = placeOf(img.id);
+        const taken = img.captured_at || img.created_at;
         return (
-          <button
+          <div
             key={img.id}
-            type="button"
+            role="button"
+            tabIndex={0}
             onClick={(e) => click(e, i)}
-            className={`group relative overflow-hidden rounded-lg border text-left transition ${
-              selected ? "ring-2 ring-primary" : "hover:opacity-95"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") onOpen(i);
+            }}
+            className={`group relative cursor-pointer overflow-hidden rounded-lg border bg-card text-left transition ${
+              selected ? "ring-2 ring-primary" : "hover:border-primary/40"
             }`}
           >
-            <img
-              src={thumbUrl(img.url, THUMB_TILE)}
-              alt={img.title || img.caption || "Bild"}
-              className="aspect-[4/5] w-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
-            <span className="absolute left-1.5 top-1.5">
-              <Badge className={`${STATUS_CLASS[img.status]} text-[10px]`}>
-                {STATUS_LABEL[img.status]}
-              </Badge>
-            </span>
-            <span className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t from-black/70 to-transparent px-2 pb-1.5 pt-6 text-[11px] text-white">
-              <StaffFace name={img.uploaded_by_name} className="h-5 w-5 text-[9px]" />
-              <span className="min-w-0 flex-1 truncate">
-                {img.title || mediaKindLabel(img.media_kind)}
+            <div className="relative">
+              <img
+                src={thumbUrl(img.url, THUMB_TILE)}
+                alt={img.title || img.caption || "Bild"}
+                className="aspect-[4/5] w-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
+              <span className="absolute left-1.5 top-1.5">
+                <Badge className={`${STATUS_CLASS[img.status]} text-[10px]`}>
+                  {STATUS_LABEL[img.status]}
+                </Badge>
               </span>
-            </span>
-            {selected && (
-              <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
-                ✓
-              </span>
-            )}
-          </button>
+              {selected && (
+                <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
+                  ✓
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-1.5 px-2 py-2">
+              <p className="truncate text-sm font-medium">
+                {img.title || img.caption || mediaKindLabel(img.media_kind)}
+              </p>
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <StaffFace name={img.uploaded_by_name} className="h-5 w-5 text-[9px]" />
+                <span className="min-w-0 flex-1 truncate">
+                  {img.uploaded_by_name || "Äldre bild"}
+                </span>
+                <span className="whitespace-nowrap tabular-nums">{dayLabel(dayKey(taken))}</span>
+              </div>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {place ? `📍 ${place}` : "📍 Plats saknas"}
+              </p>
+              {img.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {img.tags.slice(0, 3).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onTagClick?.(t);
+                      }}
+                      className="rounded-full bg-secondary px-2 py-0.5 text-[10px] text-secondary-foreground hover:bg-primary hover:text-primary-foreground"
+                    >
+                      {t}
+                    </button>
+                  ))}
+                  {img.tags.length > 3 && (
+                    <span className="text-[10px] text-muted-foreground">
+                      +{img.tags.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         );
       })}
     </div>
