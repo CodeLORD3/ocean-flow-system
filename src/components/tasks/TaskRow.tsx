@@ -132,13 +132,16 @@ export function TaskRow({
         <button type="button" onClick={() => setOpen((v) => !v)} className="min-w-0 flex-1 py-0.5 text-left">
           <span
             className={cn(
-              "block break-words text-[13px] font-medium leading-snug",
+              "block break-words leading-snug",
+              open
+                ? "text-[17px] font-bold sm:text-[13px]"
+                : "text-[15px] font-semibold sm:text-xs sm:font-semibold",
               task.done && "text-muted-foreground line-through",
             )}
           >
             {task.task}
           </span>
-          <span className="mt-0.5 block text-[10px] leading-snug text-muted-foreground sm:hidden">
+          <span className="mt-0.5 block font-mono text-[11px] leading-snug tabular-nums text-muted-foreground sm:hidden">
             {[time.label, area && `${area.number}. ${area.name}`, categoryName, assigneeName]
               .filter(Boolean)
               .join(" · ")}
