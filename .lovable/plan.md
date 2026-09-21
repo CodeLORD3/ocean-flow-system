@@ -27,7 +27,36 @@ Planering byggs om till en visuell arbetsväg som räknas fram automatiskt ur: u
 KLAR
 ```
 
-Under vägen visas summeringen: arbete, förflyttning, förberedelse, kontroll, återställning och beräknad totaltid. Stoppen ordnas så att hämtställen nära arbetsområdet kommer sist. Standardtidens fem delar och uppföljningen finns kvar men flyttas ned, under vägen och kartan.
+Under vägen visas summeringen: arbete, förflyttning, förberedelse, kontroll, återställning och beräknad totaltid. Standardtidens fem delar och uppföljningen finns kvar men flyttas ned, under vägen och kartan.
+
+Varje stopp har alltid ett tydligt syfte i vanliga ord: **Hämta**, **Utför**, **Kontrollera** eller **Lämna tillbaka**. Saker som står på samma ställe blir ett enda stopp, och en sak som hör till en annan sak ("Mopp — på städvagnen") hämtas tillsammans med den, aldrig som eget stopp. Återanvändbara saker grupperas på samma sätt vid återlämning; förbrukningsmaterial ger aldrig ett återlämningsstopp.
+
+Systemet försöker inte räkna fram matematiskt kortaste väg — det ger ett rimligt första förslag utifrån startområde, hämtställen, arbetsområdet, områdenas kopplingar och gångtid.
+
+## 3b. Beräknad väg och vår standardväg
+
+Systemet föreslår, människan bestämmer. Under Planering/Inställningar väljer en ansvarig:
+
+```text
+VÄG I BUTIKEN
+○ Beräkna automatiskt
+● Använd vår standardväg
+```
+
+Väljs standardvägen kan stoppen flyttas med drag-and-drop och sparas som butikens standardväg för uppgiften — per uppgiftsstandard/variant och butik. Butikskartan ändras inte.
+
+Finns en standardväg visas den diskret mot systemets förslag, som beslutsunderlag:
+
+```text
+STANDARDVÄG                 ca 72 m · 3 min 10 sek
+Systemets beräknade förslag  ca 61 m · 2 min 45 sek   [ VISA ALTERNATIV ]
+```
+
+Ingen text påstår att systemets väg är bättre — det finns praktiska skäl systemet inte känner till.
+
+Flyttas en sak inom samma område (ST-01 → ST-04) fortsätter standardvägen gälla och bara den exakta platsen uppdateras. Flyttas saken till ett annat område visas en varning till ansvarig: "Moppen har flyttats från Städstation till Lager" med knappen **Granska vägen**. Standardvägen ändras aldrig automatiskt.
+
+För personalen syns inget av detta — de ser bara stoppen, vad som ska hämtas, vad som ska göras och totaltiden, med **Visa på kartan**.
 
 ## 4. Arbetsvägen på butikskartan
 
