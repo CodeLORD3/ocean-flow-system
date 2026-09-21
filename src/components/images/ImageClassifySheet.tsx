@@ -270,6 +270,38 @@ export default function ImageClassifySheet({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
+                {(kind === "resource" || kind === "product") && search.trim().length > 1 && (
+                  <div className="mt-2 space-y-2 rounded-md border border-dashed p-2">
+                    {kind === "product" && (
+                      <select
+                        className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                        value={newCategory}
+                        onChange={(e) => setNewCategory(e.target.value)}
+                      >
+                        <option value="">Välj kategori för ny vara</option>
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.name}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      disabled={creating}
+                      onClick={() => void createNew()}
+                    >
+                      {creating
+                        ? "Skapar…"
+                        : kind === "product"
+                          ? `Skapa ny vara "${search.trim()}"`
+                          : `Skapa ny sak "${search.trim()}"`}
+                    </Button>
+                  </div>
+                )}
                 <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border p-1">
                   {options.list.length === 0 && (
                     <p className="p-2 text-sm text-muted-foreground">Inget att välja här ännu.</p>
