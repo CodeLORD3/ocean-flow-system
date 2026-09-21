@@ -12,8 +12,8 @@ export type RegionMark = {
   label?: string | null;
 };
 
-const COLS = 8;
-const ROWS = 6;
+/** Önskad storlek på en ruta i bildens rutnät (bildpunkter på skärmen). */
+const CELL = 34;
 
 /**
  * Bilden med ett genomskinligt rutnät ovanpå. I markeringsläget trycker man på
