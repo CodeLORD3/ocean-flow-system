@@ -180,6 +180,8 @@ export function FloorPlanCanvas({
   }, [plan.width, plan.height, zones]);
 
   useEffect(() => {
+    /* Har man zoomat eller dragit själv rör vi inte vyn när ytorna ritas om. */
+    if (touched.current) return;
     fit();
   }, [fit]);
 
@@ -734,10 +736,11 @@ export function FloorPlanCanvas({
                           // Dubbelklick tar bort hörnet — en yta måste ha minst tre hörn.
                           e.stopPropagation();
                           if (pts.length <= 3 || !onZonePointsCommit) return;
-                          onZonePointsCommit(
-                            z.id,
-                            pts.filter((_, k) => k !== i),
-                          );
+                          const out = pts.filter((_, k) => k !== i);
+                          /* Visa ändringen direkt och behåll inzoomningen. */
+                          touched.current = true;
+                          setGhostPts((m) => ({ ...m, [z.id]: out }));
+                          onZonePointsCommit(z.id, out);
                         }}
                       />
                     ))}
@@ -753,30 +756,28 @@ export function FloorPlanCanvas({
                           key={`m${i}`}
                           className="cursor-copy"
                           onPointerDown={(e) => e.stopPropagation()}
-                          onClick={(e) => {
+                          onPointerUp={(e) => {
+                            /* Tryck ska ge nytt hörn direkt, både med mus och finger. */
                             e.stopPropagation();
                             if (!onZonePointsCommit) return;
                             const out = [...pts];
                             out.splice(i + 1, 0, { x: Math.round(mid.x), y: Math.round(mid.y) });
+                            touched.current = true;
+                            setGhostPts((m) => ({ ...m, [z.id]: out }));
                             onZonePointsCommit(z.id, out);
                           }}
                         >
-                          <circle
-                            cx={mid.x}
-                            cy={mid.y}
-                            r={5.5}
-                            fill="hsl(var(--primary))"
-                            stroke="hsl(var(--card))"
-                            strokeWidth={1.5}
-                            opacity={0.9}
-                          />
-                          <path
-                            d={`M ${mid.x - 2.6} ${mid.y} H ${mid.x + 2.6} M ${mid.x} ${mid.y - 2.6} V ${mid.y + 2.6}`}
-                            stroke="hsl(var(--card))"
-                            strokeWidth={1.6}
-                            strokeLinecap="round"
-                            style={{ pointerEvents: "none" }}
-                          />
+                          {/* Plusset är alltid lika stort, oavsett hur mycket man zoomat. */}
+                          <g transform={`translate(${mid.x} ${mid.y}) scale(${1 / zoom})`}>
+                            <circle r={9} fill="hsl(var(--primary))" stroke="hsl(var(--card))" strokeWidth={2} />
+                            <path
+                              d="M -4.2 0 H 4.2 M 0 -4.2 V 4.2"
+                              stroke="hsl(var(--card))"
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              style={{ pointerEvents: "none" }}
+                            />
+                          </g>
                         </g>
                       );
                     })}
