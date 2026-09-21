@@ -87,7 +87,12 @@ import {
   type MapPin,
 } from "@/hooks/useStoreMap";
 
-export default function StoreMap() {
+/**
+ * Butikskartan. Med `embedded` visas exakt samma karta med alla funktioner,
+ * men utan sidans egen rubrik, stora knappar, statistik och bildrad — så den
+ * kan ligga inuti en annan sida, t.ex. Uppgifter.
+ */
+export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
   const { site, activeStoreId } = useSite();
   const { staff } = useStaffAuth();
   const stores = useAllowedStores();
