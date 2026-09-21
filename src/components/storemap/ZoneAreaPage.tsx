@@ -62,6 +62,8 @@ export function ZoneAreaPage({
   onAddChild,
   onSaveTags,
   onEditZone,
+  onEditShape,
+  onDeleteZone,
   onBack,
 }: {
   storeId: string;
