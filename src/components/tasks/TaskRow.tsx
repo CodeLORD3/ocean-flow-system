@@ -8,7 +8,7 @@ import { missingRequirements, missingText, valueLabel } from "@/lib/taskRequirem
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { workTypeLabel } from "@/lib/workType";
-import type { TaskRow as Task } from "@/hooks/useTasks";
+import { useTaskImages, type TaskRow as Task } from "@/hooks/useTasks";
 
 export type TaskRowArea = { id: string; name: string; color: string; number: number } | null;
 
