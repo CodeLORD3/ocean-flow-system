@@ -772,12 +772,14 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
   const totalsByCategory = useMemo(() => {
     const map = new Map<string, typeof weeklyTotals>();
     for (const item of weeklyTotals) {
+      const ids = (item as any).lines?.map((l: any) => l.lineId) || [];
+      if (ids.length > 0 && ids.every((id: string) => removedLineIds.has(id))) continue;
       const arr = map.get(item.category) || [];
       arr.push(item);
       map.set(item.category, arr);
     }
     return map;
-  }, [weeklyTotals]);
+  }, [weeklyTotals, removedLineIds]);
 
   const filteredAltProducts = useMemo(() => {
     if (!allProducts) return [];
