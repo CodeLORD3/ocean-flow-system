@@ -210,13 +210,31 @@ export default function ImageLibraryPanel({ storeId }: { storeId?: string | null
                 alt={detail.title || "Bild"}
                 className="max-h-[50vh] w-full rounded-lg object-contain"
               />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <StaffFace name={detail.uploaded_by_name} className="h-6 w-6 text-[10px]" />
+                <span>{detail.uploaded_by_name || "Äldre bild"}</span>
+                <span>·</span>
+                <span className="tabular-nums">
+                  {dayLabel(dayKey(detail.captured_at || detail.created_at))}
+                </span>
+              </div>
               {detail.description && <p className="text-sm">{detail.description}</p>}
               {detail.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {detail.tags.map((t) => (
-                    <Badge key={t} variant="secondary">
-                      {t}
-                    </Badge>
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        setTag(t);
+                        setTab("all");
+                        setDetail(null);
+                      }}
+                    >
+                      <Badge variant="secondary" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
+                        {t}
+                      </Badge>
+                    </button>
                   ))}
                 </div>
               )}
