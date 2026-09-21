@@ -102,6 +102,17 @@ export default function Uppgifter() {
     return map;
   }, [zones]);
 
+  /** Dagens uppgifter per område, så kartan visar vad som är kvar var. */
+  const zoneCounts = useMemo(() => {
+    const map = new Map<string, ZoneTaskCount>();
+    tasks.forEach((t) => {
+      if (!t.zone_id) return;
+      const cur = map.get(t.zone_id) ?? { total: 0, left: 0 };
+      map.set(t.zone_id, { total: cur.total + 1, left: cur.left + (t.done ? 0 : 1) });
+    });
+    return map;
+  }, [tasks]);
+
   const [tab, setTab] = useState("dag");
   const { data: checklists = [] } = useChecklistTemplates(storeId);
   const createChecklist = useCreateChecklistTemplate();
