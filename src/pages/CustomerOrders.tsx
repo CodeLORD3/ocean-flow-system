@@ -243,6 +243,31 @@ export default function CustomerOrders() {
     );
   };
 
+  /* Kopiera beställningar till ett nytt datum. Kopian är en ny, aktuell
+     beställning — originalet ligger kvar där det låg, t.ex. i arkivet. */
+  const duplicateOrders = useDuplicateCustomerOrders();
+  const copyTo = (date: string) => {
+    const list = marked.filter(Boolean);
+    if (list.length === 0) return;
+    duplicateOrders.mutate(
+      { ids: list, date },
+      {
+        onSuccess: () => {
+          toast.success(
+            list.length === 1
+              ? `Kopian lades in på ${dayLabel(date)}`
+              : `${list.length} kopior lades in på ${dayLabel(date)}`,
+          );
+          setMarked([]);
+          setTab("alla");
+        },
+        onError: (e: any) => toast.error(e?.message ?? "Kunde inte kopiera beställningen"),
+      },
+    );
+  };
+
+
+
   /* Utkörning: beställningar som är lastade på bilen samlas i en egen,
      ihopfällbar grupp per dag så butikspersonalen bara ser sitt eget kvar. */
   const setDeliveryRun = useSetDeliveryRun();
