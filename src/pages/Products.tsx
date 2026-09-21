@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { prepareUpload, COMPRESS_PHOTO, COMPRESS_AVATAR } from "@/lib/imageCompress";
 import { ALLERGENS } from "@/lib/catering";
 import { useTabs } from "@/contexts/TabsContext";
@@ -233,6 +234,22 @@ export default function Products() {
   const { switchTab } = useTabs();
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  /** Kommer man från en bild markeras varans rad en stund. */
+  const [searchParams] = useSearchParams();
+  const [markedId, setMarkedId] = useState<string | null>(null);
+  useEffect(() => {
+    const id = searchParams.get("markera");
+    if (!id) return;
+    setMarkedId(id);
+    const t = window.setTimeout(() => {
+      document.getElementById(`produkt-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 350);
+    const clear = window.setTimeout(() => setMarkedId(null), 8000);
+    return () => {
+      window.clearTimeout(t);
+      window.clearTimeout(clear);
+    };
+  }, [searchParams]);
   /** Detaljläge: visar sekundära kolumner (HS, producent, hållbarhet, EAN, marginal, rek. butikspris). */
   const [showDetails, setShowDetails] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -713,7 +730,16 @@ export default function Products() {
     return (
       <tr
         key={p.id}
-        className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-9 sm:h-16 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
+        id={`produkt-${p.id}`}
+        className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-9 sm:h-16 ${
+          markedId === p.id
+            ? "bg-primary/25 ring-2 ring-primary"
+            : isSubproduct
+              ? "bg-muted/10"
+              : rowIndex % 2 === 1
+                ? "bg-muted/30"
+                : ""
+        }`}
       >
         {/* Name */}
         <td className="px-2 py-0 sm:py-1 align-middle font-medium text-foreground sticky left-0 z-10 bg-card border-r border-border/60 min-w-[180px] max-w-[220px] sm:min-w-[320px] sm:max-w-[420px]">
