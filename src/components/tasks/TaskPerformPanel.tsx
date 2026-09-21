@@ -22,6 +22,7 @@ import {
 } from "@/hooks/useTaskRun";
 import type { ResolvedNeed } from "@/hooks/useResources";
 import { NeedsSheet } from "@/components/tasks/NeedsSheet";
+import { TaskLiveTimer } from "@/components/tasks/TaskLiveTimer";
 
 type PerformTask = {
   id: string;
@@ -206,6 +207,14 @@ export function TaskPerformPanel({
               </div>
             )}
           </div>
+        )}
+
+        {(status === "pagar" || status === "pausad") && (
+          <TaskLiveTimer
+            startedAt={task.started_at}
+            running={status === "pagar"}
+            pausedMinutes={task.paused_minutes}
+          />
         )}
 
         {status === "pausad" && (

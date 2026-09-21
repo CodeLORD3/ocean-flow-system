@@ -799,6 +799,8 @@ export type RegisterTask = {
   recipeId: string | null;
   recurring: boolean;
   times: number;
+  /** Hur många gånger uppgiften faktiskt blivit klar. */
+  doneTimes: number;
   lastDone: string | null;
 };
 
@@ -850,6 +852,7 @@ export function useTaskRegister(storeId?: string | null, days = 180) {
           recipeId: r.recipe_id,
           recurring: true,
           times: 0,
+          doneTimes: 0,
           lastDone: null,
         });
       });
@@ -860,6 +863,7 @@ export function useTaskRegister(storeId?: string | null, days = 180) {
         const done = r.done ? (r.done_at ?? r.checklist_days?.checklist_date ?? null) : null;
         if (prev) {
           prev.times += 1;
+          if (r.done) prev.doneTimes += 1;
           if (!prev.itemId) prev.itemId = r.id;
           if (done && (!prev.lastDone || done > prev.lastDone)) prev.lastDone = done;
           if (!prev.categoryId) prev.categoryId = r.category_id;
@@ -880,6 +884,7 @@ export function useTaskRegister(storeId?: string | null, days = 180) {
           recipeId: r.recipe_id,
           recurring: !!r.template_item_id,
           times: 1,
+          doneTimes: r.done ? 1 : 0,
           lastDone: done,
         });
       });
