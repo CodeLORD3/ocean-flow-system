@@ -16,6 +16,7 @@ import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { dueText, progressFor, STATUS_COLOR, STATUS_LABEL } from "@/lib/mapStatus";
 import { useToggleChecklistItem } from "@/hooks/useChecklist";
 import { useDeleteEntityImage, useEntityImages, useUploadEntityImage } from "@/hooks/useEntityImages";
+import LinkedImages from "@/components/images/LinkedImages";
 import { useActivityLogs } from "@/hooks/useActivityLog";
 import { useDeviations } from "@/hooks/useFoodSafety";
 import type { MapObject, MapObjectType, MapTask, MapZone } from "@/hooks/useStoreMap";
@@ -173,6 +174,18 @@ export function ZoneAreaPage({
             />
           )}
         </div>
+
+        {/* Bilder från det gemensamma biblioteket som är kopplade till ytan */}
+        {zone?.id && (
+          <LinkedImages
+            entityType="zone"
+            entityId={zone.id}
+            title="Bilder på ytan"
+            storeId={storeId}
+            zoneId={zone.id}
+            mediaKind="area"
+          />
+        )}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

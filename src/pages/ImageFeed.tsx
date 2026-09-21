@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
+import ImageLibraryPanel from "@/components/images/ImageLibraryPanel";
 import { useImageFeed, type FeedImage } from "@/hooks/useImageFeed";
 import { useMyImageFavorites, useToggleImageFavorite } from "@/hooks/useEntityImages";
 import { useAllowedStores, useSwitchStore } from "@/components/StoreSwitcher";
@@ -58,6 +59,8 @@ export default function ImageFeed() {
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [sort, setSort] = useState<"latest" | "popular">("latest");
   const [lightboxId, setLightboxId] = useState<string | null>(null);
+  /** Flöde = tidslinjen. Bibliotek = alla bilder, sökbara och sorterbara. */
+  const [view, setView] = useState<"feed" | "library">("feed");
 
   const visible = useMemo(() => {
     const list = rows.filter((r) => {
@@ -135,19 +138,29 @@ export default function ImageFeed() {
             </p>
           </div>
           <div className="flex items-center gap-1.5">
-            <Chip active={sort === "latest"} onClick={() => setSort("latest")}>
-              <Clock className="h-3.5 w-3.5" /> Senaste
+            <Chip active={view === "feed"} onClick={() => setView("feed")}>
+              Flöde
             </Chip>
-            <Chip active={sort === "popular"} onClick={() => setSort("popular")}>
-              <Trophy className="h-3.5 w-3.5" /> Populärast
+            <Chip active={view === "library"} onClick={() => setView("library")}>
+              Bibliotek
             </Chip>
-            <Chip active={onlyFavorites} onClick={() => setOnlyFavorites((v) => !v)}>
-              <Heart className={cn("h-3.5 w-3.5", onlyFavorites && "fill-current")} /> Favoriter
-            </Chip>
+            {view === "feed" && (
+              <>
+                <Chip active={sort === "latest"} onClick={() => setSort("latest")}>
+                  <Clock className="h-3.5 w-3.5" /> Senaste
+                </Chip>
+                <Chip active={sort === "popular"} onClick={() => setSort("popular")}>
+                  <Trophy className="h-3.5 w-3.5" /> Populärast
+                </Chip>
+                <Chip active={onlyFavorites} onClick={() => setOnlyFavorites((v) => !v)}>
+                  <Heart className={cn("h-3.5 w-3.5", onlyFavorites && "fill-current")} /> Favoriter
+                </Chip>
+              </>
+            )}
           </div>
         </div>
 
-        {sources.length > 0 && (
+        {view === "feed" && sources.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
             <Chip active={source === ALL} onClick={() => setSource(ALL)}>
               Alla
@@ -196,6 +209,10 @@ export default function ImageFeed() {
         )}
       </div>
 
+      {view === "library" && <ImageLibraryPanel />}
+
+      {view === "feed" && (
+      <>
       {/* Mest hjärtade — diskret remsa, bilden först */}
       {topImages.length > 0 && !isLoading && (
         <div className="space-y-2">
@@ -293,6 +310,8 @@ export default function ImageFeed() {
         favoriteIds={favoriteIds}
         onToggleFavorite={(id, favorite) => toggleFavorite.mutate({ imageId: id, favorite })}
       />
+      </>
+      )}
     </motion.div>
   );
 }
