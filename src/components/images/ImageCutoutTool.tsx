@@ -33,11 +33,15 @@ export default function ImageCutoutTool({
   const [markMode, setMarkMode] = useState(false);
   const [region, setRegion] = useState<ImageRegion | null>(null);
   const [title, setTitle] = useState("");
-  const [asResource, setAsResource] = useState(true);
+  const [target, setTarget] = useState<"resource" | "product" | "none">("resource");
   const [search, setSearch] = useState("");
   const [existingId, setExistingId] = useState<string | null>(null);
-  const { data: matches = [] } = usePickResources(search);
+  const [category, setCategory] = useState("");
+  const { data: resourceMatches = [] } = usePickResources(target === "resource" ? search : undefined);
+  const { data: productMatches = [] } = usePickProducts(target === "product" ? search : undefined);
+  const { data: categories = [] } = useCategories();
   const create = useCreateCutout();
+  const matches = target === "product" ? productMatches : resourceMatches;
 
   const reset = () => {
     setRegion(null);
@@ -49,17 +53,29 @@ export default function ImageCutoutTool({
 
   const save = async () => {
     if (!region || !title.trim()) return;
+    if (target === "product" && !existingId && !category) {
+      toast.error("Välj kategori för den nya varan");
+      return;
+    }
     try {
       const res = await create.mutateAsync({
         sourceMediaId: mediaId,
         sourceUrl: url,
         region,
         title: title.trim(),
-        createResource: asResource && !existingId,
-        resourceId: existingId,
+        target,
+        createResource: target === "resource" && !existingId,
+        resourceId: target === "resource" ? existingId : null,
+        createProduct: target === "product" && !existingId,
+        productId: target === "product" ? existingId : null,
+        productCategory: category || null,
       });
       toast.success(
-        asResource || existingId ? `${title.trim()} finns nu som sak med bild` : "Utsnittet är sparat som egen bild",
+        target === "resource"
+          ? `${title.trim()} finns nu som sak med bild`
+          : target === "product"
+            ? `${title.trim()} finns nu som vara med bild`
+            : "Utsnittet är sparat som egen bild",
       );
       onCreated?.(res.mediaId);
       reset();
@@ -67,6 +83,7 @@ export default function ImageCutoutTool({
       toast.error(e instanceof Error ? e.message : "Kunde inte klippa ut bilden");
     }
   };
+
 
   return (
     <div className="space-y-3">
