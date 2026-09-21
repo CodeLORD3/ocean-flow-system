@@ -238,6 +238,14 @@ export default function StoreMap() {
       .map((zoneId) => ({ zoneId }));
   }, [searchParams, zones]);
 
+  /** Kommer man hit för att se en arbetsväg öppnas kartan direkt, hela butiken. */
+  useEffect(() => {
+    if (routeStops.length === 0) return;
+    setView("karta");
+    setAreaPage(null);
+    setFocus(null);
+  }, [routeStops.length]);
+
   const backToTask = () => {
     setSearchParams({}, { replace: true });
     switchTab(fromTaskId ? `/uppgifter?markera=${fromTaskId}` : "/uppgifter");
