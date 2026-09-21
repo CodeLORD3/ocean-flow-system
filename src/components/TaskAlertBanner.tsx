@@ -20,16 +20,20 @@ export function TaskAlertBanner() {
       {alerts.map((a) => (
         <div
           key={a.id}
-          className="animate-task-alert flex items-center gap-3 rounded-xl border-2 border-primary bg-primary/10 px-3 py-3 shadow-card"
+          className="animate-task-alert flex items-center gap-3 rounded-xl border-2 border-destructive bg-destructive/15 px-3 py-3 shadow-card"
         >
-          <BellRing className="h-5 w-5 shrink-0 text-primary" />
+          <span className="relative flex h-6 w-6 shrink-0 items-center justify-center">
+            <span className="animate-alert-dot absolute inset-0 rounded-full bg-destructive/30" />
+            <BellRing className="relative h-5 w-5 text-destructive" />
+          </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">Ny uppgift till dig</p>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-destructive">Ny uppgift till dig</p>
             <p className="truncate text-sm font-semibold">{a.task}</p>
           </div>
           <Button
             size="sm"
-            className="h-9 text-xs"
+            variant="destructive"
+            className="h-10 text-xs font-semibold"
             onClick={() => {
               dismiss(a.id);
               navigate(
@@ -43,11 +47,12 @@ export function TaskAlertBanner() {
           >
             Öppna uppgiften
           </Button>
-          <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => dismiss(a.id)}>
-            <X className="h-4 w-4" />
+          <Button size="icon" variant="ghost" className="h-10 w-10 text-destructive" onClick={() => dismiss(a.id)}>
+            <X className="h-5 w-5" />
           </Button>
         </div>
       ))}
+
       {alerts.length > 1 && (
         <Button size="sm" variant="outline" className="h-8 text-xs" onClick={dismissAll}>
           Jag har sett alla
