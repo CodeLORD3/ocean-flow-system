@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { fetchPurchaseLeadDays, purchaseDateFor } from "@/lib/purchaseLead";
 import { createPortal } from "react-dom";
 
 /** På telefon läggs beställningsvyn som egen helskärm ovanpå allt; på dator ligger den kvar i sidan. */
