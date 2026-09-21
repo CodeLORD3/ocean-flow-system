@@ -150,7 +150,7 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
 
   /* --- Kundbeställningar som ännu inte ligger i beställningen --- */
   const { data: customerDemand } = useCustomerDemand(order.store_id, order.desired_delivery_date || null);
-  const missingDemand = useMemo(
+  const missingDemand = useMemo<CustomerDemand[]>(
     () => (customerDemand ? Array.from(customerDemand.values()) : []),
     [customerDemand],
   );
