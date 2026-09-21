@@ -37,19 +37,18 @@ export default function ReturnToImageBar() {
       : `Tillbaka till ${prev?.title || "föregående sida"}`;
 
   return (
-    <div className="sticky top-0 z-40 border-b bg-background/95 px-3 py-2 backdrop-blur">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
       <Button
-        variant="secondary"
-        className="h-12 w-full justify-start gap-3 rounded-xl px-4 text-base font-semibold shadow-sm sm:w-auto"
+        className="pointer-events-auto h-14 max-w-full gap-3 rounded-full bg-primary px-6 text-base font-semibold text-primary-foreground shadow-lg hover:bg-primary/90"
         onClick={() => {
           if (!bildId && !retur) popNav();
           navigate(to);
         }}
       >
-        <ArrowLeft className="h-6 w-6" />
-        {label}
+        <ArrowLeft className="h-6 w-6 shrink-0" />
+        <span className="truncate">{label}</span>
       </Button>
-
     </div>
   );
 }
+
