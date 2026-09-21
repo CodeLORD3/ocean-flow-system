@@ -166,38 +166,103 @@ export function ImageLightbox({
     </button>
   );
 
-  /** Liten ruta där man skriver kommentaren till den markerade delen. */
+  /**
+   * Liten ruta där man antingen skriver en kommentar på den markerade delen
+   * eller klipper ut den till en egen bild — och då kan skapa saken direkt.
+   */
   const regionComposer = pendingRegion && (
     <div className="absolute inset-x-2 bottom-2 z-30 rounded-xl border border-border bg-background/95 p-2.5 shadow-lg backdrop-blur">
-      <p className="pb-1.5 text-[11px] font-semibold text-foreground">Kommentar på markerad del</p>
-      <Textarea
-        autoFocus
-        value={regionDraft}
-        onChange={(e) => setRegionDraft(e.target.value)}
-        placeholder="Vad gäller det här i bilden?"
-        className="min-h-[60px] text-sm"
-      />
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex gap-1.5 pb-2">
         <Button
-          variant="outline"
           size="sm"
-          className="h-8 text-[11px]"
-          onClick={() => {
-            setPendingRegion(null);
-            setRegionDraft("");
-          }}
+          variant={cutMode ? "outline" : "default"}
+          className="h-7 text-[11px]"
+          onClick={() => setCutMode(false)}
         >
-          Avbryt
+          Kommentar
         </Button>
         <Button
           size="sm"
-          className="h-8 text-[11px]"
-          disabled={!regionDraft.trim() || addComment.isPending}
-          onClick={() => void saveRegionComment()}
+          variant={cutMode ? "default" : "outline"}
+          className="h-7 text-[11px]"
+          onClick={() => setCutMode(true)}
         >
-          Spara kommentar
+          <Scissors className="mr-1 h-3.5 w-3.5" />
+          Klipp ut till egen bild
         </Button>
       </div>
+      {cutMode ? (
+        <>
+          <Input
+            autoFocus
+            value={cutTitle}
+            onChange={(e) => setCutTitle(e.target.value)}
+            placeholder="Vad är det? T.ex. Hammare"
+            className="h-9 text-sm"
+          />
+          <label className="flex items-center gap-2 pt-2 text-[11px] text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={cutAsResource}
+              onChange={(e) => setCutAsResource(e.target.checked)}
+              className="h-3.5 w-3.5"
+            />
+            Skapa saken i registret Utrustning &amp; material
+          </label>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-[11px]"
+              onClick={() => {
+                setPendingRegion(null);
+                setCutTitle("");
+              }}
+            >
+              Avbryt
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 text-[11px]"
+              disabled={!cutTitle.trim() || createCutout.isPending}
+              onClick={() => void saveCutout()}
+            >
+              {createCutout.isPending ? "Sparar…" : "Spara utsnittet"}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <>
+          <Textarea
+            autoFocus
+            value={regionDraft}
+            onChange={(e) => setRegionDraft(e.target.value)}
+            placeholder="Vad gäller det här i bilden?"
+            className="min-h-[60px] text-sm"
+          />
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-[11px]"
+              onClick={() => {
+                setPendingRegion(null);
+                setRegionDraft("");
+              }}
+            >
+              Avbryt
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 text-[11px]"
+              disabled={!regionDraft.trim() || addComment.isPending}
+              onClick={() => void saveRegionComment()}
+            >
+              Spara kommentar
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 
