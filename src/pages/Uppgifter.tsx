@@ -545,6 +545,7 @@ export default function Uppgifter() {
               counts={zoneCounts}
               selected={fArea}
               onSelect={setFArea}
+              onOpenZone={(id) => switchTab(`/store-map?zone=${id}`)}
               chipsOnly={mapOpen}
               onOpenMap={() => setMapOpen((v) => !v)}
               openLabel={mapOpen ? "Dölj kartan" : "Visa hela kartan"}

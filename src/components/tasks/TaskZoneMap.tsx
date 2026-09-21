@@ -18,6 +18,8 @@ type Props = {
   selected: string;
   onSelect: (zoneId: string) => void;
   onOpenMap?: () => void;
+  /** Öppnar områdets egen sida direkt från den lilla kartan. */
+  onOpenZone?: (zoneId: string) => void;
   /** Visas kartan i egen ruta nedanför döljs den lilla översiktsbilden. */
   chipsOnly?: boolean;
   /** Texten på knappen som öppnar hela kartan. */
@@ -37,6 +39,7 @@ export function TaskZoneMap({
   selected,
   onSelect,
   onOpenMap,
+  onOpenZone,
   chipsOnly,
   openLabel,
 }: Props) {
@@ -73,6 +76,11 @@ export function TaskZoneMap({
       <div className="flex items-center justify-between gap-2 border-b px-4 py-2">
         <p className="text-sm font-semibold">Var i butiken</p>
         <div className="flex items-center gap-2">
+          {onOpenZone && selected !== "all" && selected !== "none" && (
+            <Button size="sm" className="h-7 text-xs" onClick={() => onOpenZone(selected)}>
+              Öppna området
+            </Button>
+          )}
           {selected !== "all" && (
             <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => onSelect("all")}>
               Visa hela butiken
@@ -111,7 +119,11 @@ export function TaskZoneMap({
             return (
               <g
                 key={zone.id}
-                onClick={() => onSelect(isSel ? "all" : zone.id)}
+                onClick={() => {
+                  // Första trycket väljer området, ett tryck på det valda öppnar dess sida.
+                  if (isSel && onOpenZone) onOpenZone(zone.id);
+                  else onSelect(zone.id);
+                }}
                 className="cursor-pointer"
               >
                 <polygon
@@ -157,7 +169,10 @@ export function TaskZoneMap({
             <button
               key={zone.id}
               type="button"
-              onClick={() => onSelect(isSel ? "all" : zone.id)}
+              onClick={() => {
+                if (isSel && onOpenZone) onOpenZone(zone.id);
+                else onSelect(zone.id);
+              }}
               className={cn(
                 "flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs",
                 isSel ? "border-primary bg-primary/10 font-semibold" : "border-border",
