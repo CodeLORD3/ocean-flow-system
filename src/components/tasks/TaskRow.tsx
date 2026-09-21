@@ -8,7 +8,7 @@ import { missingRequirements, missingText, valueLabel } from "@/lib/taskRequirem
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { workTypeLabel } from "@/lib/workType";
-import type { TaskRow as Task } from "@/hooks/useTasks";
+import { useTaskImages, type TaskRow as Task } from "@/hooks/useTasks";
 
 export type TaskRowArea = { id: string; name: string; color: string; number: number } | null;
 
@@ -73,8 +73,16 @@ export function TaskRow({
   const time = taskTime(task);
   const duration = durationText(task.estimated_minutes);
   const accent = area?.color ?? categoryColor ?? "hsl(var(--muted-foreground))";
-  const photoMissing = task.requires_photo && photoCount === 0;
-  const missing = missingRequirements(task, { photoCount, checkPhoto: !!photoCountKnown });
+  /**
+   * Kräver uppgiften en bild räknar raden själv bilderna, så den inte kan bockas
+   * av utan bild även när listan inte skickat med antalet.
+   */
+  const needsOwnCount = !photoCountKnown && !!task.requires_photo && !task.done;
+  const { data: ownImages } = useTaskImages(needsOwnCount ? task.id : null);
+  const effectivePhotoCount = photoCountKnown ? photoCount : (ownImages?.length ?? photoCount);
+  const countKnown = !!photoCountKnown || (needsOwnCount && ownImages !== undefined);
+  const photoMissing = task.requires_photo && effectivePhotoCount === 0;
+  const missing = missingRequirements(task, { photoCount: effectivePhotoCount, checkPhoto: countKnown });
   const blocked = !task.done && missing.length > 0;
   const tryToggle = (done: boolean) => {
     if (done && blocked) {
@@ -178,9 +186,9 @@ export function TaskRow({
               Krav
             </span>
           )}
-          {photoCount > 0 && (
+          {effectivePhotoCount > 0 && (
             <span className="inline-flex items-center gap-0.5">
-              <ImageIcon className="h-3 w-3" /> {photoCount}
+              <ImageIcon className="h-3 w-3" /> {effectivePhotoCount}
             </span>
           )}
         </span>

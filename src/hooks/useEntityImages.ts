@@ -186,6 +186,9 @@ export function useUploadEntityImage() {
       qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
       qc.invalidateQueries({ queryKey: ["floor-plan-images"] });
       qc.invalidateQueries({ queryKey: ["store-area-images"] });
+      if (vars.checklistItemId) {
+        qc.invalidateQueries({ queryKey: ["task-images", vars.checklistItemId] });
+      }
     },
   });
 }
