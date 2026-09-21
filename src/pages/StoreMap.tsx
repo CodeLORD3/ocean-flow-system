@@ -894,8 +894,8 @@ export default function StoreMap({
                       </Button>
                     )}
                   </div>
-                </div>
-              </div>
+                </DialogContent>
+              </Dialog>
             )}
 
 
