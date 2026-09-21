@@ -37,6 +37,23 @@ export function TaskZoneMap({ plan, zones, areas, counts, selected, onSelect, on
     [zones, areas],
   );
 
+  /** Kartan beskärs runt områdena så butiken fyller rutan. */
+  const view = useMemo(() => {
+    const pts = shapes.flatMap((s) => s.path.split(" ").map((p) => p.split(",").map(Number)));
+    if (pts.length === 0) return { x: 0, y: 0, w: plan.width, h: plan.height };
+    const xs = pts.map((p) => p[0]);
+    const ys = pts.map((p) => p[1]);
+    const pad = 60;
+    const x = Math.min(...xs) - pad;
+    const y = Math.min(...ys) - pad;
+    return {
+      x,
+      y,
+      w: Math.max(...xs) - x + pad,
+      h: Math.max(...ys) - y + pad,
+    };
+  }, [shapes, plan.width, plan.height]);
+
   return (
     <Card className="overflow-hidden">
       <div className="flex items-center justify-between gap-2 border-b px-4 py-2">
