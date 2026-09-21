@@ -288,7 +288,8 @@ export function AppSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "o
 
   return (
     <Sidebar collapsible={collapsible} className="border-r-2 border-r-sky-700/30 bg-gradient-to-b from-sidebar-background to-sky-950/10">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 space-y-2">
+        <SidebarProfile collapsed={collapsed} />
         <PortalLogo
           portalName="wholesale"
           fallbackIcon={Anchor}
