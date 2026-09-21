@@ -46,6 +46,8 @@ export default function ImageLinksPanel({
           Bilden är ännu inte kopplad till något. Tryck Ändra för att sortera den.
         </p>
       ) : (
+        <>
+        <h3 className="text-sm font-semibold">Ligger på dessa ställen</h3>
         <ul className="space-y-1.5">
           {links.map((l) => (
             <li
