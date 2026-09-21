@@ -16,6 +16,7 @@ export type TaskAlert = {
 
 const SEEN_KEY = "task-alerts-seen";
 const DISMISSED_KEY = "task-alerts-dismissed";
+const soundedThisPage = new Set<string>();
 
 function readIds(store: Storage | undefined, key: string): Set<string> {
   if (!store) return new Set();
@@ -71,14 +72,16 @@ export function useMyTaskAlerts() {
     ) => {
       if (row.assigned_staff_id !== staffId || row.done) return;
       if (dismissedIds().has(row.id)) return;
-      const firstTime = !seenIds().has(row.id);
       remember(row.id);
       setAlerts((list) =>
         list.some((a) => a.id === row.id)
           ? list
           : [...list, { id: row.id, task: row.task ?? "Ny uppgift", at: Date.now() }],
       );
-      if (sound && firstTime) playTaskAlert();
+      if (sound && !soundedThisPage.has(row.id)) {
+        soundedThisPage.add(row.id);
+        playTaskAlert();
+      }
     };
 
     /* Öppna uppgifter som redan ligger på mig ska lysa direkt vid inloggning */
@@ -91,7 +94,7 @@ export function useMyTaskAlerts() {
         .order("created_at", { ascending: false })
         .limit(20);
       if (!alive || !data) return;
-      data.forEach((row) => add(row as never, false));
+      data.forEach((row) => add(row as never, true));
     })();
 
     const channel = supabase
