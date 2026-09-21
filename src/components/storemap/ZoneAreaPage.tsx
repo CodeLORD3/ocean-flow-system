@@ -152,8 +152,8 @@ export function ZoneAreaPage({
     <div className="space-y-3">
       {/* Vägen in: butiken → yta → underyta. Alltid synlig, alltid tryckbar. */}
       <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-        <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={onBack}>
-          <ArrowLeft className="h-3.5 w-3.5" /> Kartan
+        <Button size="sm" className="h-10 gap-2 px-4 text-sm font-semibold" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4" /> Alla områden
         </Button>
         {path.map((p, i) => (
           <span key={p.id} className="flex items-center gap-1">
