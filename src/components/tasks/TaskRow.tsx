@@ -137,7 +137,7 @@ export function TaskRow({
         </span>
 
         {/* Kolumn 3: uppgift */}
-        <button type="button" onClick={() => setOpen((v) => !v)} className="min-w-0 flex-1 py-0.5 text-left">
+        <button type="button" onClick={() => setOpen((v) => !v)} className="min-w-[7rem] flex-1 py-0.5 text-left">
           <span
             className={cn(
               "block break-words leading-snug",
@@ -157,7 +157,7 @@ export function TaskRow({
         </button>
 
         {/* Kolumn 4: område */}
-        <span className="hidden w-[150px] shrink-0 items-center gap-1 truncate text-[11px] text-muted-foreground lg:flex">
+        <span className="hidden w-[150px] shrink-0 items-center gap-1 truncate text-[11px] text-muted-foreground 2xl:flex">
           {area && (
             <>
               <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: area.color }} />
@@ -169,12 +169,12 @@ export function TaskRow({
         </span>
 
         {/* Kolumn 5: kategori */}
-        <span className="hidden w-[120px] shrink-0 truncate text-[11px] text-muted-foreground lg:block">
+        <span className="hidden w-[120px] shrink-0 truncate text-[11px] text-muted-foreground 2xl:block">
           {categoryName ?? (task.work_type ? workTypeLabel(task.work_type) : "")}
         </span>
 
         {/* Kolumn 6: krav och bilder */}
-        <span className="hidden w-[96px] shrink-0 items-center justify-end gap-1.5 text-[10px] text-muted-foreground md:flex">
+        <span className="hidden w-[96px] shrink-0 items-center justify-end gap-1.5 text-[10px] text-muted-foreground xl:flex">
           {duration && (
             <span className="inline-flex items-center gap-0.5">
               <Timer className="h-3 w-3" /> {duration}
@@ -194,7 +194,7 @@ export function TaskRow({
         </span>
 
         {/* Kolumn 7: person — alltid samma plats */}
-        <span className="hidden w-[168px] shrink-0 items-center gap-2 sm:flex">
+        <span className="hidden w-[150px] shrink-0 items-center gap-2 lg:flex">
           {(() => {
             const name = task.done ? completedByName || task.signature || assigneeName : assigneeName;
             const img = task.done ? completedByImage || assigneeImage : assigneeImage;
