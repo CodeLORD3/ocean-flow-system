@@ -1084,6 +1084,14 @@ export function FloorPlanCanvas({
         </button>
       )}
 
+      {/* Hjälptext när man formar en yta: fler hörn eller ta bort ett */}
+      {editMode && selected?.kind === "zone" && (
+        <div className="pointer-events-none absolute bottom-3 right-3 max-w-[15rem] rounded-xl border border-border bg-card px-3 py-2 text-[11px] leading-snug text-muted-foreground shadow-sm">
+          Dra i hörnen för att forma ytan. Tryck på <span className="font-semibold text-foreground">+</span> mitt på en
+          sida för ett nytt hörn, dubbelklicka på ett hörn för att ta bort det.
+        </div>
+      )}
+
       {/* Rullhjulet zoomar först när kartan är aktiv — annars skrollar sidan */}
       {!active && (
         <div className="pointer-events-none absolute bottom-3 left-3 rounded-full border border-border bg-card/95 px-3 py-1 text-[11px] text-muted-foreground shadow-sm">
