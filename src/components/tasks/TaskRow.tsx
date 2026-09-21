@@ -186,7 +186,7 @@ export function TaskRow({
               Krav
             </span>
           )}
-          {photoCount > 0 && (
+          {effectivePhotoCount > 0 && (
             <span className="inline-flex items-center gap-0.5">
               <ImageIcon className="h-3 w-3" /> {photoCount}
             </span>
