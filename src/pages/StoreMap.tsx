@@ -1415,6 +1415,7 @@ export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
           point={pinDialog.point}
           zoneId={pinDialog.zoneId}
           existing={pinDialog.existing}
+          area={pinDialog.area ?? null}
         />
       )}
 
