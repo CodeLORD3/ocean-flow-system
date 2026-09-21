@@ -94,7 +94,7 @@ export function AnnotatableImage({
   const pct = (v: number) => `${v * 100}%`;
 
   return (
-    <div className="relative inline-block max-w-full align-middle">
+    <div ref={boxRef} className="relative inline-block max-w-full align-middle">
       <img
         src={src}
         alt={alt}
