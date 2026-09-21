@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useImageLinks, useRemoveImageLink, type LibraryImage } from "@/hooks/useImageLibrary";
 import { useLinkTargetNames } from "@/hooks/useImagePickers";
 import {
@@ -12,22 +13,46 @@ import {
 } from "@/lib/imageStatus";
 import { toast } from "sonner";
 
+/** Adressen till stället där bilden ligger, om det finns en sida att gå till. */
+export function placeRoute(entityType: string, entityId: string): string | null {
+  switch (entityType) {
+    case "zone":
+    case "map_zone":
+      return `/store-map?zone=${entityId}`;
+    case "store":
+      return "/organisation";
+    case "resource":
+      return "/utrustning";
+    case "product":
+      return "/products";
+    case "task":
+      return `/uppgifter?markera=${entityId}`;
+    default:
+      return null;
+  }
+}
+
 /**
  * Visar vad bilden hör till och låter någon ta bort en koppling. Att ta bort
  * en koppling raderar aldrig bilden — den ligger kvar i biblioteket.
+ * Trycker man på ett ställe går man dit bilden ligger.
  */
 export default function ImageLinksPanel({
   image,
   onEdit,
+  onNavigate,
 }: {
   image: LibraryImage;
   onEdit?: () => void;
+  /** Körs innan man lämnar sidan, t.ex. för att stänga bilddetaljen. */
+  onNavigate?: () => void;
 }) {
   const { data: links = [] } = useImageLinks(image.id);
   const { data: names = {} } = useLinkTargetNames(
     links.map((l) => ({ entity_type: l.entity_type, entity_id: l.entity_id })),
   );
   const remove = useRemoveImageLink();
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-3">
@@ -49,36 +74,53 @@ export default function ImageLinksPanel({
         <>
         <h3 className="text-sm font-semibold">Ligger på dessa ställen</h3>
         <ul className="space-y-1.5">
-          {links.map((l) => (
-            <li
-              key={l.id}
-              className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm"
-            >
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                {linkTypeLabel(l.entity_type)}
-              </span>
-              <span className="min-w-0 flex-1 truncate">
-                {names[`${l.entity_type}:${l.entity_id}`] || "Okänt namn"}
-              </span>
-              <span className="text-xs text-muted-foreground">{relationLabel(l.relation_type)}</span>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7"
-                title="Ta bort kopplingen (bilden ligger kvar)"
-                onClick={async () => {
-                  try {
-                    await remove.mutateAsync({ link: l });
-                    toast.success("Kopplingen togs bort. Bilden ligger kvar i biblioteket.");
-                  } catch (e) {
-                    toast.error(e instanceof Error ? e.message : "Kunde inte ta bort");
-                  }
-                }}
+          {links.map((l) => {
+            const route = placeRoute(l.entity_type, l.entity_id);
+            const name = names[`${l.entity_type}:${l.entity_id}`] || "Okänt namn";
+            return (
+              <li
+                key={l.id}
+                className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm"
               >
-                <X className="h-4 w-4" />
-              </Button>
-            </li>
-          ))}
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {linkTypeLabel(l.entity_type)}
+                </span>
+                {route ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onNavigate?.();
+                      navigate(route);
+                    }}
+                    className="flex min-w-0 flex-1 items-center gap-1 text-left font-medium hover:text-primary hover:underline"
+                    title={`Gå till ${name}`}
+                  >
+                    <span className="min-w-0 truncate">{name}</span>
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                  </button>
+                ) : (
+                  <span className="min-w-0 flex-1 truncate">{name}</span>
+                )}
+                <span className="text-xs text-muted-foreground">{relationLabel(l.relation_type)}</span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  title="Ta bort kopplingen (bilden ligger kvar)"
+                  onClick={async () => {
+                    try {
+                      await remove.mutateAsync({ link: l });
+                      toast.success("Kopplingen togs bort. Bilden ligger kvar i biblioteket.");
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Kunde inte ta bort");
+                    }
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </li>
+            );
+          })}
         </ul>
         </>
       )}
