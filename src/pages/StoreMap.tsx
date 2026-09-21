@@ -87,7 +87,12 @@ import {
   type MapPin,
 } from "@/hooks/useStoreMap";
 
-export default function StoreMap() {
+/**
+ * Butikskartan. Med `embedded` visas exakt samma karta med alla funktioner,
+ * men utan sidans egen rubrik, stora knappar, statistik och bildrad — så den
+ * kan ligga inuti en annan sida, t.ex. Uppgifter.
+ */
+export default function StoreMap({ embedded = false }: { embedded?: boolean }) {
   const { site, activeStoreId } = useSite();
   const { staff } = useStaffAuth();
   const stores = useAllowedStores();
@@ -405,40 +410,42 @@ export default function StoreMap() {
 
   return (
     <div className="space-y-4">
-      {/* Ingång till räkningen — det första en butiksanställd ser på telefon */}
-      <div className="md:hidden">
-        <CountEntryButton variant="card" />
-      </div>
+      {!embedded && (
+        <>
+          {/* Ingång till räkningen — det första en butiksanställd ser på telefon */}
+          <div className="md:hidden">
+            <CountEntryButton variant="card" />
+          </div>
 
-      {/* Stora knappar och dagens stapel högst upp */}
-      <OverviewQuickBar tasks={tasks} storeId={storeId} day={day} />
+          {/* Stora knappar och dagens stapel högst upp */}
+          <OverviewQuickBar tasks={tasks} storeId={storeId} day={day} />
 
-      {/* Viktig statistik högst upp — vilka som arbetar, stämpling, checklistor, avvikelser */}
-      <OverviewStatsBar
-        storeId={storeId}
-        openTasks={tasks.filter((t) => !t.done).length}
-        openDeviations={Object.values(issuesByEntity).reduce((a, b) => a + b, 0)}
-        totalSqm={totalSqm}
-      />
+          {/* Viktig statistik högst upp — vilka som arbetar, stämpling, checklistor, avvikelser */}
+          <OverviewStatsBar
+            storeId={storeId}
+            openTasks={tasks.filter((t) => !t.done).length}
+            openDeviations={Object.values(issuesByEntity).reduce((a, b) => a + b, 0)}
+            totalSqm={totalSqm}
+          />
 
-      {/* Bilder från butiken — senaste bilderna som en rad man kan bläddra i */}
-      <StorePhotoStrip
-        storeId={storeId}
-        planId={plan?.id ?? null}
-        planImages={planImages}
-        zones={zones}
-        objects={objects}
-        onOpenZone={(id) => { setAreaPage({ kind: "zone", id }); setView("omrade"); }}
-      />
-
-
+          {/* Bilder från butiken — senaste bilderna som en rad man kan bläddra i */}
+          <StorePhotoStrip
+            storeId={storeId}
+            planId={plan?.id ?? null}
+            planImages={planImages}
+            zones={zones}
+            objects={objects}
+            onOpenZone={(id) => { setAreaPage({ kind: "zone", id }); setView("omrade"); }}
+          />
+        </>
+      )}
 
       {/* Rubrikrad — stor titel, butik under, läge till höger */}
       <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
             <MapIcon className="h-5 w-5 text-primary" />
-            Översikt
+            {embedded ? "Butikskartan" : "Översikt"}
           </h1>
           {site !== "shop" && stores.length > 0 ? (
             <Select value={storeId} onValueChange={(v) => { setPickedStore(v); setPlanId(null); }}>

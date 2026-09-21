@@ -38,6 +38,7 @@ import {
 import { DAYPARTS, durationText, groupByDaypart, remainingMinutes } from "@/lib/taskTime";
 import { TaskRow, type TaskRowArea } from "@/components/tasks/TaskRow";
 import { TaskZoneMap, type ZoneTaskCount } from "@/components/tasks/TaskZoneMap";
+import StoreMap from "@/pages/StoreMap";
 import { TaskCalendar } from "@/components/tasks/TaskCalendar";
 import { TaskRegister } from "@/components/tasks/TaskRegister";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
@@ -112,6 +113,9 @@ export default function Uppgifter() {
     });
     return map;
   }, [tasks]);
+
+  /** Hela butikskartan kan fällas ut i uppgiftslistan. */
+  const [mapOpen, setMapOpen] = useState(false);
 
   const [tab, setTab] = useState("dag");
   const { data: checklists = [] } = useChecklistTemplates(storeId);
@@ -423,8 +427,17 @@ export default function Uppgifter() {
               counts={zoneCounts}
               selected={fArea}
               onSelect={setFArea}
-              onOpenMap={() => switchTab("/store-map")}
+              chipsOnly={mapOpen}
+              onOpenMap={() => setMapOpen((v) => !v)}
+              openLabel={mapOpen ? "Dölj kartan" : "Visa hela kartan"}
             />
+          )}
+
+          {/* Butikskartan med alla funktioner — samma karta som i Översikt */}
+          {mapOpen && (
+            <Card className="p-4">
+              <StoreMap embedded />
+            </Card>
           )}
 
           <Card className="p-4">

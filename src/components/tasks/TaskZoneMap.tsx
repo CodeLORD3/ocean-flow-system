@@ -18,6 +18,10 @@ type Props = {
   selected: string;
   onSelect: (zoneId: string) => void;
   onOpenMap?: () => void;
+  /** Visas kartan i egen ruta nedanför döljs den lilla översiktsbilden. */
+  chipsOnly?: boolean;
+  /** Texten på knappen som öppnar hela kartan. */
+  openLabel?: string;
 };
 
 /**
@@ -25,7 +29,17 @@ type Props = {
  * kvar idag och ett klick filtrerar listan på området. Kartan och listan visar
  * samma nummer, så "2. Kundyta" i listan är område 2 på kartan.
  */
-export function TaskZoneMap({ plan, zones, areas, counts, selected, onSelect, onOpenMap }: Props) {
+export function TaskZoneMap({
+  plan,
+  zones,
+  areas,
+  counts,
+  selected,
+  onSelect,
+  onOpenMap,
+  chipsOnly,
+  openLabel,
+}: Props) {
   const shapes = useMemo(
     () =>
       [...zones]
@@ -66,13 +80,13 @@ export function TaskZoneMap({ plan, zones, areas, counts, selected, onSelect, on
           )}
           {onOpenMap && (
             <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onOpenMap}>
-              Öppna butikskartan
+              {openLabel ?? "Öppna butikskartan"}
             </Button>
           )}
         </div>
       </div>
 
-      <div className="bg-muted/30">
+      <div className={cn("bg-muted/30", chipsOnly && "hidden")}>
         <svg
           viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
           className="h-[240px] w-full sm:h-[320px]"
