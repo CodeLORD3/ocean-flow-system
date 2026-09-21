@@ -91,6 +91,8 @@ export function ImageLightbox({
   const createCutout = useCreateCutout();
   /** Den markerade delen man just tittar på, så rutan lyser upp i bilden. */
   const [activeMark, setActiveMark] = useState<string | null>(null);
+  /** Alla markeringar syns bara när man bett om det; annars visas bara den man tryckt på. */
+  const [showMarks, setShowMarks] = useState(false);
   /** Redigera bildens namn, beskrivning, taggar och var den hör hemma. */
   const [editOpen, setEditOpen] = useState(false);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -120,6 +122,7 @@ export function ImageLightbox({
     setPendingRegion(null);
     setRegionDraft("");
     setActiveMark(null);
+    setShowMarks(false);
   }, [current?.id]);
 
   /** Kommentarer som pekar på en del av bilden, numrerade i den ordning de skrevs. */
@@ -141,6 +144,11 @@ export function ImageLightbox({
     [comments],
   );
   const markNumber = useMemo(() => new Map(marks.map((m) => [m.id, m.number])), [marks]);
+  /** Rutorna som ritas i bilden: alla när man valt det, annars bara den man tryckt på. */
+  const visibleMarks = useMemo(
+    () => (showMarks ? marks : marks.filter((m) => m.id === activeMark)),
+    [marks, showMarks, activeMark],
+  );
 
   const saveRegionComment = async () => {
     const v = regionDraft.trim();
@@ -175,9 +183,29 @@ export function ImageLightbox({
   };
 
   const openMark = (id: string) => {
-    setActiveMark(id);
+    setActiveMark((v) => (v === id ? null : id));
     setCommentsOpen(true);
   };
+
+  /** Liten knapp i hörnet: visa alla markeringar, eller ta bort dem från bilden. */
+  const marksToggle = marks.length > 0 && !pendingRegion && !markMode && (
+    <button
+      type="button"
+      onClick={() => {
+        if (showMarks || activeMark) {
+          setShowMarks(false);
+          setActiveMark(null);
+        } else {
+          setShowMarks(true);
+        }
+      }}
+      className="absolute bottom-2 right-2 z-20 flex h-9 items-center gap-1.5 rounded-full border border-border bg-background/85 px-3 text-[11px] font-semibold text-foreground shadow backdrop-blur"
+    >
+      <Square className="h-4 w-4" />
+      {showMarks || activeMark ? "Avmarkera alla" : `Visa markeringar (${marks.length})`}
+    </button>
+  );
+
 
   /** Knapparna nedtill i bilden: markera en del, och redigera bildens uppgifter. */
   const markButton = !pendingRegion && (
@@ -770,7 +798,7 @@ export function ImageLightbox({
                           src={thumbUrl(img.url, THUMB_FULL)}
                           alt={img.caption || title}
                           imgClassName="max-h-full max-w-full object-contain"
-                          marks={marks}
+                          marks={visibleMarks}
                           markMode={markMode}
                           activeId={activeMark}
                           onRegion={(r) => setPendingRegion(r)}
@@ -805,6 +833,7 @@ export function ImageLightbox({
                 )}
 
                 {markButton}
+                {marksToggle}
                 {regionComposer}
 
                 <DialogClose asChild>
@@ -957,7 +986,7 @@ export function ImageLightbox({
                   src={thumbUrl(current.url, THUMB_FULL)}
                   alt={current.caption || title}
                   imgClassName="max-h-[70vh] max-w-full object-contain"
-                  marks={marks}
+                  marks={visibleMarks}
                   markMode={markMode}
                   activeId={activeMark}
                   onRegion={(r) => setPendingRegion(r)}
@@ -965,6 +994,7 @@ export function ImageLightbox({
                 />
 
                 {markButton}
+                {marksToggle}
                 {regionComposer}
 
                 {images.length > 1 && (
