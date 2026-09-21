@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import {
   Heart,
   MessageCircle,
+  Eye,
   Star,
   Trophy,
   Clock,
