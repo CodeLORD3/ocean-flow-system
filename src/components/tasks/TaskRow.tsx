@@ -188,7 +188,7 @@ export function TaskRow({
           )}
           {effectivePhotoCount > 0 && (
             <span className="inline-flex items-center gap-0.5">
-              <ImageIcon className="h-3 w-3" /> {photoCount}
+              <ImageIcon className="h-3 w-3" /> {effectivePhotoCount}
             </span>
           )}
         </span>
