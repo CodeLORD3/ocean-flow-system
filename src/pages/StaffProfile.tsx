@@ -223,7 +223,7 @@ export default function StaffProfile() {
                   </div>
                   <span
                     className={cn(
-                      "absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-background",
+                      "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background",
                       openShift ? "bg-emerald-500" : "bg-muted-foreground/50",
                     )}
                     title={openShift ? "Instämplad" : "Ej instämplad"}
