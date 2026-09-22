@@ -197,16 +197,16 @@ export default function StaffProfile() {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto w-full max-w-[1400px] space-y-3"
+      className="mx-auto w-full max-w-[1400px] space-y-2"
     >
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_320px] lg:items-start">
+      <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1fr_320px] lg:items-start">
         {/* Vänster: rubrikkort med bild, namn och flikar + innehåll */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <Card className="overflow-hidden shadow-card">
             <CardContent className="p-0">
-              <div className="flex flex-wrap items-center gap-3 p-3 sm:gap-4 sm:p-4">
-                <div className="relative h-20 w-20 shrink-0 sm:h-24 sm:w-24">
-                  <div className="h-full w-full overflow-hidden rounded-full border-4 border-background bg-primary/10 shadow-md">
+              <div className="flex flex-wrap items-center gap-3 p-2 sm:p-2.5">
+                <div className="relative h-14 w-14 shrink-0 sm:h-16 sm:w-16">
+                  <div className="h-full w-full overflow-hidden rounded-full border-2 border-background bg-primary/10 shadow-md">
                     {staff.profile_image_url ? (
                       <img
                         src={staff.profile_image_url}
@@ -217,22 +217,22 @@ export default function StaffProfile() {
                       />
                     ) : (
                       <div className="grid h-full w-full place-items-center">
-                        <User className="h-10 w-10 text-primary" />
+                        <User className="h-7 w-7 text-primary" />
                       </div>
                     )}
                   </div>
                   <span
                     className={cn(
-                      "absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-background",
+                      "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background",
                       openShift ? "bg-emerald-500" : "bg-muted-foreground/50",
                     )}
                     title={openShift ? "Instämplad" : "Ej instämplad"}
                   />
                   <label
-                    className="absolute -bottom-1 left-0 grid h-8 w-8 cursor-pointer place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm transition hover:opacity-90"
+                    className="absolute -bottom-1 left-0 grid h-6 w-6 cursor-pointer place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm transition hover:opacity-90"
                     title="Byt profilbild"
                   >
-                    <Camera className="h-4 w-4" />
+                    <Camera className="h-3 w-3" />
                     <span className="sr-only">Byt profilbild</span>
                     <input
                       type="file"
@@ -246,12 +246,12 @@ export default function StaffProfile() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h1 className="font-heading text-2xl font-bold leading-tight text-foreground sm:text-3xl">{fullName}</h1>
-                  <p className="truncate text-sm text-muted-foreground">
+                  <h1 className="font-heading text-lg font-bold leading-tight text-foreground sm:text-xl">{fullName}</h1>
+                  <p className="truncate text-xs text-muted-foreground">
                     {[role, staff.workplace].filter(Boolean).join("  ·  ") || "Personal"}
                   </p>
                   {/* Dagens uppgifter direkt vid namnet, i färg */}
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground">
                       <ListChecks className="h-3.5 w-3.5" />
                       {progress ? `${progress.done} av ${progress.total} klara idag` : "Inga uppgifter idag"}
@@ -265,7 +265,7 @@ export default function StaffProfile() {
                 </div>
 
                 {/* Stämpling direkt i rubriken */}
-                <div className="w-full shrink-0 rounded-xl border border-border bg-muted/40 p-3 sm:w-56">
+                <div className="w-full shrink-0 rounded-xl border border-border bg-muted/40 p-2 sm:w-52">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Stämpelklocka</p>
                   {openShift ? (
                     <>
@@ -316,7 +316,7 @@ export default function StaffProfile() {
               </div>
 
               {/* Flikar */}
-              <div className="flex gap-1 overflow-x-auto border-t border-border px-3">
+              <div className="flex gap-1 overflow-x-auto border-t border-border px-2">
                 {TABS.map((t) => {
                   const active = tab === t.key;
                   return (
@@ -325,13 +325,13 @@ export default function StaffProfile() {
                       type="button"
                       onClick={() => setTab(t.key)}
                       className={cn(
-                        "flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-sm transition",
+                        "flex shrink-0 items-center gap-1.5 border-b-2 px-2 py-1.5 text-xs transition",
                         active
                           ? "border-primary font-semibold text-foreground"
                           : "border-transparent text-muted-foreground hover:text-foreground",
                       )}
                     >
-                      <t.icon className="h-4 w-4" />
+                      <t.icon className="h-3.5 w-3.5" />
                       {t.label}
                     </button>
                   );
