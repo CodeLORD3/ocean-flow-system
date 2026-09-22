@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { workTypeLabel } from "@/lib/workType";
 import { useTaskImages, type TaskRow as Task } from "@/hooks/useTasks";
+import { TaskSteps } from "@/components/tasks/TaskSteps";
 
 export type TaskRowArea = { id: string; name: string; color: string; number: number } | null;
 
