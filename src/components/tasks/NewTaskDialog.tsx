@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { useAddAdhocTask, useTaskRegister } from "@/hooks/useTasks";
+import { asciiFold } from "@/lib/asciiFold";
 import { ZonePickMap } from "@/components/tasks/ZonePickMap";
 import type { FloorPlan, MapZone } from "@/hooks/useStoreMap";
 
@@ -114,10 +115,16 @@ export function NewTaskDialog({
   const finalTime = timeMode === "now" ? nowTime() : time;
 
   const existingList = useMemo(() => {
-    const q = existingSearch.trim().toLowerCase();
+    // Tolerant sökning: å/ä/ö likställs och varje ord får matcha var som helst,
+    // så "stad" och "städa golv" hittar "Städa samtliga golvbrunnar".
+    const words = asciiFold(existingSearch).toLowerCase().split(/\s+/).filter(Boolean);
     return register
       .filter((r) => (existingZone ? r.zoneId === existingZone : true))
-      .filter((r) => (q ? r.task.toLowerCase().includes(q) : true))
+      .filter((r) => {
+        if (!words.length) return true;
+        const hay = asciiFold(`${r.task} ${r.note ?? ""} ${r.doers.map((d) => d.name).join(" ")}`).toLowerCase();
+        return words.every((w) => hay.includes(w));
+      })
       .sort((a, b) => b.doneTimes - a.doneTimes || a.task.localeCompare(b.task, "sv"))
       .slice(0, 60);
   }, [register, existingSearch, existingZone]);
@@ -292,6 +299,28 @@ export function NewTaskDialog({
                         <span className="block text-xs text-muted-foreground">
                           {areas.find((a) => a.id === r.zoneId)?.name ?? "Inget område"}
                         </span>
+                        {r.doers.length > 0 && (
+                          <span className="mt-1 flex flex-wrap items-center gap-1">
+                            {r.doers.slice(0, 3).map((d) => (
+                              <span
+                                key={d.id}
+                                className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs"
+                              >
+                                {d.image ? (
+                                  <img src={d.image} alt="" className="h-4 w-4 rounded-full object-cover" />
+                                ) : (
+                                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/15 text-[9px] font-semibold text-primary">
+                                    {d.name.slice(0, 1)}
+                                  </span>
+                                )}
+                                {d.name.split(" ")[0]} {d.times} ggr
+                              </span>
+                            ))}
+                            {r.doers.length > 3 && (
+                              <span className="text-xs text-muted-foreground">+{r.doers.length - 3} till</span>
+                            )}
+                          </span>
+                        )}
                       </span>
                       <span className="whitespace-nowrap font-mono text-xs tabular-nums text-muted-foreground">
                         gjord {r.doneTimes} ggr
