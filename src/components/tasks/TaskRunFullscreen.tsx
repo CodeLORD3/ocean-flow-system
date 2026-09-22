@@ -14,10 +14,9 @@ function stepImages(st: GuideStep): string[] {
   return [st.image ?? "", ...(st.images ?? [])].filter(Boolean) as string[];
 }
 
-/** Kort rubrik ur stegtexten. */
+/** Rubrik ur stegtexten — hela meningen, aldrig avkortad. */
 function stepTitle(text: string): string {
-  const first = text.split(/[.!?]/)[0]?.split(",")[0]?.trim() || text.trim();
-  return first.length > 70 ? `${first.slice(0, 67)}…` : first;
+  return text.split(/[.!?]/)[0]?.trim() || text.trim();
 }
 
 function Detail({ label, text, tone }: { label: string; text?: string | null; tone: string }) {
@@ -121,6 +120,17 @@ export function TaskRunFullscreen({
     setShowPrep(prepMissingCount > 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, steps.length]);
+
+  /** Medan uppgiften körs ska inget annat ligga över knapparna — t.ex. tillbaka-raden. */
+  useEffect(() => {
+    if (!open) return;
+    document.body.dataset.taskRun = "1";
+    window.dispatchEvent(new CustomEvent("task-run-open", { detail: { open: true } }));
+    return () => {
+      delete document.body.dataset.taskRun;
+      window.dispatchEvent(new CustomEvent("task-run-open", { detail: { open: false } }));
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open || isPhone) return;

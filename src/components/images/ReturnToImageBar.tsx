@@ -17,6 +17,14 @@ export default function ReturnToImageBar() {
   const navigate = useNavigate();
   const [prev, setPrev] = useState<NavEntry | null>(() => previousNav());
   const [hidden, setHidden] = useState(false);
+  /** Körs en uppgift i helskärm ska raden inte ligga över uppgiftens knappar. */
+  const [taskRunning, setTaskRunning] = useState(() => !!document.body.dataset.taskRun);
+
+  useEffect(() => {
+    const onRun = (e: Event) => setTaskRunning(!!(e as CustomEvent).detail?.open);
+    window.addEventListener("task-run-open", onRun as EventListener);
+    return () => window.removeEventListener("task-run-open", onRun as EventListener);
+  }, []);
 
   useEffect(() => {
     const update = () => setPrev(previousNav());
@@ -33,7 +41,7 @@ export default function ReturnToImageBar() {
   const retur = params.get("retur");
 
   const to = bildId ? `/image-feed?bild=${bildId}` : retur || prev?.url;
-  if (!to || hidden) return null;
+  if (!to || hidden || taskRunning) return null;
 
   const label = bildId
     ? "Tillbaka till bilden"
