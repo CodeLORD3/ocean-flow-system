@@ -647,7 +647,8 @@ export function TaskRunFullscreen({
             <ChevronLeft className="h-5 w-5" /> Tillbaka
           </Button>
 
-          {allDone || (done && last) ? (
+          {/* Uppgiften kan bara bli klar när alla steg är gjorda */}
+          {allDone ? (
             <Button
               className="h-12 flex-1 bg-emerald-600 text-base text-white hover:bg-emerald-700"
               onClick={finishNow}
