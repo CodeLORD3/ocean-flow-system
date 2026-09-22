@@ -958,7 +958,7 @@ export default function Uppgifter() {
           setMapZoneId(id);
           setFArea(id ?? "all");
         }}
-        onOpenArea={(id) => switchTab(`/butikskarta?zone=${id}`)}
+        onOpenArea={(id) => switchTab(withReturn(`/butikskarta?zone=${id}`, "/uppgifter", "Uppgifter"))}
         onOpenTask={(id) => switchTab(`/uppgift/${id}`)}
       />
 
