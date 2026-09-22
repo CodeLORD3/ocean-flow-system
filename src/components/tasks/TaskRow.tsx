@@ -146,7 +146,10 @@ export function TaskRow({
   const canStart = !task.done && !running;
   const [showRun, setShowRun] = useState(false);
   const runRef = useRef<HTMLDivElement | null>(null);
-  const guideSteps = parseGuide(task.guide, task.instructions).steps.filter((s) => s.text || s.image);
+  const inheritedSteps = blueprint
+    ? parseGuide(blueprint.guide, blueprint.instructions).steps.filter((s) => s.text || s.image)
+    : [];
+  const guideSteps = ownGuideSteps.length > 0 ? ownGuideSteps : inheritedSteps;
   /** Starta/fortsätt uppgiften — arbetet fälls ut här i raden. */
   const startNow = async () => {
     setOpen(true);
