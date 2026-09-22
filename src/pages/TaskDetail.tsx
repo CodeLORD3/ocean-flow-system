@@ -397,7 +397,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
         )}
       </Card>
 
-      <Tabs defaultValue={initialTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:flex sm:w-auto">
           <TabsTrigger value="genomfor">Genomför</TabsTrigger>
           <TabsTrigger value="instruktion">Hur gör vi?</TabsTrigger>
