@@ -531,9 +531,9 @@ export function TaskRunFullscreen({
             Steg {no} av {steps.length}
           </p>
         </div>
-        <span className="rounded-full bg-muted px-3 py-1 font-mono text-sm font-semibold tabular-nums">
-          {doneNos.size}/{steps.length} klara
-        </span>
+        <Button variant="outline" className="h-8 font-mono text-sm tabular-nums" onClick={() => setOverviewOpen(true)}>
+          {doneNos.size}/{steps.length} klara · Översikt
+        </Button>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label="Stäng helskärm">
           <X className="h-5 w-5" />
         </Button>
