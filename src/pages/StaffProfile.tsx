@@ -331,7 +331,7 @@ export default function StaffProfile() {
                           : "border-transparent text-muted-foreground hover:text-foreground",
                       )}
                     >
-                      <t.icon className="h-4 w-4" />
+                      <t.icon className="h-3.5 w-3.5" />
                       {t.label}
                     </button>
                   );
