@@ -564,3 +564,35 @@ function DetailRow({
     </div>
   );
 }
+
+/** Samma rader som i läsläget, men med ett fält att skriva i. */
+function EditRow({
+  tone,
+  label,
+  value,
+  onChange,
+}: {
+  tone: "primary" | "muted" | "amber" | "sky";
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const tones = {
+    primary: "bg-primary/10 text-primary",
+    muted: "bg-muted text-muted-foreground",
+    amber: "bg-amber-500/10 text-amber-700",
+    sky: "bg-sky-500/10 text-sky-700",
+  } as const;
+
+  return (
+    <div className={`flex items-center gap-3 rounded-lg px-3 py-2 ${tones[tone]}`}>
+      <span className="w-[72px] shrink-0 text-[11px] font-semibold uppercase tracking-wide">{label}</span>
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={`Skriv ${label.toLowerCase()} …`}
+        className="h-9 flex-1 border-none bg-background/70 text-[14px]"
+      />
+    </div>
+  );
+}
