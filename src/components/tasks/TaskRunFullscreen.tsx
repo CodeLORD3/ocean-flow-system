@@ -288,9 +288,14 @@ export function TaskRunFullscreen({
           >
             <X className="h-5 w-5" />
           </button>
-          <span className="pointer-events-none rounded-full bg-foreground/70 px-3 py-1.5 font-mono text-sm font-semibold tabular-nums text-background backdrop-blur">
+          <button
+            type="button"
+            onClick={() => setOverviewOpen(true)}
+            aria-label="Visa översikt över stegen"
+            className="pointer-events-auto rounded-full bg-foreground/70 px-3 py-1.5 font-mono text-sm font-semibold tabular-nums text-background backdrop-blur"
+          >
             {doneNos.size}/{steps.length} klara
-          </span>
+          </button>
         </div>
 
         <div
