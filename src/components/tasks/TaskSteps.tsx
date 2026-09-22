@@ -239,7 +239,7 @@ function StepViewer({
     setMarkMode(false);
     setPending(null);
     setMarkLabel("");
-  }, [index, step?.text, step?.keyPoint, step?.why, step?.safety]);
+  }, [index, step?.text, step?.keyPoint, step?.why, step?.safety, step?.haccp]);
 
   const go = (delta: number) => {
     const next = index + delta;
@@ -269,6 +269,7 @@ function StepViewer({
       keyPoint: draft.keyPoint,
       why: draft.why,
       safety: draft.safety,
+      haccp: draft.haccp,
     });
     toast({ title: "Steget är ändrat" });
     setEdit(false);
