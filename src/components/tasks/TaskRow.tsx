@@ -192,7 +192,7 @@ export function TaskRow({
           aria-hidden
         />
       )}
-      <div className={cn("flex items-center gap-2 px-2.5", open ? "py-2.5" : "py-1.5 min-h-[44px]")}>
+      <div className={cn("flex items-center gap-2 px-2", open ? "py-2" : "py-1 min-h-[34px]")}>
         {!open && (
           <span
             className="pointer-events-none absolute bottom-0 left-0 top-0 w-1"
@@ -203,7 +203,7 @@ export function TaskRow({
         {/* Kolumn 1: bocka av — samma kryssruta som i beställningar */}
         <span
           className={cn(
-            "flex w-9 shrink-0 items-center justify-center self-stretch border-r border-grid-line",
+            "flex w-7 shrink-0 items-center justify-center self-stretch border-r border-grid-line",
             open && "border-transparent",
           )}
           title={blocked ? missingText(task, missing) : undefined}
@@ -212,13 +212,13 @@ export function TaskRow({
             checked={task.done}
             onCheckedChange={(v) => tryToggle(!!v)}
             aria-label={task.done ? "Återöppna uppgift" : "Markera som klar"}
-            className="h-5 w-5 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
+            className="h-4 w-4 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
           />
         </span>
 
 
         {/* Kolumn 2: tid */}
-        <span className="hidden w-[46px] shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground sm:block">
+        <span className="hidden w-[42px] shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground sm:block">
           {time.label || ""}
         </span>
 
@@ -228,8 +228,8 @@ export function TaskRow({
             className={cn(
               "block break-words leading-snug",
               open
-                ? "text-[17px] font-bold sm:text-[16px]"
-                : "text-[15px] font-semibold sm:text-[15px] sm:font-semibold",
+                ? "text-[14px] font-bold sm:text-[14px]"
+                : "text-[13px] font-semibold sm:text-[13px] sm:font-semibold",
               task.done && "text-muted-foreground line-through",
             )}
           >
@@ -243,27 +243,27 @@ export function TaskRow({
         </button>
 
         {/* Kolumn 4: område — alltid samma plats, tryck öppnar kartan */}
-        <span className="hidden w-[170px] shrink-0 items-center md:flex">
+        <span className="hidden w-[150px] shrink-0 items-center md:flex">
           {area ? (
             onOpenArea ? (
               <button
                 type="button"
                 onClick={() => onOpenArea(area.id)}
                 title={`Visa ${area.name} på kartan`}
-                className="inline-flex w-full items-center gap-1.5 rounded-full px-2 py-1 text-left text-[12px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="inline-flex w-full items-center gap-1.5 rounded-full px-2 py-0.5 text-left text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: area.color }} />
                 <span className="truncate">{area.name}</span>
                 <MapPin className="ml-auto h-3 w-3 shrink-0 opacity-60" />
               </button>
             ) : (
-              <span className="inline-flex w-full items-center gap-1.5 px-2 text-[12px] text-muted-foreground">
+              <span className="inline-flex w-full items-center gap-1.5 px-2 text-[11px] text-muted-foreground">
                 <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: area.color }} />
                 <span className="truncate">{area.name}</span>
               </span>
             )
           ) : (
-            <span className="px-2 text-[12px] text-muted-foreground/60">Inget område</span>
+            <span className="px-2 text-[11px] text-muted-foreground/60">Inget område</span>
           )}
         </span>
 
@@ -293,15 +293,15 @@ export function TaskRow({
         </span>
 
         {/* Kolumn 7: person — alltid samma plats */}
-        <span className="hidden w-[150px] shrink-0 items-center gap-2 lg:flex">
+        <span className="hidden w-[132px] shrink-0 items-center gap-1.5 lg:flex">
           {(() => {
             const name = task.done ? completedByName || task.signature || assigneeName : assigneeName;
             const img = task.done ? completedByImage || assigneeImage : assigneeImage;
             if (!name) return <span className="text-[11px] text-muted-foreground">Ingen tilldelad</span>;
             return (
               <>
-                <StaffAvatar name={name} imageUrl={img} className="h-9 w-9 shrink-0" />
-                <span className={cn("truncate text-[11px]", task.done ? "text-emerald-600" : "text-muted-foreground")}>
+                <StaffAvatar name={name} imageUrl={img} className="h-6 w-6 shrink-0" />
+                <span className={cn("truncate text-[10px]", task.done ? "text-emerald-600" : "text-muted-foreground")}>
                   {task.done ? "Klar · " : ""}
                   {name}
                 </span>
@@ -311,9 +311,9 @@ export function TaskRow({
         </span>
 
         {/* Kolumn 8: status — alltid samma bredd så raderna står i linje */}
-        <span className="hidden w-[76px] shrink-0 justify-end sm:flex">
+        <span className="hidden w-[66px] shrink-0 justify-end sm:flex">
           {!task.done && running && (
-            <span className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-700">
+            <span className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
               Pågår
             </span>
           )}
