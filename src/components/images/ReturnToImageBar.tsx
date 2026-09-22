@@ -33,7 +33,7 @@ export default function ReturnToImageBar() {
   const retur = params.get("retur");
 
   const to = bildId ? `/image-feed?bild=${bildId}` : retur || prev?.url;
-  if (!to) return null;
+  if (!to || hidden) return null;
 
   const label = bildId
     ? "Tillbaka till bilden"
@@ -42,17 +42,27 @@ export default function ReturnToImageBar() {
       : `Tillbaka till ${prev?.title || "föregående sida"}`;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-      <Button
-        className="pointer-events-auto h-14 max-w-full gap-3 rounded-full bg-primary px-6 text-base font-semibold text-primary-foreground shadow-lg hover:bg-primary/90"
-        onClick={() => {
-          if (!bildId && !retur) popNav();
-          navigate(to);
-        }}
-      >
-        <ArrowLeft className="h-6 w-6 shrink-0" />
-        <span className="truncate">{label}</span>
-      </Button>
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-end px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+      <div className="pointer-events-auto flex max-w-full items-center gap-1 rounded-full bg-primary pr-1 shadow-lg">
+        <Button
+          className="h-10 max-w-full gap-2 rounded-full bg-transparent px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-foreground/10"
+          onClick={() => {
+            if (!bildId && !retur) popNav();
+            navigate(to);
+          }}
+        >
+          <ArrowLeft className="h-4 w-4 shrink-0" />
+          <span className="truncate">{label}</span>
+        </Button>
+        <button
+          type="button"
+          aria-label="Stäng tillbaka-knappen"
+          onClick={() => setHidden(true)}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-primary-foreground/80 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
