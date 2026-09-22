@@ -485,11 +485,11 @@ export function TaskRunFullscreen({
         // Bild till vänster, text till höger — allt ryms på en skärm utan skroll
         <div className="mx-auto grid h-full w-full max-w-6xl gap-4 lg:grid-cols-2 lg:items-start">
           <div className="flex min-h-0 flex-col gap-2">
-            {s.image ? (
-              <img
-                src={s.image}
+            {stepImages(s).length > 0 ? (
+              <StepGallery
+                images={stepImages(s)}
                 alt={stepTitle(s.text || "")}
-                className="max-h-[62vh] w-full rounded-xl bg-muted object-contain"
+                className="h-[62vh] w-full overflow-hidden rounded-xl bg-muted"
               />
             ) : (
               <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-xl bg-muted">
