@@ -294,8 +294,8 @@ export function TaskRunFullscreen({
                 {/* Texten i en tät ruta: dra ner den eller tryck "Minska" för hela bilden */}
                 <div
                   className={cn(
-                    "relative z-10 m-3 space-y-2 rounded-2xl bg-black/75 p-4 text-white backdrop-blur-sm transition-all",
-                    textOpen ? "max-h-[58%] overflow-y-auto" : "",
+                    "relative z-10 mx-3 mb-24 mt-3 space-y-2 rounded-2xl bg-black/75 p-4 text-white backdrop-blur-sm transition-all",
+                    textOpen ? "max-h-[52%] overflow-y-auto" : "",
                   )}
                   onTouchStart={(e) => {
                     touchY.current = e.touches[0]?.clientY ?? null;
