@@ -401,11 +401,12 @@ export function TaskRunFullscreen({
           )}
           <h2 className="font-heading text-xl font-bold leading-snug sm:text-2xl">{stepTitle(s.text || `Steg ${no}`)}</h2>
           {s.text && <p className="text-[15px] leading-snug text-muted-foreground">{s.text}</p>}
-          <Detail label="Viktigt" text={s.keyPoint} tone="bg-primary/5 text-primary" />
-          <Detail label="Varför" text={s.why} tone="bg-muted text-muted-foreground" />
+          <Detail label="Viktigt" text={s.keyPoint} tone="bg-emerald-500/10 text-emerald-700" />
+          <Detail label="Varför" text={s.why} tone="bg-sky-500/10 text-sky-700" />
           <Detail label="Säkerhet" text={s.safety} tone="bg-amber-500/10 text-amber-700" />
-          <Detail label="HACCP" text={s.haccp} tone="bg-sky-500/10 text-sky-700" />
+          <Detail label="HACCP" text={s.haccp} tone="bg-rose-500/10 text-rose-700" />
         </div>
+        )}
       </div>
 
       <div className="space-y-2 border-t bg-card px-3 py-2">
