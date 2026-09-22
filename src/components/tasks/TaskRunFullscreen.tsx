@@ -178,9 +178,31 @@ export function TaskRunFullscreen({
                     className="absolute inset-0 h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-muted" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
+                    <Camera className="h-10 w-10 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Ingen bild på steget än</p>
+                  </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/20" />
+
+                {/* Bilden är det viktigaste — byt eller lägg till den direkt här */}
+                {onSetStepImage && (
+                  <label className="absolute right-3 top-16 z-20 inline-flex">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const f = e.target.files?.[0];
+                        e.currentTarget.value = "";
+                        if (f) await onSetStepImage(i, f);
+                      }}
+                    />
+                    <span className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-foreground/70 px-3 py-1.5 text-xs text-background backdrop-blur">
+                      <Camera className="h-4 w-4" /> {st.image ? "Byt bild" : "Lägg till bild"}
+                    </span>
+                  </label>
+                )}
 
                 <div className="relative z-10 space-y-2 px-4 pb-6 pt-16 text-white">
                   <p className="font-mono text-xs tabular-nums text-white/70">
