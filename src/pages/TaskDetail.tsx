@@ -402,6 +402,15 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             onStarted={freezeCurrentRoute}
             onUpdate={(patch) => update.mutate({ id: task.id, ...patch })}
             onAddPhoto={addPhoto}
+            onSetStepImage={async (stepIndex, file) => {
+              const url = await uploadTaskStepImage(file, task.id);
+              const steps = guide.steps.map((st, i) => (i === stepIndex ? { ...st, image: url } : st));
+              await saveGuide.mutateAsync({
+                id: task.id,
+                templateItemId: task.template_item_id,
+                guide: cleanGuide({ ...guide, steps }),
+              });
+            }}
             onReopen={() => setDone.mutate({ id: task.id, done: false })}
           />
         </TabsContent>
