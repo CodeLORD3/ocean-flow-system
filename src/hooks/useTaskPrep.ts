@@ -191,19 +191,26 @@ export function useSetStepCheck() {
       stepTitle: string;
       staffId?: string | null;
     }) => {
-      const { error } = await supabase.from("task_prep_checks").upsert(
-        {
-          checklist_item_id: input.checklistItemId,
-          requirement_id: null,
-          step_no: input.stepNo,
-          item_name: input.stepTitle,
-          status: "finns",
-          checked_by_staff_id: input.staffId ?? null,
-          checked_at: new Date().toISOString(),
-        },
-        { onConflict: "checklist_item_id,step_no" },
-      );
-      if (error) throw error;
+      /** Det unika indexet är partiellt (step_no not null) — upsert går inte via API:t. */
+      const row = {
+        checklist_item_id: input.checklistItemId,
+        requirement_id: null,
+        step_no: input.stepNo,
+        item_name: input.stepTitle,
+        status: "finns",
+        checked_by_staff_id: input.staffId ?? null,
+        checked_at: new Date().toISOString(),
+      };
+      const { error } = await supabase.from("task_prep_checks").insert(row);
+      if (error) {
+        if (error.code !== "23505") throw error;
+        const { error: upErr } = await supabase
+          .from("task_prep_checks")
+          .update(row)
+          .eq("checklist_item_id", input.checklistItemId)
+          .eq("step_no", input.stepNo);
+        if (upErr) throw upErr;
+      }
     },
     onSuccess: (_d, v) => qc.invalidateQueries({ queryKey: ["task-prep-checks", v.checklistItemId] }),
   });
