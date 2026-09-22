@@ -308,9 +308,9 @@ export function TaskRunFullscreen({
                     {isDone ? <Check className="h-4 w-4" /> : n}
                   </span>
                   <span className="min-w-0 flex-1">
-                    {/* Hela texten syns — den bryts på ny rad i stället för att kapas */}
+                    {/* Bara rubriken i översikten — hela texten finns i steget */}
                     <span className={cn("block break-words text-sm font-medium", isDone && "text-emerald-900")}>
-                      {st.text || `Steg ${n}`}
+                      {stepTitle(st.text || `Steg ${n}`)}
                     </span>
                     <span className="block text-[11px] text-muted-foreground">{isDone ? "Klart" : "Kvar att göra"}</span>
                   </span>
