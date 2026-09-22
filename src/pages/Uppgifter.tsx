@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, Trash2 } from "lucide-react";
+import { Crosshair, Plus, Trash2 } from "lucide-react";
 import { NewTaskDialog } from "@/components/tasks/NewTaskDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -381,6 +381,11 @@ export default function Uppgifter() {
             </Select>
           )}
           <Input type="date" value={day} onChange={(e) => setDay(e.target.value)} className="h-9 w-[150px]" />
+          {plan && zones.length > 0 && (
+            <Button variant="ghost" size="sm" onClick={() => openMapOn(null)}>
+              <Crosshair className="mr-1 h-4 w-4" /> Butikskarta
+            </Button>
+          )}
           <Button size="sm" onClick={() => setNewOpen(true)}>
             <Plus className="mr-1 h-4 w-4" /> Ny uppgift
           </Button>
@@ -940,6 +945,23 @@ export default function Uppgifter() {
         zones={zones}
         onCreated={(id) => switchTab(`/uppgift/${id}`)}
       />
+
+      <TaskMapDrawer
+        open={mapOpen}
+        onOpenChange={setMapOpen}
+        plan={plan}
+        zones={zones}
+        areas={areaOf}
+        tasks={tasks}
+        zoneId={mapZoneId}
+        onZoneChange={(id) => {
+          setMapZoneId(id);
+          setFArea(id ?? "all");
+        }}
+        onOpenArea={(id) => switchTab(`/butikskarta?zone=${id}`)}
+        onOpenTask={(id) => switchTab(`/uppgift/${id}`)}
+      />
+
     </div>
   );
 }
