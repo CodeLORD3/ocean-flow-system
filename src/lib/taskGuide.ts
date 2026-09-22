@@ -20,6 +20,14 @@ export type GuideStep = {
   safety?: string;
   /** HACCP när det är relevant. */
   haccp?: string;
+  /** Markerade rutor i stegbilden med kort text, andel av bildens mått (0–1). */
+  marks?: GuideMark[];
+};
+
+export type GuideMark = {
+  id: string;
+  region: { x: number; y: number; w: number; h: number };
+  label: string;
 };
 export type GuideMaterial = {
   name: string;
@@ -62,6 +70,21 @@ function urls(v: unknown) {
   return Array.isArray(v) ? (v as unknown[]).map((u) => str(u)).filter(Boolean) : [];
 }
 
+function marksOf(v: unknown): GuideMark[] {
+  if (!Array.isArray(v)) return [];
+  return (v as unknown[])
+    .map((m) => {
+      const r = (m as any)?.region ?? {};
+      const num = (x: unknown) => (typeof x === "number" && isFinite(x) ? x : 0);
+      return {
+        id: str((m as any)?.id) || Math.random().toString(36).slice(2),
+        region: { x: num(r.x), y: num(r.y), w: num(r.w), h: num(r.h) },
+        label: str((m as any)?.label),
+      };
+    })
+    .filter((m) => m.region.w > 0 && m.region.h > 0);
+}
+
 /** Läser guide-kolumnen tolerant, och faller tillbaka på gamla textsteg. */
 export function parseGuide(raw: unknown, fallbackSteps?: string[] | null): TaskGuide {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
@@ -79,6 +102,7 @@ export function parseGuide(raw: unknown, fallbackSteps?: string[] | null): TaskG
                 minutes: typeof (s as any)?.minutes === "number" ? (s as any).minutes : null,
                 safety: str((s as any)?.safety),
                 haccp: str((s as any)?.haccp),
+                marks: marksOf((s as any)?.marks),
               },
         )
         .filter((s) => s.text.trim().length > 0 || s.image)
@@ -145,6 +169,7 @@ export function cleanGuide(g: TaskGuide): TaskGuide | null {
         minutes: s.minutes ?? null,
         safety: (s.safety ?? "").trim(),
         haccp: (s.haccp ?? "").trim(),
+        marks: (s.marks ?? []).filter((m) => m.region.w > 0 && m.region.h > 0),
       })),
     putBack: g.putBack.trim(),
     putBackImages: g.putBackImages.filter(Boolean),
