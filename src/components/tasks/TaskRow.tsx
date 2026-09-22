@@ -54,6 +54,8 @@ type Props = {
   /** Butiken uppgiften hör till — behövs för utrustning & material. */
   storeId?: string | null;
   onAssign?: (staffId: string | null) => void;
+  /** Sätts när man kommit tillbaka hit: raden öppnas och lyser upp en stund. */
+  focused?: boolean;
 };
 
 /**
