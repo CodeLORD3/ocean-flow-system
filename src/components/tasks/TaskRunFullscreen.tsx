@@ -365,8 +365,8 @@ export function TaskRunFullscreen({
 
   /* ---------- TELEFON: flöde som swipas uppåt, ett steg per skärm ---------- */
   if (isPhone) {
-    return (
-      <div className="fixed inset-0 z-50 bg-background">
+    return createPortal(
+      <div className="fixed inset-0 z-[100] bg-background">
         {warnNode}
         {overviewNode}
         {/* Räknaren i höger hörn och vägen ut i vänster */}
