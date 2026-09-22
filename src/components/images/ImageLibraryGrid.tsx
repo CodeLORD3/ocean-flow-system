@@ -172,11 +172,27 @@ export default function ImageLibraryGrid({
                       {STATUS_LABEL[img.status]}
                     </Badge>
                   </span>
-                  {selected && (
-                    <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
-                      ✓
-                    </span>
-                  )}
+                  <button
+                    type="button"
+                    aria-label={selected ? "Avmarkera bilden" : "Markera bilden"}
+                    aria-pressed={selected}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      lastIndex.current = index;
+                      onSelectedChange(
+                        selected
+                          ? selectedIds.filter((x) => x !== img.id)
+                          : [...selectedIds, img.id],
+                      );
+                    }}
+                    className={`absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full border text-[13px] font-semibold transition ${
+                      selected
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-white/70 bg-black/35 text-white opacity-90 backdrop-blur hover:bg-black/55"
+                    }`}
+                  >
+                    {selected ? "✓" : ""}
+                  </button>
 
                   {/* Texten ligger i bilden: namn, tid, plats och namnet på bilden */}
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 space-y-1 bg-gradient-to-t from-black/80 via-black/35 to-transparent p-2 pt-8">
