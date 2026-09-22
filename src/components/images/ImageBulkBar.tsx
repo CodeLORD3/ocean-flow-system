@@ -113,12 +113,12 @@ export default function ImageBulkBar({
               className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm"
               value={zoneId}
               onChange={(e) => setZoneId(e.target.value)}
-              disabled={!storeId}
             >
               <option value="">Lämna som det är</option>
-              {zones.map((z) => (
+              {zoneOptions.map((z) => (
                 <option key={z.id} value={z.id}>
                   {z.name}
+                  {!storeId && z.hint ? ` — ${z.hint}` : ""}
                 </option>
               ))}
             </select>
