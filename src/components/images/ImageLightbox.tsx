@@ -743,24 +743,28 @@ export function ImageLightbox({
 
 
   const uploaderMeta = current && (
-    <div className="flex items-center gap-2">
-      <StaffFace name={current.uploaded_by_name} className="h-14 w-14 bg-primary/10 text-sm text-primary" />
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-foreground truncate">
-          {current.uploaded_by_name || "Okänd uppladdare"}
-        </p>
-        <p className="text-[10px] text-muted-foreground font-mono tabular-nums">
-          {new Date(current.created_at).toLocaleString("sv-SE", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </p>
+    <div className="min-w-0 space-y-2">
+      <div className="flex items-center gap-2">
+        <StaffFace name={current.uploaded_by_name} className="h-14 w-14 bg-primary/10 text-sm text-primary" />
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-foreground truncate">
+            {current.uploaded_by_name || "Okänd uppladdare"}
+          </p>
+          <p className="text-[10px] text-muted-foreground font-mono tabular-nums">
+            {new Date(current.created_at).toLocaleString("sv-SE", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
+        </div>
       </div>
+      <ImageSourceLinks imageId={current.id} onNavigate={onClose} />
     </div>
   );
+
 
   // ---------- Mobil: Instagram-liknande swipe-karusell ----------
   if (isMobile) {
