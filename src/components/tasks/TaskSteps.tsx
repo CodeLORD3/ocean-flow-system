@@ -74,7 +74,18 @@ export function TaskSteps({
     }
   };
 
-  if (general.length === 0 && !importantNote && steps.length === 0) return null;
+  const addStep = async () => {
+    const next: TaskGuide = { ...parsed, steps: [...parsed.steps, { text: "Nytt steg", image: null }] };
+    try {
+      await saveGuide.mutateAsync({ id: taskId, templateItemId, guide: cleanGuide(next) });
+      setEditOpen(true);
+      setOpenIndex(parsed.steps.length);
+    } catch (err: any) {
+      toast({ title: "Kunde inte lägga till", description: err.message, variant: "destructive" });
+    }
+  };
+
+  if (general.length === 0 && !importantNote && steps.length === 0 && !canEdit) return null;
 
   return (
     <div className="space-y-3">
