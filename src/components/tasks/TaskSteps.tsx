@@ -325,15 +325,12 @@ function StepViewer({
               Steg {index + 1} av {steps.length}
             </p>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 pr-8">
             {canEdit && !edit && (
               <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setEdit(true)}>
                 <Pencil className="mr-1 h-3.5 w-3.5" /> Ändra text
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Stäng">
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </div>
 
