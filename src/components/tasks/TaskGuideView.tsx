@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertTriangle, Camera, MapPin, RotateCcw, Target, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -81,6 +81,7 @@ export function TaskGuideView({
   onReport,
   taskId,
   onSaveGuide,
+  highlightStep = null,
 }: {
   guide: TaskGuide;
   zones?: GuideZone[];
@@ -90,8 +91,16 @@ export function TaskGuideView({
   taskId?: string;
   /** Satt när användaren får ändra bilderna i beskrivningen. */
   onSaveGuide?: (next: TaskGuide) => Promise<void> | void;
+  /** Steget som ska lysa upp och rullas fram, 1 och uppåt. */
+  highlightStep?: number | null;
 }) {
   const canEditImages = !!taskId && !!onSaveGuide;
+  /* Kommer man från en bild i ett steg ska steget rullas fram och lysa upp. */
+  useEffect(() => {
+    if (!highlightStep) return;
+    const el = document.getElementById(`guide-step-${highlightStep}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightStep, guide.steps.length]);
   const saveStepImage = (i: number, url: string | null) =>
     onSaveGuide!({
       ...guide,
@@ -193,7 +202,15 @@ export function TaskGuideView({
           <h3 className="mb-2 text-sm font-semibold">2. Arbetsgång</h3>
           <ol className="space-y-3">
             {guide.steps.map((s, i) => (
-              <li key={i} className="flex gap-3">
+              <li
+                key={i}
+                id={`guide-step-${i + 1}`}
+                className={
+                  highlightStep === i + 1
+                    ? "flex gap-3 rounded-lg bg-primary/5 p-2 ring-2 ring-primary"
+                    : "flex gap-3"
+                }
+              >
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold">
                   {i + 1}
                 </span>

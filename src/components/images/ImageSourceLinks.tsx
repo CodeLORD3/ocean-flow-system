@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { useImageLinks } from "@/hooks/useImageLibrary";
+import { useImageStepIndex } from "@/hooks/useEntityImages";
 import { useLinkTargetNames } from "@/hooks/useImagePickers";
 import { linkTypeLabel, relationLabel } from "@/lib/imageStatus";
 import { placeRoute } from "@/components/images/ImageLinksPanel";
@@ -25,6 +26,7 @@ export default function ImageSourceLinks({
   const { data: names = {} } = useLinkTargetNames(
     links.map((l) => ({ entity_type: l.entity_type, entity_id: l.entity_id })),
   );
+  const { data: step = null } = useImageStepIndex(imageId);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -35,13 +37,18 @@ export default function ImageSourceLinks({
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Källa</p>
       <div className="flex min-w-0 flex-col items-stretch gap-1">
         {links.map((l) => {
-          const route = placeRoute(l.entity_type, l.entity_id, imageId);
+          let route = placeRoute(l.entity_type, l.entity_id, imageId);
+          /* Bilder som tagits i ett steg leder in i just det steget i uppgiften. */
+          if (route && l.entity_type === "task" && step) {
+            route += `${route.includes("?") ? "&" : "?"}steg=${step}`;
+          }
           const name = names[`${l.entity_type}:${l.entity_id}`] || linkTypeLabel(l.entity_type);
           const here = !!route && route.split("?")[0] === location.pathname;
           const inner = (
             <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
               <span className="text-[10px] uppercase tracking-wide opacity-70">
                 {linkTypeLabel(l.entity_type)} · {relationLabel(l.relation_type)}
+                {l.entity_type === "task" && step ? ` · steg ${step}` : ""}
               </span>
               <span className="break-words text-xs font-semibold leading-snug">{name}</span>
             </span>

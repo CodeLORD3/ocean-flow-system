@@ -112,6 +112,23 @@ export function useEntityImageCounts(entityType: string, ids: string[]) {
 
 const BUCKET = "logos";
 
+/** Vilket steg i uppgiften bilden togs på, om den togs i ett steg. */
+export function useImageStepIndex(imageId?: string | null) {
+  return useQuery({
+    queryKey: ["image-step-index", imageId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entity_images")
+        .select("step_index")
+        .eq("id", imageId!)
+        .maybeSingle();
+      if (error) throw error;
+      return ((data as { step_index: number | null } | null)?.step_index ?? null) as number | null;
+    },
+    enabled: !!imageId,
+  });
+}
+
 export function useUploadEntityImage() {
   const qc = useQueryClient();
   return useMutation({
