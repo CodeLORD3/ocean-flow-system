@@ -90,6 +90,15 @@ export default function ImageBulkBar({
         <Button size="sm" variant="ghost" onClick={onClear}>
           Avmarkera
         </Button>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={removeSelected}
+          disabled={del.isPending}
+          className="ml-auto"
+        >
+          {del.isPending ? "Tar bort…" : `Ta bort ${selectedIds.length}`}
+        </Button>
       </div>
 
       {open && (
