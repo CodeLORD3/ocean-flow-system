@@ -161,6 +161,15 @@ export function TaskRunFullscreen({
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  /** Tillbaka till utrustning & material — både i telefonen och på dator. */
+  const backToPrep = () => {
+    setShowPrep(true);
+    if (isPhone) {
+      const el = feedRef.current?.children[0] as HTMLElement | undefined;
+      setTimeout(() => el?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+    }
+  };
+
   const markAndNext = async () => {
     if (!done) await markStep(no, s);
     if (!last) {
