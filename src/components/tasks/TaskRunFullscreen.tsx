@@ -318,6 +318,17 @@ export function TaskRunFullscreen({
                   )}
 
                   <div className="flex items-center gap-2 pt-1">
+                    {/* Liten blå tillbaka-knapp till vänster om Klar */}
+                    <Button
+                      className="h-14 w-14 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
+                      aria-label="Föregående steg"
+                      onClick={() => {
+                        if (i > 0) scrollToStep(i - 1);
+                        else onClose();
+                      }}
+                    >
+                      <ChevronLeft className="h-6 w-6" />
+                    </Button>
                     <Button
                       className={cn(
                         "h-14 flex-1 text-base font-semibold",
