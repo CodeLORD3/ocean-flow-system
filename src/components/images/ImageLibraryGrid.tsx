@@ -118,6 +118,23 @@ export default function ImageLibraryGrid({
               {dayDateLabel(key)}
             </span>
             <span className="h-px flex-1 bg-border" />
+            <button
+              type="button"
+              onClick={() => {
+                const dayIds = items.map(({ img }) => img.id);
+                const allOn = dayIds.every((id) => selectedIds.includes(id));
+                onSelectedChange(
+                  allOn
+                    ? selectedIds.filter((id) => !dayIds.includes(id))
+                    : Array.from(new Set([...selectedIds, ...dayIds])),
+                );
+              }}
+              className="whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              {items.every(({ img }) => selectedIds.includes(img.id))
+                ? "Avmarkera dagen"
+                : "Markera dagen"}
+            </button>
             <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
               {items.length} bild{items.length === 1 ? "" : "er"}
             </span>
