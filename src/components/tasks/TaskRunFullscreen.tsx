@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Camera, Check, ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -53,6 +53,8 @@ export function TaskRunFullscreen({
   onAddPhoto,
   onSetStepImage,
   onFinish,
+  prepNode,
+  prepMissingCount = 0,
 }: {
   open: boolean;
   onClose: () => void;
@@ -67,12 +69,17 @@ export function TaskRunFullscreen({
   /** Sätter bilden på ett steg — bilderna är det viktigaste i beskrivningen. */
   onSetStepImage?: (stepIndex: number, file: File) => Promise<void> | void;
   onFinish: () => Promise<void> | void;
+  /** Kontrollen av utrustning & material — första skärmen i flödet. */
+  prepNode?: ReactNode;
+  prepMissingCount?: number;
 }) {
   const { data: staff } = useCurrentStaff();
   const { data: checks = [] } = useTaskPrepChecks(open ? checklistItemId : null);
   const setStep = useSetStepCheck();
   const clearStep = useClearStepCheck();
   const [index, setIndex] = useState(0);
+  /** Kontrollen visas först på dator, sedan stegen. */
+  const [showPrep, setShowPrep] = useState(true);
   const isPhone = useIsPhone();
   const feedRef = useRef<HTMLDivElement | null>(null);
 
@@ -83,6 +90,8 @@ export function TaskRunFullscreen({
     if (!open) return;
     const firstLeft = steps.findIndex((_s, i) => !doneNos.has(i + 1));
     setIndex(firstLeft === -1 ? Math.max(steps.length - 1, 0) : firstLeft);
+    /** Är utrustningen redan kontrollerad hoppar vi rakt till stegen. */
+    setShowPrep(prepMissingCount > 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, steps.length]);
 
@@ -115,9 +124,12 @@ export function TaskRunFullscreen({
     });
   };
 
+  /** Kontrollskärmen ligger först i flödet, före steg 1. */
+  const feedOffset = prepNode ? 1 : 0;
+
   /** Swipa vidare i telefonen: nästa steg glider upp. */
   const scrollToStep = (i: number) => {
-    const el = feedRef.current?.children[i] as HTMLElement | undefined;
+    const el = feedRef.current?.children[i + feedOffset] as HTMLElement | undefined;
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -157,11 +169,29 @@ export function TaskRunFullscreen({
           ref={feedRef}
           onScroll={(e) => {
             const h = e.currentTarget.clientHeight || 1;
-            const i = Math.round(e.currentTarget.scrollTop / h);
+            const i = Math.round(e.currentTarget.scrollTop / h) - feedOffset;
             if (i !== index) setIndex(Math.min(Math.max(i, 0), steps.length - 1));
           }}
           className="h-full snap-y snap-mandatory overflow-y-auto overscroll-contain"
         >
+          {/* Först: kontrollera utrustning & material */}
+          {prepNode && (
+            <section className="flex h-full snap-start flex-col overflow-y-auto px-3 pb-4 pt-14">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Steg 1 · innan du börjar
+              </p>
+              <h2 className="mb-3 font-heading text-xl font-bold">Kontrollera utrustning & material</h2>
+              {prepNode}
+              <Button
+                className="mt-3 h-14 w-full text-base font-semibold"
+                onClick={() => scrollToStep(0)}
+              >
+                {prepMissingCount > 0 ? "Fortsätt till stegen" : "Allt kontrollerat · till stegen"}
+                <ChevronUp className="ml-2 h-5 w-5" />
+              </Button>
+            </section>
+          )}
+
           {steps.map((st, i) => {
             const n = i + 1;
             const stepDone = doneNos.has(n);
@@ -204,24 +234,37 @@ export function TaskRunFullscreen({
                   </label>
                 )}
 
-                <div className="relative z-10 space-y-2 px-4 pb-6 pt-16 text-white">
+                {/* Texten i en tät ruta: läsbar utan att dölja bilden */}
+                <div className="relative z-10 m-3 max-h-[58%] space-y-2 overflow-y-auto rounded-2xl bg-black/75 p-4 text-white backdrop-blur-sm">
                   <p className="font-mono text-xs tabular-nums text-white/70">
-                    Steg {n} av {steps.length} · {taskName}
+                    Steg {n + feedOffset} av {steps.length + feedOffset} · {taskName}
                   </p>
                   <h2 className="font-heading text-2xl font-bold leading-tight">
                     {stepTitle(st.text || `Steg ${n}`)}
                   </h2>
-                  {st.text && <p className="text-[15px] leading-snug text-white/85">{st.text}</p>}
+                  {st.text && <p className="text-[15px] leading-snug text-white">{st.text}</p>}
                   {st.keyPoint && (
-                    <p className="text-sm text-white/90">
+                    <p className="text-sm leading-snug text-emerald-200">
                       <span className="font-semibold uppercase tracking-wide">Viktigt · </span>
                       {st.keyPoint}
                     </p>
                   )}
+                  {st.why && (
+                    <p className="text-sm leading-snug text-sky-200">
+                      <span className="font-semibold uppercase tracking-wide">Varför · </span>
+                      {st.why}
+                    </p>
+                  )}
                   {st.safety && (
-                    <p className="text-sm text-amber-200">
+                    <p className="text-sm leading-snug text-amber-200">
                       <span className="font-semibold uppercase tracking-wide">Säkerhet · </span>
                       {st.safety}
+                    </p>
+                  )}
+                  {st.haccp && (
+                    <p className="text-sm leading-snug text-rose-200">
+                      <span className="font-semibold uppercase tracking-wide">HACCP · </span>
+                      {st.haccp}
                     </p>
                   )}
 
@@ -319,6 +362,17 @@ export function TaskRunFullscreen({
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-3">
+        {/* Kontrollen av utrustningen ligger först, sedan stegen */}
+        {prepNode && showPrep ? (
+          <div className="mx-auto w-full max-w-3xl space-y-3">
+            <h2 className="font-heading text-xl font-bold">Kontrollera utrustning & material</h2>
+            {prepNode}
+            <Button className="h-12 w-full text-base font-semibold" onClick={() => setShowPrep(false)}>
+              {prepMissingCount > 0 ? "Fortsätt till stegen" : "Allt kontrollerat · till stegen"}
+              <ChevronRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        ) : (
         <div className="mx-auto w-full max-w-3xl space-y-3">
           {s.image ? (
             <img
@@ -351,11 +405,12 @@ export function TaskRunFullscreen({
           )}
           <h2 className="font-heading text-xl font-bold leading-snug sm:text-2xl">{stepTitle(s.text || `Steg ${no}`)}</h2>
           {s.text && <p className="text-[15px] leading-snug text-muted-foreground">{s.text}</p>}
-          <Detail label="Viktigt" text={s.keyPoint} tone="bg-primary/5 text-primary" />
-          <Detail label="Varför" text={s.why} tone="bg-muted text-muted-foreground" />
+          <Detail label="Viktigt" text={s.keyPoint} tone="bg-emerald-500/10 text-emerald-700" />
+          <Detail label="Varför" text={s.why} tone="bg-sky-500/10 text-sky-700" />
           <Detail label="Säkerhet" text={s.safety} tone="bg-amber-500/10 text-amber-700" />
-          <Detail label="HACCP" text={s.haccp} tone="bg-sky-500/10 text-sky-700" />
+          <Detail label="HACCP" text={s.haccp} tone="bg-rose-500/10 text-rose-700" />
         </div>
+        )}
       </div>
 
       <div className="space-y-2 border-t bg-card px-3 py-2">
