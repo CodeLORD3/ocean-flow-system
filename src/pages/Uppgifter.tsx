@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, Trash2 } from "lucide-react";
+import { Crosshair, Plus, Trash2 } from "lucide-react";
 import { NewTaskDialog } from "@/components/tasks/NewTaskDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,8 +33,8 @@ import {
 } from "@/hooks/useTasks";
 import { DAYPARTS, durationText, groupByDaypart, remainingMinutes } from "@/lib/taskTime";
 import { TaskRow, type TaskRowArea } from "@/components/tasks/TaskRow";
-import { TaskZoneMap, type ZoneTaskCount } from "@/components/tasks/TaskZoneMap";
-import StoreMap from "@/pages/StoreMap";
+import { TaskAreaChips, type AreaChipCount } from "@/components/tasks/TaskAreaChips";
+import { TaskMapDrawer } from "@/components/tasks/TaskMapDrawer";
 import { TaskCalendar } from "@/components/tasks/TaskCalendar";
 import { TaskRegister } from "@/components/tasks/TaskRegister";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
@@ -45,19 +45,19 @@ import ProductionRecipes from "@/pages/ProductionRecipes";
 
 const WEEKDAY_NAMES = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
 
-function Progress({ done, total }: { done: number; total: number }) {
+/** Kompakt framsteg: en rad med rubrik, antal klara och en tunn mätare. */
+function Progress({ done, total, label }: { done: number; total: number; label: string }) {
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-  const tone = "bg-emerald-500";
   return (
-    <div className="space-y-2">
-      <div className="flex items-baseline justify-between">
-        <span className="font-mono text-3xl tabular-nums font-semibold">{pct}%</span>
-        <span className="text-xs text-muted-foreground">
-          {done} av {total} klara
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-heading text-lg font-semibold">{label}</h2>
+        <span className="font-mono text-sm tabular-nums text-muted-foreground">
+          {done} av {total} klara · {pct} %
         </span>
       </div>
-      <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
-        <div className={cn("h-full rounded-full transition-all", tone)} style={{ width: `${pct}%` }} />
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -99,26 +99,23 @@ export default function Uppgifter() {
     return map;
   }, [zones]);
 
-  /** Dagens uppgifter per område, så kartan visar vad som är kvar var. */
+  /** Dagens uppgifter per område: hur många totalt och hur många klara. */
   const zoneCounts = useMemo(() => {
-    const map = new Map<string, ZoneTaskCount>();
+    const map = new Map<string, AreaChipCount>();
     tasks.forEach((t) => {
       if (!t.zone_id) return;
-      const cur = map.get(t.zone_id) ?? { total: 0, left: 0 };
-      map.set(t.zone_id, { total: cur.total + 1, left: cur.left + (t.done ? 0 : 1) });
+      const cur = map.get(t.zone_id) ?? { total: 0, done: 0 };
+      map.set(t.zone_id, { total: cur.total + 1, done: cur.done + (t.done ? 1 : 0) });
     });
     return map;
   }, [tasks]);
 
-  /** Hela butikskartan kan fällas ut i uppgiftslistan. */
+  /** Kartan är hjälpinformation och ligger i en panel från höger. */
   const [mapOpen, setMapOpen] = useState(false);
-  /** Ytan som visas i kartan här inne — kartan lämnar aldrig Uppgifter. */
-  const [openZoneId, setOpenZoneId] = useState<string | null>(null);
-  /** Öppnar ytans egen sida inne i uppgiftsfliken i stället för att byta flik. */
-  const openZoneHere = (zoneId: string) => {
-    setOpenZoneId(zoneId);
+  const [mapZoneId, setMapZoneId] = useState<string | null>(null);
+  const openMapOn = (zoneId: string | null) => {
+    setMapZoneId(zoneId);
     setMapOpen(true);
-    setTab("dag");
   };
 
   const [tab, setTab] = useState("mina");
@@ -129,7 +126,7 @@ export default function Uppgifter() {
   const [fArea, setFArea] = useState("all");
   const [fCat, setFCat] = useState("all");
   const [fPerson, setFPerson] = useState("all");
-  const [fStatus, setFStatus] = useState<"kvar" | "klara" | "allt">("allt");
+  const [fStatus, setFStatus] = useState<"kvar" | "klara" | "allt">("kvar");
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -285,10 +282,8 @@ export default function Uppgifter() {
     };
   }, [searchParams]);
 
-  /** Öppnar kartan med ytan markerad och med väg tillbaka till uppgiften. */
-  const openOnMap = (t: Task, areaId: string) => {
-    switchTab(`/butikskarta?zone=${areaId}&fromTask=${t.id}&taskName=${encodeURIComponent(t.task)}`);
-  };
+  /** "Visa på karta" öppnar kartpanelen från höger — sidan ligger kvar. */
+  const openOnMap = (_t: Task, areaId: string) => openMapOn(areaId);
 
   const assign = (t: Task, staffId: string | null) => {
     updateTask.mutate(
@@ -386,6 +381,11 @@ export default function Uppgifter() {
             </Select>
           )}
           <Input type="date" value={day} onChange={(e) => setDay(e.target.value)} className="h-9 w-[150px]" />
+          {plan && zones.length > 0 && (
+            <Button variant="ghost" size="sm" onClick={() => openMapOn(null)}>
+              <Crosshair className="mr-1 h-4 w-4" /> Butikskarta
+            </Button>
+          )}
           <Button size="sm" onClick={() => setNewOpen(true)}>
             <Plus className="mr-1 h-4 w-4" /> Ny uppgift
           </Button>
@@ -417,270 +417,203 @@ export default function Uppgifter() {
         </TabsList>
 
         <TabsContent value="mina">
-          <div className="grid gap-4 lg:grid-cols-[1fr_380px] lg:items-start">
-            <div className="min-w-0 space-y-4">
-
-          {!meId ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              Logga in med din personalprofil för att se dina uppgifter.
-            </p>
-          ) : (
-            <>
-              <Card className="p-4">
+          <div className="space-y-4">
+            {!meId ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                Logga in med din personalprofil för att se dina uppgifter.
+              </p>
+            ) : (
+              <>
                 <div className="flex items-center gap-3">
                   <StaffAvatar
                     name={`${staff?.first_name ?? ""} ${staff?.last_name ?? ""}`.trim()}
                     imageUrl={staff?.profile_image_url ?? null}
-                    className="h-12 w-12"
+                    className="h-11 w-11"
                   />
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {staff?.first_name} {staff?.last_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {myTasks.mine.length} kvar att göra
-                      {isResponsible && myTasks.unassigned.length > 0
-                        ? ` · ${myTasks.unassigned.length} utan tilldelad person`
-                        : ""}
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <Progress
+                      done={myTasks.doneByMe.length}
+                      total={myTasks.doneByMe.length + myTasks.mine.length}
+                      label={`${staff?.first_name ?? ""} ${staff?.last_name ?? ""}`.trim() || "Mina uppgifter"}
+                    />
                   </div>
                 </div>
-              </Card>
 
-              <div className="space-y-2">
-                <h2 className="text-sm font-semibold">Tilldelade dig</h2>
-                {myTasks.mine.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">
-                    Inga uppgifter är tilldelade dig för valt datum.
-                  </p>
-                ) : (
-                  <div className="border-t border-grid-line">{myTasks.mine.map(renderTaskRow)}</div>
-                )}
-              </div>
-
-              {isResponsible && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold">Du är ansvarig — ingen tilldelad</h2>
-                    <span className="text-xs text-muted-foreground">{myTasks.unassigned.length}</span>
-                  </div>
-                  {myTasks.unassigned.length === 0 ? (
+                <div className="space-y-1.5">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Tilldelade dig
+                  </h3>
+                  {myTasks.mine.length === 0 ? (
                     <p className="py-6 text-center text-sm text-muted-foreground">
-                      Allt är tilldelat eller klart.
+                      Inga uppgifter är tilldelade dig för valt datum.
                     </p>
                   ) : (
-                    <div className="border-t border-grid-line">
-                      {myTasks.unassigned.map(renderTaskRow)}
-                    </div>
+                    <div className="border-t border-grid-line">{myTasks.mine.map(renderTaskRow)}</div>
                   )}
                 </div>
-              )}
 
-              {myTasks.doneByMe.length > 0 && (
-                <div className="space-y-2">
-                  <h2 className="text-sm font-semibold">Klara av dig</h2>
-                  <div className="border-t border-grid-line">{myTasks.doneByMe.map(renderTaskRow)}</div>
-                </div>
-              )}
-            </>
-          )}
-            </div>
-            {plan && zones.length > 0 && (
-              <div className="lg:sticky lg:top-4">
-                <TaskZoneMap
-                  plan={plan}
-                  zones={zones}
-                  areas={areaOf}
-                  counts={zoneCounts}
-                  selected={fArea}
-                  onSelect={setFArea}
-                  onOpenZone={openZoneHere}
-                  onOpenMap={() => setTab("dag")}
-                  openLabel="Alla dagens uppgifter"
-                />
-              </div>
+                {isResponsible && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Du är ansvarig — ingen tilldelad
+                      </h3>
+                      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                        {myTasks.unassigned.length}
+                      </span>
+                    </div>
+                    {myTasks.unassigned.length === 0 ? (
+                      <p className="py-6 text-center text-sm text-muted-foreground">Allt är tilldelat eller klart.</p>
+                    ) : (
+                      <div className="border-t border-grid-line">{myTasks.unassigned.map(renderTaskRow)}</div>
+                    )}
+                  </div>
+                )}
+
+                {myTasks.doneByMe.length > 0 && (
+                  <div className="space-y-1.5">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Klara av dig
+                    </h3>
+                    <div className="border-t border-grid-line">{myTasks.doneByMe.map(renderTaskRow)}</div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </TabsContent>
 
         <TabsContent value="dag">
-          <div className="grid gap-4 lg:grid-cols-[1fr_380px] lg:items-start">
-            <div className="min-w-0 space-y-4">
+          <div className="space-y-4">
+            <Progress done={doneCount} total={tasks.length} label="Dagens uppgifter" />
+            {left > 0 && <p className="text-xs text-muted-foreground">Beräknad tid kvar: {durationText(left)}</p>}
 
-
-          <Card className="p-4">
-            <Progress done={doneCount} total={tasks.length} />
-            {left > 0 && (
-              <p className="mt-2 text-xs text-muted-foreground">Beräknad tid kvar: {durationText(left)}</p>
-            )}
-          </Card>
-
-          <div className="flex flex-wrap gap-2">
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Sök"
-              className="h-8 w-[200px] text-xs"
-            />
-            <Select value={fArea} onValueChange={setFArea}>
-              <SelectTrigger className="h-8 w-[160px] text-xs">
-                <SelectValue placeholder="Område" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alla områden</SelectItem>
-                <SelectItem value="none">Utan område</SelectItem>
-                {[...areaOf.values()].map((a) => (
-                  <SelectItem key={a!.id} value={a!.id}>
-                    {a!.number}. {a!.name}
-                  </SelectItem>
+            {/* Kompakt filterrad — sekundär till uppgifterna */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Sök uppgift …"
+                className="h-9 w-[220px] rounded-full border-0 bg-muted/60 text-sm"
+              />
+              <Select value={fCat} onValueChange={setFCat}>
+                <SelectTrigger className="h-9 w-[150px] border-0 bg-muted/60 text-xs">
+                  <SelectValue placeholder="Kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alla kategorier</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                  {WORK_TYPES.map((w) => (
+                    <SelectItem key={w.key} value={`wt:${w.key}`}>
+                      {w.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={fPerson} onValueChange={setFPerson}>
+                <SelectTrigger className="h-9 w-[150px] border-0 bg-muted/60 text-xs">
+                  <SelectValue placeholder="Person" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alla personer</SelectItem>
+                  <SelectItem value="none">Ingen tilldelad</SelectItem>
+                  {staffList.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      <span className="inline-flex items-center gap-2">
+                        <StaffAvatar
+                          name={`${s.first_name} ${s.last_name}`}
+                          imageUrl={s.profile_image_url}
+                          className="h-8 w-8"
+                        />
+                        {s.first_name} {s.last_name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex overflow-hidden rounded-full bg-muted/60 text-xs">
+                {(["kvar", "klara", "allt"] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setFStatus(k)}
+                    className={cn(
+                      "px-3.5 py-1.5 capitalize",
+                      fStatus === k && "bg-foreground text-background font-semibold",
+                    )}
+                  >
+                    {k === "allt" ? "Alla" : k}
+                  </button>
                 ))}
-              </SelectContent>
-            </Select>
-            <Select value={fCat} onValueChange={setFCat}>
-              <SelectTrigger className="h-8 w-[170px] text-xs">
-                <SelectValue placeholder="Kategori" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alla kategorier</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-                {WORK_TYPES.map((w) => (
-                  <SelectItem key={w.key} value={`wt:${w.key}`}>
-                    {w.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={fPerson} onValueChange={setFPerson}>
-              <SelectTrigger className="h-8 w-[170px] text-xs">
-                <SelectValue placeholder="Person" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alla personer</SelectItem>
-                <SelectItem value="none">Ingen tilldelad</SelectItem>
-                {staffList.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    <span className="inline-flex items-center gap-2">
-                      <StaffAvatar
-                        name={`${s.first_name} ${s.last_name}`}
-                        imageUrl={s.profile_image_url}
-                        className="h-10 w-10"
-                      />
-                      {s.first_name} {s.last_name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex overflow-hidden rounded-md border text-xs">
-              {(["typ", "tid"] as const).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setGroupBy(k)}
-                  className={cn("px-3 py-1.5", groupBy === k && "bg-primary text-primary-foreground")}
-                >
-                  {k === "typ" ? "Typ" : "Tid"}
-                </button>
-              ))}
-            </div>
-            <div className="flex overflow-hidden rounded-md border text-xs">
-              {(["kvar", "klara", "allt"] as const).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setFStatus(k)}
-                  className={cn("px-3 py-1.5 capitalize", fStatus === k && "bg-primary text-primary-foreground")}
-                >
-                  {k}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {tasks.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              Inga uppgifter för valt datum. Lägg till en tillfällig uppgift eller skapa dagens checklista.
-            </p>
-          ) : (
-            <div className="space-y-5">
-              {groups.map((g) => (
-                <div key={g.key} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold">{g.label}</h2>
-                    <span className="text-xs text-muted-foreground">
-                      {g.tasks.filter((t) => t.done).length}/{g.tasks.length}
-                    </span>
-                  </div>
-                  <div className="border-t border-grid-line">
-                  {g.tasks.map((t) => (
-                    <div
-                      key={t.id}
-                      id={`uppgift-${t.id}`}
-                      className={
-                        marked === t.id
-                          ? "rounded-lg ring-2 ring-primary ring-offset-2 ring-offset-background transition-shadow"
-                          : undefined
-                      }
+              </div>
+              <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+                Sortera
+                <div className="flex overflow-hidden rounded-full bg-muted/60">
+                  {(["tid", "typ"] as const).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setGroupBy(k)}
+                      className={cn(
+                        "px-3.5 py-1.5",
+                        groupBy === k && "bg-foreground text-background font-semibold",
+                      )}
                     >
-                      <TaskRow
-                        task={t}
-                        area={t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null}
-                        categoryName={catOf(t)?.name ?? null}
-                        categoryColor={catOf(t)?.color ?? null}
-                        assigneeName={staffName(t.assigned_staff_id)}
-                        assigneeImage={
-                          staffList.find((p) => p.id === t.assigned_staff_id)?.profile_image_url ?? null
-                        }
-                        completedByName={staffName(t.completed_by_staff_id)}
-                        completedByImage={
-                          staffList.find((p) => p.id === t.completed_by_staff_id)?.profile_image_url ?? null
-                        }
-                        onToggle={(done) => setDone.mutate({ id: t.id, done })}
-                        onSaveRequirement={(patch) => updateTask.mutate({ id: t.id, ...patch })}
-                        staffOptions={staffOptions}
-                        onAssign={(staffId) => assign(t, staffId)}
-                        onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
-                        onAddPhoto={(file) => addPhoto(t, file)}
-                        onOpenArea={(areaId) => openOnMap(t, areaId)}
-                        linkLabel={targetOf(t)?.label ?? null}
-                        onOpenLink={() => {
-                          const target = targetOf(t);
-                          if (target) switchTab(target.url);
-                        }}
-                        onDelete={() => deleteTask(t)}
-                      />
+                      {k === "typ" ? "Typ" : "Tid"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Områden som snabbfilter — samma färger som butikskartan */}
+            {zones.length > 0 && (
+              <TaskAreaChips
+                areas={[...areaOf.values()]}
+                counts={zoneCounts}
+                selected={fArea}
+                onSelect={setFArea}
+                totalCount={{ total: tasks.length, done: doneCount }}
+              />
+            )}
+
+            {tasks.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                Inga uppgifter för valt datum. Lägg till en tillfällig uppgift eller skapa dagens checklista.
+              </p>
+            ) : (
+              <div className="space-y-6">
+                {groups.map((g) => (
+                  <div key={g.key} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {g.label}
+                      </h3>
+                      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                        {g.tasks.filter((t) => t.done).length}/{g.tasks.length}
+                      </span>
                     </div>
-                   ))}
+                    <div className="border-t border-grid-line">
+                      {g.tasks.map((t) => (
+                        <div
+                          key={t.id}
+                          id={`uppgift-${t.id}`}
+                          className={
+                            marked === t.id
+                              ? "rounded-lg ring-2 ring-primary ring-offset-2 ring-offset-background transition-shadow"
+                              : undefined
+                          }
+                        >
+                          {renderTaskRow(t)}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                 </div>
-               ))}
-            </div>
-          )}
-            </div>
-            {plan && zones.length > 0 && (
-              <div className="space-y-3 lg:sticky lg:top-4">
-                <TaskZoneMap
-                  plan={plan}
-                  zones={zones}
-                  areas={areaOf}
-                  counts={zoneCounts}
-                  selected={fArea}
-                  onSelect={setFArea}
-                  onOpenZone={openZoneHere}
-                  chipsOnly={mapOpen}
-                  onOpenMap={() => setMapOpen((v) => !v)}
-                  openLabel={mapOpen ? "Dölj kartan" : "Visa hela kartan"}
-                />
-                {/* Butikskartan med alla funktioner — samma karta som i Översikt */}
-                {mapOpen && (
-                  <Card className="p-4">
-                    <StoreMap embedded openZoneId={openZoneId} onOpenZoneChange={setOpenZoneId} />
-                  </Card>
-                )}
+                ))}
               </div>
             )}
           </div>
@@ -1012,6 +945,23 @@ export default function Uppgifter() {
         zones={zones}
         onCreated={(id) => switchTab(`/uppgift/${id}`)}
       />
+
+      <TaskMapDrawer
+        open={mapOpen}
+        onOpenChange={setMapOpen}
+        plan={plan}
+        zones={zones}
+        areas={areaOf}
+        tasks={tasks}
+        zoneId={mapZoneId}
+        onZoneChange={(id) => {
+          setMapZoneId(id);
+          setFArea(id ?? "all");
+        }}
+        onOpenArea={(id) => switchTab(`/butikskarta?zone=${id}`)}
+        onOpenTask={(id) => switchTab(`/uppgift/${id}`)}
+      />
+
     </div>
   );
 }

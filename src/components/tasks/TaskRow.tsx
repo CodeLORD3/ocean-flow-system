@@ -142,8 +142,8 @@ export function TaskRow({
             className={cn(
               "block break-words leading-snug",
               open
-                ? "text-[17px] font-bold sm:text-[13px]"
-                : "text-[15px] font-semibold sm:text-xs sm:font-semibold",
+                ? "text-[17px] font-bold sm:text-[16px]"
+                : "text-[15px] font-semibold sm:text-[15px] sm:font-semibold",
               task.done && "text-muted-foreground line-through",
             )}
           >
