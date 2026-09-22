@@ -80,6 +80,9 @@ export function TaskRunFullscreen({
   const [index, setIndex] = useState(0);
   /** Kontrollen visas först på dator, sedan stegen. */
   const [showPrep, setShowPrep] = useState(true);
+  /** Textrutan i telefonen kan dras ner så hela bilden syns. */
+  const [textOpen, setTextOpen] = useState(true);
+  const touchY = useRef<number | null>(null);
   const isPhone = useIsPhone();
   const feedRef = useRef<HTMLDivElement | null>(null);
 
