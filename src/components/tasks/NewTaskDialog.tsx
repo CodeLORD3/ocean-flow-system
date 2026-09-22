@@ -60,6 +60,10 @@ export function NewTaskDialog({
   onCreated?: (taskId: string) => void;
 }) {
   const addAdhoc = useAddAdhocTask();
+  const saveGuide = useSaveTaskGuide();
+  /** Bilderna behöver en mapp innan uppgiften finns — ett eget utkasts-id. */
+  const draftId = useMemo(() => `utkast-${Math.random().toString(36).slice(2, 10)}`, []);
+  const [steps, setSteps] = useState<BuilderStep[]>([]);
   const { data: register = [] } = useTaskRegister(storeId);
   const [step, setStep] = useState(1);
   /** Först väljer man om uppgiften finns sedan tidigare eller är helt ny. */
@@ -100,6 +104,7 @@ export function NewTaskDialog({
     setPickOnMap(false);
     setReqPhoto(false);
     setReqNote(false);
+    setSteps([]);
   }, [open]);
 
   const people = useMemo(() => {
