@@ -145,7 +145,7 @@ export function TaskRegister({
               </button>
 
               {open && (
-                <div className="divide-y border-t">
+                <div className="border-t border-grid-line">
                   {g.rows.map((r) => {
                     const area = r.zoneId ? areas.get(r.zoneId) : null;
                     const target = taskTarget(
@@ -155,45 +155,50 @@ export function TaskRegister({
                     return (
                       <div
                         key={r.key}
-                        className="flex flex-col gap-2 px-3 py-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:py-2"
+                        className="flex min-h-[34px] items-center gap-2 border-b border-grid-line px-2 py-1 last:border-b-0 hover:bg-muted/40"
                       >
+                        {/* Namnet först — samma täthet som raderna i Mina uppgifter */}
                         <button
                           type="button"
                           onClick={() => r.itemId && onOpenTask(r.itemId)}
                           disabled={!r.itemId}
                           className={cn(
-                            "w-full text-left font-medium break-words sm:min-w-[180px] sm:flex-1",
+                            "min-w-[7rem] flex-1 truncate py-0.5 text-left text-[13px] font-semibold",
                             r.itemId ? "hover:underline" : "cursor-default",
                           )}
+                          title={r.task}
                         >
                           {r.task}
                         </button>
 
-                        <div className="flex flex-wrap items-center gap-2">
-                          {area && (
-                            <span
-                              className="rounded-full px-2 py-0.5 text-xs"
-                              style={{ background: `${area.color}22`, color: area.color }}
-                            >
-                              {area.number}. {area.name}
+                        <span className="hidden w-[150px] shrink-0 items-center md:flex">
+                          {area ? (
+                            <span className="inline-flex w-full items-center gap-1.5 px-2 text-[11px] text-muted-foreground">
+                              <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: area.color }} />
+                              <span className="truncate">
+                                {area.number}. {area.name}
+                              </span>
                             </span>
+                          ) : (
+                            <span className="px-2 text-[11px] text-muted-foreground/60">Inget område</span>
                           )}
-                          {r.recurring && (
-                            <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
-                              <Repeat className="h-3 w-3" /> Återkommande
-                            </span>
-                          )}
-                          <span className="text-xs text-muted-foreground sm:w-[150px] sm:text-right">
-                            {whenText(r.lastDone)}
-                          </span>
-                          <span className="font-mono text-xs tabular-nums text-muted-foreground sm:w-[70px] sm:text-right">
-                            {r.times} ggr
-                          </span>
-                        </div>
+                        </span>
 
-                        <div className="flex flex-wrap items-center gap-2">
+                        <span className="hidden w-[132px] shrink-0 truncate text-[11px] text-muted-foreground xl:block">
+                          {whenText(r.lastDone)}
+                        </span>
+
+                        <span className="hidden w-[52px] shrink-0 justify-end font-mono text-[10px] tabular-nums text-muted-foreground sm:flex">
+                          {r.times} ggr
+                        </span>
+
+                        <span className="hidden w-[20px] shrink-0 justify-center sm:flex">
+                          {r.recurring && <Repeat className="h-3 w-3 text-muted-foreground" title="Återkommande" />}
+                        </span>
+
+                        <span className="hidden w-[150px] shrink-0 lg:block">
                           <Select value={r.categoryId ?? "none"} onValueChange={(v) => setCategory(r, v)}>
-                            <SelectTrigger className="h-10 w-full text-xs sm:h-8 sm:w-[170px]">
+                            <SelectTrigger className="h-7 w-full text-[11px]">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -205,19 +210,21 @@ export function TaskRegister({
                               ))}
                             </SelectContent>
                           </Select>
+                        </span>
 
+                        <span className="flex w-[34px] shrink-0 justify-end">
                           {target && (
                             <button
                               type="button"
                               onClick={() => onNavigate(target.url)}
-                              className="inline-flex min-h-9 items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20 sm:min-h-0 sm:px-2 sm:py-0.5"
+                              title={target.label}
+                              className="rounded-md p-1 text-primary hover:bg-primary/10"
                             >
-                              <ArrowUpRight className="h-3 w-3" /> {target.label}
+                              <ArrowUpRight className="h-4 w-4" />
                             </button>
                           )}
-                        </div>
+                        </span>
                       </div>
-
                     );
                   })}
                 </div>
