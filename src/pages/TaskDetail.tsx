@@ -238,8 +238,11 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
 
       <Card className="space-y-3 p-4" style={{ borderLeft: `4px solid ${area?.color ?? "hsl(var(--primary))"}` }}>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-bold">{task.task}</h1>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Uppgift
+            </p>
+            <h1 className="font-heading text-2xl font-bold leading-tight">{task.task}</h1>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
               {time.label && (
                 <span className="inline-flex items-center gap-1">
@@ -274,10 +277,10 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
               )}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             {target && (
-              <Button size="lg" variant="outline" onClick={() => switchTab(target.url)}>
-                <ArrowUpRight className="mr-1 h-4 w-4" /> {target.label}
+              <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => switchTab(target.url)}>
+                <ArrowUpRight className="mr-1 h-3.5 w-3.5" /> {target.label}
               </Button>
             )}
             <label className="inline-flex">
@@ -293,8 +296,8 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                   for (const f of files) await addPhoto(f);
                 }}
               />
-              <span className="inline-flex h-10 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted">
-                <Camera className="h-4 w-4" /> Ta bild
+              <span className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground">
+                <Camera className="h-3.5 w-3.5" /> Ta bild
               </span>
             </label>
             <label className="inline-flex">
@@ -309,12 +312,17 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                   for (const f of files) await addPhoto(f);
                 }}
               />
-              <span className="inline-flex h-10 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted">
-                <ImageIcon className="h-4 w-4" /> Bibliotek
+              <span className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground">
+                <ImageIcon className="h-3.5 w-3.5" /> Bibliotek
               </span>
             </label>
-            <Button variant="outline" size="lg" onClick={() => setArchiveOpen(true)}>
-              <Search className="mr-1 h-4 w-4" /> Sök i arkiv
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs text-muted-foreground"
+              onClick={() => setArchiveOpen(true)}
+            >
+              <Search className="mr-1 h-3.5 w-3.5" /> Sök i arkiv
             </Button>
           </div>
         </div>

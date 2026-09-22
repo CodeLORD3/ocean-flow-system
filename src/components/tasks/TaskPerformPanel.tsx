@@ -166,23 +166,27 @@ export function TaskPerformPanel({
         )}
 
         {status === "ej_startad" && (
-          <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-3">
             <Button
-              size="lg"
-              className="h-16 w-full text-base"
+              className="h-11 px-6 text-sm font-semibold"
               onClick={async () => {
                 await start.mutateAsync(task.id);
                 onStarted?.();
                 toast({ title: "Uppgiften är startad" });
               }}
             >
-              <Play className="mr-2 h-5 w-5" /> STARTA UPPGIFT
+              <Play className="mr-2 h-4 w-4" /> Starta uppgift
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setAfterOpen((v) => !v)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs text-muted-foreground"
+              onClick={() => setAfterOpen((v) => !v)}
+            >
               Registrera i efterhand
             </Button>
             {afterOpen && (
-              <div className="space-y-2 rounded-lg border p-3">
+              <div className="w-full space-y-2 rounded-lg border p-3">
                 <label className="text-sm font-medium">Tog cirka … minuter</label>
                 <Input
                   inputMode="numeric"
