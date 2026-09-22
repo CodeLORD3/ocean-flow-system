@@ -320,12 +320,34 @@ export function TaskRunFullscreen({
 
       <div className="flex-1 overflow-y-auto px-3 py-3">
         <div className="mx-auto w-full max-w-3xl space-y-3">
-          {s.image && (
+          {s.image ? (
             <img
               src={s.image}
               alt={stepTitle(s.text || "")}
-              className="max-h-[46vh] w-full rounded-xl object-contain"
+              className="max-h-[46vh] w-full rounded-xl bg-muted object-contain"
             />
+          ) : (
+            <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-xl bg-muted">
+              <Camera className="h-8 w-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Ingen bild på steget än</p>
+            </div>
+          )}
+          {onSetStepImage && (
+            <label className="inline-flex">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  e.currentTarget.value = "";
+                  if (f) await onSetStepImage(index, f);
+                }}
+              />
+              <span className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-md border px-3 text-xs hover:bg-muted">
+                <Camera className="h-4 w-4" /> {s.image ? "Byt bild på steget" : "Lägg till bild på steget"}
+              </span>
+            </label>
           )}
           <h2 className="font-heading text-xl font-bold leading-snug sm:text-2xl">{stepTitle(s.text || `Steg ${no}`)}</h2>
           {s.text && <p className="text-[15px] leading-snug text-muted-foreground">{s.text}</p>}
