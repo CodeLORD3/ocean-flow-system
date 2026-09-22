@@ -746,14 +746,19 @@ function StepGallery({
   alt,
   fill,
   className,
+  onIndexChange,
 }: {
   images: string[];
   alt: string;
   fill?: boolean;
   className?: string;
+  /** Vilken bild man tittar på — används för att gömma textrutan. */
+  onIndexChange?: (at: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState(0);
+  useEffect(() => onIndexChange?.(at), [at]);
+
 
   const go = (i: number) => {
     const el = ref.current;
