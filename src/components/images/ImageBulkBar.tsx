@@ -3,7 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useStores } from "@/hooks/useStores";
-import { useZonesByStore, usePickResources, usePickProducts } from "@/hooks/useImagePickers";
+import {
+  useZonesByStore,
+  useAllZones,
+  usePickResources,
+  usePickProducts,
+} from "@/hooks/useImagePickers";
 import { MEDIA_KINDS, type MediaKind } from "@/lib/imageStatus";
 import { useBulkClassify } from "@/hooks/useImageLibrary";
 import { toast } from "sonner";
