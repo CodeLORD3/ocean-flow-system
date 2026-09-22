@@ -141,14 +141,19 @@ export function useUploadEntityImage() {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth?.user?.id ?? null;
       let uploaderName: string | null = auth?.user?.email ?? null;
+      let staffId: string | null = null;
       if (uid) {
         const { data: st } = await supabase
           .from("staff")
-          .select("first_name, last_name")
+          .select("id, first_name, last_name")
           .eq("user_id", uid)
           .maybeSingle();
-        if (st) uploaderName = `${st.first_name ?? ""} ${st.last_name ?? ""}`.trim() || uploaderName;
+        if (st) {
+          staffId = (st.id as string) ?? null;
+          uploaderName = `${st.first_name ?? ""} ${st.last_name ?? ""}`.trim() || uploaderName;
+        }
       }
+
       const prepared = await prepareUpload(file, COMPRESS_PHOTO);
       const path = `entity-images/${entityType}/${entityId}/${Date.now()}-${Math.random()
         .toString(36)
@@ -177,11 +182,47 @@ export function useUploadEntityImage() {
         .select("id")
         .single();
       if (error) throw error;
-      return inserted?.id as string;
+      const mediaId = inserted?.id as string;
+
+      /* Kopplingen är sanningen i bildbiblioteket: skapa den direkt så att man
+         alltid ser var bilden kommer ifrån — platsen och, när bilden tagits i
+         en uppgift, själva uppgiften. */
+      const links: {
+        media_id: string;
+        entity_type: string;
+        entity_id: string;
+        relation_type: string;
+        created_by_staff_id: string | null;
+      }[] = [];
+      const placeType = entityType === "map_zone" ? "zone" : entityType;
+      if (["zone", "store", "resource", "product", "shop_order_line", "location"].includes(placeType)) {
+        links.push({
+          media_id: mediaId,
+          entity_type: placeType,
+          entity_id: entityId,
+          relation_type: imageKind === "completion" ? "after" : "documentation",
+          created_by_staff_id: staffId,
+        });
+      }
+      if (checklistItemId) {
+        links.push({
+          media_id: mediaId,
+          entity_type: "task",
+          entity_id: checklistItemId,
+          relation_type: imageKind === "completion" ? "proof" : "documentation",
+          created_by_staff_id: staffId,
+        });
+      }
+      if (links.length) await supabase.from("image_links").insert(links as never);
+
+      return mediaId;
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["entity-images", vars.entityType, vars.entityId] });
       qc.invalidateQueries({ queryKey: ["store-cover-images"] });
+      qc.invalidateQueries({ queryKey: ["image-library"] });
+      qc.invalidateQueries({ queryKey: ["image-links"] });
+
       qc.invalidateQueries({ queryKey: ["product-photos"] });
       qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
       qc.invalidateQueries({ queryKey: ["floor-plan-images"] });

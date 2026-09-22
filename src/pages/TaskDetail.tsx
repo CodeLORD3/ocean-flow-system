@@ -240,28 +240,26 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
 
 
   const addPhoto = async (file: File) => {
-    if (!task.zone_id) {
-      toast({
-        title: "Uppgiften saknar område",
-        description: "Koppla uppgiften till ett område på butikskartan, så hamnar bilden rätt.",
-        variant: "destructive",
-      });
-      return;
-    }
     try {
+      /* Bilden kopplas alltid till uppgiften. Finns ett område kopplas den
+         även dit, så man ser både uppgiften och platsen som källa. */
       await upload.mutateAsync({
-        entityType: "map_zone",
-        entityId: task.zone_id,
+        entityType: task.zone_id ? "map_zone" : "library",
+        entityId: task.zone_id ?? task.id,
         file,
         imageKind: "completion",
-        floorPlanId: plan?.id ?? null,
+        floorPlanId: task.zone_id ? (plan?.id ?? null) : null,
         checklistItemId: task.id,
       });
-      toast({ title: "Bild sparad på uppgiften" });
+      toast({
+        title: "Bild sparad på uppgiften",
+        description: task.zone_id ? "Kopplad till uppgiften och området." : "Kopplad till uppgiften.",
+      });
     } catch (e: any) {
       toast({ title: "Kunde inte spara bilden", description: e.message, variant: "destructive" });
     }
   };
+
 
   return (
     <div className="space-y-4">
@@ -392,6 +390,29 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             {missing.length > 0 && <p className="text-xs text-amber-700">{missingText(task, missing)}</p>}
           </div>
         )}
+        {images.length > 0 && (
+
+          <div className="space-y-1.5 rounded-md border bg-muted/30 p-2">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Bilder på den här uppgiften ({images.length})
+              {area ? ` · även kopplade till ${area.number}. ${area.name}` : ""}
+            </p>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {images.map((img) => (
+                <button
+                  key={img.id}
+                  type="button"
+                  onClick={() => setLightbox(allImages.findIndex((x) => x.id === img.id))}
+                  className="shrink-0 overflow-hidden rounded-md border"
+                  title={`Tagen av ${img.uploaded_by_name ?? "okänd"}`}
+                >
+                  <img src={thumbUrl(img.url, THUMB_TILE)} alt="" className="h-20 w-20 object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {task.done && (
           <div className="flex items-center gap-2 text-xs text-emerald-600">
             {(staffName(task.completed_by_staff_id) || task.signature) && (
