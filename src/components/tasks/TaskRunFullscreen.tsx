@@ -639,6 +639,17 @@ export function TaskRunFullscreen({
             </Button>
           )}
 
+          {/* Ångra: tar bort att steget är gjort */}
+          {done && (
+            <Button
+              variant="outline"
+              className="h-12 shrink-0"
+              onClick={() => clearStep.mutate({ checklistItemId, stepNo: no })}
+            >
+              Ångra steget
+            </Button>
+          )}
+
           {requiresPhoto && (
             <label className="inline-flex shrink-0">
               <input
