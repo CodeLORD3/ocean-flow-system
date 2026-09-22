@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { Crosshair, Plus, Trash2 } from "lucide-react";
 import { NewTaskDialog } from "@/components/tasks/NewTaskDialog";
 import { Button } from "@/components/ui/button";
@@ -69,10 +69,37 @@ export default function Uppgifter() {
   const stores = useAllowedStores();
   const { switchTab } = useTabs();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
 
   const [pickedStore, setPickedStore] = useState<string | null>(null);
   const storeId = site === "shop" ? activeStoreId : (pickedStore ?? stores[0]?.id ?? null);
   const [day, setDay] = useState(todayIso());
+
+  /**
+   * Kommer man tillbaka från en uppgifts egen sida ska man landa på exakt samma
+   * rad: den fälls ut, rullas fram och lyser upp en stund.
+   */
+  const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
+  useEffect(() => {
+    if (location.pathname !== "/uppgifter") return;
+    let id: string | null = null;
+    try {
+      id = sessionStorage.getItem("uppgifter-focus-task");
+      if (id) sessionStorage.removeItem("uppgifter-focus-task");
+    } catch {
+      /* ignorera blockerad lagring */
+    }
+    if (!id) return;
+    setFocusTaskId(id);
+    const t = setTimeout(() => {
+      document.getElementById(`task-row-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 200);
+    const clear = setTimeout(() => setFocusTaskId(null), 2600);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(clear);
+    };
+  }, [location.pathname, location.key]);
 
   const { data: plans = [] } = useFloorPlans(storeId);
   const plan = plans[0] ?? null;
@@ -336,6 +363,7 @@ export default function Uppgifter() {
     <TaskRow
       key={t.id}
       task={t}
+      focused={focusTaskId === t.id}
       storeId={storeId}
       area={t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null}
       categoryName={catOf(t)?.name ?? null}
@@ -673,6 +701,7 @@ export default function Uppgifter() {
                           key={t.id}
                           task={t}
                           storeId={storeId}
+                          focused={focusTaskId === t.id}
                           area={t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null}
                           categoryName={catOf(t)?.name ?? null}
                           categoryColor={catOf(t)?.color ?? null}
@@ -710,6 +739,7 @@ export default function Uppgifter() {
                         key={t.id}
                         task={t}
                         storeId={storeId}
+                          focused={focusTaskId === t.id}
                         area={t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null}
                         categoryName={catOf(t)?.name ?? null}
                         categoryColor={catOf(t)?.color ?? null}

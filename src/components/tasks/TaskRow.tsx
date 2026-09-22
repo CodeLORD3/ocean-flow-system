@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Play, Timer, Trash2, User, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -54,6 +54,8 @@ type Props = {
   /** Butiken uppgiften hör till — behövs för utrustning & material. */
   storeId?: string | null;
   onAssign?: (staffId: string | null) => void;
+  /** Sätts när man kommit tillbaka hit: raden öppnas och lyser upp en stund. */
+  focused?: boolean;
 };
 
 /**
@@ -82,8 +84,13 @@ export function TaskRow({
   staffOptions,
   onAssign,
   storeId = null,
+  focused = false,
 }: Props) {
   const [open, setOpen] = useState(false);
+  /* Tillbaka från uppgiftssidan: raden fälls ut igen där man var. */
+  useEffect(() => {
+    if (focused) setOpen(true);
+  }, [focused]);
   const [noteDraft, setNoteDraft] = useState(task.completion_note ?? "");
   const [valueDraft, setValueDraft] = useState(
     task.completion_value === null || task.completion_value === undefined ? "" : String(task.completion_value),
@@ -118,6 +125,8 @@ export function TaskRow({
   const openDetailAt = (tab: string) => {
     try {
       sessionStorage.setItem("task-detail-tab", tab);
+      /* Minns raden så man kommer tillbaka till exakt samma öppna uppgift. */
+      sessionStorage.setItem("uppgifter-focus-task", task.id);
     } catch {
       /* ignorera blockerad lagring */
     }
@@ -153,12 +162,14 @@ export function TaskRow({
 
   return (
     <div
+      id={`task-row-${task.id}`}
       className={cn(
         "relative overflow-hidden border-x border-b border-grid-line bg-card transition-all duration-200",
         task.done && "bg-emerald-500/10",
         photoMissing && !task.done && "bg-amber-500/5",
         open &&
           "z-10 my-3 rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] pl-2.5 shadow-[0_10px_30px_-18px_hsl(var(--primary)/0.55)]",
+        focused && "animate-pulse ring-2 ring-primary ring-offset-2",
       )}
     >
       {/* Öppen uppgift: mjuk accentlinje längs hela kortets vänsterkant. */}
