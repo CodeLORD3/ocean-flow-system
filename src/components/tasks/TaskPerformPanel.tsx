@@ -333,11 +333,15 @@ export function TaskPerformPanel({
           </span>
         </label>
 
+      </Card>
+
+      {/* Klarknappen följer med längst ned så den alltid går att nå. */}
+      <div className="sticky bottom-0 z-20 -mx-1 space-y-1 border-t bg-background/95 px-1 py-2 backdrop-blur">
         <Button
           size="lg"
           disabled={blocked}
           title={blockedText}
-          className="h-16 w-full bg-emerald-600 text-base text-white hover:bg-emerald-700"
+          className="h-14 w-full bg-emerald-600 text-base text-white hover:bg-emerald-700"
           onClick={async () => {
             try {
               await finish.mutateAsync({ id: task.id, startedAt: task.started_at ?? null });
@@ -349,8 +353,8 @@ export function TaskPerformPanel({
         >
           <Check className="mr-2 h-5 w-5" /> MARKERA SOM KLAR
         </Button>
-        {blockedText && <p className="text-xs text-amber-700">{blockedText}</p>}
-      </Card>
+        {blockedText && <p className="text-center text-xs text-amber-700">{blockedText}</p>}
+      </div>
     </div>
   );
 }
