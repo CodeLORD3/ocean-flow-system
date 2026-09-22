@@ -80,7 +80,7 @@ export function TaskMapDrawer({
     const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
     const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
     return { x: cx - vw / 2, y: cy - vh / 2, w: vw, h: vh };
-  }, [shapes, zoneId, plan?.width, plan?.height]);
+  }, [shapes, zoneId, wholeStore, plan?.width, plan?.height]);
 
   const current = zoneId ? shapes.find((s) => s.zone.id === zoneId) ?? null : null;
   const c = current ? countOf(current.zone.id) : null;
