@@ -495,22 +495,24 @@ export function TaskRow({
             </Button>
             {onAddPhoto && (
               <label className="inline-flex">
+                {/* Flera bilder på en gång: kamera eller flera markerade i biblioteket */}
                 <input
                   type="file"
                   accept="image/*"
-                  capture="environment"
+                  multiple
                   className="hidden"
                   onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) onAddPhoto(file);
+                    const files = [...(e.target.files ?? [])];
                     e.currentTarget.value = "";
+                    for (const file of files) onAddPhoto(file);
                   }}
                 />
                 <span className="inline-flex h-9 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted">
-                  <Camera className="h-4 w-4" /> Ta bild
+                  <Camera className="h-4 w-4" /> Ta bilder
                 </span>
               </label>
             )}
+
             <Button size="sm" variant="ghost" onClick={() => openDetailAt("instruktion")}>
               <ImageIcon className="mr-1 h-4 w-4" /> Hur gör jag?
             </Button>
