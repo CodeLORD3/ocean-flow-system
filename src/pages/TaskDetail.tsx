@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -104,6 +105,13 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
     window.addEventListener("task-detail-tab", onWanted);
     return () => window.removeEventListener("task-detail-tab", onWanted);
   }, []);
+  /* Kommer man från en bild som togs i ett steg: öppna "Hur gör vi?" på steget. */
+  const location = useLocation();
+  const stepFromLink = Number(new URLSearchParams(location.search).get("steg")) || null;
+  useEffect(() => {
+    if (stepFromLink) setActiveTab("instruktion");
+  }, [stepFromLink]);
+
   const setDone = useSetTaskDone();
   const update = useUpdateTask();
   const removeTask = useDeleteTask();
@@ -240,7 +248,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const missing = missingRequirements(task, { photoCount: images.length, checkPhoto: true });
 
 
-  const addPhoto = async (file: File) => {
+  const addPhoto = async (file: File, stepIndex?: number | null) => {
     try {
       /* Bilden kopplas alltid till uppgiften. Finns ett område kopplas den
          även dit, så man ser både uppgiften och platsen som källa. */
@@ -251,6 +259,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
         imageKind: "completion",
         floorPlanId: task.zone_id ? (plan?.id ?? null) : null,
         checklistItemId: task.id,
+        stepIndex: stepIndex ?? null,
       });
       toast({
         title: "Bild sparad på uppgiften",
@@ -508,6 +517,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             <TaskGuideView
               guide={guide}
               zones={guideZones}
+              highlightStep={stepFromLink}
               taskId={task.id}
               onSaveGuide={async (next) => {
                 await saveGuide.mutateAsync({
