@@ -14,6 +14,8 @@ import {
   SlidersHorizontal,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -125,6 +127,36 @@ export default function ImageLibraryPanel({
     const t = setTimeout(() => setDebounced(search), 300);
     return () => clearTimeout(t);
   }, [search]);
+
+  // Bläddra bland bilderna i listan med pilarna eller knapparna.
+  const detailIndex = detail ? rows.findIndex((r) => r.id === detail.id) : -1;
+  const stepDetail = (dir: 1 | -1) => {
+    if (detailIndex < 0) return;
+    const next = rows[detailIndex + dir];
+    if (next) setDetail(next);
+  };
+
+  useEffect(() => {
+    if (!detail) return;
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing =
+        el?.isContentEditable ||
+        ((el?.tagName === "INPUT" || el?.tagName === "TEXTAREA") &&
+          !!(el as HTMLInputElement).value);
+      if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "PageDown") {
+        e.preventDefault();
+        stepDetail(1);
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "PageUp") {
+        e.preventDefault();
+        stepDetail(-1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detail?.id, rows]);
 
   const filter = useMemo(() => {
     const base: LibraryFilter = {
@@ -364,9 +396,38 @@ export default function ImageLibraryPanel({
       <Dialog open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
         <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex flex-wrap items-center gap-2 pr-8">
               {detail?.title || "Bild"}
               {detail && <Badge variant="outline">{STATUS_LABEL[detail.status]}</Badge>}
+              {detailIndex >= 0 && rows.length > 1 && (
+                <span className="ml-auto flex items-center gap-1 text-xs font-normal text-muted-foreground">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="h-7 w-7"
+                    onClick={() => stepDetail(-1)}
+                    disabled={detailIndex <= 0}
+                    aria-label="Föregående bild"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="tabular-nums">
+                    {detailIndex + 1} / {rows.length}
+                  </span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="h-7 w-7"
+                    onClick={() => stepDetail(1)}
+                    disabled={detailIndex >= rows.length - 1}
+                    aria-label="Nästa bild"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </span>
+              )}
             </DialogTitle>
           </DialogHeader>
           {detail && (
