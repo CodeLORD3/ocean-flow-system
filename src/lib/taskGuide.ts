@@ -169,6 +169,7 @@ export function cleanGuide(g: TaskGuide): TaskGuide | null {
         minutes: s.minutes ?? null,
         safety: (s.safety ?? "").trim(),
         haccp: (s.haccp ?? "").trim(),
+        marks: (s.marks ?? []).filter((m) => m.region.w > 0 && m.region.h > 0),
       })),
     putBack: g.putBack.trim(),
     putBackImages: g.putBackImages.filter(Boolean),
