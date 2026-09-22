@@ -232,7 +232,7 @@ export default function StaffProfile() {
                     className="absolute -bottom-1 left-0 grid h-6 w-6 cursor-pointer place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm transition hover:opacity-90"
                     title="Byt profilbild"
                   >
-                    <Camera className="h-4 w-4" />
+                    <Camera className="h-3 w-3" />
                     <span className="sr-only">Byt profilbild</span>
                     <input
                       type="file"
