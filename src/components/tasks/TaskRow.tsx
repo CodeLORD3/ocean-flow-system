@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Play, Timer, Trash2, User, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -84,8 +84,13 @@ export function TaskRow({
   staffOptions,
   onAssign,
   storeId = null,
+  focused = false,
 }: Props) {
   const [open, setOpen] = useState(false);
+  /* Tillbaka från uppgiftssidan: raden fälls ut igen där man var. */
+  useEffect(() => {
+    if (focused) setOpen(true);
+  }, [focused]);
   const [noteDraft, setNoteDraft] = useState(task.completion_note ?? "");
   const [valueDraft, setValueDraft] = useState(
     task.completion_value === null || task.completion_value === undefined ? "" : String(task.completion_value),
