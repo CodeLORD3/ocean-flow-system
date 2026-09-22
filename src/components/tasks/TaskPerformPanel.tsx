@@ -23,6 +23,10 @@ import {
 import type { ResolvedNeed } from "@/hooks/useResources";
 import { NeedsSheet } from "@/components/tasks/NeedsSheet";
 import { TaskLiveTimer } from "@/components/tasks/TaskLiveTimer";
+import { TaskPrepPanel } from "@/components/tasks/TaskPrepPanel";
+import { TaskStepChecks } from "@/components/tasks/TaskStepChecks";
+import type { GuideStep } from "@/lib/taskGuide";
+import { useTaskPrepChecks } from "@/hooks/useTaskPrep";
 
 type PerformTask = {
   id: string;
@@ -55,6 +59,8 @@ export function TaskPerformPanel({
   areaName,
   photoCount,
   needs,
+  storeId,
+  guideSteps,
   onShowOnMap,
   onShowAllOnMap,
   onUpdate,
@@ -67,6 +73,9 @@ export function TaskPerformPanel({
   areaName?: string | null;
   photoCount: number;
   needs: ResolvedNeed[];
+  storeId?: string | null;
+  /** Stegen i arbetsbeskrivningen som ska bockas av. */
+  guideSteps?: GuideStep[];
   onShowOnMap?: (zoneId: string) => void;
   /** Hela vägen på butikskartan. */
   onShowAllOnMap?: () => void;
@@ -98,9 +107,19 @@ export function TaskPerformPanel({
     [results],
   );
   const missingCheckpoints = checkpoints.filter((c) => c.required && !checkedIds.has(c.id));
-  const blocked = missing.length > 0 || missingCheckpoints.length > 0;
+  /** Utrustningen måste kontrolleras innan arbetet får bockas av. */
+  const { data: prepChecks = [] } = useTaskPrepChecks(task.id);
+  const prepCheckedIds = new Set(prepChecks.map((c) => c.requirement_id ?? ""));
+  const prepMissing = needs.filter((n) => !prepCheckedIds.has(n.requirement.id));
+  const steps = guideSteps ?? [];
+  const doneSteps = new Set(prepChecks.filter((c) => c.step_no != null).map((c) => c.step_no));
+  const stepsLeft = steps.length > 0 ? steps.length - doneSteps.size : 0;
+  const blocked =
+    missing.length > 0 || missingCheckpoints.length > 0 || prepMissing.length > 0 || stepsLeft > 0;
 
-  const blockedText = missingCheckpoints.length > 0
+  const blockedText = prepMissing.length > 0
+    ? `Kontrollera utrustningen först: ${prepMissing.map((n) => (n.resource?.name ?? n.requirement.requirement_name).toLowerCase()).join(", ")}.`
+    : missingCheckpoints.length > 0
     ? `Bocka ${missingCheckpoints.map((c) => c.label.toLowerCase()).join(" och ")} först.`
     : missing.length > 0
       ? missingText(task, missing)
@@ -148,12 +167,15 @@ export function TaskPerformPanel({
         )}
 
         {needs.length > 0 && (
-          <div className="rounded-lg border p-3">
-            <p className="text-sm">
-              Behövs: {needs.map((n) => n.requirement.requirement_name).join(", ")}
-            </p>
-            <Button variant="outline" size="lg" className="mt-2 h-14" onClick={() => setNeedsOpen(true)}>
-              <MapPin className="mr-1 h-4 w-4" /> VAR FINNS DET?
+          <div className="space-y-2">
+            <TaskPrepPanel
+              checklistItemId={task.id}
+              storeId={storeId}
+              needs={needs}
+              onShowOnMap={onShowOnMap}
+            />
+            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setNeedsOpen(true)}>
+              <MapPin className="mr-1 h-3.5 w-3.5" /> Var finns det?
             </Button>
             <NeedsSheet
               open={needsOpen}
@@ -164,6 +186,8 @@ export function TaskPerformPanel({
             />
           </div>
         )}
+
+        {steps.length > 0 && <TaskStepChecks checklistItemId={task.id} steps={steps} />}
 
         {status === "ej_startad" && (
           <div className="flex flex-wrap items-center gap-3">

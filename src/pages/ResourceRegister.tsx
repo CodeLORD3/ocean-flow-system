@@ -395,6 +395,14 @@ export default function ResourceRegister() {
                   />
                 </div>
                 <div>
+                  <label className="text-sm font-medium">Märke</label>
+                  <Input
+                    value={edit.brand ?? ""}
+                    placeholder="T.ex. Tork, Ajax"
+                    onChange={(e) => setEdit({ ...edit, brand: e.target.value })}
+                  />
+                </div>
+                <div>
                   <label className="text-sm font-medium">Köps hos</label>
                   <Input value={edit.supplier ?? ""} onChange={(e) => setEdit({ ...edit, supplier: e.target.value })} />
                 </div>

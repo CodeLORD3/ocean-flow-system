@@ -12969,6 +12969,7 @@ export type Database = {
       resource_items: {
         Row: {
           active: boolean
+          brand: string | null
           category: string | null
           created_at: string
           id: string
@@ -12986,6 +12987,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          brand?: string | null
           category?: string | null
           created_at?: string
           id?: string
@@ -13003,6 +13005,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          brand?: string | null
           category?: string | null
           created_at?: string
           id?: string
@@ -13080,6 +13083,118 @@ export type Database = {
             columns: ["resource_id"]
             isOneToOne: false
             referencedRelation: "resource_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_shortage_reports: {
+        Row: {
+          checklist_item_id: string | null
+          created_at: string
+          id: string
+          item_name: string
+          level: string
+          note: string | null
+          reported_by_staff_id: string | null
+          requirement_id: string | null
+          resolved_at: string | null
+          resolved_by_staff_id: string | null
+          resource_id: string | null
+          status: string
+          store_id: string | null
+        }
+        Insert: {
+          checklist_item_id?: string | null
+          created_at?: string
+          id?: string
+          item_name: string
+          level?: string
+          note?: string | null
+          reported_by_staff_id?: string | null
+          requirement_id?: string | null
+          resolved_at?: string | null
+          resolved_by_staff_id?: string | null
+          resource_id?: string | null
+          status?: string
+          store_id?: string | null
+        }
+        Update: {
+          checklist_item_id?: string | null
+          created_at?: string
+          id?: string
+          item_name?: string
+          level?: string
+          note?: string | null
+          reported_by_staff_id?: string | null
+          requirement_id?: string | null
+          resolved_at?: string | null
+          resolved_by_staff_id?: string | null
+          resource_id?: string | null
+          status?: string
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_shortage_reports_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_shortage_reports_reported_by_staff_id_fkey"
+            columns: ["reported_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_shortage_reports_reported_by_staff_id_fkey"
+            columns: ["reported_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_shortage_reports_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "task_resource_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_shortage_reports_resolved_by_staff_id_fkey"
+            columns: ["resolved_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_shortage_reports_resolved_by_staff_id_fkey"
+            columns: ["resolved_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_shortage_reports_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resource_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_shortage_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "resource_shortage_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -17291,6 +17406,81 @@ export type Database = {
             columns: ["checklist_item_id"]
             isOneToOne: false
             referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_prep_checks: {
+        Row: {
+          checked_at: string
+          checked_by_staff_id: string | null
+          checklist_item_id: string
+          id: string
+          item_name: string
+          note: string | null
+          requirement_id: string | null
+          resource_id: string | null
+          status: string
+          step_no: number | null
+        }
+        Insert: {
+          checked_at?: string
+          checked_by_staff_id?: string | null
+          checklist_item_id: string
+          id?: string
+          item_name: string
+          note?: string | null
+          requirement_id?: string | null
+          resource_id?: string | null
+          status?: string
+          step_no?: number | null
+        }
+        Update: {
+          checked_at?: string
+          checked_by_staff_id?: string | null
+          checklist_item_id?: string
+          id?: string
+          item_name?: string
+          note?: string | null
+          requirement_id?: string | null
+          resource_id?: string | null
+          status?: string
+          step_no?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_prep_checks_checked_by_staff_id_fkey"
+            columns: ["checked_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_prep_checks_checked_by_staff_id_fkey"
+            columns: ["checked_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_prep_checks_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_prep_checks_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "task_resource_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_prep_checks_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resource_items"
             referencedColumns: ["id"]
           },
         ]
