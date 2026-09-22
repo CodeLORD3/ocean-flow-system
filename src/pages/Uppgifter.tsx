@@ -498,6 +498,45 @@ export default function Uppgifter() {
         </div>
       </div>
 
+      {cleanMode && (
+        <>
+          <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm">
+            Markera uppgifterna som inte är relevanta. Allt du lämnar omarkerat behålls som det är.
+          </div>
+          {/* Fast rad längst ned: ta bort de markerade eller avsluta rensningen */}
+          <div className="fixed inset-x-0 bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-40 mx-auto flex w-[min(38rem,calc(100%-1.5rem))] items-center gap-2 rounded-xl border bg-background/95 p-2 shadow-lg backdrop-blur">
+            <span className="min-w-0 flex-1 truncate px-1 text-sm">
+              {selected.length === 0
+                ? "Ingen uppgift markerad"
+                : `${selected.length} markerad${selected.length === 1 ? "" : "e"}`}
+            </span>
+            {selected.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => setSelected([])}>
+                Avmarkera
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={selected.length === 0 || removeTask.isPending}
+              onClick={deleteSelected}
+            >
+              <Trash2 className="mr-1 h-4 w-4" /> Ta bort {selected.length > 0 ? selected.length : ""}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCleanMode(false);
+                setSelected([]);
+              }}
+            >
+              Klar
+            </Button>
+          </div>
+        </>
+      )}
+
       <Tabs value={tab} onValueChange={setTab}>
         {/* Kort rad: Mina · Dagens · Alla. Övriga vyer ligger i "Mer" */}
         <div className="flex items-center gap-2">
