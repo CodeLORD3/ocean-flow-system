@@ -97,6 +97,9 @@ export function TaskRunFullscreen({
 
   const doneNos = new Set(checks.filter((c) => c.step_no != null).map((c) => c.step_no as number));
 
+  /** Senaste "bocka av och gå vidare" — används av Enter. */
+  const markAndNextRef = useRef<(() => Promise<void>) | null>(null);
+
   /** Börja på första steget som inte är gjort. */
   useEffect(() => {
     if (!open) return;
@@ -114,6 +117,14 @@ export function TaskRunFullscreen({
       /** Upp/ner byter steg — höger/vänster byter bild på steget. */
       if (e.key === "ArrowDown") setIndex((i) => Math.min(i + 1, steps.length - 1));
       if (e.key === "ArrowUp") setIndex((i) => Math.max(i - 1, 0));
+      /** Enter bockar av steget och går vidare. */
+      if (e.key === "Enter") {
+        const target = e.target as HTMLElement | null;
+        const tag = target?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return;
+        e.preventDefault();
+        void markAndNextRef.current?.();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -153,6 +164,10 @@ export function TaskRunFullscreen({
       if (isPhone) setTimeout(() => scrollToStep(no), 60);
     }
   };
+  markAndNextRef.current = markAndNext;
+
+  /** Ångra: tar bort att steget är gjort. */
+  const undoStep = (stepNo: number) => clearStep.mutate({ checklistItemId, stepNo });
 
   const finishNow = async () => {
     /** Saknas bilden får man en tydlig varning innan uppgiften stängs. */
@@ -467,31 +482,30 @@ export function TaskRunFullscreen({
                     >
                       <ChevronLeft className="h-6 w-6" />
                     </Button>
-                    {/* Samma gröna knapp hela vägen — bockat steg visas med kryss i knappen */}
+                    {/* Grå tills steget är gjort — grön efteråt, och samma knapp ångrar */}
                     <Button
-                      className="h-14 flex-1 bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-700"
+                      className={cn(
+                        "h-14 flex-1 text-base font-semibold",
+                        stepDone
+                          ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                          : "animate-pulse bg-muted text-foreground hover:animate-none hover:bg-foreground hover:text-background",
+                      )}
                       onClick={() => {
+                        if (stepDone) {
+                          undoStep(n);
+                          return;
+                        }
                         /** Hoppa vidare direkt, spara i bakgrunden. */
                         if (!isLast) {
                           scrollToStep(i + 1);
                           setTimeout(() => scrollToStep(i + 1), 120);
                         }
-                        if (!stepDone) void markStep(n, st);
+                        void markStep(n, st);
                       }}
                     >
                       <Check className="mr-2 h-5 w-5" />
-                      {stepDone ? (isLast ? "Klart" : "Klart · nästa steg") : isLast ? "Klar" : "Klar · nästa steg"}
+                      {stepDone ? "Klart · tryck för att ångra" : isLast ? "Markera som klar" : "Markera som klar · nästa"}
                     </Button>
-                    {/* Ångra: tar bort att steget är gjort */}
-                    {stepDone && (
-                      <Button
-                        variant="outline"
-                        className="h-14 shrink-0 px-3 text-xs"
-                        onClick={() => clearStep.mutate({ checklistItemId, stepNo: n })}
-                      >
-                        Ångra
-                      </Button>
-                    )}
                     {requiresPhoto && (
                       <label className="inline-flex">
                         <input
@@ -641,25 +655,21 @@ export function TaskRunFullscreen({
               <Check className="mr-2 h-5 w-5" /> MARKERA UPPGIFTEN SOM KLAR
             </Button>
           ) : (
+            /* Grå tills steget är gjort — grön efteråt, och samma knapp ångrar */
             <Button
-              className="h-12 flex-1 bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-700"
-              onClick={markAndNext}
+              className={cn(
+                "h-12 flex-1 text-base font-semibold",
+                done
+                  ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                  : "animate-pulse bg-muted text-foreground hover:animate-none hover:bg-foreground hover:text-background",
+              )}
+              onClick={() => (done ? undoStep(no) : void markAndNext())}
             >
               <Check className="mr-2 h-5 w-5" />
-              {done ? "Klart · nästa steg" : last ? "Klar" : "Klar · nästa steg"}
+              {done ? "Klart · tryck för att ångra" : last ? "Markera som klar" : "Markera som klar · nästa (Enter)"}
             </Button>
           )}
 
-          {/* Ångra: tar bort att steget är gjort */}
-          {done && (
-            <Button
-              variant="outline"
-              className="h-12 shrink-0"
-              onClick={() => clearStep.mutate({ checklistItemId, stepNo: no })}
-            >
-              Ångra steget
-            </Button>
-          )}
 
           {requiresPhoto && (
             <label className="inline-flex shrink-0">
