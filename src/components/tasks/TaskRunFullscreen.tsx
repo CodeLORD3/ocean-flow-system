@@ -368,7 +368,7 @@ export function TaskRunFullscreen({
                           {st.haccp}
                         </p>
                       )}
-                    </>
+                    </div>
                   )}
 
                   <div className="flex items-center gap-2 pt-1">
