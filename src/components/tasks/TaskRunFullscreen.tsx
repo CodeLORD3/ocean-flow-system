@@ -508,30 +508,37 @@ export function TaskRunFullscreen({
                     >
                       <ChevronLeft className="h-6 w-6" />
                     </Button>
-                    {/* Grå tills steget är gjort — grön efteråt, och samma knapp ångrar */}
-                    <Button
-                      className={cn(
-                        "h-12 flex-1 text-sm font-semibold",
-                        stepDone
-                          ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                          : "animate-pulse bg-muted text-foreground hover:animate-none hover:bg-emerald-600 hover:text-white",
-                      )}
-                      onClick={() => {
-                        if (stepDone) {
-                          undoStep(n);
-                          return;
-                        }
-                        /** Hoppa vidare direkt, spara i bakgrunden. */
-                        if (!isLast) {
-                          scrollToStep(i + 1);
-                          setTimeout(() => scrollToStep(i + 1), 120);
-                        }
-                        void markStep(n, st);
-                      }}
-                    >
-                      <Check className="mr-2 h-5 w-5" />
-                      {stepDone ? "Klart · tryck för att ångra" : isLast ? "Markera som klar" : "Markera som klar · nästa"}
-                    </Button>
+                    {stepDone ? (
+                      /* Klart: grön bekräftelse — ångra ligger i en egen tydlig knapp */
+                      <>
+                        <span className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md bg-emerald-600 text-sm font-semibold text-white">
+                          <Check className="h-5 w-5" /> Klart
+                        </span>
+                        <Button
+                          variant="outline"
+                          className="h-12 shrink-0 border-white/30 bg-transparent px-3 text-xs text-white hover:bg-white/15 hover:text-white"
+                          onClick={() => undoStep(n)}
+                        >
+                          <RotateCcw className="mr-1 h-4 w-4" /> Ångra
+                        </Button>
+                      </>
+                    ) : (
+                      /* Grå och blinkande tills steget är gjort */
+                      <Button
+                        className="h-12 flex-1 animate-pulse bg-muted text-sm font-semibold text-foreground hover:animate-none hover:bg-emerald-600 hover:text-white"
+                        onClick={() => {
+                          /** Hoppa vidare direkt, spara i bakgrunden. */
+                          if (!isLast) {
+                            scrollToStep(i + 1);
+                            setTimeout(() => scrollToStep(i + 1), 120);
+                          }
+                          void markStep(n, st);
+                        }}
+                      >
+                        <Check className="mr-2 h-5 w-5" />
+                        {isLast ? "Markera som klar" : "Markera som klar · nästa"}
+                      </Button>
+                    )}
                     {requiresPhoto && (
                       <label className="inline-flex">
                         <input
