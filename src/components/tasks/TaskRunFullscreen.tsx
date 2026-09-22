@@ -248,6 +248,28 @@ export function TaskRunFullscreen({
         <div className="h-1.5 rounded-full bg-muted">
           <div className="h-full rounded-full bg-emerald-600 transition-all" style={{ width: `${pct}%` }} />
         </div>
+        {/* Vägen tillbaka till utrustning & material */}
+        {prepNode && (
+          <button
+            type="button"
+            onClick={() => {
+              setOverviewOpen(false);
+              backToPrep();
+            }}
+            className="mt-3 flex w-full items-center gap-3 rounded-lg border bg-background px-3 py-2 text-left hover:bg-muted/60"
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
+              <ChevronUp className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">Utrustning & material</span>
+              <span className="block text-[11px] text-muted-foreground">
+                {prepMissingCount > 0 ? `${prepMissingCount} kvar att bocka av` : "Allt kontrollerat"}
+              </span>
+            </span>
+          </button>
+        )}
+
         <ul className="mt-3 space-y-1.5">
           {steps.map((st, i) => {
             const n = i + 1;
