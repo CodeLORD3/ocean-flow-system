@@ -23,6 +23,7 @@ import { AnnotatableImage, type ImageRegion } from "@/components/images/Annotata
 import { useCreateCutout } from "@/hooks/useImageCutouts";
 import { useLibraryImage } from "@/hooks/useImageLibrary";
 import ImageClassifySheet from "@/components/images/ImageClassifySheet";
+import ImageSourceLinks from "@/components/images/ImageSourceLinks";
 import { toast } from "sonner";
 
 type Props = {
