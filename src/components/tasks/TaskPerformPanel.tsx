@@ -67,6 +67,7 @@ export function TaskPerformPanel({
   onShowAllOnMap,
   onUpdate,
   onAddPhoto,
+  onSetStepImage,
   onReopen,
   onStarted,
 }: {
@@ -85,6 +86,8 @@ export function TaskPerformPanel({
   onStarted?: () => void;
   onUpdate: (patch: Record<string, unknown>) => void;
   onAddPhoto: (file: File) => Promise<void> | void;
+  /** Bilden på ett steg i arbetsbeskrivningen. */
+  onSetStepImage?: (stepIndex: number, file: File) => Promise<void> | void;
   onReopen: () => void;
 }) {
   const status = (task.run_status ?? "ej_startad") as RunStatus;
@@ -420,6 +423,7 @@ export function TaskPerformPanel({
         requiresPhoto={task.requires_photo}
         blockedText={blockedText}
         onAddPhoto={onAddPhoto}
+        onSetStepImage={onSetStepImage}
         onFinish={completeTask}
       />
     </div>
