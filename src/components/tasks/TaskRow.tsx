@@ -97,8 +97,16 @@ export function TaskRow({
   );
   const time = taskTime(task);
 
+  /* Ny rad på nytt datum utan beskrivning: ärv steg och utrustning från samma uppgift. */
+  const ownGuideSteps = parseGuide(task.guide, task.instructions).steps.filter((s) => s.text || s.image);
+  const { data: blueprint } = useTaskBlueprint(task.task, ownGuideSteps.length === 0);
   /* Utrustning & material — samma kontroll som på uppgiftens egen sida */
-  const { data: requirements = [] } = useTaskRequirements(task.template_item_id ?? null, task.id);
+  const { data: ownRequirements = [] } = useTaskRequirements(task.template_item_id ?? null, task.id);
+  const { data: inheritedRequirements = [] } = useTaskRequirements(
+    null,
+    ownRequirements.length === 0 && blueprint?.sourceId ? blueprint.sourceId : null,
+  );
+  const requirements = ownRequirements.length > 0 ? ownRequirements : inheritedRequirements;
   const { data: resourceItems = [] } = useResourceItems();
   const { data: resourceLocations = [] } = useResourceLocations(storeId);
   const { data: resourceMappings = [] } = useStoreResourceMappings(storeId);
