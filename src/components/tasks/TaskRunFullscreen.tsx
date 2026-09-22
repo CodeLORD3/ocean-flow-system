@@ -82,6 +82,8 @@ export function TaskRunFullscreen({
   const [showPrep, setShowPrep] = useState(true);
   /** Textrutan i telefonen kan dras ner så hela bilden syns. */
   const [textOpen, setTextOpen] = useState(true);
+  /** Varning när uppgiften stängs utan den bild som krävs. */
+  const [warnPhoto, setWarnPhoto] = useState(false);
   const touchY = useRef<number | null>(null);
   const isPhone = useIsPhone();
   const feedRef = useRef<HTMLDivElement | null>(null);
@@ -145,14 +147,66 @@ export function TaskRunFullscreen({
   };
 
   const finishNow = async () => {
+    /** Saknas bilden får man en tydlig varning innan uppgiften stängs. */
+    if (requiresPhoto && photoCount === 0) {
+      setWarnPhoto(true);
+      return;
+    }
     await onFinish();
     onClose();
   };
+
+  const finishAnyway = async () => {
+    setWarnPhoto(false);
+    await onFinish();
+    onClose();
+  };
+
+  /** Tydlig varning: bilden krävs men saknas — man kan ta den nu eller i efterhand. */
+  const warnNode = warnPhoto ? (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-foreground/60 p-4 sm:items-center">
+      <div className="w-full max-w-md space-y-3 rounded-2xl border border-amber-500/40 bg-card p-4 shadow-xl">
+        <p className="font-heading text-lg font-bold text-amber-700">Du missade bilden</p>
+        <p className="text-sm text-muted-foreground">
+          Den här uppgiften kräver en bild. Ta bilden nu, eller stäng uppgiften ändå — då står det att bilden saknas
+          och du kan lägga in den i efterhand på uppgiftsraden.
+        </p>
+        <label className="inline-flex w-full">
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              e.currentTarget.value = "";
+              if (f) {
+                await onAddPhoto(f);
+                setWarnPhoto(false);
+              }
+            }}
+          />
+          <span className="inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+            <Camera className="h-5 w-5" /> Ta bilden nu
+          </span>
+        </label>
+        <div className="flex gap-2">
+          <Button variant="outline" className="h-11 flex-1" onClick={() => setWarnPhoto(false)}>
+            Avbryt
+          </Button>
+          <Button variant="outline" className="h-11 flex-1 border-amber-500/50 text-amber-700" onClick={finishAnyway}>
+            Stäng utan bild
+          </Button>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   /* ---------- TELEFON: flöde som swipas uppåt, ett steg per skärm ---------- */
   if (isPhone) {
     return (
       <div className="fixed inset-0 z-50 bg-background">
+        {warnNode}
         {/* Räknaren i höger hörn och vägen ut i vänster */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between p-3">
           <button
@@ -407,6 +461,7 @@ export function TaskRunFullscreen({
   /* ---------- DATOR: ett steg i taget, knapparna alltid på samma plats ---------- */
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
+      {warnNode}
       <div className="flex items-center gap-3 border-b px-3 py-2">
         <div className="min-w-0 flex-1">
           <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{taskName}</p>
