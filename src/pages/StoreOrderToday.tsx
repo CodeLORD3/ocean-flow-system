@@ -120,6 +120,9 @@ export default function StoreOrderToday() {
           <p className="mt-2 text-[18px] text-muted-foreground">
             Inget beställt ännu. Lägg varor på beställningen medan du räknar.
           </p>
+          <div className="mt-3">
+            <KvitteraInget storeId={selectedStoreId} vad="grossist" />
+          </div>
         </div>
       ) : (
         <div className="space-y-2">

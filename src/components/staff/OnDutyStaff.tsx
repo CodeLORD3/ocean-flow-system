@@ -7,7 +7,8 @@ import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useStores } from "@/hooks/useStores";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { dagsavslutStatus, dagsavslutText } from "@/lib/dagsavslut";
+import { dagsavslutSaknas, dagsavslutStatus, type DagsavslutPost } from "@/lib/dagsavslut";
+import { DayCloseReminderDialog } from "@/components/staff/DayCloseReminderDialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -33,6 +34,7 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
   const clockOut = useClockOut();
   const { toast } = useToast();
   const [confirm, setConfirm] = useState<null | "in" | "out">(null);
+  const [dayClose, setDayClose] = useState<{ storeName: string | null; saknas: DagsavslutPost[] } | null>(null);
 
   const byId = new Map(staffList.map((s: any) => [s.id, s]));
   const onDuty = openShifts
@@ -79,14 +81,10 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
         {
           onSuccess: async () => {
             toast({ title: "Utstämplad", description: myShift ? shiftDuration(myShift.clocked_in_at) : undefined });
-            // Saknas dagsrapport eller inventering för butiken påminner vi direkt.
-            const saknas = dagsavslutText(await dagsavslutStatus(shiftStore));
-            if (saknas) {
-              toast({
-                title: "Kom ihåg innan du går",
-                description: `${saknas} ${stores.find((s) => s.id === shiftStore)?.name ?? ""}`.trim(),
-                variant: "destructive",
-              });
+            // Vad som är kvar i dag visas i en ruta som ligger kvar tills den stängs.
+            const saknas = dagsavslutSaknas(await dagsavslutStatus(shiftStore));
+            if (saknas.length) {
+              setDayClose({ storeName: stores.find((s) => s.id === shiftStore)?.name ?? null, saknas });
             }
           },
           onError: (err: any) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
@@ -229,6 +227,13 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DayCloseReminderDialog
+        open={!!dayClose}
+        onClose={() => setDayClose(null)}
+        storeName={dayClose?.storeName}
+        saknas={dayClose?.saknas ?? []}
+      />
     </div>
   );
 }

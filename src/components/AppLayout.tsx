@@ -9,6 +9,7 @@ import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
 
 import { MobileTabBar } from "@/components/MobileTabBar";
 import { TaskAlertBanner } from "@/components/TaskAlertBanner";
+import { DayCloseBanner } from "@/components/DayCloseBanner";
 import { versionLabel } from "@/lib/appVersion";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 
@@ -359,6 +360,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             }
           >
             {!isCountFlow && <TaskAlertBanner />}
+            {!isCountFlow && <DayCloseBanner />}
             {!isStaffModule && !isCountFlow && <StoreHero />}
             {children}
           </main>

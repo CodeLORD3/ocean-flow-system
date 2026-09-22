@@ -27,7 +27,8 @@ import { PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
 import {
   useMyOpenShift, useShiftHistory, useClockIn, useClockOut, useDirectClockAccess, shiftClock, shiftDuration,
 } from "@/hooks/useStaffShifts";
-import { dagsavslutStatus, dagsavslutText } from "@/lib/dagsavslut";
+import { dagsavslutSaknas, dagsavslutStatus, type DagsavslutPost } from "@/lib/dagsavslut";
+import { DayCloseReminderDialog } from "@/components/staff/DayCloseReminderDialog";
 
 type TabKey = "uppgifter" | "tid" | "aktivitet" | "profil";
 
@@ -94,6 +95,7 @@ export default function StaffProfile() {
 
   /** Personalen byter sin egen profilbild direkt här — bilden komprimeras före uppladdning. */
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [dayClose, setDayClose] = useState<{ storeName: string | null; saknas: DagsavslutPost[] } | null>(null);
   const handlePhotoPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -172,6 +174,7 @@ export default function StaffProfile() {
   };
 
   const handleClockOut = () => {
+    // Rutan med vad som är kvar i dag ligger kvar tills den stängs.
     const shiftStore = openShift?.store_id ?? effectiveStore;
     clockOut.mutate(
       { staffId: staff.id },
@@ -179,12 +182,11 @@ export default function StaffProfile() {
         onSuccess: async () => {
           toast({ title: "Utstämplad", description: openShift ? shiftDuration(openShift.clocked_in_at) : undefined });
           // Påminn om dagens avslut för butiken innan personalen går hem.
-          const saknas = dagsavslutText(await dagsavslutStatus(shiftStore));
-          if (saknas) {
-            toast({
-              title: "Kom ihåg innan du går",
-              description: `${saknas} ${stores.find((s) => s.id === shiftStore)?.name ?? ""}`.trim(),
-              variant: "destructive",
+          const saknas = dagsavslutSaknas(await dagsavslutStatus(shiftStore));
+          if (saknas.length) {
+            setDayClose({
+              storeName: stores.find((s) => s.id === shiftStore)?.name ?? null,
+              saknas,
             });
           }
         },
@@ -413,6 +415,13 @@ export default function StaffProfile() {
           </Card>
         </div>
       </div>
+
+      <DayCloseReminderDialog
+        open={!!dayClose}
+        onClose={() => setDayClose(null)}
+        storeName={dayClose?.storeName}
+        saknas={dayClose?.saknas ?? []}
+      />
     </motion.div>
   );
 }

@@ -406,12 +406,22 @@ Deno.serve(async (req) => {
   }
   // Vid utstämpling påminner klockan om dagens avslut för butiken: saknas
   // dagsrapport eller godkänd inventering ska personalen se det innan de går.
-  let dagsavslut: { dagsrapport_klar: boolean; inventering_klar: boolean } | null = null;
+  let dagsavslut: Record<string, unknown> | null = null;
   if (action === "ut" && station.store_id) {
     const { data: st } = await db.rpc("dagsavslut_status", { _store_id: station.store_id, _day: null });
     if (st) {
-      const s = st as { dagsrapport_klar?: boolean; inventering_klar?: boolean };
-      dagsavslut = { dagsrapport_klar: !!s.dagsrapport_klar, inventering_klar: !!s.inventering_klar };
+      const s = st as {
+        dagsrapport_klar?: boolean;
+        inventering_klar?: boolean;
+        grossistorder_klar?: boolean;
+        inkop_klar?: boolean;
+      };
+      dagsavslut = {
+        dagsrapport_klar: !!s.dagsrapport_klar,
+        inventering_klar: !!s.inventering_klar,
+        grossistorder_klar: s.grossistorder_klar !== false,
+        inkop_klar: s.inkop_klar !== false,
+      };
     }
   }
   return json(req, { status: "punched", entry: inserted, employee: { first_name: hit.first_name, pnr_masked: hit.pnr_masked }, dagsavslut, expires_at: expiresAt });

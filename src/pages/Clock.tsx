@@ -230,7 +230,7 @@ export default function Clock() {
     reset();
     // Med påminnelse om dagens avslut får kvittot stå kvar längre så att den
     // som stämplar ut hinner läsa vad som saknas.
-    setTimeout(() => setReceipt(null), reminder ? 14000 : 6000);
+    setTimeout(() => setReceipt(null), reminder ? 30000 : 6000);
   };
 
   const handleLookup = async () => {
