@@ -827,7 +827,7 @@ export function useTaskRegister(storeId?: string | null, days = 180) {
         supabase
           .from("checklist_items")
           .select(
-            "id, task, category_id, zone_id, note, link_url, recipe_id, template_item_id, done, done_at, checklist_days!inner(store_id, checklist_date)",
+            "id, task, category_id, zone_id, note, link_url, recipe_id, template_item_id, done, done_at, completed_by_staff_id, checklist_days!inner(store_id, checklist_date)",
           )
           .eq("checklist_days.store_id", storeId!)
           .gte("checklist_days.checklist_date", fromIso)
@@ -839,6 +839,8 @@ export function useTaskRegister(storeId?: string | null, days = 180) {
 
       const map = new Map<string, RegisterTask>();
       const keyOf = (name: string) => name.trim().toLowerCase();
+      /** Antal gånger per person och uppgift, fylls på nedan. */
+      const doneBy = new Map<string, Map<string, number>>();
 
       (tpl.data || []).forEach((r: any) => {
         map.set(keyOf(r.task), {
@@ -856,6 +858,7 @@ export function useTaskRegister(storeId?: string | null, days = 180) {
           times: 0,
           doneTimes: 0,
           lastDone: null,
+          doers: [],
         });
       });
 
