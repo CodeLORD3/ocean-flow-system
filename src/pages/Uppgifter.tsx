@@ -501,183 +501,136 @@ export default function Uppgifter() {
         </TabsContent>
 
         <TabsContent value="dag">
-          <div className="grid gap-4 lg:grid-cols-[1fr_380px] lg:items-start">
-            <div className="min-w-0 space-y-4">
+          <div className="space-y-4">
+            <Progress done={doneCount} total={tasks.length} label="Dagens uppgifter" />
+            {left > 0 && <p className="text-xs text-muted-foreground">Beräknad tid kvar: {durationText(left)}</p>}
 
-
-          <Card className="p-4">
-            <Progress done={doneCount} total={tasks.length} />
-            {left > 0 && (
-              <p className="mt-2 text-xs text-muted-foreground">Beräknad tid kvar: {durationText(left)}</p>
-            )}
-          </Card>
-
-          <div className="flex flex-wrap gap-2">
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Sök"
-              className="h-8 w-[200px] text-xs"
-            />
-            <Select value={fArea} onValueChange={setFArea}>
-              <SelectTrigger className="h-8 w-[160px] text-xs">
-                <SelectValue placeholder="Område" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alla områden</SelectItem>
-                <SelectItem value="none">Utan område</SelectItem>
-                {[...areaOf.values()].map((a) => (
-                  <SelectItem key={a!.id} value={a!.id}>
-                    {a!.number}. {a!.name}
-                  </SelectItem>
+            {/* Kompakt filterrad — sekundär till uppgifterna */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Sök uppgift …"
+                className="h-9 w-[220px] rounded-full border-0 bg-muted/60 text-sm"
+              />
+              <Select value={fCat} onValueChange={setFCat}>
+                <SelectTrigger className="h-9 w-[150px] border-0 bg-muted/60 text-xs">
+                  <SelectValue placeholder="Kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alla kategorier</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                  {WORK_TYPES.map((w) => (
+                    <SelectItem key={w.key} value={`wt:${w.key}`}>
+                      {w.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={fPerson} onValueChange={setFPerson}>
+                <SelectTrigger className="h-9 w-[150px] border-0 bg-muted/60 text-xs">
+                  <SelectValue placeholder="Person" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alla personer</SelectItem>
+                  <SelectItem value="none">Ingen tilldelad</SelectItem>
+                  {staffList.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      <span className="inline-flex items-center gap-2">
+                        <StaffAvatar
+                          name={`${s.first_name} ${s.last_name}`}
+                          imageUrl={s.profile_image_url}
+                          className="h-8 w-8"
+                        />
+                        {s.first_name} {s.last_name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex overflow-hidden rounded-full bg-muted/60 text-xs">
+                {(["kvar", "klara", "allt"] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setFStatus(k)}
+                    className={cn(
+                      "px-3.5 py-1.5 capitalize",
+                      fStatus === k && "bg-foreground text-background font-semibold",
+                    )}
+                  >
+                    {k === "allt" ? "Alla" : k}
+                  </button>
                 ))}
-              </SelectContent>
-            </Select>
-            <Select value={fCat} onValueChange={setFCat}>
-              <SelectTrigger className="h-8 w-[170px] text-xs">
-                <SelectValue placeholder="Kategori" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alla kategorier</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-                {WORK_TYPES.map((w) => (
-                  <SelectItem key={w.key} value={`wt:${w.key}`}>
-                    {w.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={fPerson} onValueChange={setFPerson}>
-              <SelectTrigger className="h-8 w-[170px] text-xs">
-                <SelectValue placeholder="Person" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alla personer</SelectItem>
-                <SelectItem value="none">Ingen tilldelad</SelectItem>
-                {staffList.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    <span className="inline-flex items-center gap-2">
-                      <StaffAvatar
-                        name={`${s.first_name} ${s.last_name}`}
-                        imageUrl={s.profile_image_url}
-                        className="h-10 w-10"
-                      />
-                      {s.first_name} {s.last_name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex overflow-hidden rounded-md border text-xs">
-              {(["typ", "tid"] as const).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setGroupBy(k)}
-                  className={cn("px-3 py-1.5", groupBy === k && "bg-primary text-primary-foreground")}
-                >
-                  {k === "typ" ? "Typ" : "Tid"}
-                </button>
-              ))}
-            </div>
-            <div className="flex overflow-hidden rounded-md border text-xs">
-              {(["kvar", "klara", "allt"] as const).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setFStatus(k)}
-                  className={cn("px-3 py-1.5 capitalize", fStatus === k && "bg-primary text-primary-foreground")}
-                >
-                  {k}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {tasks.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              Inga uppgifter för valt datum. Lägg till en tillfällig uppgift eller skapa dagens checklista.
-            </p>
-          ) : (
-            <div className="space-y-5">
-              {groups.map((g) => (
-                <div key={g.key} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold">{g.label}</h2>
-                    <span className="text-xs text-muted-foreground">
-                      {g.tasks.filter((t) => t.done).length}/{g.tasks.length}
-                    </span>
-                  </div>
-                  <div className="border-t border-grid-line">
-                  {g.tasks.map((t) => (
-                    <div
-                      key={t.id}
-                      id={`uppgift-${t.id}`}
-                      className={
-                        marked === t.id
-                          ? "rounded-lg ring-2 ring-primary ring-offset-2 ring-offset-background transition-shadow"
-                          : undefined
-                      }
+              </div>
+              <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+                Sortera
+                <div className="flex overflow-hidden rounded-full bg-muted/60">
+                  {(["tid", "typ"] as const).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setGroupBy(k)}
+                      className={cn(
+                        "px-3.5 py-1.5",
+                        groupBy === k && "bg-foreground text-background font-semibold",
+                      )}
                     >
-                      <TaskRow
-                        task={t}
-                        area={t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null}
-                        categoryName={catOf(t)?.name ?? null}
-                        categoryColor={catOf(t)?.color ?? null}
-                        assigneeName={staffName(t.assigned_staff_id)}
-                        assigneeImage={
-                          staffList.find((p) => p.id === t.assigned_staff_id)?.profile_image_url ?? null
-                        }
-                        completedByName={staffName(t.completed_by_staff_id)}
-                        completedByImage={
-                          staffList.find((p) => p.id === t.completed_by_staff_id)?.profile_image_url ?? null
-                        }
-                        onToggle={(done) => setDone.mutate({ id: t.id, done })}
-                        onSaveRequirement={(patch) => updateTask.mutate({ id: t.id, ...patch })}
-                        staffOptions={staffOptions}
-                        onAssign={(staffId) => assign(t, staffId)}
-                        onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
-                        onAddPhoto={(file) => addPhoto(t, file)}
-                        onOpenArea={(areaId) => openOnMap(t, areaId)}
-                        linkLabel={targetOf(t)?.label ?? null}
-                        onOpenLink={() => {
-                          const target = targetOf(t);
-                          if (target) switchTab(target.url);
-                        }}
-                        onDelete={() => deleteTask(t)}
-                      />
+                      {k === "typ" ? "Typ" : "Tid"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Områden som snabbfilter — samma färger som butikskartan */}
+            {zones.length > 0 && (
+              <TaskAreaChips
+                areas={[...areaOf.values()]}
+                counts={zoneCounts}
+                selected={fArea}
+                onSelect={setFArea}
+                totalCount={{ total: tasks.length, done: doneCount }}
+              />
+            )}
+
+            {tasks.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                Inga uppgifter för valt datum. Lägg till en tillfällig uppgift eller skapa dagens checklista.
+              </p>
+            ) : (
+              <div className="space-y-6">
+                {groups.map((g) => (
+                  <div key={g.key} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {g.label}
+                      </h3>
+                      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                        {g.tasks.filter((t) => t.done).length}/{g.tasks.length}
+                      </span>
                     </div>
-                   ))}
+                    <div className="border-t border-grid-line">
+                      {g.tasks.map((t) => (
+                        <div
+                          key={t.id}
+                          id={`uppgift-${t.id}`}
+                          className={
+                            marked === t.id
+                              ? "rounded-lg ring-2 ring-primary ring-offset-2 ring-offset-background transition-shadow"
+                              : undefined
+                          }
+                        >
+                          {renderTaskRow(t)}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                 </div>
-               ))}
-            </div>
-          )}
-            </div>
-            {plan && zones.length > 0 && (
-              <div className="space-y-3 lg:sticky lg:top-4">
-                <TaskZoneMap
-                  plan={plan}
-                  zones={zones}
-                  areas={areaOf}
-                  counts={zoneCounts}
-                  selected={fArea}
-                  onSelect={setFArea}
-                  onOpenZone={openZoneHere}
-                  chipsOnly={mapOpen}
-                  onOpenMap={() => setMapOpen((v) => !v)}
-                  openLabel={mapOpen ? "Dölj kartan" : "Visa hela kartan"}
-                />
-                {/* Butikskartan med alla funktioner — samma karta som i Översikt */}
-                {mapOpen && (
-                  <Card className="p-4">
-                    <StoreMap embedded openZoneId={openZoneId} onOpenZoneChange={setOpenZoneId} />
-                  </Card>
-                )}
+                ))}
               </div>
             )}
           </div>
