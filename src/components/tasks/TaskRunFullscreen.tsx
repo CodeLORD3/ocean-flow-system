@@ -233,7 +233,7 @@ export function TaskRunFullscreen({
             const n = i + 1;
             const isDone = doneNos.has(n);
             return (
-              <li key={n}>
+              <li key={n} className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => {
