@@ -82,13 +82,11 @@ export function ZonePickMap({
     onChange(zoneId);
     if (!zoneId || !autoNext || !onNext) return;
     const zone = zones.find((z) => z.id === zoneId);
-    const hasChildren = zones.some((z) => z.parent_zone_id === zoneId);
-    if (hasChildren) return;
     setFlash(zone?.name ?? null);
     window.setTimeout(() => {
       setFlash(null);
       onNext();
-    }, 700);
+    }, 450);
   };
 
   const view = useMemo(() => {

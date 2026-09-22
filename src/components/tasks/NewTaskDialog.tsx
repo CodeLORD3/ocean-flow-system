@@ -136,6 +136,22 @@ export function NewTaskDialog({
       .slice(0, 60);
   }, [register, existingSearch, existingZone]);
 
+  /** Väljer person och går direkt vidare till sista steget. */
+  const choosePerson = (id: string) => {
+    setPerson(id);
+    setPersonSearch("");
+    setTimeout(() => setStep(3), 250);
+  };
+
+  /** Går direkt vidare till namnsökningen när området är valt. */
+  const goToPerson = () => {
+    setPickOnMap(false);
+    setTimeout(() => {
+      personRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      personRef.current?.querySelector("input")?.focus();
+    }, 60);
+  };
+
   const pickExisting = (r: { task: string; zoneId: string | null }) => {
     setTask(r.task);
     if (r.zoneId) setZone(r.zoneId);
@@ -391,7 +407,10 @@ export function NewTaskDialog({
                       <button
                         key={a.id}
                         type="button"
-                        onClick={() => setZone(a.id)}
+                        onClick={() => {
+                          setZone(a.id);
+                          goToPerson();
+                        }}
                         className={cn(
                           "rounded-full border px-3 py-2 text-sm",
                           zone === a.id ? "border-primary bg-primary/10 font-semibold text-primary" : "hover:bg-muted",
@@ -420,13 +439,7 @@ export function NewTaskDialog({
                         onChange={setZone}
                         numberOf={(id) => areas.find((a) => a.id === id)?.number ?? null}
                         autoNext
-                        onNext={() => {
-                          setPickOnMap(false);
-                          setTimeout(() => {
-                            personRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                            personRef.current?.querySelector("input")?.focus();
-                          }, 60);
-                        }}
+                        onNext={goToPerson}
                       />
                     )}
                   </>
@@ -470,8 +483,7 @@ export function NewTaskDialog({
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && people.length > 0) {
                             e.preventDefault();
-                            setPerson(people[0].id);
-                            setPersonSearch("");
+                             choosePerson(people[0].id);
                           }
                         }}
                       />
@@ -489,8 +501,7 @@ export function NewTaskDialog({
                           key={s.id}
                           type="button"
                           onClick={() => {
-                            setPerson(s.id);
-                            setPersonSearch("");
+                             choosePerson(s.id);
                           }}
                           className={cn(
                             "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-base",
