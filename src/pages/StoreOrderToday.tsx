@@ -240,7 +240,7 @@ export default function StoreOrderToday() {
               .filter((l) => l.line_status !== "avvisad")
               .map((l) => (
                 <div key={l.id} className="flex items-center gap-3">
-                  <span className="min-w-0 flex-1 truncate text-[18px]">
+                  <span className="min-w-0 flex-1 break-words text-[18px] leading-snug">
                     {l.products?.name ?? "Vara"}
                     <span className="block text-[16px] text-muted-foreground">
                       Skickat {fmtQty(Number(l.quantity_shipped ?? 0), l.unit)}
