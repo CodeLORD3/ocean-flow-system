@@ -494,8 +494,7 @@ export function NewTaskDialog({
                           key={s.id}
                           type="button"
                           onClick={() => {
-                            setPerson(s.id);
-                            setPersonSearch("");
+                             choosePerson(s.id);
                           }}
                           className={cn(
                             "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-base",
