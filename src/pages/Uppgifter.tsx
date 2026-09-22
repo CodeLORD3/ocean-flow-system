@@ -363,8 +363,10 @@ export default function Uppgifter() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold">Uppgifter</h1>
-          <p className="text-sm text-muted-foreground">Dagens arbete, standarduppgifter och schemaläggning.</p>
+          <h1 className="text-xl font-bold sm:text-2xl">Uppgifter</h1>
+          <p className="hidden text-sm text-muted-foreground sm:block">
+            Dagens arbete, standarduppgifter och schemaläggning.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {site !== "shop" && (
