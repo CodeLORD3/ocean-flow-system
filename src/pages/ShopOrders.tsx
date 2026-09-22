@@ -979,18 +979,20 @@ export default function ShopOrders() {
                               key={p.id}
                               role="button"
                               tabIndex={-1}
-                              className={`w-full min-h-14 text-left px-3 py-3 text-[16px] flex items-center gap-2 cursor-pointer sm:min-h-0 sm:py-2 sm:text-xs ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
+                              className={`w-full min-h-14 text-left px-3 py-3 text-[16px] flex items-start gap-2 cursor-pointer sm:min-h-0 sm:items-center sm:py-2 sm:text-xs ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
                               onClick={() => addProduct(p)}
                               onMouseEnter={() => setHighlightedIndex(idx)}
                             >
-                              <ProductThumb src={(p as any).image_url} alt={p.name} static className="w-7 h-5" />
-                              <span className="font-medium text-foreground flex-1 truncate">{p.name}</span>
-                              <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
+                              <ProductThumb src={(p as any).image_url} alt={p.name} static className="w-7 h-5 shrink-0" />
+                              <span className="min-w-0 flex-1">
+                                <span className="block font-medium text-foreground break-words leading-snug">{p.name}</span>
+                                <span className="block text-muted-foreground font-mono text-[11px] sm:text-[10px]">{p.sku} · {p.unit}</span>
+                              </span>
                               <button
                                 type="button"
                                 title="Visa produkt"
                                 aria-label={`Visa ${p.name}`}
-                                className="p-1 rounded hover:bg-background text-muted-foreground hover:text-foreground"
+                                className="shrink-0 p-1 rounded hover:bg-background text-muted-foreground hover:text-foreground"
                                 onClick={(e) => { e.stopPropagation(); setPreviewProduct(p); }}
                               >
                                 <Eye className="h-3.5 w-3.5" />
