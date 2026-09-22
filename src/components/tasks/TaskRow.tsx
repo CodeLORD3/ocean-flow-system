@@ -96,6 +96,7 @@ export function TaskRow({
   const canStart = !task.done && !running;
   const [showGuide, setShowGuide] = useState(false);
   const [showRun, setShowRun] = useState(false);
+  const runRef = useRef<HTMLDivElement | null>(null);
   const guideSteps = parseGuide(task.guide, task.instructions).steps.filter((s) => s.text || s.image);
   /** Starta/fortsätt uppgiften — arbetet fälls ut här i raden. */
   const startNow = async () => {
