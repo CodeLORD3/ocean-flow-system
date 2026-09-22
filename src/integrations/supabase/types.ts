@@ -3867,6 +3867,68 @@ export type Database = {
         }
         Relationships: []
       }
+      dagsavslut_kvitteringar: {
+        Row: {
+          created_at: string
+          dag: string
+          id: string
+          note: string | null
+          staff_id: string | null
+          staff_name: string | null
+          store_id: string
+          vad: string
+        }
+        Insert: {
+          created_at?: string
+          dag: string
+          id?: string
+          note?: string | null
+          staff_id?: string | null
+          staff_name?: string | null
+          store_id: string
+          vad: string
+        }
+        Update: {
+          created_at?: string
+          dag?: string
+          id?: string
+          note?: string | null
+          staff_id?: string | null
+          staff_name?: string | null
+          store_id?: string
+          vad?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dagsavslut_kvitteringar_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dagsavslut_kvitteringar_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dagsavslut_kvitteringar_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "dagsavslut_kvitteringar_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_report_edits: {
         Row: {
           changed_at: string

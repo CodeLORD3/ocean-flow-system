@@ -40,7 +40,7 @@ create index if not exists dagsavslut_kvitteringar_store_dag_idx
   on public.dagsavslut_kvitteringar (store_id, dag);
 
 -- Status för dagens avslut: fyra punkter i stället för två.
-create or replace function public.dagsavslut_status(_store_id uuid, _day date)
+create or replace function public.dagsavslut_status(_store_id uuid, _day date default null)
 returns jsonb
 language sql
 stable
