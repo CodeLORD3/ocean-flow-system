@@ -145,6 +145,17 @@ export function TaskRunFullscreen({
   };
 
   const finishNow = async () => {
+    /** Saknas bilden får man en tydlig varning innan uppgiften stängs. */
+    if (requiresPhoto && photoCount === 0) {
+      setWarnPhoto(true);
+      return;
+    }
+    await onFinish();
+    onClose();
+  };
+
+  const finishAnyway = async () => {
+    setWarnPhoto(false);
     await onFinish();
     onClose();
   };
