@@ -31,7 +31,7 @@ export default function ImageSourceLinks({
   return (
     <div className={cn("space-y-1", className)}>
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Källa</p>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex min-w-0 flex-col items-stretch gap-1">
         {links.map((l) => {
           const route = placeRoute(l.entity_type, l.entity_id, imageId);
           const name = names[`${l.entity_type}:${l.entity_id}`] || linkTypeLabel(l.entity_type);
