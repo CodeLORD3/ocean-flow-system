@@ -404,8 +404,8 @@ export function TaskPerformPanel({
 
       </Card>
 
-      {/* Klarknappen följer med längst ned så den alltid går att nå. */}
-      <div className="sticky bottom-0 z-20 -mx-1 space-y-1 border-t bg-background/95 px-1 py-2 backdrop-blur">
+      {/* Klarknappen ligger still längst ned — följer inte med vid skroll. */}
+      <div className="space-y-1 pt-1">
         <Button
           size="lg"
           disabled={blocked}
