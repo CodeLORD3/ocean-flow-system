@@ -95,6 +95,9 @@ export function TaskPerformPanel({
   const resume = useResumeTask();
   const finish = useFinishTask();
   const logAfter = useLogTaskAfterwards();
+  const checkAll = useCheckAllPresent();
+  const setStep = useSetStepCheck();
+  const { data: staff } = useCurrentStaff();
 
   const [pauseReason, setPauseReason] = useState("kund");
   const [needsOpen, setNeedsOpen] = useState(false);
