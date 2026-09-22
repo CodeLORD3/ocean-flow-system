@@ -198,6 +198,7 @@ export function TaskPrepPanel({
                   </Button>
                 </div>
               )}
+              </div>
             </div>
           );
         })}
