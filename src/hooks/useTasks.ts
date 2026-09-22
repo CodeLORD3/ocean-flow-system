@@ -174,6 +174,7 @@ export function useSetTaskDone() {
       qc.invalidateQueries({ queryKey: ["day-tasks"] });
       qc.invalidateQueries({ queryKey: ["map-tasks"] });
       qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["task-register"] });
       qc.invalidateQueries({ queryKey: ["task-item"] });
     },
   });
@@ -207,6 +208,7 @@ export function useUpdateTask() {
       qc.invalidateQueries({ queryKey: ["map-tasks"] });
       qc.invalidateQueries({ queryKey: ["task-item"] });
       qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["task-register"] });
     },
   });
 }
@@ -300,6 +302,7 @@ export function useAddAdhocTask() {
       qc.invalidateQueries({ queryKey: ["day-tasks"] });
       qc.invalidateQueries({ queryKey: ["map-tasks"] });
       qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["task-register"] });
     },
   });
 }
@@ -408,6 +411,7 @@ export function useAddStandardTask() {
       qc.invalidateQueries({ queryKey: ["standard-tasks"] });
       qc.invalidateQueries({ queryKey: ["map-tasks"] });
       qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["task-register"] });
     },
   });
 }
@@ -492,6 +496,7 @@ export function useMakeTaskRecurring() {
       qc.invalidateQueries({ queryKey: ["day-tasks"] });
       qc.invalidateQueries({ queryKey: ["standard-tasks"] });
       qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["task-register"] });
     },
   });
 }
@@ -514,6 +519,7 @@ export function useSetStandardWeekdays() {
       qc.invalidateQueries({ queryKey: ["standard-tasks"] });
       qc.invalidateQueries({ queryKey: ["task-item"] });
       qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["task-register"] });
     },
   });
 }
@@ -742,6 +748,7 @@ export function useUpdateStandardTask() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["standard-tasks"] });
       qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["task-register"] });
     },
   });
 }
@@ -781,6 +788,7 @@ export function useSaveTaskGuide() {
       qc.invalidateQueries({ queryKey: ["day-tasks"] });
       qc.invalidateQueries({ queryKey: ["standard-tasks"] });
       qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["task-register"] });
     },
   });
 }
