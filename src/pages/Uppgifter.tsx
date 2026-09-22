@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { withReturn } from "@/lib/navHistory";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useAllowedStores } from "@/components/StoreSwitcher";
@@ -958,7 +959,7 @@ export default function Uppgifter() {
           setMapZoneId(id);
           setFArea(id ?? "all");
         }}
-        onOpenArea={(id) => switchTab(`/butikskarta?zone=${id}`)}
+        onOpenArea={(id) => switchTab(withReturn(`/butikskarta?zone=${id}`, "/uppgifter", "Uppgifter"))}
         onOpenTask={(id) => switchTab(`/uppgift/${id}`)}
       />
 
