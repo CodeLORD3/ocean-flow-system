@@ -21,6 +21,7 @@ export function ZonePickMap({
   numberOf,
   colorOf,
   onNext,
+  autoNext,
 }: {
   plan: FloorPlan;
   zones: MapZone[];
