@@ -45,7 +45,7 @@ import {
 import { TaskGuideEditor } from "@/components/tasks/TaskGuideEditor";
 import { TaskGuideView } from "@/components/tasks/TaskGuideView";
 import { TaskIssueDialog } from "@/components/tasks/TaskIssueDialog";
-import { parseGuide } from "@/lib/taskGuide";
+import { cleanGuide, parseGuide } from "@/lib/taskGuide";
 import { DAYPARTS, durationText, taskTime } from "@/lib/taskTime";
 import { workTypeLabel } from "@/lib/workType";
 import { TASK_LINKS, taskTarget } from "@/lib/taskLink";
@@ -432,6 +432,14 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             <TaskGuideView
               guide={guide}
               zones={guideZones}
+              taskId={task.id}
+              onSaveGuide={async (next) => {
+                await saveGuide.mutateAsync({
+                  id: task.id,
+                  templateItemId: task.template_item_id,
+                  guide: cleanGuide(next),
+                });
+              }}
               onShowOnMap={(zoneId) =>
                 switchTab(`/butikskarta?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
               }

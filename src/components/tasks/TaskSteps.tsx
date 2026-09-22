@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Info, MessageSquarePlus, Pencil, Plus, Square } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Info, MessageSquarePlus, Pencil, Plus, Square, Trash2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { cleanGuide, parseGuide, type GuideMark, type GuideStep, type TaskGuide 
 import { AnnotatableImage, type ImageRegion, type RegionMark } from "@/components/images/AnnotatableImage";
 import { useCreateImprovement } from "@/hooks/useResources";
 import { useSaveTaskGuide } from "@/hooks/useTasks";
+import { uploadTaskStepImage } from "@/lib/taskStepImage";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 type Props = {
@@ -243,6 +244,7 @@ function StepViewer({
   const [markMode, setMarkMode] = useState(false);
   const [pending, setPending] = useState<ImageRegion | null>(null);
   const [markLabel, setMarkLabel] = useState("");
+  const [uploading, setUploading] = useState(false);
   const createImprovement = useCreateImprovement();
   const { staff } = useStaffAuth();
 
@@ -350,6 +352,49 @@ function StepViewer({
             </p>
           </div>
           <div className="flex items-center gap-1 pr-8">
+            {canEdit && (
+              <>
+                <label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      e.currentTarget.value = "";
+                      if (!file) return;
+                      setUploading(true);
+                      try {
+                        const url = await uploadTaskStepImage(file, taskId);
+                        await onSaveStep(index, { image: url, marks: [] });
+                        toast({ title: step.image ? "Bilden är bytt" : "Bilden är tillagd" });
+                      } catch (err: any) {
+                        toast({ title: "Kunde inte spara bilden", description: err.message, variant: "destructive" });
+                      } finally {
+                        setUploading(false);
+                      }
+                    }}
+                  />
+                  <span className="inline-flex h-8 cursor-pointer items-center rounded-md px-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
+                    <Camera className="mr-1 h-3.5 w-3.5" />
+                    {uploading ? "Laddar upp …" : step.image ? "Byt bild" : "Lägg till bild"}
+                  </span>
+                </label>
+                {step.image && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs text-muted-foreground"
+                    onClick={async () => {
+                      await onSaveStep(index, { image: null, marks: [] });
+                      toast({ title: "Bilden är borttagen från steget" });
+                    }}
+                  >
+                    <Trash2 className="mr-1 h-3.5 w-3.5" /> Ta bort bild
+                  </Button>
+                )}
+              </>
+            )}
             {canEdit && !edit && (
               <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setEdit(true)}>
                 <Pencil className="mr-1 h-3.5 w-3.5" /> Ändra text
