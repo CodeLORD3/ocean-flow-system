@@ -821,7 +821,7 @@ export function useTaskRegister(storeId?: string | null, days = 180) {
       const [tpl, occ] = await Promise.all([
         supabase
           .from("checklist_template_items")
-          .select("id, task, category_id, zone_id, note, link_url, recipe_id, active, store_id")
+          .select("id, task, category_id, zone_id, important_note, link_url, recipe_id, active, store_id")
           .eq("active", true)
           .or(`store_id.is.null,store_id.eq.${storeId}`),
         supabase
