@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
+import { Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, RotateCcw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { GuideStep } from "@/lib/taskGuide";
