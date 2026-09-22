@@ -597,7 +597,9 @@ export function useTaskHistory(storeId?: string | null, taskName?: string | null
 
       const { data: items, error } = await supabase
         .from("checklist_items")
-        .select("id, day_id, done, done_at, signature, completed_by_staff_id")
+        .select(
+          "id, day_id, done, done_at, signature, completed_by_staff_id, completion_note, completion_value, value_label, note, active_minutes, paused_minutes, actual_minutes, started_at, finished_at",
+        )
         .in("day_id", dayIds)
         .eq("task", taskName!);
       if (error) throw error;
