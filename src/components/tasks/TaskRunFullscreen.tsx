@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Camera, Check, ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
+import { Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { GuideStep } from "@/lib/taskGuide";
@@ -80,6 +80,9 @@ export function TaskRunFullscreen({
   const [index, setIndex] = useState(0);
   /** Kontrollen visas först på dator, sedan stegen. */
   const [showPrep, setShowPrep] = useState(true);
+  /** Textrutan i telefonen kan dras ner så hela bilden syns. */
+  const [textOpen, setTextOpen] = useState(true);
+  const touchY = useRef<number | null>(null);
   const isPhone = useIsPhone();
   const feedRef = useRef<HTMLDivElement | null>(null);
 
@@ -234,38 +237,84 @@ export function TaskRunFullscreen({
                   </label>
                 )}
 
-                {/* Texten i en tät ruta: läsbar utan att dölja bilden */}
-                <div className="relative z-10 m-3 max-h-[58%] space-y-2 overflow-y-auto rounded-2xl bg-black/75 p-4 text-white backdrop-blur-sm">
+                {/* Texten i en tät ruta: dra ner den eller tryck "Minska" för hela bilden */}
+                <div
+                  className={cn(
+                    "relative z-10 m-3 space-y-2 rounded-2xl bg-black/75 p-4 text-white backdrop-blur-sm transition-all",
+                    textOpen ? "max-h-[58%] overflow-y-auto" : "",
+                  )}
+                  onTouchStart={(e) => {
+                    touchY.current = e.touches[0]?.clientY ?? null;
+                  }}
+                  onTouchEnd={(e) => {
+                    const from = touchY.current;
+                    touchY.current = null;
+                    const to = e.changedTouches[0]?.clientY;
+                    if (from == null || to == null) return;
+                    if (to - from > 50) setTextOpen(false);
+                    if (from - to > 50) setTextOpen(true);
+                  }}
+                >
+                  {/* Dra-handtaget och knappen för att minska eller visa texten */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTextOpen((v) => !v)}
+                      className="mx-auto h-1.5 w-12 rounded-full bg-white/40"
+                      aria-label={textOpen ? "Minska texten" : "Visa texten"}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setTextOpen((v) => !v)}
+                      className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white"
+                    >
+                      {textOpen ? (
+                        <>
+                          <ChevronDown className="h-3.5 w-3.5" /> Minska
+                        </>
+                      ) : (
+                        <>
+                          <ChevronUp className="h-3.5 w-3.5" /> Visa texten
+                        </>
+                      )}
+                    </button>
+                  </div>
+
                   <p className="font-mono text-xs tabular-nums text-white/70">
                     Steg {n + feedOffset} av {steps.length + feedOffset} · {taskName}
                   </p>
-                  <h2 className="font-heading text-2xl font-bold leading-tight">
+                  <h2 className={cn("font-heading font-bold leading-tight", textOpen ? "text-2xl" : "pr-24 text-base")}>
                     {stepTitle(st.text || `Steg ${n}`)}
                   </h2>
-                  {st.text && <p className="text-[15px] leading-snug text-white">{st.text}</p>}
-                  {st.keyPoint && (
-                    <p className="text-sm leading-snug text-emerald-200">
-                      <span className="font-semibold uppercase tracking-wide">Viktigt · </span>
-                      {st.keyPoint}
-                    </p>
-                  )}
-                  {st.why && (
-                    <p className="text-sm leading-snug text-sky-200">
-                      <span className="font-semibold uppercase tracking-wide">Varför · </span>
-                      {st.why}
-                    </p>
-                  )}
-                  {st.safety && (
-                    <p className="text-sm leading-snug text-amber-200">
-                      <span className="font-semibold uppercase tracking-wide">Säkerhet · </span>
-                      {st.safety}
-                    </p>
-                  )}
-                  {st.haccp && (
-                    <p className="text-sm leading-snug text-rose-200">
-                      <span className="font-semibold uppercase tracking-wide">HACCP · </span>
-                      {st.haccp}
-                    </p>
+
+                  {textOpen && (
+                    <>
+                      {st.text && <p className="text-[15px] leading-snug text-white">{st.text}</p>}
+                      {st.keyPoint && (
+                        <p className="text-sm leading-snug text-emerald-200">
+                          <span className="font-semibold uppercase tracking-wide">Viktigt · </span>
+                          {st.keyPoint}
+                        </p>
+                      )}
+                      {st.why && (
+                        <p className="text-sm leading-snug text-sky-200">
+                          <span className="font-semibold uppercase tracking-wide">Varför · </span>
+                          {st.why}
+                        </p>
+                      )}
+                      {st.safety && (
+                        <p className="text-sm leading-snug text-amber-200">
+                          <span className="font-semibold uppercase tracking-wide">Säkerhet · </span>
+                          {st.safety}
+                        </p>
+                      )}
+                      {st.haccp && (
+                        <p className="text-sm leading-snug text-rose-200">
+                          <span className="font-semibold uppercase tracking-wide">HACCP · </span>
+                          {st.haccp}
+                        </p>
+                      )}
+                    </>
                   )}
 
                   <div className="flex items-center gap-2 pt-1">
