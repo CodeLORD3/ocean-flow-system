@@ -250,7 +250,7 @@ export function TaskRow({
                 type="button"
                 onClick={() => onOpenArea(area.id)}
                 title={`Visa ${area.name} på kartan`}
-                className="inline-flex w-full items-center gap-1.5 rounded-full px-2 py-1 text-left text-[12px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="inline-flex w-full items-center gap-1.5 rounded-full px-2 py-0.5 text-left text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: area.color }} />
                 <span className="truncate">{area.name}</span>
