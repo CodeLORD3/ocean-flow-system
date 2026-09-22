@@ -727,6 +727,34 @@ function StepGallery({
     setAt(next);
   };
 
+  /** Pilarna höger/vänster byter bild på steget. */
+  useEffect(() => {
+    if (images.length < 2) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setAt((cur) => {
+          const next = Math.min(cur + 1, images.length - 1);
+          const el = ref.current;
+          if (el) el.scrollTo({ left: next * el.clientWidth, behavior: "smooth" });
+          return next;
+        });
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setAt((cur) => {
+          const next = Math.max(cur - 1, 0);
+          const el = ref.current;
+          if (el) el.scrollTo({ left: next * el.clientWidth, behavior: "smooth" });
+          return next;
+        });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [images.length]);
+
+
   return (
     <div className={cn("relative", fill ? "absolute inset-0" : "", className)}>
       <div
