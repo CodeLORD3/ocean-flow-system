@@ -197,15 +197,15 @@ export default function StaffProfile() {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto w-full max-w-[1400px] space-y-4"
+      className="mx-auto w-full max-w-[1400px] space-y-3"
     >
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_340px] xl:items-start">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_320px] lg:items-start">
         {/* Vänster: rubrikkort med bild, namn och flikar + innehåll */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Card className="overflow-hidden shadow-card">
             <CardContent className="p-0">
-              <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
-                <div className="relative h-24 w-24 shrink-0 sm:h-28 sm:w-28">
+              <div className="flex flex-wrap items-center gap-3 p-3 sm:gap-4 sm:p-4">
+                <div className="relative h-20 w-20 shrink-0 sm:h-24 sm:w-24">
                   <div className="h-full w-full overflow-hidden rounded-full border-4 border-background bg-primary/10 shadow-md">
                     {staff.profile_image_url ? (
                       <img
