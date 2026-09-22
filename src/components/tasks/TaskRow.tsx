@@ -275,6 +275,29 @@ export function TaskRow({
 
       {open && (
         <div className="space-y-3 border-t border-primary/20 px-3 pb-3 pt-2.5 text-sm">
+          {/* Två tydliga val: läsa hur man gör, eller sätta igång och göra den */}
+          {!task.done && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button
+                variant={showGuide ? "secondary" : "outline"}
+                className="h-12 justify-start gap-2 text-sm font-semibold"
+                onClick={() => setShowGuide((v) => !v)}
+              >
+                <ImageIcon className="h-4 w-4" />
+                {showGuide ? "Stäng beskrivningen" : "Hur gör jag?"}
+              </Button>
+              <Button
+                className="h-12 justify-start gap-2 text-sm font-semibold"
+                onClick={startNow}
+                disabled={start.isPending}
+              >
+                {running ? <Timer className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                {running ? "Fortsätt uppgiften" : "Starta uppgiften"}
+              </Button>
+            </div>
+          )}
+
+          {(showGuide || task.done) && (
           <TaskSteps
             taskId={task.id}
             taskName={task.task}
