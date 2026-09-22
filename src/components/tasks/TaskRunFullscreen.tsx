@@ -277,6 +277,7 @@ export function TaskRunFullscreen({
     return (
       <div className="fixed inset-0 z-50 bg-background">
         {warnNode}
+        {overviewNode}
         {/* Räknaren i höger hörn och vägen ut i vänster */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between p-3">
           <button
