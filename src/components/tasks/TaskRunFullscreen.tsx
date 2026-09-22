@@ -53,6 +53,8 @@ export function TaskRunFullscreen({
   onAddPhoto,
   onSetStepImage,
   onFinish,
+  prepNode,
+  prepMissingCount = 0,
 }: {
   open: boolean;
   onClose: () => void;
