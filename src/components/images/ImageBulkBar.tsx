@@ -10,7 +10,7 @@ import {
   usePickProducts,
 } from "@/hooks/useImagePickers";
 import { MEDIA_KINDS, type MediaKind } from "@/lib/imageStatus";
-import { useBulkClassify } from "@/hooks/useImageLibrary";
+import { useBulkClassify, useBulkDeleteImages } from "@/hooks/useImageLibrary";
 import { toast } from "sonner";
 
 /**
