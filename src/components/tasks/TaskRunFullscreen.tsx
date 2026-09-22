@@ -120,9 +120,12 @@ export function TaskRunFullscreen({
     });
   };
 
+  /** Kontrollskärmen ligger först i flödet, före steg 1. */
+  const feedOffset = prepNode ? 1 : 0;
+
   /** Swipa vidare i telefonen: nästa steg glider upp. */
   const scrollToStep = (i: number) => {
-    const el = feedRef.current?.children[i] as HTMLElement | undefined;
+    const el = feedRef.current?.children[i + feedOffset] as HTMLElement | undefined;
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
