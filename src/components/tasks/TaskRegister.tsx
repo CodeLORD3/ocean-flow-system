@@ -193,7 +193,11 @@ export function TaskRegister({
                         </span>
 
                         <span className="hidden w-[20px] shrink-0 justify-center sm:flex">
-                          {r.recurring && <Repeat className="h-3 w-3 text-muted-foreground" title="Återkommande" />}
+                          {r.recurring && (
+                            <span title="Återkommande">
+                              <Repeat className="h-3 w-3 text-muted-foreground" />
+                            </span>
+                          )}
                         </span>
 
                         <span className="hidden w-[150px] shrink-0 lg:block">
