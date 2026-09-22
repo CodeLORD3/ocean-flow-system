@@ -68,9 +68,14 @@ export function TaskMapDrawer({
     const w = Math.max(...xs) - Math.min(...xs);
     const h = Math.max(...ys) - Math.min(...ys);
     const pad = Math.max(40, Math.max(w, h) * 0.1);
-    const x = Math.min(...xs) - pad;
-    const y = Math.min(...ys) - pad;
-    return { x, y, w: w + pad * 2, h: h + pad * 2 };
+    let vw = w + pad * 2;
+    let vh = h + pad * 2;
+    // Smala ytor får en rimlig ruta så kartan inte klipps hårt.
+    vw = Math.max(vw, vh * 1.2);
+    vh = Math.max(vh, vw * 0.6);
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    return { x: cx - vw / 2, y: cy - vh / 2, w: vw, h: vh };
   }, [shapes, zoneId, plan?.width, plan?.height]);
 
   const current = zoneId ? shapes.find((s) => s.zone.id === zoneId) ?? null : null;
