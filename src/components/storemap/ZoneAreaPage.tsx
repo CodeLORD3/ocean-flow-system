@@ -38,7 +38,7 @@ import type { MapObject, MapObjectType, MapTask, MapZone } from "@/hooks/useStor
 const dt = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString("sv-SE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
 
-type SectionKey = "uppgifter" | "bilder" | "utrustning" | "avvikelser" | "historik";
+type SectionKey = "bilder" | "utrustning" | "avvikelser" | "historik";
 
 /**
  * Ytans egen sida: kartan över just den ytan, ytorna som ligger inuti och allt
@@ -66,6 +66,7 @@ export function ZoneAreaPage({
   onEditZone,
   onEditShape,
   onDeleteZone,
+  onOpenTask,
   onBack,
 }: {
   storeId: string;
@@ -93,6 +94,8 @@ export function ZoneAreaPage({
   onEditShape?: (zoneId: string) => void;
   /** Tar bort ytan. */
   onDeleteZone?: (zoneId: string) => void;
+  /** Öppnar uppgiftens egen sida. */
+  onOpenTask?: (taskId: string) => void;
   onBack: () => void;
 }) {
   const entityType = object ? "map_object" : "map_zone";
@@ -106,7 +109,7 @@ export function ZoneAreaPage({
   const { data: logs = [] } = useActivityLogs({ storeId, limit: 300 });
   const { data: deviations = [] } = useDeviations(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [section, setSection] = useState<SectionKey>("uppgifter");
+  const [section, setSection] = useState<SectionKey>("bilder");
   const [tagDraft, setTagDraft] = useState("");
   const [historyLimit, setHistoryLimit] = useState(12);
 
@@ -143,7 +146,6 @@ export function ZoneAreaPage({
   };
 
   const sections: { key: SectionKey; label: string; icon: React.ReactNode; count?: number }[] = [
-    { key: "uppgifter", label: "Uppgifter", icon: <ListChecks className="h-3.5 w-3.5" />, count: progress.total },
     { key: "bilder", label: "Bilder", icon: <ImageIcon className="h-3.5 w-3.5" />, count: images.length },
     { key: "utrustning", label: "Utrustning", icon: <Wrench className="h-3.5 w-3.5" /> },
     { key: "avvikelser", label: "Avvikelser", icon: <TriangleAlert className="h-3.5 w-3.5" />, count: openIssues.length },
