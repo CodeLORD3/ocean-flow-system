@@ -437,7 +437,7 @@ export function TaskRunFullscreen({
             </Button>
           </div>
         ) : (
-        {/* Bild till vänster, text till höger — allt ryms på en skärm utan skroll */}
+        // Bild till vänster, text till höger — allt ryms på en skärm utan skroll
         <div className="mx-auto grid h-full w-full max-w-6xl gap-4 lg:grid-cols-2 lg:items-start">
           <div className="flex min-h-0 flex-col gap-2">
             {s.image ? (
