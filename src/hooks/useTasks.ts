@@ -802,6 +802,8 @@ export type RegisterTask = {
   /** Hur många gånger uppgiften faktiskt blivit klar. */
   doneTimes: number;
   lastDone: string | null;
+  /** Vilka personer som gjort uppgiften, flest gånger först. */
+  doers: { id: string; name: string; image: string | null; times: number }[];
 };
 
 /**
