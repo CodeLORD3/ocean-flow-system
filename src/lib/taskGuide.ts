@@ -87,6 +87,7 @@ export function parseGuide(raw: unknown, fallbackSteps?: string[] | null): TaskG
                 minutes: typeof (s as any)?.minutes === "number" ? (s as any).minutes : null,
                 safety: str((s as any)?.safety),
                 haccp: str((s as any)?.haccp),
+                marks: marksOf((s as any)?.marks),
               },
         )
         .filter((s) => s.text.trim().length > 0 || s.image)
