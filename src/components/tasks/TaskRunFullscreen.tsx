@@ -97,6 +97,9 @@ export function TaskRunFullscreen({
 
   const doneNos = new Set(checks.filter((c) => c.step_no != null).map((c) => c.step_no as number));
 
+  /** Senaste "bocka av och gå vidare" — används av Enter. */
+  const markAndNextRef = useRef<(() => Promise<void>) | null>(null);
+
   /** Börja på första steget som inte är gjort. */
   useEffect(() => {
     if (!open) return;
