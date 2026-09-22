@@ -265,7 +265,7 @@ export default function StaffProfile() {
                 </div>
 
                 {/* Stämpling direkt i rubriken */}
-                <div className="w-full shrink-0 rounded-xl border border-border bg-muted/40 p-3 sm:w-56">
+                <div className="w-full shrink-0 rounded-xl border border-border bg-muted/40 p-2 sm:w-52">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Stämpelklocka</p>
                   {openShift ? (
                     <>
