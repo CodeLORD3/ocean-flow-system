@@ -15,9 +15,14 @@ function stepTitle(text: string): string {
 export function TaskStepChecks({
   checklistItemId,
   steps,
+  locked = false,
+  onLockedClick,
 }: {
   checklistItemId: string;
   steps: GuideStep[];
+  /** Innan uppgiften är startad går stegen inte att bocka av. */
+  locked?: boolean;
+  onLockedClick?: () => void;
 }) {
   const { data: staff } = useCurrentStaff();
   const { data: checks = [] } = useTaskPrepChecks(checklistItemId);
@@ -40,6 +45,11 @@ export function TaskStepChecks({
           {doneNos.size} av {steps.length} klara
         </span>
       </div>
+      {locked && (
+        <p className="text-sm text-muted-foreground">
+          Starta uppgiften först — tryck på ett steg så startar den.
+        </p>
+      )}
       <div className="space-y-1.5">
         {steps.map((s, i) => {
           const no = i + 1;
@@ -49,7 +59,9 @@ export function TaskStepChecks({
               key={no}
               type="button"
               onClick={() =>
-                done
+                locked
+                  ? onLockedClick?.()
+                  : done
                   ? clearStep.mutate({ checklistItemId, stepNo: no })
                   : setStep.mutate({
                       checklistItemId,
@@ -61,6 +73,7 @@ export function TaskStepChecks({
               className={cn(
                 "flex w-full items-center gap-3 rounded-lg border p-2 text-left",
                 done ? "border-emerald-500/30 bg-emerald-500/5" : "hover:bg-muted",
+                locked && "opacity-60",
               )}
             >
               <span

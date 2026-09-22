@@ -193,7 +193,18 @@ export function TaskPerformPanel({
           </div>
         )}
 
-        {steps.length > 0 && <TaskStepChecks checklistItemId={task.id} steps={steps} />}
+        {steps.length > 0 && (
+          <TaskStepChecks
+            checklistItemId={task.id}
+            steps={steps}
+            locked={status === "ej_startad"}
+            onLockedClick={async () => {
+              await start.mutateAsync(task.id);
+              onStarted?.();
+              toast({ title: "Uppgiften är startad", description: "Bocka av stegen ett i taget." });
+            }}
+          />
+        )}
 
         {status === "ej_startad" && (
           <div className="flex flex-wrap items-center gap-3">
