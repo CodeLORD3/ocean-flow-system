@@ -445,20 +445,29 @@ function StepViewer({
                 placeholder="Vad ska göras i det här steget?"
                 className="min-h-[70px] text-[15px]"
               />
-              <Input
+              <EditRow
+                tone="primary"
+                label="Viktigt"
                 value={draft.keyPoint}
-                onChange={(e) => setDraft((d) => ({ ...d, keyPoint: e.target.value }))}
-                placeholder="Viktigt"
+                onChange={(v) => setDraft((d) => ({ ...d, keyPoint: v }))}
               />
-              <Input
+              <EditRow
+                tone="muted"
+                label="Varför"
                 value={draft.why}
-                onChange={(e) => setDraft((d) => ({ ...d, why: e.target.value }))}
-                placeholder="Varför"
+                onChange={(v) => setDraft((d) => ({ ...d, why: v }))}
               />
-              <Input
+              <EditRow
+                tone="amber"
+                label="Säkerhet"
                 value={draft.safety}
-                onChange={(e) => setDraft((d) => ({ ...d, safety: e.target.value }))}
-                placeholder="Säkerhet"
+                onChange={(v) => setDraft((d) => ({ ...d, safety: v }))}
+              />
+              <EditRow
+                tone="sky"
+                label="HACCP"
+                value={draft.haccp}
+                onChange={(v) => setDraft((d) => ({ ...d, haccp: v }))}
               />
               <div className="flex gap-2">
                 <Button size="sm" disabled={saving} onClick={saveText}>
