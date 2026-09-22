@@ -89,6 +89,8 @@ export function TaskRunFullscreen({
   const [textOpen, setTextOpen] = useState(true);
   /** Varning när uppgiften stängs utan den bild som krävs. */
   const [warnPhoto, setWarnPhoto] = useState(false);
+  /** Översikt över vad som är gjort och vad som är kvar. */
+  const [overviewOpen, setOverviewOpen] = useState(false);
   const touchY = useRef<number | null>(null);
   const isPhone = useIsPhone();
   const feedRef = useRef<HTMLDivElement | null>(null);
