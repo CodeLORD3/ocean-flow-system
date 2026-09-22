@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Info, MessageSquarePlus, Pencil, Plus, Square } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Info, MessageSquarePlus, Pencil, Plus, Square, Trash2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { cleanGuide, parseGuide, type GuideMark, type GuideStep, type TaskGuide 
 import { AnnotatableImage, type ImageRegion, type RegionMark } from "@/components/images/AnnotatableImage";
 import { useCreateImprovement } from "@/hooks/useResources";
 import { useSaveTaskGuide } from "@/hooks/useTasks";
+import { uploadTaskStepImage } from "@/lib/taskStepImage";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 type Props = {
@@ -243,6 +244,7 @@ function StepViewer({
   const [markMode, setMarkMode] = useState(false);
   const [pending, setPending] = useState<ImageRegion | null>(null);
   const [markLabel, setMarkLabel] = useState("");
+  const [uploading, setUploading] = useState(false);
   const createImprovement = useCreateImprovement();
   const { staff } = useStaffAuth();
 
