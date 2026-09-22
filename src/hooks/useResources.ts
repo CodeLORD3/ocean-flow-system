@@ -39,6 +39,8 @@ export type ResourceItem = {
   unit: string | null;
   total_count: number | null;
   unit_value: number | null;
+  /** Fabrikat — vilket märke butiken faktiskt använder. */
+  brand: string | null;
   supplier: string | null;
   supplier_article_no: string | null;
   reusable: boolean;
@@ -130,6 +132,7 @@ export function useSaveResourceItem() {
         unit: input.unit?.trim() || null,
         total_count: input.total_count ?? null,
         unit_value: input.unit_value ?? null,
+        brand: input.brand?.trim() || null,
         supplier: input.supplier?.trim() || null,
         supplier_article_no: input.supplier_article_no?.trim() || null,
         reusable: input.reusable ?? true,

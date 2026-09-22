@@ -393,6 +393,8 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             areaName={area ? `${area.number}. ${area.name}` : null}
             photoCount={images.length}
             needs={needs}
+            storeId={storeId}
+            guideSteps={guide.steps}
             onShowOnMap={(zoneId) =>
               switchTab(`/butikskarta?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
             }
