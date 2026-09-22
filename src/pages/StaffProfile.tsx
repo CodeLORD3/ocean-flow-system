@@ -229,7 +229,7 @@ export default function StaffProfile() {
                     title={openShift ? "Instämplad" : "Ej instämplad"}
                   />
                   <label
-                    className="absolute -bottom-1 left-0 grid h-8 w-8 cursor-pointer place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm transition hover:opacity-90"
+                    className="absolute -bottom-1 left-0 grid h-6 w-6 cursor-pointer place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm transition hover:opacity-90"
                     title="Byt profilbild"
                   >
                     <Camera className="h-4 w-4" />
