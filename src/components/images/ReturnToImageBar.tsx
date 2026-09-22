@@ -42,7 +42,7 @@ export default function ReturnToImageBar() {
       : `Tillbaka till ${prev?.title || "föregående sida"}`;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-end px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 flex justify-start px-3 sm:bottom-0 sm:justify-end sm:pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
       <div className="pointer-events-auto flex max-w-full items-center gap-1 rounded-full bg-primary pr-1 shadow-lg">
         <Button
           className="h-10 max-w-full gap-2 rounded-full bg-transparent px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-foreground/10"
