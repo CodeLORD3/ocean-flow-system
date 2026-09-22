@@ -31,7 +31,7 @@ export function placeRoute(
     case "product":
       return `/products?markera=${entityId}${back}`;
     case "task":
-      return `/uppgifter?markera=${entityId}${back}`;
+      return `/uppgift/${entityId}?frombild=${fromImageId ?? ""}`;
     default:
       return null;
   }
