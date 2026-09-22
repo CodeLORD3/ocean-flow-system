@@ -204,8 +204,8 @@ export default function StaffProfile() {
         <div className="space-y-2">
           <Card className="overflow-hidden shadow-card">
             <CardContent className="p-0">
-              <div className="flex flex-wrap items-center gap-3 p-2 sm:p-2.5">
-                <div className="relative h-14 w-14 shrink-0 sm:h-16 sm:w-16">
+              <div className="flex flex-wrap items-center gap-4 px-3 py-2">
+                <div className="relative h-20 w-20 shrink-0 sm:h-24 sm:w-24">
                   <div className="h-full w-full overflow-hidden rounded-full border-2 border-background bg-primary/10 shadow-md">
                     {staff.profile_image_url ? (
                       <img
@@ -217,7 +217,7 @@ export default function StaffProfile() {
                       />
                     ) : (
                       <div className="grid h-full w-full place-items-center">
-                        <User className="h-7 w-7 text-primary" />
+                        <User className="h-10 w-10 text-primary" />
                       </div>
                     )}
                   </div>
@@ -246,8 +246,8 @@ export default function StaffProfile() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h1 className="font-heading text-lg font-bold leading-tight text-foreground sm:text-xl">{fullName}</h1>
-                  <p className="truncate text-xs text-muted-foreground">
+                  <h1 className="font-heading text-2xl font-bold leading-tight text-foreground sm:text-3xl">{fullName}</h1>
+                  <p className="truncate text-sm text-muted-foreground">
                     {[role, staff.workplace].filter(Boolean).join("  ·  ") || "Personal"}
                   </p>
                   {/* Dagens uppgifter direkt vid namnet, i färg */}
