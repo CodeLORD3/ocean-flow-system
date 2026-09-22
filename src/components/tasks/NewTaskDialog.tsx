@@ -125,7 +125,14 @@ export function NewTaskDialog({
         const hay = asciiFold(`${r.task} ${r.note ?? ""} ${r.doers.map((d) => d.name).join(" ")}`).toLowerCase();
         return words.every((w) => hay.includes(w));
       })
-      .sort((a, b) => b.doneTimes - a.doneTimes || a.task.localeCompare(b.task, "sv"))
+      // Rangordning: senast gjord först, sedan flest gånger, sist namn.
+      .sort(
+        (a, b) =>
+          (b.lastDone ?? "").localeCompare(a.lastDone ?? "") ||
+          b.doneTimes - a.doneTimes ||
+          b.times - a.times ||
+          a.task.localeCompare(b.task, "sv"),
+      )
       .slice(0, 60);
   }, [register, existingSearch, existingZone]);
 
