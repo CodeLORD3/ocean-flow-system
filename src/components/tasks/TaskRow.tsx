@@ -293,7 +293,7 @@ export function TaskRow({
         </span>
 
         {/* Kolumn 7: person — alltid samma plats */}
-        <span className="hidden w-[150px] shrink-0 items-center gap-2 lg:flex">
+        <span className="hidden w-[132px] shrink-0 items-center gap-1.5 lg:flex">
           {(() => {
             const name = task.done ? completedByName || task.signature || assigneeName : assigneeName;
             const img = task.done ? completedByImage || assigneeImage : assigneeImage;
