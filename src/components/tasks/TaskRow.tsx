@@ -131,6 +131,8 @@ export function TaskRow({
       /* ignorera blockerad lagring */
     }
     onOpenDetail();
+    /* Uppgiftssidan kan redan vara monterad (flikar hålls vid liv) — berätta vilken flik som ska visas. */
+    window.dispatchEvent(new CustomEvent("task-detail-tab", { detail: { taskId: task.id, tab } }));
   };
   const running = task.run_status === "pagar";
   const canStart = !task.done && !running;
