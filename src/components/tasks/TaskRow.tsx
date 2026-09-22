@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowUpRight, Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Timer, Trash2, User } from "lucide-react";
+import { ArrowUpRight, Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Play, Timer, Trash2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { workTypeLabel } from "@/lib/workType";
 import { useTaskImages, type TaskRow as Task } from "@/hooks/useTasks";
 import { TaskSteps } from "@/components/tasks/TaskSteps";
+import { useStartTask } from "@/hooks/useTaskRun";
+import { toast } from "@/hooks/use-toast";
 
 export type TaskRowArea = { id: string; name: string; color: string; number: number } | null;
 
@@ -87,6 +89,15 @@ export function TaskRow({
   const photoMissing = task.requires_photo && effectivePhotoCount === 0;
   const missing = missingRequirements(task, { photoCount: effectivePhotoCount, checkPhoto: countKnown });
   const blocked = !task.done && missing.length > 0;
+  const start = useStartTask();
+  const running = task.run_status === "pagar";
+  const canStart = !task.done && !running;
+  const startNow = async () => {
+    setOpen(true);
+    if (!canStart) return;
+    await start.mutateAsync(task.id);
+    toast({ title: "Uppgiften är startad", description: "Bocka av stegen ett i taget." });
+  };
   const tryToggle = (done: boolean) => {
     if (done && blocked) {
       setOpen(true);
@@ -230,7 +241,25 @@ export function TaskRow({
           })()}
         </span>
 
-        {/* Kolumn 8: rulldown */}
+        {/* Kolumn 8: starta uppgiften — ett tryck räcker */}
+        {!task.done && (
+          <Button
+            size="sm"
+            variant={running ? "outline" : "default"}
+            onClick={startNow}
+            disabled={start.isPending}
+            className={cn(
+              "h-9 shrink-0 gap-1 px-2.5 sm:px-3",
+              running && "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20",
+            )}
+            title={running ? "Uppgiften pågår" : "Starta uppgiften"}
+          >
+            {running ? <Timer className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            <span className="hidden text-xs font-semibold sm:inline">{running ? "Pågår" : "Starta"}</span>
+          </Button>
+        )}
+
+        {/* Kolumn 9: rulldown */}
         <button
           type="button"
           aria-label={open ? "Stäng detaljer" : "Visa detaljer"}
