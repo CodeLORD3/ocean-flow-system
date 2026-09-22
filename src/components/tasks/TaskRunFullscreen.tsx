@@ -169,8 +169,9 @@ export function TaskRunFullscreen({
 
   /** Tydlig varning: bilden krävs men saknas — man kan ta den nu eller i efterhand. */
   const warnNode = warnPhoto ? (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-foreground/60 p-4 sm:items-center">
-      <div className="w-full max-w-md space-y-3 rounded-2xl border border-amber-500/40 bg-card p-4 shadow-xl">
+    /* Rutan får inte hamna bakom menyn längst ned i telefonen */
+    <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-foreground/60 p-4">
+      <div className="my-auto w-full max-w-md space-y-3 rounded-2xl border border-amber-500/40 bg-card p-4 shadow-xl">
         <p className="font-heading text-lg font-bold text-amber-700">Du missade bilden</p>
         <p className="text-sm text-muted-foreground">
           Den här uppgiften kräver en bild. Ta bilden nu, eller stäng uppgiften ändå — då står det att bilden saknas
