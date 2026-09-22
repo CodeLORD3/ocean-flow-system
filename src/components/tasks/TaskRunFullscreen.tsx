@@ -784,18 +784,19 @@ export function TaskRunFullscreen({
 
           {/* Kameran finns alltid, även när bild inte krävs */}
           {(
-            <label className="inline-flex shrink-0" title="Ta bild">
+            <label className="inline-flex shrink-0" title="Ta bilder">
               <input
                 type="file"
                 accept="image/*"
-                capture="environment"
+                multiple
                 className="hidden"
                 onChange={async (e) => {
-                  const f = e.target.files?.[0];
+                  const files = [...(e.target.files ?? [])];
                   e.currentTarget.value = "";
-                  if (f) await onAddPhoto(f);
+                  for (const f of files) await onAddPhoto(f);
                 }}
               />
+
               <span
                 className={cn(
                   "inline-flex h-12 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted",
