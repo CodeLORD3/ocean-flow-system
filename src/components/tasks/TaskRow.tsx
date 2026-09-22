@@ -278,6 +278,16 @@ export function TaskRow({
           )}
 
 
+          {/* Utförandet sker här i raden — du fortsätter där du var senast */}
+          {showRun && guideSteps.length > 0 && (
+            <div className="space-y-2">
+              <TaskStepChecks checklistItemId={task.id} steps={guideSteps} locked={!running} onLockedClick={startNow} />
+              <Button variant="outline" size="sm" className="w-full" onClick={() => setShowRun(false)}>
+                <ChevronDown className="mr-1 h-4 w-4" /> Stäng och tillbaka till listan
+              </Button>
+            </div>
+          )}
+
           {(showGuide || task.done) && (
           <TaskSteps
             taskId={task.id}
