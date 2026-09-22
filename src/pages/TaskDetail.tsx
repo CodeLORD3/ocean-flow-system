@@ -296,8 +296,8 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                   for (const f of files) await addPhoto(f);
                 }}
               />
-              <span className="inline-flex h-10 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted">
-                <Camera className="h-4 w-4" /> Ta bild
+              <span className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground">
+                <Camera className="h-3.5 w-3.5" /> Ta bild
               </span>
             </label>
             <label className="inline-flex">
