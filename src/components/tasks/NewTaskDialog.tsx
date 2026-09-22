@@ -136,11 +136,11 @@ export function NewTaskDialog({
       .slice(0, 60);
   }, [register, existingSearch, existingZone]);
 
-  /** Väljer person och går direkt vidare till sista steget. */
+  /** Väljer person. Namnet står kvar synligt — man går vidare med Nästa. */
   const choosePerson = (id: string) => {
     setPerson(id);
     setPersonSearch("");
-    setTimeout(() => setStep(3), 250);
+    setTimeout(() => personRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
   };
 
   /** Går direkt vidare till namnsökningen när området är valt. */
@@ -156,6 +156,8 @@ export function NewTaskDialog({
     setTask(r.task);
     if (r.zoneId) setZone(r.zoneId);
     setStep(2);
+    /* Området är redan ifyllt — hoppa direkt ner till namnet så man kan skriva. */
+    if (r.zoneId) setTimeout(goToPerson, 120);
   };
 
   const save = async () => {
@@ -494,7 +496,13 @@ export function NewTaskDialog({
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         value={personSearch}
-                        onChange={(e) => setPersonSearch(e.target.value)}
+                        onChange={(e) => {
+                          setPersonSearch(e.target.value);
+                          setTimeout(
+                            () => personRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                            60,
+                          );
+                        }}
                         placeholder="Skriv de första bokstäverna i namnet …"
                         className="h-12 rounded-full pl-9 text-base"
                         onKeyDown={(e) => {
@@ -512,7 +520,7 @@ export function NewTaskDialog({
                           : `${people.length} träff${people.length === 1 ? "" : "ar"} – tryck på namnet eller Enter för den första.`}
                       </p>
                     )}
-                    <div className="max-h-60 space-y-1 overflow-y-auto">
+                    <div className="max-h-44 space-y-1 overflow-y-auto">
                       {people.map((s, i) => (
                         <button
                           key={s.id}
@@ -691,7 +699,12 @@ export function NewTaskDialog({
             <ArrowLeft className="mr-1 h-5 w-5" /> {step === 1 && mode === null ? "Avbryt" : "Tillbaka"}
           </Button>
           {step < 3 ? (
-            <Button size="lg" className="h-12" onClick={() => setStep(step + 1)} disabled={!task.trim()}>
+            <Button
+              size="lg"
+              className={cn("h-12", step === 2 && chosenPerson && "animate-pulse")}
+              onClick={() => setStep(step + 1)}
+              disabled={!task.trim()}
+            >
               Nästa <ArrowRight className="ml-1 h-5 w-5" />
             </Button>
           ) : (
