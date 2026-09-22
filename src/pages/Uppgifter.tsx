@@ -232,7 +232,7 @@ export default function Uppgifter() {
     [areaOf],
   );
 
-  const addPhoto = async (task: Task, file: File) => {
+  const addPhoto = async (task: Task, file: File, stepIndex?: number | null) => {
     const zoneId = task.zone_id;
     try {
       /* Bilden kopplas alltid till uppgiften, och till området när det finns. */
@@ -243,6 +243,7 @@ export default function Uppgifter() {
         imageKind: "completion",
         floorPlanId: zoneId ? (plan?.id ?? null) : null,
         checklistItemId: task.id,
+        stepIndex: stepIndex ?? null,
       });
       toast({
         title: "Bild sparad på uppgiften",
@@ -374,7 +375,7 @@ export default function Uppgifter() {
       staffOptions={staffOptions}
       onAssign={(staffId) => assign(t, staffId)}
       onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
-      onAddPhoto={(file) => addPhoto(t, file)}
+      onAddPhoto={(file, stepIndex) => addPhoto(t, file, stepIndex)}
       onOpenArea={(areaId) => openOnMap(t, areaId)}
       linkLabel={targetOf(t)?.label ?? null}
       onOpenLink={() => {
@@ -713,7 +714,7 @@ export default function Uppgifter() {
                           staffOptions={staffOptions}
                           onAssign={(staffId) => assign(t, staffId)}
                           onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
-                          onAddPhoto={(file) => addPhoto(t, file)}
+                          onAddPhoto={(file, stepIndex) => addPhoto(t, file, stepIndex)}
                           onOpenArea={(areaId) => openOnMap(t, areaId)}
                           linkLabel={targetOf(t)?.label ?? null}
                           onOpenLink={() => {
@@ -749,7 +750,7 @@ export default function Uppgifter() {
                         staffOptions={staffOptions}
                         onAssign={(staffId) => assign(t, staffId)}
                         onOpenDetail={() => switchTab(`/uppgift/${t.id}`)}
-                        onAddPhoto={(file) => addPhoto(t, file)}
+                        onAddPhoto={(file, stepIndex) => addPhoto(t, file, stepIndex)}
                         onOpenArea={(areaId) => openOnMap(t, areaId)}
                       />
                     ))}

@@ -72,7 +72,7 @@ export function TaskRunFullscreen({
   requiresPhoto?: boolean | null;
   /** Det som saknas för att få bocka av uppgiften. */
   blockedText?: string;
-  onAddPhoto: (file: File) => Promise<void> | void;
+  onAddPhoto: (file: File, stepIndex?: number | null) => Promise<void> | void;
   /** Sätter bilden på ett steg — bilderna är det viktigaste i beskrivningen. */
   onSetStepImage?: (stepIndex: number, file: File) => Promise<void> | void;
   onFinish: () => Promise<void> | void;
@@ -621,7 +621,7 @@ export function TaskRunFullscreen({
                           onChange={async (e) => {
                             const files = [...(e.target.files ?? [])];
                             e.currentTarget.value = "";
-                            for (const f of files) await onAddPhoto(f);
+                            for (const f of files) await onAddPhoto(f, n);
                           }}
                         />
 
@@ -799,7 +799,7 @@ export function TaskRunFullscreen({
                 onChange={async (e) => {
                   const files = [...(e.target.files ?? [])];
                   e.currentTarget.value = "";
-                  for (const f of files) await onAddPhoto(f);
+                  for (const f of files) await onAddPhoto(f, no);
                 }}
               />
 
