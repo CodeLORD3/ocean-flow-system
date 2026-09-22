@@ -215,7 +215,7 @@ function StepViewer({
   const [comment, setComment] = useState("");
   const [commentOpen, setCommentOpen] = useState(false);
   const [edit, setEdit] = useState(startInEdit);
-  const [draft, setDraft] = useState({ text: "", keyPoint: "", why: "", safety: "" });
+  const [draft, setDraft] = useState({ text: "", keyPoint: "", why: "", safety: "", haccp: "" });
   const [showMarks, setShowMarks] = useState(false);
   const [activeMark, setActiveMark] = useState<string | null>(null);
   const [markMode, setMarkMode] = useState(false);
@@ -232,6 +232,7 @@ function StepViewer({
       keyPoint: step?.keyPoint ?? "",
       why: step?.why ?? "",
       safety: step?.safety ?? "",
+      haccp: step?.haccp ?? "",
     });
     setShowMarks(false);
     setActiveMark(null);
