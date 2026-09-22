@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { workTypeLabel } from "@/lib/workType";
 import { useTaskImages, type TaskRow as Task } from "@/hooks/useTasks";
-import { TaskSteps } from "@/components/tasks/TaskSteps";
 import { TaskRunFullscreen } from "@/components/tasks/TaskRunFullscreen";
 import { parseGuide } from "@/lib/taskGuide";
 import { useStartTask, useFinishTask } from "@/hooks/useTaskRun";
@@ -126,7 +125,6 @@ export function TaskRow({
   };
   const running = task.run_status === "pagar";
   const canStart = !task.done && !running;
-  const [showGuide, setShowGuide] = useState(false);
   const [showRun, setShowRun] = useState(false);
   const runRef = useRef<HTMLDivElement | null>(null);
   const guideSteps = parseGuide(task.guide, task.instructions).steps.filter((s) => s.text || s.image);
@@ -369,17 +367,6 @@ export function TaskRow({
             }
           />
 
-          {(showGuide || task.done) && (
-          <TaskSteps
-            taskId={task.id}
-            taskName={task.task}
-            guide={task.guide}
-            instructions={task.instructions}
-            note={task.note}
-            importantNote={task.important_note}
-            templateItemId={task.template_item_id}
-          />
-          )}
 
 
           {/* Klar men bilden saknas — tydlig påminnelse om att lägga in den i efterhand */}
@@ -500,12 +487,8 @@ export function TaskRow({
                 </span>
               </label>
             )}
-            <Button
-              size="sm"
-              variant={showGuide ? "secondary" : "ghost"}
-              onClick={() => setShowGuide((v) => !v)}
-            >
-              <ImageIcon className="mr-1 h-4 w-4" /> {showGuide ? "Stäng beskrivningen" : "Hur gör jag?"}
+            <Button size="sm" variant="ghost" onClick={() => openDetailAt("instruktion")}>
+              <ImageIcon className="mr-1 h-4 w-4" /> Hur gör jag?
             </Button>
             {onDelete && (
               <Button
