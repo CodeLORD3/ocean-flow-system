@@ -134,6 +134,9 @@ export function TaskGuideEditor({
   const patchMaterial = (i: number, p: Partial<TaskGuide["materials"][number]>) =>
     patch({ materials: guide.materials.map((x, j) => (j === i ? { ...x, ...p } : x)) });
 
+  /** Bilduppladdning för stegkorten. */
+  const upload = useUploadGuideImage();
+
   /** Snabbraden: skriv steget och tryck Enter. */
   const [draft, setDraft] = useState("");
   const addDraft = () => {
