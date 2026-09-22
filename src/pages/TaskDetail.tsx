@@ -432,6 +432,14 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             <TaskGuideView
               guide={guide}
               zones={guideZones}
+              taskId={task.id}
+              onSaveGuide={async (next) => {
+                await saveGuide.mutateAsync({
+                  id: task.id,
+                  templateItemId: task.template_item_id,
+                  guide: cleanGuide(next),
+                });
+              }}
               onShowOnMap={(zoneId) =>
                 switchTab(`/butikskarta?zone=${zoneId}&fromTask=${task.id}&taskName=${encodeURIComponent(task.task)}`)
               }

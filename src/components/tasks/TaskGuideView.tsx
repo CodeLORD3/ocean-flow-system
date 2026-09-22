@@ -1,8 +1,74 @@
-import { AlertTriangle, MapPin, RotateCcw, Target } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, Camera, MapPin, RotateCcw, Target, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 import type { TaskGuide } from "@/lib/taskGuide";
+import { uploadTaskStepImage } from "@/lib/taskStepImage";
 import type { GuideZone } from "@/components/tasks/TaskGuideEditor";
+
+/**
+ * Byt eller ta bort en bild i arbetsbeskrivningen. Den gamla bilden ligger
+ * kvar i bildbiblioteket — beskrivningen pekar bara på en ny.
+ */
+function ImageChange({
+  taskId,
+  hasImage,
+  label,
+  onPicked,
+  onRemove,
+}: {
+  taskId: string;
+  hasImage: boolean;
+  label?: string;
+  onPicked: (url: string) => Promise<void> | void;
+  onRemove?: () => Promise<void> | void;
+}) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-1">
+      <label>
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            e.currentTarget.value = "";
+            if (!file) return;
+            setBusy(true);
+            try {
+              const url = await uploadTaskStepImage(file, taskId);
+              await onPicked(url);
+              toast({ title: hasImage ? "Bilden är bytt" : "Bilden är tillagd" });
+            } catch (err: any) {
+              toast({ title: "Kunde inte spara bilden", description: err.message, variant: "destructive" });
+            } finally {
+              setBusy(false);
+            }
+          }}
+        />
+        <span className="inline-flex h-7 cursor-pointer items-center rounded-md px-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
+          <Camera className="mr-1 h-3.5 w-3.5" />
+          {busy ? "Laddar upp …" : hasImage ? "Byt bild" : label ?? "Lägg till bild"}
+        </span>
+      </label>
+      {hasImage && onRemove && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs text-muted-foreground"
+          onClick={async () => {
+            await onRemove();
+            toast({ title: "Bilden är borttagen" });
+          }}
+        >
+          <Trash2 className="mr-1 h-3.5 w-3.5" /> Ta bort bild
+        </Button>
+      )}
+    </div>
+  );
+}
 
 /**
  * Visar arbetsbeskrivningen som ett flöde: godkänt läge, hämta fram med plats
@@ -13,12 +79,29 @@ export function TaskGuideView({
   zones = [],
   onShowOnMap,
   onReport,
+  taskId,
+  onSaveGuide,
 }: {
   guide: TaskGuide;
   zones?: GuideZone[];
   onShowOnMap?: (zoneId: string) => void;
   onReport?: (materialName?: string) => void;
+  /** Uppgiften bilderna laddas upp till. */
+  taskId?: string;
+  /** Satt när användaren får ändra bilderna i beskrivningen. */
+  onSaveGuide?: (next: TaskGuide) => Promise<void> | void;
 }) {
+  const canEditImages = !!taskId && !!onSaveGuide;
+  const saveStepImage = (i: number, url: string | null) =>
+    onSaveGuide!({
+      ...guide,
+      steps: guide.steps.map((s, idx) => (idx === i ? { ...s, image: url, marks: url ? s.marks : [] } : s)),
+    });
+  const saveMaterialImage = (i: number, url: string | null) =>
+    onSaveGuide!({
+      ...guide,
+      materials: guide.materials.map((m, idx) => (idx === i ? { ...m, image: url } : m)),
+    });
   const hasGoal = guide.goal.trim() || guide.goalImages.length > 0;
   const hasMaterials = guide.materials.length > 0;
   const hasSteps = guide.steps.length > 0;
@@ -45,6 +128,14 @@ export function TaskGuideView({
                 </a>
               ))}
             </div>
+          )}
+          {canEditImages && (
+            <ImageChange
+              taskId={taskId!}
+              hasImage={false}
+              label="Lägg till bild på godkänt läge"
+              onPicked={(url) => onSaveGuide!({ ...guide, goalImages: [...guide.goalImages, url] })}
+            />
           )}
         </section>
       )}
@@ -81,6 +172,14 @@ export function TaskGuideView({
                         </Button>
                       )}
                     </div>
+                    {canEditImages && (
+                      <ImageChange
+                        taskId={taskId!}
+                        hasImage={!!m.image}
+                        onPicked={(url) => saveMaterialImage(i, url)}
+                        onRemove={() => saveMaterialImage(i, null)}
+                      />
+                    )}
                   </div>
                 </div>
               );
@@ -104,6 +203,15 @@ export function TaskGuideView({
                     <a href={s.image} target="_blank" rel="noreferrer">
                       <img src={thumbUrl(s.image, THUMB_TILE)} alt="" className="mt-1 h-28 w-28 rounded-lg object-cover" />
                     </a>
+                  )}
+                  {canEditImages && (
+                    <ImageChange
+                      taskId={taskId!}
+                      hasImage={!!s.image}
+                      label="Lägg till stegbild"
+                      onPicked={(url) => saveStepImage(i, url)}
+                      onRemove={() => saveStepImage(i, null)}
+                    />
                   )}
                 </div>
               </li>
