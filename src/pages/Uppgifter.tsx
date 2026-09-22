@@ -356,8 +356,72 @@ export default function Uppgifter() {
     return { mine, unassigned, doneByMe };
   }, [tasks, meId, isResponsible]);
 
+  /** Rensa-läge: markera uppgifter som inte är relevanta och ta bort dem i ett svep. */
+  const [cleanMode, setCleanMode] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const toggleSelected = (id: string) =>
+    setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+
+  const deleteSelected = async () => {
+    if (selected.length === 0) return;
+    const many = selected.length === 1 ? "uppgiften" : `${selected.length} uppgifter`;
+    if (!window.confirm(`Ta bort ${many}? Det du inte har markerat behålls precis som det är.`)) return;
+    let ok = 0;
+    for (const id of selected) {
+      try {
+        await removeTask.mutateAsync(id);
+        ok += 1;
+      } catch (e: any) {
+        toast({ title: "Kunde inte ta bort alla", description: e.message, variant: "destructive" });
+        break;
+      }
+    }
+    setSelected([]);
+    toast({ title: ok === 1 ? "1 uppgift togs bort" : `${ok} uppgifter togs bort` });
+  };
+
+  /** Rad i rensa-läget: bara det man behöver för att avgöra om uppgiften ska bort. */
+  const renderCleanRow = (t: Task) => {
+    const area = t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null;
+    const picked = selected.includes(t.id);
+    return (
+      <label
+        key={t.id}
+        className={cn(
+          "flex cursor-pointer items-center gap-3 border-b border-grid-line px-2 py-2 text-sm",
+          picked ? "bg-destructive/10" : "hover:bg-muted/50",
+        )}
+      >
+        <input
+          type="checkbox"
+          className="h-5 w-5 shrink-0 accent-[hsl(var(--destructive))]"
+          checked={picked}
+          onChange={() => toggleSelected(t.id)}
+        />
+        <span className="w-12 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+          {t.specific_time?.slice(0, 5) ?? "—"}
+        </span>
+        <span className={cn("min-w-0 flex-1 truncate font-medium", t.done && "text-muted-foreground line-through")}>
+          {t.task}
+        </span>
+        {area && (
+          <span className="hidden shrink-0 items-center gap-1 text-xs text-muted-foreground sm:flex">
+            <span className="h-2 w-2 rounded-full" style={{ background: area.color }} />
+            {area.name}
+          </span>
+        )}
+        <span className="w-28 shrink-0 truncate text-right text-xs text-muted-foreground">
+          {staffName(t.completed_by_staff_id) ?? staffName(t.assigned_staff_id) ?? "ingen"}
+        </span>
+      </label>
+    );
+  };
+
   /** Samma uppgiftsrad som i dagens lista, återanvänd i Mina uppgifter. */
-  const renderTaskRow = (t: Task) => (
+  const renderTaskRow = (t: Task) =>
+    cleanMode ? (
+      renderCleanRow(t)
+    ) : (
     <TaskRow
       key={t.id}
       task={t}
@@ -416,11 +480,62 @@ export default function Uppgifter() {
               <Crosshair className="mr-1 h-4 w-4" /> Butikskarta
             </Button>
           )}
+          {tasks.length > 0 && (
+            <Button
+              size="sm"
+              variant={cleanMode ? "destructive" : "ghost"}
+              onClick={() => {
+                setCleanMode((v) => !v);
+                setSelected([]);
+              }}
+            >
+              <Trash2 className="mr-1 h-4 w-4" /> {cleanMode ? "Avsluta rensning" : "Rensa listan"}
+            </Button>
+          )}
           <Button size="sm" onClick={() => setNewOpen(true)}>
             <Plus className="mr-1 h-4 w-4" /> Ny uppgift
           </Button>
         </div>
       </div>
+
+      {cleanMode && (
+        <>
+          <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm">
+            Markera uppgifterna som inte är relevanta. Allt du lämnar omarkerat behålls som det är.
+          </div>
+          {/* Fast rad längst ned: ta bort de markerade eller avsluta rensningen */}
+          <div className="fixed inset-x-0 bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-40 mx-auto flex w-[min(38rem,calc(100%-1.5rem))] items-center gap-2 rounded-xl border bg-background/95 p-2 shadow-lg backdrop-blur">
+            <span className="min-w-0 flex-1 truncate px-1 text-sm">
+              {selected.length === 0
+                ? "Ingen uppgift markerad"
+                : `${selected.length} markerad${selected.length === 1 ? "" : "e"}`}
+            </span>
+            {selected.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => setSelected([])}>
+                Avmarkera
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={selected.length === 0 || removeTask.isPending}
+              onClick={deleteSelected}
+            >
+              <Trash2 className="mr-1 h-4 w-4" /> Ta bort {selected.length > 0 ? selected.length : ""}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCleanMode(false);
+                setSelected([]);
+              }}
+            >
+              Klar
+            </Button>
+          </div>
+        </>
+      )}
 
       <Tabs value={tab} onValueChange={setTab}>
         {/* Kort rad: Mina · Dagens · Alla. Övriga vyer ligger i "Mer" */}
