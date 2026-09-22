@@ -183,7 +183,7 @@ export function NewTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[560px]">
+      <DialogContent className="flex max-h-[92dvh] flex-col overflow-hidden sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Ny uppgift</DialogTitle>
         </DialogHeader>
@@ -218,7 +218,7 @@ export function NewTaskDialog({
           ))}
         </div>
 
-        <div className="min-h-[260px] space-y-4 pt-1">
+        <div className="-mx-1 min-h-[260px] flex-1 space-y-4 overflow-y-auto px-1 pt-1">
           {step === 1 && mode === null && (
             <div className="space-y-3">
               <p className="text-sm font-medium">Är det en uppgift som redan finns?</p>
@@ -255,58 +255,17 @@ export function NewTaskDialog({
                   placeholder="Sök uppgift …"
                   autoFocus
                   className="h-12 rounded-full pl-9 text-base"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && existingList.length > 0) {
+                      e.preventDefault();
+                      pickExisting(existingList[0]);
+                    }
+                  }}
                 />
               </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setExistingZone(null)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-sm",
-                    existingZone === null ? "border-primary bg-primary/10 font-semibold text-primary" : "hover:bg-muted",
-                  )}
-                >
-                  Alla områden
-                </button>
-                {areas.map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => setExistingZone(a.id)}
-                    className={cn(
-                      "rounded-full border px-3 py-1.5 text-sm",
-                      existingZone === a.id
-                        ? "border-primary bg-primary/10 font-semibold text-primary"
-                        : "hover:bg-muted",
-                    )}
-                  >
-                    {a.number}. {a.name}
-                  </button>
-                ))}
-              </div>
-              {plan && (zones?.length ?? 0) > 0 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setExistingMap((v) => !v)}
-                    className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium hover:bg-muted"
-                  >
-                    <Map className="h-4 w-4" />
-                    {existingMap ? "Stäng kartan" : "Välj område på kartan"}
-                  </button>
-                  {existingMap && (
-                    <ZonePickMap
-                      plan={plan}
-                      zones={zones ?? []}
-                      value={existingZone}
-                      onChange={setExistingZone}
-                      numberOf={(id) => areas.find((a) => a.id === id)?.number ?? null}
-                      onNext={() => setExistingMap(false)}
-                    />
-                  )}
-                </>
-              )}
-              <div className="max-h-72 space-y-1 overflow-y-auto">
+
+              {/* Träffarna direkt under sökrutan, så man kan trycka utan att skrolla. */}
+              <div className="max-h-[46vh] space-y-1 overflow-y-auto">
                 {existingList.length === 0 ? (
                   <p className="text-sm text-muted-foreground">Ingen uppgift matchar.</p>
                 ) : (
@@ -352,6 +311,7 @@ export function NewTaskDialog({
                   ))
                 )}
               </div>
+
               <button
                 type="button"
                 onClick={() => setMode("ny")}
@@ -359,6 +319,63 @@ export function NewTaskDialog({
               >
                 Finns den inte? Skapa en ny uppgift
               </button>
+
+              <details className="rounded-lg border px-3 py-2">
+                <summary className="cursor-pointer text-sm font-medium">
+                  Filtrera på område{existingZone ? `: ${areas.find((a) => a.id === existingZone)?.name ?? ""}` : ""}
+                </summary>
+                <div className="mt-2 space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setExistingZone(null)}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-sm",
+                        existingZone === null ? "border-primary bg-primary/10 font-semibold text-primary" : "hover:bg-muted",
+                      )}
+                    >
+                      Alla områden
+                    </button>
+                    {areas.map((a) => (
+                      <button
+                        key={a.id}
+                        type="button"
+                        onClick={() => setExistingZone(a.id)}
+                        className={cn(
+                          "rounded-full border px-3 py-1.5 text-sm",
+                          existingZone === a.id
+                            ? "border-primary bg-primary/10 font-semibold text-primary"
+                            : "hover:bg-muted",
+                        )}
+                      >
+                        {a.number}. {a.name}
+                      </button>
+                    ))}
+                  </div>
+                  {plan && (zones?.length ?? 0) > 0 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setExistingMap((v) => !v)}
+                        className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium hover:bg-muted"
+                      >
+                        <Map className="h-4 w-4" />
+                        {existingMap ? "Stäng kartan" : "Välj område på kartan"}
+                      </button>
+                      {existingMap && (
+                        <ZonePickMap
+                          plan={plan}
+                          zones={zones ?? []}
+                          value={existingZone}
+                          onChange={setExistingZone}
+                          numberOf={(id) => areas.find((a) => a.id === id)?.number ?? null}
+                          onNext={() => setExistingMap(false)}
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+              </details>
             </div>
           )}
 
@@ -660,7 +677,7 @@ export function NewTaskDialog({
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-t pt-3">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-t bg-background pt-3">
           <Button
             variant="outline"
             size="lg"
