@@ -113,7 +113,7 @@ export function TaskSteps({
         </div>
       )}
 
-      {steps.length > 0 && (
+      {(steps.length > 0 || canEdit) && (
         <div>
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             Så här gör du · {steps.length} steg
@@ -171,6 +171,17 @@ export function TaskSteps({
                 )}
               </div>
             ))}
+            {canEdit && (
+              <button
+                type="button"
+                onClick={addStep}
+                disabled={saveGuide.isPending}
+                className="flex w-40 shrink-0 snap-start flex-col items-center justify-center gap-1 rounded-xl border border-dashed bg-muted/30 py-6 text-[12.5px] font-medium text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
+              >
+                <Plus className="h-5 w-5" />
+                Lägg till steg
+              </button>
+            )}
           </div>
         </div>
       )}
