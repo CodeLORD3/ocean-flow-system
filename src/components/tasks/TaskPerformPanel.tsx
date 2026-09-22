@@ -391,35 +391,7 @@ export function TaskPerformPanel({
           disabled={blocked}
           title={blockedText}
           className="h-14 w-full bg-emerald-600 text-base text-white hover:bg-emerald-700"
-          onClick={async () => {
-            try {
-              if (prepMissing.length > 0) {
-                await checkAll.mutateAsync({
-                  items: prepMissing.map((n) => ({
-                    checklistItemId: task.id,
-                    requirementId: n.requirement.id,
-                    resourceId: n.resource?.id ?? null,
-                    itemName: n.resource?.name ?? n.requirement.requirement_name,
-                    status: "finns" as const,
-                    staffId: staff?.id ?? null,
-                  })),
-                });
-              }
-              for (let i = 0; i < steps.length; i++) {
-                if (doneSteps.has(i + 1)) continue;
-                await setStep.mutateAsync({
-                  checklistItemId: task.id,
-                  stepNo: i + 1,
-                  stepTitle: (steps[i].text || `Steg ${i + 1}`).slice(0, 80),
-                  staffId: staff?.id ?? null,
-                });
-              }
-              await finish.mutateAsync({ id: task.id, startedAt: task.started_at ?? null });
-              toast({ title: "Uppgiften är klar" });
-            } catch (e: any) {
-              toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
-            }
-          }}
+          onClick={completeTask}
         >
           <Check className="mr-2 h-5 w-5" /> MARKERA SOM KLAR
         </Button>
