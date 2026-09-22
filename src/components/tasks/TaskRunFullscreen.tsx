@@ -217,20 +217,21 @@ export function TaskRunFullscreen({
           <input
             type="file"
             accept="image/*"
-            capture="environment"
+            multiple
             className="hidden"
             onChange={async (e) => {
-              const f = e.target.files?.[0];
+              const files = [...(e.target.files ?? [])];
               e.currentTarget.value = "";
-              if (f) {
-                await onAddPhoto(f);
+              if (files.length) {
+                for (const f of files) await onAddPhoto(f);
                 setWarnPhoto(false);
               }
             }}
           />
           <span className="inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90">
-            <Camera className="h-5 w-5" /> Ta bilden nu
+            <Camera className="h-5 w-5" /> Ta bilderna nu
           </span>
+
         </label>
         <div className="flex gap-2">
           <Button variant="outline" className="h-11 flex-1" onClick={() => setWarnPhoto(false)}>
