@@ -363,8 +363,10 @@ export default function Uppgifter() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold">Uppgifter</h1>
-          <p className="text-sm text-muted-foreground">Dagens arbete, standarduppgifter och schemaläggning.</p>
+          <h1 className="text-xl font-bold sm:text-2xl">Uppgifter</h1>
+          <p className="hidden text-sm text-muted-foreground sm:block">
+            Dagens arbete, standarduppgifter och schemaläggning.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {site !== "shop" && (
@@ -394,28 +396,47 @@ export default function Uppgifter() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="h-auto flex-wrap gap-1 p-1">
-          {[
-            ["mina", "Mina uppgifter"],
-            ["dag", "Dagens uppgifter"],
-            ["alla", "Alla uppgifter"],
-            ["personer", "Personer"],
-            ["kalender", "Kalender"],
-            ["produktion", "Produktion"],
-            ["checklistor", "Checklistor"],
-            ["sagordu", "Så gör du"],
-            ["standard", "Standarduppgifter"],
-            ["schema", "Schemaläggning"],
-          ].map(([value, label]) => (
-            <TabsTrigger
-              key={value}
-              value={value}
-              className="rounded-md px-3 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:font-semibold"
-            >
-              {label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        {/* Kort rad: Mina · Dagens · Alla. Övriga vyer ligger i "Mer" */}
+        <div className="flex items-center gap-2">
+          <TabsList className="h-9 gap-1 p-1">
+            {[
+              ["mina", "Mina"],
+              ["dag", "Dagens"],
+              ["alla", "Alla"],
+            ].map(([value, label]) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className="rounded-md px-3 py-1 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground"
+              >
+                {label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <Select
+            value={["mina", "dag", "alla"].includes(tab) ? "" : tab}
+            onValueChange={setTab}
+          >
+            <SelectTrigger className="h-9 w-[150px] text-sm">
+              <SelectValue placeholder="Mer" />
+            </SelectTrigger>
+            <SelectContent>
+              {[
+                ["personer", "Personer"],
+                ["kalender", "Kalender"],
+                ["produktion", "Produktion"],
+                ["checklistor", "Checklistor"],
+                ["sagordu", "Så gör du"],
+                ["standard", "Standarduppgifter"],
+                ["schema", "Schemaläggning"],
+              ].map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <TabsContent value="mina">
           <div className="space-y-4">
