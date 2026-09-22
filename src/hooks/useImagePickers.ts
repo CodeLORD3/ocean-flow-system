@@ -146,3 +146,29 @@ export function useLinkTargetNames(links: { entity_type: string; entity_id: stri
     staleTime: 60_000,
   });
 }
+
+/** Alla områden i alla butiker, med butiksnamnet som ledtext. */
+export function useAllZones() {
+  return useQuery({
+    queryKey: ["pick-zones-all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("map_zones")
+        .select("id, name, zone_kind, store_id, sort_order, stores(name)")
+        .order("sort_order");
+      if (error) throw error;
+      const seen = new Set<string>();
+      const out: PickOption[] = [];
+      for (const z of data || []) {
+        const name = (z.name as string) || "";
+        const store = ((z as any).stores?.name as string) || "";
+        const key = `${store}|${name}`.toLowerCase();
+        if (!name || seen.has(key)) continue;
+        seen.add(key);
+        out.push({ id: z.id as string, name, hint: store || null });
+      }
+      return out;
+    },
+    staleTime: 60_000,
+  });
+}
