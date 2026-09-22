@@ -125,6 +125,8 @@ export function TaskRow({
   const openDetailAt = (tab: string) => {
     try {
       sessionStorage.setItem("task-detail-tab", tab);
+      /* Minns raden så man kommer tillbaka till exakt samma öppna uppgift. */
+      sessionStorage.setItem("uppgifter-focus-task", task.id);
     } catch {
       /* ignorera blockerad lagring */
     }
@@ -160,12 +162,14 @@ export function TaskRow({
 
   return (
     <div
+      id={`task-row-${task.id}`}
       className={cn(
         "relative overflow-hidden border-x border-b border-grid-line bg-card transition-all duration-200",
         task.done && "bg-emerald-500/10",
         photoMissing && !task.done && "bg-amber-500/5",
         open &&
           "z-10 my-3 rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] pl-2.5 shadow-[0_10px_30px_-18px_hsl(var(--primary)/0.55)]",
+        focused && "animate-pulse ring-2 ring-primary ring-offset-2",
       )}
     >
       {/* Öppen uppgift: mjuk accentlinje längs hela kortets vänsterkant. */}
