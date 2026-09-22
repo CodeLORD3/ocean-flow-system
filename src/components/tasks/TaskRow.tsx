@@ -212,7 +212,7 @@ export function TaskRow({
             checked={task.done}
             onCheckedChange={(v) => tryToggle(!!v)}
             aria-label={task.done ? "Återöppna uppgift" : "Markera som klar"}
-            className="h-5 w-5 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
+            className="h-4 w-4 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
           />
         </span>
 
