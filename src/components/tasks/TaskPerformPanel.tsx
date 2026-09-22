@@ -238,6 +238,16 @@ export function TaskPerformPanel({
           />
         )}
 
+        {/* Pågående arbete: gå tillbaka in i helskärmsläget */}
+        {status !== "ej_startad" && steps.length > 0 && (
+          <Button
+            className="h-12 w-full text-base font-semibold"
+            onClick={() => setRunOpen(true)}
+          >
+            <Play className="mr-2 h-5 w-5" /> Gör uppgiften steg för steg
+          </Button>
+        )}
+
         {status === "ej_startad" && (
           <div className="flex flex-wrap items-center gap-3">
             <Button
@@ -245,6 +255,7 @@ export function TaskPerformPanel({
               onClick={async () => {
                 await start.mutateAsync(task.id);
                 onStarted?.();
+                if (steps.length > 0) setRunOpen(true);
                 toast({ title: "Uppgiften är startad" });
               }}
             >
