@@ -459,15 +459,15 @@ export function TaskRunFullscreen({
                     </button>
                   </div>
 
-                  <p className="font-mono text-xs tabular-nums text-white/70">
+                  <p className="font-mono text-[11px] tabular-nums text-white/70">
                     Steg {n + feedOffset} av {steps.length + feedOffset} · {taskName}
                   </p>
-                  <h2 className={cn("font-heading font-bold leading-tight", textOpen ? "text-2xl" : "pr-24 text-base")}>
+                  <h2 className={cn("font-heading font-bold leading-tight", textOpen ? "text-xl" : "pr-20 text-base")}>
                     {stepTitle(st.text || `Steg ${n}`)}
                   </h2>
 
                   {textOpen && (
-                    <div className="max-h-[26vh] space-y-2 overflow-y-auto">
+                    <div className="max-h-[22vh] space-y-1.5 overflow-y-auto">
                       {st.text && <p className="text-[15px] leading-snug text-white">{st.text}</p>}
                       {st.keyPoint && (
                         <p className="text-sm leading-snug text-emerald-200">
