@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ArrowUpRight, Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Play, Timer, Trash2, User } from "lucide-react";
+import { ArrowUpRight, Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Play, Timer, Trash2, User, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -314,6 +314,15 @@ export function TaskRow({
             </Button>
           )}
 
+
+          {/* Allt om uppgiften: redigera, historik, vilka som gjort den, vilka dagar */}
+          <Button
+            variant="outline"
+            className="h-10 w-full justify-start gap-2 text-sm"
+            onClick={onOpenDetail}
+          >
+            <Info className="h-4 w-4" /> Mer om uppgiften — redigera, historik, vilka som gjort den
+          </Button>
 
           {/* Utförandet — samma sida, stegen med "Klar · nästa steg" läggs över listan */}
           <TaskRunFullscreen
