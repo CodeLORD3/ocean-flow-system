@@ -128,6 +128,36 @@ export default function ImageLibraryPanel({
     return () => clearTimeout(t);
   }, [search]);
 
+  // Bläddra bland bilderna i listan med pilarna eller knapparna.
+  const detailIndex = detail ? rows.findIndex((r) => r.id === detail.id) : -1;
+  const stepDetail = (dir: 1 | -1) => {
+    if (detailIndex < 0) return;
+    const next = rows[detailIndex + dir];
+    if (next) setDetail(next);
+  };
+
+  useEffect(() => {
+    if (!detail) return;
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing =
+        el?.isContentEditable ||
+        ((el?.tagName === "INPUT" || el?.tagName === "TEXTAREA") &&
+          !!(el as HTMLInputElement).value);
+      if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "PageDown") {
+        e.preventDefault();
+        stepDetail(1);
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "PageUp") {
+        e.preventDefault();
+        stepDetail(-1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detail?.id, rows]);
+
   const filter = useMemo(() => {
     const base: LibraryFilter = {
       search: debounced || undefined,
