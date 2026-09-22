@@ -25,6 +25,7 @@ import { useStaff } from "@/hooks/useStaff";
 import { useFloorPlans, useMapZones } from "@/hooks/useStoreMap";
 import { useUploadEntityImage, type EntityImage } from "@/hooks/useEntityImages";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
+import ImageSourceLinks from "@/components/images/ImageSourceLinks";
 import { ImageArchivePicker } from "@/components/images/ImageArchivePicker";
 import { useAttachArchiveImages } from "@/hooks/useImageArchive";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
@@ -567,13 +568,13 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           {allImages.length === 0 ? (
             <p className="text-sm text-muted-foreground">Inga bilder är kopplade till uppgiften ännu.</p>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {allImages.map((img, i) => (
-                <div key={img.id} className="space-y-1">
+                <div key={img.id} className="flex gap-3 rounded-xl border bg-card p-2">
                   <button
                     type="button"
                     onClick={() => setLightbox(i)}
-                    className="block aspect-square w-full overflow-hidden rounded-lg border bg-muted"
+                    className="block h-24 w-24 shrink-0 overflow-hidden rounded-lg border bg-muted"
                   >
                     <img
                       src={thumbUrl(img.url, THUMB_TILE)}
@@ -581,13 +582,27 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                       className="h-full w-full object-cover transition-transform hover:scale-105"
                     />
                   </button>
-                  <p className="truncate text-[11px] text-muted-foreground">
-                    {img.uploaded_by_name || "Okänd"}
-                    {img.created_at ? ` · ${new Date(img.created_at).toLocaleDateString("sv-SE")}` : ""}
-                  </p>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <p className="truncate text-xs font-medium text-foreground">
+                      {img.uploaded_by_name || "Okänd uppladdare"}
+                    </p>
+                    <p className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                      {img.created_at
+                        ? new Date(img.created_at).toLocaleString("sv-SE", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : ""}
+                    </p>
+                    <ImageSourceLinks imageId={img.id} />
+                  </div>
                 </div>
               ))}
             </div>
+
           )}
         </TabsContent>
 
