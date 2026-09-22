@@ -406,7 +406,14 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             onCompleted={() => switchTab("/uppgifter")}
             onSetStepImage={async (stepIndex, file) => {
               const url = await uploadTaskStepImage(file, task.id);
-              const steps = guide.steps.map((st, i) => (i === stepIndex ? { ...st, image: url } : st));
+              /** Har steget redan en bild läggs den nya till i bläddringen. */
+              const steps = guide.steps.map((st, i) =>
+                i === stepIndex
+                  ? st.image
+                    ? { ...st, images: [...(st.images ?? []), url] }
+                    : { ...st, image: url }
+                  : st,
+              );
               await saveGuide.mutateAsync({
                 id: task.id,
                 templateItemId: task.template_item_id,

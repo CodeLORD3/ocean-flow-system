@@ -8,6 +8,8 @@
 export type GuideStep = {
   text: string;
   image?: string | null;
+  /** Fler bilder på steget, bläddras åt höger och vänster. */
+  images?: string[];
   /** Kort videoklipp, högst ett halvt minut. */
   video?: string | null;
   /** Viktig punkt: det som avgör om resultatet blir rätt. */
@@ -96,6 +98,7 @@ export function parseGuide(raw: unknown, fallbackSteps?: string[] | null): TaskG
             : {
                 text: str((s as any)?.text),
                 image: str((s as any)?.image) || null,
+                images: urls((s as any)?.images),
                 video: str((s as any)?.video) || null,
                 keyPoint: str((s as any)?.keyPoint),
                 why: str((s as any)?.why),
@@ -141,7 +144,7 @@ export function guideIsEmpty(g: TaskGuide) {
     !g.putBack.trim() &&
     g.putBackImages.length === 0 &&
     g.materials.every((m) => !m.name.trim() && !m.image) &&
-    g.steps.every((s) => !s.text.trim() && !s.image)
+    g.steps.every((s) => !s.text.trim() && !s.image && (s.images ?? []).length === 0)
   );
 }
 
@@ -163,6 +166,7 @@ export function cleanGuide(g: TaskGuide): TaskGuide | null {
       .map((s) => ({
         text: s.text.trim(),
         image: s.image ?? null,
+        images: (s.images ?? []).filter(Boolean),
         video: s.video ?? null,
         keyPoint: (s.keyPoint ?? "").trim(),
         why: (s.why ?? "").trim(),

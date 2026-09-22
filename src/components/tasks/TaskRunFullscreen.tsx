@@ -6,6 +6,11 @@ import type { GuideStep } from "@/lib/taskGuide";
 import { useCurrentStaff } from "@/hooks/useCurrentStaff";
 import { useClearStepCheck, useSetStepCheck, useTaskPrepChecks } from "@/hooks/useTaskPrep";
 
+/** Alla bilder på ett steg: huvudbilden först, därefter de extra bilderna. */
+function stepImages(st: GuideStep): string[] {
+  return [st.image ?? "", ...(st.images ?? [])].filter(Boolean) as string[];
+}
+
 /** Kort rubrik ur stegtexten. */
 function stepTitle(text: string): string {
   const first = text.split(/[.!?]/)[0]?.split(",")[0]?.trim() || text.trim();
@@ -258,12 +263,8 @@ export function TaskRunFullscreen({
                 key={n}
                 className="relative flex h-full snap-start snap-always flex-col justify-end bg-foreground/95"
               >
-                {st.image ? (
-                  <img
-                    src={st.image}
-                    alt={stepTitle(st.text || "")}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
+                {stepImages(st).length > 0 ? (
+                  <StepGallery images={stepImages(st)} alt={stepTitle(st.text || "")} fill />
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
                     <Camera className="h-10 w-10 text-muted-foreground" />
@@ -484,11 +485,11 @@ export function TaskRunFullscreen({
         // Bild till vänster, text till höger — allt ryms på en skärm utan skroll
         <div className="mx-auto grid h-full w-full max-w-6xl gap-4 lg:grid-cols-2 lg:items-start">
           <div className="flex min-h-0 flex-col gap-2">
-            {s.image ? (
-              <img
-                src={s.image}
+            {stepImages(s).length > 0 ? (
+              <StepGallery
+                images={stepImages(s)}
                 alt={stepTitle(s.text || "")}
-                className="max-h-[62vh] w-full rounded-xl bg-muted object-contain"
+                className="h-[62vh] w-full overflow-hidden rounded-xl bg-muted"
               />
             ) : (
               <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-xl bg-muted">
@@ -591,6 +592,86 @@ export function TaskRunFullscreen({
         </div>
         {blockedText && <p className="text-center text-xs text-amber-700">{blockedText}</p>}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Flera bilder på ett steg: dra i sidled eller tryck på pilarna höger/vänster.
+ * Snäpper en bild per svaj, precis som stegflödet.
+ */
+function StepGallery({
+  images,
+  alt,
+  fill,
+  className,
+}: {
+  images: string[];
+  alt: string;
+  fill?: boolean;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [at, setAt] = useState(0);
+
+  const go = (i: number) => {
+    const el = ref.current;
+    if (!el) return;
+    const next = Math.max(0, Math.min(images.length - 1, i));
+    el.scrollTo({ left: next * el.clientWidth, behavior: "smooth" });
+    setAt(next);
+  };
+
+  return (
+    <div className={cn("relative", fill ? "absolute inset-0" : "", className)}>
+      <div
+        ref={ref}
+        className="flex h-full w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth"
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          if (el.clientWidth > 0) setAt(Math.round(el.scrollLeft / el.clientWidth));
+        }}
+      >
+        {images.map((src, i) => (
+          <img
+            key={`${src}-${i}`}
+            src={src}
+            alt={`${alt} — bild ${i + 1}`}
+            className={cn("h-full w-full shrink-0 snap-start snap-always", fill ? "object-cover" : "object-contain")}
+          />
+        ))}
+      </div>
+
+      {images.length > 1 && (
+        <>
+          <button
+            type="button"
+            aria-label="Föregående bild"
+            className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/55 p-2 text-white backdrop-blur disabled:opacity-30"
+            disabled={at === 0}
+            onClick={() => go(at - 1)}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            aria-label="Nästa bild"
+            className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/55 p-2 text-white backdrop-blur disabled:opacity-30"
+            disabled={at === images.length - 1}
+            onClick={() => go(at + 1)}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <div className="absolute left-1/2 top-2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/55 px-2 py-1 backdrop-blur">
+            {images.map((_, i) => (
+              <span
+                key={i}
+                className={cn("h-1.5 w-1.5 rounded-full", i === at ? "bg-white" : "bg-white/40")}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
