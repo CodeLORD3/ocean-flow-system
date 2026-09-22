@@ -91,7 +91,7 @@ export default function ImageCutoutTool({
         <AnnotatableImage
           src={url}
           alt={alt || title || "Bild"}
-          imgClassName={cn("max-h-[50vh] w-full rounded-lg object-contain", imgClassName)}
+          imgClassName={cn("max-h-[72vh] w-full rounded-lg object-contain", imgClassName)}
           markMode={markMode}
           marks={
             region
