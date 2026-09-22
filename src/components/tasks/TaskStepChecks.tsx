@@ -15,9 +15,14 @@ function stepTitle(text: string): string {
 export function TaskStepChecks({
   checklistItemId,
   steps,
+  locked = false,
+  onLockedClick,
 }: {
   checklistItemId: string;
   steps: GuideStep[];
+  /** Innan uppgiften är startad går stegen inte att bocka av. */
+  locked?: boolean;
+  onLockedClick?: () => void;
 }) {
   const { data: staff } = useCurrentStaff();
   const { data: checks = [] } = useTaskPrepChecks(checklistItemId);
