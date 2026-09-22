@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
 import { useAddAdhocTask, useTaskRegister } from "@/hooks/useTasks";
+import { asciiFold } from "@/lib/asciiFold";
 import { ZonePickMap } from "@/components/tasks/ZonePickMap";
 import type { FloorPlan, MapZone } from "@/hooks/useStoreMap";
 
@@ -114,10 +115,16 @@ export function NewTaskDialog({
   const finalTime = timeMode === "now" ? nowTime() : time;
 
   const existingList = useMemo(() => {
-    const q = existingSearch.trim().toLowerCase();
+    // Tolerant sökning: å/ä/ö likställs och varje ord får matcha var som helst,
+    // så "stad" och "städa golv" hittar "Städa samtliga golvbrunnar".
+    const words = asciiFold(existingSearch).toLowerCase().split(/\s+/).filter(Boolean);
     return register
       .filter((r) => (existingZone ? r.zoneId === existingZone : true))
-      .filter((r) => (q ? r.task.toLowerCase().includes(q) : true))
+      .filter((r) => {
+        if (!words.length) return true;
+        const hay = asciiFold(`${r.task} ${r.note ?? ""} ${r.doers.map((d) => d.name).join(" ")}`).toLowerCase();
+        return words.every((w) => hay.includes(w));
+      })
       .sort((a, b) => b.doneTimes - a.doneTimes || a.task.localeCompare(b.task, "sv"))
       .slice(0, 60);
   }, [register, existingSearch, existingZone]);
