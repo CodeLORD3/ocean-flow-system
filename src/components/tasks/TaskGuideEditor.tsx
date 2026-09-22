@@ -134,6 +134,25 @@ export function TaskGuideEditor({
   const patchMaterial = (i: number, p: Partial<TaskGuide["materials"][number]>) =>
     patch({ materials: guide.materials.map((x, j) => (j === i ? { ...x, ...p } : x)) });
 
+  /** Snabbraden: skriv steget och tryck Enter. */
+  const [draft, setDraft] = useState("");
+  const addDraft = () => {
+    const text = draft.trim();
+    if (!text) return;
+    setGuide((g) => ({ ...g, steps: [...g.steps, { text, image: null }] }));
+    setDraft("");
+  };
+
+  /** Flytta ett steg upp eller ner i ordningen. */
+  const moveStep = (i: number, dir: -1 | 1) =>
+    setGuide((g) => {
+      const next = [...g.steps];
+      const j = i + dir;
+      if (j < 0 || j >= next.length) return g;
+      [next[i], next[j]] = [next[j], next[i]];
+      return { ...g, steps: next };
+    });
+
   const sections = [
     { n: 1, title: "Godkänt läge" },
     { n: 2, title: "Hämta fram" },
