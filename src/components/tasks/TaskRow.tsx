@@ -218,7 +218,7 @@ export function TaskRow({
 
 
         {/* Kolumn 2: tid */}
-        <span className="hidden w-[46px] shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground sm:block">
+        <span className="hidden w-[42px] shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground sm:block">
           {time.label || ""}
         </span>
 
