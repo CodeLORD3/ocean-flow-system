@@ -1245,9 +1245,9 @@ export default function ShopOrders() {
                           {items.map(({ line, idx }) => (
                             <tr key={line.product_id} className="border-b border-border/30">
                               <td className="py-2 font-medium text-foreground">
-                                <div className="flex items-center gap-2">
-                                  <ProductThumb src={line.image_url} alt={line.product_name} static className="w-7 h-5" />
-                                  <span className="truncate">{line.product_name}</span>
+                                <div className="flex items-start gap-2">
+                                  <ProductThumb src={line.image_url} alt={line.product_name} static className="w-7 h-5 shrink-0" />
+                                  <span className="min-w-0 break-words leading-snug">{line.product_name}</span>
                                 </div>
                               </td>
                               <td className="py-2 text-muted-foreground">{line.unit}</td>
