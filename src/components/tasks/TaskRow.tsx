@@ -10,7 +10,7 @@ import { missingRequirements, missingText, valueLabel } from "@/lib/taskRequirem
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { workTypeLabel } from "@/lib/workType";
-import { useTaskImages, type TaskRow as Task } from "@/hooks/useTasks";
+import { useTaskImages, useTaskBlueprint, type TaskRow as Task } from "@/hooks/useTasks";
 import { TaskRunFullscreen } from "@/components/tasks/TaskRunFullscreen";
 import { parseGuide } from "@/lib/taskGuide";
 import { useStartTask, useFinishTask } from "@/hooks/useTaskRun";
