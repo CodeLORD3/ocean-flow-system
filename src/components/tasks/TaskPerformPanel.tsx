@@ -25,6 +25,7 @@ import { NeedsSheet } from "@/components/tasks/NeedsSheet";
 import { TaskLiveTimer } from "@/components/tasks/TaskLiveTimer";
 import { TaskPrepPanel } from "@/components/tasks/TaskPrepPanel";
 import { TaskStepChecks } from "@/components/tasks/TaskStepChecks";
+import { TaskRunFullscreen } from "@/components/tasks/TaskRunFullscreen";
 import type { GuideStep } from "@/lib/taskGuide";
 import { useCheckAllPresent, useSetStepCheck, useTaskPrepChecks } from "@/hooks/useTaskPrep";
 import { useCurrentStaff } from "@/hooks/useCurrentStaff";
@@ -123,6 +124,38 @@ export function TaskPerformPanel({
   /** Utrustning och steg bockas av automatiskt när man trycker klar. */
   const autoRest = prepMissing.length + stepsLeft;
 
+  /** Helskärmsläget: ett steg i taget när arbetet görs. */
+  const [runOpen, setRunOpen] = useState(false);
+  const completeTask = async () => {
+    try {
+      if (prepMissing.length > 0) {
+        await checkAll.mutateAsync({
+          items: prepMissing.map((n) => ({
+            checklistItemId: task.id,
+            requirementId: n.requirement.id,
+            resourceId: n.resource?.id ?? null,
+            itemName: n.resource?.name ?? n.requirement.requirement_name,
+            status: "finns" as const,
+            staffId: staff?.id ?? null,
+          })),
+        });
+      }
+      for (let i = 0; i < steps.length; i++) {
+        if (doneSteps.has(i + 1)) continue;
+        await setStep.mutateAsync({
+          checklistItemId: task.id,
+          stepNo: i + 1,
+          stepTitle: (steps[i].text || `Steg ${i + 1}`).slice(0, 80),
+          staffId: staff?.id ?? null,
+        });
+      }
+      await finish.mutateAsync({ id: task.id, startedAt: task.started_at ?? null });
+      toast({ title: "Uppgiften är klar" });
+    } catch (e: any) {
+      toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
+    }
+  };
+
   const blockedText = missingCheckpoints.length > 0
     ? `Bocka ${missingCheckpoints.map((c) => c.label.toLowerCase()).join(" och ")} först.`
     : missing.length > 0
@@ -206,6 +239,16 @@ export function TaskPerformPanel({
           />
         )}
 
+        {/* Pågående arbete: gå tillbaka in i helskärmsläget */}
+        {status !== "ej_startad" && steps.length > 0 && (
+          <Button
+            className="h-12 w-full text-base font-semibold"
+            onClick={() => setRunOpen(true)}
+          >
+            <Play className="mr-2 h-5 w-5" /> Gör uppgiften steg för steg
+          </Button>
+        )}
+
         {status === "ej_startad" && (
           <div className="flex flex-wrap items-center gap-3">
             <Button
@@ -213,6 +256,7 @@ export function TaskPerformPanel({
               onClick={async () => {
                 await start.mutateAsync(task.id);
                 onStarted?.();
+                if (steps.length > 0) setRunOpen(true);
                 toast({ title: "Uppgiften är startad" });
               }}
             >
@@ -359,40 +403,25 @@ export function TaskPerformPanel({
           disabled={blocked}
           title={blockedText}
           className="h-14 w-full bg-emerald-600 text-base text-white hover:bg-emerald-700"
-          onClick={async () => {
-            try {
-              if (prepMissing.length > 0) {
-                await checkAll.mutateAsync({
-                  items: prepMissing.map((n) => ({
-                    checklistItemId: task.id,
-                    requirementId: n.requirement.id,
-                    resourceId: n.resource?.id ?? null,
-                    itemName: n.resource?.name ?? n.requirement.requirement_name,
-                    status: "finns" as const,
-                    staffId: staff?.id ?? null,
-                  })),
-                });
-              }
-              for (let i = 0; i < steps.length; i++) {
-                if (doneSteps.has(i + 1)) continue;
-                await setStep.mutateAsync({
-                  checklistItemId: task.id,
-                  stepNo: i + 1,
-                  stepTitle: (steps[i].text || `Steg ${i + 1}`).slice(0, 80),
-                  staffId: staff?.id ?? null,
-                });
-              }
-              await finish.mutateAsync({ id: task.id, startedAt: task.started_at ?? null });
-              toast({ title: "Uppgiften är klar" });
-            } catch (e: any) {
-              toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
-            }
-          }}
+          onClick={completeTask}
         >
           <Check className="mr-2 h-5 w-5" /> MARKERA SOM KLAR
         </Button>
         {blockedText && <p className="text-center text-xs text-amber-700">{blockedText}</p>}
       </div>
+
+      <TaskRunFullscreen
+        open={runOpen}
+        onClose={() => setRunOpen(false)}
+        checklistItemId={task.id}
+        taskName={task.task}
+        steps={steps}
+        photoCount={photoCount}
+        requiresPhoto={task.requires_photo}
+        blockedText={blockedText}
+        onAddPhoto={onAddPhoto}
+        onFinish={completeTask}
+      />
     </div>
   );
 }
