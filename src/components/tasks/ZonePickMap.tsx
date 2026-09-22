@@ -29,6 +29,8 @@ export function ZonePickMap({
   numberOf?: (zoneId: string) => number | null;
   colorOf?: (zoneId: string) => string | null;
   onNext?: () => void;
+  /** Går vidare av sig självt när man tryckt på en yta utan ytor inuti. */
+  autoNext?: boolean;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
