@@ -38,6 +38,7 @@ export function OverviewTaskPanel({
   day,
   onDayChange,
   onOpenZone,
+  onOpenTask,
   lockedZoneId,
 }: {
   storeId: string;
@@ -48,6 +49,8 @@ export function OverviewTaskPanel({
   day: string;
   onDayChange?: (iso: string) => void;
   onOpenZone?: (zoneId: string) => void;
+  /** Öppnar uppgiftens egen sida. */
+  onOpenTask?: (taskId: string) => void;
   /** Sätts på en ytas egen sida — då visas bara den ytans uppgifter. */
   lockedZoneId?: string | null;
 }) {
@@ -299,9 +302,19 @@ export function OverviewTaskPanel({
                       className="mt-0.5"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className={cn("truncate text-xs", t.done ? "text-muted-foreground line-through" : "font-medium")}>
+                      <button
+                        type="button"
+                        onClick={() => onOpenTask?.(t.id)}
+                        disabled={!onOpenTask}
+                        className={cn(
+                          "block w-full truncate text-left text-xs",
+                          t.done ? "text-muted-foreground line-through" : "font-medium",
+                          onOpenTask ? "hover:underline" : "cursor-default",
+                        )}
+                        title={onOpenTask ? "Öppna uppgiften" : undefined}
+                      >
                         {t.task}
-                      </p>
+                      </button>
                       <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
                         <button
                           type="button"
