@@ -39,6 +39,7 @@ import {
   useTaskCategories,
   useTaskImages,
   useTaskItem,
+  useTaskBlueprint,
   useTaskReferenceImages,
   useUpdateTask,
 } from "@/hooks/useTasks";
