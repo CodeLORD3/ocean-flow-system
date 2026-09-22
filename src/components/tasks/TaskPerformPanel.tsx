@@ -114,16 +114,18 @@ export function TaskPerformPanel({
   const steps = guideSteps ?? [];
   const doneSteps = new Set(prepChecks.filter((c) => c.step_no != null).map((c) => c.step_no));
   const stepsLeft = steps.length > 0 ? steps.length - doneSteps.size : 0;
-  const blocked =
-    missing.length > 0 || missingCheckpoints.length > 0 || prepMissing.length > 0 || stepsLeft > 0;
+  /** Bara bild/kommentar/mätvärde och obligatoriska kontrollpunkter stoppar. */
+  const blocked = missing.length > 0 || missingCheckpoints.length > 0;
+  /** Utrustning och steg bockas av automatiskt när man trycker klar. */
+  const autoRest = prepMissing.length + stepsLeft;
 
-  const blockedText = prepMissing.length > 0
-    ? `Kontrollera utrustningen först: ${prepMissing.map((n) => (n.resource?.name ?? n.requirement.requirement_name).toLowerCase()).join(", ")}.`
-    : missingCheckpoints.length > 0
+  const blockedText = missingCheckpoints.length > 0
     ? `Bocka ${missingCheckpoints.map((c) => c.label.toLowerCase()).join(" och ")} först.`
     : missing.length > 0
       ? missingText(task, missing)
-      : undefined;
+      : autoRest > 0
+        ? `${autoRest} rader bockas av när du trycker klar.`
+        : undefined;
 
   if (task.done) {
     return (
