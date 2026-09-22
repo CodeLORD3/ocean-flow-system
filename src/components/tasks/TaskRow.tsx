@@ -52,6 +52,8 @@ type Props = {
   photoCountKnown?: boolean;
   /** Personer som kan få uppgiften. Visas som snabb tilldelning i rulldownen. */
   staffOptions?: { id: string; name: string; imageUrl?: string | null }[];
+  /** Butiken uppgiften hör till — behövs för utrustning & material. */
+  storeId?: string | null;
   onAssign?: (staffId: string | null) => void;
 };
 
@@ -80,6 +82,7 @@ export function TaskRow({
   photoCountKnown,
   staffOptions,
   onAssign,
+  storeId = null,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState(task.completion_note ?? "");
@@ -89,7 +92,6 @@ export function TaskRow({
   const time = taskTime(task);
 
   /* Utrustning & material — samma kontroll som på uppgiftens egen sida */
-  const storeId = task.store_id ?? null;
   const { data: requirements = [] } = useTaskRequirements(task.template_item_id ?? null, task.id);
   const { data: resourceItems = [] } = useResourceItems();
   const { data: resourceLocations = [] } = useResourceLocations(storeId);
