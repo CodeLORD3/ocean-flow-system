@@ -127,7 +127,12 @@ export function TaskSteps({
                       </span>
                     )}
                   </div>
-                  <p className="line-clamp-3 px-2 py-1.5 text-[12px] leading-snug">{s.text || "—"}</p>
+                  <div className="px-2 py-1.5">
+                    <p className="line-clamp-2 text-[12.5px] font-semibold leading-snug">
+                      {stepTitle(s.text) || "—"}
+                    </p>
+                    <p className="mt-0.5 text-[10.5px] text-muted-foreground">Tryck för hela beskrivningen</p>
+                  </div>
                 </button>
                 {canEdit && (
                   <button
