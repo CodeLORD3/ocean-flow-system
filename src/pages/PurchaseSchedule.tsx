@@ -1,3 +1,4 @@
+import { KvitteraIngetInkop } from "@/components/dagsavslut/KvitteraInget";
 import { useMemo, useState, useCallback, useRef, DragEvent } from "react";
 import { GROSSIST_FLYTANDE_ID } from "@/lib/locations";
 import { useShopOrders } from "@/hooks/useShopOrders";
@@ -929,6 +930,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <KvitteraIngetInkop />
           <Button size="sm" variant="outline" className="gap-1" onClick={() => setManualDialogOpen(true)}>
             <Plus className="h-3.5 w-3.5" /> Lägg till produkt
           </Button>
