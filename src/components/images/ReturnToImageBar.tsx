@@ -41,7 +41,7 @@ export default function ReturnToImageBar() {
   const retur = params.get("retur");
 
   const to = bildId ? `/image-feed?bild=${bildId}` : retur || prev?.url;
-  if (!to || hidden) return null;
+  if (!to || hidden || taskRunning) return null;
 
   const label = bildId
     ? "Tillbaka till bilden"
