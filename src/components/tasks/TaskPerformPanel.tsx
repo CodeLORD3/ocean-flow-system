@@ -423,6 +423,7 @@ export function TaskPerformPanel({
         requiresPhoto={task.requires_photo}
         blockedText={blockedText}
         onAddPhoto={onAddPhoto}
+        onSetStepImage={onSetStepImage}
         onFinish={completeTask}
       />
     </div>
