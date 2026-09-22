@@ -280,7 +280,7 @@ export function ZonePickMap({
               <button
                 key={c.id}
                 type="button"
-                onClick={() => onChange(c.id)}
+                onClick={() => pick(c.id)}
                 className="rounded-full border px-3 py-1.5 text-xs hover:bg-muted"
               >
                 {c.name}
