@@ -70,6 +70,21 @@ function urls(v: unknown) {
   return Array.isArray(v) ? (v as unknown[]).map((u) => str(u)).filter(Boolean) : [];
 }
 
+function marksOf(v: unknown): GuideMark[] {
+  if (!Array.isArray(v)) return [];
+  return (v as unknown[])
+    .map((m) => {
+      const r = (m as any)?.region ?? {};
+      const num = (x: unknown) => (typeof x === "number" && isFinite(x) ? x : 0);
+      return {
+        id: str((m as any)?.id) || Math.random().toString(36).slice(2),
+        region: { x: num(r.x), y: num(r.y), w: num(r.w), h: num(r.h) },
+        label: str((m as any)?.label),
+      };
+    })
+    .filter((m) => m.region.w > 0 && m.region.h > 0);
+}
+
 /** Läser guide-kolumnen tolerant, och faller tillbaka på gamla textsteg. */
 export function parseGuide(raw: unknown, fallbackSteps?: string[] | null): TaskGuide {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
