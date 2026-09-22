@@ -8,6 +8,8 @@
 export type GuideStep = {
   text: string;
   image?: string | null;
+  /** Fler bilder på steget, bläddras åt höger och vänster. */
+  images?: string[];
   /** Kort videoklipp, högst ett halvt minut. */
   video?: string | null;
   /** Viktig punkt: det som avgör om resultatet blir rätt. */
