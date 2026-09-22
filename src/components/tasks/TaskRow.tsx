@@ -278,12 +278,14 @@ export function TaskRow({
           })()}
         </span>
 
-        {/* Pågår-märke i raden — starten ligger i utfällningen */}
-        {!task.done && running && (
-          <span className="shrink-0 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-700">
-            Pågår
-          </span>
-        )}
+        {/* Kolumn 8: status — alltid samma bredd så raderna står i linje */}
+        <span className="hidden w-[76px] shrink-0 justify-end sm:flex">
+          {!task.done && running && (
+            <span className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-700">
+              Pågår
+            </span>
+          )}
+        </span>
 
 
         {/* Kolumn 9: rulldown */}
