@@ -89,6 +89,15 @@ export function TaskRow({
   const photoMissing = task.requires_photo && effectivePhotoCount === 0;
   const missing = missingRequirements(task, { photoCount: effectivePhotoCount, checkPhoto: countKnown });
   const blocked = !task.done && missing.length > 0;
+  const start = useStartTask();
+  const running = task.run_status === "pagar";
+  const canStart = !task.done && !running;
+  const startNow = async () => {
+    setOpen(true);
+    if (!canStart) return;
+    await start.mutateAsync(task.id);
+    toast({ title: "Uppgiften är startad", description: "Bocka av stegen ett i taget." });
+  };
   const tryToggle = (done: boolean) => {
     if (done && blocked) {
       setOpen(true);
