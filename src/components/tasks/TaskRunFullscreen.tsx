@@ -258,12 +258,8 @@ export function TaskRunFullscreen({
                 key={n}
                 className="relative flex h-full snap-start snap-always flex-col justify-end bg-foreground/95"
               >
-                {st.image ? (
-                  <img
-                    src={st.image}
-                    alt={stepTitle(st.text || "")}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
+                {stepImages(st).length > 0 ? (
+                  <StepGallery images={stepImages(st)} alt={stepTitle(st.text || "")} fill />
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
                     <Camera className="h-10 w-10 text-muted-foreground" />
