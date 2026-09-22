@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { workTypeLabel } from "@/lib/workType";
 import { useTaskImages, type TaskRow as Task } from "@/hooks/useTasks";
 import { TaskSteps } from "@/components/tasks/TaskSteps";
-import { TaskStepChecks } from "@/components/tasks/TaskStepChecks";
+import { TaskRunFullscreen } from "@/components/tasks/TaskRunFullscreen";
 import { parseGuide } from "@/lib/taskGuide";
 import { useStartTask } from "@/hooks/useTaskRun";
 import { toast } from "@/hooks/use-toast";
@@ -290,15 +290,22 @@ export function TaskRow({
           )}
 
 
-          {/* Utförandet sker här i raden — du fortsätter där du var senast */}
-          {showRun && guideSteps.length > 0 && (
-            <div className="space-y-2" ref={runRef}>
-              <TaskStepChecks checklistItemId={task.id} steps={guideSteps} locked={!running} onLockedClick={startNow} />
-              <Button variant="outline" size="sm" className="w-full" onClick={() => setShowRun(false)}>
-                <ChevronDown className="mr-1 h-4 w-4" /> Stäng och tillbaka till listan
-              </Button>
-            </div>
-          )}
+          {/* Utförandet — samma sida, stegen med "Klar · nästa steg" läggs över listan */}
+          <TaskRunFullscreen
+            open={showRun && guideSteps.length > 0}
+            onClose={() => setShowRun(false)}
+            checklistItemId={task.id}
+            taskName={task.task}
+            steps={guideSteps}
+            photoCount={effectivePhotoCount}
+            requiresPhoto={task.requires_photo}
+            blockedText={blocked ? missingText(task, missing) : undefined}
+            onAddPhoto={async (file) => onAddPhoto?.(file)}
+            onFinish={async () => {
+              onToggle(true);
+              setShowRun(false);
+            }}
+          />
 
           {(showGuide || task.done) && (
           <TaskSteps
