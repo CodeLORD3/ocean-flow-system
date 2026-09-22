@@ -316,7 +316,7 @@ export default function StaffProfile() {
               </div>
 
               {/* Flikar */}
-              <div className="flex gap-1 overflow-x-auto border-t border-border px-3">
+              <div className="flex gap-1 overflow-x-auto border-t border-border px-2">
                 {TABS.map((t) => {
                   const active = tab === t.key;
                   return (
