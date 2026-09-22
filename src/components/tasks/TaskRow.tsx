@@ -263,7 +263,7 @@ export function TaskRow({
               </span>
             )
           ) : (
-            <span className="px-2 text-[12px] text-muted-foreground/60">Inget område</span>
+            <span className="px-2 text-[11px] text-muted-foreground/60">Inget område</span>
           )}
         </span>
 
