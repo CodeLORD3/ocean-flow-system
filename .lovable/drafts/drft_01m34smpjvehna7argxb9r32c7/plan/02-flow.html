@@ -1,0 +1,42 @@
+<svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" style="font-family: var(--font-sans)">
+  <defs>
+    <marker id="ch" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10" fill="none" stroke="var(--fg-secondary)" stroke-width="1.4"/>
+    </marker>
+  </defs>
+
+  <rect x="8" y="40" width="120" height="52" rx="8" fill="none" stroke="var(--fg-secondary)"/>
+  <text x="68" y="62" text-anchor="middle" style="font-size:14px;font-weight:480;fill:var(--fg-primary)">Ordrar</text>
+  <text x="68" y="79" text-anchor="middle" style="font-size:12px;fill:var(--fg-secondary)">ny beställning</text>
+
+  <rect x="160" y="40" width="120" height="52" rx="8" fill="none" stroke="var(--fg-secondary)"/>
+  <text x="220" y="62" text-anchor="middle" style="font-size:14px;font-weight:480;fill:var(--fg-primary)">Sök vara</text>
+  <text x="220" y="79" text-anchor="middle" style="font-size:12px;fill:var(--fg-secondary)">träfflista</text>
+
+  <rect x="312" y="34" width="140" height="64" rx="8" fill="var(--bg-accent-translucent)" stroke="var(--fg-accent)"/>
+  <text x="382" y="58" text-anchor="middle" style="font-size:14px;font-weight:480;fill:var(--fg-accent)">Varan i listan</text>
+  <text x="382" y="76" text-anchor="middle" style="font-size:12px;fill:var(--fg-accent)">här låser det sig</text>
+
+  <rect x="484" y="40" width="140" height="52" rx="8" fill="none" stroke="var(--fg-secondary)" stroke-dasharray="4 3"/>
+  <text x="554" y="62" text-anchor="middle" style="font-size:14px;font-weight:480;fill:var(--fg-primary)">Skicka</text>
+  <text x="554" y="79" text-anchor="middle" style="font-size:12px;fill:var(--fg-secondary)">först nu sparas allt</text>
+
+  <line x1="128" y1="66" x2="156" y2="66" stroke="var(--fg-secondary)" marker-end="url(#ch)"/>
+  <line x1="280" y1="66" x2="308" y2="66" stroke="var(--fg-secondary)" marker-end="url(#ch)"/>
+  <line x1="452" y1="66" x2="480" y2="66" stroke="var(--fg-secondary)" stroke-dasharray="4 3" marker-end="url(#ch)"/>
+
+  <rect x="8" y="126" width="616" height="118" rx="8" fill="none" stroke="var(--border-translucent)" stroke-dasharray="4 3"/>
+  <text x="24" y="148" style="font-size:12px;fill:var(--fg-secondary)">tre riskpunkter i samma ögonblick</text>
+
+  <circle cx="34" cy="174" r="10" fill="var(--bg-accent)"/>
+  <text x="34" y="178" text-anchor="middle" style="font-size:12px;fill:var(--fg-emphasis)">1</text>
+  <text x="54" y="178" style="font-size:12px;fill:var(--fg-primary)">kundbeställningarna fylls på i samma stund och kan rita om listan i ring</text>
+
+  <circle cx="34" cy="200" r="10" fill="var(--bg-muted)"/>
+  <text x="34" y="204" text-anchor="middle" style="font-size:12px;fill:var(--fg-primary)">2</text>
+  <text x="54" y="204" style="font-size:12px;fill:var(--fg-primary)">hoppet till antal-fältet: fokus + rullning krockar med tangentbordet</text>
+
+  <circle cx="34" cy="226" r="10" fill="var(--bg-muted)"/>
+  <text x="34" y="230" text-anchor="middle" style="font-size:12px;fill:var(--fg-primary)">3</text>
+  <text x="54" y="230" style="font-size:12px;fill:var(--fg-primary)">en kvarliggande ruta gör hela sidan otryckbar (rullning fungerar ändå)</text>
+</svg>
