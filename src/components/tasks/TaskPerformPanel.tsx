@@ -68,6 +68,7 @@ export function TaskPerformPanel({
   onUpdate,
   onAddPhoto,
   onSetStepImage,
+  onCompleted,
   onReopen,
   onStarted,
 }: {
