@@ -73,6 +73,7 @@ export function TaskStepChecks({
               className={cn(
                 "flex w-full items-center gap-3 rounded-lg border p-2 text-left",
                 done ? "border-emerald-500/30 bg-emerald-500/5" : "hover:bg-muted",
+                locked && "opacity-60",
               )}
             >
               <span
