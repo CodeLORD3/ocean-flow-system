@@ -209,16 +209,15 @@ function StepViewer({
         </div>
 
         <div className="max-h-[32vh] space-y-3 overflow-y-auto px-4 py-3">
-          <p className="text-[15px] leading-relaxed">{step.text}</p>
-          {step.keyPoint && (
-            <p className="rounded-lg bg-primary/10 px-3 py-2 text-[13px]">
-              <span className="font-semibold">Viktigt: </span>
-              {step.keyPoint}
-            </p>
-          )}
-          {step.why && <p className="text-[13px] text-muted-foreground">Varför: {step.why}</p>}
-          {step.safety && (
-            <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[13px] text-amber-700">Säkerhet: {step.safety}</p>
+          <p className="text-[16px] font-medium leading-relaxed">{step.text}</p>
+
+          {(step.keyPoint || step.why || step.safety || step.haccp) && (
+            <div className="space-y-2">
+              {step.keyPoint && <DetailRow tone="primary" label="Viktigt" text={step.keyPoint} />}
+              {step.why && <DetailRow tone="muted" label="Varför" text={step.why} />}
+              {step.safety && <DetailRow tone="amber" label="Säkerhet" text={step.safety} />}
+              {step.haccp && <DetailRow tone="sky" label="HACCP" text={step.haccp} />}
+            </div>
           )}
 
           {commentOpen ? (
@@ -265,5 +264,30 @@ function StepViewer({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Lika uppbyggda rader: färgad etikett till vänster, texten i samma storlek. */
+function DetailRow({
+  tone,
+  label,
+  text,
+}: {
+  tone: "primary" | "muted" | "amber" | "sky";
+  label: string;
+  text: string;
+}) {
+  const tones = {
+    primary: "bg-primary/10 text-primary",
+    muted: "bg-muted text-muted-foreground",
+    amber: "bg-amber-500/10 text-amber-700",
+    sky: "bg-sky-500/10 text-sky-700",
+  } as const;
+
+  return (
+    <div className={`flex items-start gap-3 rounded-lg px-3 py-2 ${tones[tone]}`}>
+      <span className="w-[72px] shrink-0 text-[11px] font-semibold uppercase tracking-wide leading-5">{label}</span>
+      <span className="min-w-0 flex-1 text-[14px] leading-5 text-foreground">{text}</span>
+    </div>
   );
 }
