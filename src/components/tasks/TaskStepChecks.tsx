@@ -59,7 +59,9 @@ export function TaskStepChecks({
               key={no}
               type="button"
               onClick={() =>
-                done
+                locked
+                  ? onLockedClick?.()
+                  : done
                   ? clearStep.mutate({ checklistItemId, stepNo: no })
                   : setStep.mutate({
                       checklistItemId,
