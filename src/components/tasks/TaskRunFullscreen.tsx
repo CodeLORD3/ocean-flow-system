@@ -87,6 +87,10 @@ export function TaskRunFullscreen({
   const [showPrep, setShowPrep] = useState(true);
   /** Textrutan i telefonen kan dras ner så hela bilden syns. */
   const [textOpen, setTextOpen] = useState(true);
+  /** Vilken bild man tittar på i varje steg — rutan göms när man bläddrar vidare. */
+  const [galleryAt, setGalleryAt] = useState<Record<number, number>>({});
+  /** Steg där man valt att ta fram rutan igen fastän man bläddrat i bilderna. */
+  const [panelShown, setPanelShown] = useState<Record<number, boolean>>({});
   /** Varning när uppgiften stängs utan den bild som krävs. */
   const [warnPhoto, setWarnPhoto] = useState(false);
   /** Översikt över vad som är gjort och vad som är kvar. */
@@ -357,13 +361,23 @@ export function TaskRunFullscreen({
             const n = i + 1;
             const stepDone = doneNos.has(n);
             const isLast = n === steps.length;
+            /** Bläddrar man vidare i bilderna göms rutan så hela bilden syns. */
+            const browsing = (galleryAt[n] ?? 0) > 0 && !panelShown[n];
             return (
               <section
                 key={n}
                 className="relative flex h-full snap-start snap-always flex-col justify-end bg-foreground/95"
               >
                 {stepImages(st).length > 0 ? (
-                  <StepGallery images={stepImages(st)} alt={stepTitle(st.text || "")} fill />
+                  <StepGallery
+                    images={stepImages(st)}
+                    alt={stepTitle(st.text || "")}
+                    fill
+                    onIndexChange={(at) => {
+                      setGalleryAt((prev) => (prev[n] === at ? prev : { ...prev, [n]: at }));
+                      if (at === 0) setPanelShown((prev) => (prev[n] ? { ...prev, [n]: false } : prev));
+                    }}
+                  />
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
                     <Camera className="h-10 w-10 text-muted-foreground" />
@@ -391,11 +405,22 @@ export function TaskRunFullscreen({
                   </label>
                 )}
 
+                {/* Bläddrar man i bilderna göms rutan — knappen tar fram den igen */}
+                {browsing && (
+                  <button
+                    type="button"
+                    onClick={() => setPanelShown((prev) => ({ ...prev, [n]: true }))}
+                    className="absolute bottom-24 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-xs font-semibold text-white backdrop-blur"
+                  >
+                    <ChevronUp className="mr-1 inline h-3.5 w-3.5" /> Visa texten och klar-knappen
+                  </button>
+                )}
+
                 {/* Texten i en tät ruta: dra ner den eller tryck "Minska" för hela bilden */}
                 <div
                   className={cn(
-                    "relative z-10 mx-3 mb-24 mt-3 space-y-2 rounded-2xl bg-black/70 p-4 text-white backdrop-blur-sm transition-all",
-                    "",
+                    "relative z-10 mx-3 mb-20 mt-3 space-y-1.5 rounded-2xl bg-black/70 px-3 py-2.5 text-white backdrop-blur-sm transition-all",
+                    browsing && "hidden",
                   )}
                   onTouchStart={(e) => {
                     touchY.current = e.touches[0]?.clientY ?? null;
@@ -420,7 +445,7 @@ export function TaskRunFullscreen({
                     <button
                       type="button"
                       onClick={() => setTextOpen((v) => !v)}
-                      className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white"
+                      className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold text-white"
                     >
                       {textOpen ? (
                         <>
@@ -434,15 +459,15 @@ export function TaskRunFullscreen({
                     </button>
                   </div>
 
-                  <p className="font-mono text-xs tabular-nums text-white/70">
+                  <p className="font-mono text-[11px] tabular-nums text-white/70">
                     Steg {n + feedOffset} av {steps.length + feedOffset} · {taskName}
                   </p>
-                  <h2 className={cn("font-heading font-bold leading-tight", textOpen ? "text-2xl" : "pr-24 text-base")}>
+                  <h2 className={cn("font-heading font-bold leading-tight", textOpen ? "text-xl" : "pr-20 text-base")}>
                     {stepTitle(st.text || `Steg ${n}`)}
                   </h2>
 
                   {textOpen && (
-                    <div className="max-h-[26vh] space-y-2 overflow-y-auto">
+                    <div className="max-h-[22vh] space-y-1.5 overflow-y-auto">
                       {st.text && <p className="text-[15px] leading-snug text-white">{st.text}</p>}
                       {st.keyPoint && (
                         <p className="text-sm leading-snug text-emerald-200">
@@ -474,7 +499,7 @@ export function TaskRunFullscreen({
                   <div className="flex items-center gap-2 pt-1">
                     {/* Liten blå tillbaka-knapp till vänster om Klar */}
                     <Button
-                      className="h-14 w-14 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
+                      className="h-12 w-12 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
                       aria-label="Föregående steg"
                       onClick={() => {
                         if (i > 0) scrollToStep(i - 1);
@@ -486,7 +511,7 @@ export function TaskRunFullscreen({
                     {/* Grå tills steget är gjort — grön efteråt, och samma knapp ångrar */}
                     <Button
                       className={cn(
-                        "h-14 flex-1 text-base font-semibold",
+                        "h-12 flex-1 text-sm font-semibold",
                         stepDone
                           ? "bg-emerald-600 text-white hover:bg-emerald-700"
                           : "animate-pulse bg-muted text-foreground hover:animate-none hover:bg-emerald-600 hover:text-white",
@@ -520,14 +545,14 @@ export function TaskRunFullscreen({
                             if (f) await onAddPhoto(f);
                           }}
                         />
-                        <span className="inline-flex h-14 cursor-pointer items-center gap-1 rounded-md bg-white/15 px-4 text-sm text-white">
+                        <span className="inline-flex h-12 cursor-pointer items-center gap-1 rounded-md bg-white/15 px-3 text-sm text-white">
                           <Camera className="h-5 w-5" /> {photoCount > 0 ? photoCount : ""}
                         </span>
                       </label>
                     )}
                   </div>
                   {stepDone && !isLast && (
-                    <p className="text-center text-xs text-white/60">Swipa upp för nästa steg</p>
+                    <p className="text-center text-[10px] text-white/60">Swipa upp för nästa steg</p>
                   )}
                 </div>
               </section>
@@ -732,14 +757,19 @@ function StepGallery({
   alt,
   fill,
   className,
+  onIndexChange,
 }: {
   images: string[];
   alt: string;
   fill?: boolean;
   className?: string;
+  /** Vilken bild man tittar på — används för att gömma textrutan. */
+  onIndexChange?: (at: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState(0);
+  useEffect(() => onIndexChange?.(at), [at]);
+
 
   const go = (i: number) => {
     const el = ref.current;
