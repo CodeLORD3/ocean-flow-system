@@ -311,9 +311,9 @@ export function TaskRow({
         </span>
 
         {/* Kolumn 8: status — alltid samma bredd så raderna står i linje */}
-        <span className="hidden w-[76px] shrink-0 justify-end sm:flex">
+        <span className="hidden w-[66px] shrink-0 justify-end sm:flex">
           {!task.done && running && (
-            <span className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-700">
+            <span className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
               Pågår
             </span>
           )}
