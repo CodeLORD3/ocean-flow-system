@@ -246,14 +246,26 @@ export default function StaffProfile() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h1 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">{fullName}</h1>
-                  <p className="mt-1 truncate text-sm text-muted-foreground">
+                  <h1 className="font-heading text-2xl font-bold leading-tight text-foreground sm:text-3xl">{fullName}</h1>
+                  <p className="truncate text-sm text-muted-foreground">
                     {[role, staff.workplace].filter(Boolean).join("  ·  ") || "Personal"}
                   </p>
+                  {/* Dagens uppgifter direkt vid namnet, i färg */}
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground">
+                      <ListChecks className="h-3.5 w-3.5" />
+                      {progress ? `${progress.done} av ${progress.total} klara idag` : "Inga uppgifter idag"}
+                    </span>
+                    {progress && progress.left > 0 && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 text-[11px] font-semibold text-accent-foreground">
+                        {progress.left} kvar
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Stämpling direkt i rubriken */}
-                <div className="w-full shrink-0 rounded-xl border border-border bg-muted/40 p-3 sm:w-64">
+                <div className="w-full shrink-0 rounded-xl border border-border bg-muted/40 p-3 sm:w-56">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Stämpelklocka</p>
                   {openShift ? (
                     <>
