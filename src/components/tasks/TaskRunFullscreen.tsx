@@ -230,24 +230,37 @@ export function TaskRunFullscreen({
                   </label>
                 )}
 
-                <div className="relative z-10 space-y-2 px-4 pb-6 pt-16 text-white">
+                {/* Texten i en tät ruta: läsbar utan att dölja bilden */}
+                <div className="relative z-10 m-3 max-h-[58%] space-y-2 overflow-y-auto rounded-2xl bg-black/75 p-4 text-white backdrop-blur-sm">
                   <p className="font-mono text-xs tabular-nums text-white/70">
-                    Steg {n} av {steps.length} · {taskName}
+                    Steg {n + feedOffset} av {steps.length + feedOffset} · {taskName}
                   </p>
                   <h2 className="font-heading text-2xl font-bold leading-tight">
                     {stepTitle(st.text || `Steg ${n}`)}
                   </h2>
-                  {st.text && <p className="text-[15px] leading-snug text-white/85">{st.text}</p>}
+                  {st.text && <p className="text-[15px] leading-snug text-white">{st.text}</p>}
                   {st.keyPoint && (
-                    <p className="text-sm text-white/90">
+                    <p className="text-sm leading-snug text-emerald-200">
                       <span className="font-semibold uppercase tracking-wide">Viktigt · </span>
                       {st.keyPoint}
                     </p>
                   )}
+                  {st.why && (
+                    <p className="text-sm leading-snug text-sky-200">
+                      <span className="font-semibold uppercase tracking-wide">Varför · </span>
+                      {st.why}
+                    </p>
+                  )}
                   {st.safety && (
-                    <p className="text-sm text-amber-200">
+                    <p className="text-sm leading-snug text-amber-200">
                       <span className="font-semibold uppercase tracking-wide">Säkerhet · </span>
                       {st.safety}
+                    </p>
+                  )}
+                  {st.haccp && (
+                    <p className="text-sm leading-snug text-rose-200">
+                      <span className="font-semibold uppercase tracking-wide">HACCP · </span>
+                      {st.haccp}
                     </p>
                   )}
 
