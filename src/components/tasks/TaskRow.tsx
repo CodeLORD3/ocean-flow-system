@@ -320,6 +320,13 @@ export function TaskRow({
           )}
 
 
+          {/* Klar men bilden saknas — tydlig påminnelse om att lägga in den i efterhand */}
+          {task.done && task.requires_photo && effectivePhotoCount === 0 && (
+            <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[12px] font-medium text-amber-700">
+              Bilden saknas på den här uppgiften — lägg in den i efterhand med "Ta bild".
+            </p>
+          )}
+
           <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
             {time.kind !== "none" && (
               <span className="inline-flex items-center gap-1">
