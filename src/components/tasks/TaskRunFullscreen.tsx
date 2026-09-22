@@ -164,6 +164,10 @@ export function TaskRunFullscreen({
       if (isPhone) setTimeout(() => scrollToStep(no), 60);
     }
   };
+  markAndNextRef.current = markAndNext;
+
+  /** Ångra: tar bort att steget är gjort. */
+  const undoStep = (stepNo: number) => clearStep.mutate({ checklistItemId, stepNo });
 
   const finishNow = async () => {
     /** Saknas bilden får man en tydlig varning innan uppgiften stängs. */
