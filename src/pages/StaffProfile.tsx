@@ -206,7 +206,7 @@ export default function StaffProfile() {
             <CardContent className="p-0">
               <div className="flex flex-wrap items-center gap-3 p-2 sm:p-2.5">
                 <div className="relative h-14 w-14 shrink-0 sm:h-16 sm:w-16">
-                  <div className="h-full w-full overflow-hidden rounded-full border-4 border-background bg-primary/10 shadow-md">
+                  <div className="h-full w-full overflow-hidden rounded-full border-2 border-background bg-primary/10 shadow-md">
                     {staff.profile_image_url ? (
                       <img
                         src={staff.profile_image_url}
