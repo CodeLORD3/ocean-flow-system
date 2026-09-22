@@ -197,15 +197,15 @@ export default function StaffProfile() {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto w-full max-w-[1400px] space-y-4"
+      className="mx-auto w-full max-w-[1400px] space-y-3"
     >
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_340px] xl:items-start">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_320px] lg:items-start">
         {/* Vänster: rubrikkort med bild, namn och flikar + innehåll */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Card className="overflow-hidden shadow-card">
             <CardContent className="p-0">
-              <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
-                <div className="relative h-24 w-24 shrink-0 sm:h-28 sm:w-28">
+              <div className="flex flex-wrap items-center gap-3 p-3 sm:gap-4 sm:p-4">
+                <div className="relative h-20 w-20 shrink-0 sm:h-24 sm:w-24">
                   <div className="h-full w-full overflow-hidden rounded-full border-4 border-background bg-primary/10 shadow-md">
                     {staff.profile_image_url ? (
                       <img
@@ -246,14 +246,26 @@ export default function StaffProfile() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h1 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">{fullName}</h1>
-                  <p className="mt-1 truncate text-sm text-muted-foreground">
+                  <h1 className="font-heading text-2xl font-bold leading-tight text-foreground sm:text-3xl">{fullName}</h1>
+                  <p className="truncate text-sm text-muted-foreground">
                     {[role, staff.workplace].filter(Boolean).join("  ·  ") || "Personal"}
                   </p>
+                  {/* Dagens uppgifter direkt vid namnet, i färg */}
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground">
+                      <ListChecks className="h-3.5 w-3.5" />
+                      {progress ? `${progress.done} av ${progress.total} klara idag` : "Inga uppgifter idag"}
+                    </span>
+                    {progress && progress.left > 0 && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 text-[11px] font-semibold text-accent-foreground">
+                        {progress.left} kvar
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Stämpling direkt i rubriken */}
-                <div className="w-full shrink-0 rounded-xl border border-border bg-muted/40 p-3 sm:w-64">
+                <div className="w-full shrink-0 rounded-xl border border-border bg-muted/40 p-3 sm:w-56">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Stämpelklocka</p>
                   {openShift ? (
                     <>
@@ -313,7 +325,7 @@ export default function StaffProfile() {
                       type="button"
                       onClick={() => setTab(t.key)}
                       className={cn(
-                        "flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-sm transition",
+                        "flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-sm transition",
                         active
                           ? "border-primary font-semibold text-foreground"
                           : "border-transparent text-muted-foreground hover:text-foreground",
@@ -345,12 +357,12 @@ export default function StaffProfile() {
         </div>
 
         {/* Höger: dagens framsteg, senaste aktivitet, snabbåtgärder */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Card className="shadow-card">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-1 pt-3">
               <CardTitle className="font-heading text-sm">Dagens framsteg</CardTitle>
             </CardHeader>
-            <CardContent className="flex items-center gap-4">
+            <CardContent className="flex items-center gap-4 pb-4">
               <ProgressRing percent={progress?.percent ?? 0} />
               <div className="min-w-0 space-y-1.5 text-xs">
                 <p className="text-sm font-semibold text-foreground">
@@ -564,15 +576,43 @@ function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string
   const navigate = useNavigate();
   const { data: items = [], isLoading } = useMyWork(staffId);
 
-  const groups: { key: string; label: string; icon: any; tone: string; rows: MyWorkItem[] }[] = useMemo(
+  const groups: {
+    key: string;
+    label: string;
+    icon: any;
+    /** Färgad rubrikbricka */
+    chip: string;
+    /** Färgad ram och botten på raderna */
+    box: string;
+    bar: string;
+    rows: MyWorkItem[];
+  }[] = useMemo(
     () => [
-      { key: "late", label: "Försenat", icon: AlertTriangle, tone: "text-destructive", rows: items.filter((i) => i.late) },
-      { key: "today", label: "Idag", icon: ListChecks, tone: "text-primary", rows: items.filter((i) => i.today) },
+      {
+        key: "late",
+        label: "Försenat",
+        icon: AlertTriangle,
+        chip: "bg-destructive text-destructive-foreground",
+        box: "border-destructive/40 bg-destructive/5",
+        bar: "bg-destructive",
+        rows: items.filter((i) => i.late),
+      },
+      {
+        key: "today",
+        label: "Idag",
+        icon: ListChecks,
+        chip: "bg-primary text-primary-foreground",
+        box: "border-primary/40 bg-primary/5",
+        bar: "bg-primary",
+        rows: items.filter((i) => i.today),
+      },
       {
         key: "next",
         label: "Kommande",
         icon: CalendarDays,
-        tone: "text-muted-foreground",
+        chip: "bg-muted text-muted-foreground",
+        box: "border-border bg-card",
+        bar: "bg-muted-foreground/40",
         rows: items.filter((i) => !i.late && !i.today),
       },
     ],
@@ -581,7 +621,7 @@ function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string
 
   return (
     <Card className="shadow-card">
-      <CardContent className="space-y-4 p-4">
+      <CardContent className="space-y-3 p-3">
         {isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-10" />
@@ -596,11 +636,16 @@ function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string
             .filter((g) => g.rows.length > 0)
             .map((g) => (
               <div key={g.key} className="space-y-1.5">
-                <p className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide ${g.tone}`}>
+                <p
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide",
+                    g.chip,
+                  )}
+                >
                   <g.icon className="h-3.5 w-3.5" /> {g.label}
-                  <span className="tabular-nums text-muted-foreground">({g.rows.length})</span>
+                  <span className="tabular-nums opacity-80">({g.rows.length})</span>
                 </p>
-                <div className="divide-y divide-border rounded-xl border border-border">
+                <div className={cn("divide-y divide-border overflow-hidden rounded-xl border", g.box)}>
                   {g.rows.map((it) => (
                     <button
                       key={it.id}
@@ -608,7 +653,8 @@ function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string
                       onClick={() => navigate(withReturn(`/uppgifter?markera=${it.id}`))}
                       className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-muted/40"
                     >
-                      <div className="min-w-0">
+                      <span className={cn("h-8 w-1.5 shrink-0 rounded-full", g.bar)} />
+                      <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">{it.task}</p>
                         <p className="text-[10px] text-muted-foreground">
                           {new Date(it.date).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })}
