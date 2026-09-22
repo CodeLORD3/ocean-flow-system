@@ -243,7 +243,7 @@ export function TaskRow({
         </button>
 
         {/* Kolumn 4: område — alltid samma plats, tryck öppnar kartan */}
-        <span className="hidden w-[170px] shrink-0 items-center md:flex">
+        <span className="hidden w-[150px] shrink-0 items-center md:flex">
           {area ? (
             onOpenArea ? (
               <button
