@@ -25,6 +25,7 @@ import { NeedsSheet } from "@/components/tasks/NeedsSheet";
 import { TaskLiveTimer } from "@/components/tasks/TaskLiveTimer";
 import { TaskPrepPanel } from "@/components/tasks/TaskPrepPanel";
 import { TaskStepChecks } from "@/components/tasks/TaskStepChecks";
+import { TaskRunFullscreen } from "@/components/tasks/TaskRunFullscreen";
 import type { GuideStep } from "@/lib/taskGuide";
 import { useCheckAllPresent, useSetStepCheck, useTaskPrepChecks } from "@/hooks/useTaskPrep";
 import { useCurrentStaff } from "@/hooks/useCurrentStaff";
