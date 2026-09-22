@@ -614,6 +614,7 @@ export default function StoreMap({
                 canManage && pageZone ? (tags) => saveZone.mutate({ id: pageZone.id, tags }) : undefined
               }
               onEditZone={canManage ? (id) => setSheetZoneId(id) : undefined}
+              onOpenTask={(id) => switchTab(`/uppgift/${id}`)}
               onEditShape={canManage ? (id) => editZoneShape(id) : undefined}
               onDeleteZone={
                 canManage
