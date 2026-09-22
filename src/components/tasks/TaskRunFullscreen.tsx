@@ -361,6 +361,8 @@ export function TaskRunFullscreen({
             const n = i + 1;
             const stepDone = doneNos.has(n);
             const isLast = n === steps.length;
+            /** Bläddrar man vidare i bilderna göms rutan så hela bilden syns. */
+            const browsing = (galleryAt[n] ?? 0) > 0 && !panelShown[n];
             return (
               <section
                 key={n}
