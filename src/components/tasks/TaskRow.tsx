@@ -106,7 +106,12 @@ export function TaskRow({
       await start.mutateAsync(task.id);
       toast({ title: "Uppgiften är startad", description: "Bocka av stegen ett i taget." });
     }
-    if (guideSteps.length === 0) onOpenDetail();
+    if (guideSteps.length === 0) {
+      onOpenDetail();
+      return;
+    }
+    /** Rulla fram stegen så man ser dem direkt. */
+    setTimeout(() => runRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
   };
   const tryToggle = (done: boolean) => {
     if (done && blocked) {
