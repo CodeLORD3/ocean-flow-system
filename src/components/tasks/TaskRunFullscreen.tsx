@@ -342,7 +342,7 @@ export function TaskRunFullscreen({
                   </h2>
 
                   {textOpen && (
-                    <>
+                    <div className="max-h-[32vh] space-y-2 overflow-y-auto">
                       {st.text && <p className="text-[15px] leading-snug text-white">{st.text}</p>}
                       {st.keyPoint && (
                         <p className="text-sm leading-snug text-emerald-200">
