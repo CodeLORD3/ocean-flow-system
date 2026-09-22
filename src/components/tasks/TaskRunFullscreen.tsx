@@ -51,6 +51,7 @@ export function TaskRunFullscreen({
   requiresPhoto,
   blockedText,
   onAddPhoto,
+  onSetStepImage,
   onFinish,
 }: {
   open: boolean;
