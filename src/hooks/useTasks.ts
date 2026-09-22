@@ -866,6 +866,11 @@ export function useTaskRegister(storeId?: string | null, days = 180) {
         const key = keyOf(r.task);
         const prev = map.get(key);
         const done = r.done ? (r.done_at ?? r.checklist_days?.checklist_date ?? null) : null;
+        if (r.done && r.completed_by_staff_id) {
+          const per = doneBy.get(key) ?? new Map<string, number>();
+          per.set(r.completed_by_staff_id, (per.get(r.completed_by_staff_id) ?? 0) + 1);
+          doneBy.set(key, per);
+        }
         if (prev) {
           prev.times += 1;
           if (r.done) prev.doneTimes += 1;
@@ -891,8 +896,34 @@ export function useTaskRegister(storeId?: string | null, days = 180) {
           times: 1,
           doneTimes: r.done ? 1 : 0,
           lastDone: done,
+          doers: [],
         });
       });
+
+      // Namn och ansikte på de som gjort uppgifterna.
+      const staffIds = [...new Set([...doneBy.values()].flatMap((m) => [...m.keys()]))];
+      if (staffIds.length) {
+        const { data: people } = await supabase
+          .from("staff")
+          .select("id, first_name, last_name, profile_image_url")
+          .in("id", staffIds);
+        const byId = new Map((people ?? []).map((p: any) => [p.id, p]));
+        doneBy.forEach((per, key) => {
+          const row = map.get(key);
+          if (!row) return;
+          row.doers = [...per.entries()]
+            .map(([id, times]) => {
+              const p = byId.get(id);
+              return {
+                id,
+                name: p ? `${p.first_name} ${p.last_name}`.trim() : "Okänd person",
+                image: p?.profile_image_url ?? null,
+                times,
+              };
+            })
+            .sort((a, b) => b.times - a.times || a.name.localeCompare(b.name, "sv"));
+        });
+      }
 
       return [...map.values()].sort((a, b) => a.task.localeCompare(b.task, "sv"));
     },
