@@ -27,6 +27,17 @@ type Props = {
   canEdit?: boolean;
 };
 
+/** Kort rubrik ur stegtexten: första meningen eller satsen, aldrig avhuggen mitt i ett ord. */
+function stepTitle(text?: string | null) {
+  const t = (text ?? "").trim();
+  if (!t) return "";
+  const first = t.split(/[.!?\n]/)[0].split(",")[0].trim();
+  const short = first || t;
+  if (short.length <= 42) return short;
+  const cut = short.slice(0, 42);
+  return `${cut.slice(0, cut.lastIndexOf(" ") > 20 ? cut.lastIndexOf(" ") : 42)}…`;
+}
+
 /**
  * Överst allmän information, sedan arbetsgången som stegbilder. Tryck på ett
  * steg för att läsa det stort, bläddra med pilarna, ändra texten direkt och
@@ -127,7 +138,12 @@ export function TaskSteps({
                       </span>
                     )}
                   </div>
-                  <p className="line-clamp-3 px-2 py-1.5 text-[12px] leading-snug">{s.text || "—"}</p>
+                  <div className="px-2 py-1.5">
+                    <p className="line-clamp-2 text-[12.5px] font-semibold leading-snug">
+                      {stepTitle(s.text) || "—"}
+                    </p>
+                    <p className="mt-0.5 text-[10.5px] text-muted-foreground">Tryck för hela beskrivningen</p>
+                  </div>
                 </button>
                 {canEdit && (
                   <button
