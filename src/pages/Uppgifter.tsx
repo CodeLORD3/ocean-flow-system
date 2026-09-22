@@ -414,88 +414,68 @@ export default function Uppgifter() {
         </TabsList>
 
         <TabsContent value="mina">
-          <div className="grid gap-4 lg:grid-cols-[1fr_380px] lg:items-start">
-            <div className="min-w-0 space-y-4">
-
-          {!meId ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              Logga in med din personalprofil för att se dina uppgifter.
-            </p>
-          ) : (
-            <>
-              <Card className="p-4">
+          <div className="space-y-4">
+            {!meId ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                Logga in med din personalprofil för att se dina uppgifter.
+              </p>
+            ) : (
+              <>
                 <div className="flex items-center gap-3">
                   <StaffAvatar
                     name={`${staff?.first_name ?? ""} ${staff?.last_name ?? ""}`.trim()}
                     imageUrl={staff?.profile_image_url ?? null}
-                    className="h-12 w-12"
+                    className="h-11 w-11"
                   />
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {staff?.first_name} {staff?.last_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {myTasks.mine.length} kvar att göra
-                      {isResponsible && myTasks.unassigned.length > 0
-                        ? ` · ${myTasks.unassigned.length} utan tilldelad person`
-                        : ""}
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <Progress
+                      done={myTasks.doneByMe.length}
+                      total={myTasks.doneByMe.length + myTasks.mine.length}
+                      label={`${staff?.first_name ?? ""} ${staff?.last_name ?? ""}`.trim() || "Mina uppgifter"}
+                    />
                   </div>
                 </div>
-              </Card>
 
-              <div className="space-y-2">
-                <h2 className="text-sm font-semibold">Tilldelade dig</h2>
-                {myTasks.mine.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">
-                    Inga uppgifter är tilldelade dig för valt datum.
-                  </p>
-                ) : (
-                  <div className="border-t border-grid-line">{myTasks.mine.map(renderTaskRow)}</div>
-                )}
-              </div>
-
-              {isResponsible && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold">Du är ansvarig — ingen tilldelad</h2>
-                    <span className="text-xs text-muted-foreground">{myTasks.unassigned.length}</span>
-                  </div>
-                  {myTasks.unassigned.length === 0 ? (
+                <div className="space-y-1.5">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Tilldelade dig
+                  </h3>
+                  {myTasks.mine.length === 0 ? (
                     <p className="py-6 text-center text-sm text-muted-foreground">
-                      Allt är tilldelat eller klart.
+                      Inga uppgifter är tilldelade dig för valt datum.
                     </p>
                   ) : (
-                    <div className="border-t border-grid-line">
-                      {myTasks.unassigned.map(renderTaskRow)}
-                    </div>
+                    <div className="border-t border-grid-line">{myTasks.mine.map(renderTaskRow)}</div>
                   )}
                 </div>
-              )}
 
-              {myTasks.doneByMe.length > 0 && (
-                <div className="space-y-2">
-                  <h2 className="text-sm font-semibold">Klara av dig</h2>
-                  <div className="border-t border-grid-line">{myTasks.doneByMe.map(renderTaskRow)}</div>
-                </div>
-              )}
-            </>
-          )}
-            </div>
-            {plan && zones.length > 0 && (
-              <div className="lg:sticky lg:top-4">
-                <TaskZoneMap
-                  plan={plan}
-                  zones={zones}
-                  areas={areaOf}
-                  counts={zoneCounts}
-                  selected={fArea}
-                  onSelect={setFArea}
-                  onOpenZone={openZoneHere}
-                  onOpenMap={() => setTab("dag")}
-                  openLabel="Alla dagens uppgifter"
-                />
-              </div>
+                {isResponsible && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Du är ansvarig — ingen tilldelad
+                      </h3>
+                      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                        {myTasks.unassigned.length}
+                      </span>
+                    </div>
+                    {myTasks.unassigned.length === 0 ? (
+                      <p className="py-6 text-center text-sm text-muted-foreground">Allt är tilldelat eller klart.</p>
+                    ) : (
+                      <div className="border-t border-grid-line">{myTasks.unassigned.map(renderTaskRow)}</div>
+                    )}
+                  </div>
+                )}
+
+                {myTasks.doneByMe.length > 0 && (
+                  <div className="space-y-1.5">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Klara av dig
+                    </h3>
+                    <div className="border-t border-grid-line">{myTasks.doneByMe.map(renderTaskRow)}</div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </TabsContent>
