@@ -13,7 +13,7 @@ export type RegionMark = {
 };
 
 /** Önskad storlek på en ruta i bildens rutnät (bildpunkter på skärmen). */
-const CELL = 16;
+const CELL = 8;
 
 /**
  * Bilden med ett genomskinligt rutnät ovanpå. I markeringsläget trycker man på
@@ -160,8 +160,8 @@ export function AnnotatableImage({
                     if (dragging.current) setTo({ c, r });
                   }}
                   className={cn(
-                    "border border-white/25",
-                    inSel ? "bg-primary/40" : "bg-white/5 hover:bg-white/20",
+                    "border border-white/[0.06]",
+                    inSel ? "bg-primary/40" : "bg-transparent hover:bg-white/10",
                   )}
                 />
               );
