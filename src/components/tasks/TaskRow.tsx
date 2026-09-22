@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowUpRight, Camera, Check, ChevronDown, ChevronRight, Clock, ImageIcon, MapPin, Play, Timer, Trash2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -96,6 +96,7 @@ export function TaskRow({
   const canStart = !task.done && !running;
   const [showGuide, setShowGuide] = useState(false);
   const [showRun, setShowRun] = useState(false);
+  const runRef = useRef<HTMLDivElement | null>(null);
   const guideSteps = parseGuide(task.guide, task.instructions).steps.filter((s) => s.text || s.image);
   /** Starta/fortsätt uppgiften — arbetet fälls ut här i raden. */
   const startNow = async () => {
@@ -105,7 +106,12 @@ export function TaskRow({
       await start.mutateAsync(task.id);
       toast({ title: "Uppgiften är startad", description: "Bocka av stegen ett i taget." });
     }
-    if (guideSteps.length === 0) onOpenDetail();
+    if (guideSteps.length === 0) {
+      onOpenDetail();
+      return;
+    }
+    /** Rulla fram stegen så man ser dem direkt. */
+    setTimeout(() => runRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
   };
   const tryToggle = (done: boolean) => {
     if (done && blocked) {
@@ -286,7 +292,7 @@ export function TaskRow({
 
           {/* Utförandet sker här i raden — du fortsätter där du var senast */}
           {showRun && guideSteps.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2" ref={runRef}>
               <TaskStepChecks checklistItemId={task.id} steps={guideSteps} locked={!running} onLockedClick={startNow} />
               <Button variant="outline" size="sm" className="w-full" onClick={() => setShowRun(false)}>
                 <ChevronDown className="mr-1 h-4 w-4" /> Stäng och tillbaka till listan
