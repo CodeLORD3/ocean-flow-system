@@ -20,6 +20,14 @@ export type GuideStep = {
   safety?: string;
   /** HACCP när det är relevant. */
   haccp?: string;
+  /** Markerade rutor i stegbilden med kort text, andel av bildens mått (0–1). */
+  marks?: GuideMark[];
+};
+
+export type GuideMark = {
+  id: string;
+  region: { x: number; y: number; w: number; h: number };
+  label: string;
 };
 export type GuideMaterial = {
   name: string;
