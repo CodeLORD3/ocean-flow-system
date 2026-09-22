@@ -86,7 +86,7 @@ export function ZonePickMap({
     window.setTimeout(() => {
       setFlash(null);
       onNext();
-    }, 700);
+    }, 450);
   };
 
   const view = useMemo(() => {
