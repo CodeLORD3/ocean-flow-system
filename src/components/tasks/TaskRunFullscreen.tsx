@@ -481,6 +481,16 @@ export function TaskRunFullscreen({
                       <Check className="mr-2 h-5 w-5" />
                       {stepDone ? (isLast ? "Klart" : "Klart · nästa steg") : isLast ? "Klar" : "Klar · nästa steg"}
                     </Button>
+                    {/* Ångra: tar bort att steget är gjort */}
+                    {stepDone && (
+                      <Button
+                        variant="outline"
+                        className="h-14 shrink-0 px-3 text-xs"
+                        onClick={() => clearStep.mutate({ checklistItemId, stepNo: n })}
+                      >
+                        Ångra
+                      </Button>
+                    )}
                     {requiresPhoto && (
                       <label className="inline-flex">
                         <input
