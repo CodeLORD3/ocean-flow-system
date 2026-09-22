@@ -655,25 +655,21 @@ export function TaskRunFullscreen({
               <Check className="mr-2 h-5 w-5" /> MARKERA UPPGIFTEN SOM KLAR
             </Button>
           ) : (
+            /* Grå tills steget är gjort — grön efteråt, och samma knapp ångrar */
             <Button
-              className="h-12 flex-1 bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-700"
-              onClick={markAndNext}
+              className={cn(
+                "h-12 flex-1 text-base font-semibold",
+                done
+                  ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                  : "animate-pulse bg-muted text-foreground hover:animate-none hover:bg-foreground hover:text-background",
+              )}
+              onClick={() => (done ? undoStep(no) : void markAndNext())}
             >
               <Check className="mr-2 h-5 w-5" />
-              {done ? "Klart · nästa steg" : last ? "Klar" : "Klar · nästa steg"}
+              {done ? "Klart · tryck för att ångra" : last ? "Markera som klar" : "Markera som klar · nästa (Enter)"}
             </Button>
           )}
 
-          {/* Ångra: tar bort att steget är gjort */}
-          {done && (
-            <Button
-              variant="outline"
-              className="h-12 shrink-0"
-              onClick={() => clearStep.mutate({ checklistItemId, stepNo: no })}
-            >
-              Ångra steget
-            </Button>
-          )}
 
           {requiresPhoto && (
             <label className="inline-flex shrink-0">
