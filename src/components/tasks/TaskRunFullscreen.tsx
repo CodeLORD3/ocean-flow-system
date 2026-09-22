@@ -486,15 +486,12 @@ export function TaskRunFullscreen({
       </div>
 
       <div className="space-y-2 border-t bg-card px-3 py-2">
-        <div className="mx-auto flex w-full max-w-3xl items-center gap-2">
+        <div className="mx-auto flex w-full max-w-6xl items-center gap-2">
           <Button
-            variant="outline"
-            className="h-12 shrink-0 px-3"
-            disabled={no === 1}
-            onClick={() => setIndex((i) => Math.max(i - 1, 0))}
-            aria-label="Föregående steg"
+            className="h-12 shrink-0 gap-1 bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            onClick={() => (no === 1 ? onClose() : setIndex((i) => Math.max(i - 1, 0)))}
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5" /> Tillbaka
           </Button>
 
           {allDone || (done && last) ? (
