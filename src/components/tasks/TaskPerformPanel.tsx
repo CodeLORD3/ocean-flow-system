@@ -155,13 +155,15 @@ export function TaskPerformPanel({
     }
   };
 
-  const blockedText = missingCheckpoints.length > 0
-    ? `Bocka ${missingCheckpoints.map((c) => c.label.toLowerCase()).join(" och ")} först.`
-    : missing.length > 0
-      ? missingText(task, missing)
-      : autoRest > 0
-        ? `${autoRest} rader bockas av när du trycker klar.`
-        : undefined;
+  const blockedText = stepsLeft > 0
+    ? `${stepsLeft} steg kvar att bocka av innan uppgiften kan bli klar.`
+    : missingCheckpoints.length > 0
+      ? `Bocka ${missingCheckpoints.map((c) => c.label.toLowerCase()).join(" och ")} först.`
+      : missing.length > 0
+        ? missingText(task, missing)
+        : autoRest > 0
+          ? `${autoRest} rader bockas av när du trycker klar.`
+          : undefined;
 
   if (task.done) {
     return (
