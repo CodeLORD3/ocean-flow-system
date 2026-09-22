@@ -136,6 +136,13 @@ export function NewTaskDialog({
       .slice(0, 60);
   }, [register, existingSearch, existingZone]);
 
+  /** Väljer person och går direkt vidare till sista steget. */
+  const choosePerson = (id: string) => {
+    setPerson(id);
+    setPersonSearch("");
+    setTimeout(() => setStep(3), 250);
+  };
+
   /** Går direkt vidare till namnsökningen när området är valt. */
   const goToPerson = () => {
     setPickOnMap(false);
