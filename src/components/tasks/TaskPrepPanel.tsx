@@ -129,75 +129,90 @@ export function TaskPrepPanel({
                 check && check.status !== "finns" && "border-amber-500/40 bg-amber-500/5",
               )}
             >
-              {/* Namnet står som rubrik så hela namnet syns */}
-              <p className="mb-2 text-base font-semibold leading-snug">{nameOf(n)}</p>
-              <div className="flex items-center gap-3">
-              {n.resource?.image ? (
-                <img
-                  src={n.resource.image}
-                  alt={nameOf(n)}
-                  loading="lazy"
-                  className="h-14 w-14 shrink-0 rounded-md object-cover"
-                />
-              ) : (
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] text-muted-foreground">
-                  Ingen bild
-                </div>
-              )}
-
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">
-                  {[brand, n.requirement.quantity_required ? `${n.requirement.quantity_required} st` : null, place]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-                {check && (
-                  <p
-                    className={cn(
-                      "text-xs",
-                      check.status === "finns" ? "text-emerald-700" : "text-amber-700",
-                    )}
-                  >
-                    {PREP_STATUS_LABEL[check.status]}
-                    {check.note ? ` — ${check.note}` : ""}
-                  </p>
+              {/* Bild och text på en rad, knapparna på egen rad — så inget krockar
+                  och hela texten får plats även på telefonen. */}
+              <div className="flex items-start gap-3">
+                {n.resource?.image ? (
+                  <img
+                    src={n.resource.image}
+                    alt={nameOf(n)}
+                    loading="lazy"
+                    className="h-14 w-14 shrink-0 rounded-md object-cover"
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] text-muted-foreground">
+                    Ingen bild
+                  </div>
                 )}
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-base font-semibold leading-snug">{nameOf(n)}</p>
+                  <p className="text-xs leading-snug text-muted-foreground">
+                    {[brand, n.requirement.quantity_required ? `${n.requirement.quantity_required} st` : null, place]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                  {check && (
+                    <p
+                      className={cn(
+                        "text-xs leading-snug",
+                        check.status === "finns" ? "text-emerald-700" : "text-amber-700",
+                      )}
+                    >
+                      {PREP_STATUS_LABEL[check.status]}
+                      {check.note ? ` — ${check.note}` : ""}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              {n.zoneId && onShowOnMap && !n.carrierName && (
-                <Button variant="ghost" size="sm" className="h-9" onClick={() => onShowOnMap(n.zoneId!)}>
-                  <MapPin className="h-4 w-4" />
-                </Button>
-              )}
-
-              {check ? (
-                <Button
-                  size="sm"
-                  className="h-10 shrink-0 bg-emerald-600 px-4 text-white hover:bg-emerald-700"
-                  onClick={() => clearCheck.mutate({ id: check.id, checklistItemId })}
-                  title="Tryck igen för att ångra"
-                >
-                  <Check className="mr-1 h-4 w-4" /> Klar
-                </Button>
-              ) : (
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button variant="outline" size="sm" className="h-10 px-4" onClick={() => mark(n, "finns")}>
-                    <Check className="mr-1 h-4 w-4" /> Finns
-                  </Button>
+              <div className="mt-2 flex items-center gap-2">
+                {n.zoneId && onShowOnMap && !n.carrierName && (
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    className="h-9 text-amber-700"
-                    onClick={() => {
-                      setShortageFor(n);
-                      setLevel("tar_slut");
-                      setNote("");
-                    }}
+                    className="h-10 shrink-0 px-3"
+                    title="Visa på kartan"
+                    onClick={() => onShowOnMap(n.zoneId!)}
                   >
-                    <AlertTriangle className="h-4 w-4" />
+                    <MapPin className="h-4 w-4" />
                   </Button>
-                </div>
-              )}
+                )}
+
+                {check ? (
+                  <Button
+                    size="sm"
+                    className="h-10 flex-1 bg-emerald-600 px-4 text-white hover:bg-emerald-700"
+                    onClick={() => clearCheck.mutate({ id: check.id, checklistItemId })}
+                    title="Tryck igen för att ångra"
+                  >
+                    <Check className="mr-1 h-4 w-4" /> Klar
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 flex-1 px-4"
+                      onClick={() => mark(n, "finns")}
+                    >
+                      <Check className="mr-1 h-4 w-4" /> Finns
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 shrink-0 px-3 text-amber-700"
+                      title="Rapportera brist"
+                      onClick={() => {
+                        setShortageFor(n);
+                        setLevel("tar_slut");
+                        setNote("");
+                      }}
+                    >
+                      <AlertTriangle className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           );
