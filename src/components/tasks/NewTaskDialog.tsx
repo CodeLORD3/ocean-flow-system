@@ -7,7 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
-import { useAddAdhocTask, useTaskRegister } from "@/hooks/useTasks";
+import { useAddAdhocTask, useSaveTaskGuide, useTaskRegister } from "@/hooks/useTasks";
+import { NewTaskStepsBuilder, type BuilderStep } from "@/components/tasks/NewTaskStepsBuilder";
+import { cleanGuide, EMPTY_GUIDE } from "@/lib/taskGuide";
 import { asciiFold } from "@/lib/asciiFold";
 import { ZonePickMap } from "@/components/tasks/ZonePickMap";
 import type { FloorPlan, MapZone } from "@/hooks/useStoreMap";
