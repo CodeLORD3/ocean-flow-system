@@ -325,7 +325,7 @@ export default function StaffProfile() {
                       type="button"
                       onClick={() => setTab(t.key)}
                       className={cn(
-                        "flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-sm transition",
+                        "flex shrink-0 items-center gap-1.5 border-b-2 px-2 py-1.5 text-xs transition",
                         active
                           ? "border-primary font-semibold text-foreground"
                           : "border-transparent text-muted-foreground hover:text-foreground",
