@@ -325,9 +325,13 @@ export function TaskRunFullscreen({
                           ? "bg-white/15 text-white hover:bg-white/25"
                           : "bg-emerald-600 text-white hover:bg-emerald-700",
                       )}
-                      onClick={async () => {
-                        if (!stepDone) await markStep(n, st);
-                        if (!isLast) scrollToStep(i + 1);
+                      onClick={() => {
+                        /** Hoppa vidare direkt, spara i bakgrunden. */
+                        if (!isLast) {
+                          scrollToStep(i + 1);
+                          setTimeout(() => scrollToStep(i + 1), 120);
+                        }
+                        if (!stepDone) void markStep(n, st);
                       }}
                     >
                       {stepDone ? (
