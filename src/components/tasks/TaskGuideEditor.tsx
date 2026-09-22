@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Camera, MapPin, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Camera, Images, MapPin, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +42,38 @@ function PickImage({
       />
       <span className="inline-flex h-9 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted">
         <Camera className="h-4 w-4" /> {upload.isPending ? "Laddar upp…" : label}
+      </span>
+    </label>
+  );
+}
+
+/** Flera bilder på en gång: varje bild blir ett eget steg. */
+function MultiPickImages({ taskId, onPicked }: { taskId: string; onPicked: (urls: string[]) => void }) {
+  const upload = useUploadGuideImage();
+  return (
+    <label className="inline-flex">
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={async (e) => {
+          const files = [...(e.target.files ?? [])];
+          e.currentTarget.value = "";
+          if (files.length === 0) return;
+          const urls: string[] = [];
+          for (const file of files) {
+            try {
+              urls.push(await upload.mutateAsync({ file, taskId }));
+            } catch (err: any) {
+              toast({ title: "Kunde inte ladda upp bilden", description: err.message, variant: "destructive" });
+            }
+          }
+          if (urls.length > 0) onPicked(urls);
+        }}
+      />
+      <span className="inline-flex h-9 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted">
+        <Images className="h-4 w-4" /> {upload.isPending ? "Laddar upp…" : "Bilder som steg"}
       </span>
     </label>
   );
