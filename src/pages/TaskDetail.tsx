@@ -46,6 +46,7 @@ import { TaskGuideEditor } from "@/components/tasks/TaskGuideEditor";
 import { TaskGuideView } from "@/components/tasks/TaskGuideView";
 import { TaskIssueDialog } from "@/components/tasks/TaskIssueDialog";
 import { cleanGuide, parseGuide } from "@/lib/taskGuide";
+import { uploadTaskStepImage } from "@/lib/taskStepImage";
 import { DAYPARTS, durationText, taskTime } from "@/lib/taskTime";
 import { workTypeLabel } from "@/lib/workType";
 import { TASK_LINKS, taskTarget } from "@/lib/taskLink";
