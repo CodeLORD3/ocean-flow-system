@@ -950,3 +950,28 @@ export function useTaskRegister(storeId?: string | null, days = 180) {
     enabled: !!storeId,
   });
 }
+
+/**
+ * Samma uppgift kan finnas som ny rad på ett annat datum utan beskrivning.
+ * Då hämtas senast sparade beskrivning och utrustning från en tidigare rad
+ * med samma namn, så steg, bilder och checkrutor finns direkt när man kör.
+ */
+export function useTaskBlueprint(taskName?: string | null, needed = false) {
+  return useQuery({
+    queryKey: ["task-blueprint", taskName ?? null],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("checklist_items")
+        .select("id, guide, instructions")
+        .eq("task", taskName as string)
+        .not("guide", "is", null)
+        .order("updated_at", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      const row = (data || [])[0] as { id: string; guide: unknown; instructions: unknown } | undefined;
+      if (!row) return null;
+      return { sourceId: row.id, guide: row.guide, instructions: (row.instructions ?? null) as string[] | null };
+    },
+    enabled: needed && !!taskName,
+  });
+}
