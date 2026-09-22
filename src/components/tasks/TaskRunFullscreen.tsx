@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { GuideStep } from "@/lib/taskGuide";
 import { useCurrentStaff } from "@/hooks/useCurrentStaff";
 import { useFullscreenFlowFlag } from "@/lib/fullscreenFlow";
+import { useResetTaskRun } from "@/hooks/useTaskRun";
 import { useClearStepCheck, useRestartTask, useSetStepCheck, useTaskPrepChecks } from "@/hooks/useTaskPrep";
 
 /** Alla bilder på ett steg: huvudbilden först, därefter de extra bilderna. */
@@ -84,6 +85,7 @@ export function TaskRunFullscreen({
   const setStep = useSetStepCheck();
   const clearStep = useClearStepCheck();
   const restart = useRestartTask();
+  const resetRun = useResetTaskRun();
   useFullscreenFlowFlag(open);
   const [index, setIndex] = useState(0);
   /** Kontrollen visas först på dator, sedan stegen. */
@@ -288,6 +290,7 @@ export function TaskRunFullscreen({
           className="mt-3 h-10 w-full gap-2 text-sm"
           onClick={async () => {
             await restart.mutateAsync({ checklistItemId });
+            await resetRun.mutateAsync(checklistItemId);
             setOverviewOpen(false);
             setIndex(0);
             if (prepNode) backToPrep();

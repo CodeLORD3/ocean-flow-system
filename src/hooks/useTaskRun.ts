@@ -170,6 +170,34 @@ export function useStartTask() {
   });
 }
 
+/**
+ * Nollställ klockan — uppgiften är varken startad eller pågående, och pauserna
+ * tas bort. Används av "Börja om uppgiften" så tiden mäts från noll igen.
+ */
+export function useResetTaskRun() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("task_pauses").delete().eq("checklist_item_id", id);
+      const { error } = await supabase
+        .from("checklist_items")
+        .update({
+          started_at: null,
+          started_by_staff_id: null,
+          finished_at: null,
+          run_status: "ej_startad",
+          active_minutes: null,
+          paused_minutes: null,
+          actual_minutes: null,
+          time_source: null,
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidateRun(qc),
+  });
+}
+
 export function usePauseTask() {
   const qc = useQueryClient();
   const { staff } = useStaffAuth();
