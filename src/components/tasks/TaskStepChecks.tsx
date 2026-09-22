@@ -45,6 +45,11 @@ export function TaskStepChecks({
           {doneNos.size} av {steps.length} klara
         </span>
       </div>
+      {locked && (
+        <p className="text-sm text-muted-foreground">
+          Starta uppgiften först — tryck på ett steg så startar den.
+        </p>
+      )}
       <div className="space-y-1.5">
         {steps.map((s, i) => {
           const no = i + 1;
