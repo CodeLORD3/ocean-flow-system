@@ -567,15 +567,30 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           {allImages.length === 0 ? (
             <p className="text-sm text-muted-foreground">Inga bilder är kopplade till uppgiften ännu.</p>
           ) : (
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
               {allImages.map((img, i) => (
-                <button key={img.id} type="button" onClick={() => setLightbox(i)} className="overflow-hidden rounded-lg">
-                  <img src={thumbUrl(img.url, THUMB_TILE)} alt="" className="h-24 w-full object-cover" />
-                </button>
+                <div key={img.id} className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => setLightbox(i)}
+                    className="block aspect-square w-full overflow-hidden rounded-lg border bg-muted"
+                  >
+                    <img
+                      src={thumbUrl(img.url, THUMB_TILE)}
+                      alt=""
+                      className="h-full w-full object-cover transition-transform hover:scale-105"
+                    />
+                  </button>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    {img.uploaded_by_name || "Okänd"}
+                    {img.created_at ? ` · ${new Date(img.created_at).toLocaleDateString("sv-SE")}` : ""}
+                  </p>
+                </div>
               ))}
             </div>
           )}
         </TabsContent>
+
 
         <TabsContent value="historik" className="space-y-2">
           {doers.length > 0 && (
