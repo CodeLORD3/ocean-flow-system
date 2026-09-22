@@ -391,7 +391,10 @@ export function NewTaskDialog({
                       <button
                         key={a.id}
                         type="button"
-                        onClick={() => setZone(a.id)}
+                        onClick={() => {
+                          setZone(a.id);
+                          goToPerson();
+                        }}
                         className={cn(
                           "rounded-full border px-3 py-2 text-sm",
                           zone === a.id ? "border-primary bg-primary/10 font-semibold text-primary" : "hover:bg-muted",
