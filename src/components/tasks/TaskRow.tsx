@@ -192,7 +192,7 @@ export function TaskRow({
           aria-hidden
         />
       )}
-      <div className={cn("flex items-center gap-2 px-2.5", open ? "py-2.5" : "py-1.5 min-h-[44px]")}>
+      <div className={cn("flex items-center gap-2 px-2", open ? "py-2" : "py-1 min-h-[34px]")}>
         {!open && (
           <span
             className="pointer-events-none absolute bottom-0 left-0 top-0 w-1"
