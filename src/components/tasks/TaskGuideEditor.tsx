@@ -270,68 +270,112 @@ export function TaskGuideEditor({
           </div>
         </div>
 
-        <div className="space-y-3">
-          {guide.steps.map((s, i) => (
-            <div key={i} className="flex items-start gap-2 rounded-lg border p-2">
-              <div className="flex flex-col items-center gap-1">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold">
-                  {i + 1}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  disabled={i === 0}
-                  aria-label="Flytta upp"
-                  onClick={() => moveStep(i, -1)}
-                >
-                  <ArrowUp className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  disabled={i === guide.steps.length - 1}
-                  aria-label="Flytta ner"
-                  onClick={() => moveStep(i, 1)}
-                >
-                  <ArrowDown className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-              <div className="flex-1 space-y-2">
-                <Textarea
-                  value={s.text}
-                  placeholder="Ex: Blanda golvmedel i hinken, 1 kork per 5 liter."
-                  onChange={(e) => patch({ steps: guide.steps.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)) })}
-                  className="min-h-[52px]"
-                />
-                <div className="flex items-center gap-2">
-                  {s.image && <img src={thumbUrl(s.image, THUMB_TILE)} alt="" className="h-16 w-16 rounded object-cover" />}
-                  <PickImage
-                    taskId={taskId}
-                    label={s.image ? "Byt bild" : "Bild på hur man gör"}
-                    onPicked={(url) => patch({ steps: guide.steps.map((x, j) => (j === i ? { ...x, image: url } : x)) })}
-                  />
-                  {s.image && (
+        {/* Stegen ser ut som när uppgiften körs: bild till vänster, rubrik och information till höger */}
+        <div className="space-y-4">
+          {guide.steps.map((s, i) => {
+            const patchStep = (p: Partial<TaskGuide["steps"][number]>) =>
+              patch({ steps: guide.steps.map((x, j) => (j === i ? { ...x, ...p } : x)) });
+            return (
+              <div key={i} className="overflow-hidden rounded-xl border bg-card">
+                <div className="flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-1.5">
+                  <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                    Steg {i + 1} av {guide.steps.length}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={i === 0} aria-label="Flytta upp" onClick={() => moveStep(i, -1)}>
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
-                      size="sm"
-                      onClick={() => patch({ steps: guide.steps.map((x, j) => (j === i ? { ...x, image: null } : x)) })}
+                      size="icon"
+                      className="h-7 w-7"
+                      disabled={i === guide.steps.length - 1}
+                      aria-label="Flytta ner"
+                      onClick={() => moveStep(i, 1)}
                     >
-                      Ta bort bilden
+                      <ArrowDown className="h-4 w-4" />
                     </Button>
-                  )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      aria-label="Ta bort steget"
+                      onClick={() => patch({ steps: guide.steps.filter((_, j) => j !== i) })}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+                  {/* Tryck på bilden för att lägga in eller byta bild */}
+                  <label className="group relative block cursor-pointer overflow-hidden rounded-lg border bg-muted">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        e.currentTarget.value = "";
+                        if (!file) return;
+                        try {
+                          const url = await upload.mutateAsync({ file, taskId });
+                          patchStep({ image: url, marks: [] });
+                        } catch (err: any) {
+                          toast({ title: "Kunde inte ladda upp bilden", description: err.message, variant: "destructive" });
+                        }
+                      }}
+                    />
+                    {s.image ? (
+                      <>
+                        <img src={thumbUrl(s.image, 800)} alt="" className="aspect-[4/3] w-full object-cover" />
+                        <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-md bg-background/90 px-2 py-1 text-xs">
+                          <Camera className="h-3.5 w-3.5" /> Tryck för att byta bild
+                        </span>
+                      </>
+                    ) : (
+                      <span className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Camera className="h-7 w-7" />
+                        {upload.isPending ? "Laddar upp …" : "Tryck här för att lägga in bild"}
+                      </span>
+                    )}
+                  </label>
+
+                  <div className="min-w-0 space-y-2">
+                    {/* Rubriken: tryck och skriv direkt */}
+                    <Textarea
+                      value={s.text}
+                      placeholder="Rubrik: vad ska göras i det här steget?"
+                      onChange={(e) => patchStep({ text: e.target.value })}
+                      className="min-h-[56px] resize-none border-transparent bg-transparent px-0 text-xl font-semibold leading-snug shadow-none focus-visible:border-input focus-visible:px-3"
+                    />
+                    {/* Informationen under rubriken */}
+                    <Textarea
+                      value={s.why ?? ""}
+                      placeholder="Information: hur gör man, och vad är bra att veta?"
+                      onChange={(e) => patchStep({ why: e.target.value })}
+                      className="min-h-[70px] resize-none border-transparent bg-transparent px-0 text-sm leading-relaxed text-muted-foreground shadow-none focus-visible:border-input focus-visible:px-3 focus-visible:text-foreground"
+                    />
+                    {/* Viktigt: det som avgör om resultatet blir rätt */}
+                    <div className="rounded-md bg-emerald-500/10 px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Viktigt</p>
+                      <Textarea
+                        value={s.keyPoint ?? ""}
+                        placeholder="Ex: Inget förvaras utanför skåpen."
+                        onChange={(e) => patchStep({ keyPoint: e.target.value })}
+                        className="min-h-[38px] resize-none border-transparent bg-transparent px-0 text-sm text-emerald-800 shadow-none focus-visible:border-input focus-visible:bg-background focus-visible:px-3"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => patch({ steps: guide.steps.filter((_, j) => j !== i) })}>
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-            </div>
-          ))}
+            );
+          })}
           <Button variant="outline" size="sm" onClick={() => patch({ steps: [...guide.steps, { text: "", image: null }] })}>
             <Plus className="mr-1 h-4 w-4" /> Lägg till tomt steg
           </Button>
         </div>
+
       </div>
 
 
