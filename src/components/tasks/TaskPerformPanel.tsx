@@ -166,10 +166,9 @@ export function TaskPerformPanel({
         )}
 
         {status === "ej_startad" && (
-          <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-3">
             <Button
-              size="lg"
-              className="h-16 w-full text-base"
+              className="h-11 px-6 text-sm font-semibold"
               onClick={async () => {
                 await start.mutateAsync(task.id);
                 onStarted?.();
