@@ -20,6 +20,7 @@ import {
 import { STATUS_LABEL, SUPPLIER_LABEL } from "@/lib/storeReplenishment";
 import { useNextDeliveryDay } from "@/hooks/useNextDeliveryDay";
 import { fmtQty } from "@/lib/mobileCount";
+import { KvitteraInget } from "@/components/dagsavslut/KvitteraInget";
 
 const MANAGER_ROLES = [
   "store_manager",
