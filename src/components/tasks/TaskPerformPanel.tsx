@@ -425,6 +425,17 @@ export function TaskPerformPanel({
         onAddPhoto={onAddPhoto}
         onSetStepImage={onSetStepImage}
         onFinish={completeTask}
+        prepMissingCount={prepMissing.length}
+        prepNode={
+          needs.length > 0 ? (
+            <TaskPrepPanel
+              checklistItemId={task.id}
+              storeId={storeId}
+              needs={needs}
+              onShowOnMap={onShowOnMap}
+            />
+          ) : undefined
+        }
       />
     </div>
   );
