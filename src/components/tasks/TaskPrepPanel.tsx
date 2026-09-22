@@ -124,11 +124,14 @@ export function TaskPrepPanel({
             <div
               key={n.requirement.id}
               className={cn(
-                "flex items-center gap-3 rounded-lg border p-2",
+                "rounded-lg border p-2",
                 check?.status === "finns" && "border-emerald-500/30 bg-emerald-500/5",
                 check && check.status !== "finns" && "border-amber-500/40 bg-amber-500/5",
               )}
             >
+              {/* Namnet står som rubrik så hela namnet syns */}
+              <p className="mb-2 text-base font-semibold leading-snug">{nameOf(n)}</p>
+              <div className="flex items-center gap-3">
               {n.resource?.image ? (
                 <img
                   src={n.resource.image}
