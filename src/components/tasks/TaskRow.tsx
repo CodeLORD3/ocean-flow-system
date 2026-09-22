@@ -170,6 +170,15 @@ export function TaskRow({
       setOpen(true);
       return;
     }
+    /** Har uppgiften steg görs den i flödet — bocken räcker inte som klarmarkering. */
+    if (done && !task.done && guideSteps.length > 0) {
+      toast({
+        title: running ? "Fortsätt uppgiften" : "Starta uppgiften",
+        description: "Uppgiften görs steg för steg — den blir klar när alla steg är avbockade.",
+      });
+      startNow();
+      return;
+    }
     onToggle(done);
   };
 
@@ -491,7 +500,13 @@ export function TaskRow({
               disabled={blocked}
               onClick={() => tryToggle(!task.done)}
             >
-              {task.done ? "Återöppna" : "Markera som klar"}
+              {task.done
+                ? "Återöppna"
+                : guideSteps.length > 0
+                  ? running
+                    ? "Fortsätt uppgiften"
+                    : "Starta uppgiften"
+                  : "Markera som klar"}
             </Button>
             {onAddPhoto && (
               <label className="inline-flex">
