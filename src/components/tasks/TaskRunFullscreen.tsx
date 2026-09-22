@@ -233,7 +233,7 @@ export function TaskRunFullscreen({
         >
           {/* Först: kontrollera utrustning & material */}
           {prepNode && (
-            <section className="flex h-full snap-start flex-col overflow-y-auto px-3 pb-4 pt-14">
+            <section className="flex h-full snap-start snap-always flex-col overflow-y-auto px-3 pb-4 pt-14">
               <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Steg 1 · innan du börjar
               </p>
@@ -256,7 +256,7 @@ export function TaskRunFullscreen({
             return (
               <section
                 key={n}
-                className="relative flex h-full snap-start flex-col justify-end bg-foreground/95"
+                className="relative flex h-full snap-start snap-always flex-col justify-end bg-foreground/95"
               >
                 {st.image ? (
                   <img
@@ -426,7 +426,7 @@ export function TaskRunFullscreen({
           })}
 
           {/* Sista skärmen: bocka av hela uppgiften */}
-          <section className="flex h-full snap-start flex-col items-center justify-center gap-4 px-6 text-center">
+          <section className="flex h-full snap-start snap-always flex-col items-center justify-center gap-4 px-6 text-center">
             <p className="font-mono text-4xl font-bold tabular-nums">
               {doneNos.size}/{steps.length}
             </p>
