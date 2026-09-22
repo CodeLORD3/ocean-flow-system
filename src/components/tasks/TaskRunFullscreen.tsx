@@ -779,8 +779,9 @@ export function TaskRunFullscreen({
           )}
 
 
-          {requiresPhoto && (
-            <label className="inline-flex shrink-0">
+          {/* Kameran finns alltid, även när bild inte krävs */}
+          {(
+            <label className="inline-flex shrink-0" title="Ta bild">
               <input
                 type="file"
                 accept="image/*"
