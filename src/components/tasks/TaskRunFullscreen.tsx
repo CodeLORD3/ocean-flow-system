@@ -603,8 +603,9 @@ export function TaskRunFullscreen({
                         {isLast ? "Markera som klar" : "Markera som klar · nästa"}
                       </Button>
                     )}
-                    {requiresPhoto && (
-                      <label className="inline-flex">
+                    {/* Kameran finns alltid, även när bild inte krävs */}
+                    {(
+                      <label className="inline-flex" title="Ta bild">
                         <input
                           type="file"
                           accept="image/*"
