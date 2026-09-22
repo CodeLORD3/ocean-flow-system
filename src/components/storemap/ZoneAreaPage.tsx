@@ -234,6 +234,20 @@ export function ZoneAreaPage({
         </div>
       </div>
 
+      {/* Dagens uppgifter direkt under rubriken — det man oftast kommer hit för */}
+      {tasks.length === 0 ? (
+        <EmptyState title="Inga uppgifter" description="Koppla uppgifter till ytan i kartan." />
+      ) : (
+        <OverviewTaskPanel
+          storeId={storeId}
+          zones={zone ? [zone] : []}
+          objects={object ? [object] : []}
+          tasks={tasks}
+          day={""}
+          onOpenTask={onOpenTask}
+        />
+      )}
+
       {/* Taggar på ytan — egna ord, inga fasta kategorier */}
       {zone && (
         <div className="flex flex-wrap items-center gap-1.5">
