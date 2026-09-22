@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Info, MessageSquarePlus, Pencil, Square, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Info, MessageSquarePlus, Pencil, Plus, Square } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,7 +74,18 @@ export function TaskSteps({
     }
   };
 
-  if (general.length === 0 && !importantNote && steps.length === 0) return null;
+  const addStep = async () => {
+    const next: TaskGuide = { ...parsed, steps: [...parsed.steps, { text: "Nytt steg", image: null }] };
+    try {
+      await saveGuide.mutateAsync({ id: taskId, templateItemId, guide: cleanGuide(next) });
+      setEditOpen(true);
+      setOpenIndex(parsed.steps.length);
+    } catch (err: any) {
+      toast({ title: "Kunde inte lägga till", description: err.message, variant: "destructive" });
+    }
+  };
+
+  if (general.length === 0 && !importantNote && steps.length === 0 && !canEdit) return null;
 
   return (
     <div className="space-y-3">
@@ -102,7 +113,7 @@ export function TaskSteps({
         </div>
       )}
 
-      {steps.length > 0 && (
+      {(steps.length > 0 || canEdit) && (
         <div>
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             Så här gör du · {steps.length} steg
@@ -160,6 +171,17 @@ export function TaskSteps({
                 )}
               </div>
             ))}
+            {canEdit && (
+              <button
+                type="button"
+                onClick={addStep}
+                disabled={saveGuide.isPending}
+                className="flex w-40 shrink-0 snap-start flex-col items-center justify-center gap-1 rounded-xl border border-dashed bg-muted/30 py-6 text-[12.5px] font-medium text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
+              >
+                <Plus className="h-5 w-5" />
+                Lägg till steg
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -215,7 +237,7 @@ function StepViewer({
   const [comment, setComment] = useState("");
   const [commentOpen, setCommentOpen] = useState(false);
   const [edit, setEdit] = useState(startInEdit);
-  const [draft, setDraft] = useState({ text: "", keyPoint: "", why: "", safety: "" });
+  const [draft, setDraft] = useState({ text: "", keyPoint: "", why: "", safety: "", haccp: "" });
   const [showMarks, setShowMarks] = useState(false);
   const [activeMark, setActiveMark] = useState<string | null>(null);
   const [markMode, setMarkMode] = useState(false);
@@ -232,13 +254,14 @@ function StepViewer({
       keyPoint: step?.keyPoint ?? "",
       why: step?.why ?? "",
       safety: step?.safety ?? "",
+      haccp: step?.haccp ?? "",
     });
     setShowMarks(false);
     setActiveMark(null);
     setMarkMode(false);
     setPending(null);
     setMarkLabel("");
-  }, [index, step?.text, step?.keyPoint, step?.why, step?.safety]);
+  }, [index, step?.text, step?.keyPoint, step?.why, step?.safety, step?.haccp]);
 
   const go = (delta: number) => {
     const next = index + delta;
@@ -268,6 +291,7 @@ function StepViewer({
       keyPoint: draft.keyPoint,
       why: draft.why,
       safety: draft.safety,
+      haccp: draft.haccp,
     });
     toast({ title: "Steget är ändrat" });
     setEdit(false);
@@ -325,15 +349,12 @@ function StepViewer({
               Steg {index + 1} av {steps.length}
             </p>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 pr-8">
             {canEdit && !edit && (
               <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setEdit(true)}>
                 <Pencil className="mr-1 h-3.5 w-3.5" /> Ändra text
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Stäng">
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </div>
 
@@ -448,20 +469,29 @@ function StepViewer({
                 placeholder="Vad ska göras i det här steget?"
                 className="min-h-[70px] text-[15px]"
               />
-              <Input
+              <EditRow
+                tone="primary"
+                label="Viktigt"
                 value={draft.keyPoint}
-                onChange={(e) => setDraft((d) => ({ ...d, keyPoint: e.target.value }))}
-                placeholder="Viktigt"
+                onChange={(v) => setDraft((d) => ({ ...d, keyPoint: v }))}
               />
-              <Input
+              <EditRow
+                tone="muted"
+                label="Varför"
                 value={draft.why}
-                onChange={(e) => setDraft((d) => ({ ...d, why: e.target.value }))}
-                placeholder="Varför"
+                onChange={(v) => setDraft((d) => ({ ...d, why: v }))}
               />
-              <Input
+              <EditRow
+                tone="amber"
+                label="Säkerhet"
                 value={draft.safety}
-                onChange={(e) => setDraft((d) => ({ ...d, safety: e.target.value }))}
-                placeholder="Säkerhet"
+                onChange={(v) => setDraft((d) => ({ ...d, safety: v }))}
+              />
+              <EditRow
+                tone="sky"
+                label="HACCP"
+                value={draft.haccp}
+                onChange={(v) => setDraft((d) => ({ ...d, haccp: v }))}
               />
               <div className="flex gap-2">
                 <Button size="sm" disabled={saving} onClick={saveText}>
@@ -555,6 +585,38 @@ function DetailRow({
     <div className={`flex items-start gap-3 rounded-lg px-3 py-2 ${tones[tone]}`}>
       <span className="w-[72px] shrink-0 text-[11px] font-semibold uppercase tracking-wide leading-5">{label}</span>
       <span className="min-w-0 flex-1 text-[14px] leading-5 text-foreground">{text}</span>
+    </div>
+  );
+}
+
+/** Samma rader som i läsläget, men med ett fält att skriva i. */
+function EditRow({
+  tone,
+  label,
+  value,
+  onChange,
+}: {
+  tone: "primary" | "muted" | "amber" | "sky";
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const tones = {
+    primary: "bg-primary/10 text-primary",
+    muted: "bg-muted text-muted-foreground",
+    amber: "bg-amber-500/10 text-amber-700",
+    sky: "bg-sky-500/10 text-sky-700",
+  } as const;
+
+  return (
+    <div className={`flex items-center gap-3 rounded-lg px-3 py-2 ${tones[tone]}`}>
+      <span className="w-[72px] shrink-0 text-[11px] font-semibold uppercase tracking-wide">{label}</span>
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={`Skriv ${label.toLowerCase()} …`}
+        className="h-9 flex-1 border-none bg-background/70 text-[14px]"
+      />
     </div>
   );
 }
