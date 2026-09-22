@@ -21,6 +21,7 @@ export function ZonePickMap({
   numberOf,
   colorOf,
   onNext,
+  autoNext,
 }: {
   plan: FloorPlan;
   zones: MapZone[];
@@ -29,6 +30,8 @@ export function ZonePickMap({
   numberOf?: (zoneId: string) => number | null;
   colorOf?: (zoneId: string) => string | null;
   onNext?: () => void;
+  /** Går vidare av sig självt när man tryckt på en yta utan ytor inuti. */
+  autoNext?: boolean;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -70,6 +73,23 @@ export function ZonePickMap({
     () => (value ? zones.filter((z) => z.parent_zone_id === value) : []),
     [zones, value],
   );
+
+  /** Namnet blinkar upp en kort stund som bekräftelse innan nästa steg. */
+  const [flash, setFlash] = useState<string | null>(null);
+
+  /** Väljer en yta. Saknar den ytor inuti går vi vidare av oss självt. */
+  const pick = (zoneId: string | null) => {
+    onChange(zoneId);
+    if (!zoneId || !autoNext || !onNext) return;
+    const zone = zones.find((z) => z.id === zoneId);
+    const hasChildren = zones.some((z) => z.parent_zone_id === zoneId);
+    if (hasChildren) return;
+    setFlash(zone?.name ?? null);
+    window.setTimeout(() => {
+      setFlash(null);
+      onNext();
+    }, 700);
+  };
 
   const view = useMemo(() => {
     const pts = shapes.flatMap((s) => s.path.split(" ").map((p) => p.split(",").map(Number)));
@@ -180,7 +200,7 @@ export function ZonePickMap({
                   className="cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onChange(isSel ? null : zone.id);
+                    pick(isSel ? null : zone.id);
                   }}
                 >
                   <polygon
@@ -216,6 +236,14 @@ export function ZonePickMap({
             })}
           </g>
         </svg>
+
+        {flash && (
+          <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
+            <p className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg">
+              Valt: {flash}
+            </p>
+          </div>
+        )}
 
         <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full border bg-card p-1 shadow-sm">
           <button
@@ -260,7 +288,7 @@ export function ZonePickMap({
               <button
                 key={c.id}
                 type="button"
-                onClick={() => onChange(c.id)}
+                onClick={() => pick(c.id)}
                 className="rounded-full border px-3 py-1.5 text-xs hover:bg-muted"
               >
                 {c.name}

@@ -412,6 +412,7 @@ export function NewTaskDialog({
                         value={zone}
                         onChange={setZone}
                         numberOf={(id) => areas.find((a) => a.id === id)?.number ?? null}
+                        autoNext
                         onNext={() => {
                           setPickOnMap(false);
                           setTimeout(() => {
