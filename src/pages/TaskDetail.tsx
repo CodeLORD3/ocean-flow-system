@@ -238,8 +238,11 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
 
       <Card className="space-y-3 p-4" style={{ borderLeft: `4px solid ${area?.color ?? "hsl(var(--primary))"}` }}>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-bold">{task.task}</h1>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Uppgift
+            </p>
+            <h1 className="font-heading text-2xl font-bold leading-tight">{task.task}</h1>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
               {time.label && (
                 <span className="inline-flex items-center gap-1">
