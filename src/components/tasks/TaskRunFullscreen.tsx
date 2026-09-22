@@ -358,6 +358,17 @@ export function TaskRunFullscreen({
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-3">
+        {/* Kontrollen av utrustningen ligger först, sedan stegen */}
+        {prepNode && showPrep ? (
+          <div className="mx-auto w-full max-w-3xl space-y-3">
+            <h2 className="font-heading text-xl font-bold">Kontrollera utrustning & material</h2>
+            {prepNode}
+            <Button className="h-12 w-full text-base font-semibold" onClick={() => setShowPrep(false)}>
+              {prepMissingCount > 0 ? "Fortsätt till stegen" : "Allt kontrollerat · till stegen"}
+              <ChevronRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        ) : (
         <div className="mx-auto w-full max-w-3xl space-y-3">
           {s.image ? (
             <img
