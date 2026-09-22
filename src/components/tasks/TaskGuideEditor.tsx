@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Camera, MapPin, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Camera, Images, MapPin, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +42,38 @@ function PickImage({
       />
       <span className="inline-flex h-9 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted">
         <Camera className="h-4 w-4" /> {upload.isPending ? "Laddar upp…" : label}
+      </span>
+    </label>
+  );
+}
+
+/** Flera bilder på en gång: varje bild blir ett eget steg. */
+function MultiPickImages({ taskId, onPicked }: { taskId: string; onPicked: (urls: string[]) => void }) {
+  const upload = useUploadGuideImage();
+  return (
+    <label className="inline-flex">
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={async (e) => {
+          const files = [...(e.target.files ?? [])];
+          e.currentTarget.value = "";
+          if (files.length === 0) return;
+          const urls: string[] = [];
+          for (const file of files) {
+            try {
+              urls.push(await upload.mutateAsync({ file, taskId }));
+            } catch (err: any) {
+              toast({ title: "Kunde inte ladda upp bilden", description: err.message, variant: "destructive" });
+            }
+          }
+          if (urls.length > 0) onPicked(urls);
+        }}
+      />
+      <span className="inline-flex h-9 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted">
+        <Images className="h-4 w-4" /> {upload.isPending ? "Laddar upp…" : "Bilder som steg"}
       </span>
     </label>
   );
@@ -101,6 +133,25 @@ export function TaskGuideEditor({
   const patch = (p: Partial<TaskGuide>) => setGuide((g) => ({ ...g, ...p }));
   const patchMaterial = (i: number, p: Partial<TaskGuide["materials"][number]>) =>
     patch({ materials: guide.materials.map((x, j) => (j === i ? { ...x, ...p } : x)) });
+
+  /** Snabbraden: skriv steget och tryck Enter. */
+  const [draft, setDraft] = useState("");
+  const addDraft = () => {
+    const text = draft.trim();
+    if (!text) return;
+    setGuide((g) => ({ ...g, steps: [...g.steps, { text, image: null }] }));
+    setDraft("");
+  };
+
+  /** Flytta ett steg upp eller ner i ordningen. */
+  const moveStep = (i: number, dir: -1 | 1) =>
+    setGuide((g) => {
+      const next = [...g.steps];
+      const j = i + dir;
+      if (j < 0 || j >= next.length) return g;
+      [next[i], next[j]] = [next[j], next[i]];
+      return { ...g, steps: next };
+    });
 
   const sections = [
     { n: 1, title: "Godkänt läge" },
@@ -188,13 +239,65 @@ export function TaskGuideEditor({
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">{sections[2].n}. {sections[2].title}</p>
-        <p className="mb-2 text-xs text-muted-foreground">Ett moment per steg, i rätt ordning.</p>
+        <p className="mb-2 text-xs text-muted-foreground">
+          Ett moment per steg. Skriv och tryck Enter, eller lägg in bilder — varje bild blir ett nytt steg.
+        </p>
+
+        {/* Snabbrad: skriv steget och tryck Enter, eller lägg in flera bilder på en gång */}
+        <div className="mb-3 flex items-start gap-2 rounded-lg border border-dashed p-2">
+          <Textarea
+            value={draft}
+            placeholder="Skriv nästa steg och tryck Enter"
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                addDraft();
+              }
+            }}
+            className="min-h-[44px] flex-1"
+          />
+          <div className="flex shrink-0 flex-col gap-2">
+            <Button size="sm" onClick={addDraft} disabled={!draft.trim()}>
+              <Plus className="mr-1 h-4 w-4" /> Lägg till
+            </Button>
+            <MultiPickImages
+              taskId={taskId}
+              onPicked={(urls) =>
+                patch({ steps: [...guide.steps, ...urls.map((url) => ({ text: "", image: url }))] })
+              }
+            />
+          </div>
+        </div>
+
         <div className="space-y-3">
           {guide.steps.map((s, i) => (
-            <div key={i} className="flex items-start gap-2">
-              <span className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold">
-                {i + 1}
-              </span>
+            <div key={i} className="flex items-start gap-2 rounded-lg border p-2">
+              <div className="flex flex-col items-center gap-1">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold">
+                  {i + 1}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  disabled={i === 0}
+                  aria-label="Flytta upp"
+                  onClick={() => moveStep(i, -1)}
+                >
+                  <ArrowUp className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  disabled={i === guide.steps.length - 1}
+                  aria-label="Flytta ner"
+                  onClick={() => moveStep(i, 1)}
+                >
+                  <ArrowDown className="h-3.5 w-3.5" />
+                </Button>
+              </div>
               <div className="flex-1 space-y-2">
                 <Textarea
                   value={s.text}
@@ -226,10 +329,11 @@ export function TaskGuideEditor({
             </div>
           ))}
           <Button variant="outline" size="sm" onClick={() => patch({ steps: [...guide.steps, { text: "", image: null }] })}>
-            <Plus className="mr-1 h-4 w-4" /> Lägg till steg
+            <Plus className="mr-1 h-4 w-4" /> Lägg till tomt steg
           </Button>
         </div>
       </div>
+
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">{sections[3].n}. {sections[3].title}</p>
