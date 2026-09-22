@@ -28,6 +28,8 @@ export default function ImageBulkBar({
   const [tags, setTags] = useState("");
   const { data: stores = [] } = useStores();
   const { data: zones = [] } = useZonesByStore(storeId || null);
+  const { data: allZones = [] } = useAllZones();
+  const zoneOptions = storeId ? zones : allZones;
   const { data: resources = [] } = usePickResources();
   const { data: products = [] } = usePickProducts();
   const bulk = useBulkClassify();
