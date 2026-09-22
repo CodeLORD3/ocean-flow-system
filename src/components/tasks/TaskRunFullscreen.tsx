@@ -777,14 +777,39 @@ function StepGallery({
   }, [images.length]);
 
 
+  /** Med musen drar man bilden i sidled precis som med fingret. */
+  const drag = useRef<{ x: number; left: number } | null>(null);
+
   return (
     <div className={cn("relative", fill ? "absolute inset-0" : "", className)}>
       <div
         ref={ref}
-        className="flex h-full w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth"
+        className="flex h-full w-full cursor-grab snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth active:cursor-grabbing"
         onScroll={(e) => {
           const el = e.currentTarget;
           if (el.clientWidth > 0) setAt(Math.round(el.scrollLeft / el.clientWidth));
+        }}
+        onPointerDown={(e) => {
+          if (e.pointerType !== "mouse") return;
+          drag.current = { x: e.clientX, left: e.currentTarget.scrollLeft };
+        }}
+        onPointerMove={(e) => {
+          if (!drag.current) return;
+          e.preventDefault();
+          e.currentTarget.scrollLeft = drag.current.left - (e.clientX - drag.current.x);
+        }}
+        onPointerUp={(e) => {
+          const d = drag.current;
+          drag.current = null;
+          if (!d) return;
+          /** Snäpp till närmaste bild efter draget. */
+          const el = e.currentTarget;
+          const moved = e.clientX - d.x;
+          if (Math.abs(moved) > 40) go(at + (moved < 0 ? 1 : -1));
+          else el.scrollTo({ left: at * el.clientWidth, behavior: "smooth" });
+        }}
+        onPointerLeave={() => {
+          drag.current = null;
         }}
       >
         {images.map((src, i) => (
