@@ -83,11 +83,25 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const { data: reference = [] } = useTaskReferenceImages(task?.template_item_id ?? null);
   const { data: history = [] } = useTaskHistory(storeId, task?.task ?? null);
   // Öppnad via "Mer om uppgiften" → hoppa direkt till rätt flik.
-  const [initialTab] = useState(() => {
+  const [activeTab, setActiveTab] = useState(() => {
     const wanted = typeof sessionStorage !== "undefined" ? sessionStorage.getItem("task-detail-tab") : null;
     if (wanted) sessionStorage.removeItem("task-detail-tab");
     return wanted || "genomfor";
   });
+  /* Sidan hålls monterad mellan flikbyten — lyssna därför på vilken flik som begärs. */
+  useEffect(() => {
+    const onWanted = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { taskId?: string; tab?: string } | undefined;
+      if (detail?.tab) setActiveTab(detail.tab);
+      try {
+        sessionStorage.removeItem("task-detail-tab");
+      } catch {
+        /* ignorera blockerad lagring */
+      }
+    };
+    window.addEventListener("task-detail-tab", onWanted);
+    return () => window.removeEventListener("task-detail-tab", onWanted);
+  }, []);
   const setDone = useSetTaskDone();
   const update = useUpdateTask();
   const removeTask = useDeleteTask();
@@ -383,7 +397,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
         )}
       </Card>
 
-      <Tabs defaultValue={initialTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:flex sm:w-auto">
           <TabsTrigger value="genomfor">Genomför</TabsTrigger>
           <TabsTrigger value="instruktion">Hur gör vi?</TabsTrigger>
