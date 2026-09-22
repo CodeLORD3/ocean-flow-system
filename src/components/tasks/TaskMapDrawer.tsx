@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Check, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, Maximize2, Minimize2, X } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -58,9 +58,13 @@ export function TaskMapDrawer({
     return { total: list.length, done: list.filter((t) => t.done).length, list };
   };
 
+  /** Zooma ut: visar hela butiken utan att tappa valt område. */
+  const [wholeStore, setWholeStore] = useState(false);
+  useEffect(() => setWholeStore(false), [zoneId]);
+
   /** Kartan centreras på valt område, annars på hela butiken. */
   const view = useMemo(() => {
-    const target = zoneId ? shapes.filter((s) => s.zone.id === zoneId) : shapes;
+    const target = zoneId && !wholeStore ? shapes.filter((s) => s.zone.id === zoneId) : shapes;
     const pts = (target.length > 0 ? target : shapes).flatMap((s) => s.pts);
     if (pts.length === 0) return { x: 0, y: 0, w: plan?.width ?? 1000, h: plan?.height ?? 700 };
     const xs = pts.map((p) => p.x);
@@ -76,7 +80,7 @@ export function TaskMapDrawer({
     const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
     const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
     return { x: cx - vw / 2, y: cy - vh / 2, w: vw, h: vh };
-  }, [shapes, zoneId, plan?.width, plan?.height]);
+  }, [shapes, zoneId, wholeStore, plan?.width, plan?.height]);
 
   const current = zoneId ? shapes.find((s) => s.zone.id === zoneId) ?? null : null;
   const c = current ? countOf(current.zone.id) : null;
@@ -111,7 +115,19 @@ export function TaskMapDrawer({
 
         {plan && shapes.length > 0 ? (
           <>
-            <div className="bg-muted/20">
+            <div className="relative bg-muted/20">
+              {/* Zooma ut för att se var i butiken området ligger */}
+              {zoneId && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="absolute right-3 top-3 z-10 h-9 gap-1.5 shadow"
+                  onClick={() => setWholeStore((v) => !v)}
+                >
+                  {wholeStore ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  {wholeStore ? "Zooma in på området" : "Zooma ut · hela butiken"}
+                </Button>
+              )}
               <svg
                 viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
                 className="h-[58vh] max-h-[640px] min-h-[320px] w-full"
