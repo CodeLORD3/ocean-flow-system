@@ -154,6 +154,8 @@ export function TaskPerformPanel({
       }
       await finish.mutateAsync({ id: task.id, startedAt: task.started_at ?? null });
       toast({ title: "Uppgiften är klar" });
+      /** Tillbaka till flödet så nästa uppgift kan betas av direkt. */
+      onCompleted?.();
     } catch (e: any) {
       toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
     }
