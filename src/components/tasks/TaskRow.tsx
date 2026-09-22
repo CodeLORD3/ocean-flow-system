@@ -244,23 +244,13 @@ export function TaskRow({
           })()}
         </span>
 
-        {/* Kolumn 8: starta uppgiften — ett tryck räcker */}
-        {!task.done && (
-          <Button
-            size="sm"
-            variant={running ? "outline" : "default"}
-            onClick={startNow}
-            disabled={start.isPending}
-            className={cn(
-              "h-9 shrink-0 gap-1 px-2.5 sm:px-3",
-              running && "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20",
-            )}
-            title={running ? "Uppgiften pågår" : "Starta uppgiften"}
-          >
-            {running ? <Timer className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            <span className="hidden text-xs font-semibold sm:inline">{running ? "Pågår" : "Starta"}</span>
-          </Button>
+        {/* Pågår-märke i raden — starten ligger i utfällningen */}
+        {!task.done && running && (
+          <span className="shrink-0 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-700">
+            Pågår
+          </span>
         )}
+
 
         {/* Kolumn 9: rulldown */}
         <button
@@ -275,27 +265,18 @@ export function TaskRow({
 
       {open && (
         <div className="space-y-3 border-t border-primary/20 px-3 pb-3 pt-2.5 text-sm">
-          {/* Två tydliga val: läsa hur man gör, eller sätta igång och göra den */}
+          {/* En enda start — "Starta uppgiften" tar dig dit arbetet görs */}
           {!task.done && (
-            <div className="grid gap-2 sm:grid-cols-2">
-              <Button
-                variant={showGuide ? "secondary" : "outline"}
-                className="h-12 justify-start gap-2 text-sm font-semibold"
-                onClick={() => setShowGuide((v) => !v)}
-              >
-                <ImageIcon className="h-4 w-4" />
-                {showGuide ? "Stäng beskrivningen" : "Hur gör jag?"}
-              </Button>
-              <Button
-                className="h-12 justify-start gap-2 text-sm font-semibold"
-                onClick={startNow}
-                disabled={start.isPending}
-              >
-                {running ? <Timer className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                {running ? "Fortsätt uppgiften" : "Starta uppgiften"}
-              </Button>
-            </div>
+            <Button
+              className="h-12 w-full justify-start gap-2 text-sm font-semibold"
+              onClick={startNow}
+              disabled={start.isPending}
+            >
+              {running ? <Timer className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              {running ? "Fortsätt uppgiften" : "Starta uppgiften"}
+            </Button>
           )}
+
 
           {(showGuide || task.done) && (
           <TaskSteps
@@ -422,7 +403,7 @@ export function TaskRow({
               </label>
             )}
             <Button size="sm" variant="ghost" onClick={onOpenDetail}>
-              Mer info →
+              <ImageIcon className="mr-1 h-4 w-4" /> Hur gör jag? →
             </Button>
             {onDelete && (
               <Button
