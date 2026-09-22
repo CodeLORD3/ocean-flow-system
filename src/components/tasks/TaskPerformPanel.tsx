@@ -26,7 +26,8 @@ import { TaskLiveTimer } from "@/components/tasks/TaskLiveTimer";
 import { TaskPrepPanel } from "@/components/tasks/TaskPrepPanel";
 import { TaskStepChecks } from "@/components/tasks/TaskStepChecks";
 import type { GuideStep } from "@/lib/taskGuide";
-import { useTaskPrepChecks } from "@/hooks/useTaskPrep";
+import { useCheckAllPresent, useSetStepCheck, useTaskPrepChecks } from "@/hooks/useTaskPrep";
+import { useCurrentStaff } from "@/hooks/useCurrentStaff";
 
 type PerformTask = {
   id: string;
