@@ -115,7 +115,19 @@ export function TaskMapDrawer({
 
         {plan && shapes.length > 0 ? (
           <>
-            <div className="bg-muted/20">
+            <div className="relative bg-muted/20">
+              {/* Zooma ut för att se var i butiken området ligger */}
+              {zoneId && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="absolute right-3 top-3 z-10 h-9 gap-1.5 shadow"
+                  onClick={() => setWholeStore((v) => !v)}
+                >
+                  {wholeStore ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  {wholeStore ? "Zooma in på området" : "Zooma ut · hela butiken"}
+                </Button>
+              )}
               <svg
                 viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
                 className="h-[58vh] max-h-[640px] min-h-[320px] w-full"
