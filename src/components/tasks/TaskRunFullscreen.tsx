@@ -445,7 +445,7 @@ export function TaskRunFullscreen({
                     <button
                       type="button"
                       onClick={() => setTextOpen((v) => !v)}
-                      className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white"
+                      className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold text-white"
                     >
                       {textOpen ? (
                         <>
