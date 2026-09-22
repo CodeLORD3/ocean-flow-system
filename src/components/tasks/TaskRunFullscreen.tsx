@@ -603,8 +603,9 @@ export function TaskRunFullscreen({
                         {isLast ? "Markera som klar" : "Markera som klar · nästa"}
                       </Button>
                     )}
-                    {requiresPhoto && (
-                      <label className="inline-flex">
+                    {/* Kameran finns alltid, även när bild inte krävs */}
+                    {(
+                      <label className="inline-flex" title="Ta bild">
                         <input
                           type="file"
                           accept="image/*"
@@ -779,8 +780,9 @@ export function TaskRunFullscreen({
           )}
 
 
-          {requiresPhoto && (
-            <label className="inline-flex shrink-0">
+          {/* Kameran finns alltid, även när bild inte krävs */}
+          {(
+            <label className="inline-flex shrink-0" title="Ta bild">
               <input
                 type="file"
                 accept="image/*"
@@ -795,7 +797,7 @@ export function TaskRunFullscreen({
               <span
                 className={cn(
                   "inline-flex h-12 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted",
-                  photoCount === 0 && "border-amber-500/50 text-amber-700",
+                  requiresPhoto && photoCount === 0 && "border-amber-500/50 text-amber-700",
                 )}
               >
                 <Camera className="h-5 w-5" /> {photoCount > 0 ? photoCount : "Bild"}
