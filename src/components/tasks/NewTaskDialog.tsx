@@ -182,6 +182,13 @@ export function NewTaskDialog({
         requiresPhoto: reqPhoto,
         requiresNote: reqNote,
       });
+      /* Stegen man byggde i mallen följer med uppgiften direkt. */
+      if (id && steps.length > 0) {
+        await saveGuide.mutateAsync({
+          id,
+          guide: cleanGuide({ ...EMPTY_GUIDE, steps }),
+        });
+      }
       toast({ title: "Uppgiften är skapad" });
       onOpenChange(false);
       if (id) onCreated?.(id);
@@ -404,6 +411,15 @@ export function NewTaskDialog({
               <p className="text-xs text-muted-foreground">
                 Skriv med egna ord. Allt annat kan du fylla i i nästa steg — eller senare.
               </p>
+
+              {/* Mallen: så här ser uppgiften ut när någon gör den */}
+              <div className="mt-4 space-y-2 border-t pt-4">
+                <p className="text-sm font-medium">Så här ser uppgiften ut</p>
+                <p className="text-xs text-muted-foreground">
+                  Lägg in bilden, skriv rubrik och information, spara steget och gå vidare till nästa.
+                </p>
+                <NewTaskStepsBuilder draftId={draftId} steps={steps} onChange={setSteps} />
+              </div>
             </div>
           )}
 
