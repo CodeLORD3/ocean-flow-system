@@ -125,10 +125,10 @@ export function TaskPerformPanel({
   const steps = guideSteps ?? [];
   const doneSteps = new Set(prepChecks.filter((c) => c.step_no != null).map((c) => c.step_no));
   const stepsLeft = steps.length > 0 ? steps.length - doneSteps.size : 0;
-  /** Bara bild/kommentar/mätvärde och obligatoriska kontrollpunkter stoppar. */
-  const blocked = missing.length > 0 || missingCheckpoints.length > 0;
-  /** Utrustning och steg bockas av automatiskt när man trycker klar. */
-  const autoRest = prepMissing.length + stepsLeft;
+  /** Alla steg måste vara gjorda — bild/kommentar/mätvärde och kontrollpunkter stoppar också. */
+  const blocked = missing.length > 0 || missingCheckpoints.length > 0 || stepsLeft > 0;
+  /** Utrustningen bockas av automatiskt när man trycker klar. */
+  const autoRest = prepMissing.length;
 
   /** Helskärmsläget: ett steg i taget när arbetet görs. */
   const [runOpen, setRunOpen] = useState(false);
@@ -146,15 +146,6 @@ export function TaskPerformPanel({
           })),
         });
       }
-      for (let i = 0; i < steps.length; i++) {
-        if (doneSteps.has(i + 1)) continue;
-        await setStep.mutateAsync({
-          checklistItemId: task.id,
-          stepNo: i + 1,
-          stepTitle: (steps[i].text || `Steg ${i + 1}`).slice(0, 80),
-          staffId: staff?.id ?? null,
-        });
-      }
       await finish.mutateAsync({ id: task.id, startedAt: task.started_at ?? null });
       toast({ title: "Uppgiften är klar" });
       /** Tillbaka till flödet så nästa uppgift kan betas av direkt. */
@@ -164,13 +155,15 @@ export function TaskPerformPanel({
     }
   };
 
-  const blockedText = missingCheckpoints.length > 0
-    ? `Bocka ${missingCheckpoints.map((c) => c.label.toLowerCase()).join(" och ")} först.`
-    : missing.length > 0
-      ? missingText(task, missing)
-      : autoRest > 0
-        ? `${autoRest} rader bockas av när du trycker klar.`
-        : undefined;
+  const blockedText = stepsLeft > 0
+    ? `${stepsLeft} steg kvar att bocka av innan uppgiften kan bli klar.`
+    : missingCheckpoints.length > 0
+      ? `Bocka ${missingCheckpoints.map((c) => c.label.toLowerCase()).join(" och ")} först.`
+      : missing.length > 0
+        ? missingText(task, missing)
+        : autoRest > 0
+          ? `${autoRest} rader bockas av när du trycker klar.`
+          : undefined;
 
   if (task.done) {
     return (

@@ -539,12 +539,22 @@ export function TaskRunFullscreen({
               {doneNos.size}/{steps.length}
             </p>
             <p className="text-lg font-semibold">{allDone ? "Alla steg är klara" : "Steg kvar att bocka av"}</p>
+            {/* Uppgiften kan bara bli klar när alla steg är gjorda */}
             <Button
-              className="h-14 w-full bg-emerald-600 text-base text-white hover:bg-emerald-700"
+              className={cn(
+                "h-14 w-full text-base",
+                allDone ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-muted text-muted-foreground",
+              )}
+              disabled={!allDone}
               onClick={finishNow}
             >
               <Check className="mr-2 h-5 w-5" /> MARKERA UPPGIFTEN SOM KLAR
             </Button>
+            {!allDone && (
+              <p className="text-sm text-amber-700">
+                {steps.length - doneNos.size} steg kvar att bocka av innan uppgiften kan bli klar.
+              </p>
+            )}
             {blockedText && <p className="text-sm text-amber-700">{blockedText}</p>}
             <Button variant="ghost" onClick={onClose}>
               Stäng
@@ -647,7 +657,8 @@ export function TaskRunFullscreen({
             <ChevronLeft className="h-5 w-5" /> Tillbaka
           </Button>
 
-          {allDone || (done && last) ? (
+          {/* Uppgiften kan bara bli klar när alla steg är gjorda */}
+          {allDone ? (
             <Button
               className="h-12 flex-1 bg-emerald-600 text-base text-white hover:bg-emerald-700"
               onClick={finishNow}
