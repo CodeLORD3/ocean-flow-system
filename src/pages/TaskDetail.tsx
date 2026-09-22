@@ -403,6 +403,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
             onStarted={freezeCurrentRoute}
             onUpdate={(patch) => update.mutate({ id: task.id, ...patch })}
             onAddPhoto={addPhoto}
+            onCompleted={() => switchTab("/uppgifter")}
             onSetStepImage={async (stepIndex, file) => {
               const url = await uploadTaskStepImage(file, task.id);
               const steps = guide.steps.map((st, i) => (i === stepIndex ? { ...st, image: url } : st));
