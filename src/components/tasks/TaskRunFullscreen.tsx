@@ -547,19 +547,11 @@ export function TaskRunFullscreen({
             </Button>
           ) : (
             <Button
-              className={cn("h-12 flex-1 text-base", done ? "" : "bg-emerald-600 text-white hover:bg-emerald-700")}
-              variant={done ? "outline" : "default"}
+              className="h-12 flex-1 bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-700"
               onClick={markAndNext}
             >
-              {done ? (
-                <>
-                  Nästa steg <ChevronRight className="ml-2 h-5 w-5" />
-                </>
-              ) : (
-                <>
-                  <Check className="mr-2 h-5 w-5" /> Klar {last ? "" : "· nästa steg"}
-                </>
-              )}
+              <Check className="mr-2 h-5 w-5" />
+              {done ? "Klart · nästa steg" : last ? "Klar" : "Klar · nästa steg"}
             </Button>
           )}
 
