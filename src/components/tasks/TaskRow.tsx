@@ -402,8 +402,12 @@ export function TaskRow({
                 </span>
               </label>
             )}
-            <Button size="sm" variant="ghost" onClick={onOpenDetail}>
-              <ImageIcon className="mr-1 h-4 w-4" /> Hur gör jag? →
+            <Button
+              size="sm"
+              variant={showGuide ? "secondary" : "ghost"}
+              onClick={() => setShowGuide((v) => !v)}
+            >
+              <ImageIcon className="mr-1 h-4 w-4" /> {showGuide ? "Stäng beskrivningen" : "Hur gör jag?"}
             </Button>
             {onDelete && (
               <Button
