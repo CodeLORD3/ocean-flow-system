@@ -480,6 +480,18 @@ export default function Uppgifter() {
               <Crosshair className="mr-1 h-4 w-4" /> Butikskarta
             </Button>
           )}
+          {tasks.length > 0 && (
+            <Button
+              size="sm"
+              variant={cleanMode ? "destructive" : "ghost"}
+              onClick={() => {
+                setCleanMode((v) => !v);
+                setSelected([]);
+              }}
+            >
+              <Trash2 className="mr-1 h-4 w-4" /> {cleanMode ? "Avsluta rensning" : "Rensa listan"}
+            </Button>
+          )}
           <Button size="sm" onClick={() => setNewOpen(true)}>
             <Plus className="mr-1 h-4 w-4" /> Ny uppgift
           </Button>
