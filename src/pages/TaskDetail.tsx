@@ -92,6 +92,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const attachArchive = useAttachArchiveImages();
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [openOccurrence, setOpenOccurrence] = useState<string | null>(null);
   const [title, setTitle] = useState<string | null>(null);
   const [important, setImportant] = useState<string | null>(null);
   const { data: categories = [] } = useTaskCategories(storeId);
