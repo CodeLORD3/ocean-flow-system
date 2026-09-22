@@ -10,7 +10,7 @@ import { missingRequirements, missingText, valueLabel } from "@/lib/taskRequirem
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { workTypeLabel } from "@/lib/workType";
-import { useTaskImages, type TaskRow as Task } from "@/hooks/useTasks";
+import { useTaskImages, useTaskBlueprint, type TaskRow as Task } from "@/hooks/useTasks";
 import { TaskRunFullscreen } from "@/components/tasks/TaskRunFullscreen";
 import { parseGuide } from "@/lib/taskGuide";
 import { useStartTask, useFinishTask } from "@/hooks/useTaskRun";
@@ -97,8 +97,16 @@ export function TaskRow({
   );
   const time = taskTime(task);
 
+  /* Ny rad på nytt datum utan beskrivning: ärv steg och utrustning från samma uppgift. */
+  const ownGuideSteps = parseGuide(task.guide, task.instructions).steps.filter((s) => s.text || s.image);
+  const { data: blueprint } = useTaskBlueprint(task.task, ownGuideSteps.length === 0);
   /* Utrustning & material — samma kontroll som på uppgiftens egen sida */
-  const { data: requirements = [] } = useTaskRequirements(task.template_item_id ?? null, task.id);
+  const { data: ownRequirements = [] } = useTaskRequirements(task.template_item_id ?? null, task.id);
+  const { data: inheritedRequirements = [] } = useTaskRequirements(
+    null,
+    ownRequirements.length === 0 && blueprint?.sourceId ? blueprint.sourceId : null,
+  );
+  const requirements = ownRequirements.length > 0 ? ownRequirements : inheritedRequirements;
   const { data: resourceItems = [] } = useResourceItems();
   const { data: resourceLocations = [] } = useResourceLocations(storeId);
   const { data: resourceMappings = [] } = useStoreResourceMappings(storeId);
@@ -138,7 +146,10 @@ export function TaskRow({
   const canStart = !task.done && !running;
   const [showRun, setShowRun] = useState(false);
   const runRef = useRef<HTMLDivElement | null>(null);
-  const guideSteps = parseGuide(task.guide, task.instructions).steps.filter((s) => s.text || s.image);
+  const inheritedSteps = blueprint
+    ? parseGuide(blueprint.guide, blueprint.instructions).steps.filter((s) => s.text || s.image)
+    : [];
+  const guideSteps = ownGuideSteps.length > 0 ? ownGuideSteps : inheritedSteps;
   /** Starta/fortsätt uppgiften — arbetet fälls ut här i raden. */
   const startNow = async () => {
     setOpen(true);
