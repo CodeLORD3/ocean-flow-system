@@ -136,6 +136,15 @@ export function NewTaskDialog({
       .slice(0, 60);
   }, [register, existingSearch, existingZone]);
 
+  /** Går direkt vidare till namnsökningen när området är valt. */
+  const goToPerson = () => {
+    setPickOnMap(false);
+    setTimeout(() => {
+      personRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      personRef.current?.querySelector("input")?.focus();
+    }, 60);
+  };
+
   const pickExisting = (r: { task: string; zoneId: string | null }) => {
     setTask(r.task);
     if (r.zoneId) setZone(r.zoneId);
