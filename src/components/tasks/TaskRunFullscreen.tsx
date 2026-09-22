@@ -161,6 +161,15 @@ export function TaskRunFullscreen({
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  /** Tillbaka till utrustning & material — både i telefonen och på dator. */
+  const backToPrep = () => {
+    setShowPrep(true);
+    if (isPhone) {
+      const el = feedRef.current?.children[0] as HTMLElement | undefined;
+      setTimeout(() => el?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+    }
+  };
+
   const markAndNext = async () => {
     if (!done) await markStep(no, s);
     if (!last) {
@@ -248,6 +257,28 @@ export function TaskRunFullscreen({
         <div className="h-1.5 rounded-full bg-muted">
           <div className="h-full rounded-full bg-emerald-600 transition-all" style={{ width: `${pct}%` }} />
         </div>
+        {/* Vägen tillbaka till utrustning & material */}
+        {prepNode && (
+          <button
+            type="button"
+            onClick={() => {
+              setOverviewOpen(false);
+              backToPrep();
+            }}
+            className="mt-3 flex w-full items-center gap-3 rounded-lg border bg-background px-3 py-2 text-left hover:bg-muted/60"
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
+              <ChevronUp className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">Utrustning & material</span>
+              <span className="block text-[11px] text-muted-foreground">
+                {prepMissingCount > 0 ? `${prepMissingCount} kvar att bocka av` : "Allt kontrollerat"}
+              </span>
+            </span>
+          </button>
+        )}
+
         <ul className="mt-3 space-y-1.5">
           {steps.map((st, i) => {
             const n = i + 1;
@@ -459,9 +490,21 @@ export function TaskRunFullscreen({
                     </button>
                   </div>
 
-                  <p className="font-mono text-[11px] tabular-nums text-white/70">
-                    Steg {n + feedOffset} av {steps.length + feedOffset} · {taskName}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="min-w-0 flex-1 truncate font-mono text-[11px] tabular-nums text-white/70">
+                      Steg {n + feedOffset} av {steps.length + feedOffset} · {taskName}
+                    </p>
+                    {/* Vägen tillbaka till utrustning & material */}
+                    {prepNode && (
+                      <button
+                        type="button"
+                        onClick={backToPrep}
+                        className="shrink-0 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold text-white"
+                      >
+                        Utrustning
+                      </button>
+                    )}
+                  </div>
                   <h2 className={cn("font-heading font-bold leading-tight", textOpen ? "text-xl" : "pr-20 text-base")}>
                     {stepTitle(st.text || `Steg ${n}`)}
                   </h2>
