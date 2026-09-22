@@ -499,7 +499,7 @@ export function TaskRunFullscreen({
                   <div className="flex items-center gap-2 pt-1">
                     {/* Liten blå tillbaka-knapp till vänster om Klar */}
                     <Button
-                      className="h-14 w-14 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
+                      className="h-12 w-12 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
                       aria-label="Föregående steg"
                       onClick={() => {
                         if (i > 0) scrollToStep(i - 1);
@@ -511,7 +511,7 @@ export function TaskRunFullscreen({
                     {/* Grå tills steget är gjort — grön efteråt, och samma knapp ångrar */}
                     <Button
                       className={cn(
-                        "h-14 flex-1 text-base font-semibold",
+                        "h-12 flex-1 text-sm font-semibold",
                         stepDone
                           ? "bg-emerald-600 text-white hover:bg-emerald-700"
                           : "animate-pulse bg-muted text-foreground hover:animate-none hover:bg-emerald-600 hover:text-white",
@@ -545,14 +545,14 @@ export function TaskRunFullscreen({
                             if (f) await onAddPhoto(f);
                           }}
                         />
-                        <span className="inline-flex h-14 cursor-pointer items-center gap-1 rounded-md bg-white/15 px-4 text-sm text-white">
+                        <span className="inline-flex h-12 cursor-pointer items-center gap-1 rounded-md bg-white/15 px-3 text-sm text-white">
                           <Camera className="h-5 w-5" /> {photoCount > 0 ? photoCount : ""}
                         </span>
                       </label>
                     )}
                   </div>
                   {stepDone && !isLast && (
-                    <p className="text-center text-xs text-white/60">Swipa upp för nästa steg</p>
+                    <p className="text-center text-[10px] text-white/60">Swipa upp för nästa steg</p>
                   )}
                 </div>
               </section>
