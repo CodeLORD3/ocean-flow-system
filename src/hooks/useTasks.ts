@@ -564,6 +564,15 @@ export type TaskOccurrence = {
   done_at: string | null;
   signature: string | null;
   completed_by_staff_id: string | null;
+  completion_note: string | null;
+  completion_value: number | null;
+  value_label: string | null;
+  note: string | null;
+  active_minutes: number | null;
+  paused_minutes: number | null;
+  actual_minutes: number | null;
+  started_at: string | null;
+  finished_at: string | null;
   images: EntityImage[];
 };
 
