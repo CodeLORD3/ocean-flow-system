@@ -357,12 +357,12 @@ export default function StaffProfile() {
         </div>
 
         {/* Höger: dagens framsteg, senaste aktivitet, snabbåtgärder */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Card className="shadow-card">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-1 pt-3">
               <CardTitle className="font-heading text-sm">Dagens framsteg</CardTitle>
             </CardHeader>
-            <CardContent className="flex items-center gap-4">
+            <CardContent className="flex items-center gap-4 pb-4">
               <ProgressRing percent={progress?.percent ?? 0} />
               <div className="min-w-0 space-y-1.5 text-xs">
                 <p className="text-sm font-semibold text-foreground">
