@@ -193,6 +193,14 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
 
   const doneRatio = history.length > 0 ? Math.round((history.filter((h) => h.done).length / history.length) * 100) : null;
 
+  if (isLoading) return <p className="text-muted-foreground">Laddar…</p>;
+  if (!task) return <p className="text-muted-foreground">Uppgiften finns inte längre.</p>;
+
+  const time = taskTime(task);
+  const target = taskTarget(task, recipes.find((r) => r.id === task.recipe_id)?.name ?? null);
+  const missing = missingRequirements(task, { photoCount: images.length, checkPhoto: true });
+
+
   const addPhoto = async (file: File) => {
     if (!task.zone_id) {
       toast({
