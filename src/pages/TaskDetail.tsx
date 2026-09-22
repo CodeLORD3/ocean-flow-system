@@ -82,6 +82,12 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const { data: images = [] } = useTaskImages(taskId);
   const { data: reference = [] } = useTaskReferenceImages(task?.template_item_id ?? null);
   const { data: history = [] } = useTaskHistory(storeId, task?.task ?? null);
+  // Öppnad via "Mer om uppgiften" → hoppa direkt till rätt flik.
+  const [initialTab] = useState(() => {
+    const wanted = typeof sessionStorage !== "undefined" ? sessionStorage.getItem("task-detail-tab") : null;
+    if (wanted) sessionStorage.removeItem("task-detail-tab");
+    return wanted || "genomfor";
+  });
   const setDone = useSetTaskDone();
   const update = useUpdateTask();
   const removeTask = useDeleteTask();
@@ -377,7 +383,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
         )}
       </Card>
 
-      <Tabs defaultValue="genomfor">
+      <Tabs defaultValue={initialTab}>
         <TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:flex sm:w-auto">
           <TabsTrigger value="genomfor">Genomför</TabsTrigger>
           <TabsTrigger value="instruktion">Hur gör vi?</TabsTrigger>
