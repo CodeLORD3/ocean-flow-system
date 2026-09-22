@@ -476,8 +476,7 @@ export function NewTaskDialog({
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && people.length > 0) {
                             e.preventDefault();
-                            setPerson(people[0].id);
-                            setPersonSearch("");
+                             choosePerson(people[0].id);
                           }
                         }}
                       />
