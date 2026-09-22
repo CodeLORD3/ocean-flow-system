@@ -125,10 +125,10 @@ export function TaskPerformPanel({
   const steps = guideSteps ?? [];
   const doneSteps = new Set(prepChecks.filter((c) => c.step_no != null).map((c) => c.step_no));
   const stepsLeft = steps.length > 0 ? steps.length - doneSteps.size : 0;
-  /** Bara bild/kommentar/mätvärde och obligatoriska kontrollpunkter stoppar. */
-  const blocked = missing.length > 0 || missingCheckpoints.length > 0;
-  /** Utrustning och steg bockas av automatiskt när man trycker klar. */
-  const autoRest = prepMissing.length + stepsLeft;
+  /** Alla steg måste vara gjorda — bild/kommentar/mätvärde och kontrollpunkter stoppar också. */
+  const blocked = missing.length > 0 || missingCheckpoints.length > 0 || stepsLeft > 0;
+  /** Utrustningen bockas av automatiskt när man trycker klar. */
+  const autoRest = prepMissing.length;
 
   /** Helskärmsläget: ett steg i taget när arbetet görs. */
   const [runOpen, setRunOpen] = useState(false);
