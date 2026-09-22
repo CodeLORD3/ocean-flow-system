@@ -114,6 +114,14 @@ export function TaskRunFullscreen({
       /** Upp/ner byter steg — höger/vänster byter bild på steget. */
       if (e.key === "ArrowDown") setIndex((i) => Math.min(i + 1, steps.length - 1));
       if (e.key === "ArrowUp") setIndex((i) => Math.max(i - 1, 0));
+      /** Enter bockar av steget och går vidare. */
+      if (e.key === "Enter") {
+        const target = e.target as HTMLElement | null;
+        const tag = target?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return;
+        e.preventDefault();
+        void markAndNextRef.current?.();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
