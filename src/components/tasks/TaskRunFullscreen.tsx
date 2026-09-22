@@ -490,9 +490,21 @@ export function TaskRunFullscreen({
                     </button>
                   </div>
 
-                  <p className="font-mono text-[11px] tabular-nums text-white/70">
-                    Steg {n + feedOffset} av {steps.length + feedOffset} · {taskName}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="min-w-0 flex-1 truncate font-mono text-[11px] tabular-nums text-white/70">
+                      Steg {n + feedOffset} av {steps.length + feedOffset} · {taskName}
+                    </p>
+                    {/* Vägen tillbaka till utrustning & material */}
+                    {prepNode && (
+                      <button
+                        type="button"
+                        onClick={backToPrep}
+                        className="shrink-0 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold text-white"
+                      >
+                        Utrustning
+                      </button>
+                    )}
+                  </div>
                   <h2 className={cn("font-heading font-bold leading-tight", textOpen ? "text-xl" : "pr-20 text-base")}>
                     {stepTitle(st.text || `Steg ${n}`)}
                   </h2>
