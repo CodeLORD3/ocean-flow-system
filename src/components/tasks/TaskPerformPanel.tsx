@@ -408,6 +408,19 @@ export function TaskPerformPanel({
         </Button>
         {blockedText && <p className="text-center text-xs text-amber-700">{blockedText}</p>}
       </div>
+
+      <TaskRunFullscreen
+        open={runOpen}
+        onClose={() => setRunOpen(false)}
+        checklistItemId={task.id}
+        taskName={task.task}
+        steps={steps}
+        photoCount={photoCount}
+        requiresPhoto={task.requires_photo}
+        blockedText={blockedText}
+        onAddPhoto={onAddPhoto}
+        onFinish={completeTask}
+      />
     </div>
   );
 }
