@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, RotateCcw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -365,8 +366,8 @@ export function TaskRunFullscreen({
 
   /* ---------- TELEFON: flöde som swipas uppåt, ett steg per skärm ---------- */
   if (isPhone) {
-    return (
-      <div className="fixed inset-0 z-50 bg-background">
+    return createPortal(
+      <div className="fixed inset-0 z-[100] bg-background">
         {warnNode}
         {overviewNode}
         {/* Räknaren i höger hörn och vägen ut i vänster */}
@@ -400,19 +401,25 @@ export function TaskRunFullscreen({
         >
           {/* Först: kontrollera utrustning & material */}
           {prepNode && (
-            <section className="flex h-full snap-start snap-always flex-col overflow-y-auto px-3 pb-4 pt-14">
+            <section className="relative flex h-full snap-start snap-always flex-col overflow-y-auto px-3 pt-14">
               <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Steg 1 · innan du börjar
               </p>
               <h2 className="mb-3 font-heading text-xl font-bold">Kontrollera utrustning & material</h2>
               {prepNode}
-              <Button
-                className="mt-3 h-14 w-full text-base font-semibold"
-                onClick={() => scrollToStep(0)}
-              >
-                {prepMissingCount > 0 ? "Fortsätt till stegen" : "Allt kontrollerat · till stegen"}
-                <ChevronUp className="ml-2 h-5 w-5" />
-              </Button>
+              {/* Knappen ligger alltid kvar längst ned så man alltid kommer till stegen */}
+              <div className="sticky bottom-0 -mx-3 mt-3 bg-background/95 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur">
+                <Button
+                  className={cn(
+                    "h-14 w-full text-base font-semibold",
+                    prepMissingCount === 0 && "bg-emerald-600 hover:bg-emerald-700",
+                  )}
+                  onClick={() => scrollToStep(0)}
+                >
+                  {prepMissingCount > 0 ? "Fortsätt till stegen" : "Allt kontrollerat · till stegen"}
+                  <ChevronUp className="ml-2 h-5 w-5" />
+                </Button>
+              </div>
             </section>
           )}
 
@@ -667,13 +674,14 @@ export function TaskRunFullscreen({
             </Button>
           </section>
         </div>
-      </div>
+      </div>,
+      document.body,
     );
   }
 
   /* ---------- DATOR: ett steg i taget, knapparna alltid på samma plats ---------- */
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex flex-col bg-background">
       {warnNode}
       {overviewNode}
       <div className="flex items-center gap-3 border-b px-3 py-2">
@@ -826,9 +834,11 @@ export function TaskRunFullscreen({
         </div>
         {blockedText && <p className="text-center text-xs text-amber-700">{blockedText}</p>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
+
 
 /**
  * Flera bilder på ett steg: dra i sidled eller tryck på pilarna höger/vänster.
