@@ -865,6 +865,8 @@ function StepGallery({
       <div
         ref={ref}
         className="flex h-full w-full cursor-grab snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth active:cursor-grabbing"
+        /* Svajp i sidled på bilden ska byta bild — inte byta steg */
+        style={{ touchAction: "pan-x" }}
         onScroll={(e) => {
           const el = e.currentTarget;
           if (el.clientWidth > 0) setAt(Math.round(el.scrollLeft / el.clientWidth));
@@ -897,7 +899,8 @@ function StepGallery({
             key={`${src}-${i}`}
             src={src}
             alt={`${alt} — bild ${i + 1}`}
-            className={cn("h-full w-full shrink-0 snap-start snap-always", fill ? "object-cover" : "object-contain")}
+            draggable={false}
+            className={cn("h-full w-full shrink-0 select-none snap-start snap-always", fill ? "object-cover" : "object-contain")}
           />
         ))}
       </div>
