@@ -615,13 +615,13 @@ export function TaskRunFullscreen({
                       <Button
                         className="h-12 flex-1 animate-pulse bg-muted text-sm font-semibold text-foreground hover:animate-none hover:bg-emerald-600 hover:text-white"
                         onClick={() => {
-                          /** Hoppa vidare direkt, spara i bakgrunden. */
-                          if (!isLast) {
-                            scrollToStep(i + 1);
-                            setTimeout(() => scrollToStep(i + 1), 120);
-                          }
+                          /** Hoppa vidare direkt, spara i bakgrunden. Sista steget går till slutskärmen. */
+                          const target = i + 1;
+                          scrollToStep(target);
+                          setTimeout(() => scrollToStep(target), 120);
                           void markStep(n, st);
                         }}
+
                       >
                         <Check className="mr-2 h-5 w-5" />
                         {isLast ? "Markera som klar" : "Markera som klar · nästa"}
