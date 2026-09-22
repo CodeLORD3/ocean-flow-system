@@ -73,6 +73,23 @@ export function ZonePickMap({
     [zones, value],
   );
 
+  /** Namnet blinkar upp en kort stund som bekräftelse innan nästa steg. */
+  const [flash, setFlash] = useState<string | null>(null);
+
+  /** Väljer en yta. Saknar den ytor inuti går vi vidare av oss självt. */
+  const pick = (zoneId: string | null) => {
+    onChange(zoneId);
+    if (!zoneId || !autoNext || !onNext) return;
+    const zone = zones.find((z) => z.id === zoneId);
+    const hasChildren = zones.some((z) => z.parent_zone_id === zoneId);
+    if (hasChildren) return;
+    setFlash(zone?.name ?? null);
+    window.setTimeout(() => {
+      setFlash(null);
+      onNext();
+    }, 700);
+  };
+
   const view = useMemo(() => {
     const pts = shapes.flatMap((s) => s.path.split(" ").map((p) => p.split(",").map(Number)));
     if (pts.length === 0) return { x: 0, y: 0, w: plan.width, h: plan.height };
