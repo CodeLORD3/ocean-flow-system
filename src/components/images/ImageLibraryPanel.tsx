@@ -364,9 +364,38 @@ export default function ImageLibraryPanel({
       <Dialog open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
         <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex flex-wrap items-center gap-2 pr-8">
               {detail?.title || "Bild"}
               {detail && <Badge variant="outline">{STATUS_LABEL[detail.status]}</Badge>}
+              {detailIndex >= 0 && rows.length > 1 && (
+                <span className="ml-auto flex items-center gap-1 text-xs font-normal text-muted-foreground">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="h-7 w-7"
+                    onClick={() => stepDetail(-1)}
+                    disabled={detailIndex <= 0}
+                    aria-label="Föregående bild"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="tabular-nums">
+                    {detailIndex + 1} / {rows.length}
+                  </span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="h-7 w-7"
+                    onClick={() => stepDetail(1)}
+                    disabled={detailIndex >= rows.length - 1}
+                    aria-label="Nästa bild"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </span>
+              )}
             </DialogTitle>
           </DialogHeader>
           {detail && (
