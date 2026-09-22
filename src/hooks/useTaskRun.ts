@@ -185,9 +185,10 @@ export function useResetTaskRun() {
           started_at: null,
           started_by_staff_id: null,
           finished_at: null,
-          run_status: null,
+          run_status: "ej_startad",
           active_minutes: null,
-          pause_minutes: null,
+          paused_minutes: null,
+          actual_minutes: null,
           time_source: null,
         })
         .eq("id", id);
