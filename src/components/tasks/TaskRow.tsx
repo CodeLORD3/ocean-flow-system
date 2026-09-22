@@ -92,11 +92,14 @@ export function TaskRow({
   const start = useStartTask();
   const running = task.run_status === "pagar";
   const canStart = !task.done && !running;
+  const [showGuide, setShowGuide] = useState(false);
+  /** Starta uppgiften och gå direkt dit arbetet görs. */
   const startNow = async () => {
-    setOpen(true);
-    if (!canStart) return;
-    await start.mutateAsync(task.id);
-    toast({ title: "Uppgiften är startad", description: "Bocka av stegen ett i taget." });
+    if (canStart) {
+      await start.mutateAsync(task.id);
+      toast({ title: "Uppgiften är startad", description: "Bocka av stegen ett i taget." });
+    }
+    onOpenDetail();
   };
   const tryToggle = (done: boolean) => {
     if (done && blocked) {
@@ -272,6 +275,29 @@ export function TaskRow({
 
       {open && (
         <div className="space-y-3 border-t border-primary/20 px-3 pb-3 pt-2.5 text-sm">
+          {/* Två tydliga val: läsa hur man gör, eller sätta igång och göra den */}
+          {!task.done && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button
+                variant={showGuide ? "secondary" : "outline"}
+                className="h-12 justify-start gap-2 text-sm font-semibold"
+                onClick={() => setShowGuide((v) => !v)}
+              >
+                <ImageIcon className="h-4 w-4" />
+                {showGuide ? "Stäng beskrivningen" : "Hur gör jag?"}
+              </Button>
+              <Button
+                className="h-12 justify-start gap-2 text-sm font-semibold"
+                onClick={startNow}
+                disabled={start.isPending}
+              >
+                {running ? <Timer className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                {running ? "Fortsätt uppgiften" : "Starta uppgiften"}
+              </Button>
+            </div>
+          )}
+
+          {(showGuide || task.done) && (
           <TaskSteps
             taskId={task.id}
             taskName={task.task}
@@ -281,6 +307,8 @@ export function TaskRow({
             importantNote={task.important_note}
             templateItemId={task.template_item_id}
           />
+          )}
+
 
           <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
             {time.kind !== "none" && (
