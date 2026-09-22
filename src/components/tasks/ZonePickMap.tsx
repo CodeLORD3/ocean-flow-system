@@ -237,6 +237,14 @@ export function ZonePickMap({
           </g>
         </svg>
 
+        {flash && (
+          <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
+            <p className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg">
+              Valt: {flash}
+            </p>
+          </div>
+        )}
+
         <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full border bg-card p-1 shadow-sm">
           <button
             type="button"
