@@ -86,6 +86,8 @@ export function TaskRunFullscreen({
   const clearStep = useClearStepCheck();
   const restart = useRestartTask();
   const resetRun = useResetTaskRun();
+  const reopen = useReopenTask();
+  const start = useStartTask();
   useFullscreenFlowFlag(open);
   const [index, setIndex] = useState(0);
   /** Kontrollen visas först på dator, sedan stegen. */
