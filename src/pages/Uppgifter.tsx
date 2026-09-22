@@ -33,8 +33,8 @@ import {
 } from "@/hooks/useTasks";
 import { DAYPARTS, durationText, groupByDaypart, remainingMinutes } from "@/lib/taskTime";
 import { TaskRow, type TaskRowArea } from "@/components/tasks/TaskRow";
-import { TaskZoneMap, type ZoneTaskCount } from "@/components/tasks/TaskZoneMap";
-import StoreMap from "@/pages/StoreMap";
+import { TaskAreaChips, type AreaChipCount } from "@/components/tasks/TaskAreaChips";
+import { TaskMapDrawer } from "@/components/tasks/TaskMapDrawer";
 import { TaskCalendar } from "@/components/tasks/TaskCalendar";
 import { TaskRegister } from "@/components/tasks/TaskRegister";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
@@ -45,19 +45,19 @@ import ProductionRecipes from "@/pages/ProductionRecipes";
 
 const WEEKDAY_NAMES = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
 
-function Progress({ done, total }: { done: number; total: number }) {
+/** Kompakt framsteg: en rad med rubrik, antal klara och en tunn mätare. */
+function Progress({ done, total, label }: { done: number; total: number; label: string }) {
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-  const tone = "bg-emerald-500";
   return (
-    <div className="space-y-2">
-      <div className="flex items-baseline justify-between">
-        <span className="font-mono text-3xl tabular-nums font-semibold">{pct}%</span>
-        <span className="text-xs text-muted-foreground">
-          {done} av {total} klara
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-heading text-lg font-semibold">{label}</h2>
+        <span className="font-mono text-sm tabular-nums text-muted-foreground">
+          {done} av {total} klara · {pct} %
         </span>
       </div>
-      <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
-        <div className={cn("h-full rounded-full transition-all", tone)} style={{ width: `${pct}%` }} />
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -99,26 +99,23 @@ export default function Uppgifter() {
     return map;
   }, [zones]);
 
-  /** Dagens uppgifter per område, så kartan visar vad som är kvar var. */
+  /** Dagens uppgifter per område: hur många totalt och hur många klara. */
   const zoneCounts = useMemo(() => {
-    const map = new Map<string, ZoneTaskCount>();
+    const map = new Map<string, AreaChipCount>();
     tasks.forEach((t) => {
       if (!t.zone_id) return;
-      const cur = map.get(t.zone_id) ?? { total: 0, left: 0 };
-      map.set(t.zone_id, { total: cur.total + 1, left: cur.left + (t.done ? 0 : 1) });
+      const cur = map.get(t.zone_id) ?? { total: 0, done: 0 };
+      map.set(t.zone_id, { total: cur.total + 1, done: cur.done + (t.done ? 1 : 0) });
     });
     return map;
   }, [tasks]);
 
-  /** Hela butikskartan kan fällas ut i uppgiftslistan. */
+  /** Kartan är hjälpinformation och ligger i en panel från höger. */
   const [mapOpen, setMapOpen] = useState(false);
-  /** Ytan som visas i kartan här inne — kartan lämnar aldrig Uppgifter. */
-  const [openZoneId, setOpenZoneId] = useState<string | null>(null);
-  /** Öppnar ytans egen sida inne i uppgiftsfliken i stället för att byta flik. */
-  const openZoneHere = (zoneId: string) => {
-    setOpenZoneId(zoneId);
+  const [mapZoneId, setMapZoneId] = useState<string | null>(null);
+  const openMapOn = (zoneId: string | null) => {
+    setMapZoneId(zoneId);
     setMapOpen(true);
-    setTab("dag");
   };
 
   const [tab, setTab] = useState("mina");
