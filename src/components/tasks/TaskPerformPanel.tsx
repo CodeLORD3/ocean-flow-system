@@ -67,6 +67,7 @@ export function TaskPerformPanel({
   onShowAllOnMap,
   onUpdate,
   onAddPhoto,
+  onSetStepImage,
   onReopen,
   onStarted,
 }: {
