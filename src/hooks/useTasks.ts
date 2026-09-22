@@ -627,6 +627,15 @@ export function useTaskHistory(storeId?: string | null, taskName?: string | null
           done_at: r.done_at,
           signature: r.signature,
           completed_by_staff_id: r.completed_by_staff_id,
+          completion_note: r.completion_note ?? null,
+          completion_value: r.completion_value ?? null,
+          value_label: r.value_label ?? null,
+          note: r.note ?? null,
+          active_minutes: r.active_minutes ?? null,
+          paused_minutes: r.paused_minutes ?? null,
+          actual_minutes: r.actual_minutes ?? null,
+          started_at: r.started_at ?? null,
+          finished_at: r.finished_at ?? null,
           images: byItem.get(r.id) ?? [],
         }))
         .sort((a, b) => b.date.localeCompare(a.date)) as TaskOccurrence[];
