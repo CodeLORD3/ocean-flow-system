@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { useImageLinks } from "@/hooks/useImageLibrary";
 import { useLinkTargetNames } from "@/hooks/useImagePickers";
@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * Visar tydligt var bilden kommer ifrån — uppgift, område, vara eller butik —
- * som klickbara chips. Tryck på en chip och man kommer direkt dit.
+ * som klickbara rader. Tryck på en rad och man kommer direkt dit. Är man redan
+ * där står det "Du är här" i stället för en länk som inte gör något.
  */
 export default function ImageSourceLinks({
   imageId,
@@ -25,6 +26,7 @@ export default function ImageSourceLinks({
     links.map((l) => ({ entity_type: l.entity_type, entity_id: l.entity_id })),
   );
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (links.length === 0) return null;
 
@@ -35,21 +37,26 @@ export default function ImageSourceLinks({
         {links.map((l) => {
           const route = placeRoute(l.entity_type, l.entity_id, imageId);
           const name = names[`${l.entity_type}:${l.entity_id}`] || linkTypeLabel(l.entity_type);
+          const here = !!route && route.split("?")[0] === location.pathname;
           const inner = (
-            <>
-              <span className="shrink-0 text-[10px] uppercase tracking-wide opacity-70">
-                {linkTypeLabel(l.entity_type)}
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
+              <span className="text-[10px] uppercase tracking-wide opacity-70">
+                {linkTypeLabel(l.entity_type)} · {relationLabel(l.relation_type)}
               </span>
-              <span className="min-w-0 flex-1 truncate text-left font-medium">{name}</span>
-              <span className="shrink-0 text-[10px] opacity-60">{relationLabel(l.relation_type)}</span>
-            </>
+              <span className="break-words text-xs font-semibold leading-snug">{name}</span>
+            </span>
           );
           const base =
-            "flex w-full min-w-0 max-w-full items-center gap-1.5 overflow-hidden rounded-full border px-2.5 py-1 text-xs bg-card";
-          if (!route) {
+            "flex w-full min-w-0 items-center gap-2 rounded-lg border bg-card px-2 py-1.5 text-xs";
+          if (!route || here) {
             return (
               <span key={l.id} className={cn(base, "text-muted-foreground")}>
                 {inner}
+                {here && (
+                  <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold">
+                    Du är här
+                  </span>
+                )}
               </span>
             );
           }

@@ -568,7 +568,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           {allImages.length === 0 ? (
             <p className="text-sm text-muted-foreground">Inga bilder är kopplade till uppgiften ännu.</p>
           ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
               {allImages.map((img, i) => (
                 <div key={img.id} className="flex min-w-0 gap-3 overflow-hidden rounded-xl border bg-card p-2">
                   <button
