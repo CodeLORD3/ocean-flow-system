@@ -111,8 +111,9 @@ export function TaskRunFullscreen({
     if (!open || isPhone) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
-      if (e.key === "ArrowRight" || e.key === "ArrowDown") setIndex((i) => Math.min(i + 1, steps.length - 1));
-      if (e.key === "ArrowLeft" || e.key === "ArrowUp") setIndex((i) => Math.max(i - 1, 0));
+      /** Upp/ner byter steg — höger/vänster byter bild på steget. */
+      if (e.key === "ArrowDown") setIndex((i) => Math.min(i + 1, steps.length - 1));
+      if (e.key === "ArrowUp") setIndex((i) => Math.max(i - 1, 0));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
