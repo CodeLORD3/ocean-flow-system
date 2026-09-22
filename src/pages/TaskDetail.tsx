@@ -413,7 +413,6 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           </div>
         )}
 
-        )}
         {task.done && (
           <div className="flex items-center gap-2 text-xs text-emerald-600">
             {(staffName(task.completed_by_staff_id) || task.signature) && (
