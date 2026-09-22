@@ -233,7 +233,7 @@ export function TaskRunFullscreen({
             const n = i + 1;
             const isDone = doneNos.has(n);
             return (
-              <li key={n}>
+              <li key={n} className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -263,6 +263,17 @@ export function TaskRunFullscreen({
                     <span className="block text-[11px] text-muted-foreground">{isDone ? "Klart" : "Kvar att göra"}</span>
                   </span>
                 </button>
+                {/* Ångra: tar bort att steget är gjort */}
+                {isDone && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 shrink-0 text-xs"
+                    onClick={() => clearStep.mutate({ checklistItemId, stepNo: n })}
+                  >
+                    Ångra
+                  </Button>
+                )}
               </li>
             );
           })}
@@ -470,6 +481,16 @@ export function TaskRunFullscreen({
                       <Check className="mr-2 h-5 w-5" />
                       {stepDone ? (isLast ? "Klart" : "Klart · nästa steg") : isLast ? "Klar" : "Klar · nästa steg"}
                     </Button>
+                    {/* Ångra: tar bort att steget är gjort */}
+                    {stepDone && (
+                      <Button
+                        variant="outline"
+                        className="h-14 shrink-0 px-3 text-xs"
+                        onClick={() => clearStep.mutate({ checklistItemId, stepNo: n })}
+                      >
+                        Ångra
+                      </Button>
+                    )}
                     {requiresPhoto && (
                       <label className="inline-flex">
                         <input
@@ -625,6 +646,17 @@ export function TaskRunFullscreen({
             >
               <Check className="mr-2 h-5 w-5" />
               {done ? "Klart · nästa steg" : last ? "Klar" : "Klar · nästa steg"}
+            </Button>
+          )}
+
+          {/* Ångra: tar bort att steget är gjort */}
+          {done && (
+            <Button
+              variant="outline"
+              className="h-12 shrink-0"
+              onClick={() => clearStep.mutate({ checklistItemId, stepNo: no })}
+            >
+              Ångra steget
             </Button>
           )}
 
