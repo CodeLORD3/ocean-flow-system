@@ -307,6 +307,8 @@ export function TaskRow({
             importantNote={task.important_note}
             templateItemId={task.template_item_id}
           />
+          )}
+
 
           <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
             {time.kind !== "none" && (
