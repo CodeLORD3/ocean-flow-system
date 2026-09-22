@@ -237,17 +237,14 @@ export function TaskRow({
 
       {open && (
         <div className="space-y-3 border-t border-primary/20 px-3 pb-3 pt-2.5 text-sm">
-          {task.important_note && (
-            <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[13px] text-amber-700">{task.important_note}</p>
-          )}
-          {task.instructions && task.instructions.length > 0 && (
-            <ol className="list-decimal space-y-1 pl-5 text-[13px] text-muted-foreground">
-              {task.instructions.slice(0, 4).map((step, i) => (
-                <li key={i}>{step}</li>
-              ))}
-            </ol>
-          )}
-          {task.note && <p className="text-[13px] text-muted-foreground">{task.note}</p>}
+          <TaskSteps
+            taskId={task.id}
+            taskName={task.task}
+            guide={task.guide}
+            instructions={task.instructions}
+            note={task.note}
+            importantNote={task.important_note}
+          />
 
           <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
             {time.kind !== "none" && (
