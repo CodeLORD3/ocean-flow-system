@@ -3,7 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useStores } from "@/hooks/useStores";
-import { useZonesByStore, usePickResources, usePickProducts } from "@/hooks/useImagePickers";
+import {
+  useZonesByStore,
+  useAllZones,
+  usePickResources,
+  usePickProducts,
+} from "@/hooks/useImagePickers";
 import { MEDIA_KINDS, type MediaKind } from "@/lib/imageStatus";
 import { useBulkClassify } from "@/hooks/useImageLibrary";
 import { toast } from "sonner";
@@ -28,6 +33,8 @@ export default function ImageBulkBar({
   const [tags, setTags] = useState("");
   const { data: stores = [] } = useStores();
   const { data: zones = [] } = useZonesByStore(storeId || null);
+  const { data: allZones = [] } = useAllZones();
+  const zoneOptions = storeId ? zones : allZones;
   const { data: resources = [] } = usePickResources();
   const { data: products = [] } = usePickProducts();
   const bulk = useBulkClassify();
@@ -61,8 +68,8 @@ export default function ImageBulkBar({
   }
 
   return (
-    <div className="sticky bottom-0 z-20 -mx-4 mt-4 border-t bg-background/95 px-4 py-3 backdrop-blur">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="fixed inset-x-0 bottom-0 z-50 max-h-[70dvh] overflow-y-auto border-t bg-background px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(0,0,0,0.12)] sm:pb-3">
+      <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-2">
         <span className="text-sm font-medium">{selectedIds.length} markerade</span>
         <Button size="sm" onClick={() => setOpen((v) => !v)}>
           {open ? "Stäng" : "Placera / koppla"}
@@ -73,7 +80,7 @@ export default function ImageBulkBar({
       </div>
 
       {open && (
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto mt-3 grid max-w-[1400px] gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <Label>Vad visar bilderna?</Label>
             <select
@@ -113,12 +120,12 @@ export default function ImageBulkBar({
               className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm"
               value={zoneId}
               onChange={(e) => setZoneId(e.target.value)}
-              disabled={!storeId}
             >
               <option value="">Lämna som det är</option>
-              {zones.map((z) => (
+              {zoneOptions.map((z) => (
                 <option key={z.id} value={z.id}>
                   {z.name}
+                  {!storeId && z.hint ? ` — ${z.hint}` : ""}
                 </option>
               ))}
             </select>
