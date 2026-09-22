@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { GuideStep } from "@/lib/taskGuide";
 import { useCurrentStaff } from "@/hooks/useCurrentStaff";
 import { useFullscreenFlowFlag } from "@/lib/fullscreenFlow";
-import { useResetTaskRun } from "@/hooks/useTaskRun";
+import { useResetTaskRun, useReopenTask, useStartTask } from "@/hooks/useTaskRun";
 import { useClearStepCheck, useRestartTask, useSetStepCheck, useTaskPrepChecks } from "@/hooks/useTaskPrep";
 
 /** Alla bilder på ett steg: huvudbilden först, därefter de extra bilderna. */
@@ -86,6 +86,8 @@ export function TaskRunFullscreen({
   const clearStep = useClearStepCheck();
   const restart = useRestartTask();
   const resetRun = useResetTaskRun();
+  const reopen = useReopenTask();
+  const start = useStartTask();
   useFullscreenFlowFlag(open);
   const [index, setIndex] = useState(0);
   /** Kontrollen visas först på dator, sedan stegen. */
@@ -285,13 +287,16 @@ export function TaskRunFullscreen({
           </button>
         )}
 
-        {/* Börja om — alla steg och utrustningskontrollen nollställs */}
+        {/* Börja om — allt nollställs och uppgiften startas direkt i flödet igen */}
         <Button
           variant="outline"
           className="mt-3 h-10 w-full gap-2 text-sm"
           onClick={async () => {
             await restart.mutateAsync({ checklistItemId });
+            await reopen.mutateAsync(checklistItemId);
             await resetRun.mutateAsync(checklistItemId);
+            /** Klockan börjar om från noll och man står i flödet på nytt. */
+            await start.mutateAsync(checklistItemId);
             setOverviewOpen(false);
             setIndex(0);
             if (prepNode) backToPrep();
@@ -300,6 +305,7 @@ export function TaskRunFullscreen({
         >
           <RotateCcw className="h-4 w-4" /> Börja om uppgiften
         </Button>
+
 
         <ul className="mt-3 space-y-1.5">
           {steps.map((st, i) => {
