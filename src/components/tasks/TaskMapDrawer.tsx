@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Check, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, Maximize2, Minimize2, X } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
