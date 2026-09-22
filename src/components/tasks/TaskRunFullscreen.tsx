@@ -285,13 +285,16 @@ export function TaskRunFullscreen({
           </button>
         )}
 
-        {/* Börja om — alla steg och utrustningskontrollen nollställs */}
+        {/* Börja om — allt nollställs och uppgiften startas direkt i flödet igen */}
         <Button
           variant="outline"
           className="mt-3 h-10 w-full gap-2 text-sm"
           onClick={async () => {
             await restart.mutateAsync({ checklistItemId });
+            await reopen.mutateAsync(checklistItemId);
             await resetRun.mutateAsync(checklistItemId);
+            /** Klockan börjar om från noll och man står i flödet på nytt. */
+            await start.mutateAsync(checklistItemId);
             setOverviewOpen(false);
             setIndex(0);
             if (prepNode) backToPrep();
@@ -300,6 +303,7 @@ export function TaskRunFullscreen({
         >
           <RotateCcw className="h-4 w-4" /> Börja om uppgiften
         </Button>
+
 
         <ul className="mt-3 space-y-1.5">
           {steps.map((st, i) => {
