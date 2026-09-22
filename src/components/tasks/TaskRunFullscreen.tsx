@@ -14,10 +14,9 @@ function stepImages(st: GuideStep): string[] {
   return [st.image ?? "", ...(st.images ?? [])].filter(Boolean) as string[];
 }
 
-/** Kort rubrik ur stegtexten. */
+/** Rubrik ur stegtexten — hela meningen, aldrig avkortad. */
 function stepTitle(text: string): string {
-  const first = text.split(/[.!?]/)[0]?.split(",")[0]?.trim() || text.trim();
-  return first.length > 70 ? `${first.slice(0, 67)}…` : first;
+  return text.split(/[.!?]/)[0]?.trim() || text.trim();
 }
 
 function Detail({ label, text, tone }: { label: string; text?: string | null; tone: string }) {
