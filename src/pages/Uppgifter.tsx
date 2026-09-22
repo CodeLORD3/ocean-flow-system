@@ -998,7 +998,18 @@ export default function Uppgifter() {
         staff={staffList}
         plan={plan}
         zones={zones}
-        onCreated={(id) => switchTab(`/uppgift/${id}`)}
+        onCreated={(id) => {
+          // Efter att uppgiften skapats stannar vi i flödet av uppgifter
+          // och rullar fram + markerar den nya raden.
+          setTab("dag");
+          setFocusTaskId(id);
+          setTimeout(() => {
+            document
+              .getElementById(`task-row-${id}`)
+              ?.scrollIntoView({ behavior: "smooth", block: "center" });
+          }, 300);
+          setTimeout(() => setFocusTaskId(null), 3000);
+        }}
       />
 
       <TaskMapDrawer
