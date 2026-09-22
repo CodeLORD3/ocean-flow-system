@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #fbfcfc;
+        font-family: Barlow, system-ui, sans-serif;
+        color: #1f4d6b;
+      }
+      .rad {
+        border: 1px solid #d6e0e6;
+        border-left: 6px solid #b4462a;
+        border-radius: 12px;
+        background: #fff;
+        padding: 14px 16px;
+        max-width: 720px;
+      }
+      .topp {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #b4462a;
+        font-weight: 700;
+      }
+      .butik { color: #1f4d6b; }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+      .chip {
+        border: 1px solid #d6e0e6;
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        background: #f4f7f8;
+      }
+      .klar {
+        background: #e8f3ec;
+        border-color: #bcdcc7;
+        color: #2f6b45;
+      }
+      .rest { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: #6a7c86; margin-top: 8px; }
+    </style>
+  </head>
+  <body>
+    <div class="rad">
+      <div class="topp">
+        <span>Kvar i dag</span>
+        <span class="butik">Fiskskaldjur Amhult</span>
+      </div>
+      <div class="chips">
+        <span class="chip">Dagsrapport</span>
+        <span class="chip">Inventering</span>
+        <span class="chip">Beställning grossist</span>
+        <span class="chip">Inköp</span>
+        <span class="chip klar">Kassaavstämning klar</span>
+      </div>
+      <div class="rest">1 av 5 klara · raden försvinner när allt är klart</div>
+    </div>
+  </body>
+</html>
