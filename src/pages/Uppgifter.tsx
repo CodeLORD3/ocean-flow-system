@@ -69,6 +69,7 @@ export default function Uppgifter() {
   const stores = useAllowedStores();
   const { switchTab } = useTabs();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
 
   const [pickedStore, setPickedStore] = useState<string | null>(null);
   const storeId = site === "shop" ? activeStoreId : (pickedStore ?? stores[0]?.id ?? null);
