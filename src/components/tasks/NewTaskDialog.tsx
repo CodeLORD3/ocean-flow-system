@@ -299,6 +299,28 @@ export function NewTaskDialog({
                         <span className="block text-xs text-muted-foreground">
                           {areas.find((a) => a.id === r.zoneId)?.name ?? "Inget område"}
                         </span>
+                        {r.doers.length > 0 && (
+                          <span className="mt-1 flex flex-wrap items-center gap-1">
+                            {r.doers.slice(0, 3).map((d) => (
+                              <span
+                                key={d.id}
+                                className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs"
+                              >
+                                {d.image ? (
+                                  <img src={d.image} alt="" className="h-4 w-4 rounded-full object-cover" />
+                                ) : (
+                                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/15 text-[9px] font-semibold text-primary">
+                                    {d.name.slice(0, 1)}
+                                  </span>
+                                )}
+                                {d.name.split(" ")[0]} {d.times} ggr
+                              </span>
+                            ))}
+                            {r.doers.length > 3 && (
+                              <span className="text-xs text-muted-foreground">+{r.doers.length - 3} till</span>
+                            )}
+                          </span>
+                        )}
                       </span>
                       <span className="whitespace-nowrap font-mono text-xs tabular-nums text-muted-foreground">
                         gjord {r.doneTimes} ggr
