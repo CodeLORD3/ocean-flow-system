@@ -29,6 +29,8 @@ export type EntityImage = {
   floor_plan_id: string | null;
   /** Checklistuppgiften bilden togs för, om bilden kom från en uppgift. */
   checklist_item_id?: string | null;
+  /** Vilket steg i uppgiften bilden togs på, 1 och uppåt. */
+  step_index?: number | null;
 };
 
 export type EntityImageComment = {
@@ -123,6 +125,7 @@ export function useUploadEntityImage() {
       floorPlanId,
       norm,
       checklistItemId,
+      stepIndex,
     }: {
       entityType: string;
       entityId: string;
@@ -137,6 +140,8 @@ export function useUploadEntityImage() {
       norm?: { x: number; y: number } | null;
       /** Checklistuppgiften bilden hör till, när bilden tas från en uppgift. */
       checklistItemId?: string | null;
+      /** Steget i uppgiften bilden togs på, 1 och uppåt. */
+      stepIndex?: number | null;
     }) => {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth?.user?.id ?? null;
@@ -178,6 +183,7 @@ export function useUploadEntityImage() {
           norm_x: norm?.x ?? null,
           norm_y: norm?.y ?? null,
           checklist_item_id: checklistItemId ?? null,
+          step_index: stepIndex ?? null,
         } as never)
         .select("id")
         .single();

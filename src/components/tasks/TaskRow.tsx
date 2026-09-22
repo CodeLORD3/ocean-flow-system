@@ -39,7 +39,7 @@ type Props = {
   photoCount?: number;
   onToggle: (done: boolean) => void;
   onOpenDetail: () => void;
-  onAddPhoto?: (file: File) => void;
+  onAddPhoto?: (file: File, stepIndex?: number | null) => void;
   onOpenArea?: (areaId: string) => void;
   onDelete?: () => void;
   /** Genväg dit arbetet görs (dagsrapport, checklista, recept …). */
@@ -376,7 +376,7 @@ export function TaskRow({
             photoCount={effectivePhotoCount}
             requiresPhoto={task.requires_photo}
             blockedText={blocked ? missingText(task, missing) : undefined}
-            onAddPhoto={async (file) => onAddPhoto?.(file)}
+            onAddPhoto={async (file, stepIndex) => onAddPhoto?.(file, stepIndex)}
             onFinish={async () => {
               /* Stoppa klockan så tiden sparas — annars står uppgiften kvar som pågående. */
               if (task.started_at) await finish.mutateAsync({ id: task.id, startedAt: task.started_at });
