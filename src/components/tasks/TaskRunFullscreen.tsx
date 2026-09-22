@@ -87,6 +87,10 @@ export function TaskRunFullscreen({
   const [showPrep, setShowPrep] = useState(true);
   /** Textrutan i telefonen kan dras ner så hela bilden syns. */
   const [textOpen, setTextOpen] = useState(true);
+  /** Vilken bild man tittar på i varje steg — rutan göms när man bläddrar vidare. */
+  const [galleryAt, setGalleryAt] = useState<Record<number, number>>({});
+  /** Steg där man valt att ta fram rutan igen fastän man bläddrat i bilderna. */
+  const [panelShown, setPanelShown] = useState<Record<number, boolean>>({});
   /** Varning när uppgiften stängs utan den bild som krävs. */
   const [warnPhoto, setWarnPhoto] = useState(false);
   /** Översikt över vad som är gjort och vad som är kvar. */
