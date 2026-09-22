@@ -435,11 +435,23 @@ export default function ShopOrders() {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const startNewOrder = () => {
     setCreatingOrder(true);
-    setTimeout(() => {
-      searchInputRef.current?.focus();
-      searchInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 80);
+    requestAnimationFrame(() => {
+      searchInputRef.current?.focus({ preventScroll: true });
+      searchInputRef.current?.scrollIntoView({ block: "nearest" });
+    });
   };
+
+  /**
+   * Säkerhetsnät: om en ruta stängts utan att städa upp blir sidan omöjlig att
+   * trycka på. Så fort ingen ruta är öppen släpps sidan fri igen.
+   */
+  useEffect(() => {
+    const t = window.setInterval(() => {
+      if (document.querySelector("[role=dialog],[data-state=open][role=alertdialog]")) return;
+      if (document.body.style.pointerEvents === "none") document.body.style.pointerEvents = "";
+    }, 500);
+    return () => window.clearInterval(t);
+  }, []);
 
 
   // Fetch active store details to determine zone
@@ -559,6 +571,53 @@ export default function ShopOrders() {
     });
   }, [customerDemand]);
 
+  /**
+   * Beställningen som håller på att skrivas sparas lokalt per butik, så raderna
+   * ligger kvar om telefonen laddar om sidan eller byter flik.
+   */
+  const draftKey = activeStoreId ? `shop-order-draft-${activeStoreId}` : null;
+  const draftLoaded = useRef(false);
+  useEffect(() => {
+    draftLoaded.current = false;
+  }, [draftKey]);
+  useEffect(() => {
+    if (!draftKey || draftLoaded.current) return;
+    draftLoaded.current = true;
+    try {
+      const raw = sessionStorage.getItem(draftKey);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { lines?: OrderLine[]; note?: string; date?: string | null };
+      if (Array.isArray(saved.lines) && saved.lines.length > 0) {
+        setOrderLines(saved.lines);
+        setCreatingOrder(true);
+      }
+      if (saved.note) setOrderNote(saved.note);
+      if (saved.date) setDesiredDeliveryDate(new Date(saved.date));
+    } catch {
+      /* trasigt utkast ignoreras */
+    }
+  }, [draftKey]);
+  useEffect(() => {
+    if (!draftKey || !draftLoaded.current) return;
+    try {
+      if (orderLines.length === 0 && !orderNote) {
+        sessionStorage.removeItem(draftKey);
+        return;
+      }
+      sessionStorage.setItem(
+        draftKey,
+        JSON.stringify({
+          lines: orderLines,
+          note: orderNote,
+          date: desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : null,
+        }),
+      );
+    } catch {
+      /* fullt lagringsutrymme stoppar inte beställningen */
+    }
+  }, [draftKey, orderLines, orderNote, desiredDeliveryDate]);
+
+
   // Fetch shop orders with lines
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["shop-orders-shop", activeStoreId],
@@ -653,21 +712,30 @@ export default function ShopOrders() {
     setFocusProductId(p.id);
   };
 
-  // Efter att en produkt lagts till: hoppa direkt till antal-fältet
+  // Efter att en produkt lagts till: hoppa direkt till antal-fältet.
+  // Ett försök per tillagd produkt — fokus får aldrig hänga kvar och trigga om effekten.
   useEffect(() => {
     if (!focusProductId) return;
-    const el = qtyRefs.current[focusProductId];
-    if (el) {
-      el.focus();
-      el.select?.();
+    const id = focusProductId;
+    const raf = requestAnimationFrame(() => {
+      const el = qtyRefs.current[id];
+      if (el) {
+        el.focus({ preventScroll: true });
+        el.select?.();
+        el.scrollIntoView({ block: "nearest" });
+      }
       setFocusProductId(null);
-    }
-  }, [focusProductId, groupedOrderLines]);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [focusProductId]);
 
 
 
+  /** Telefonens tangentbord ger komma — siffran ska räknas ändå. */
+  const renKvantitet = (v: string) => v.replace(",", ".").replace(/[^\d.]/g, "");
   const updateLine = (idx: number, qty: string) => {
-    setOrderLines(prev => prev.map((l, i) => i === idx ? { ...l, quantity: qty } : l));
+    const q = renKvantitet(qty);
+    setOrderLines(prev => prev.map((l, i) => i === idx ? { ...l, quantity: q } : l));
   };
 
   /**
@@ -706,7 +774,8 @@ export default function ShopOrders() {
   };
 
   const setLineField = (idx: number, field: "priorityQty" | "priorityNote", value: string) => {
-    setOrderLines(prev => prev.map((l, i) => (i === idx ? { ...l, [field]: value } : l)));
+    const v = field === "priorityQty" ? renKvantitet(value) : value;
+    setOrderLines(prev => prev.map((l, i) => (i === idx ? { ...l, [field]: v } : l)));
   };
 
   const removeLine = (idx: number) => {
@@ -796,6 +865,13 @@ export default function ShopOrders() {
     setOrderLines([]);
     setOrderNote("");
     setDesiredDeliveryDate(undefined);
+    if (draftKey) {
+      try {
+        sessionStorage.removeItem(draftKey);
+      } catch {
+        /* ignoreras */
+      }
+    }
   };
 
 
@@ -1037,7 +1113,7 @@ export default function ShopOrders() {
                                 </Button>
                                 <Input
                                   ref={el => { qtyRefs.current[line.product_id] = el; }}
-                                  type="number"
+                                  type="text"
                                   inputMode="decimal"
                                   enterKeyHint="next"
                                   step="0.1"
@@ -1093,7 +1169,7 @@ export default function ShopOrders() {
                               {line.priority === "must" && (
                                 <div className="flex flex-wrap items-center gap-2">
                                   <Input
-                                    type="number"
+                                    type="text"
                                     inputMode="decimal"
                                     step="0.1"
                                     value={line.priorityQty}
@@ -1183,7 +1259,7 @@ export default function ShopOrders() {
                                       <span className="text-[10px] text-muted-foreground">Påfyllning</span>
                                       <Input
                                         ref={el => { qtyRefs.current[line.product_id] = el; }}
-                                        type="number"
+                                        type="text"
                                         inputMode="decimal"
                                         step="0.1"
                                         value={line.topUpQty ?? ""}
@@ -1197,7 +1273,7 @@ export default function ShopOrders() {
                                 ) : (
                                 <Input
                                   ref={el => { qtyRefs.current[line.product_id] = el; }}
-                                  type="number"
+                                  type="text"
                                   inputMode="decimal"
                                   enterKeyHint="next"
                                   step="0.1"
@@ -1283,7 +1359,7 @@ export default function ShopOrders() {
                                       {line.priority === "must" && (
                                         <div className="flex flex-wrap items-center gap-1">
                                           <Input
-                                            type="number"
+                                            type="text"
                                             inputMode="decimal"
                                             step="0.1"
                                             value={line.priorityQty}
