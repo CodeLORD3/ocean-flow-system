@@ -188,13 +188,65 @@ export function TaskGuideEditor({
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">{sections[2].n}. {sections[2].title}</p>
-        <p className="mb-2 text-xs text-muted-foreground">Ett moment per steg, i rätt ordning.</p>
+        <p className="mb-2 text-xs text-muted-foreground">
+          Ett moment per steg. Skriv och tryck Enter, eller lägg in bilder — varje bild blir ett nytt steg.
+        </p>
+
+        {/* Snabbrad: skriv steget och tryck Enter, eller lägg in flera bilder på en gång */}
+        <div className="mb-3 flex items-start gap-2 rounded-lg border border-dashed p-2">
+          <Textarea
+            value={draft}
+            placeholder="Skriv nästa steg och tryck Enter"
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                addDraft();
+              }
+            }}
+            className="min-h-[44px] flex-1"
+          />
+          <div className="flex shrink-0 flex-col gap-2">
+            <Button size="sm" onClick={addDraft} disabled={!draft.trim()}>
+              <Plus className="mr-1 h-4 w-4" /> Lägg till
+            </Button>
+            <MultiPickImages
+              taskId={taskId}
+              onPicked={(urls) =>
+                patch({ steps: [...guide.steps, ...urls.map((url) => ({ text: "", image: url }))] })
+              }
+            />
+          </div>
+        </div>
+
         <div className="space-y-3">
           {guide.steps.map((s, i) => (
-            <div key={i} className="flex items-start gap-2">
-              <span className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold">
-                {i + 1}
-              </span>
+            <div key={i} className="flex items-start gap-2 rounded-lg border p-2">
+              <div className="flex flex-col items-center gap-1">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold">
+                  {i + 1}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  disabled={i === 0}
+                  aria-label="Flytta upp"
+                  onClick={() => moveStep(i, -1)}
+                >
+                  <ArrowUp className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  disabled={i === guide.steps.length - 1}
+                  aria-label="Flytta ner"
+                  onClick={() => moveStep(i, 1)}
+                >
+                  <ArrowDown className="h-3.5 w-3.5" />
+                </Button>
+              </div>
               <div className="flex-1 space-y-2">
                 <Textarea
                   value={s.text}
@@ -226,10 +278,11 @@ export function TaskGuideEditor({
             </div>
           ))}
           <Button variant="outline" size="sm" onClick={() => patch({ steps: [...guide.steps, { text: "", image: null }] })}>
-            <Plus className="mr-1 h-4 w-4" /> Lägg till steg
+            <Plus className="mr-1 h-4 w-4" /> Lägg till tomt steg
           </Button>
         </div>
       </div>
+
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">{sections[3].n}. {sections[3].title}</p>
