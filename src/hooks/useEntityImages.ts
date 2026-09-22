@@ -67,25 +67,60 @@ async function currentActorName() {
 }
 
 
-/** Bilder kopplade till ett objekt, t.ex. en butik ("store") eller en lagerplats ("storage_location"). */
+/** image_links använder korta namn för kartans ytor/objekt. */
+function linkTypesFor(entityType: string) {
+  if (entityType === "map_zone") return ["zone", "map_zone"];
+  if (entityType === "map_object") return ["map_object", "object"];
+  return [entityType];
+}
+
+/**
+ * Bilder kopplade till ett objekt, t.ex. en butik ("store") eller en yta ("map_zone").
+ * image_links är sanningen om vad bilden hör till; entity_images.entity_type/entity_id
+ * är bara bakåtkompatibelt hemvist. Därför slås båda samman här.
+ */
 export function useEntityImages(entityType: string, entityId?: string | null) {
   return useQuery({
     queryKey: ["entity-images", entityType, entityId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("entity_images")
-        .select("*")
-        .eq("entity_type", entityType)
-        .eq("entity_id", entityId!)
-        .order("is_cover", { ascending: false })
-        .order("sort_order")
-        .order("created_at");
-      if (error) throw error;
-      return (data || []) as EntityImage[];
+      const [homed, links] = await Promise.all([
+        supabase
+          .from("entity_images")
+          .select("*")
+          .eq("entity_type", entityType)
+          .eq("entity_id", entityId!)
+          .order("is_cover", { ascending: false })
+          .order("sort_order")
+          .order("created_at"),
+        supabase
+          .from("image_links")
+          .select("media_id")
+          .in("entity_type", linkTypesFor(entityType))
+          .eq("entity_id", entityId!),
+      ]);
+      if (homed.error) throw homed.error;
+      if (links.error) throw links.error;
+
+      const rows = (homed.data || []) as EntityImage[];
+      const have = new Set(rows.map((r) => r.id));
+      const missing = [...new Set((links.data || []).map((r) => r.media_id as string))].filter(
+        (id) => !have.has(id),
+      );
+      if (missing.length) {
+        const { data: extra, error } = await supabase
+          .from("entity_images")
+          .select("*")
+          .in("id", missing)
+          .order("created_at");
+        if (error) throw error;
+        rows.push(...((extra || []) as EntityImage[]));
+      }
+      return rows;
     },
     enabled: !!entityId,
   });
 }
+
 
 /** Antal bilder per objekt-id, hämtat i en enda fråga för en lista. */
 export function useEntityImageCounts(entityType: string, ids: string[]) {
