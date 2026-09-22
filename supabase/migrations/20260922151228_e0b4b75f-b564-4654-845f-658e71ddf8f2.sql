@@ -1,0 +1,1 @@
+ALTER TABLE public.entity_images ADD COLUMN IF NOT EXISTS step_index integer;

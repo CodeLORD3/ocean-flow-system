@@ -5231,6 +5231,7 @@ export type Database = {
           norm_y: number | null
           sort_order: number
           status: string
+          step_index: number | null
           tags: string[]
           title: string | null
           uploaded_by: string | null
@@ -5262,6 +5263,7 @@ export type Database = {
           norm_y?: number | null
           sort_order?: number
           status?: string
+          step_index?: number | null
           tags?: string[]
           title?: string | null
           uploaded_by?: string | null
@@ -5293,6 +5295,7 @@ export type Database = {
           norm_y?: number | null
           sort_order?: number
           status?: string
+          step_index?: number | null
           tags?: string[]
           title?: string | null
           uploaded_by?: string | null
