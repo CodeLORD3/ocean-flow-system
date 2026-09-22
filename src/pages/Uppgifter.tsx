@@ -234,28 +234,25 @@ export default function Uppgifter() {
 
   const addPhoto = async (task: Task, file: File) => {
     const zoneId = task.zone_id;
-    if (!zoneId) {
-      toast({
-        title: "Uppgiften saknar område",
-        description: "Koppla uppgiften till ett område på butikskartan först, så hamnar bilden rätt.",
-        variant: "destructive",
-      });
-      return;
-    }
     try {
+      /* Bilden kopplas alltid till uppgiften, och till området när det finns. */
       await upload.mutateAsync({
-        entityType: "map_zone",
-        entityId: zoneId,
+        entityType: zoneId ? "map_zone" : "library",
+        entityId: zoneId ?? task.id,
         file,
         imageKind: "completion",
-        floorPlanId: plan?.id ?? null,
+        floorPlanId: zoneId ? (plan?.id ?? null) : null,
         checklistItemId: task.id,
       });
-      toast({ title: "Bild sparad på uppgiften" });
+      toast({
+        title: "Bild sparad på uppgiften",
+        description: zoneId ? "Kopplad till uppgiften och området." : "Kopplad till uppgiften.",
+      });
     } catch (e: any) {
       toast({ title: "Kunde inte spara bilden", description: e.message, variant: "destructive" });
     }
   };
+
 
   const deleteTask = async (task: Task) => {
     if (!window.confirm(`Ta bort uppgiften "${task.task}" från ${day}?`)) return;
