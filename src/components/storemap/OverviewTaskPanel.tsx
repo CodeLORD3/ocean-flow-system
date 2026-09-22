@@ -38,6 +38,7 @@ export function OverviewTaskPanel({
   day,
   onDayChange,
   onOpenZone,
+  onOpenTask,
   lockedZoneId,
 }: {
   storeId: string;
@@ -48,6 +49,8 @@ export function OverviewTaskPanel({
   day: string;
   onDayChange?: (iso: string) => void;
   onOpenZone?: (zoneId: string) => void;
+  /** Öppnar uppgiftens egen sida. */
+  onOpenTask?: (taskId: string) => void;
   /** Sätts på en ytas egen sida — då visas bara den ytans uppgifter. */
   lockedZoneId?: string | null;
 }) {
