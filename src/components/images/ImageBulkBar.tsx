@@ -61,8 +61,8 @@ export default function ImageBulkBar({
   }
 
   return (
-    <div className="sticky bottom-0 z-20 -mx-4 mt-4 border-t bg-background/95 px-4 py-3 backdrop-blur">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="fixed inset-x-0 bottom-0 z-50 max-h-[70dvh] overflow-y-auto border-t bg-background px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(0,0,0,0.12)] sm:pb-3">
+      <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-2">
         <span className="text-sm font-medium">{selectedIds.length} markerade</span>
         <Button size="sm" onClick={() => setOpen((v) => !v)}>
           {open ? "Stäng" : "Placera / koppla"}
@@ -73,7 +73,7 @@ export default function ImageBulkBar({
       </div>
 
       {open && (
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto mt-3 grid max-w-[1400px] gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <Label>Vad visar bilderna?</Label>
             <select
