@@ -38,6 +38,19 @@ export default function ImageBulkBar({
   const { data: resources = [] } = usePickResources();
   const { data: products = [] } = usePickProducts();
   const bulk = useBulkClassify();
+  const del = useBulkDeleteImages();
+
+  async function removeSelected() {
+    const n = selectedIds.length;
+    if (!window.confirm(`Ta bort ${n} bilder helt? Det går inte att ångra.`)) return;
+    try {
+      await del.mutateAsync({ mediaIds: selectedIds });
+      toast.success(`${n} bilder borttagna`);
+      onClear();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte ta bort");
+    }
+  }
 
   // Finns bara en butik behöver ingen välja den — områdena visas direkt.
   useEffect(() => {
