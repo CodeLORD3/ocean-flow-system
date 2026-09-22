@@ -63,6 +63,8 @@ export function TaskRunFullscreen({
   /** Det som saknas för att få bocka av uppgiften. */
   blockedText?: string;
   onAddPhoto: (file: File) => Promise<void> | void;
+  /** Sätter bilden på ett steg — bilderna är det viktigaste i beskrivningen. */
+  onSetStepImage?: (stepIndex: number, file: File) => Promise<void> | void;
   onFinish: () => Promise<void> | void;
 }) {
   const { data: staff } = useCurrentStaff();
