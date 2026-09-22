@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { GuideStep } from "@/lib/taskGuide";
 import { useCurrentStaff } from "@/hooks/useCurrentStaff";
 import { useFullscreenFlowFlag } from "@/lib/fullscreenFlow";
-import { useResetTaskRun } from "@/hooks/useTaskRun";
+import { useResetTaskRun, useReopenTask, useStartTask } from "@/hooks/useTaskRun";
 import { useClearStepCheck, useRestartTask, useSetStepCheck, useTaskPrepChecks } from "@/hooks/useTaskPrep";
 
 /** Alla bilder på ett steg: huvudbilden först, därefter de extra bilderna. */
