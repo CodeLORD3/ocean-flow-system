@@ -851,7 +851,7 @@ export function useTaskRegister(storeId?: string | null, days = 180) {
           categoryId: r.category_id,
           categoryName: null,
           zoneId: r.zone_id,
-          note: r.note,
+          note: r.important_note ?? null,
           linkUrl: r.link_url,
           recipeId: r.recipe_id,
           recurring: true,
