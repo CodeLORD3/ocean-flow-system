@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -16,11 +16,16 @@ export default function ReturnToImageBar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [prev, setPrev] = useState<NavEntry | null>(() => previousNav());
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
     const update = () => setPrev(previousNav());
     update();
     return subscribeNav(update);
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    setHidden(false);
   }, [location.pathname, location.search]);
 
   const params = new URLSearchParams(location.search);
