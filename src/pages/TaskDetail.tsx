@@ -25,6 +25,7 @@ import { useStaff } from "@/hooks/useStaff";
 import { useFloorPlans, useMapZones } from "@/hooks/useStoreMap";
 import { useUploadEntityImage, type EntityImage } from "@/hooks/useEntityImages";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
+import ImageSourceLinks from "@/components/images/ImageSourceLinks";
 import { ImageArchivePicker } from "@/components/images/ImageArchivePicker";
 import { useAttachArchiveImages } from "@/hooks/useImageArchive";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
