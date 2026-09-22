@@ -200,7 +200,7 @@ export function ZonePickMap({
                   className="cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onChange(isSel ? null : zone.id);
+                    pick(isSel ? null : zone.id);
                   }}
                 >
                   <polygon
