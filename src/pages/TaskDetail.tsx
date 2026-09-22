@@ -277,10 +277,10 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
               )}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             {target && (
-              <Button size="lg" variant="outline" onClick={() => switchTab(target.url)}>
-                <ArrowUpRight className="mr-1 h-4 w-4" /> {target.label}
+              <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => switchTab(target.url)}>
+                <ArrowUpRight className="mr-1 h-3.5 w-3.5" /> {target.label}
               </Button>
             )}
             <label className="inline-flex">
