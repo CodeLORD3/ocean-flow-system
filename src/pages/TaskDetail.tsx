@@ -312,12 +312,17 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
                   for (const f of files) await addPhoto(f);
                 }}
               />
-              <span className="inline-flex h-10 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted">
-                <ImageIcon className="h-4 w-4" /> Bibliotek
+              <span className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground">
+                <ImageIcon className="h-3.5 w-3.5" /> Bibliotek
               </span>
             </label>
-            <Button variant="outline" size="lg" onClick={() => setArchiveOpen(true)}>
-              <Search className="mr-1 h-4 w-4" /> Sök i arkiv
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs text-muted-foreground"
+              onClick={() => setArchiveOpen(true)}
+            >
+              <Search className="mr-1 h-3.5 w-3.5" /> Sök i arkiv
             </Button>
           </div>
         </div>
