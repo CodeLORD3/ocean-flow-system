@@ -369,7 +369,15 @@ export function TaskRunFullscreen({
                 className="relative flex h-full snap-start snap-always flex-col justify-end bg-foreground/95"
               >
                 {stepImages(st).length > 0 ? (
-                  <StepGallery images={stepImages(st)} alt={stepTitle(st.text || "")} fill />
+                  <StepGallery
+                    images={stepImages(st)}
+                    alt={stepTitle(st.text || "")}
+                    fill
+                    onIndexChange={(at) => {
+                      setGalleryAt((prev) => (prev[n] === at ? prev : { ...prev, [n]: at }));
+                      if (at === 0) setPanelShown((prev) => (prev[n] ? { ...prev, [n]: false } : prev));
+                    }}
+                  />
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted">
                     <Camera className="h-10 w-10 text-muted-foreground" />
