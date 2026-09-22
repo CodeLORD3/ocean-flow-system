@@ -89,6 +89,8 @@ export function TaskRunFullscreen({
   const [textOpen, setTextOpen] = useState(true);
   /** Varning när uppgiften stängs utan den bild som krävs. */
   const [warnPhoto, setWarnPhoto] = useState(false);
+  /** Översikt över vad som är gjort och vad som är kvar. */
+  const [overviewOpen, setOverviewOpen] = useState(false);
   const touchY = useRef<number | null>(null);
   const isPhone = useIsPhone();
   const feedRef = useRef<HTMLDivElement | null>(null);
@@ -208,11 +210,74 @@ export function TaskRunFullscreen({
     </div>
   ) : null;
 
+  /** Översikt: vad som är gjort och vad som är kvar — tryck på ett steg för att gå dit. */
+  const overviewNode = overviewOpen ? (
+    <div className="fixed inset-0 z-[55] flex items-end justify-center bg-foreground/60 p-0 sm:items-center sm:p-4">
+      <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border bg-card p-4 shadow-xl sm:rounded-2xl">
+        <div className="mb-3 flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="font-heading text-lg font-bold">Översikt</p>
+            <p className="font-mono text-sm tabular-nums text-muted-foreground">
+              {doneNos.size} av {steps.length} klara · {steps.length - doneNos.size} kvar
+            </p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => setOverviewOpen(false)} aria-label="Stäng översikten">
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        <div className="h-1.5 rounded-full bg-muted">
+          <div className="h-full rounded-full bg-emerald-600 transition-all" style={{ width: `${pct}%` }} />
+        </div>
+        <ul className="mt-3 space-y-1.5">
+          {steps.map((st, i) => {
+            const n = i + 1;
+            const isDone = doneNos.has(n);
+            return (
+              <li key={n}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOverviewOpen(false);
+                    setShowPrep(false);
+                    setIndex(i);
+                    if (isPhone) setTimeout(() => scrollToStep(i), 60);
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left",
+                    isDone ? "border-emerald-500/40 bg-emerald-50/70" : "bg-background hover:bg-muted/60",
+                    n === no && "ring-2 ring-primary",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-mono text-xs font-semibold tabular-nums",
+                      isDone ? "bg-emerald-600 text-white" : "bg-muted text-foreground",
+                    )}
+                  >
+                    {isDone ? <Check className="h-4 w-4" /> : n}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className={cn("block truncate text-sm font-medium", isDone && "text-emerald-900")}>
+                      {stepTitle(st.text || `Steg ${n}`)}
+                    </span>
+                    <span className="block text-[11px] text-muted-foreground">{isDone ? "Klart" : "Kvar att göra"}</span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  ) : null;
+
+
   /* ---------- TELEFON: flöde som swipas uppåt, ett steg per skärm ---------- */
   if (isPhone) {
     return (
       <div className="fixed inset-0 z-50 bg-background">
         {warnNode}
+        {overviewNode}
         {/* Räknaren i höger hörn och vägen ut i vänster */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between p-3">
           <button
@@ -223,9 +288,14 @@ export function TaskRunFullscreen({
           >
             <X className="h-5 w-5" />
           </button>
-          <span className="pointer-events-none rounded-full bg-foreground/70 px-3 py-1.5 font-mono text-sm font-semibold tabular-nums text-background backdrop-blur">
+          <button
+            type="button"
+            onClick={() => setOverviewOpen(true)}
+            aria-label="Visa översikt över stegen"
+            className="pointer-events-auto rounded-full bg-foreground/70 px-3 py-1.5 font-mono text-sm font-semibold tabular-nums text-background backdrop-blur"
+          >
             {doneNos.size}/{steps.length} klara
-          </span>
+          </button>
         </div>
 
         <div
@@ -453,6 +523,7 @@ export function TaskRunFullscreen({
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
       {warnNode}
+      {overviewNode}
       <div className="flex items-center gap-3 border-b px-3 py-2">
         <div className="min-w-0 flex-1">
           <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{taskName}</p>
@@ -460,9 +531,9 @@ export function TaskRunFullscreen({
             Steg {no} av {steps.length}
           </p>
         </div>
-        <span className="rounded-full bg-muted px-3 py-1 font-mono text-sm font-semibold tabular-nums">
-          {doneNos.size}/{steps.length} klara
-        </span>
+        <Button variant="outline" className="h-8 font-mono text-sm tabular-nums" onClick={() => setOverviewOpen(true)}>
+          {doneNos.size}/{steps.length} klara · Översikt
+        </Button>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label="Stäng helskärm">
           <X className="h-5 w-5" />
         </Button>
