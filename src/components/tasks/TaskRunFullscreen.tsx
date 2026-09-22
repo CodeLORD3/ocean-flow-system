@@ -82,6 +82,8 @@ export function TaskRunFullscreen({
   const [showPrep, setShowPrep] = useState(true);
   /** Textrutan i telefonen kan dras ner så hela bilden syns. */
   const [textOpen, setTextOpen] = useState(true);
+  /** Varning när uppgiften stängs utan den bild som krävs. */
+  const [warnPhoto, setWarnPhoto] = useState(false);
   const touchY = useRef<number | null>(null);
   const isPhone = useIsPhone();
   const feedRef = useRef<HTMLDivElement | null>(null);
