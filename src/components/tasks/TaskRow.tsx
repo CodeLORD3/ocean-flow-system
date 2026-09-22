@@ -14,7 +14,7 @@ import { useTaskImages, type TaskRow as Task } from "@/hooks/useTasks";
 import { TaskSteps } from "@/components/tasks/TaskSteps";
 import { TaskRunFullscreen } from "@/components/tasks/TaskRunFullscreen";
 import { parseGuide } from "@/lib/taskGuide";
-import { useStartTask } from "@/hooks/useTaskRun";
+import { useStartTask, useFinishTask } from "@/hooks/useTaskRun";
 import { TaskPrepPanel } from "@/components/tasks/TaskPrepPanel";
 import { useTaskPrepChecks } from "@/hooks/useTaskPrep";
 import {
@@ -114,6 +114,7 @@ export function TaskRow({
   const missing = missingRequirements(task, { photoCount: effectivePhotoCount, checkPhoto: countKnown });
   const blocked = !task.done && missing.length > 0;
   const start = useStartTask();
+  const finish = useFinishTask();
   const running = task.run_status === "pagar";
   const canStart = !task.done && !running;
   const [showGuide, setShowGuide] = useState(false);
@@ -326,7 +327,9 @@ export function TaskRow({
             blockedText={blocked ? missingText(task, missing) : undefined}
             onAddPhoto={async (file) => onAddPhoto?.(file)}
             onFinish={async () => {
-              onToggle(true);
+              /* Stoppa klockan så tiden sparas — annars står uppgiften kvar som pågående. */
+              if (task.started_at) await finish.mutateAsync({ id: task.id, startedAt: task.started_at });
+              else onToggle(true);
               setShowRun(false);
             }}
             prepMissingCount={prepMissingCount}
