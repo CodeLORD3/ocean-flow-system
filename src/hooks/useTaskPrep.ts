@@ -216,6 +216,24 @@ export function useSetStepCheck() {
   });
 }
 
+/**
+ * Börja om uppgiften — alla avbockade steg och all utrustningskontroll tas
+ * bort så hela processen kan göras igen. Historiken på uppgiften rörs inte.
+ */
+export function useRestartTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { checklistItemId: string }) => {
+      const { error } = await supabase
+        .from("task_prep_checks")
+        .delete()
+        .eq("checklist_item_id", input.checklistItemId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => qc.invalidateQueries({ queryKey: ["task-prep-checks", v.checklistItemId] }),
+  });
+}
+
 export function useClearStepCheck() {
   const qc = useQueryClient();
   return useMutation({
