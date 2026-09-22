@@ -58,9 +58,13 @@ export function TaskMapDrawer({
     return { total: list.length, done: list.filter((t) => t.done).length, list };
   };
 
+  /** Zooma ut: visar hela butiken utan att tappa valt område. */
+  const [wholeStore, setWholeStore] = useState(false);
+  useEffect(() => setWholeStore(false), [zoneId]);
+
   /** Kartan centreras på valt område, annars på hela butiken. */
   const view = useMemo(() => {
-    const target = zoneId ? shapes.filter((s) => s.zone.id === zoneId) : shapes;
+    const target = zoneId && !wholeStore ? shapes.filter((s) => s.zone.id === zoneId) : shapes;
     const pts = (target.length > 0 ? target : shapes).flatMap((s) => s.pts);
     if (pts.length === 0) return { x: 0, y: 0, w: plan?.width ?? 1000, h: plan?.height ?? 700 };
     const xs = pts.map((p) => p.x);
