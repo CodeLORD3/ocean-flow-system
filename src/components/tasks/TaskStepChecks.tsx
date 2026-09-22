@@ -87,6 +87,20 @@ export function TaskStepChecks({
               <span className={cn("min-w-0 flex-1 text-sm", done && "text-muted-foreground line-through")}>
                 {stepTitle(s.text || `Steg ${no}`)}
               </span>
+              <span
+                className={cn(
+                  "shrink-0 rounded-md px-3 py-1.5 text-xs font-semibold",
+                  done ? "bg-emerald-600 text-white" : "border text-muted-foreground",
+                )}
+              >
+                {done ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Check className="h-3.5 w-3.5" /> Klar
+                  </span>
+                ) : (
+                  "Markera klar"
+                )}
+              </span>
             </button>
           );
         })}
