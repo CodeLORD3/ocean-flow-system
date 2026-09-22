@@ -326,18 +326,6 @@ export function ZoneAreaPage({
         ))}
       </div>
 
-      {section === "uppgifter" &&
-        (tasks.length === 0 ? (
-          <EmptyState title="Inga uppgifter" description="Koppla uppgifter till ytan i kartan." />
-        ) : (
-          <OverviewTaskPanel
-            storeId={storeId}
-            zones={zone ? [zone] : []}
-            objects={object ? [object] : []}
-            tasks={tasks}
-            day={""}
-          />
-        ))}
 
       {section === "bilder" && (
         <div className="space-y-3">
