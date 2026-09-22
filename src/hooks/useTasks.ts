@@ -564,6 +564,15 @@ export type TaskOccurrence = {
   done_at: string | null;
   signature: string | null;
   completed_by_staff_id: string | null;
+  completion_note: string | null;
+  completion_value: number | null;
+  value_label: string | null;
+  note: string | null;
+  active_minutes: number | null;
+  paused_minutes: number | null;
+  actual_minutes: number | null;
+  started_at: string | null;
+  finished_at: string | null;
   images: EntityImage[];
 };
 
@@ -588,7 +597,9 @@ export function useTaskHistory(storeId?: string | null, taskName?: string | null
 
       const { data: items, error } = await supabase
         .from("checklist_items")
-        .select("id, day_id, done, done_at, signature, completed_by_staff_id")
+        .select(
+          "id, day_id, done, done_at, signature, completed_by_staff_id, completion_note, completion_value, value_label, note, active_minutes, paused_minutes, actual_minutes, started_at, finished_at",
+        )
         .in("day_id", dayIds)
         .eq("task", taskName!);
       if (error) throw error;
@@ -616,6 +627,15 @@ export function useTaskHistory(storeId?: string | null, taskName?: string | null
           done_at: r.done_at,
           signature: r.signature,
           completed_by_staff_id: r.completed_by_staff_id,
+          completion_note: r.completion_note ?? null,
+          completion_value: r.completion_value ?? null,
+          value_label: r.value_label ?? null,
+          note: r.note ?? null,
+          active_minutes: r.active_minutes ?? null,
+          paused_minutes: r.paused_minutes ?? null,
+          actual_minutes: r.actual_minutes ?? null,
+          started_at: r.started_at ?? null,
+          finished_at: r.finished_at ?? null,
           images: byItem.get(r.id) ?? [],
         }))
         .sort((a, b) => b.date.localeCompare(a.date)) as TaskOccurrence[];

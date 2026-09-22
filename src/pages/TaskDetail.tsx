@@ -92,6 +92,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const attachArchive = useAttachArchiveImages();
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [openOccurrence, setOpenOccurrence] = useState<string | null>(null);
   const [title, setTitle] = useState<string | null>(null);
   const [important, setImportant] = useState<string | null>(null);
   const { data: categories = [] } = useTaskCategories(storeId);
@@ -514,25 +515,101 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
           {history.length === 0 ? (
             <p className="text-sm text-muted-foreground">Ingen historik ännu.</p>
           ) : (
-            history.map((h) => (
-              <Card key={h.id} className="flex flex-wrap items-center gap-3 px-4 py-2 text-sm">
-                <span className={cn("rounded px-2 py-0.5 text-[11px]", dayBadgeClass(h.date))}>{h.date}</span>
-                <span className={h.done ? "text-emerald-600" : "text-muted-foreground"}>
-                  {h.done ? "Klar" : "Inte gjord"}
-                </span>
-                {(staffName(h.completed_by_staff_id) || h.signature) && (
-                  <span className="flex items-center gap-2">
-                    <StaffAvatar
-                      name={staffName(h.completed_by_staff_id) ?? h.signature}
-                      imageUrl={staffImage(h.completed_by_staff_id)}
-                      className="h-10 w-10"
-                    />
-                    {staffName(h.completed_by_staff_id) ?? h.signature}
-                  </span>
-                )}
-                {h.images.length > 0 && <span className="text-xs text-muted-foreground">{h.images.length} bilder</span>}
-              </Card>
-            ))
+            history.map((h) => {
+              const open = openOccurrence === h.id;
+              const noteText = h.completion_note ?? h.note;
+              const minutes = h.active_minutes ?? h.actual_minutes;
+              const hasDetails =
+                !!noteText || h.completion_value !== null || h.images.length > 0 || minutes !== null;
+              return (
+                <Card key={h.id} className="overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setOpenOccurrence(open ? null : h.id)}
+                    className="flex w-full flex-wrap items-center gap-3 px-4 py-2 text-left text-sm hover:bg-muted/40"
+                  >
+                    <span className={cn("rounded px-2 py-0.5 text-[11px]", dayBadgeClass(h.date))}>{h.date}</span>
+                    <span className={h.done ? "text-emerald-600" : "text-muted-foreground"}>
+                      {h.done ? "Klar" : "Inte gjord"}
+                    </span>
+                    {(staffName(h.completed_by_staff_id) || h.signature) && (
+                      <span className="flex items-center gap-2">
+                        <StaffAvatar
+                          name={staffName(h.completed_by_staff_id) ?? h.signature}
+                          imageUrl={staffImage(h.completed_by_staff_id)}
+                          className="h-10 w-10"
+                        />
+                        {staffName(h.completed_by_staff_id) ?? h.signature}
+                      </span>
+                    )}
+                    {minutes !== null && (
+                      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                        {Math.round(minutes)} min
+                      </span>
+                    )}
+                    {h.images.length > 0 && (
+                      <span className="text-xs text-muted-foreground">{h.images.length} bilder</span>
+                    )}
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {hasDetails ? (open ? "Stäng" : "Så här gjordes den") : "Inget mer sparat"}
+                    </span>
+                  </button>
+                  {open && (
+                    <div className="space-y-3 border-t bg-muted/20 px-4 py-3 text-sm">
+                      <p className="text-xs text-muted-foreground">
+                        {h.done_at
+                          ? `Klarmarkerad ${new Date(h.done_at).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" })}`
+                          : "Ingen tid registrerad"}
+                        {h.started_at &&
+                          ` · start ${new Date(h.started_at).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}`}
+                        {h.paused_minutes ? ` · pauser ${Math.round(h.paused_minutes)} min` : ""}
+                      </p>
+                      {noteText ? (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Anteckning
+                          </p>
+                          <p className="whitespace-pre-wrap">{noteText}</p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Ingen anteckning skrevs.</p>
+                      )}
+                      {h.completion_value !== null && (
+                        <p>
+                          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            {h.value_label ?? "Mätvärde"}:{" "}
+                          </span>
+                          <span className="font-mono tabular-nums">{h.completion_value}</span>
+                        </p>
+                      )}
+                      {h.images.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {h.images.map((img) => {
+                            const idx = allImages.findIndex((x) => x.id === img.id);
+                            return (
+                              <button
+                                key={img.id}
+                                type="button"
+                                onClick={() => setLightbox(idx >= 0 ? idx : 0)}
+                                className="overflow-hidden rounded-lg"
+                              >
+                                <img
+                                  src={thumbUrl(img.url, THUMB_TILE)}
+                                  alt=""
+                                  className="h-24 w-24 object-cover"
+                                />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Inga bilder togs.</p>
+                      )}
+                    </div>
+                  )}
+                </Card>
+              );
+            })
           )}
         </TabsContent>
 
