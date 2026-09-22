@@ -78,6 +78,8 @@ export function TaskRunFullscreen({
   const setStep = useSetStepCheck();
   const clearStep = useClearStepCheck();
   const [index, setIndex] = useState(0);
+  /** Kontrollen visas först på dator, sedan stegen. */
+  const [showPrep, setShowPrep] = useState(true);
   const isPhone = useIsPhone();
   const feedRef = useRef<HTMLDivElement | null>(null);
 
