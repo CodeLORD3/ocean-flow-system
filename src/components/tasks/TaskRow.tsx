@@ -203,7 +203,7 @@ export function TaskRow({
         {/* Kolumn 1: bocka av — samma kryssruta som i beställningar */}
         <span
           className={cn(
-            "flex w-9 shrink-0 items-center justify-center self-stretch border-r border-grid-line",
+            "flex w-7 shrink-0 items-center justify-center self-stretch border-r border-grid-line",
             open && "border-transparent",
           )}
           title={blocked ? missingText(task, missing) : undefined}
