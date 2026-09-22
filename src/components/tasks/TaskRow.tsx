@@ -92,11 +92,14 @@ export function TaskRow({
   const start = useStartTask();
   const running = task.run_status === "pagar";
   const canStart = !task.done && !running;
+  const [showGuide, setShowGuide] = useState(false);
+  /** Starta uppgiften och gå direkt dit arbetet görs. */
   const startNow = async () => {
-    setOpen(true);
-    if (!canStart) return;
-    await start.mutateAsync(task.id);
-    toast({ title: "Uppgiften är startad", description: "Bocka av stegen ett i taget." });
+    if (canStart) {
+      await start.mutateAsync(task.id);
+      toast({ title: "Uppgiften är startad", description: "Bocka av stegen ett i taget." });
+    }
+    onOpenDetail();
   };
   const tryToggle = (done: boolean) => {
     if (done && blocked) {
