@@ -183,7 +183,7 @@ export function NewTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[560px]">
+      <DialogContent className="flex max-h-[92dvh] flex-col overflow-hidden sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Ny uppgift</DialogTitle>
         </DialogHeader>
