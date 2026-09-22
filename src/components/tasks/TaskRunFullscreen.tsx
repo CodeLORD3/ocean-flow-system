@@ -796,7 +796,7 @@ export function TaskRunFullscreen({
               <span
                 className={cn(
                   "inline-flex h-12 cursor-pointer items-center gap-1 rounded-md border px-3 text-sm hover:bg-muted",
-                  photoCount === 0 && "border-amber-500/50 text-amber-700",
+                  requiresPhoto && photoCount === 0 && "border-amber-500/50 text-amber-700",
                 )}
               >
                 <Camera className="h-5 w-5" /> {photoCount > 0 ? photoCount : "Bild"}
