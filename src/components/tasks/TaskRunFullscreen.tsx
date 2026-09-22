@@ -273,8 +273,9 @@ export function TaskRunFullscreen({
                     {isDone ? <Check className="h-4 w-4" /> : n}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className={cn("block truncate text-sm font-medium", isDone && "text-emerald-900")}>
-                      {stepTitle(st.text || `Steg ${n}`)}
+                    {/* Hela texten syns — den bryts på ny rad i stället för att kapas */}
+                    <span className={cn("block break-words text-sm font-medium", isDone && "text-emerald-900")}>
+                      {st.text || `Steg ${n}`}
                     </span>
                     <span className="block text-[11px] text-muted-foreground">{isDone ? "Klart" : "Kvar att göra"}</span>
                   </span>
@@ -284,7 +285,7 @@ export function TaskRunFullscreen({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 shrink-0 text-xs"
+                    className="h-7 shrink-0 px-2 text-[11px]"
                     onClick={() => clearStep.mutate({ checklistItemId, stepNo: n })}
                   >
                     Ångra
