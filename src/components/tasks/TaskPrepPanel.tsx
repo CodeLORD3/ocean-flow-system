@@ -146,8 +146,7 @@ export function TaskPrepPanel({
               )}
 
               <div className="min-w-0 flex-1">
-                <p className="truncate text-base font-semibold">{nameOf(n)}</p>
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {[brand, n.requirement.quantity_required ? `${n.requirement.quantity_required} st` : null, place]
                     .filter(Boolean)
                     .join(" · ")}
