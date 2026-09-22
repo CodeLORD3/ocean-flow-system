@@ -165,11 +165,29 @@ export function TaskRunFullscreen({
           ref={feedRef}
           onScroll={(e) => {
             const h = e.currentTarget.clientHeight || 1;
-            const i = Math.round(e.currentTarget.scrollTop / h);
+            const i = Math.round(e.currentTarget.scrollTop / h) - feedOffset;
             if (i !== index) setIndex(Math.min(Math.max(i, 0), steps.length - 1));
           }}
           className="h-full snap-y snap-mandatory overflow-y-auto overscroll-contain"
         >
+          {/* Först: kontrollera utrustning & material */}
+          {prepNode && (
+            <section className="flex h-full snap-start flex-col overflow-y-auto px-3 pb-4 pt-14">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Steg 1 · innan du börjar
+              </p>
+              <h2 className="mb-3 font-heading text-xl font-bold">Kontrollera utrustning & material</h2>
+              {prepNode}
+              <Button
+                className="mt-3 h-14 w-full text-base font-semibold"
+                onClick={() => scrollToStep(0)}
+              >
+                {prepMissingCount > 0 ? "Fortsätt till stegen" : "Allt kontrollerat · till stegen"}
+                <ChevronUp className="ml-2 h-5 w-5" />
+              </Button>
+            </section>
+          )}
+
           {steps.map((st, i) => {
             const n = i + 1;
             const stepDone = doneNos.has(n);
