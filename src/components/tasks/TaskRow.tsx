@@ -115,6 +115,15 @@ export function TaskRow({
   const blocked = !task.done && missing.length > 0;
   const start = useStartTask();
   const finish = useFinishTask();
+  /* Öppna uppgiftssidan på rätt flik: historik, instruktion eller inställningar. */
+  const openDetailAt = (tab: string) => {
+    try {
+      sessionStorage.setItem("task-detail-tab", tab);
+    } catch {
+      /* ignorera blockerad lagring */
+    }
+    onOpenDetail();
+  };
   const running = task.run_status === "pagar";
   const canStart = !task.done && !running;
   const [showGuide, setShowGuide] = useState(false);
@@ -316,13 +325,24 @@ export function TaskRow({
 
 
           {/* Allt om uppgiften: redigera, historik, vilka som gjort den, vilka dagar */}
-          <Button
-            variant="outline"
-            className="h-10 w-full justify-start gap-2 text-sm"
-            onClick={onOpenDetail}
-          >
-            <Info className="h-4 w-4" /> Mer om uppgiften — redigera, historik, vilka som gjort den
-          </Button>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Button
+              variant="secondary"
+              className="col-span-2 h-10 justify-start gap-2 text-sm font-semibold sm:col-span-1"
+              onClick={() => openDetailAt("genomfor")}
+            >
+              <Info className="h-4 w-4" /> Mer om uppgiften
+            </Button>
+            <Button variant="outline" className="h-10 gap-1.5 text-xs" onClick={() => openDetailAt("historik")}>
+              <Timer className="h-3.5 w-3.5" /> Historik &amp; tider
+            </Button>
+            <Button variant="outline" className="h-10 gap-1.5 text-xs" onClick={() => openDetailAt("instruktion")}>
+              <Info className="h-3.5 w-3.5" /> Hur gör vi?
+            </Button>
+            <Button variant="outline" className="h-10 gap-1.5 text-xs" onClick={() => openDetailAt("inst")}>
+              <Info className="h-3.5 w-3.5" /> Redigera &amp; dagar
+            </Button>
+          </div>
 
           {/* Utförandet — samma sida, stegen med "Klar · nästa steg" läggs över listan */}
           <TaskRunFullscreen
