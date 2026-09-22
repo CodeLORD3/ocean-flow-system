@@ -263,6 +263,17 @@ export function TaskRunFullscreen({
                     <span className="block text-[11px] text-muted-foreground">{isDone ? "Klart" : "Kvar att göra"}</span>
                   </span>
                 </button>
+                {/* Ångra: tar bort att steget är gjort */}
+                {isDone && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 shrink-0 text-xs"
+                    onClick={() => clearStep.mutate({ checklistItemId, stepNo: n })}
+                  >
+                    Ångra
+                  </Button>
+                )}
               </li>
             );
           })}
