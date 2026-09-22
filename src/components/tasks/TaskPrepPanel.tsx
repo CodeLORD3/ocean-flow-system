@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Check, MapPin, PackageCheck, X } from "lucide-react";
+import { AlertTriangle, Check, MapPin, PackageCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -170,16 +170,16 @@ export function TaskPrepPanel({
 
               {check ? (
                 <Button
-                  variant="ghost"
                   size="sm"
-                  className="h-9 text-xs text-muted-foreground"
+                  className="h-10 shrink-0 bg-emerald-600 px-4 text-white hover:bg-emerald-700"
                   onClick={() => clearCheck.mutate({ id: check.id, checklistItemId })}
+                  title="Tryck igen för att ångra"
                 >
-                  <X className="mr-1 h-3.5 w-3.5" /> Ångra
+                  <Check className="mr-1 h-4 w-4" /> Klar
                 </Button>
               ) : (
                 <div className="flex shrink-0 items-center gap-1">
-                  <Button size="sm" className="h-9" onClick={() => mark(n, "finns")}>
+                  <Button variant="outline" size="sm" className="h-10 px-4" onClick={() => mark(n, "finns")}>
                     <Check className="mr-1 h-4 w-4" /> Finns
                   </Button>
                   <Button
