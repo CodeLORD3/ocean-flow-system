@@ -68,6 +68,7 @@ export function TaskPerformPanel({
   onUpdate,
   onAddPhoto,
   onSetStepImage,
+  onCompleted,
   onReopen,
   onStarted,
 }: {
@@ -88,6 +89,8 @@ export function TaskPerformPanel({
   onAddPhoto: (file: File) => Promise<void> | void;
   /** Bilden på ett steg i arbetsbeskrivningen. */
   onSetStepImage?: (stepIndex: number, file: File) => Promise<void> | void;
+  /** Körs när uppgiften bockats av — tillbaka till uppgiftsflödet. */
+  onCompleted?: () => void;
   onReopen: () => void;
 }) {
   const status = (task.run_status ?? "ej_startad") as RunStatus;
@@ -154,6 +157,8 @@ export function TaskPerformPanel({
       }
       await finish.mutateAsync({ id: task.id, startedAt: task.started_at ?? null });
       toast({ title: "Uppgiften är klar" });
+      /** Tillbaka till flödet så nästa uppgift kan betas av direkt. */
+      onCompleted?.();
     } catch (e: any) {
       toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
     }
