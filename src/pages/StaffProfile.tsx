@@ -576,15 +576,43 @@ function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string
   const navigate = useNavigate();
   const { data: items = [], isLoading } = useMyWork(staffId);
 
-  const groups: { key: string; label: string; icon: any; tone: string; rows: MyWorkItem[] }[] = useMemo(
+  const groups: {
+    key: string;
+    label: string;
+    icon: any;
+    /** Färgad rubrikbricka */
+    chip: string;
+    /** Färgad ram och botten på raderna */
+    box: string;
+    bar: string;
+    rows: MyWorkItem[];
+  }[] = useMemo(
     () => [
-      { key: "late", label: "Försenat", icon: AlertTriangle, tone: "text-destructive", rows: items.filter((i) => i.late) },
-      { key: "today", label: "Idag", icon: ListChecks, tone: "text-primary", rows: items.filter((i) => i.today) },
+      {
+        key: "late",
+        label: "Försenat",
+        icon: AlertTriangle,
+        chip: "bg-destructive text-destructive-foreground",
+        box: "border-destructive/40 bg-destructive/5",
+        bar: "bg-destructive",
+        rows: items.filter((i) => i.late),
+      },
+      {
+        key: "today",
+        label: "Idag",
+        icon: ListChecks,
+        chip: "bg-primary text-primary-foreground",
+        box: "border-primary/40 bg-primary/5",
+        bar: "bg-primary",
+        rows: items.filter((i) => i.today),
+      },
       {
         key: "next",
         label: "Kommande",
         icon: CalendarDays,
-        tone: "text-muted-foreground",
+        chip: "bg-muted text-muted-foreground",
+        box: "border-border bg-card",
+        bar: "bg-muted-foreground/40",
         rows: items.filter((i) => !i.late && !i.today),
       },
     ],
@@ -593,7 +621,7 @@ function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string
 
   return (
     <Card className="shadow-card">
-      <CardContent className="space-y-4 p-4">
+      <CardContent className="space-y-3 p-3">
         {isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-10" />
