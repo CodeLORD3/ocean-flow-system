@@ -141,14 +141,19 @@ export function useUploadEntityImage() {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth?.user?.id ?? null;
       let uploaderName: string | null = auth?.user?.email ?? null;
+      let staffId: string | null = null;
       if (uid) {
         const { data: st } = await supabase
           .from("staff")
-          .select("first_name, last_name")
+          .select("id, first_name, last_name")
           .eq("user_id", uid)
           .maybeSingle();
-        if (st) uploaderName = `${st.first_name ?? ""} ${st.last_name ?? ""}`.trim() || uploaderName;
+        if (st) {
+          staffId = (st.id as string) ?? null;
+          uploaderName = `${st.first_name ?? ""} ${st.last_name ?? ""}`.trim() || uploaderName;
+        }
       }
+
       const prepared = await prepareUpload(file, COMPRESS_PHOTO);
       const path = `entity-images/${entityType}/${entityId}/${Date.now()}-${Math.random()
         .toString(36)
