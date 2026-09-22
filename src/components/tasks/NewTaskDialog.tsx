@@ -7,7 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { StaffAvatar } from "@/components/staff/StaffAvatar";
-import { useAddAdhocTask, useTaskRegister } from "@/hooks/useTasks";
+import { useAddAdhocTask, useSaveTaskGuide, useTaskRegister } from "@/hooks/useTasks";
+import { NewTaskStepsBuilder, type BuilderStep } from "@/components/tasks/NewTaskStepsBuilder";
+import { cleanGuide, EMPTY_GUIDE } from "@/lib/taskGuide";
 import { asciiFold } from "@/lib/asciiFold";
 import { ZonePickMap } from "@/components/tasks/ZonePickMap";
 import type { FloorPlan, MapZone } from "@/hooks/useStoreMap";
@@ -58,6 +60,10 @@ export function NewTaskDialog({
   onCreated?: (taskId: string) => void;
 }) {
   const addAdhoc = useAddAdhocTask();
+  const saveGuide = useSaveTaskGuide();
+  /** Bilderna behöver en mapp innan uppgiften finns — ett eget utkasts-id. */
+  const draftId = useMemo(() => `utkast-${Math.random().toString(36).slice(2, 10)}`, []);
+  const [steps, setSteps] = useState<BuilderStep[]>([]);
   const { data: register = [] } = useTaskRegister(storeId);
   const [step, setStep] = useState(1);
   /** Först väljer man om uppgiften finns sedan tidigare eller är helt ny. */
@@ -98,6 +104,7 @@ export function NewTaskDialog({
     setPickOnMap(false);
     setReqPhoto(false);
     setReqNote(false);
+    setSteps([]);
   }, [open]);
 
   const people = useMemo(() => {
@@ -175,6 +182,13 @@ export function NewTaskDialog({
         requiresPhoto: reqPhoto,
         requiresNote: reqNote,
       });
+      /* Stegen man byggde i mallen följer med uppgiften direkt. */
+      if (id && steps.length > 0) {
+        await saveGuide.mutateAsync({
+          id,
+          guide: cleanGuide({ ...EMPTY_GUIDE, steps }),
+        });
+      }
       toast({ title: "Uppgiften är skapad" });
       onOpenChange(false);
       if (id) onCreated?.(id);
@@ -397,6 +411,15 @@ export function NewTaskDialog({
               <p className="text-xs text-muted-foreground">
                 Skriv med egna ord. Allt annat kan du fylla i i nästa steg — eller senare.
               </p>
+
+              {/* Mallen: så här ser uppgiften ut när någon gör den */}
+              <div className="mt-4 space-y-2 border-t pt-4">
+                <p className="text-sm font-medium">Så här ser uppgiften ut</p>
+                <p className="text-xs text-muted-foreground">
+                  Lägg in bilden, skriv rubrik och information, spara steget och gå vidare till nästa.
+                </p>
+                <NewTaskStepsBuilder draftId={draftId} steps={steps} onChange={setSteps} />
+              </div>
             </div>
           )}
 
