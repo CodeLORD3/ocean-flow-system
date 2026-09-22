@@ -482,31 +482,30 @@ export function TaskRunFullscreen({
                     >
                       <ChevronLeft className="h-6 w-6" />
                     </Button>
-                    {/* Samma gröna knapp hela vägen — bockat steg visas med kryss i knappen */}
+                    {/* Grå tills steget är gjort — grön efteråt, och samma knapp ångrar */}
                     <Button
-                      className="h-14 flex-1 bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-700"
+                      className={cn(
+                        "h-14 flex-1 text-base font-semibold",
+                        stepDone
+                          ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                          : "animate-pulse bg-muted text-foreground hover:animate-none hover:bg-foreground hover:text-background",
+                      )}
                       onClick={() => {
+                        if (stepDone) {
+                          undoStep(n);
+                          return;
+                        }
                         /** Hoppa vidare direkt, spara i bakgrunden. */
                         if (!isLast) {
                           scrollToStep(i + 1);
                           setTimeout(() => scrollToStep(i + 1), 120);
                         }
-                        if (!stepDone) void markStep(n, st);
+                        void markStep(n, st);
                       }}
                     >
                       <Check className="mr-2 h-5 w-5" />
-                      {stepDone ? (isLast ? "Klart" : "Klart · nästa steg") : isLast ? "Klar" : "Klar · nästa steg"}
+                      {stepDone ? "Klart · tryck för att ångra" : isLast ? "Markera som klar" : "Markera som klar · nästa"}
                     </Button>
-                    {/* Ångra: tar bort att steget är gjort */}
-                    {stepDone && (
-                      <Button
-                        variant="outline"
-                        className="h-14 shrink-0 px-3 text-xs"
-                        onClick={() => clearStep.mutate({ checklistItemId, stepNo: n })}
-                      >
-                        Ångra
-                      </Button>
-                    )}
                     {requiresPhoto && (
                       <label className="inline-flex">
                         <input
