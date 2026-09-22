@@ -118,19 +118,22 @@ export function TaskRow({
             aria-hidden
           />
         )}
-        {/* Kolumn 1: bocka av */}
-        <button
-          type="button"
-          aria-label={task.done ? "Återöppna uppgift" : "Markera som klar"}
-          onClick={() => tryToggle(!task.done)}
-          title={blocked ? missingText(task, missing) : undefined}
+        {/* Kolumn 1: bocka av — samma kryssruta som i beställningar */}
+        <span
           className={cn(
-            "flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition-colors",
-            task.done ? "border-emerald-500 bg-emerald-500 text-white" : "border-border hover:bg-muted",
+            "flex w-9 shrink-0 items-center justify-center self-stretch border-r border-grid-line",
+            open && "border-transparent",
           )}
+          title={blocked ? missingText(task, missing) : undefined}
         >
-          {task.done && <Check className="h-3.5 w-3.5" />}
-        </button>
+          <Checkbox
+            checked={task.done}
+            onCheckedChange={(v) => tryToggle(!!v)}
+            aria-label={task.done ? "Återöppna uppgift" : "Markera som klar"}
+            className="h-5 w-5 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500"
+          />
+        </span>
+
 
         {/* Kolumn 2: tid */}
         <span className="hidden w-[46px] shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground sm:block">
