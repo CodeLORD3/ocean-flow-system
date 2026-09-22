@@ -111,8 +111,9 @@ export function TaskRunFullscreen({
     if (!open || isPhone) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
-      if (e.key === "ArrowRight" || e.key === "ArrowDown") setIndex((i) => Math.min(i + 1, steps.length - 1));
-      if (e.key === "ArrowLeft" || e.key === "ArrowUp") setIndex((i) => Math.max(i - 1, 0));
+      /** Upp/ner byter steg — höger/vänster byter bild på steget. */
+      if (e.key === "ArrowDown") setIndex((i) => Math.min(i + 1, steps.length - 1));
+      if (e.key === "ArrowUp") setIndex((i) => Math.max(i - 1, 0));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -725,6 +726,34 @@ function StepGallery({
     el.scrollTo({ left: next * el.clientWidth, behavior: "smooth" });
     setAt(next);
   };
+
+  /** Pilarna höger/vänster byter bild på steget. */
+  useEffect(() => {
+    if (images.length < 2) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setAt((cur) => {
+          const next = Math.min(cur + 1, images.length - 1);
+          const el = ref.current;
+          if (el) el.scrollTo({ left: next * el.clientWidth, behavior: "smooth" });
+          return next;
+        });
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setAt((cur) => {
+          const next = Math.max(cur - 1, 0);
+          const el = ref.current;
+          if (el) el.scrollTo({ left: next * el.clientWidth, behavior: "smooth" });
+          return next;
+        });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [images.length]);
+
 
   return (
     <div className={cn("relative", fill ? "absolute inset-0" : "", className)}>
