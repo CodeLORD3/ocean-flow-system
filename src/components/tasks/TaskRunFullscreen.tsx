@@ -383,13 +383,9 @@ export function TaskRunFullscreen({
                     >
                       <ChevronLeft className="h-6 w-6" />
                     </Button>
+                    {/* Samma gröna knapp hela vägen — bockat steg visas med kryss i knappen */}
                     <Button
-                      className={cn(
-                        "h-14 flex-1 text-base font-semibold",
-                        stepDone
-                          ? "bg-white/15 text-white hover:bg-white/25"
-                          : "bg-emerald-600 text-white hover:bg-emerald-700",
-                      )}
+                      className="h-14 flex-1 bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-700"
                       onClick={() => {
                         /** Hoppa vidare direkt, spara i bakgrunden. */
                         if (!isLast) {
@@ -399,15 +395,8 @@ export function TaskRunFullscreen({
                         if (!stepDone) void markStep(n, st);
                       }}
                     >
-                      {stepDone ? (
-                        <>
-                          Klart <ChevronUp className="ml-2 h-5 w-5" />
-                        </>
-                      ) : (
-                        <>
-                          <Check className="mr-2 h-5 w-5" /> Klar {isLast ? "" : "· nästa"}
-                        </>
-                      )}
+                      <Check className="mr-2 h-5 w-5" />
+                      {stepDone ? (isLast ? "Klart" : "Klart · nästa steg") : isLast ? "Klar" : "Klar · nästa steg"}
                     </Button>
                     {requiresPhoto && (
                       <label className="inline-flex">
