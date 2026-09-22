@@ -146,15 +146,6 @@ export function TaskPerformPanel({
           })),
         });
       }
-      for (let i = 0; i < steps.length; i++) {
-        if (doneSteps.has(i + 1)) continue;
-        await setStep.mutateAsync({
-          checklistItemId: task.id,
-          stepNo: i + 1,
-          stepTitle: (steps[i].text || `Steg ${i + 1}`).slice(0, 80),
-          staffId: staff?.id ?? null,
-        });
-      }
       await finish.mutateAsync({ id: task.id, startedAt: task.started_at ?? null });
       toast({ title: "Uppgiften är klar" });
       /** Tillbaka till flödet så nästa uppgift kan betas av direkt. */
