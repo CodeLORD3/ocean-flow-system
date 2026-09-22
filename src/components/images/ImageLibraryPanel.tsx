@@ -394,7 +394,7 @@ export default function ImageLibraryPanel({
 
       {/* Bilddetalj: bilden, vad den hör till och vem som gjort vad */}
       <Dialog open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
-        <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
+        <DialogContent className="max-h-[94vh] max-w-5xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex flex-wrap items-center gap-2 pr-8">
               {detail?.title || "Bild"}
