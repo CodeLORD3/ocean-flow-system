@@ -10,7 +10,7 @@ import {
   usePickProducts,
 } from "@/hooks/useImagePickers";
 import { MEDIA_KINDS, type MediaKind } from "@/lib/imageStatus";
-import { useBulkClassify } from "@/hooks/useImageLibrary";
+import { useBulkClassify, useBulkDeleteImages } from "@/hooks/useImageLibrary";
 import { toast } from "sonner";
 
 /**
@@ -38,6 +38,19 @@ export default function ImageBulkBar({
   const { data: resources = [] } = usePickResources();
   const { data: products = [] } = usePickProducts();
   const bulk = useBulkClassify();
+  const del = useBulkDeleteImages();
+
+  async function removeSelected() {
+    const n = selectedIds.length;
+    if (!window.confirm(`Ta bort ${n} bilder helt? Det går inte att ångra.`)) return;
+    try {
+      await del.mutateAsync({ mediaIds: selectedIds });
+      toast.success(`${n} bilder borttagna`);
+      onClear();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte ta bort");
+    }
+  }
 
   // Finns bara en butik behöver ingen välja den — områdena visas direkt.
   useEffect(() => {
@@ -76,6 +89,15 @@ export default function ImageBulkBar({
         </Button>
         <Button size="sm" variant="ghost" onClick={onClear}>
           Avmarkera
+        </Button>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={removeSelected}
+          disabled={del.isPending}
+          className="ml-auto"
+        >
+          {del.isPending ? "Tar bort…" : `Ta bort ${selectedIds.length}`}
         </Button>
       </div>
 

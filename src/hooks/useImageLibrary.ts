@@ -524,6 +524,24 @@ export function useRemoveImageLink() {
 }
 
 /**
+ * Tar bort markerade bilder helt: kopplingar, historik och själva bilden.
+ * Filen i lagringen lämnas orörd så inget annat som pekar på den går sönder.
+ */
+export function useBulkDeleteImages() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ mediaIds }: { mediaIds: string[] }) => {
+      if (!mediaIds.length) return;
+      await supabase.from("image_links").delete().in("media_id", mediaIds);
+      await supabase.from("image_activity").delete().in("media_id", mediaIds);
+      const { error } = await supabase.from("entity_images").delete().in("id", mediaIds);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(qc),
+  });
+}
+
+/**
  * Laddar upp en eller flera bilder. Ingen klassificering krävs: bilderna
  * skapas som oplacerade och kan sorteras senare av vem som helst i personalen.
  */
