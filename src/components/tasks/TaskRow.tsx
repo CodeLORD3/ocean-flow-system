@@ -244,23 +244,13 @@ export function TaskRow({
           })()}
         </span>
 
-        {/* Kolumn 8: starta uppgiften — ett tryck räcker */}
-        {!task.done && (
-          <Button
-            size="sm"
-            variant={running ? "outline" : "default"}
-            onClick={startNow}
-            disabled={start.isPending}
-            className={cn(
-              "h-9 shrink-0 gap-1 px-2.5 sm:px-3",
-              running && "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20",
-            )}
-            title={running ? "Uppgiften pågår" : "Starta uppgiften"}
-          >
-            {running ? <Timer className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            <span className="hidden text-xs font-semibold sm:inline">{running ? "Pågår" : "Starta"}</span>
-          </Button>
+        {/* Pågår-märke i raden — starten ligger i utfällningen */}
+        {!task.done && running && (
+          <span className="shrink-0 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-700">
+            Pågår
+          </span>
         )}
+
 
         {/* Kolumn 9: rulldown */}
         <button
