@@ -266,3 +266,28 @@ function StepViewer({
     </Dialog>
   );
 }
+
+/** Lika uppbyggda rader: färgad etikett till vänster, texten i samma storlek. */
+function DetailRow({
+  tone,
+  label,
+  text,
+}: {
+  tone: "primary" | "muted" | "amber" | "sky";
+  label: string;
+  text: string;
+}) {
+  const tones = {
+    primary: "bg-primary/10 text-primary",
+    muted: "bg-muted text-muted-foreground",
+    amber: "bg-amber-500/10 text-amber-700",
+    sky: "bg-sky-500/10 text-sky-700",
+  } as const;
+
+  return (
+    <div className={`flex items-start gap-3 rounded-lg px-3 py-2 ${tones[tone]}`}>
+      <span className="w-[72px] shrink-0 text-[11px] font-semibold uppercase tracking-wide leading-5">{label}</span>
+      <span className="min-w-0 flex-1 text-[14px] leading-5 text-foreground">{text}</span>
+    </div>
+  );
+}
