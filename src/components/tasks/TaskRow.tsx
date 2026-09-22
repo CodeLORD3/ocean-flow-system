@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { workTypeLabel } from "@/lib/workType";
 import { useTaskImages, type TaskRow as Task } from "@/hooks/useTasks";
 import { TaskSteps } from "@/components/tasks/TaskSteps";
+import { TaskStepChecks } from "@/components/tasks/TaskStepChecks";
+import { parseGuide } from "@/lib/taskGuide";
 import { useStartTask } from "@/hooks/useTaskRun";
 import { toast } from "@/hooks/use-toast";
 
@@ -93,13 +95,17 @@ export function TaskRow({
   const running = task.run_status === "pagar";
   const canStart = !task.done && !running;
   const [showGuide, setShowGuide] = useState(false);
-  /** Starta uppgiften och gå direkt dit arbetet görs. */
+  const [showRun, setShowRun] = useState(false);
+  const guideSteps = parseGuide(task.guide, task.instructions).steps.filter((s) => s.text || s.image);
+  /** Starta/fortsätt uppgiften — arbetet fälls ut här i raden. */
   const startNow = async () => {
+    setOpen(true);
+    setShowRun(true);
     if (canStart) {
       await start.mutateAsync(task.id);
       toast({ title: "Uppgiften är startad", description: "Bocka av stegen ett i taget." });
     }
-    onOpenDetail();
+    if (guideSteps.length === 0) onOpenDetail();
   };
   const tryToggle = (done: boolean) => {
     if (done && blocked) {
@@ -277,6 +283,16 @@ export function TaskRow({
             </Button>
           )}
 
+
+          {/* Utförandet sker här i raden — du fortsätter där du var senast */}
+          {showRun && guideSteps.length > 0 && (
+            <div className="space-y-2">
+              <TaskStepChecks checklistItemId={task.id} steps={guideSteps} locked={!running} onLockedClick={startNow} />
+              <Button variant="outline" size="sm" className="w-full" onClick={() => setShowRun(false)}>
+                <ChevronDown className="mr-1 h-4 w-4" /> Stäng och tillbaka till listan
+              </Button>
+            </div>
+          )}
 
           {(showGuide || task.done) && (
           <TaskSteps
