@@ -31,21 +31,21 @@ export default function ImageSourceLinks({
   return (
     <div className={cn("space-y-1", className)}>
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Källa</p>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex min-w-0 flex-col items-stretch gap-1">
         {links.map((l) => {
           const route = placeRoute(l.entity_type, l.entity_id, imageId);
           const name = names[`${l.entity_type}:${l.entity_id}`] || linkTypeLabel(l.entity_type);
           const inner = (
             <>
-              <span className="text-[10px] uppercase tracking-wide opacity-70">
+              <span className="shrink-0 text-[10px] uppercase tracking-wide opacity-70">
                 {linkTypeLabel(l.entity_type)}
               </span>
-              <span className="min-w-0 max-w-[16rem] truncate font-medium">{name}</span>
-              <span className="text-[10px] opacity-60">{relationLabel(l.relation_type)}</span>
+              <span className="min-w-0 flex-1 truncate text-left font-medium">{name}</span>
+              <span className="shrink-0 text-[10px] opacity-60">{relationLabel(l.relation_type)}</span>
             </>
           );
           const base =
-            "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs bg-card";
+            "flex w-full min-w-0 max-w-full items-center gap-1.5 overflow-hidden rounded-full border px-2.5 py-1 text-xs bg-card";
           if (!route) {
             return (
               <span key={l.id} className={cn(base, "text-muted-foreground")}>
