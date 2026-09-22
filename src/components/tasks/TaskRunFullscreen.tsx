@@ -437,42 +437,50 @@ export function TaskRunFullscreen({
             </Button>
           </div>
         ) : (
-        <div className="mx-auto w-full max-w-3xl space-y-3">
-          {s.image ? (
-            <img
-              src={s.image}
-              alt={stepTitle(s.text || "")}
-              className="max-h-[46vh] w-full rounded-xl bg-muted object-contain"
-            />
-          ) : (
-            <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-xl bg-muted">
-              <Camera className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Ingen bild på steget än</p>
-            </div>
-          )}
-          {onSetStepImage && (
-            <label className="inline-flex">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  e.currentTarget.value = "";
-                  if (f) await onSetStepImage(index, f);
-                }}
+        {/* Bild till vänster, text till höger — allt ryms på en skärm utan skroll */}
+        <div className="mx-auto grid h-full w-full max-w-6xl gap-4 lg:grid-cols-2 lg:items-start">
+          <div className="flex min-h-0 flex-col gap-2">
+            {s.image ? (
+              <img
+                src={s.image}
+                alt={stepTitle(s.text || "")}
+                className="max-h-[62vh] w-full rounded-xl bg-muted object-contain"
               />
-              <span className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-md border px-3 text-xs hover:bg-muted">
-                <Camera className="h-4 w-4" /> {s.image ? "Byt bild på steget" : "Lägg till bild på steget"}
-              </span>
-            </label>
-          )}
-          <h2 className="font-heading text-xl font-bold leading-snug sm:text-2xl">{stepTitle(s.text || `Steg ${no}`)}</h2>
-          {s.text && <p className="text-[15px] leading-snug text-muted-foreground">{s.text}</p>}
-          <Detail label="Viktigt" text={s.keyPoint} tone="bg-emerald-500/10 text-emerald-700" />
-          <Detail label="Varför" text={s.why} tone="bg-sky-500/10 text-sky-700" />
-          <Detail label="Säkerhet" text={s.safety} tone="bg-amber-500/10 text-amber-700" />
-          <Detail label="HACCP" text={s.haccp} tone="bg-rose-500/10 text-rose-700" />
+            ) : (
+              <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-xl bg-muted">
+                <Camera className="h-8 w-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Ingen bild på steget än</p>
+              </div>
+            )}
+            {onSetStepImage && (
+              <label className="inline-flex">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.currentTarget.value = "";
+                    if (f) await onSetStepImage(index, f);
+                  }}
+                />
+                <span className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-md border px-3 text-xs hover:bg-muted">
+                  <Camera className="h-4 w-4" /> {s.image ? "Byt bild på steget" : "Lägg till bild på steget"}
+                </span>
+              </label>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="font-heading text-xl font-bold leading-snug sm:text-2xl">
+              {stepTitle(s.text || `Steg ${no}`)}
+            </h2>
+            {s.text && <p className="text-[15px] leading-snug text-muted-foreground">{s.text}</p>}
+            <Detail label="Viktigt" text={s.keyPoint} tone="bg-emerald-500/10 text-emerald-700" />
+            <Detail label="Varför" text={s.why} tone="bg-sky-500/10 text-sky-700" />
+            <Detail label="Säkerhet" text={s.safety} tone="bg-amber-500/10 text-amber-700" />
+            <Detail label="HACCP" text={s.haccp} tone="bg-rose-500/10 text-rose-700" />
+          </div>
         </div>
         )}
       </div>
