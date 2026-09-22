@@ -388,7 +388,29 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
               </div>
             )}
             {missing.length > 0 && <p className="text-xs text-amber-700">{missingText(task, missing)}</p>}
+        </div>
+        {images.length > 0 && (
+          <div className="space-y-1.5 rounded-md border bg-muted/30 p-2">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Bilder på den här uppgiften ({images.length})
+              {area ? ` · även kopplade till ${area.number}. ${area.name}` : ""}
+            </p>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {images.map((img) => (
+                <button
+                  key={img.id}
+                  type="button"
+                  onClick={() => setLightbox(allImages.findIndex((x) => x.id === img.id))}
+                  className="shrink-0 overflow-hidden rounded-md border"
+                  title={`Tagen av ${img.uploaded_by_name ?? "okänd"}`}
+                >
+                  <img src={thumbUrl(img.url, THUMB_TILE)} alt="" className="h-20 w-20 object-cover" />
+                </button>
+              ))}
+            </div>
           </div>
+        )}
+
         )}
         {task.done && (
           <div className="flex items-center gap-2 text-xs text-emerald-600">
