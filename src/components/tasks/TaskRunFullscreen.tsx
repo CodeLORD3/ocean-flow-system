@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { GuideStep } from "@/lib/taskGuide";
 import { useCurrentStaff } from "@/hooks/useCurrentStaff";
-import { useClearStepCheck, useSetStepCheck, useTaskPrepChecks } from "@/hooks/useTaskPrep";
+import { useClearStepCheck, useRestartTask, useSetStepCheck, useTaskPrepChecks } from "@/hooks/useTaskPrep";
 
 /** Alla bilder på ett steg: huvudbilden först, därefter de extra bilderna. */
 function stepImages(st: GuideStep): string[] {
@@ -82,6 +82,7 @@ export function TaskRunFullscreen({
   const { data: checks = [] } = useTaskPrepChecks(open ? checklistItemId : null);
   const setStep = useSetStepCheck();
   const clearStep = useClearStepCheck();
+  const restart = useRestartTask();
   const [index, setIndex] = useState(0);
   /** Kontrollen visas först på dator, sedan stegen. */
   const [showPrep, setShowPrep] = useState(true);
@@ -278,6 +279,21 @@ export function TaskRunFullscreen({
             </span>
           </button>
         )}
+
+        {/* Börja om — alla steg och utrustningskontrollen nollställs */}
+        <Button
+          variant="outline"
+          className="mt-3 h-10 w-full gap-2 text-sm"
+          onClick={async () => {
+            await restart.mutateAsync({ checklistItemId });
+            setOverviewOpen(false);
+            setIndex(0);
+            if (prepNode) backToPrep();
+            else if (isPhone) setTimeout(() => scrollToStep(0), 60);
+          }}
+        >
+          <RotateCcw className="h-4 w-4" /> Börja om uppgiften
+        </Button>
 
         <ul className="mt-3 space-y-1.5">
           {steps.map((st, i) => {
