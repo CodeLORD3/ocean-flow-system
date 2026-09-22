@@ -217,7 +217,7 @@ export default function StaffProfile() {
                       />
                     ) : (
                       <div className="grid h-full w-full place-items-center">
-                        <User className="h-10 w-10 text-primary" />
+                        <User className="h-7 w-7 text-primary" />
                       </div>
                     )}
                   </div>
