@@ -294,7 +294,7 @@ export function TaskRunFullscreen({
                 {/* Texten i en tät ruta: dra ner den eller tryck "Minska" för hela bilden */}
                 <div
                   className={cn(
-                    "relative z-10 mx-3 mb-24 mt-3 space-y-2 rounded-2xl bg-black/75 p-4 text-white backdrop-blur-sm transition-all",
+                    "relative z-10 mx-3 mb-24 mt-3 space-y-2 rounded-2xl bg-black/70 p-4 text-white backdrop-blur-sm transition-all",
                     "",
                   )}
                   onTouchStart={(e) => {
@@ -342,7 +342,7 @@ export function TaskRunFullscreen({
                   </h2>
 
                   {textOpen && (
-                    <div className="max-h-[32vh] space-y-2 overflow-y-auto">
+                    <div className="max-h-[26vh] space-y-2 overflow-y-auto">
                       {st.text && <p className="text-[15px] leading-snug text-white">{st.text}</p>}
                       {st.keyPoint && (
                         <p className="text-sm leading-snug text-emerald-200">
