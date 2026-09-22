@@ -126,7 +126,7 @@ export default function Uppgifter() {
   const [fArea, setFArea] = useState("all");
   const [fCat, setFCat] = useState("all");
   const [fPerson, setFPerson] = useState("all");
-  const [fStatus, setFStatus] = useState<"kvar" | "klara" | "allt">("allt");
+  const [fStatus, setFStatus] = useState<"kvar" | "klara" | "allt">("kvar");
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -282,10 +282,8 @@ export default function Uppgifter() {
     };
   }, [searchParams]);
 
-  /** Öppnar kartan med ytan markerad och med väg tillbaka till uppgiften. */
-  const openOnMap = (t: Task, areaId: string) => {
-    switchTab(`/butikskarta?zone=${areaId}&fromTask=${t.id}&taskName=${encodeURIComponent(t.task)}`);
-  };
+  /** "Visa på karta" öppnar kartpanelen från höger — sidan ligger kvar. */
+  const openOnMap = (_t: Task, areaId: string) => openMapOn(areaId);
 
   const assign = (t: Task, staffId: string | null) => {
     updateTask.mutate(
