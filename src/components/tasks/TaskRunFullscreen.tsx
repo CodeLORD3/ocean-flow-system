@@ -828,9 +828,11 @@ export function TaskRunFullscreen({
         </div>
         {blockedText && <p className="text-center text-xs text-amber-700">{blockedText}</p>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
+
 
 /**
  * Flera bilder på ett steg: dra i sidled eller tryck på pilarna höger/vänster.
