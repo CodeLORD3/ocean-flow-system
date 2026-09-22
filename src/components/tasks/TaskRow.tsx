@@ -300,8 +300,8 @@ export function TaskRow({
             if (!name) return <span className="text-[11px] text-muted-foreground">Ingen tilldelad</span>;
             return (
               <>
-                <StaffAvatar name={name} imageUrl={img} className="h-9 w-9 shrink-0" />
-                <span className={cn("truncate text-[11px]", task.done ? "text-emerald-600" : "text-muted-foreground")}>
+                <StaffAvatar name={name} imageUrl={img} className="h-6 w-6 shrink-0" />
+                <span className={cn("truncate text-[10px]", task.done ? "text-emerald-600" : "text-muted-foreground")}>
                   {task.done ? "Klar · " : ""}
                   {name}
                 </span>
