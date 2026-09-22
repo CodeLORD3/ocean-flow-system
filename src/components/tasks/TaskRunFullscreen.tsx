@@ -90,6 +90,8 @@ export function TaskRunFullscreen({
     if (!open) return;
     const firstLeft = steps.findIndex((_s, i) => !doneNos.has(i + 1));
     setIndex(firstLeft === -1 ? Math.max(steps.length - 1, 0) : firstLeft);
+    /** Är utrustningen redan kontrollerad hoppar vi rakt till stegen. */
+    setShowPrep(prepMissingCount > 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, steps.length]);
 
