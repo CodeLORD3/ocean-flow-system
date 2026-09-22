@@ -15,6 +15,15 @@ import { TaskSteps } from "@/components/tasks/TaskSteps";
 import { TaskRunFullscreen } from "@/components/tasks/TaskRunFullscreen";
 import { parseGuide } from "@/lib/taskGuide";
 import { useStartTask } from "@/hooks/useTaskRun";
+import { TaskPrepPanel } from "@/components/tasks/TaskPrepPanel";
+import { useTaskPrepChecks } from "@/hooks/useTaskPrep";
+import {
+  resolveNeeds,
+  useResourceItems,
+  useResourceLocations,
+  useStoreResourceMappings,
+  useTaskRequirements,
+} from "@/hooks/useResources";
 import { toast } from "@/hooks/use-toast";
 
 export type TaskRowArea = { id: string; name: string; color: string; number: number } | null;
@@ -78,6 +87,17 @@ export function TaskRow({
     task.completion_value === null || task.completion_value === undefined ? "" : String(task.completion_value),
   );
   const time = taskTime(task);
+
+  /* Utrustning & material — samma kontroll som på uppgiftens egen sida */
+  const storeId = task.store_id ?? null;
+  const { data: requirements = [] } = useTaskRequirements(task.template_item_id ?? null, task.id);
+  const { data: resourceItems = [] } = useResourceItems();
+  const { data: resourceLocations = [] } = useResourceLocations(storeId);
+  const { data: resourceMappings = [] } = useStoreResourceMappings(storeId);
+  const needs = resolveNeeds(requirements, resourceMappings, resourceItems, resourceLocations);
+  const { data: prepChecks = [] } = useTaskPrepChecks(task.id);
+  const prepCheckedIds = new Set(prepChecks.map((c) => c.requirement_id ?? ""));
+  const prepMissingCount = needs.filter((nd) => !prepCheckedIds.has(nd.requirement.id)).length;
   const duration = durationText(task.estimated_minutes);
   const accent = area?.color ?? categoryColor ?? "hsl(var(--muted-foreground))";
   /**
@@ -305,6 +325,12 @@ export function TaskRow({
               onToggle(true);
               setShowRun(false);
             }}
+            prepMissingCount={prepMissingCount}
+            prepNode={
+              needs.length > 0 ? (
+                <TaskPrepPanel checklistItemId={task.id} storeId={storeId} needs={needs} />
+              ) : undefined
+            }
           />
 
           {(showGuide || task.done) && (
