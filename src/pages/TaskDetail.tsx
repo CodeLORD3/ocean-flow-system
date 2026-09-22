@@ -119,10 +119,25 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
   const { data: categories = [] } = useTaskCategories(storeId);
   const { data: recipes = [] } = useProductionRecipes();
   const saveGuide = useSaveTaskGuide();
-  const guide = useMemo(() => parseGuide(task?.guide, task?.instructions ?? null), [task?.guide, task?.instructions]);
+  const ownGuide = useMemo(
+    () => parseGuide(task?.guide, task?.instructions ?? null),
+    [task?.guide, task?.instructions],
+  );
+  const ownHasContent = ownGuide.steps.some((s) => s.text || s.image) || !!ownGuide.goal;
+  /* Samma uppgift på nytt datum: ärv beskrivning och utrustning från senaste raden. */
+  const { data: blueprint } = useTaskBlueprint(task?.task ?? null, !!task && !ownHasContent);
+  const guide = useMemo(
+    () => (ownHasContent || !blueprint ? ownGuide : parseGuide(blueprint.guide, blueprint.instructions)),
+    [ownHasContent, blueprint, ownGuide],
+  );
 
   /** Vad arbetet kräver → butikens sak → var den finns. Platsen bor i registret. */
-  const { data: requirements = [] } = useTaskRequirements(task?.template_item_id ?? null, taskId);
+  const { data: ownRequirements = [] } = useTaskRequirements(task?.template_item_id ?? null, taskId);
+  const { data: inheritedRequirements = [] } = useTaskRequirements(
+    null,
+    ownRequirements.length === 0 && blueprint?.sourceId ? blueprint.sourceId : null,
+  );
+  const requirements = ownRequirements.length > 0 ? ownRequirements : inheritedRequirements;
   const { data: resourceItems = [] } = useResourceItems();
   const { data: resourceLocations = [] } = useResourceLocations(storeId);
   const { data: resourceMappings = [] } = useStoreResourceMappings(storeId);
