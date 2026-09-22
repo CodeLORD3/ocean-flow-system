@@ -6,6 +6,11 @@ import type { GuideStep } from "@/lib/taskGuide";
 import { useCurrentStaff } from "@/hooks/useCurrentStaff";
 import { useClearStepCheck, useSetStepCheck, useTaskPrepChecks } from "@/hooks/useTaskPrep";
 
+/** Alla bilder på ett steg: huvudbilden först, därefter de extra bilderna. */
+function stepImages(st: GuideStep): string[] {
+  return [st.image ?? "", ...(st.images ?? [])].filter(Boolean) as string[];
+}
+
 /** Kort rubrik ur stegtexten. */
 function stepTitle(text: string): string {
   const first = text.split(/[.!?]/)[0]?.split(",")[0]?.trim() || text.trim();
