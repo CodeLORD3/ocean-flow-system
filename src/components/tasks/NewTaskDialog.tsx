@@ -218,7 +218,7 @@ export function NewTaskDialog({
           ))}
         </div>
 
-        <div className="min-h-[260px] space-y-4 pt-1">
+        <div className="-mx-1 min-h-[260px] flex-1 space-y-4 overflow-y-auto px-1 pt-1">
           {step === 1 && mode === null && (
             <div className="space-y-3">
               <p className="text-sm font-medium">Är det en uppgift som redan finns?</p>
