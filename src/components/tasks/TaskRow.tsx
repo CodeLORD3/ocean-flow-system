@@ -156,15 +156,28 @@ export function TaskRow({
           </span>
         </button>
 
-        {/* Kolumn 4: område */}
-        <span className="hidden w-[150px] shrink-0 items-center gap-1 truncate text-[11px] text-muted-foreground 2xl:flex">
-          {area && (
-            <>
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: area.color }} />
-              <span className="truncate">
-                {area.number}. {area.name}
+        {/* Kolumn 4: område — alltid samma plats, tryck öppnar kartan */}
+        <span className="hidden w-[170px] shrink-0 items-center md:flex">
+          {area ? (
+            onOpenArea ? (
+              <button
+                type="button"
+                onClick={() => onOpenArea(area.id)}
+                title={`Visa ${area.name} på kartan`}
+                className="inline-flex w-full items-center gap-1.5 rounded-full px-2 py-1 text-left text-[12px] text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: area.color }} />
+                <span className="truncate">{area.name}</span>
+                <MapPin className="ml-auto h-3 w-3 shrink-0 opacity-60" />
+              </button>
+            ) : (
+              <span className="inline-flex w-full items-center gap-1.5 px-2 text-[12px] text-muted-foreground">
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: area.color }} />
+                <span className="truncate">{area.name}</span>
               </span>
-            </>
+            )
+          ) : (
+            <span className="px-2 text-[12px] text-muted-foreground/60">Inget område</span>
           )}
         </span>
 
