@@ -356,8 +356,72 @@ export default function Uppgifter() {
     return { mine, unassigned, doneByMe };
   }, [tasks, meId, isResponsible]);
 
+  /** Rensa-läge: markera uppgifter som inte är relevanta och ta bort dem i ett svep. */
+  const [cleanMode, setCleanMode] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const toggleSelected = (id: string) =>
+    setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+
+  const deleteSelected = async () => {
+    if (selected.length === 0) return;
+    const many = selected.length === 1 ? "uppgiften" : `${selected.length} uppgifter`;
+    if (!window.confirm(`Ta bort ${many}? Det du inte har markerat behålls precis som det är.`)) return;
+    let ok = 0;
+    for (const id of selected) {
+      try {
+        await removeTask.mutateAsync(id);
+        ok += 1;
+      } catch (e: any) {
+        toast({ title: "Kunde inte ta bort alla", description: e.message, variant: "destructive" });
+        break;
+      }
+    }
+    setSelected([]);
+    toast({ title: ok === 1 ? "1 uppgift togs bort" : `${ok} uppgifter togs bort` });
+  };
+
+  /** Rad i rensa-läget: bara det man behöver för att avgöra om uppgiften ska bort. */
+  const renderCleanRow = (t: Task) => {
+    const area = t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null;
+    const picked = selected.includes(t.id);
+    return (
+      <label
+        key={t.id}
+        className={cn(
+          "flex cursor-pointer items-center gap-3 border-b border-grid-line px-2 py-2 text-sm",
+          picked ? "bg-destructive/10" : "hover:bg-muted/50",
+        )}
+      >
+        <input
+          type="checkbox"
+          className="h-5 w-5 shrink-0 accent-[hsl(var(--destructive))]"
+          checked={picked}
+          onChange={() => toggleSelected(t.id)}
+        />
+        <span className="w-12 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+          {t.specific_time?.slice(0, 5) ?? "—"}
+        </span>
+        <span className={cn("min-w-0 flex-1 truncate font-medium", t.done && "text-muted-foreground line-through")}>
+          {t.task}
+        </span>
+        {area && (
+          <span className="hidden shrink-0 items-center gap-1 text-xs text-muted-foreground sm:flex">
+            <span className="h-2 w-2 rounded-full" style={{ background: area.color }} />
+            {area.name}
+          </span>
+        )}
+        <span className="w-28 shrink-0 truncate text-right text-xs text-muted-foreground">
+          {staffName(t.completed_by_staff_id) ?? staffName(t.assigned_staff_id) ?? "ingen"}
+        </span>
+      </label>
+    );
+  };
+
   /** Samma uppgiftsrad som i dagens lista, återanvänd i Mina uppgifter. */
-  const renderTaskRow = (t: Task) => (
+  const renderTaskRow = (t: Task) =>
+    cleanMode ? (
+      renderCleanRow(t)
+    ) : (
     <TaskRow
       key={t.id}
       task={t}
