@@ -257,7 +257,7 @@ export function TaskRow({
                 <MapPin className="ml-auto h-3 w-3 shrink-0 opacity-60" />
               </button>
             ) : (
-              <span className="inline-flex w-full items-center gap-1.5 px-2 text-[12px] text-muted-foreground">
+              <span className="inline-flex w-full items-center gap-1.5 px-2 text-[11px] text-muted-foreground">
                 <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: area.color }} />
                 <span className="truncate">{area.name}</span>
               </span>
