@@ -43,7 +43,10 @@ export default function ImageSourceLinks({
             route += `${route.includes("?") ? "&" : "?"}steg=${step}`;
           }
           const name = names[`${l.entity_type}:${l.entity_id}`] || linkTypeLabel(l.entity_type);
-          const here = !!route && route.split("?")[0] === location.pathname;
+          const toStep = l.entity_type === "task" && !!step;
+          /* Står man redan på uppgiftens sida ska steglänken ändå fungera —
+             den tar en till just det steget i arbetsgången. */
+          const here = !!route && route.split("?")[0] === location.pathname && !toStep;
           const inner = (
             <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
               <span className="text-[10px] uppercase tracking-wide opacity-70">
