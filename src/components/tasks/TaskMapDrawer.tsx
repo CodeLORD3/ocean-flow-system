@@ -67,7 +67,7 @@ export function TaskMapDrawer({
     const ys = pts.map((p) => p.y);
     const w = Math.max(...xs) - Math.min(...xs);
     const h = Math.max(...ys) - Math.min(...ys);
-    const pad = Math.max(80, Math.max(w, h) * 0.25);
+    const pad = Math.max(40, Math.max(w, h) * 0.1);
     const x = Math.min(...xs) - pad;
     const y = Math.min(...ys) - pad;
     return { x, y, w: w + pad * 2, h: h + pad * 2 };
@@ -109,7 +109,7 @@ export function TaskMapDrawer({
             <div className="bg-muted/20">
               <svg
                 viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-                className="h-[46vh] max-h-[520px] min-h-[280px] w-full"
+                className="h-[58vh] max-h-[640px] min-h-[320px] w-full"
                 role="img"
                 aria-label="Butikskartan"
               >
