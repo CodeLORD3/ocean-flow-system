@@ -170,6 +170,15 @@ export function TaskRow({
       setOpen(true);
       return;
     }
+    /** Har uppgiften steg görs den i flödet — bocken räcker inte som klarmarkering. */
+    if (done && !task.done && guideSteps.length > 0) {
+      toast({
+        title: running ? "Fortsätt uppgiften" : "Starta uppgiften",
+        description: "Uppgiften görs steg för steg — den blir klar när alla steg är avbockade.",
+      });
+      startNow();
+      return;
+    }
     onToggle(done);
   };
 
