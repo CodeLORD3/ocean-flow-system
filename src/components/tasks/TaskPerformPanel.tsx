@@ -89,6 +89,8 @@ export function TaskPerformPanel({
   onAddPhoto: (file: File) => Promise<void> | void;
   /** Bilden på ett steg i arbetsbeskrivningen. */
   onSetStepImage?: (stepIndex: number, file: File) => Promise<void> | void;
+  /** Körs när uppgiften bockats av — tillbaka till uppgiftsflödet. */
+  onCompleted?: () => void;
   onReopen: () => void;
 }) {
   const status = (task.run_status ?? "ej_startad") as RunStatus;
