@@ -636,11 +636,16 @@ function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string
             .filter((g) => g.rows.length > 0)
             .map((g) => (
               <div key={g.key} className="space-y-1.5">
-                <p className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide ${g.tone}`}>
+                <p
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide",
+                    g.chip,
+                  )}
+                >
                   <g.icon className="h-3.5 w-3.5" /> {g.label}
-                  <span className="tabular-nums text-muted-foreground">({g.rows.length})</span>
+                  <span className="tabular-nums opacity-80">({g.rows.length})</span>
                 </p>
-                <div className="divide-y divide-border rounded-xl border border-border">
+                <div className={cn("divide-y divide-border overflow-hidden rounded-xl border", g.box)}>
                   {g.rows.map((it) => (
                     <button
                       key={it.id}
@@ -648,7 +653,8 @@ function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string
                       onClick={() => navigate(withReturn(`/uppgifter?markera=${it.id}`))}
                       className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-muted/40"
                     >
-                      <div className="min-w-0">
+                      <span className={cn("h-8 w-1.5 shrink-0 rounded-full", g.bar)} />
+                      <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">{it.task}</p>
                         <p className="text-[10px] text-muted-foreground">
                           {new Date(it.date).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })}
