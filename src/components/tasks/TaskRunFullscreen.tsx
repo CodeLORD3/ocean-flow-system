@@ -488,7 +488,7 @@ export function TaskRunFullscreen({
                         "h-14 flex-1 text-base font-semibold",
                         stepDone
                           ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                          : "animate-pulse bg-muted text-foreground hover:animate-none hover:bg-foreground hover:text-background",
+                          : "animate-pulse bg-muted text-foreground hover:animate-none hover:bg-emerald-600 hover:text-white",
                       )}
                       onClick={() => {
                         if (stepDone) {
@@ -661,7 +661,7 @@ export function TaskRunFullscreen({
                 "h-12 flex-1 text-base font-semibold",
                 done
                   ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                  : "animate-pulse bg-muted text-foreground hover:animate-none hover:bg-foreground hover:text-background",
+                  : "animate-pulse bg-muted text-foreground hover:animate-none hover:bg-emerald-600 hover:text-white",
               )}
               onClick={() => (done ? undoStep(no) : void markAndNext())}
             >
