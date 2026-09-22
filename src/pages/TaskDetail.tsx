@@ -388,8 +388,10 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
               </div>
             )}
             {missing.length > 0 && <p className="text-xs text-amber-700">{missingText(task, missing)}</p>}
-        </div>
+          </div>
+        )}
         {images.length > 0 && (
+
           <div className="space-y-1.5 rounded-md border bg-muted/30 p-2">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
               Bilder på den här uppgiften ({images.length})
