@@ -130,40 +130,40 @@ export default function StoreOrderToday() {
           {lines.map((l) => (
             <div
               key={l.id}
-              className="flex min-h-[72px] items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3"
+              className="space-y-2 rounded-2xl border border-border bg-card px-4 py-3"
             >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[19px] font-semibold leading-tight">
-                  {l.products?.name ?? "Vara"}
-                </p>
-                <p className="flex flex-wrap items-center gap-1 text-[17px] text-muted-foreground">
-                  {l.created_by_name ? (
-                    <>
-                      Lagd av <StaffName name={l.created_by_name} faceClassName="h-7 w-7 text-[11px]" />
-                    </>
-                  ) : (
-                    "Lagd i butiken"
-                  )}
-                  {l.comment ? ` · ${l.comment}` : ""}
-                </p>
+              <p className="break-words text-[19px] font-semibold leading-snug">
+                {l.products?.name ?? "Vara"}
+              </p>
+              <p className="flex flex-wrap items-center gap-1 text-[17px] text-muted-foreground">
+                {l.created_by_name ? (
+                  <>
+                    Lagd av <StaffName name={l.created_by_name} faceClassName="h-7 w-7 text-[11px]" />
+                  </>
+                ) : (
+                  "Lagd i butiken"
+                )}
+                {l.comment ? ` · ${l.comment}` : ""}
+              </p>
+              <div className="flex items-center gap-3">
+                <Input
+                  defaultValue={String(l.quantity_ordered).replace(".", ",")}
+                  onBlur={(e) => {
+                    const v = Number(e.target.value.replace(",", "."));
+                    if (v > 0) updateLine.mutate({ lineId: l.id, quantity: v, comment: l.comment });
+                  }}
+                  className="h-14 w-24 min-h-[56px] text-center text-[19px] tabular-nums"
+                />
+                <span className="text-[17px] text-muted-foreground">{l.unit}</span>
+                <button
+                  type="button"
+                  aria-label="Ta bort raden"
+                  onClick={() => removeLine.mutate(l.id)}
+                  className="ml-auto flex h-14 w-14 min-h-[56px] shrink-0 items-center justify-center rounded-xl border border-border"
+                >
+                  <X className="h-6 w-6" />
+                </button>
               </div>
-              <Input
-                defaultValue={String(l.quantity_ordered).replace(".", ",")}
-                onBlur={(e) => {
-                  const v = Number(e.target.value.replace(",", "."));
-                  if (v > 0) updateLine.mutate({ lineId: l.id, quantity: v, comment: l.comment });
-                }}
-                className="h-14 w-24 min-h-[56px] text-center text-[19px] tabular-nums"
-              />
-              <span className="w-8 shrink-0 text-[17px] text-muted-foreground">{l.unit}</span>
-              <button
-                type="button"
-                aria-label="Ta bort raden"
-                onClick={() => removeLine.mutate(l.id)}
-                className="flex h-14 w-14 min-h-[56px] shrink-0 items-center justify-center rounded-xl border border-border"
-              >
-                <X className="h-6 w-6" />
-              </button>
             </div>
           ))}
 
