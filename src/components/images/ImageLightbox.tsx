@@ -362,21 +362,28 @@ export function ImageLightbox({
   };
 
   useEffect(() => {
-    if (!open || isMobile) return;
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
       const el = e.target as HTMLElement | null;
-      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) return;
-      if (e.key === "ArrowRight") {
+      // Skriver man i en ruta med text ska pilarna flytta markören, inte bilden.
+      const typing =
+        !!el &&
+        (el.isContentEditable ||
+          ((el.tagName === "INPUT" || el.tagName === "TEXTAREA") &&
+            !!(el as HTMLInputElement | HTMLTextAreaElement).value));
+      if (typing) return;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "PageDown") {
         e.preventDefault();
         go(1);
-      } else if (e.key === "ArrowLeft") {
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "PageUp") {
         e.preventDefault();
         go(-1);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, index, images.length, isMobile]);
+  }, [open, index, images.length]);
 
   // Håller karusellen i synk när index ändras utifrån (t.ex. öppning)
   useEffect(() => {
