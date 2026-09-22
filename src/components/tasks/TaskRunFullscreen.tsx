@@ -294,7 +294,7 @@ export function TaskRunFullscreen({
                 {/* Texten i en tät ruta: dra ner den eller tryck "Minska" för hela bilden */}
                 <div
                   className={cn(
-                    "relative z-10 mx-3 mb-24 mt-3 space-y-2 rounded-2xl bg-black/75 p-4 text-white backdrop-blur-sm transition-all",
+                    "relative z-10 mx-3 mb-24 mt-3 space-y-2 rounded-2xl bg-black/70 p-4 text-white backdrop-blur-sm transition-all",
                     "",
                   )}
                   onTouchStart={(e) => {
@@ -342,7 +342,7 @@ export function TaskRunFullscreen({
                   </h2>
 
                   {textOpen && (
-                    <div className="max-h-[32vh] space-y-2 overflow-y-auto">
+                    <div className="max-h-[26vh] space-y-2 overflow-y-auto">
                       {st.text && <p className="text-[15px] leading-snug text-white">{st.text}</p>}
                       {st.keyPoint && (
                         <p className="text-sm leading-snug text-emerald-200">
@@ -383,13 +383,9 @@ export function TaskRunFullscreen({
                     >
                       <ChevronLeft className="h-6 w-6" />
                     </Button>
+                    {/* Samma gröna knapp hela vägen — bockat steg visas med kryss i knappen */}
                     <Button
-                      className={cn(
-                        "h-14 flex-1 text-base font-semibold",
-                        stepDone
-                          ? "bg-white/15 text-white hover:bg-white/25"
-                          : "bg-emerald-600 text-white hover:bg-emerald-700",
-                      )}
+                      className="h-14 flex-1 bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-700"
                       onClick={() => {
                         /** Hoppa vidare direkt, spara i bakgrunden. */
                         if (!isLast) {
@@ -399,15 +395,8 @@ export function TaskRunFullscreen({
                         if (!stepDone) void markStep(n, st);
                       }}
                     >
-                      {stepDone ? (
-                        <>
-                          Klart <ChevronUp className="ml-2 h-5 w-5" />
-                        </>
-                      ) : (
-                        <>
-                          <Check className="mr-2 h-5 w-5" /> Klar {isLast ? "" : "· nästa"}
-                        </>
-                      )}
+                      <Check className="mr-2 h-5 w-5" />
+                      {stepDone ? (isLast ? "Klart" : "Klart · nästa steg") : isLast ? "Klar" : "Klar · nästa steg"}
                     </Button>
                     {requiresPhoto && (
                       <label className="inline-flex">
@@ -558,19 +547,11 @@ export function TaskRunFullscreen({
             </Button>
           ) : (
             <Button
-              className={cn("h-12 flex-1 text-base", done ? "" : "bg-emerald-600 text-white hover:bg-emerald-700")}
-              variant={done ? "outline" : "default"}
+              className="h-12 flex-1 bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-700"
               onClick={markAndNext}
             >
-              {done ? (
-                <>
-                  Nästa steg <ChevronRight className="ml-2 h-5 w-5" />
-                </>
-              ) : (
-                <>
-                  <Check className="mr-2 h-5 w-5" /> Klar {last ? "" : "· nästa steg"}
-                </>
-              )}
+              <Check className="mr-2 h-5 w-5" />
+              {done ? "Klart · nästa steg" : last ? "Klar" : "Klar · nästa steg"}
             </Button>
           )}
 
