@@ -500,7 +500,13 @@ export function TaskRow({
               disabled={blocked}
               onClick={() => tryToggle(!task.done)}
             >
-              {task.done ? "Återöppna" : "Markera som klar"}
+              {task.done
+                ? "Återöppna"
+                : guideSteps.length > 0
+                  ? running
+                    ? "Fortsätt uppgiften"
+                    : "Starta uppgiften"
+                  : "Markera som klar"}
             </Button>
             {onAddPhoto && (
               <label className="inline-flex">
