@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { workTypeLabel } from "@/lib/workType";
 import { useTaskImages, type TaskRow as Task } from "@/hooks/useTasks";
 import { TaskSteps } from "@/components/tasks/TaskSteps";
-import { TaskStepChecks } from "@/components/tasks/TaskStepChecks";
+import { TaskRunFullscreen } from "@/components/tasks/TaskRunFullscreen";
 import { parseGuide } from "@/lib/taskGuide";
 import { useStartTask } from "@/hooks/useTaskRun";
 import { toast } from "@/hooks/use-toast";
