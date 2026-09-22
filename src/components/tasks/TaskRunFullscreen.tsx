@@ -69,6 +69,9 @@ export function TaskRunFullscreen({
   /** Sätter bilden på ett steg — bilderna är det viktigaste i beskrivningen. */
   onSetStepImage?: (stepIndex: number, file: File) => Promise<void> | void;
   onFinish: () => Promise<void> | void;
+  /** Kontrollen av utrustning & material — första skärmen i flödet. */
+  prepNode?: ReactNode;
+  prepMissingCount?: number;
 }) {
   const { data: staff } = useCurrentStaff();
   const { data: checks = [] } = useTaskPrepChecks(open ? checklistItemId : null);
