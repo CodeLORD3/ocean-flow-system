@@ -175,13 +175,18 @@ export function TaskPerformPanel({
                 toast({ title: "Uppgiften är startad" });
               }}
             >
-              <Play className="mr-2 h-5 w-5" /> STARTA UPPGIFT
+              <Play className="mr-2 h-4 w-4" /> Starta uppgift
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setAfterOpen((v) => !v)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs text-muted-foreground"
+              onClick={() => setAfterOpen((v) => !v)}
+            >
               Registrera i efterhand
             </Button>
             {afterOpen && (
-              <div className="space-y-2 rounded-lg border p-3">
+              <div className="w-full space-y-2 rounded-lg border p-3">
                 <label className="text-sm font-medium">Tog cirka … minuter</label>
                 <Input
                   inputMode="numeric"
