@@ -403,7 +403,7 @@ export function TaskRow({
               </label>
             )}
             <Button size="sm" variant="ghost" onClick={onOpenDetail}>
-              Mer info →
+              <ImageIcon className="mr-1 h-4 w-4" /> Hur gör jag? →
             </Button>
             {onDelete && (
               <Button
