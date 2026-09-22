@@ -29,7 +29,9 @@ export function useFullscreenFlowActive() {
     const fn = () => setValue(active > 0);
     listeners.add(fn);
     fn();
-    return () => listeners.delete(fn);
+    return () => {
+      listeners.delete(fn);
+    };
   }, []);
   return value;
 }

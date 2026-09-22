@@ -3,6 +3,7 @@ import { MessageSquare, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { useChatUnread } from "@/hooks/useChat";
+import { useFullscreenFlowActive } from "@/lib/fullscreenFlow";
 
 /**
  * Flytande chattknapp nere till höger (som chattbubblan på Facebook).
@@ -12,6 +13,9 @@ export function ChatBubble() {
   const [open, setOpen] = useState(false);
   const unread = useChatUnread();
   const count = unread.total ?? 0;
+  /* Göms när personalen gör en uppgift steg för steg — knappen ska inte ligga i vägen. */
+  const hidden = useFullscreenFlowActive();
+  if (hidden) return null;
 
   return (
     <>
