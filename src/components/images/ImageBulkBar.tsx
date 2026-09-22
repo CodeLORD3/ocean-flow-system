@@ -19,7 +19,7 @@ export default function ImageBulkBar({
   selectedIds: string[];
   onClear: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [kind, setKind] = useState<MediaKind | "">("");
   const [storeId, setStoreId] = useState("");
   const [zoneId, setZoneId] = useState("");
@@ -31,6 +31,11 @@ export default function ImageBulkBar({
   const { data: resources = [] } = usePickResources();
   const { data: products = [] } = usePickProducts();
   const bulk = useBulkClassify();
+
+  // Finns bara en butik behöver ingen välja den — områdena visas direkt.
+  useEffect(() => {
+    if (!storeId && stores.length === 1) setStoreId(stores[0].id);
+  }, [storeId, stores]);
 
   if (selectedIds.length === 0) return null;
 
