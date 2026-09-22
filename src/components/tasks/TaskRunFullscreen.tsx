@@ -275,7 +275,7 @@ export function TaskRunFullscreen({
                   <span className="min-w-0 flex-1">
                     {/* Hela texten syns — den bryts på ny rad i stället för att kapas */}
                     <span className={cn("block break-words text-sm font-medium", isDone && "text-emerald-900")}>
-                      {stepTitle(st.text || `Steg ${n}`)}
+                      {st.text || `Steg ${n}`}
                     </span>
                     <span className="block text-[11px] text-muted-foreground">{isDone ? "Klart" : "Kvar att göra"}</span>
                   </span>
