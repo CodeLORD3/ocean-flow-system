@@ -426,6 +426,7 @@ export default function Uppgifter() {
       key={t.id}
       task={t}
       focused={focusTaskId === t.id}
+      isNew={newTaskId === t.id}
       storeId={storeId}
       area={t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null}
       categoryName={catOf(t)?.name ?? null}
