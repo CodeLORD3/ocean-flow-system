@@ -21095,6 +21095,14 @@ export type Database = {
         Args: { _date: string; _store_id: string }
         Returns: Json
       }
+      pos_demo_training_sequence: {
+        Args: { p_register_id: string }
+        Returns: {
+          events: number
+          journal_seq: number
+          session_id: string
+        }[]
+      }
       pos_fefo_lots: {
         Args: { _location_id: string; _product_id: string }
         Returns: {
