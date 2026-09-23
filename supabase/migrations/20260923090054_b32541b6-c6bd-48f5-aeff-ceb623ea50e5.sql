@@ -1,0 +1,34 @@
+revoke execute on function public.block_locked_stock_count() from anon, public;
+revoke execute on function public.enforce_stock_report_line_allowed() from anon, public;
+revoke execute on function public.clock_station_move(uuid, uuid) from anon, public;
+revoke execute on function public.dagsavslut_status(uuid, date) from anon, public;
+revoke execute on function public.get_lineage(text, uuid) from anon, public;
+revoke execute on function public.inventering_paminnelse() from anon, public;
+revoke execute on function public.is_auction_user() from anon, public;
+revoke execute on function public.pick_lot_fefo(uuid, uuid, numeric) from anon, public;
+revoke execute on function public.pricing_calc(uuid, uuid) from anon, public;
+revoke execute on function public.pricing_pick_rule(text, uuid, text, uuid) from anon, public;
+revoke execute on function public.product_cost_history(uuid) from anon, public;
+revoke execute on function public.store_replenishment_auto_send() from anon, public;
+revoke execute on function public.store_report_allowed_products(uuid) from anon, public;
+revoke execute on function public.store_stock_disappearance(uuid, date, date) from anon, public;
+revoke execute on function public.traceability_lookup(text) from anon, public;
+revoke execute on function public.traceability_report() from anon, public;
+revoke execute on function public.wholesale_price_for(uuid, uuid) from anon, public;
+
+grant execute on function public.clock_station_move(uuid, uuid) to authenticated;
+grant execute on function public.dagsavslut_status(uuid, date) to authenticated;
+grant execute on function public.get_lineage(text, uuid) to authenticated;
+grant execute on function public.is_auction_user() to authenticated;
+grant execute on function public.pick_lot_fefo(uuid, uuid, numeric) to authenticated;
+grant execute on function public.pricing_calc(uuid, uuid) to authenticated;
+grant execute on function public.pricing_pick_rule(text, uuid, text, uuid) to authenticated;
+grant execute on function public.product_cost_history(uuid) to authenticated;
+grant execute on function public.store_report_allowed_products(uuid) to authenticated;
+grant execute on function public.store_stock_disappearance(uuid, date, date) to authenticated;
+grant execute on function public.traceability_lookup(text) to authenticated;
+grant execute on function public.traceability_report() to authenticated;
+grant execute on function public.wholesale_price_for(uuid, uuid) to authenticated;
+
+grant execute on function public.inventering_paminnelse() to service_role;
+grant execute on function public.store_replenishment_auto_send() to service_role;
