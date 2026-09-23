@@ -97,8 +97,10 @@ export function useMyTaskAlerts() {
       data.forEach((row) => add(row as never, true));
     })();
 
+    // Egen kanal per montering: ett återanvänt namn kraschar när kanalen
+    // redan är igång (callbacks kan inte läggas till efter subscribe).
     const channel = supabase
-      .channel("my-task-alerts")
+      .channel(`my-task-alerts-${staffId}-${Math.random().toString(36).slice(2, 8)}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "checklist_items" }, (p) => add(p.new as never))
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "checklist_items" }, (p) => {
         const before = p.old as { assigned_staff_id?: string | null } | null;

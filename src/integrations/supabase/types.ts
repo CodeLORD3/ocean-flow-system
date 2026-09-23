@@ -11144,6 +11144,127 @@ export type Database = {
           },
         ]
       }
+      pos_grand_totals: {
+        Row: {
+          gt_net: number | null
+          gt_returns: number
+          gt_sales: number
+          receipt_count: number
+          register_id: string
+          training_count: number
+          updated_at: string
+        }
+        Insert: {
+          gt_net?: number | null
+          gt_returns?: number
+          gt_sales?: number
+          receipt_count?: number
+          register_id: string
+          training_count?: number
+          updated_at?: string
+        }
+        Update: {
+          gt_net?: number | null
+          gt_returns?: number
+          gt_sales?: number
+          receipt_count?: number
+          register_id?: string
+          training_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_grand_totals_register_id_fkey"
+            columns: ["register_id"]
+            isOneToOne: true
+            referencedRelation: "pos_registers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_journal: {
+        Row: {
+          created_at: string
+          event_time: string
+          event_type: string
+          hash: string
+          legal_entity_id: string
+          origin: string
+          payload: Json
+          prev_hash: string
+          receipt_id: string | null
+          register_id: string
+          sequence_no: number
+          session_id: string | null
+          software_version: string
+          staff_id: string | null
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_time?: string
+          event_type: string
+          hash: string
+          legal_entity_id: string
+          origin?: string
+          payload: Json
+          prev_hash: string
+          receipt_id?: string | null
+          register_id: string
+          sequence_no: number
+          session_id?: string | null
+          software_version: string
+          staff_id?: string | null
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          event_time?: string
+          event_type?: string
+          hash?: string
+          legal_entity_id?: string
+          origin?: string
+          payload?: Json
+          prev_hash?: string
+          receipt_id?: string | null
+          register_id?: string
+          sequence_no?: number
+          session_id?: string | null
+          software_version?: string
+          staff_id?: string | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_journal_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "pos_journal_register_id_fkey"
+            columns: ["register_id"]
+            isOneToOne: false
+            referencedRelation: "pos_registers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_journal_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "pos_journal_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pos_products: {
         Row: {
           active: boolean
@@ -11209,6 +11330,179 @@ export type Database = {
             columns: ["erp_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_regions: {
+        Row: {
+          cash_rounding: number
+          country_code: string
+          created_at: string
+          currency_code: string
+          id: string
+          locale: string
+          name: string
+          timezone: string
+        }
+        Insert: {
+          cash_rounding?: number
+          country_code: string
+          created_at?: string
+          currency_code: string
+          id?: string
+          locale: string
+          name: string
+          timezone: string
+        }
+        Update: {
+          cash_rounding?: number
+          country_code?: string
+          created_at?: string
+          currency_code?: string
+          id?: string
+          locale?: string
+          name?: string
+          timezone?: string
+        }
+        Relationships: []
+      }
+      pos_registers: {
+        Row: {
+          created_at: string
+          fiscal_device_ref: string | null
+          id: string
+          is_active: boolean
+          journal_last_hash: string | null
+          journal_seq: number
+          journal_writer: string
+          legal_entity_id: string
+          name: string | null
+          register_number: string
+          register_token_hash: string | null
+          software_version: string
+          store_id: string
+          updated_at: string
+          worldline_terminal_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          fiscal_device_ref?: string | null
+          id?: string
+          is_active?: boolean
+          journal_last_hash?: string | null
+          journal_seq?: number
+          journal_writer?: string
+          legal_entity_id: string
+          name?: string | null
+          register_number: string
+          register_token_hash?: string | null
+          software_version?: string
+          store_id: string
+          updated_at?: string
+          worldline_terminal_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          fiscal_device_ref?: string | null
+          id?: string
+          is_active?: boolean
+          journal_last_hash?: string | null
+          journal_seq?: number
+          journal_writer?: string
+          legal_entity_id?: string
+          name?: string | null
+          register_number?: string
+          register_token_hash?: string | null
+          software_version?: string
+          store_id?: string
+          updated_at?: string
+          worldline_terminal_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_registers_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "pos_registers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "pos_registers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_sessions: {
+        Row: {
+          closed_at: string | null
+          closed_by_staff_id: string | null
+          created_at: string
+          id: string
+          opened_at: string
+          opened_by_staff_id: string | null
+          opening_float: number
+          register_id: string
+          status: string
+          store_id: string
+          training: boolean
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by_staff_id?: string | null
+          created_at?: string
+          id?: string
+          opened_at?: string
+          opened_by_staff_id?: string | null
+          opening_float?: number
+          register_id: string
+          status?: string
+          store_id: string
+          training?: boolean
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by_staff_id?: string | null
+          created_at?: string
+          id?: string
+          opened_at?: string
+          opened_by_staff_id?: string | null
+          opening_float?: number
+          register_id?: string
+          status?: string
+          store_id?: string
+          training?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_sessions_register_id_fkey"
+            columns: ["register_id"]
+            isOneToOne: false
+            referencedRelation: "pos_registers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sessions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "pos_sessions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -16546,11 +16840,14 @@ export type Database = {
           manager: string | null
           name: string
           phone: string | null
+          pos_enabled: boolean
           price_tier_id: string | null
           region: string | null
+          region_country: string | null
           requires_identification_mark: boolean
           slug: string
           sqm: number | null
+          store_code: string | null
           unit_type: string
           weather_timezone: string | null
           week_last_open_dow: number
@@ -16582,11 +16879,14 @@ export type Database = {
           manager?: string | null
           name: string
           phone?: string | null
+          pos_enabled?: boolean
           price_tier_id?: string | null
           region?: string | null
+          region_country?: string | null
           requires_identification_mark?: boolean
           slug: string
           sqm?: number | null
+          store_code?: string | null
           unit_type?: string
           weather_timezone?: string | null
           week_last_open_dow?: number
@@ -16618,11 +16918,14 @@ export type Database = {
           manager?: string | null
           name?: string
           phone?: string | null
+          pos_enabled?: boolean
           price_tier_id?: string | null
           region?: string | null
+          region_country?: string | null
           requires_identification_mark?: boolean
           slug?: string
           sqm?: number | null
+          store_code?: string | null
           unit_type?: string
           weather_timezone?: string | null
           week_last_open_dow?: number
@@ -20792,6 +21095,14 @@ export type Database = {
         Args: { _date: string; _store_id: string }
         Returns: Json
       }
+      pos_demo_training_sequence: {
+        Args: { p_register_id: string }
+        Returns: {
+          events: number
+          journal_seq: number
+          session_id: string
+        }[]
+      }
       pos_fefo_lots: {
         Args: { _location_id: string; _product_id: string }
         Returns: {
@@ -20799,6 +21110,56 @@ export type Database = {
           best_before: string
           lot_id: string
           unit_cost: number
+        }[]
+      }
+      pos_journal_append: {
+        Args: {
+          p_event_type: string
+          p_payload: Json
+          p_receipt_id?: string
+          p_register_id: string
+          p_session_id?: string
+          p_staff_id?: string
+        }
+        Returns: {
+          created_at: string
+          event_time: string
+          event_type: string
+          hash: string
+          legal_entity_id: string
+          origin: string
+          payload: Json
+          prev_hash: string
+          receipt_id: string | null
+          register_id: string
+          sequence_no: number
+          session_id: string | null
+          software_version: string
+          staff_id: string | null
+          store_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pos_journal"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      pos_journal_hash: {
+        Args: {
+          etime: string
+          etype: string
+          payload: Json
+          prev: string
+          seq: number
+        }
+        Returns: string
+      }
+      pos_journal_verify: {
+        Args: { p_register_id: string }
+        Returns: {
+          first_bad_seq: number
+          ok: boolean
         }[]
       }
       pos_live_summary: { Args: { _date: string }; Returns: Json }
