@@ -1117,14 +1117,20 @@ export default function Uppgifter() {
         onCreated={(id) => {
           // Efter att uppgiften skapats stannar vi i flödet av uppgifter
           // och rullar fram + markerar den nya raden.
+          // Inga filter får gömma den nya raden.
           setTab("dag");
+          setFArea("all");
+          setQuery("");
           setFocusTaskId(id);
+          setNewTaskId(id);
+          toast({ title: "Uppgiften är skapad", description: "Den ligger nu i listan — vi visar var." });
           setTimeout(() => {
             document
               .getElementById(`task-row-${id}`)
               ?.scrollIntoView({ behavior: "smooth", block: "center" });
           }, 300);
           setTimeout(() => setFocusTaskId(null), 3000);
+          setTimeout(() => setNewTaskId(null), 15000);
         }}
       />
 
