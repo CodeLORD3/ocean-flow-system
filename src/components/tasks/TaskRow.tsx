@@ -87,6 +87,7 @@ export function TaskRow({
   onAssign,
   storeId = null,
   focused = false,
+  isNew = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   /* Tillbaka från uppgiftssidan: raden fälls ut igen där man var. */
