@@ -302,6 +302,29 @@ export function TaskRegister({
                             </button>
                           )}
                         </span>
+
+                        {/* Redigera namnet direkt i listan, eller ta bort uppgiften */}
+                        <span className="flex w-[62px] shrink-0 justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditKey(r.key);
+                              setEditName(r.task);
+                            }}
+                            title="Byt namn på uppgiften"
+                            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteRow(r)}
+                            title="Ta bort uppgiften"
+                            className="rounded-md p-1 text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </span>
                       </div>
                     );
                   })}
