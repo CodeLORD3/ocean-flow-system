@@ -69,7 +69,7 @@
     "react-leaflet": "4.2.1",
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^2.1.9",
-    "react-router-dom": "6.30.6",
+    "react-router-dom": "^7.18.4",
     "react-simple-maps": "3.0.0",
     "react-zoom-pan-pinch": "^4.2.0",
     "recharts": "^2.15.4",
