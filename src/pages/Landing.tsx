@@ -30,7 +30,7 @@ export default function Landing() {
     );
   }
 
-  if (session) return <Navigate to="/choose-portal" replace />;
+  if (session) return <Navigate to={next ?? "/choose-portal"} replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
