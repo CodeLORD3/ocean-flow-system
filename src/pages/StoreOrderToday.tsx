@@ -68,8 +68,7 @@ export default function StoreOrderToday() {
   const lines = draft.data?.store_replenishment_lines ?? [];
   const staffName =
     ((activeUser as any)?.name as string | null) ??
-    [(staff as any)?.first_name, (staff as any)?.last_name].filter(Boolean).join(" ") ||
-    null;
+    ([(staff as any)?.first_name, (staff as any)?.last_name].filter(Boolean).join(" ") || null);
   const openReceive = orders.data?.filter((o) => o.status === "avsand" || o.status === "delvis_mottagen") ?? [];
   const receiveTarget = openReceive.find((o) => o.id === receiveOrderId) ?? null;
 
