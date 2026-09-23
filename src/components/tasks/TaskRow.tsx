@@ -114,6 +114,8 @@ export function TaskRow({
   const { data: prepChecks = [] } = useTaskPrepChecks(task.id);
   const prepCheckedIds = new Set(prepChecks.map((c) => c.requirement_id ?? ""));
   const prepMissingCount = needs.filter((nd) => !prepCheckedIds.has(nd.requirement.id)).length;
+  /** Antal avbockade steg — visas som framsteg på raden, t.ex. 2/4 steg. */
+  const stepsDoneCount = new Set(prepChecks.filter((c) => c.step_no != null).map((c) => c.step_no as number)).size;
   const duration = durationText(task.estimated_minutes);
   const accent = area?.color ?? categoryColor ?? "hsl(var(--muted-foreground))";
   /**
