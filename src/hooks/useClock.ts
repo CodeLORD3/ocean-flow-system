@@ -174,7 +174,7 @@ export function useUpdateStationProfile() {
     mutationFn: async ({ id, profile, name }: { id: string; profile: ClockStationProfile; name?: string }) => {
       const patch: Record<string, unknown> = { profile };
       if (name) patch.name = name;
-      const { error } = await supabase.from("clock_stations").update(patch).eq("id", id);
+      const { error } = await supabase.from("clock_stations").update(patch as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clock_stations"] }),

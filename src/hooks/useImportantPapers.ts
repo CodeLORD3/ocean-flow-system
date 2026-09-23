@@ -242,7 +242,7 @@ export function useSaveImportantPaper() {
       }
 
       if (input.id) {
-        const { error } = await supabase.from("important_papers").update(row).eq("id", input.id);
+        const { error } = await supabase.from("important_papers").update(row as never).eq("id", input.id);
         if (error) throw error;
         return input.id;
       }

@@ -389,7 +389,7 @@ export function useUpdateEntityImage() {
       }
       if (sort_order !== undefined) patch.sort_order = sort_order;
       if (focal_point !== undefined) patch.focal_point = focal_point;
-      const { error } = await supabase.from("entity_images").update(patch).eq("id", id);
+      const { error } = await supabase.from("entity_images").update(patch as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

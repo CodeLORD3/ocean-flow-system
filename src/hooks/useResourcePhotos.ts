@@ -67,7 +67,7 @@ export function useNameResourcePhoto() {
     mutationFn: async (input: { id: string; title: string; caption?: string | null }) => {
       const patch: Record<string, unknown> = { title: input.title.trim() || null };
       if (input.caption !== undefined) patch.caption = input.caption?.trim() || null;
-      const { error } = await supabase.from("entity_images").update(patch).eq("id", input.id);
+      const { error } = await supabase.from("entity_images").update(patch as never).eq("id", input.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -90,7 +90,7 @@ export function useLinkPhotoToResource() {
         entity_id: input.resourceId,
       };
       if (input.title?.trim()) patch.title = input.title.trim();
-      const { error } = await supabase.from("entity_images").update(patch).eq("id", input.photoId);
+      const { error } = await supabase.from("entity_images").update(patch as never).eq("id", input.photoId);
       if (error) throw error;
 
       const { data: item } = await supabase

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,10 @@ import { LandingView } from "@/components/landing/LandingView";
 
 export default function Landing() {
   const { session, loading } = useStaffAuth();
+  const [searchParams] = useSearchParams();
+  const rawNext = searchParams.get("next");
+  // Endast relativa adresser inom appen får användas som returmål.
+  const next = rawNext && /^\/(?!\/)/.test(rawNext) ? rawNext : null;
   const { data: settings } = useLandingSettings();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +30,7 @@ export default function Landing() {
     );
   }
 
-  if (session) return <Navigate to="/choose-portal" replace />;
+  if (session) return <Navigate to={next ?? "/choose-portal"} replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
