@@ -4,8 +4,9 @@ import { motion } from "framer-motion";
 import {
   User, Mail, Phone, MapPin, LogIn, LogOut, Clock, Store as StoreIcon, ShieldCheck,
   History as HistoryIcon, ChevronRight, ListChecks, AlertTriangle, CalendarDays,
-  Activity as ActivityIcon, Settings, Camera, Image as ImageIcon, Plus,
+  Activity as ActivityIcon, Settings, Camera, Image as ImageIcon, Plus, Trash2,
 } from "lucide-react";
+import { useDeleteTask } from "@/hooks/useTasks";
 import { useMyActivity } from "@/hooks/useMyActivity";
 import { useMyWork, type MyWorkItem } from "@/hooks/useMyWork";
 import { useMyDayProgress } from "@/hooks/useMyDayProgress";
