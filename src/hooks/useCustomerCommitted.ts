@@ -16,7 +16,7 @@ export function useCustomerCommitted(storeId?: string | null) {
     queryFn: async () => {
       const { data: orders, error: oErr } = await supabase
         .from("customer_orders")
-        .select("id, status, customer_name, wanted_date")
+        .select("id, status, customer_name_snapshot, wanted_date")
         .eq("store_id", storeId!)
         .limit(2000);
       if (oErr) throw oErr;
@@ -43,7 +43,7 @@ export function useCustomerCommitted(storeId?: string | null) {
         const entry =
           map.get(l.product_id) ?? { quantity: 0, unit: l.unit || "kg", customers: [] };
         entry.quantity += Number(l.quantity_ordered) || 0;
-        const name = (byId.get(l.customer_order_id) as any)?.customer_name;
+        const name = (byId.get(l.customer_order_id) as any)?.customer_name_snapshot;
         if (name && !entry.customers.includes(name)) entry.customers.push(name);
         map.set(l.product_id, entry);
       }

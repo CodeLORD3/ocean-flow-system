@@ -111,7 +111,7 @@ export function usePackedByProduct(storeId?: string | null) {
         let q = supabase
           .from("customer_order_lines")
           .select(
-            "product_id, quantity, quantity_packed, unit, customer_orders!inner(id, order_number, status, store_id, wanted_date, customer_name_snapshot, customers_retail(name))",
+            "product_id, quantity_ordered, quantity_packed, unit, customer_orders!inner(id, order_number, status, store_id, wanted_date, customer_name_snapshot, customers_retail(name))",
           )
           .in("customer_orders.status", OPEN_CUSTOMER_STATUSES);
         if (storeId) q = q.eq("customer_orders.store_id", storeId);
@@ -120,7 +120,7 @@ export function usePackedByProduct(storeId?: string | null) {
         for (const r of (data || []) as any[]) {
           if (!r.product_id) continue;
           const packed = Number(r.quantity_packed || 0);
-          const rest = Math.max(0, Number(r.quantity || 0) - packed);
+          const rest = Math.max(0, Number(r.quantity_ordered || 0) - packed);
           const o = r.customer_orders || {};
           if (o.wanted_date && o.wanted_date < today) continue;
           const unit = r.unit || "kg";

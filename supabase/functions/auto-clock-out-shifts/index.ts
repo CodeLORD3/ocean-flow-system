@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/clock.ts";
-import { svenskDagSista, svenskDatum } from "../_shared/setime.ts";
+import { svenskDagSista, svenskDagStart, svenskDatum } from "../_shared/setime.ts";
 
 /**
  * Stänger alla stämplingar som startade före dagens datum (Stockholm-tid).
@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     );
 
     const localDate = svenskDatum();
-    const startOfToday = svenskDagSista(localDate);
+    const startOfToday = svenskDagStart(localDate);
 
     const { data: openRows, error: readErr } = await supabase
       .from("staff_shifts")

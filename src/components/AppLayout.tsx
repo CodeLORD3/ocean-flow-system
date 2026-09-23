@@ -163,8 +163,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     location.pathname === "/m/inventering" ||
     location.pathname === "/rakna" ||
     // Auktionsinköpen är samma slags helskärmsverktyg vid ringen.
-    location.pathname === "/auktion" ||
-    (isNarrow && location.pathname === "/inventory");
+    location.pathname === "/auktion";
   const page = pageTitles[location.pathname] || { title: fallbackTitle, breadcrumb: ["Hem", fallbackTitle] };
   const allowedStores = useAllowedStores();
   /** Personal & schema: ingen toppbild och sidomenyn helt gömd bakom hamburgaren. */
