@@ -1389,6 +1389,95 @@ export type Database = {
           },
         ]
       }
+      checklist_def_points: {
+        Row: {
+          created_at: string
+          def_id: string
+          id: string
+          max_value: number | null
+          min_value: number | null
+          point_type: string
+          sort_order: number
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          def_id: string
+          id?: string
+          max_value?: number | null
+          min_value?: number | null
+          point_type?: string
+          sort_order?: number
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          def_id?: string
+          id?: string
+          max_value?: number | null
+          min_value?: number | null
+          point_type?: string
+          sort_order?: number
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_def_points_def_id_fkey"
+            columns: ["def_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_defs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_defs: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          id: string
+          name: string
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          id?: string
+          name: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_defs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "checklist_defs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_items: {
         Row: {
           active_minutes: number | null
@@ -1593,10 +1682,138 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "checklist_items_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_definitions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "checklist_items_zone_id_fkey"
             columns: ["zone_id"]
             isOneToOne: false
             referencedRelation: "map_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_run_results: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          image_id: string | null
+          point_id: string
+          recorded_at: string
+          result: string | null
+          run_id: string
+          staff_id: string | null
+          updated_at: string
+          value: number | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          image_id?: string | null
+          point_id: string
+          recorded_at?: string
+          result?: string | null
+          run_id: string
+          staff_id?: string | null
+          updated_at?: string
+          value?: number | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          image_id?: string | null
+          point_id?: string
+          recorded_at?: string
+          result?: string | null
+          run_id?: string
+          staff_id?: string | null
+          updated_at?: string
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_run_results_point_id_fkey"
+            columns: ["point_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_def_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_run_results_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_runs: {
+        Row: {
+          created_at: string
+          def_id: string
+          id: string
+          locked: boolean
+          run_date: string
+          run_time: string | null
+          signed_at: string | null
+          signed_by: string | null
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          def_id: string
+          id?: string
+          locked?: boolean
+          run_date?: string
+          run_time?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          def_id?: string
+          id?: string
+          locked?: boolean
+          run_date?: string
+          run_time?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_runs_def_id_fkey"
+            columns: ["def_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_defs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_runs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "checklist_runs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -1660,6 +1877,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "checklist_signature_requests_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "task_occurrences"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "checklist_signature_requests_requested_by_staff_id_fkey"
             columns: ["requested_by_staff_id"]
             isOneToOne: false
@@ -1706,6 +1930,7 @@ export type Database = {
           link_url: string | null
           map_object_id: string | null
           recipe_id: string | null
+          requires_checklist_def_id: string | null
           requires_note: boolean
           requires_photo: boolean
           requires_value: boolean
@@ -1748,6 +1973,7 @@ export type Database = {
           link_url?: string | null
           map_object_id?: string | null
           recipe_id?: string | null
+          requires_checklist_def_id?: string | null
           requires_note?: boolean
           requires_photo?: boolean
           requires_value?: boolean
@@ -1790,6 +2016,7 @@ export type Database = {
           link_url?: string | null
           map_object_id?: string | null
           recipe_id?: string | null
+          requires_checklist_def_id?: string | null
           requires_note?: boolean
           requires_photo?: boolean
           requires_value?: boolean
@@ -1850,6 +2077,13 @@ export type Database = {
             columns: ["recipe_id"]
             isOneToOne: false
             referencedRelation: "production_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_requires_checklist_def_id_fkey"
+            columns: ["requires_checklist_def_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_defs"
             referencedColumns: ["id"]
           },
           {
@@ -5374,6 +5608,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "entity_images_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_occurrences"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "entity_images_floor_plan_id_fkey"
             columns: ["floor_plan_id"]
             isOneToOne: false
@@ -6731,6 +6972,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "improvement_suggestions_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_occurrences"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "improvement_suggestions_resource_id_fkey"
             columns: ["resource_id"]
             isOneToOne: false
@@ -6742,6 +6990,13 @@ export type Database = {
             columns: ["template_item_id"]
             isOneToOne: false
             referencedRelation: "checklist_template_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "improvement_suggestions_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_definitions"
             referencedColumns: ["id"]
           },
         ]
@@ -13714,6 +13969,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "resource_shortage_reports_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_occurrences"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "resource_shortage_reports_reported_by_staff_id_fkey"
             columns: ["reported_by_staff_id"]
             isOneToOne: false
@@ -13957,6 +14219,66 @@ export type Database = {
           },
           {
             foreignKeyName: "schedule_imports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedules: {
+        Row: {
+          active: boolean
+          created_at: string
+          end_date: string | null
+          id: string
+          owner_id: string
+          owner_type: string
+          rule: Json
+          skip_closed_days: boolean
+          start_date: string | null
+          store_id: string | null
+          times: Json | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          owner_id: string
+          owner_type: string
+          rule?: Json
+          skip_closed_days?: boolean
+          start_date?: string | null
+          store_id?: string | null
+          times?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          owner_id?: string
+          owner_type?: string
+          rule?: Json
+          skip_closed_days?: boolean
+          start_date?: string | null
+          store_id?: string | null
+          times?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedules_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "schedules_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -16296,6 +16618,42 @@ export type Database = {
           },
         ]
       }
+      store_closed_days: {
+        Row: {
+          created_at: string
+          date: string
+          reason: string | null
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          reason?: string | null
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          reason?: string | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_closed_days_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_closed_days_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_company_periods: {
         Row: {
           created_at: string
@@ -17898,6 +18256,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "task_checkpoint_results_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_occurrences"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "task_checkpoint_results_checkpoint_id_fkey"
             columns: ["checkpoint_id"]
             isOneToOne: false
@@ -17948,6 +18313,13 @@ export type Database = {
             referencedRelation: "checklist_template_items"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "task_checkpoints_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_definitions"
+            referencedColumns: ["id"]
+          },
         ]
       }
       task_pauses: {
@@ -17987,6 +18359,13 @@ export type Database = {
             columns: ["checklist_item_id"]
             isOneToOne: false
             referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_pauses_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_occurrences"
             referencedColumns: ["id"]
           },
         ]
@@ -18048,6 +18427,13 @@ export type Database = {
             columns: ["checklist_item_id"]
             isOneToOne: false
             referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_prep_checks_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_occurrences"
             referencedColumns: ["id"]
           },
           {
@@ -18115,10 +18501,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "task_resource_requirements_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_occurrences"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "task_resource_requirements_task_template_id_fkey"
             columns: ["task_template_id"]
             isOneToOne: false
             referencedRelation: "checklist_template_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_resource_requirements_task_template_id_fkey"
+            columns: ["task_template_id"]
+            isOneToOne: false
+            referencedRelation: "task_definitions"
             referencedColumns: ["id"]
           },
         ]
@@ -18172,10 +18572,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "task_route_snapshots_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_occurrences"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "task_route_snapshots_template_item_id_fkey"
             columns: ["template_item_id"]
             isOneToOne: false
             referencedRelation: "checklist_template_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_route_snapshots_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_definitions"
             referencedColumns: ["id"]
           },
         ]
@@ -18226,6 +18640,13 @@ export type Database = {
             columns: ["template_item_id"]
             isOneToOne: false
             referencedRelation: "checklist_template_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_standard_routes_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_definitions"
             referencedColumns: ["id"]
           },
         ]
@@ -20678,6 +21099,418 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_definitions: {
+        Row: {
+          active: boolean | null
+          assigned_staff_id: string | null
+          auto_start: boolean | null
+          category: string | null
+          category_id: string | null
+          created_at: string | null
+          daypart: string | null
+          estimated_minutes: number | null
+          guide: Json | null
+          id: string | null
+          important_note: string | null
+          instructions: Json | null
+          link_url: string | null
+          map_object_id: string | null
+          recipe_id: string | null
+          requires_note: boolean | null
+          requires_photo: boolean | null
+          requires_value: boolean | null
+          section: string | null
+          sort_order: number | null
+          specific_time: string | null
+          standard_id: string | null
+          std_check_minutes: number | null
+          std_do_minutes: number | null
+          std_fetch_minutes: number | null
+          std_prepare_minutes: number | null
+          std_restore_minutes: number | null
+          store_id: string | null
+          task: string | null
+          template_id: string | null
+          time_from: string | null
+          time_label: string | null
+          time_to: string | null
+          updated_at: string | null
+          value_label: string | null
+          variant_note: string | null
+          variant_of: string | null
+          weekdays: number[] | null
+          work_type: string | null
+          zone_id: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          assigned_staff_id?: string | null
+          auto_start?: boolean | null
+          category?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          daypart?: string | null
+          estimated_minutes?: number | null
+          guide?: Json | null
+          id?: string | null
+          important_note?: string | null
+          instructions?: Json | null
+          link_url?: string | null
+          map_object_id?: string | null
+          recipe_id?: string | null
+          requires_note?: boolean | null
+          requires_photo?: boolean | null
+          requires_value?: boolean | null
+          section?: string | null
+          sort_order?: number | null
+          specific_time?: string | null
+          standard_id?: string | null
+          std_check_minutes?: number | null
+          std_do_minutes?: number | null
+          std_fetch_minutes?: number | null
+          std_prepare_minutes?: number | null
+          std_restore_minutes?: number | null
+          store_id?: string | null
+          task?: string | null
+          template_id?: string | null
+          time_from?: string | null
+          time_label?: string | null
+          time_to?: string | null
+          updated_at?: string | null
+          value_label?: string | null
+          variant_note?: string | null
+          variant_of?: string | null
+          weekdays?: number[] | null
+          work_type?: string | null
+          zone_id?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          assigned_staff_id?: string | null
+          auto_start?: boolean | null
+          category?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          daypart?: string | null
+          estimated_minutes?: number | null
+          guide?: Json | null
+          id?: string | null
+          important_note?: string | null
+          instructions?: Json | null
+          link_url?: string | null
+          map_object_id?: string | null
+          recipe_id?: string | null
+          requires_note?: boolean | null
+          requires_photo?: boolean | null
+          requires_value?: boolean | null
+          section?: string | null
+          sort_order?: number | null
+          specific_time?: string | null
+          standard_id?: string | null
+          std_check_minutes?: number | null
+          std_do_minutes?: number | null
+          std_fetch_minutes?: number | null
+          std_prepare_minutes?: number | null
+          std_restore_minutes?: number | null
+          store_id?: string | null
+          task?: string | null
+          template_id?: string | null
+          time_from?: string | null
+          time_label?: string | null
+          time_to?: string | null
+          updated_at?: string | null
+          value_label?: string | null
+          variant_note?: string | null
+          variant_of?: string | null
+          weekdays?: number[] | null
+          work_type?: string | null
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_template_items_assigned_staff_id_fkey"
+            columns: ["assigned_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_assigned_staff_id_fkey"
+            columns: ["assigned_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "task_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_map_object_id_fkey"
+            columns: ["map_object_id"]
+            isOneToOne: false
+            referencedRelation: "map_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "production_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "map_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_occurrences: {
+        Row: {
+          active_minutes: number | null
+          actual_minutes: number | null
+          assigned_staff_id: string | null
+          category: string | null
+          category_id: string | null
+          completed_by_staff_id: string | null
+          completion_note: string | null
+          completion_value: number | null
+          created_at: string | null
+          day_id: string | null
+          daypart: string | null
+          done: boolean | null
+          done_at: string | null
+          estimated_minutes: number | null
+          finished_at: string | null
+          guide: Json | null
+          id: string | null
+          important_note: string | null
+          instructions: Json | null
+          link_url: string | null
+          map_object_id: string | null
+          note: string | null
+          paused_minutes: number | null
+          recipe_id: string | null
+          requires_note: boolean | null
+          requires_photo: boolean | null
+          requires_value: boolean | null
+          run_status: string | null
+          section: string | null
+          signature: string | null
+          sort_order: number | null
+          specific_time: string | null
+          started_at: string | null
+          started_by_staff_id: string | null
+          task: string | null
+          template_item_id: string | null
+          time_from: string | null
+          time_label: string | null
+          time_source: string | null
+          time_to: string | null
+          updated_at: string | null
+          value_label: string | null
+          work_type: string | null
+          zone_id: string | null
+        }
+        Insert: {
+          active_minutes?: number | null
+          actual_minutes?: number | null
+          assigned_staff_id?: string | null
+          category?: string | null
+          category_id?: string | null
+          completed_by_staff_id?: string | null
+          completion_note?: string | null
+          completion_value?: number | null
+          created_at?: string | null
+          day_id?: string | null
+          daypart?: string | null
+          done?: boolean | null
+          done_at?: string | null
+          estimated_minutes?: number | null
+          finished_at?: string | null
+          guide?: Json | null
+          id?: string | null
+          important_note?: string | null
+          instructions?: Json | null
+          link_url?: string | null
+          map_object_id?: string | null
+          note?: string | null
+          paused_minutes?: number | null
+          recipe_id?: string | null
+          requires_note?: boolean | null
+          requires_photo?: boolean | null
+          requires_value?: boolean | null
+          run_status?: string | null
+          section?: string | null
+          signature?: string | null
+          sort_order?: number | null
+          specific_time?: string | null
+          started_at?: string | null
+          started_by_staff_id?: string | null
+          task?: string | null
+          template_item_id?: string | null
+          time_from?: string | null
+          time_label?: string | null
+          time_source?: string | null
+          time_to?: string | null
+          updated_at?: string | null
+          value_label?: string | null
+          work_type?: string | null
+          zone_id?: string | null
+        }
+        Update: {
+          active_minutes?: number | null
+          actual_minutes?: number | null
+          assigned_staff_id?: string | null
+          category?: string | null
+          category_id?: string | null
+          completed_by_staff_id?: string | null
+          completion_note?: string | null
+          completion_value?: number | null
+          created_at?: string | null
+          day_id?: string | null
+          daypart?: string | null
+          done?: boolean | null
+          done_at?: string | null
+          estimated_minutes?: number | null
+          finished_at?: string | null
+          guide?: Json | null
+          id?: string | null
+          important_note?: string | null
+          instructions?: Json | null
+          link_url?: string | null
+          map_object_id?: string | null
+          note?: string | null
+          paused_minutes?: number | null
+          recipe_id?: string | null
+          requires_note?: boolean | null
+          requires_photo?: boolean | null
+          requires_value?: boolean | null
+          run_status?: string | null
+          section?: string | null
+          signature?: string | null
+          sort_order?: number | null
+          specific_time?: string | null
+          started_at?: string | null
+          started_by_staff_id?: string | null
+          task?: string | null
+          template_item_id?: string | null
+          time_from?: string | null
+          time_label?: string | null
+          time_source?: string | null
+          time_to?: string | null
+          updated_at?: string | null
+          value_label?: string | null
+          work_type?: string | null
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_assigned_staff_id_fkey"
+            columns: ["assigned_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_assigned_staff_id_fkey"
+            columns: ["assigned_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "task_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_completed_by_staff_id_fkey"
+            columns: ["completed_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_completed_by_staff_id_fkey"
+            columns: ["completed_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_map_object_id_fkey"
+            columns: ["map_object_id"]
+            isOneToOne: false
+            referencedRelation: "map_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "production_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_template_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "task_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "map_zones"
             referencedColumns: ["id"]
           },
         ]
