@@ -144,7 +144,7 @@ export function useSetPeriodStatus() {
         patch.correction_reason = reason;
         patch.exported_by = auth.user?.id ?? null;
       }
-      const { error } = await supabase.from("payroll_periods").update(patch).eq("id", id);
+      const { error } = await supabase.from("payroll_periods").update(patch as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["payroll-periods"] }),

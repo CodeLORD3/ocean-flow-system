@@ -186,7 +186,7 @@ export function useUpdateTask() {
   const { staff } = useStaffAuth();
   return useMutation({
     mutationFn: async ({ id, ...patch }: { id: string } & Record<string, unknown>) => {
-      const { error } = await supabase.from("checklist_items").update(patch).eq("id", id);
+      const { error } = await supabase.from("checklist_items").update(patch as never).eq("id", id);
       if (error) throw error;
       // Den som blir tilldelad uppgiften får en personlig notis.
       if ("assigned_staff_id" in patch && patch.assigned_staff_id) {
@@ -742,7 +742,7 @@ export function useUpdateStandardTask() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...patch }: { id: string } & Record<string, unknown>) => {
-      const { error } = await supabase.from("checklist_template_items").update(patch).eq("id", id);
+      const { error } = await supabase.from("checklist_template_items").update(patch as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

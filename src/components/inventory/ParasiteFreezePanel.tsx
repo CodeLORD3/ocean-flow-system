@@ -60,7 +60,7 @@ export default function ParasiteFreezePanel({ lotId }: Props) {
         bivalve_registration_doc: val("bivalve_registration_doc") || null,
         production_area_classification: val("production_area_classification") || null,
       };
-      const { error } = await supabase.from("lots").update(payload).eq("id", lotId);
+      const { error } = await supabase.from("lots").update(payload as never).eq("id", lotId);
       if (error) throw error;
     },
     onSuccess: () => {

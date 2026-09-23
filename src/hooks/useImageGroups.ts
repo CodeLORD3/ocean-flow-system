@@ -179,7 +179,7 @@ export function useUpdateImageGroup() {
       const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
       if (name !== undefined) patch.name = name;
       if (description !== undefined) patch.description = description;
-      const { error } = await supabase.from("image_groups").update(patch).eq("id", id);
+      const { error } = await supabase.from("image_groups").update(patch as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_d, v) => qc.invalidateQueries({ queryKey: key(v.entityType, v.entityId) }),
