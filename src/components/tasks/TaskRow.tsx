@@ -247,7 +247,13 @@ export function TaskRow({
             {task.task}
           </span>
           <span className="mt-0.5 block font-mono text-[11px] leading-snug tabular-nums text-muted-foreground sm:hidden">
-            {[time.label, area && `${area.number}. ${area.name}`, categoryName, assigneeName]
+            {[
+              time.label,
+              area && `${area.number}. ${area.name}`,
+              categoryName,
+              assigneeName,
+              guideSteps.length > 0 && !task.done ? `${stepsDoneCount}/${guideSteps.length} steg klara` : null,
+            ]
               .filter(Boolean)
               .join(" · ")}
           </span>
