@@ -220,7 +220,37 @@ export function useCreateWeekFromTemplates() {
   });
 }
 
-/** Kopiera vecka: källveckans pass klonas till målveckan som utkast. */
+/**
+ * Ledighet inom ett datumintervall: vem som är ledig vilken dag.
+ * Används för att kopierade pass aldrig läggs på någon som är ledig.
+ */
+async function absentByDate(from: string, to: string) {
+  const { data, error } = await supabase
+    .from("absence_requests")
+    .select("employee_id, status, extent_pct, start_date, end_date, date_from, date_to")
+    .in("status", ["approved", "auto_approved"]);
+  if (error) throw error;
+  const blocked = new Set<string>();
+  (data ?? []).forEach((r) => {
+    if (Number(r.extent_pct ?? 100) < 100) return;
+    const start = (r.date_from ?? r.start_date) as string | null;
+    if (!start) return;
+    const end = (r.date_to ?? r.end_date ?? start) as string;
+    if (end < from || start > to) return;
+    const cursor = new Date(`${start < from ? from : start}T12:00:00`);
+    const last = new Date(`${end > to ? to : end}T12:00:00`);
+    while (cursor <= last) {
+      blocked.add(`${r.employee_id}|${cursor.toISOString().slice(0, 10)}`);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+  });
+  return blocked;
+}
+
+/**
+ * Kopiera vecka: källveckans pass klonas till målveckan som utkast.
+ * Pass på någon som är ledig i målveckan kopieras som obemannat pass.
+ */
 export function useCopyWeek() {
   const qc = useQueryClient();
   return useMutation({
@@ -246,23 +276,33 @@ export function useCopyWeek() {
         .neq("status", "cancelled");
       if (error) throw error;
       const { data: auth } = await supabase.auth.getUser();
-      const rows = (data ?? []).map((s) => ({
-        store_id: s.store_id,
-        legal_entity_id: s.legal_entity_id,
-        employee_id: keepEmployees ? s.employee_id : null,
-        shift_type_id: s.shift_type_id,
-        date: dst[src.indexOf(s.date)],
-        start_time: s.start_time,
-        end_time: s.end_time,
-        break_minutes: s.break_minutes,
-        status: "draft" as const,
-        note: s.note,
-        created_by: auth.user?.id ?? null,
-      }));
-      if (!rows.length) return 0;
+      const blocked = keepEmployees ? await absentByDate(dst[0], dst[6]) : new Set<string>();
+      let freed = 0;
+      const rows = (data ?? []).map((s) => {
+        const date = dst[src.indexOf(s.date)];
+        let employeeId = keepEmployees ? s.employee_id : null;
+        if (employeeId && blocked.has(`${employeeId}|${date}`)) {
+          employeeId = null;
+          freed += 1;
+        }
+        return {
+          store_id: s.store_id,
+          legal_entity_id: s.legal_entity_id,
+          employee_id: employeeId,
+          shift_type_id: s.shift_type_id,
+          date,
+          start_time: s.start_time,
+          end_time: s.end_time,
+          break_minutes: s.break_minutes,
+          status: "draft" as const,
+          note: s.note,
+          created_by: auth.user?.id ?? null,
+        };
+      });
+      if (!rows.length) return { count: 0, freed: 0 };
       const { error: insErr } = await supabase.from("shifts").insert(rows);
       if (insErr) throw insErr;
-      return rows.length;
+      return { count: rows.length, freed };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["shifts"] }),
   });
