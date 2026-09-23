@@ -59,6 +59,17 @@ export function NewTaskStepsBuilder({
     setDraft({ text: "", image: null });
   };
 
+  /** Flyttar ett steg uppåt eller nedåt i ordningen. */
+  const moveStep = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= steps.length) return;
+    const next = [...steps];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+    if (index === i) setIndex(j);
+    else if (index === j) setIndex(i);
+  };
+
   const stepNumber = editingSaved ? index + 1 : steps.length + 1;
 
   return (
