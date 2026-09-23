@@ -139,7 +139,7 @@ export function ShopOrderFortnoxButton({ orderId }: { orderId: string }) {
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <Button variant="outline" size="sm" className="h-7 text-[11px]" disabled={sending} onClick={send}>
+      <Button variant="outline" size="sm" className="h-7 text-[11px]" disabled={sending} onClick={() => void send()}>
         {sending ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <FileUp className="mr-1 h-3.5 w-3.5" />}
         Skicka till Fortnox
       </Button>
