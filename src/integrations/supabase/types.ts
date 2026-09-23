@@ -5278,7 +5278,7 @@ export type Database = {
           checklist_item_id: string | null
           created_at: string
           description: string | null
-          entity_id: string
+          entity_id: string | null
           entity_type: string
           floor_plan_id: string | null
           focal_point: string
@@ -5310,7 +5310,7 @@ export type Database = {
           checklist_item_id?: string | null
           created_at?: string
           description?: string | null
-          entity_id: string
+          entity_id?: string | null
           entity_type: string
           floor_plan_id?: string | null
           focal_point?: string
@@ -5342,7 +5342,7 @@ export type Database = {
           checklist_item_id?: string | null
           created_at?: string
           description?: string | null
-          entity_id?: string
+          entity_id?: string | null
           entity_type?: string
           floor_plan_id?: string | null
           focal_point?: string
