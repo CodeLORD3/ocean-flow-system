@@ -80,6 +80,8 @@ export default function Uppgifter() {
    * rad: den fälls ut, rullas fram och lyser upp en stund.
    */
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
+  /** Uppgiften som just skapats — raden får en tydlig grön rubrik en stund. */
+  const [newTaskId, setNewTaskId] = useState<string | null>(null);
   useEffect(() => {
     if (location.pathname !== "/uppgifter") return;
     let id: string | null = null;
@@ -426,6 +428,7 @@ export default function Uppgifter() {
       key={t.id}
       task={t}
       focused={focusTaskId === t.id}
+      isNew={newTaskId === t.id}
       storeId={storeId}
       area={t.zone_id ? (areaOf.get(t.zone_id) ?? null) : null}
       categoryName={catOf(t)?.name ?? null}
@@ -1114,14 +1117,20 @@ export default function Uppgifter() {
         onCreated={(id) => {
           // Efter att uppgiften skapats stannar vi i flödet av uppgifter
           // och rullar fram + markerar den nya raden.
+          // Inga filter får gömma den nya raden.
           setTab("dag");
+          setFArea("all");
+          setQuery("");
           setFocusTaskId(id);
+          setNewTaskId(id);
+          toast({ title: "Uppgiften är skapad", description: "Den ligger nu i listan — vi visar var." });
           setTimeout(() => {
             document
               .getElementById(`task-row-${id}`)
               ?.scrollIntoView({ behavior: "smooth", block: "center" });
           }, 300);
           setTimeout(() => setFocusTaskId(null), 3000);
+          setTimeout(() => setNewTaskId(null), 15000);
         }}
       />
 

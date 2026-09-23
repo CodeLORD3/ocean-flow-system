@@ -56,6 +56,8 @@ type Props = {
   onAssign?: (staffId: string | null) => void;
   /** Sätts när man kommit tillbaka hit: raden öppnas och lyser upp en stund. */
   focused?: boolean;
+  /** Sätts direkt efter att uppgiften skapats: raden får en tydlig rubrik. */
+  isNew?: boolean;
 };
 
 /**
@@ -85,6 +87,7 @@ export function TaskRow({
   onAssign,
   storeId = null,
   focused = false,
+  isNew = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   /* Tillbaka från uppgiftssidan: raden fälls ut igen där man var. */
@@ -194,8 +197,18 @@ export function TaskRow({
         open &&
           "z-10 my-3 rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] pl-2.5 shadow-[0_10px_30px_-18px_hsl(var(--primary)/0.55)]",
         focused && "animate-pulse ring-2 ring-primary ring-offset-2",
+        isNew && "my-3 rounded-2xl ring-2 ring-emerald-500 ring-offset-2",
       )}
     >
+      {/* Nyss skapad uppgift: tydlig rubrik så man ser var den landade. */}
+      {isNew && (
+        <div className="flex items-center gap-2 bg-emerald-500/15 px-3 py-1.5">
+          <Check className="h-4 w-4 text-emerald-700" />
+          <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">
+            Din nya uppgift ligger här
+          </span>
+        </div>
+      )}
       {/* Öppen uppgift: mjuk accentlinje längs hela kortets vänsterkant. */}
       {open && (
         <span
