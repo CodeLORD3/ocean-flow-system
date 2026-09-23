@@ -173,18 +173,50 @@ export function TaskRegister({
                         className="flex min-h-[34px] items-center gap-2 border-b border-grid-line px-2 py-1 last:border-b-0 hover:bg-muted/40"
                       >
                         {/* Namnet först — samma täthet som raderna i Mina uppgifter */}
-                        <button
-                          type="button"
-                          onClick={() => r.itemId && onOpenTask(r.itemId)}
-                          disabled={!r.itemId}
-                          className={cn(
-                            "min-w-[7rem] flex-1 truncate py-0.5 text-left text-[13px] font-semibold",
-                            r.itemId ? "hover:underline" : "cursor-default",
-                          )}
-                          title={r.task}
-                        >
-                          {r.task}
-                        </button>
+                        {editKey === r.key ? (
+                          <div className="flex min-w-[7rem] flex-1 items-center gap-1">
+                            <Input
+                              autoFocus
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") saveName(r);
+                                if (e.key === "Escape") setEditKey(null);
+                              }}
+                              className="h-8 text-[13px] font-semibold"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => saveName(r)}
+                              title="Spara namnet"
+                              className="rounded-md p-1 text-emerald-700 hover:bg-emerald-500/10"
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditKey(null)}
+                              title="Avbryt"
+                              className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => r.itemId && onOpenTask(r.itemId)}
+                            disabled={!r.itemId}
+                            className={cn(
+                              "min-w-[7rem] flex-1 truncate py-0.5 text-left text-[13px] font-semibold",
+                              r.itemId ? "hover:underline" : "cursor-default",
+                            )}
+                            title={r.task}
+                          >
+                            {r.task}
+                          </button>
+                        )}
+
 
                         <span className="hidden w-[150px] shrink-0 items-center md:flex">
                           {area ? (
