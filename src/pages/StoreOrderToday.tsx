@@ -21,6 +21,7 @@ import { STATUS_LABEL, SUPPLIER_LABEL } from "@/lib/storeReplenishment";
 import { useNextDeliveryDay } from "@/hooks/useNextDeliveryDay";
 import { fmtQty } from "@/lib/mobileCount";
 import { KvitteraInget } from "@/components/dagsavslut/KvitteraInget";
+import AddReplenishLineSheet from "@/components/orders/AddReplenishLineSheet";
 
 const MANAGER_ROLES = [
   "store_manager",
@@ -65,6 +66,10 @@ export default function StoreOrderToday() {
   const maySend = !onlyManager || (role ? MANAGER_ROLES.includes(role) : false);
 
   const lines = draft.data?.store_replenishment_lines ?? [];
+  const staffName =
+    ((activeUser as any)?.name as string | null) ??
+    [(staff as any)?.first_name, (staff as any)?.last_name].filter(Boolean).join(" ") ||
+    null;
   const openReceive = orders.data?.filter((o) => o.status === "avsand" || o.status === "delvis_mottagen") ?? [];
   const receiveTarget = openReceive.find((o) => o.id === receiveOrderId) ?? null;
 
@@ -115,11 +120,19 @@ export default function StoreOrderToday() {
         </p>
       </header>
 
+      <AddReplenishLineSheet
+        storeId={selectedStoreId}
+        wantedDate={wantedDate}
+        staffName={staffName}
+        dayLabel={delivery.label}
+      />
+
       {lines.length === 0 ? (
         <div className="rounded-3xl border border-border bg-card p-5">
           <ShoppingBasket className="h-9 w-9 text-muted-foreground/60" />
           <p className="mt-2 text-[18px] text-muted-foreground">
-            Inget beställt ännu. Lägg varor på beställningen medan du räknar.
+            Inget beställt ännu. Tryck på "Lägg till vara" här ovanför, eller lägg varor på
+            beställningen medan du räknar.
           </p>
           <div className="mt-3">
             <KvitteraInget storeId={selectedStoreId} vad="grossist" />
