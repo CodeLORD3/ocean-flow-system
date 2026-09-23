@@ -90,6 +90,33 @@ export function TaskRegister({
     });
   }, [filtered, categories]);
 
+  /** Sparar det nya namnet på uppgiften, både i mallen och på alla dagar. */
+  const saveName = async (row: RegisterTask) => {
+    const name = editName.trim();
+    if (!name || name === row.task) {
+      setEditKey(null);
+      return;
+    }
+    try {
+      await rename.mutateAsync({ oldName: row.task, newName: name, templateItemId: row.templateItemId });
+      setEditKey(null);
+      toast({ title: "Uppgiften bytte namn", description: name });
+    } catch (e: any) {
+      toast({ title: "Kunde inte byta namn", description: e.message, variant: "destructive" });
+    }
+  };
+
+  /** Tar bort uppgiften helt efter bekräftelse. */
+  const deleteRow = async (row: RegisterTask) => {
+    if (!window.confirm(`Ta bort "${row.task}" ur uppgifterna?`)) return;
+    try {
+      await removeTask.mutateAsync({ task: row.task, templateItemId: row.templateItemId });
+      toast({ title: "Uppgiften togs bort", description: row.task });
+    } catch (e: any) {
+      toast({ title: "Kunde inte ta bort", description: e.message, variant: "destructive" });
+    }
+  };
+
   const setCategory = (row: RegisterTask, value: string) => {
     const category_id = value === "none" ? null : value;
     if (row.templateItemId) updateStandard.mutate({ id: row.templateItemId, category_id });
