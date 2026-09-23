@@ -585,6 +585,12 @@ function ShiftHistoryCard({
 function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string; name: string }[] }) {
   const navigate = useNavigate();
   const { data: items = [], isLoading } = useMyWork(staffId);
+  const removeTask = useDeleteTask();
+
+  const deleteRow = (it: MyWorkItem) => {
+    if (!window.confirm(`Ta bort uppgiften "${it.task}"?`)) return;
+    removeTask.mutate(it.id);
+  };
 
   const groups: {
     key: string;
