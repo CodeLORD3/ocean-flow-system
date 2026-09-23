@@ -44,25 +44,36 @@ export function ShopOrderFortnoxButton({ orderId }: { orderId: string }) {
     qc.invalidateQueries({ queryKey: ["shop_orders"] });
   };
 
-  const send = async () => {
+  const send = async (allowMissingBatch = false) => {
     setSending(true);
-    // Exportorder till Schweiz: varje rad måste bära parti på fakturan.
+    // Exportorder till Schweiz: varje rad bör bära parti på fakturan.
     const { data: order } = await supabase
       .from("shop_orders")
       .select("store_id")
       .eq("id", orderId)
       .maybeSingle();
-    if (order?.store_id && (await isExportStore(order.store_id))) {
+    if (!allowMissingBatch && order?.store_id && (await isExportStore(order.store_id))) {
       const missing = await shopOrderLinesMissingBatch(orderId);
       if (missing.length) {
         setSending(false);
         setRepairOpen(true);
         return toast.error(
           `Parti saknas på ${missing.map((m) => m.productName).join(", ")}. Koppla parti innan fakturan skickas.`,
+          {
+            duration: 12000,
+            action: {
+              label: "Skicka ändå",
+              onClick: () => {
+                setRepairOpen(false);
+                void send(true);
+              },
+            },
+          },
         );
       }
 
     }
+
     const { data, error } = await supabase.functions.invoke("fortnox-send-shop-invoice", {
       body: { order_id: orderId },
     });
@@ -128,7 +139,7 @@ export function ShopOrderFortnoxButton({ orderId }: { orderId: string }) {
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <Button variant="outline" size="sm" className="h-7 text-[11px]" disabled={sending} onClick={send}>
+      <Button variant="outline" size="sm" className="h-7 text-[11px]" disabled={sending} onClick={() => void send()}>
         {sending ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <FileUp className="mr-1 h-3.5 w-3.5" />}
         Skicka till Fortnox
       </Button>
