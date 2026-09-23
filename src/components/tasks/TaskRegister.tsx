@@ -1,11 +1,20 @@
 import { useMemo, useState } from "react";
-import { ArrowUpRight, ChevronDown, Repeat, Search } from "lucide-react";
+import { ArrowUpRight, Check, ChevronDown, Pencil, Repeat, Search, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 import { taskTarget } from "@/lib/taskLink";
-import { useTaskRegister, useUpdateTask, useUpdateStandardTask, type RegisterTask, type TaskCategory } from "@/hooks/useTasks";
+import {
+  useTaskRegister,
+  useUpdateTask,
+  useUpdateStandardTask,
+  useRenameRegisterTask,
+  useDeleteRegisterTask,
+  type RegisterTask,
+  type TaskCategory,
+} from "@/hooks/useTasks";
 import type { TaskRowArea } from "@/components/tasks/TaskRow";
 import type { ProductionRecipe } from "@/hooks/useProductionRecipes";
 
