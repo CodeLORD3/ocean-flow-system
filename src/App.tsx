@@ -19,6 +19,7 @@ import FirstLoginPasswordChange from "@/pages/FirstLoginPasswordChange";
 import StaffForgotPassword from "@/pages/StaffForgotPassword";
 import StaffResetPassword from "@/pages/StaffResetPassword";
 import Clock from "@/pages/Clock";
+import OAuthConsent from "@/pages/OAuthConsent";
 import { Loader2 } from "lucide-react";
 
 // Investor Portal
@@ -98,6 +99,9 @@ const AppContent = () => {
             <Route path="/choose-portal" element={<PortalChooser />} />
             <Route path="/forgot-password" element={<StaffForgotPassword />} />
             <Route path="/reset-password" element={<StaffResetPassword />} />
+
+            {/* Godkännande när en AI-assistent kopplas till kontot */}
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
 
             {/* Stämpelklocka — fristående kioskläge, ingen ERP-inloggning */}
             <Route path="/clock" element={<Clock />} />
