@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, Check, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Camera, Check, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
@@ -59,52 +59,84 @@ export function NewTaskStepsBuilder({
     setDraft({ text: "", image: null });
   };
 
+  /** Flyttar ett steg uppåt eller nedåt i ordningen. */
+  const moveStep = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= steps.length) return;
+    const next = [...steps];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+    if (index === i) setIndex(j);
+    else if (index === j) setIndex(i);
+  };
+
   const stepNumber = editingSaved ? index + 1 : steps.length + 1;
 
   return (
     <div className="space-y-3">
-      {/* Sparade steg: tryck för att redigera igen */}
+      {/* Sparade steg i ordning: tryck för att redigera, pilar för att flytta */}
       {steps.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="space-y-1.5">
           {steps.map((s, i) => (
             <div
               key={i}
               className={cn(
-                "flex items-center gap-2 rounded-lg border px-2 py-1",
+                "flex items-center gap-2 rounded-lg border px-2 py-1.5",
                 i === index ? "border-primary bg-primary/10" : "",
               )}
             >
+              <span className="w-5 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{i + 1}</span>
               <button
                 type="button"
                 onClick={() => setIndex(i)}
-                className="flex min-w-0 items-center gap-2 text-left"
+                className="flex min-w-0 flex-1 items-center gap-2 text-left"
               >
                 {s.image ? (
-                  <img src={thumbUrl(s.image, THUMB_TILE)} alt="" className="h-8 w-8 rounded object-cover" />
+                  <img src={thumbUrl(s.image, THUMB_TILE)} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />
                 ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded bg-muted text-[10px] text-muted-foreground">
-                    {i + 1}
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-muted text-[10px] text-muted-foreground">
+                    <Plus className="h-4 w-4" />
                   </span>
                 )}
-                <span className="max-w-[9rem] truncate text-xs">{s.text?.trim() || `Steg ${i + 1}`}</span>
+                <span className="min-w-0 truncate text-xs">{s.text?.trim() || `Steg ${i + 1}`}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => moveStep(i, -1)}
+                disabled={i === 0}
+                aria-label="Flytta steget uppåt"
+                className="text-muted-foreground disabled:opacity-30"
+              >
+                <ArrowUp className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => moveStep(i, 1)}
+                disabled={i === steps.length - 1}
+                aria-label="Flytta steget nedåt"
+                className="text-muted-foreground disabled:opacity-30"
+              >
+                <ArrowDown className="h-4 w-4" />
               </button>
               <button type="button" onClick={() => removeStep(i)} aria-label="Ta bort steget">
-                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                <Trash2 className="h-4 w-4 text-destructive" />
               </button>
             </div>
           ))}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setIndex(steps.length);
-              setDraft({ text: "", image: null });
-            }}
-          >
-            <Plus className="mr-1 h-4 w-4" /> Nytt steg
-          </Button>
         </div>
       )}
+
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={() => {
+          setIndex(steps.length);
+          setDraft({ text: "", image: null });
+        }}
+      >
+        <Plus className="mr-1 h-4 w-4" /> Lägg till steg
+      </Button>
 
       {/* Stegkortet: ser ut som när uppgiften körs */}
       <div className="overflow-hidden rounded-xl border bg-card">

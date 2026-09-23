@@ -114,6 +114,8 @@ export function TaskRow({
   const { data: prepChecks = [] } = useTaskPrepChecks(task.id);
   const prepCheckedIds = new Set(prepChecks.map((c) => c.requirement_id ?? ""));
   const prepMissingCount = needs.filter((nd) => !prepCheckedIds.has(nd.requirement.id)).length;
+  /** Antal avbockade steg — visas som framsteg på raden, t.ex. 2/4 steg. */
+  const stepsDoneCount = new Set(prepChecks.filter((c) => c.step_no != null).map((c) => c.step_no as number)).size;
   const duration = durationText(task.estimated_minutes);
   const accent = area?.color ?? categoryColor ?? "hsl(var(--muted-foreground))";
   /**
@@ -245,7 +247,13 @@ export function TaskRow({
             {task.task}
           </span>
           <span className="mt-0.5 block font-mono text-[11px] leading-snug tabular-nums text-muted-foreground sm:hidden">
-            {[time.label, area && `${area.number}. ${area.name}`, categoryName, assigneeName]
+            {[
+              time.label,
+              area && `${area.number}. ${area.name}`,
+              categoryName,
+              assigneeName,
+              guideSteps.length > 0 && !task.done ? `${stepsDoneCount}/${guideSteps.length} steg klara` : null,
+            ]
               .filter(Boolean)
               .join(" · ")}
           </span>
@@ -279,6 +287,23 @@ export function TaskRow({
         {/* Kolumn 5: kategori */}
         <span className="hidden w-[120px] shrink-0 truncate text-[11px] text-muted-foreground 2xl:block">
           {categoryName ?? (task.work_type ? workTypeLabel(task.work_type) : "")}
+        </span>
+
+        {/* Steg-framsteg: syns direkt på raden när uppgiften har steg */}
+        <span className="hidden w-[78px] shrink-0 justify-end sm:flex">
+          {guideSteps.length > 0 && (
+            <span
+              className={cn(
+                "rounded-md border px-1.5 py-0.5 font-mono text-[10px] tabular-nums",
+                stepsDoneCount >= guideSteps.length
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                  : "border-grid-line text-muted-foreground",
+              )}
+              title="Avbockade steg"
+            >
+              {stepsDoneCount}/{guideSteps.length} steg
+            </span>
+          )}
         </span>
 
         {/* Kolumn 6: krav och bilder */}
