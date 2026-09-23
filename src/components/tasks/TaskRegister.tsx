@@ -45,6 +45,12 @@ export function TaskRegister({
   const { data: register = [], isLoading } = useTaskRegister(storeId);
   const updateTask = useUpdateTask();
   const updateStandard = useUpdateStandardTask();
+  const rename = useRenameRegisterTask();
+  const removeTask = useDeleteRegisterTask();
+  /** Uppgiften som just nu döps om, och det nya namnet. */
+  const [editKey, setEditKey] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+
 
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("all");
