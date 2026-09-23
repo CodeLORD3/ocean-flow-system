@@ -56,6 +56,8 @@ type Props = {
   onAssign?: (staffId: string | null) => void;
   /** Sätts när man kommit tillbaka hit: raden öppnas och lyser upp en stund. */
   focused?: boolean;
+  /** Sätts direkt efter att uppgiften skapats: raden får en tydlig rubrik. */
+  isNew?: boolean;
 };
 
 /**
