@@ -959,6 +959,69 @@ export function useTaskRegister(storeId?: string | null, days = 180) {
   });
 }
 
+/** Byter namn på uppgiften överallt: standarduppgiften och alla dagens rader. */
+export function useRenameRegisterTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      oldName,
+      newName,
+      templateItemId,
+    }: {
+      oldName: string;
+      newName: string;
+      templateItemId?: string | null;
+    }) => {
+      const name = newName.trim();
+      if (!name) throw new Error("Uppgiften måste ha ett namn");
+      if (templateItemId) {
+        const { error } = await supabase
+          .from("checklist_template_items")
+          .update({ task: name })
+          .eq("id", templateItemId);
+        if (error) throw error;
+      }
+      const { error: iErr } = await supabase.from("checklist_items").update({ task: name }).eq("task", oldName);
+      if (iErr) throw iErr;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["task-register"] });
+      qc.invalidateQueries({ queryKey: ["standard-tasks"] });
+      qc.invalidateQueries({ queryKey: ["day-tasks"] });
+      qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["task-item"] });
+    },
+  });
+}
+
+/**
+ * Tar bort uppgiften ur registret: standarduppgiften stängs av så den inte
+ * återkommer, och alla dagens rader med samma namn tas bort.
+ */
+export function useDeleteRegisterTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ task, templateItemId }: { task: string; templateItemId?: string | null }) => {
+      if (templateItemId) {
+        const { error } = await supabase
+          .from("checklist_template_items")
+          .update({ active: false })
+          .eq("id", templateItemId);
+        if (error) throw error;
+      }
+      const { error } = await supabase.from("checklist_items").delete().eq("task", task);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["task-register"] });
+      qc.invalidateQueries({ queryKey: ["standard-tasks"] });
+      qc.invalidateQueries({ queryKey: ["day-tasks"] });
+      qc.invalidateQueries({ queryKey: ["map-tasks"] });
+      qc.invalidateQueries({ queryKey: ["checklist-day"] });
+    },
+  });
+}
+
 /**
  * Samma uppgift kan finnas som ny rad på ett annat datum utan beskrivning.
  * Då hämtas senast sparade beskrivning och utrustning från en tidigare rad
