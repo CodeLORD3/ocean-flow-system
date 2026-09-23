@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, lazy, Suspense, ComponentType } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, lazy, Suspense, ComponentType } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { recordNav } from "@/lib/navHistory";
 
@@ -152,8 +152,22 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useTabs() {
+/**
+ * Flikarna är ren bekvämlighet. Saknas de av någon anledning ska sidan
+ * fortfarande fungera — vanlig navigering används då istället för ett krasch-fel.
+ */
+export function useTabs(): TabsContextValue {
   const ctx = useContext(TabsContext);
-  if (!ctx) throw new Error("useTabs must be used within TabsProvider");
-  return ctx;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const fallback = useMemo<TabsContextValue>(
+    () => ({
+      tabs: [{ path: location.pathname, title: getTitleForPath(location.pathname) }],
+      activeTab: location.pathname,
+      closeTab: () => {},
+      switchTab: (path: string) => navigate(path),
+    }),
+    [location.pathname, navigate]
+  );
+  return ctx ?? fallback;
 }
