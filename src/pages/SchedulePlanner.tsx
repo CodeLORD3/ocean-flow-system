@@ -726,7 +726,11 @@ export default function SchedulePlanner() {
                       toAnchor: anchor,
                       keepEmployees: true,
                     });
-                    toast.success(n ? `${n} pass kopierade från förra veckan` : "Förra veckan är tom");
+                    toast.success(n.count ? `${n.count} pass kopierade från förra veckan` : "Förra veckan är tom", {
+                      description: n.freed
+                        ? `${n.freed} pass lades som obemannade eftersom personen är ledig.`
+                        : undefined,
+                    });
                   } catch (e) {
                     toast.error(e instanceof Error ? e.message : "Kunde inte kopiera vecka");
                   }
@@ -780,7 +784,11 @@ export default function SchedulePlanner() {
                           toAnchor: anchor,
                           keepEmployees: true,
                         });
-                        toast.success(n ? `${n} pass kopierade från förra veckan` : "Förra veckan är tom");
+                        toast.success(n.count ? `${n.count} pass kopierade från förra veckan` : "Förra veckan är tom", {
+                      description: n.freed
+                        ? `${n.freed} pass lades som obemannade eftersom personen är ledig.`
+                        : undefined,
+                    });
                       } catch (e) {
                         toast.error(e instanceof Error ? e.message : "Kunde inte kopiera vecka");
                       }
