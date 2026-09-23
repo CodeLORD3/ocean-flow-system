@@ -72,6 +72,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/system-status": "Systemstatus",
   "/lager-blueprint": "Lagerblueprint",
   "/pos-live": "Kassa live",
+  "/pos-fundament": "POS-fundament",
 };
 
 export function getTitleForPath(path: string): string {
