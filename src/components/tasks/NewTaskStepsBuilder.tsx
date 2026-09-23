@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, Check, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Camera, Check, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
