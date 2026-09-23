@@ -663,39 +663,48 @@ function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string
                 </p>
                 <div className={cn("divide-y divide-border overflow-hidden rounded-xl border", g.box)}>
                   {g.rows.map((it) => (
-                    <button
-                      key={it.id}
-                      type="button"
-                      onClick={() => {
-                        // Uppgiften kan ligga på ett tidigare datum — öppna dess egen sida med historiken
-                        try {
-                          sessionStorage.setItem("task-detail-tab", "historik");
-                        } catch {
-                          /* sessionStorage kan vara blockerad */
-                        }
-                        window.dispatchEvent(new CustomEvent("task-detail-tab", { detail: "historik" }));
-                        navigate(withReturn(`/uppgift/${it.id}`));
-                      }}
-                      className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-muted/40"
-                    >
-                      <span className={cn("h-8 w-1.5 shrink-0 rounded-full", g.bar)} />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">{it.task}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {new Date(it.date).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })}
-                          {it.time ? ` · ${it.time}` : ""}
-                          {stores.find((s) => s.id === it.storeId)?.name
-                            ? ` · ${stores.find((s) => s.id === it.storeId)!.name}`
-                            : ""}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1.5">
-                        {it.minutes ? (
-                          <span className="text-[10px] tabular-nums text-muted-foreground">{it.minutes} min</span>
-                        ) : null}
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                    </button>
+                    <div key={it.id} className="flex items-center gap-1 pr-2 transition hover:bg-muted/40">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // Uppgiften kan ligga på ett tidigare datum — öppna dess egen sida med historiken
+                          try {
+                            sessionStorage.setItem("task-detail-tab", "historik");
+                          } catch {
+                            /* sessionStorage kan vara blockerad */
+                          }
+                          window.dispatchEvent(new CustomEvent("task-detail-tab", { detail: "historik" }));
+                          navigate(withReturn(`/uppgift/${it.id}`));
+                        }}
+                        className="flex min-w-0 flex-1 items-center justify-between gap-3 px-3 py-2.5 text-left"
+                      >
+                        <span className={cn("h-8 w-1.5 shrink-0 rounded-full", g.bar)} />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-foreground">{it.task}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {new Date(it.date).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })}
+                            {it.time ? ` · ${it.time}` : ""}
+                            {stores.find((s) => s.id === it.storeId)?.name
+                              ? ` · ${stores.find((s) => s.id === it.storeId)!.name}`
+                              : ""}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          {it.minutes ? (
+                            <span className="text-[10px] tabular-nums text-muted-foreground">{it.minutes} min</span>
+                          ) : null}
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteRow(it)}
+                        title="Ta bort uppgiften"
+                        className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
