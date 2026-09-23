@@ -29,6 +29,7 @@ import {
   usePosPriceListItems,
   usePosPriceLists,
   usePosVatRates,
+  usePublishPrices,
   useSetMarkdownRuleActive,
 } from "@/hooks/usePosPriceEngine";
 
@@ -123,7 +124,7 @@ export default function PosPrices() {
 
   /* Publicering */
   const [paste, setPaste] = useState("");
-  const publish = usePublishForm(activeList?.id, staffId);
+  const publish = usePublishPrices();
 
   /* Ny override */
   const [ovStore, setOvStore] = useState("");
@@ -644,9 +645,3 @@ function parsePaste(
   return out;
 }
 
-/* Liten omslagsfunktion så publiceringsknappen kan använda listans id direkt. */
-function usePublishForm(_listId: string | undefined, _staffId: string | null) {
-  return usePublishPricesHook();
-}
-
-import { usePublishPrices as usePublishPricesHook } from "@/hooks/usePosPriceEngine";
