@@ -86,10 +86,18 @@ export default function StockPricePoster() {
   }, [stock, products]);
 
   useEffect(() => {
+    // Sätt bara priser som saknas. Utan den här kontrollen skapas ett nytt
+    // objekt vid varje rendering och sidan börjar rendera om sig i all evighet.
     setPrices((prev) => {
+      let changed = false;
       const next = { ...prev };
-      for (const r of rows) if (next[r.id] == null) next[r.id] = r.suggested;
-      return next;
+      for (const r of rows) {
+        if (next[r.id] == null) {
+          next[r.id] = r.suggested;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
     });
   }, [rows]);
 
