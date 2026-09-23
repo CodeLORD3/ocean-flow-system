@@ -27,12 +27,14 @@ Söndag förekommer inte i dagens data, men omräkningen skrivs ändå så att s
 ## Teknisk del
 
 Migration (idempotent, `IF NOT EXISTS` / `ON CONFLICT DO NOTHING`):
-- Vyer `task_definitions` (över `checklist_template_items`) och `task_occurrences` (över `checklist_items`), `GRANT SELECT` till `authenticated` och `service_role`.
+- Vyer `task_definitions` (över `checklist_template_items`) och `task_occurrences` (över `checklist_items`), skapade `WITH (security_invoker = true)` så att underliggande RLS gäller, `GRANT SELECT` till `authenticated` och `service_role`.
 - `schedules`: `id`, `owner_type text check in ('task','checklist')`, `owner_id uuid`, `rule jsonb`, `start_date`, `end_date`, `times jsonb`, `skip_closed_days boolean default true`, `store_id uuid`, `active boolean default true`, `created_at`, `updated_at` + unikt index `(owner_type, owner_id, store_id)` (nullbutik hanteras via `coalesce`-uttryck i indexet). GRANT + RLS enligt befintligt mönster (`is_staff`/`can_see_store` för läsning), `update_updated_at_column`-trigger.
-- Backfill: en `schedules`-rad per `checklist_templates` och `checklist_template_items` med ifyllda `weekdays`, `rule = jsonb_build_object('type','weekdays','days', <ISO-array>)`. För `checklist_templates` mappas `0 -> 7`; `checklist_template_items` antas redan ISO. `ON CONFLICT DO NOTHING`.
-- `store_closed_days` (`store_id`, `date`, `reason`, pk `(store_id, date)`), GRANT + RLS.
-- `checklist_defs`, `checklist_def_points`, `checklist_runs`, `checklist_run_results` enligt specen, med GRANT + RLS (läsning för personal, skrivning via befintliga mönster) och `updated_at`-triggers där det passar.
-- Trigger `checklist_run_results_locked_guard` (BEFORE UPDATE OR DELETE) som kastar fel när `checklist_runs.locked = true`.
+- Backfill: en rad per **varje aktiv** `checklist_template_item` och en rad per `checklist_templates`. Regel i ordning: radens egna `weekdays` → mallens `weekdays` (`0 -> 7`) → `{"type":"daily"}`. Veckodagsregel som `jsonb_build_object('type','weekdays','days', <ISO-array>)`. `ON CONFLICT DO NOTHING`. Redovisas: alla 32 standarduppgifter har en regel.
+- Företräde: en uppgifts egen `schedules`-rad gäller före mallens. Dokumenteras i `docs/uppgifter-och-checklistor.md`.
+- `store_closed_days` (`store_id`, `date`, `reason`, pk `(store_id, date)`), GRANT + RLS: läsning för personal, skrivning endast för admin (`has_role(auth.uid(),'admin')`).
+- `checklist_defs`, `checklist_def_points`, `checklist_runs`, `checklist_run_results` enligt specen, med GRANT + RLS. Läsning för personal. **Inga** insert/update/delete-policies för `authenticated` på `checklist_runs` och `checklist_run_results` — skrivning sker via security definer-funktioner (byggs i steg 3) eller service role.
+- Trigger `checklist_run_results_locked_guard` (BEFORE UPDATE OR DELETE) som kastar fel när körningen är låst.
+- Trigger på `checklist_runs` som stoppar att `locked` ändras från true till false och stoppar borttagning av en låst körning.
 - `checklist_template_items.requires_checklist_def_id uuid references checklist_defs(id)`.
 
 Kod:
@@ -41,5 +43,7 @@ Kod:
 
 Verifiering:
 - `bunx tsgo --noEmit`.
-- Vitest: veckodagsomräkningen (inklusive söndag 0 -> 7) som ren funktion i `src/lib/`, samt SQL-kontroll av att låsningen kastar fel vid ändring och borttagning av ett resultat i en låst körning.
+- Vitest: veckodagsomräkningen (inklusive söndag 0 -> 7) som ren funktion i `src/lib/`.
+- SQL-kontroll av all låsning: ändring och borttagning av resultat i en låst körning, samt låst körning som låses upp respektive tas bort.
+- Supabase-lintern: kontroll att inga security definer-vyer finns.
 - Redovisning före/efter: antal standarduppgifter, antal regler i `schedules` och tre stickprov gamla `weekdays` mot ny regel.
