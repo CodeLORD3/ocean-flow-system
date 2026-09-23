@@ -1,11 +1,20 @@
 import { useMemo, useState } from "react";
-import { ArrowUpRight, ChevronDown, Repeat, Search } from "lucide-react";
+import { ArrowUpRight, Check, ChevronDown, Pencil, Repeat, Search, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 import { taskTarget } from "@/lib/taskLink";
-import { useTaskRegister, useUpdateTask, useUpdateStandardTask, type RegisterTask, type TaskCategory } from "@/hooks/useTasks";
+import {
+  useTaskRegister,
+  useUpdateTask,
+  useUpdateStandardTask,
+  useRenameRegisterTask,
+  useDeleteRegisterTask,
+  type RegisterTask,
+  type TaskCategory,
+} from "@/hooks/useTasks";
 import type { TaskRowArea } from "@/components/tasks/TaskRow";
 import type { ProductionRecipe } from "@/hooks/useProductionRecipes";
 
@@ -36,6 +45,12 @@ export function TaskRegister({
   const { data: register = [], isLoading } = useTaskRegister(storeId);
   const updateTask = useUpdateTask();
   const updateStandard = useUpdateStandardTask();
+  const rename = useRenameRegisterTask();
+  const removeTask = useDeleteRegisterTask();
+  /** Uppgiften som just nu döps om, och det nya namnet. */
+  const [editKey, setEditKey] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+
 
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState("all");
@@ -74,6 +89,33 @@ export function TaskRegister({
       return a.label.localeCompare(b.label, "sv");
     });
   }, [filtered, categories]);
+
+  /** Sparar det nya namnet på uppgiften, både i mallen och på alla dagar. */
+  const saveName = async (row: RegisterTask) => {
+    const name = editName.trim();
+    if (!name || name === row.task) {
+      setEditKey(null);
+      return;
+    }
+    try {
+      await rename.mutateAsync({ oldName: row.task, newName: name, templateItemId: row.templateItemId });
+      setEditKey(null);
+      toast({ title: "Uppgiften bytte namn", description: name });
+    } catch (e: any) {
+      toast({ title: "Kunde inte byta namn", description: e.message, variant: "destructive" });
+    }
+  };
+
+  /** Tar bort uppgiften helt efter bekräftelse. */
+  const deleteRow = async (row: RegisterTask) => {
+    if (!window.confirm(`Ta bort "${row.task}" ur uppgifterna?`)) return;
+    try {
+      await removeTask.mutateAsync({ task: row.task, templateItemId: row.templateItemId });
+      toast({ title: "Uppgiften togs bort", description: row.task });
+    } catch (e: any) {
+      toast({ title: "Kunde inte ta bort", description: e.message, variant: "destructive" });
+    }
+  };
 
   const setCategory = (row: RegisterTask, value: string) => {
     const category_id = value === "none" ? null : value;
@@ -158,18 +200,50 @@ export function TaskRegister({
                         className="flex min-h-[34px] items-center gap-2 border-b border-grid-line px-2 py-1 last:border-b-0 hover:bg-muted/40"
                       >
                         {/* Namnet först — samma täthet som raderna i Mina uppgifter */}
-                        <button
-                          type="button"
-                          onClick={() => r.itemId && onOpenTask(r.itemId)}
-                          disabled={!r.itemId}
-                          className={cn(
-                            "min-w-[7rem] flex-1 truncate py-0.5 text-left text-[13px] font-semibold",
-                            r.itemId ? "hover:underline" : "cursor-default",
-                          )}
-                          title={r.task}
-                        >
-                          {r.task}
-                        </button>
+                        {editKey === r.key ? (
+                          <div className="flex min-w-[7rem] flex-1 items-center gap-1">
+                            <Input
+                              autoFocus
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") saveName(r);
+                                if (e.key === "Escape") setEditKey(null);
+                              }}
+                              className="h-8 text-[13px] font-semibold"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => saveName(r)}
+                              title="Spara namnet"
+                              className="rounded-md p-1 text-emerald-700 hover:bg-emerald-500/10"
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditKey(null)}
+                              title="Avbryt"
+                              className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => r.itemId && onOpenTask(r.itemId)}
+                            disabled={!r.itemId}
+                            className={cn(
+                              "min-w-[7rem] flex-1 truncate py-0.5 text-left text-[13px] font-semibold",
+                              r.itemId ? "hover:underline" : "cursor-default",
+                            )}
+                            title={r.task}
+                          >
+                            {r.task}
+                          </button>
+                        )}
+
 
                         <span className="hidden w-[150px] shrink-0 items-center md:flex">
                           {area ? (
@@ -227,6 +301,29 @@ export function TaskRegister({
                               <ArrowUpRight className="h-4 w-4" />
                             </button>
                           )}
+                        </span>
+
+                        {/* Redigera namnet direkt i listan, eller ta bort uppgiften */}
+                        <span className="flex w-[62px] shrink-0 justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditKey(r.key);
+                              setEditName(r.task);
+                            }}
+                            title="Byt namn på uppgiften"
+                            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteRow(r)}
+                            title="Ta bort uppgiften"
+                            className="rounded-md p-1 text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </span>
                       </div>
                     );
