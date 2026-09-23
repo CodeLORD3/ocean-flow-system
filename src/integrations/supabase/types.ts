@@ -11265,6 +11265,119 @@ export type Database = {
           },
         ]
       }
+      pos_markdown_rules: {
+        Row: {
+          active: boolean
+          category_id: string | null
+          country_code: string
+          created_at: string
+          hours_before: number | null
+          id: string
+          percent_off: number
+          trigger_type: string
+        }
+        Insert: {
+          active?: boolean
+          category_id?: string | null
+          country_code: string
+          created_at?: string
+          hours_before?: number | null
+          id?: string
+          percent_off: number
+          trigger_type: string
+        }
+        Update: {
+          active?: boolean
+          category_id?: string | null
+          country_code?: string
+          created_at?: string
+          hours_before?: number | null
+          id?: string
+          percent_off?: number
+          trigger_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_markdown_rules_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_price_list_items: {
+        Row: {
+          price_inc_vat: number
+          price_list_id: string
+          product_id: string
+          published_at: string
+          published_by: string | null
+          valid_from: string
+          vat_category: string
+        }
+        Insert: {
+          price_inc_vat: number
+          price_list_id: string
+          product_id: string
+          published_at?: string
+          published_by?: string | null
+          valid_from?: string
+          vat_category?: string
+        }
+        Update: {
+          price_inc_vat?: number
+          price_list_id?: string
+          product_id?: string
+          published_at?: string
+          published_by?: string | null
+          valid_from?: string
+          vat_category?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_price_list_items_price_list_id_fkey"
+            columns: ["price_list_id"]
+            isOneToOne: false
+            referencedRelation: "pos_price_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_price_list_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_price_lists: {
+        Row: {
+          country_code: string
+          created_at: string
+          currency_code: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          country_code: string
+          created_at?: string
+          currency_code: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          currency_code?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       pos_products: {
         Row: {
           active: boolean
@@ -11545,6 +11658,73 @@ export type Database = {
           },
         ]
       }
+      pos_store_price_overrides: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          lot_number: string | null
+          percent_off: number | null
+          price_inc_vat: number
+          product_id: string
+          reason: string
+          store_id: string
+          valid_from: string
+          valid_to: string
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lot_number?: string | null
+          percent_off?: number | null
+          price_inc_vat: number
+          product_id: string
+          reason: string
+          store_id: string
+          valid_from?: string
+          valid_to: string
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lot_number?: string | null
+          percent_off?: number | null
+          price_inc_vat?: number
+          product_id?: string
+          reason?: string
+          store_id?: string
+          valid_from?: string
+          valid_to?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_store_price_overrides_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_store_price_overrides_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "pos_store_price_overrides_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pos_sync_queue: {
         Row: {
           attempts: number
@@ -11809,6 +11989,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pos_vat_rates: {
+        Row: {
+          category: string
+          country_code: string
+          created_at: string
+          id: string
+          note: string | null
+          rate: number
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          category: string
+          country_code: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          rate: number
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          category?: string
+          country_code?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          rate?: number
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: []
       }
       price_history: {
         Row: {
@@ -21091,6 +21304,18 @@ export type Database = {
         }[]
       }
       pnr_hash: { Args: { _pnr: string }; Returns: string }
+      pos_apply_markdowns: { Args: never; Returns: number }
+      pos_create_override: {
+        Args: {
+          p_price: number
+          p_product_id: string
+          p_reason: string
+          p_staff?: string
+          p_store_id: string
+          p_valid_to: string
+        }
+        Returns: string
+      }
       pos_day_summary: {
         Args: { _date: string; _store_id: string }
         Returns: Json
@@ -21102,6 +21327,19 @@ export type Database = {
           journal_seq: number
           session_id: string
         }[]
+      }
+      pos_effective_price: {
+        Args: { p_at?: string; p_product_id: string; p_store_id: string }
+        Returns: {
+          price_inc_vat: number
+          price_source: string
+          source_id: string
+          vat_rate: number
+        }[]
+      }
+      pos_end_override: {
+        Args: { p_override_id: string; p_staff?: string }
+        Returns: string
       }
       pos_fefo_lots: {
         Args: { _location_id: string; _product_id: string }
@@ -21163,7 +21401,19 @@ export type Database = {
         }[]
       }
       pos_live_summary: { Args: { _date: string }; Returns: Json }
+      pos_publish_prices: {
+        Args: { p_items: Json; p_price_list_id: string; p_staff?: string }
+        Returns: Json
+      }
       pos_queue_health: { Args: never; Returns: Json }
+      pos_set_markdown_rule_active: {
+        Args: { p_active: boolean; p_rule_id: string }
+        Returns: boolean
+      }
+      pos_vat_rate_for: {
+        Args: { p_at?: string; p_category: string; p_country: string }
+        Returns: number
+      }
       post_purchase_report: {
         Args: { p_location_id: string; p_lots: Json; p_report_id: string }
         Returns: string[]

@@ -124,6 +124,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   "/lager-blueprint": ADMIN,
   "/pos-live": ADMIN,
   "/pos-fundament": ADMIN,
+  "/pos-priser": ADMIN,
   "/shopify": ADMIN,
   "/settings": ADMIN,
   "/landing-settings": ADMIN,
