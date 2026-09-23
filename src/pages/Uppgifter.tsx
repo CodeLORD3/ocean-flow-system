@@ -80,6 +80,8 @@ export default function Uppgifter() {
    * rad: den fälls ut, rullas fram och lyser upp en stund.
    */
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
+  /** Uppgiften som just skapats — raden får en tydlig grön rubrik en stund. */
+  const [newTaskId, setNewTaskId] = useState<string | null>(null);
   useEffect(() => {
     if (location.pathname !== "/uppgifter") return;
     let id: string | null = null;
