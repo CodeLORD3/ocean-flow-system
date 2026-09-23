@@ -132,6 +132,7 @@ const financeNav = [
   { title: "Försvunnet ur lagret", url: "/stock-disappearance", icon: Package },
   { title: "Kassa live", url: "/pos-live", icon: Radio },
   { title: "POS-fundament", url: "/pos-fundament", icon: Radio },
+  { title: "POS-priser", url: "/pos-priser", icon: Radio },
   { title: "Uppgifter", url: "/uppgifter", icon: ListTodo },
   
   { title: "Butikskarta", url: "/butikskarta", icon: Map },

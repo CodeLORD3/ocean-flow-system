@@ -26,14 +26,14 @@ import {
 const ETAPPER: { key: string; title: string; done?: boolean }[] = [
   { key: "P0", title: "Förstudie och regelkrav (SKVFS 2021:17)" },
   { key: "P1", title: "Fundament: bolag, butik, register, journalminne", done: true },
-  { key: "P2", title: "Kvittoflöde och kassapass i kassan" },
-  { key: "P3", title: "Betalning via Worldline" },
-  { key: "P4", title: "Kontrollenhet och molnbaserat kontrollsystem" },
-  { key: "P5", title: "X- och Z-rapporter, dagsavslut" },
-  { key: "P6", title: "Returer, kvittokopia och lådöppning" },
-  { key: "P7", title: "Journalexport till Skatteverket" },
-  { key: "P8", title: "Tillverkardeklaration och certifiering" },
-  { key: "P9", title: "Utrullning i alla butiker" },
+  { key: "P2", title: "Priser och batcher", done: true },
+  { key: "P3", title: "Kassa-UI" },
+  { key: "P4", title: "Fiscal service kontrollsystem" },
+  { key: "P5", title: "Worldline" },
+  { key: "P6", title: "Rapporter och specialkvitton" },
+  { key: "P7", title: "Hårdvara och offline" },
+  { key: "P8", title: "Tillverkardeklaration och pilot" },
+  { key: "P9", title: "Utrullning" },
 ];
 
 const DEADLINES = [
@@ -52,6 +52,7 @@ const EVENT_LABEL: Record<string, string> = {
   drawer_open_no_sale: "Lådöppning utan köp",
   x_report: "X-rapport",
   z_report: "Z-rapport",
+  price_changed: "Pris ändrat",
   config_changed: "Inställning ändrad",
   journal_export: "Journalexport",
 };

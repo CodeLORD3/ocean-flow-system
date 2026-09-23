@@ -95,6 +95,7 @@ import DataCoverage from "@/pages/DataCoverage";
 import SystemStatus from "@/pages/SystemStatus";
 import LagerBlueprint from "@/pages/LagerBlueprint";
 import PosFoundation from "@/pages/PosFoundation";
+import PosPrices from "@/pages/PosPrices";
 import ClockGuides from "@/pages/ClockGuides";
 import StockDisappearance from "@/pages/StockDisappearance";
 import PosLive from "@/pages/PosLive";
@@ -217,6 +218,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/clock-guides": { component: <ClockGuides /> },
   "/pos-live": { component: <PosLive /> },
   "/pos-fundament": { component: <PosFoundation /> },
+  "/pos-priser": { component: <PosPrices /> },
   "/shopify": { component: <ShopifyWebOrders /> },
   "/stock-movements": { component: <StockMovementsPage /> },
   "/stock-disappearance": { component: <StockDisappearance /> },
