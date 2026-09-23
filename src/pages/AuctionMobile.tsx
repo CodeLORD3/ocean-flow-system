@@ -436,7 +436,7 @@ export default function AuctionMobile() {
 
 
   return (
-    <div className="pb-28">
+    <div className="h-full min-h-0 overflow-y-auto overscroll-contain pb-28">
       <div className="flex items-center gap-3 px-1 pt-1">
         <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <Gavel className="h-7 w-7" />

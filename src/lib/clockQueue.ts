@@ -97,6 +97,7 @@ export async function syncQueue(): Promise<number> {
       identifier = new TextDecoder().decode(plain);
       await punch(identifier, item.action, item.occurred_at, {
         clientPunchId: item.client_punch_id,
+        offlineQueued: true,
         workSiteId: item.work_site_id,
         costCenter: item.cost_center,
         latitude: item.latitude,
