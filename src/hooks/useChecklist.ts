@@ -1,3 +1,4 @@
+// Dessa tabeller används av Uppgifter. Nya checklistor byggs i egna tabeller.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { guessWorkType } from "@/lib/workType";
