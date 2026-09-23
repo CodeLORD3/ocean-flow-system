@@ -289,6 +289,23 @@ export function TaskRow({
           {categoryName ?? (task.work_type ? workTypeLabel(task.work_type) : "")}
         </span>
 
+        {/* Steg-framsteg: syns direkt på raden när uppgiften har steg */}
+        <span className="hidden w-[78px] shrink-0 justify-end sm:flex">
+          {guideSteps.length > 0 && (
+            <span
+              className={cn(
+                "rounded-md border px-1.5 py-0.5 font-mono text-[10px] tabular-nums",
+                stepsDoneCount >= guideSteps.length
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                  : "border-grid-line text-muted-foreground",
+              )}
+              title="Avbockade steg"
+            >
+              {stepsDoneCount}/{guideSteps.length} steg
+            </span>
+          )}
+        </span>
+
         {/* Kolumn 6: krav och bilder */}
         <span className="hidden w-[96px] shrink-0 items-center justify-end gap-1.5 text-[10px] text-muted-foreground xl:flex">
           {duration && (
