@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "sdk_version": "3.0.1",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://tzcvoqnrhjtrxlzhhdmu.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "makrill-erp",
+      "version": "0.1.0",
+      "title": "Makrill ERP"
+    },
+    "tools": [
+      {
+        "name": "list_stores",
+        "title": "Lista butiker och driftställen",
+        "description": "Listar butiker och grossistenheter med stad, land, valuta och om enheten är aktiv.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "only_active": {
+              "type": "boolean",
+              "description": "Visa bara aktiva enheter."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "search_products",
+        "title": "Sök varor",
+        "description": "Söker varor på namn, artikelnummer eller streckkod och visar kategori, enhet och priser.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Sökord, artikelnummer eller streckkod."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Antal träffar, standard 20."
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_customer_orders",
+        "title": "Lista kundbeställningar",
+        "description": "Listar kundbeställningar med ordernummer, kund, önskat datum och tid, status och packstatus. Kan filtreras på butik, datum och status.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "store_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Butikens id, från list_stores."
+            },
+            "wanted_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Önskat leveransdatum, ÅÅÅÅ-MM-DD."
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Orderstatus, exempelvis aktiv."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Antal rader, standard 30."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_lot",
+        "title": "Hämta parti för spårbarhet",
+        "description": "Hämtar ett parti på partinummer och visar art, fångstområde, redskap, fångstdatum, bäst före, kvarvarande mängd i kilo och status.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "lot_number": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Partinummer, exakt eller del av."
+            }
+          },
+          "required": [
+            "lot_number"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
