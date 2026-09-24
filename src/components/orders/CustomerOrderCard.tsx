@@ -612,11 +612,9 @@ export function CustomerOrderCard({
                 orderId={order.id}
                 storeId={order.store_id}
                 locked={
-                  order.pack_status === "packad" ||
                   !!order.cancelled_at ||
                   !!order.archived_at ||
-                  ["packad", "levererad", "avhamtad", "avbruten", "delvis_utlamnad"].includes(order.status) ||
-                  lines.some((l) => l.pack_status === "packad")
+                  ["levererad", "avhamtad", "avbruten", "delvis_utlamnad"].includes(order.status) 
                 }
               />
             )}
