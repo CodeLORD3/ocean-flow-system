@@ -19,6 +19,7 @@ import {
 import { EmptyState } from "@/components/EmptyState";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
+import { IncomingTransfers } from "@/components/orders/OrderTransfer";
 import {
   useCustomerOrders,
   useArchiveCustomerOrder,
@@ -578,6 +579,7 @@ export default function CustomerOrders() {
         Privatkunder{isShop && activeStoreName ? ` — ${activeStoreName}` : ""}. Betalning sker i
         kassan vid hämtning.
       </p>
+      {canEdit && <IncomingTransfers storeId={isShop ? activeStoreId : effectiveStore} />}
 
       {/* Ordermenyn: tre operativa flikar först, historiken nedtonad sist. */}
       {panel === "orders" && (
