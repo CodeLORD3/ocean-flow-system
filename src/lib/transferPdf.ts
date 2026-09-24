@@ -103,7 +103,7 @@ export function buildTransferDoc(data: TransferPdfData) {
     margin: { left: margin, right: margin },
     theme: "plain",
     styles: { fontSize: 9, cellPadding: 1 },
-    columnStyles: { 0: { fontStyle: "bold", cellWidth: 26 } },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 42 } },
     body: meta,
   });
 
