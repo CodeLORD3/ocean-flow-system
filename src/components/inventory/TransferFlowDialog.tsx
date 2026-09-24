@@ -16,6 +16,7 @@ import { Printer, ArrowRight, Check, X, AlertTriangle, FileSpreadsheet } from "l
 import { LEVEL_LABEL, type LocationLevel } from "@/lib/locations";
 import { openTransferPdf } from "@/lib/transferPdf";
 import { useSenderMark } from "@/hooks/useEstablishments";
+import { useFacilityParty } from "@/hooks/useFacilityParty";
 import ExportDossierDialog from "@/components/inventory/ExportDossierDialog";
 import {
   useApproveInbound,
@@ -163,6 +164,8 @@ export default function TransferFlowDialog({ order, onOpenChange }: TransferFlow
       lines: pdfLines,
       identificationMark: senderMark ?? null,
       requiresIdentificationMark: !!order.to_location,
+      sender: senderParty ?? null,
+      receiver: receiverParty ?? null,
     });
 
   const doPrintPicklist = async () => {
