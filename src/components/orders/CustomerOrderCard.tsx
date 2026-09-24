@@ -50,6 +50,7 @@ import { allergenLabel, scaleQuantity } from "@/lib/catering";
 import { OrderAuditLine, OrderApprovedBy } from "./OrderAuditLine";
 import { CurrencyAmount, useSekRate } from "@/components/orders/CurrencyAmount";
 import { getStoreCurrency } from "@/lib/currency";
+import { TransferOrderBox } from "./OrderTransfer";
 
 
 const nf = (v: any, d = 2) =>
@@ -606,6 +607,19 @@ export function CustomerOrderCard({
                 <Printer className="mr-2 h-4 w-4" /> Skriv preliminär offert
               </Button>
             </div>
+            {!readOnly && (
+              <TransferOrderBox
+                orderId={order.id}
+                storeId={order.store_id}
+                locked={
+                  order.pack_status === "packad" ||
+                  !!order.cancelled_at ||
+                  !!order.archived_at ||
+                  ["packad", "levererad", "avhamtad", "avbruten", "delvis_utlamnad"].includes(order.status) ||
+                  lines.some((l) => l.pack_status === "packad")
+                }
+              />
+            )}
             {!readOnly && order.category === "catering" && (
               <div className="sm:max-w-[220px]">
                 <Label>Antal gäster</Label>

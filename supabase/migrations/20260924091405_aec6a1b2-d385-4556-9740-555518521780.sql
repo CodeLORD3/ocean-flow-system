@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public._actor_name() FROM authenticated;
