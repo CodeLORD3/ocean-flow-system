@@ -361,7 +361,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             }
           >
             {!isCountFlow && <TaskAlertBanner />}
-            {!isCountFlow && <DayCloseBanner />}
+            {!isCountFlow && site !== "wholesale" && <DayCloseBanner />}
             {!isStaffModule && !isCountFlow && <StoreHero />}
             {children}
           </main>
