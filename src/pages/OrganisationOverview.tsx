@@ -26,6 +26,7 @@ import { useSuppliers } from "@/hooks/useSuppliers";
 import CountEntryButton from "@/components/inventory/mobile/CountEntryButton";
 import AuctionEntryCard from "@/components/auction/AuctionEntryCard";
 import { useSite } from "@/contexts/SiteContext";
+import { DayCloseOverview } from "@/components/DayCloseOverview";
 import { useTabs } from "@/contexts/TabsContext";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import { PORTAL_IMAGE_ENTITY_TYPE, portalImageEntityId } from "@/lib/portalImages";
@@ -302,6 +303,7 @@ export default function OrganisationOverview() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 sm:space-y-6 max-w-full overflow-x-hidden">
+      {site === "wholesale" && <DayCloseOverview />}
       {/* Ingång till räkningen — det första en butiksanställd ser på telefon */}
       {isShop && (
         <div className="md:hidden">

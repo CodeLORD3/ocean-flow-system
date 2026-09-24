@@ -34,6 +34,9 @@ export function useDagsavslut() {
     if (site === "shop" && activeStoreId) {
       return aktiva.filter((s) => s.id === activeStoreId);
     }
+    if (site === "production") {
+      return aktiva.filter((s) => /grossist/i.test(s.name ?? ""));
+    }
     return aktiva;
   }, [stores, site, activeStoreId]);
 
