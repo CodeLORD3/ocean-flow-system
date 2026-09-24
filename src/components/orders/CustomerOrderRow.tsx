@@ -64,6 +64,7 @@ import { OrderAuditLine, OrderApprovedBy } from "./OrderAuditLine";
 import { getStoreCurrency } from "@/lib/currency";
 import { OrderTypeIcon } from "@/components/orders/OrderTypeIcon";
 import { CurrencyAmount } from "@/components/orders/CurrencyAmount";
+import { TransferOrderBox } from "./OrderTransfer";
 
 
 
@@ -1028,6 +1029,21 @@ export function CustomerOrderRow({
                   </Button>
                 )}
               </div>
+
+              {!readOnly && canEdit && (
+                <TransferOrderBox
+                  orderId={order.id}
+                  storeId={order.store_id}
+                  locked={
+                    cancelled ||
+                    handedOver ||
+                    isArchived ||
+                    order.pack_status === "packad" ||
+                    lines.some((l) => l.pack_status === "packad")
+                  }
+                />
+              )}
+
 
               {/* Borttagning raderar inget — ordern flyttas till Borttagna med anledning. */}
               {deleteReason !== null && !cancelled && (
