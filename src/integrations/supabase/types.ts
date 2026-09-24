@@ -3370,6 +3370,90 @@ export type Database = {
           },
         ]
       }
+      customer_order_transfers: {
+        Row: {
+          decided_at: string | null
+          decided_by: string | null
+          decided_by_name: string | null
+          decision_reason: string | null
+          from_store_id: string
+          id: string
+          message: string | null
+          order_id: string
+          requested_at: string
+          requested_by: string | null
+          requested_by_name: string | null
+          status: string
+          to_store_id: string
+        }
+        Insert: {
+          decided_at?: string | null
+          decided_by?: string | null
+          decided_by_name?: string | null
+          decision_reason?: string | null
+          from_store_id: string
+          id?: string
+          message?: string | null
+          order_id: string
+          requested_at?: string
+          requested_by?: string | null
+          requested_by_name?: string | null
+          status?: string
+          to_store_id: string
+        }
+        Update: {
+          decided_at?: string | null
+          decided_by?: string | null
+          decided_by_name?: string | null
+          decision_reason?: string | null
+          from_store_id?: string
+          id?: string
+          message?: string | null
+          order_id?: string
+          requested_at?: string
+          requested_by?: string | null
+          requested_by_name?: string | null
+          status?: string
+          to_store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_order_transfers_from_store_id_fkey"
+            columns: ["from_store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "customer_order_transfers_from_store_id_fkey"
+            columns: ["from_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_order_transfers_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "customer_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_order_transfers_to_store_id_fkey"
+            columns: ["to_store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "customer_order_transfers_to_store_id_fkey"
+            columns: ["to_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_orders: {
         Row: {
           allergy_note: string | null
@@ -3409,6 +3493,7 @@ export type Database = {
           note: string | null
           order_number: string
           order_type: string
+          original_store_id: string | null
           pack_status: string
           packed_at: string | null
           packed_by_name: string | null
@@ -3474,6 +3559,7 @@ export type Database = {
           note?: string | null
           order_number: string
           order_type?: string
+          original_store_id?: string | null
           pack_status?: string
           packed_at?: string | null
           packed_by_name?: string | null
@@ -3539,6 +3625,7 @@ export type Database = {
           note?: string | null
           order_number?: string
           order_type?: string
+          original_store_id?: string | null
           pack_status?: string
           packed_at?: string | null
           packed_by_name?: string | null
@@ -21608,6 +21695,7 @@ export type Database = {
       }
     }
     Functions: {
+      _actor_name: { Args: never; Returns: string }
       absence_conflicts: {
         Args: { _request_id: string }
         Returns: {
@@ -21705,6 +21793,10 @@ export type Database = {
       can_see_employee: { Args: { _employee_id: string }; Returns: boolean }
       can_see_employee_folder: { Args: { _name: string }; Returns: boolean }
       can_see_store: { Args: { _store_id: string }; Returns: boolean }
+      cancel_customer_order_transfer: {
+        Args: { _transfer_id: string }
+        Returns: undefined
+      }
       check_station_heartbeats: {
         Args: { _threshold_minutes?: number }
         Returns: Json
@@ -21836,6 +21928,10 @@ export type Database = {
           _request_id: string
         }
         Returns: Json
+      }
+      decide_customer_order_transfer: {
+        Args: { _approve: boolean; _reason: string; _transfer_id: string }
+        Returns: undefined
       }
       employee_is_self: { Args: { _employee_id: string }; Returns: boolean }
       employee_pnr_key: { Args: never; Returns: string }
@@ -22410,6 +22506,10 @@ export type Database = {
       register_sick_period: {
         Args: { _employee_id: string; _first_day: string; _last_day?: string }
         Returns: Json
+      }
+      request_customer_order_transfer: {
+        Args: { _message: string; _order_id: string; _to_store_id: string }
+        Returns: string
       }
       run_time_compliance_checks: {
         Args: { _from?: string; _to?: string }
