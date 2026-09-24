@@ -1037,9 +1037,7 @@ export function CustomerOrderRow({
                   locked={
                     cancelled ||
                     handedOver ||
-                    isArchived ||
-                    order.pack_status === "packad" ||
-                    lines.some((l) => l.pack_status === "packad")
+                    isArchived
                   }
                 />
               )}
