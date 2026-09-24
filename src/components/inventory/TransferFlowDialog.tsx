@@ -66,6 +66,8 @@ const levelName = (loc: any) =>
  */
 export default function TransferFlowDialog({ order, onOpenChange }: TransferFlowDialogProps) {
   const { data: senderMark } = useSenderMark();
+  const { data: senderParty } = useFacilityParty(order?.from_location_id);
+  const { data: receiverParty } = useFacilityParty(order?.to_location_id);
   const lines = useMemo(
     () =>
       ((order?.transfer_order_lines ?? []) as any[]).slice().sort(
