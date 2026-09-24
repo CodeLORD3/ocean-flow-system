@@ -33,7 +33,23 @@ export interface TransferPdfData {
   identificationMark?: string | null;
   /** Sätts när mottagaren kräver märke enligt 853/2004. */
   requiresIdentificationMark?: boolean;
+  /** Avsändande och mottagande anläggning med bolag och adress. */
+  sender?: TransferParty | null;
+  receiver?: TransferParty | null;
 }
+
+export interface TransferParty {
+  storeName: string;
+  address: string | null;
+  companyName: string | null;
+  orgNr: string | null;
+}
+
+const partyText = (p: TransferParty | null | undefined, fallback: string) => {
+  if (!p) return fallback;
+  const company = [p.companyName, p.orgNr].filter(Boolean).join(", ");
+  return [p.storeName, company, p.address].filter(Boolean).join("\n");
+};
 
 const nf = (v: number | null | undefined, dec = 1) =>
   v === null || v === undefined
@@ -73,9 +89,11 @@ export function buildTransferDoc(data: TransferPdfData) {
   doc.setTextColor(0);
 
   const meta: [string, string][] = [
-    ["Från", `${data.fromName} (${data.fromLevel})`],
-    ["Till", `${data.toName} (${data.toLevel})`],
-    ["Underlag", data.sourceDocumentLabel || "—"],
+    ["Avsändande anläggning", partyText(data.sender, data.fromName)],
+    ["Från lagerplats", `${data.fromName} (${data.fromLevel})`],
+    ["Mottagare", partyText(data.receiver, data.toName)],
+    ["Till lagerplats", `${data.toName} (${data.toLevel})`],
+    ["Underlag", data.sourceDocumentLabel || "Saknas"],
     ["Skapad", `${dateText(data.createdAt)}${data.createdBy ? ` · ${data.createdBy}` : ""}`],
   ];
   if (data.reason) meta.push(["Orsak", data.reason]);
@@ -85,7 +103,7 @@ export function buildTransferDoc(data: TransferPdfData) {
     margin: { left: margin, right: margin },
     theme: "plain",
     styles: { fontSize: 9, cellPadding: 1 },
-    columnStyles: { 0: { fontStyle: "bold", cellWidth: 26 } },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 42 } },
     body: meta,
   });
 
