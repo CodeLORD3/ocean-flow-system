@@ -186,6 +186,7 @@ export function EmployeeDialog({ open, employee, onOpenChange }: Props) {
             <TabsTrigger value="person">Personuppgifter</TabsTrigger>
             <TabsTrigger value="login" disabled={!employeeId}>Inloggning</TabsTrigger>
             <TabsTrigger value="employments" disabled={!employeeId}>Anställningar</TabsTrigger>
+            <TabsTrigger value="contracts" disabled={!employeeId}>Avtal</TabsTrigger>
             <TabsTrigger value="docs" disabled={!employeeId}>Dokument</TabsTrigger>
           </TabsList>
 
@@ -345,6 +346,10 @@ export function EmployeeDialog({ open, employee, onOpenChange }: Props) {
                 </div>
               </>
             )}
+          </TabsContent>
+
+          <TabsContent value="contracts" className="pt-4">
+            {employeeId && contractEmployee && <EmploymentContracts employee={contractEmployee} />}
           </TabsContent>
 
           <TabsContent value="docs" className="pt-4">
