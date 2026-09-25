@@ -5358,6 +5358,121 @@ export type Database = {
         }
         Relationships: []
       }
+      employment_contract_templates: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          legal_entity_id: string | null
+          name: string
+          sections: Json
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          legal_entity_id?: string | null
+          name: string
+          sections?: Json
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          legal_entity_id?: string | null
+          name?: string
+          sections?: Json
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      employment_contracts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          employment_id: string | null
+          error: string | null
+          id: string
+          pdf_path: string | null
+          scrive_document_id: string | null
+          sections: Json
+          sent_at: string | null
+          signatories: Json
+          signed_at: string | null
+          signed_pdf_path: string | null
+          status: string
+          template_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          employment_id?: string | null
+          error?: string | null
+          id?: string
+          pdf_path?: string | null
+          scrive_document_id?: string | null
+          sections?: Json
+          sent_at?: string | null
+          signatories?: Json
+          signed_at?: string | null
+          signed_pdf_path?: string | null
+          status?: string
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          employment_id?: string | null
+          error?: string | null
+          id?: string
+          pdf_path?: string | null
+          scrive_document_id?: string | null
+          sections?: Json
+          sent_at?: string | null
+          signatories?: Json
+          signed_at?: string | null
+          signed_pdf_path?: string | null
+          status?: string
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employment_contracts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employment_contracts_employment_id_fkey"
+            columns: ["employment_id"]
+            isOneToOne: false
+            referencedRelation: "employments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employment_contracts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "employment_contract_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employments: {
         Row: {
           agreement_area: string
@@ -21888,6 +22003,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      contract_signer_data: { Args: { _contract_id: string }; Returns: Json }
       cost_read_allowed: { Args: { _store_id: string }; Returns: boolean }
       current_staff: {
         Args: never
