@@ -20,6 +20,7 @@ import { isValidPnr, maskPnr } from "@/lib/personnummer";
 import { EmploymentForm } from "./EmploymentForm";
 import { EmployeeDocuments } from "./EmployeeDocuments";
 import { EmployeeLoginSection } from "./EmployeeLoginSection";
+import { EmploymentContracts } from "./EmploymentContracts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
@@ -57,6 +58,9 @@ export function EmployeeDialog({ open, employee, onOpenChange }: Props) {
     is_active: employee?.is_active ?? true,
   });
   const set = (k: string, v: string | boolean) => setF((p) => ({ ...p, [k]: v }));
+  const contractEmployee: Employee | null = employeeId
+    ? ({ ...(employee ?? {}), ...f, id: employeeId } as unknown as Employee)
+    : null;
 
   const [showEmploymentForm, setShowEmploymentForm] = useState(false);
   const [editEmployment, setEditEmployment] = useState<Employment | null>(null);
