@@ -6,6 +6,7 @@ import { ShiftTemplatesPanel } from "@/components/staff/ShiftTemplatesPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ContractTemplateEditor } from "@/components/employees/ContractTemplateEditor";
 
 interface WorkRule { id: string; rule_key: string; name: string; value_numeric: number | null; value_text: string | null; unit: string | null; legal_source: string | null; agreement_source: string | null; is_unverified: boolean; version: number; valid_from: string; note: string | null; }
 interface ObWindow { id: string; name: string; day_kind: string; start_time: string; end_time: string; pct: number; wage_code_id: string | null; agreement_source: string | null; }
@@ -94,6 +95,7 @@ export default function StaffRules() {
             <TabsTrigger value="sites">Driftställen</TabsTrigger>
             <TabsTrigger value="holidays"><CalendarDays className="mr-2 h-4 w-4" />Helgdagar</TabsTrigger>
             <TabsTrigger value="templates">Passmallar</TabsTrigger>
+            <TabsTrigger value="contract">Avtalsmall</TabsTrigger>
           </TabsList>
           <TabsContent value="rules" className="space-y-1">
             <SectionLabel>Versionerade regler</SectionLabel>
@@ -149,6 +151,7 @@ export default function StaffRules() {
           </TabsContent>
           <TabsContent value="holidays" className="space-y-4"><div className="flex flex-wrap items-end gap-2"><div><SectionLabel>Datum</SectionLabel><IndustryInput type="date" value={holiday.date} onChange={(e) => setHoliday((v) => ({ ...v, date: e.target.value }))} /></div><div><SectionLabel>Namn</SectionLabel><IndustryInput placeholder="T.ex. Julafton" value={holiday.name} onChange={(e) => setHoliday((v) => ({ ...v, name: e.target.value }))} /></div><IndustryButton variant="primary" corners disabled={saving} onClick={addHoliday}><Plus className="h-4 w-4" />Lägg till</IndustryButton></div><div className="space-y-1">{holidays.map((item) => <IndustryRow key={item.id} className="flex-wrap"><span className="ind-mono w-28">{item.holiday_date}</span><span className="flex-1">{item.name}</span>{item.is_major_holiday && <StatusLabel tone="progress">Storhelg</StatusLabel>}</IndustryRow>)}</div></TabsContent>
           <TabsContent value="templates" className="mt-5"><ShiftTemplatesPanel /></TabsContent>
+          <TabsContent value="contract" className="mt-5"><ContractTemplateEditor /></TabsContent>
         </Tabs>
       )}
       <p className="ind-muted text-xs"><Save className="mr-1 inline h-3.5 w-3.5" />Ändringar i regelvärden sparas när du lämnar fältet. Nivån för övertid är fortsatt markerad som overifierad tills avtalet är bekräftat.</p>
