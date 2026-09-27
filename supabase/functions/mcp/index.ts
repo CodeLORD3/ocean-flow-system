@@ -228,18 +228,162 @@ var get_lot_default = defineTool4({
   }
 });
 
+// src/lib/mcp/tools/ai-team.ts
+import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z5 } from "npm:zod@^3.25.76";
+var deny = { content: [{ type: "text", text: "Inte inloggad." }], isError: true };
+var fail = (m) => ({ content: [{ type: "text", text: m }], isError: true });
+var ok = (key, v) => ({
+  content: [{ type: "text", text: JSON.stringify(v) }],
+  structuredContent: { [key]: v }
+});
+var uppgiftStatus = z5.enum(["\xF6ppen", "p\xE5g\xE5r", "v\xE4ntar p\xE5 vd", "klar"]);
+var utkastStatus = z5.enum(["utkast", "redigerat", "godk\xE4nt", "skickat", "avslaget"]);
+var read = { readOnlyHint: true, idempotentHint: true, openWorldHint: false };
+var write = { readOnlyHint: false, destructiveHint: false, openWorldHint: false };
+var listaAiUppgifter = defineTool5({
+  name: "lista_ai_uppgifter",
+  title: "Lista AI-uppgifter",
+  description: "Listar AI-teamets uppgifter. Kan filtreras p\xE5 status och tilldelad.",
+  inputSchema: {
+    status: uppgiftStatus.optional(),
+    tilldelad: z5.string().trim().min(1).optional(),
+    limit: z5.number().int().min(1).max(200).optional()
+  },
+  annotations: read,
+  handler: async ({ status, tilldelad, limit }, ctx) => {
+    if (!ctx.isAuthenticated()) return deny;
+    let q = supabaseForUser(ctx).from("ai_uppgifter").select("*").order("skapad", { ascending: false }).limit(limit ?? 50);
+    if (status) q = q.eq("status", status);
+    if (tilldelad) q = q.eq("tilldelad", tilldelad);
+    const { data, error } = await q;
+    return error ? fail(error.message) : ok("uppgifter", data ?? []);
+  }
+});
+var skapaAiUppgift = defineTool5({
+  name: "skapa_ai_uppgift",
+  title: "Skapa AI-uppgift",
+  description: "Skapar en ny uppgift p\xE5 tavlan.",
+  inputSchema: {
+    uppgift: z5.string().trim().min(1),
+    tilldelad: z5.string().trim().optional(),
+    skapad_av: z5.string().trim().optional(),
+    prioritet: z5.number().int().min(1).max(5).optional(),
+    deadline: z5.string().optional().describe("ISO-tidpunkt."),
+    underlag: z5.string().optional(),
+    status: uppgiftStatus.optional()
+  },
+  annotations: write,
+  handler: async (input, ctx) => {
+    if (!ctx.isAuthenticated()) return deny;
+    const { data, error } = await supabaseForUser(ctx).from("ai_uppgifter").insert(input).select().single();
+    return error ? fail(error.message) : ok("uppgift", data);
+  }
+});
+var uppdateraAiUppgift = defineTool5({
+  name: "uppdatera_ai_uppgift",
+  title: "Uppdatera AI-uppgift",
+  description: "Uppdaterar status och resultat p\xE5 en AI-uppgift.",
+  inputSchema: {
+    id: z5.number().int(),
+    status: uppgiftStatus.optional(),
+    resultat: z5.string().optional()
+  },
+  annotations: { ...write, idempotentHint: true },
+  handler: async ({ id, status, resultat }, ctx) => {
+    if (!ctx.isAuthenticated()) return deny;
+    const patch = {};
+    if (status) patch.status = status;
+    if (resultat !== void 0) patch.resultat = resultat;
+    const { data, error } = await supabaseForUser(ctx).from("ai_uppgifter").update(patch).eq("id", id).select().single();
+    return error ? fail(error.message) : ok("uppgift", data);
+  }
+});
+var listaAiUtkast = defineTool5({
+  name: "lista_ai_utkast",
+  title: "Lista AI-utkast",
+  description: "Listar utkast som v\xE4ntar p\xE5 eller har passerat VD:s attest. Kan filtreras p\xE5 status och typ.",
+  inputSchema: {
+    status: utkastStatus.optional(),
+    typ: z5.string().trim().min(1).optional(),
+    limit: z5.number().int().min(1).max(200).optional()
+  },
+  annotations: read,
+  handler: async ({ status, typ, limit }, ctx) => {
+    if (!ctx.isAuthenticated()) return deny;
+    let q = supabaseForUser(ctx).from("ai_utkast").select("*").order("skapad", { ascending: false }).limit(limit ?? 50);
+    if (status) q = q.eq("status", status);
+    if (typ) q = q.eq("typ", typ);
+    const { data, error } = await q;
+    return error ? fail(error.message) : ok("utkast", data ?? []);
+  }
+});
+var skapaAiUtkast = defineTool5({
+  name: "skapa_ai_utkast",
+  title: "Skapa AI-utkast",
+  description: "Skapar ett nytt utkast f\xF6r VD:s attest.",
+  inputSchema: {
+    titel: z5.string().trim().min(1),
+    typ: z5.string().optional(),
+    mottagare: z5.string().optional(),
+    kanal: z5.string().optional(),
+    innehall: z5.string().optional().describe("Markdown."),
+    bilaga_url: z5.string().url().optional(),
+    skapad_av: z5.string().optional()
+  },
+  annotations: write,
+  handler: async (input, ctx) => {
+    if (!ctx.isAuthenticated()) return deny;
+    const { data, error } = await supabaseForUser(ctx).from("ai_utkast").insert(input).select().single();
+    return error ? fail(error.message) : ok("utkast", data);
+  }
+});
+var uppdateraAiUtkast = defineTool5({
+  name: "uppdatera_ai_utkast",
+  title: "Uppdatera AI-utkast",
+  description: "Uppdaterar ett utkast: inneh\xE5ll, titel, mottagare, kanal, bilaga eller status.",
+  inputSchema: {
+    id: z5.number().int(),
+    titel: z5.string().trim().min(1).optional(),
+    mottagare: z5.string().optional(),
+    kanal: z5.string().optional(),
+    innehall: z5.string().optional(),
+    bilaga_url: z5.string().url().optional(),
+    status: utkastStatus.optional()
+  },
+  annotations: { ...write, idempotentHint: true },
+  handler: async ({ id, ...rest }, ctx) => {
+    if (!ctx.isAuthenticated()) return deny;
+    const patch = Object.fromEntries(Object.entries(rest).filter(([, v]) => v !== void 0));
+    if (patch.status === "skickat") patch.skickad = (/* @__PURE__ */ new Date()).toISOString();
+    const { data, error } = await supabaseForUser(ctx).from("ai_utkast").update(patch).eq("id", id).select().single();
+    return error ? fail(error.message) : ok("utkast", data);
+  }
+});
+
 // src/lib/mcp/index.ts
 var projectRef = "tzcvoqnrhjtrxlzhhdmu";
 var mcp_default = defineMcp({
   name: "makrill-erp",
   title: "Makrill ERP",
   version: "0.1.0",
-  instructions: "Verktyg f\xF6r Makrill ERP. L\xE4sande verktyg som k\xF6rs som den inloggade anv\xE4ndaren: list_stores f\xF6r butiker och driftst\xE4llen, search_products f\xF6r varor och priser, list_customer_orders f\xF6r kundbest\xE4llningar och get_lot f\xF6r partisp\xE5rbarhet.",
+  instructions: "Verktyg f\xF6r Makrill ERP. L\xE4sande verktyg som k\xF6rs som den inloggade anv\xE4ndaren: list_stores f\xF6r butiker och driftst\xE4llen, search_products f\xF6r varor och priser, list_customer_orders f\xF6r kundbest\xE4llningar och get_lot f\xF6r partisp\xE5rbarhet. AI-teamet: lista_ai_uppgifter, skapa_ai_uppgift, uppdatera_ai_uppgift, lista_ai_utkast, skapa_ai_utkast och uppdatera_ai_utkast (kr\xE4ver administrat\xF6rsroll).",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"
   }),
-  tools: [list_stores_default, search_products_default, list_customer_orders_default, get_lot_default]
+  tools: [
+    list_stores_default,
+    search_products_default,
+    list_customer_orders_default,
+    get_lot_default,
+    listaAiUppgifter,
+    skapaAiUppgift,
+    uppdateraAiUppgift,
+    listaAiUtkast,
+    skapaAiUtkast,
+    uppdateraAiUtkast
+  ]
 });
 
 // lovable-mcp-supabase-entry.ts

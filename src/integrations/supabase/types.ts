@@ -504,6 +504,96 @@ export type Database = {
           },
         ]
       }
+      ai_uppgifter: {
+        Row: {
+          deadline: string | null
+          id: number
+          prioritet: number | null
+          resultat: string | null
+          skapad: string | null
+          skapad_av: string | null
+          status: string | null
+          tilldelad: string | null
+          underlag: string | null
+          uppdaterad: string | null
+          uppgift: string
+        }
+        Insert: {
+          deadline?: string | null
+          id?: never
+          prioritet?: number | null
+          resultat?: string | null
+          skapad?: string | null
+          skapad_av?: string | null
+          status?: string | null
+          tilldelad?: string | null
+          underlag?: string | null
+          uppdaterad?: string | null
+          uppgift: string
+        }
+        Update: {
+          deadline?: string | null
+          id?: never
+          prioritet?: number | null
+          resultat?: string | null
+          skapad?: string | null
+          skapad_av?: string | null
+          status?: string | null
+          tilldelad?: string | null
+          underlag?: string | null
+          uppdaterad?: string | null
+          uppgift?: string
+        }
+        Relationships: []
+      }
+      ai_utkast: {
+        Row: {
+          bilaga_url: string | null
+          id: number
+          innehall: string | null
+          kanal: string | null
+          mottagare: string | null
+          skapad: string | null
+          skapad_av: string | null
+          skickad: string | null
+          status: string | null
+          titel: string
+          typ: string | null
+          uppdaterad: string | null
+          vd_kommentar: string | null
+        }
+        Insert: {
+          bilaga_url?: string | null
+          id?: never
+          innehall?: string | null
+          kanal?: string | null
+          mottagare?: string | null
+          skapad?: string | null
+          skapad_av?: string | null
+          skickad?: string | null
+          status?: string | null
+          titel: string
+          typ?: string | null
+          uppdaterad?: string | null
+          vd_kommentar?: string | null
+        }
+        Update: {
+          bilaga_url?: string | null
+          id?: never
+          innehall?: string | null
+          kanal?: string | null
+          mottagare?: string | null
+          skapad?: string | null
+          skapad_av?: string | null
+          skickad?: string | null
+          status?: string | null
+          titel?: string
+          typ?: string | null
+          uppdaterad?: string | null
+          vd_kommentar?: string | null
+        }
+        Relationships: []
+      }
       allergens: {
         Row: {
           active: boolean
