@@ -134,6 +134,265 @@
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
+      },
+      {
+        "name": "lista_ai_uppgifter",
+        "title": "Lista AI-uppgifter",
+        "description": "Listar AI-teamets uppgifter. Kan filtreras på status och tilldelad.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "öppen",
+                "pågår",
+                "väntar på vd",
+                "klar"
+              ]
+            },
+            "tilldelad": {
+              "type": "string",
+              "minLength": 1
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "skapa_ai_uppgift",
+        "title": "Skapa AI-uppgift",
+        "description": "Skapar en ny uppgift på tavlan.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "uppgift": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tilldelad": {
+              "type": "string"
+            },
+            "skapad_av": {
+              "type": "string"
+            },
+            "prioritet": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            },
+            "deadline": {
+              "type": "string",
+              "description": "ISO-tidpunkt."
+            },
+            "underlag": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "öppen",
+                "pågår",
+                "väntar på vd",
+                "klar"
+              ]
+            }
+          },
+          "required": [
+            "uppgift"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "uppdatera_ai_uppgift",
+        "title": "Uppdatera AI-uppgift",
+        "description": "Uppdaterar status och resultat på en AI-uppgift.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "öppen",
+                "pågår",
+                "väntar på vd",
+                "klar"
+              ]
+            },
+            "resultat": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lista_ai_utkast",
+        "title": "Lista AI-utkast",
+        "description": "Listar utkast som väntar på eller har passerat VD:s attest. Kan filtreras på status och typ.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "utkast",
+                "redigerat",
+                "godkänt",
+                "skickat",
+                "avslaget"
+              ]
+            },
+            "typ": {
+              "type": "string",
+              "minLength": 1
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "skapa_ai_utkast",
+        "title": "Skapa AI-utkast",
+        "description": "Skapar ett nytt utkast för VD:s attest.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "titel": {
+              "type": "string",
+              "minLength": 1
+            },
+            "typ": {
+              "type": "string"
+            },
+            "mottagare": {
+              "type": "string"
+            },
+            "kanal": {
+              "type": "string"
+            },
+            "innehall": {
+              "type": "string",
+              "description": "Markdown."
+            },
+            "bilaga_url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "skapad_av": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "titel"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "uppdatera_ai_utkast",
+        "title": "Uppdatera AI-utkast",
+        "description": "Uppdaterar ett utkast: innehåll, titel, mottagare, kanal, bilaga eller status.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "titel": {
+              "type": "string",
+              "minLength": 1
+            },
+            "mottagare": {
+              "type": "string"
+            },
+            "kanal": {
+              "type": "string"
+            },
+            "innehall": {
+              "type": "string"
+            },
+            "bilaga_url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "utkast",
+                "redigerat",
+                "godkänt",
+                "skickat",
+                "avslaget"
+              ]
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
       }
     ]
   }
