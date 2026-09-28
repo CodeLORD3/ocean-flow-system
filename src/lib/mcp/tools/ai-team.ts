@@ -5,10 +5,14 @@ import { supabaseForUser } from "../supabase";
 type Ctx = Parameters<typeof supabaseForUser>[0] & { isAuthenticated: () => boolean };
 const deny = { content: [{ type: "text" as const, text: "Inte inloggad." }], isError: true };
 const fail = (m: string) => ({ content: [{ type: "text" as const, text: m }], isError: true });
-const ok = (key: string, v: unknown) => ({
-  content: [{ type: "text" as const, text: JSON.stringify(v) }],
-  structuredContent: { [key]: v } as Record<string, unknown>,
-});
+type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
+const ok = (key: string, v: unknown) => {
+  const json = JSON.parse(JSON.stringify(v ?? null)) as Json;
+  return {
+    content: [{ type: "text" as const, text: JSON.stringify(json) }],
+    structuredContent: { [key]: json } as { [k: string]: Json },
+  };
+};
 const uppgiftStatus = z.enum(["öppen", "pågår", "väntar på vd", "klar"]);
 const utkastStatus = z.enum(["utkast", "redigerat", "godkänt", "skickat", "avslaget"]);
 const read = { readOnlyHint: true, idempotentHint: true, openWorldHint: false };

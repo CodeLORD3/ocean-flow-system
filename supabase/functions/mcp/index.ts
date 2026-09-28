@@ -233,10 +233,13 @@ import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@3.0.1";
 import { z as z5 } from "npm:zod@^3.25.76";
 var deny = { content: [{ type: "text", text: "Inte inloggad." }], isError: true };
 var fail = (m) => ({ content: [{ type: "text", text: m }], isError: true });
-var ok = (key, v) => ({
-  content: [{ type: "text", text: JSON.stringify(v) }],
-  structuredContent: { [key]: v }
-});
+var ok = (key, v) => {
+  const json = JSON.parse(JSON.stringify(v ?? null));
+  return {
+    content: [{ type: "text", text: JSON.stringify(json) }],
+    structuredContent: { [key]: json }
+  };
+};
 var uppgiftStatus = z5.enum(["\xF6ppen", "p\xE5g\xE5r", "v\xE4ntar p\xE5 vd", "klar"]);
 var utkastStatus = z5.enum(["utkast", "redigerat", "godk\xE4nt", "skickat", "avslaget"]);
 var read = { readOnlyHint: true, idempotentHint: true, openWorldHint: false };
