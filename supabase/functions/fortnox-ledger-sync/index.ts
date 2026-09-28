@@ -100,9 +100,16 @@ async function runSync(sb: SupabaseClient, body: any) {
         const fy = Number(y.FromDate.slice(0, 4));
         const heads = await listVoucherHeads(sb, entity, y.Id);
 
-        const { data: have } = await sb.from("fortnox_vouchers")
-          .select("voucher_series, voucher_number").eq("legal_entity_code", entity).eq("financial_year", fy).limit(100000);
-        const seen = new Set((have ?? []).map((v: any) => `${v.voucher_series}-${v.voucher_number}`));
+        // Hämtas sidvis: API:t returnerar högst 1 000 rader per anrop, annars hämtas redan sparade verifikationer om.
+        const seen = new Set<string>();
+        for (let from = 0; ; from += 1000) {
+          const { data: have, error: haveErr } = await sb.from("fortnox_vouchers")
+            .select("voucher_series, voucher_number").eq("legal_entity_code", entity).eq("financial_year", fy)
+            .order("id").range(from, from + 999);
+          if (haveErr) throw new Error(haveErr.message);
+          for (const v of have ?? []) seen.add(`${v.voucher_series}-${v.voucher_number}`);
+          if (!have || have.length < 1000) break;
+        }
 
         // Ändrade sedan senaste lyckade körning hämtas om.
         const changed = new Set<string>();
