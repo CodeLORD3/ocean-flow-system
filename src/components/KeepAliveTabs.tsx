@@ -84,6 +84,7 @@ import Checklist from "@/pages/Checklist";
 import Uppgifter from "@/pages/Uppgifter";
 import Attestera from "@/pages/Attestera";
 import Tavlan from "@/pages/Tavlan";
+import Systemkontroll from "@/pages/Systemkontroll";
 import Veckomal from "@/pages/Veckomal";
 import TaskDetail from "@/pages/TaskDetail";
 import StoreMap from "@/pages/StoreMap";
@@ -210,6 +211,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/uppgifter": { component: <Uppgifter /> },
   "/attestera": { component: <Attestera /> },
   "/tavlan": { component: <Tavlan /> },
+  "/systemkontroll": { component: <Systemkontroll /> },
   "/veckomal": { component: <Veckomal /> },
   "/store-map": { component: <StoreMap /> },
   "/butikskarta": { component: <StoreMap mapOnly /> },

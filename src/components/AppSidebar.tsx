@@ -143,6 +143,7 @@ const financeNav = [
   { title: "Systemstatus", url: "/system-status", icon: Activity },
   { title: "Attestera", url: "/attestera", icon: ShieldCheck },
   { title: "Tavlan", url: "/tavlan", icon: ListTodo },
+  { title: "Systemkontroll", url: "/systemkontroll", icon: Activity },
   { title: "Lagerblueprint", url: "/lager-blueprint", icon: FileText },
   { title: "Stämpelklockan — guider", url: "/clock-guides", icon: FileText },
   { title: "Webbordrar", url: "/shopify", icon: Globe },

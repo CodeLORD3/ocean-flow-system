@@ -22976,6 +22976,8 @@ export type Database = {
         Returns: string
       }
       run_system_checks: { Args: never; Returns: Json }
+      run_system_checks_now: { Args: never; Returns: Json }
+      run_system_checks_scheduled: { Args: never; Returns: Json }
       run_time_compliance_checks: {
         Args: { _from?: string; _to?: string }
         Returns: Json
