@@ -152,6 +152,7 @@ export default function PortalChooser() {
     if (key === "admin" && session?.user?.id) {
       try {
         const { data } = await (supabase as any).from("user_start_page").select("vd_overview").eq("user_id", session.user.id).maybeSingle();
+        console.log("VDSTART", JSON.stringify(data));
         if (data?.vd_overview) route = "/vd";
       } catch { /* fall back to overview */ }
     }
