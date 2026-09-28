@@ -12,12 +12,32 @@
  *  - Dubbletter stoppas på filhash och på dokumentnummer + leverantör.
  *  - Påminnelser/inkasso arkiveras som information och kan aldrig attesteras.
  */
-import { adminClient, corsHeaders, fortnoxRequest, getAccessToken, json, FORTNOX_API } from "../_shared/fortnox.ts";
+import { adminClient, corsHeaders, fortnoxRequest as baseRequest, getAccessToken, json, FORTNOX_API, FortnoxError } from "../_shared/fortnox.ts";
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 const BUCKET = "leverantorsdokument";
 const INBOX_PATHS = ["inbox", "inbox_s", "inbox_v", "inbox_d"];
 const MAX_DEPTH = 3;
+/** Högst så här många mappar (inkorgsmappar + arkivmappar) läses per körning. Körs var 30:e minut. */
+const MAX_FOLDERS_PER_RUN = 3;
+const sleepMs = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** Exponentiell backoff med jitter: 2 s, 4 s, 8 s, 16 s, 32 s (tak 32 s). */
+const backoff = (attempt: number, retryAfter?: string | null) => {
+  const ra = retryAfter ? Number(retryAfter) * 1000 : 0;
+  return Math.max(ra, Math.min(32_000, 2000 * 2 ** attempt)) + Math.floor(Math.random() * 500);
+};
+
+/** fortnoxRequest med extra exponentiell backoff när Fortnox fortsätter svara 429. */
+async function fortnoxRequest<T = any>(sb: SupabaseClient, entity: string, method: "GET" | "POST" | "PUT" | "DELETE", path: string, body?: unknown): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await baseRequest<T>(sb, entity, method, path, body);
+    } catch (e) {
+      if (e instanceof FortnoxError && e.status === 429 && attempt < 4) { await sleepMs(backoff(attempt)); continue; }
+      throw e;
+    }
+  }
+}
 
 type Json = Record<string, unknown>;
 
@@ -69,10 +89,15 @@ async function downloadFile(
   fileId: string,
   base: "inbox" | "archive",
 ): Promise<Uint8Array> {
-  const token = await getAccessToken(sb, entity);
-  const res = await fetch(`${FORTNOX_API}/${base}/${encodeURIComponent(fileId)}`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/octet-stream" },
-  });
+  let res: Response;
+  for (let attempt = 0; ; attempt++) {
+    const token = await getAccessToken(sb, entity);
+    res = await fetch(`${FORTNOX_API}/${base}/${encodeURIComponent(fileId)}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/octet-stream" },
+    });
+    if (res.status === 429 && attempt < 5) { await res.body?.cancel(); await sleepMs(backoff(attempt, res.headers.get("Retry-After"))); continue; }
+    break;
+  }
   if (!res.ok) throw new Error(`Kunde inte hämta fil ${fileId} från Fortnox (${res.status})`);
   return new Uint8Array(await res.arrayBuffer());
 }
@@ -204,46 +229,36 @@ Deno.serve(async (req) => {
     // ---------- 1 + 2: Inbox och arkiv ----------
     const candidates: ArchiveFile[] = [];
 
-    for (const path of INBOX_PATHS) {
+    /**
+     * Mappkö: inkorgsmapparna och arkivets rot roterar mellan körningarna
+     * (halvtimmesplats), högst MAX_FOLDERS_PER_RUN mappar läses per körning.
+     * Undermappar som hittas läggs sist i kön och läses bara om taket inte nåtts.
+     */
+    type QueueItem = { base: "inbox" | "archive"; query: string; label: string; depth: number; source: string };
+    const roots: QueueItem[] = INBOX_PATHS.map((p) => ({ base: "inbox" as const, query: `?path=${p}`, label: p, depth: 0, source: `inbox:${p}` }));
+    if (includeArchive) roots.push({ base: "archive", query: "", label: "arkiv", depth: 0, source: "arkiv" });
+    const slot = Math.floor(Date.now() / 1_800_000);
+    const offset = typeof body.folder_offset === "number" ? body.folder_offset : (slot * MAX_FOLDERS_PER_RUN) % roots.length;
+    const queue: QueueItem[] = [...roots.slice(offset), ...roots.slice(0, offset)];
+    let foldersRead = 0;
+    while (queue.length && foldersRead < MAX_FOLDERS_PER_RUN && !outOfTime()) {
+      const item = queue.shift()!;
+      foldersRead++;
       try {
-        // Digital post ligger i inbox-API:t (/inbox/?path=inbox_s), inte i arkivet.
-        const { files, folders } = await readFolder(sb, entity, "inbox", `?path=${path}`, path);
+        const { files, folders } = await readFolder(sb, entity, item.base, item.query, item.label);
         candidates.push(...files);
-        for (const folder of folders) {
-          try {
-            const sub = await readFolder(sb, entity, "inbox", `?folderid=${folder.id}`, `${path}/${folder.name}`);
-            candidates.push(...sub.files);
-          } catch { /* hoppa över undermappar vi inte får läsa */ }
+        if (item.depth < MAX_DEPTH) {
+          for (const f of folders) {
+            queue.push({ base: item.base, query: `?folderid=${f.id}`, label: `${item.label}/${f.name}`, depth: item.depth + 1, source: item.source });
+          }
         }
       } catch (e) {
         const msg = String(e instanceof Error ? e.message : e);
-        if (isScopeError(msg)) inboxScopeMissing = true;
-        results.push({ source: `inbox:${path}`, action: "kunde_inte_lasas", error: msg });
+        if (item.base === "inbox" && isScopeError(msg)) inboxScopeMissing = true;
+        results.push({ source: item.source, folder: item.label, action: "kunde_inte_lasas", error: msg });
       }
     }
-
-
-    if (includeArchive && !outOfTime()) {
-      try {
-        const root = await readFolder(sb, entity, "archive", "", "arkiv");
-        candidates.push(...root.files);
-        let level = root.folders.map((f) => ({ ...f, depth: 1 }));
-        while (level.length && level[0].depth <= MAX_DEPTH) {
-          const next: { id: string; name: string; depth: number }[] = [];
-          for (const folder of level) {
-            if (candidates.length >= limit * 3) break;
-            try {
-              const sub = await readFolder(sb, entity, "archive", `?folderid=${folder.id}`, `arkiv/${folder.name}`);
-              candidates.push(...sub.files);
-              next.push(...sub.folders.map((f) => ({ ...f, depth: folder.depth + 1 })));
-            } catch { /* hoppa över mappar vi inte får läsa */ }
-          }
-          level = next;
-        }
-      } catch (e) {
-        results.push({ source: "arkiv", action: "kunde_inte_lasas", error: String(e instanceof Error ? e.message : e) });
-      }
-    }
+    results.push({ folders_read: foldersRead, folders_left: queue.length, next_offset: (offset + MAX_FOLDERS_PER_RUN) % roots.length });
 
     for (const file of candidates) {
 
