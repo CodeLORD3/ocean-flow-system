@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useAiUppgifter, useSaveAiUppgift, UPPGIFT_STATUS, fmtDateTime, type AiUppgift } from "@/hooks/useAiTeam";
+import { AiTriggerAdmin } from "@/components/ai/AiTriggerAdmin";
 
 const ALL = "__alla";
 type Draft = Partial<AiUppgift>;
@@ -81,6 +82,9 @@ export default function Tavlan() {
           );
         })}
       </div>
+
+      <AiTriggerAdmin />
+
 
       <Dialog open={!!draft} onOpenChange={(o) => !o && setDraft(null)}>
         <DialogContent className="max-w-lg">
