@@ -13875,6 +13875,7 @@ export type Database = {
           source_currency: string | null
           species_fao_code: string | null
           status: string
+          store_id: string | null
           supplier_article_no: string | null
           supplier_name: string | null
           unit: string | null
@@ -13921,6 +13922,7 @@ export type Database = {
           source_currency?: string | null
           species_fao_code?: string | null
           status?: string
+          store_id?: string | null
           supplier_article_no?: string | null
           supplier_name?: string | null
           unit?: string | null
@@ -13967,6 +13969,7 @@ export type Database = {
           source_currency?: string | null
           species_fao_code?: string | null
           status?: string
+          store_id?: string | null
           supplier_article_no?: string | null
           supplier_name?: string | null
           unit?: string | null
@@ -14018,6 +14021,20 @@ export type Database = {
             columns: ["report_id"]
             isOneToOne: false
             referencedRelation: "purchase_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_report_lines_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "purchase_report_lines_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -14082,6 +14099,7 @@ export type Database = {
           report_date: string
           source_currency: string | null
           status: string
+          store_id: string | null
           supplier_id: string | null
           supplier_name_raw: string | null
           total_amount: number | null
@@ -14112,6 +14130,7 @@ export type Database = {
           report_date?: string
           source_currency?: string | null
           status?: string
+          store_id?: string | null
           supplier_id?: string | null
           supplier_name_raw?: string | null
           total_amount?: number | null
@@ -14142,6 +14161,7 @@ export type Database = {
           report_date?: string
           source_currency?: string | null
           status?: string
+          store_id?: string | null
           supplier_id?: string | null
           supplier_name_raw?: string | null
           total_amount?: number | null
@@ -14182,6 +14202,20 @@ export type Database = {
             columns: ["posted_by"]
             isOneToOne: false
             referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "purchase_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
           {
@@ -16024,6 +16058,61 @@ export type Database = {
           },
         ]
       }
+      staff_cost_rates: {
+        Row: {
+          cost_per_hour: number
+          created_at: string
+          id: string
+          legal_entity_id: string
+          note: string | null
+          store_id: string | null
+          updated_at: string
+          valid_from: string
+        }
+        Insert: {
+          cost_per_hour: number
+          created_at?: string
+          id?: string
+          legal_entity_id: string
+          note?: string | null
+          store_id?: string | null
+          updated_at?: string
+          valid_from: string
+        }
+        Update: {
+          cost_per_hour?: number
+          created_at?: string
+          id?: string
+          legal_entity_id?: string
+          note?: string | null
+          store_id?: string | null
+          updated_at?: string
+          valid_from?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_cost_rates_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "staff_cost_rates_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "staff_cost_rates_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_planned_shifts: {
         Row: {
           created_at: string
@@ -17018,6 +17107,63 @@ export type Database = {
           },
         ]
       }
+      store_budget: {
+        Row: {
+          created_at: string
+          id: string
+          month: number
+          other: number | null
+          raw_material: number | null
+          rent: number | null
+          sales: number | null
+          staff: number | null
+          store_id: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month: number
+          other?: number | null
+          raw_material?: number | null
+          rent?: number | null
+          sales?: number | null
+          staff?: number | null
+          store_id: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: number
+          other?: number | null
+          raw_material?: number | null
+          rent?: number | null
+          sales?: number | null
+          staff?: number | null
+          store_id?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_budget_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_budget_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_closed_days: {
         Row: {
           created_at: string
@@ -17135,6 +17281,60 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      store_fixed_costs: {
+        Row: {
+          amount_per_month: number
+          cost_type: string
+          created_at: string
+          currency: string
+          id: string
+          note: string | null
+          store_id: string
+          updated_at: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          amount_per_month: number
+          cost_type: string
+          created_at?: string
+          currency?: string
+          id?: string
+          note?: string | null
+          store_id: string
+          updated_at?: string
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          amount_per_month?: number
+          cost_type?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          note?: string | null
+          store_id?: string
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_fixed_costs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_fixed_costs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       store_opening_hours: {
         Row: {
@@ -22974,6 +23174,40 @@ export type Database = {
       request_customer_order_transfer: {
         Args: { _message: string; _order_id: string; _to_store_id: string }
         Returns: string
+      }
+      resultat_bokfort: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          cost_center: string
+          legal_entity_code: string
+          month: string
+          other_external: number
+          raw_material: number
+          revenue: number
+          staff: number
+        }[]
+      }
+      resultat_per_butik: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          budget_other: number
+          budget_raw: number
+          budget_rent: number
+          budget_sales: number
+          budget_staff: number
+          fixed_cost_sek: number
+          legal_entity_id: string
+          month: string
+          raw_ic_sek: number
+          raw_purchase_sek: number
+          sales_days: number
+          sales_sek: number
+          staff_cost_sek: number
+          staff_hours: number
+          staff_hours_without_rate: number
+          store_id: string
+          store_name: string
+        }[]
       }
       run_system_checks: { Args: never; Returns: Json }
       run_system_checks_now: { Args: never; Returns: Json }
