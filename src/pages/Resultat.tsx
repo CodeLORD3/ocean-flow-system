@@ -40,7 +40,7 @@ function derive(r: Row) {
   if (r.staff_cost_sek == null) missing.push("personal");
   if (r.fixed_cost_sek == null) missing.push("fasta");
   const result = r.sales_sek == null ? null : Number(r.sales_sek) - Number(raw ?? 0) - Number(r.staff_cost_sek ?? 0) - Number(r.fixed_cost_sek ?? 0);
-  const margin = result != null && r.sales_sek ? (result / Number(r.sales_sek)) * 100 : null;
+  const margin = result != null && r.sales_sek && missing.length === 0 ? (result / Number(r.sales_sek)) * 100 : null;
   const budgetResult = r.budget_sales == null ? null
     : Number(r.budget_sales) - Number(r.budget_raw ?? 0) - Number(r.budget_staff ?? 0) - Number(r.budget_rent ?? 0) - Number(r.budget_other ?? 0);
   return { raw, result, margin, missing, budgetResult };
