@@ -334,11 +334,10 @@ export default function DailyReport() {
       gross: num(gross) == null,
       net: num(net) == null,
       receipts: num(receipts) == null,
-      largest: num(largest) == null,
       staffTimes: Object.values(staffRows).some((r) => r.active && (!r.start || !r.end)),
     };
     return { ...m, any: Object.values(m).some(Boolean) };
-  }, [gross, net, receipts, largest, staffRows]);
+  }, [gross, net, receipts, staffRows]);
 
   const errCls = (bad: boolean) =>
     showErrors && bad ? "border-destructive ring-1 ring-destructive/40" : "";
@@ -363,6 +362,33 @@ export default function DailyReport() {
     setLargest(String(pos.largest_sale));
   }, [hydrated, pos, gross, net, receipts, largest]);
 
+  /** Kassans siffror: sparad avstämning/Z-rapport i första hand, annars livekassan. */
+  const posRef = useMemo(() => {
+    const e = existing as any;
+    if (e?.pos_source && e.pos_gross_sales != null) {
+      return { gross: Number(e.pos_gross_sales), net: e.pos_net_sales != null ? Number(e.pos_net_sales) : null,
+               receipts: e.pos_receipt_count != null ? Number(e.pos_receipt_count) : null, source: String(e.pos_source) };
+    }
+    if (pos && pos.receipt_count > 0) {
+      return { gross: pos.gross_sales, net: pos.net_sales, receipts: pos.receipt_count, source: "Kassan live" };
+    }
+    return null;
+  }, [existing, pos]);
+
+  const posHint = (staffVal: number | null, posVal: number | null | undefined, decimals = 2) => {
+    if (!posRef || posVal == null) return null;
+    const diffPct = staffVal != null && posVal !== 0 ? Math.abs(staffVal - posVal) / Math.abs(posVal) * 100 : null;
+    const flag = diffPct != null && diffPct > 2;
+    const fmt = posVal.toLocaleString("sv-SE", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).replace(/\u00a0/g, " ");
+    return (
+      <p className={cn("text-[11px] font-mono tabular-nums", flag ? "text-destructive font-medium" : "text-muted-foreground")}>
+        Kassan: {fmt}
+        {diffPct != null && ` · diff ${diffPct.toFixed(1).replace(".", ",")} %`}
+        {flag && " — över 2 %"}
+      </p>
+    );
+  };
+
   // Diff mot kassan så manuella överskrivningar syns tydligt.
   const posDiff = useMemo(() => {
     if (!pos || pos.receipt_count === 0) return [];
@@ -373,7 +399,6 @@ export default function DailyReport() {
     cmp("Brutto", num(gross), pos.gross_sales);
     cmp("Netto", num(net), pos.net_sales);
     cmp("Antal köp", num(receipts), pos.receipt_count);
-    cmp("Största köp", num(largest), pos.largest_sale);
     return rows;
   }, [pos, gross, net, receipts, largest]);
 
@@ -408,7 +433,7 @@ export default function DailyReport() {
         receipt_count: num(receipts) != null ? Math.round(num(receipts)!) : null,
         largest_sale: num(largest),
         // Frys kassans siffror vid stängning så avvikelser går att spåra i efterhand.
-        ...(pos && pos.receipt_count > 0
+        ...(pos && pos.receipt_count > 0 && !String((existing as any)?.pos_source ?? "").startsWith("Z-rapport")
           ? {
               pos_gross_sales: pos.gross_sales,
               pos_net_sales: pos.net_sales,
@@ -483,6 +508,9 @@ export default function DailyReport() {
           <Card className="shadow-card">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-heading">Försäljning</CardTitle>
+              {posRef && (
+                <p className="text-[11px] text-muted-foreground">Kassans siffror under varje fält · källa: {posRef.source}</p>
+              )}
             </CardHeader>
             <CardContent className="flex flex-col gap-3 max-w-md">
               <div className="space-y-1">
@@ -495,6 +523,7 @@ export default function DailyReport() {
                   value={gross}
                   onChange={(e) => onGrossChange(e.target.value)}
                 />
+                {posHint(num(gross), posRef?.gross)}
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Nettoförsäljning ({currencyLabel}) *</Label>
@@ -506,6 +535,7 @@ export default function DailyReport() {
                   value={net}
                   onChange={(e) => onNetChange(e.target.value)}
                 />
+                {posHint(num(net), posRef?.net)}
                 <p className="text-[11px] text-muted-foreground">
                   Brutto och netto räknas ut åt varandra med {vatPct || "0"} % moms.
                 </p>
@@ -530,6 +560,7 @@ export default function DailyReport() {
                   value={receipts}
                   onChange={(e) => setReceipts(e.target.value)}
                 />
+                {posHint(num(receipts), posRef?.receipts, 0)}
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Snittköp ({currencyLabel})</Label>
@@ -540,18 +571,7 @@ export default function DailyReport() {
                   value={avgBasket != null ? avgBasket.toFixed(2) : ""}
                 />
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Största försäljning ({currencyLabel}) *</Label>
-                <Input
-                  className={cn("h-11 text-base font-mono tabular-nums", errCls(missing.largest))}
-                  inputMode="decimal"
-                  enterKeyHint="next"
-                  autoComplete="off"
-                  value={largest}
-                  onChange={(e) => setLargest(e.target.value)}
-                />
-              </div>
-              {showErrors && (missing.gross || missing.net || missing.receipts || missing.largest) && (
+              {showErrors && (missing.gross || missing.net || missing.receipts) && (
                 <p className="text-xs text-destructive">Fälten märkta * måste fyllas i.</p>
               )}
             </CardContent>
