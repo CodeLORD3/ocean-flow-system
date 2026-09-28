@@ -64,6 +64,7 @@ import { useProductsWithChildren, useAddSubproduct, useUpdateProduct } from "@/h
 import { useCategories, useAddCategory } from "@/hooks/useCategories";
 import { useProductFamilies, useCreateProductFamily } from "@/hooks/useProductFamilies";
 import { usePriceHistory, useLatestPriceChanges } from "@/hooks/usePriceHistory";
+import { SenastePrisandringar } from "@/components/ai/PrisUtkastPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import BarcodeDisplay from "@/components/barcode/BarcodeDisplay";
@@ -1437,6 +1438,7 @@ export default function Products() {
               </div>
             </div>
             {editId && <ProductPhotosGallery productId={editId} productName={form.name} />}
+            {editId && <SenastePrisandringar productId={editId} />}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Kategori *</Label>

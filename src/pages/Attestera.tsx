@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import MarkdownDoc from "@/components/MarkdownDoc";
 import { useAiUtkast, useUpdateAiUtkast, UTKAST_STATUS, fmtDateTime, type AiUtkast } from "@/hooks/useAiTeam";
 import { cn } from "@/lib/utils";
+import { PrisUtkastPanel } from "@/components/ai/PrisUtkastPanel";
 
 const ALL = "__alla";
 
@@ -129,13 +130,16 @@ export default function Attestera() {
                 <Textarea className="min-h-[320px] font-mono text-sm" value={innehall} onChange={(e) => setInnehall(e.target.value)} />
               )}
             </div>
+            {sel.typ === "pris" && (
+              <PrisUtkastPanel utkastId={sel.id} innehall={innehall} kommentar={kommentar} onApproved={() => update.reset()} />
+            )}
             <div className="space-y-1">
               <Label>VD-kommentar</Label>
               <Textarea value={kommentar} onChange={(e) => setKommentar(e.target.value)} />
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => save({ status: "redigerat" }, "Sparat")}>Spara</Button>
-              <Button onClick={() => save({ status: "godkänt" }, "Godkänt")}>Godkänn</Button>
+              {sel.typ !== "pris" && <Button onClick={() => save({ status: "godkänt" }, "Godkänt")}>Godkänn</Button>}
               <Button
                 variant="destructive"
                 onClick={() => {
