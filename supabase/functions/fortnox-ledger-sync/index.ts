@@ -58,10 +58,14 @@ Deno.serve(async (req) => {
 
   const { data: conns } = await sb.from("fortnox_connections")
     .select("legal_entity_code, scopes").eq("status", "connected");
+  const { data: states } = await sb.from("fortnox_ledger_sync_state").select("legal_entity_code, last_run_at");
+  const lastRun = new Map((states ?? []).map((r: any) => [r.legal_entity_code, r.last_run_at ?? ""]));
   const entities = (conns ?? [])
     .filter((c: any) => (c.scopes ?? []).includes("bookkeeping"))
     .map((c: any) => c.legal_entity_code as string)
-    .filter((e) => !body.entity || e === body.entity);
+    .filter((e) => !body.entity || e === body.entity)
+    // Bolaget som väntat längst först, så ett stort bolag inte svälter det andra.
+    .sort((a, b) => String(lastRun.get(a) ?? "").localeCompare(String(lastRun.get(b) ?? "")));
 
   const report: any[] = [];
 
@@ -97,14 +101,14 @@ Deno.serve(async (req) => {
         });
 
         let yearFetched = 0;
-        for (const h of todo) {
-          if (outOfTime()) { partial = true; break; }
+        // Fortnox tillåter 25 anrop / 5 s: 4 parallella hämtningar per ~0,9 s.
+        const fetchOne = async (h: any) => {
           const d = await fortnoxRequest<any>(sb, entity, "GET",
             `/vouchers/${encodeURIComponent(h.VoucherSeries)}/${h.VoucherNumber}?financialyear=${y.Id}`);
           const v = d?.Voucher ?? h;
           const rows = (v.VoucherRows ?? []) as any[];
           const centers = [...new Set(rows.map((r) => r.CostCenter).filter(Boolean))];
-          const { error } = await sb.from("fortnox_vouchers").upsert({
+          return {
             legal_entity_code: entity,
             financial_year: fy,
             voucher_series: String(v.VoucherSeries),
@@ -114,10 +118,18 @@ Deno.serve(async (req) => {
             cost_center: v.CostCenter || (centers.length === 1 ? centers[0] : null),
             rows,
             fetched_at: new Date().toISOString(),
-          }, { onConflict: "legal_entity_code,financial_year,voucher_series,voucher_number" });
+          };
+        };
+        for (let i = 0; i < todo.length; i += 4) {
+          if (outOfTime()) { partial = true; break; }
+          const t0 = Date.now();
+          const batch = await Promise.all(todo.slice(i, i + 4).map(fetchOne));
+          const { error } = await sb.from("fortnox_vouchers")
+            .upsert(batch, { onConflict: "legal_entity_code,financial_year,voucher_series,voucher_number" });
           if (error) throw new Error(error.message);
-          yearFetched++; fetchedNow++;
-          await sleep(220); // Fortnox: 25 anrop / 5 s
+          yearFetched += batch.length; fetchedNow += batch.length;
+          const wait = 900 - (Date.now() - t0);
+          if (wait > 0) await sleep(wait);
         }
 
         const { data: n, error: balErr } = await sb.rpc("fortnox_rebuild_balances", { p_entity: entity, p_year: fy });
