@@ -144,6 +144,7 @@ const financeNav = [
   { title: "Datakvalitet", url: "/coverage", icon: Shield },
   { title: "Systemstatus", url: "/system-status", icon: Activity },
   { title: "VD-översikt", url: "/vd", icon: TrendingUp },
+  { title: "Kunder för utskick", url: "/kunder", icon: Globe },
   { title: "Attestera", url: "/attestera", icon: ShieldCheck },
   { title: "Tavlan", url: "/tavlan", icon: ListTodo },
   { title: "Systemkontroll", url: "/systemkontroll", icon: Activity },

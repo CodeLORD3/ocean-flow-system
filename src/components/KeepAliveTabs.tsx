@@ -86,6 +86,7 @@ import Attestera from "@/pages/Attestera";
 import Tavlan from "@/pages/Tavlan";
 import Systemkontroll from "@/pages/Systemkontroll";
 import VdOversikt from "@/pages/VdOversikt";
+import Kunder from "@/pages/Kunder";
 import Resultat from "@/pages/Resultat";
 import Likviditet from "@/pages/Likviditet";
 import Veckomal from "@/pages/Veckomal";
@@ -216,6 +217,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/tavlan": { component: <Tavlan /> },
   "/systemkontroll": { component: <Systemkontroll /> },
   "/vd": { component: <VdOversikt /> },
+  "/kunder": { component: <Kunder /> },
   "/resultat": { component: <Resultat /> },
   "/likviditet": { component: <Likviditet /> },
   "/veckomal": { component: <Veckomal /> },
