@@ -52,8 +52,14 @@ export default function Tavlan() {
       {isLoading && <p className="text-sm text-muted-foreground">Laddar…</p>}
       {error && <p className="text-sm text-destructive">Kunde inte hämta uppgifter.</p>}
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {UPPGIFT_STATUS.map((s) => {
-          const col = list.filter((d) => (d.status ?? "öppen") === s);
+        {(["väntar på vd", "öppen", "pågår", "klar"] as const).map((s) => {
+          const col = list
+            .filter((d) => (d.status ?? "öppen") === s)
+            .sort(
+              (a, b) =>
+                (a.prioritet ?? 9) - (b.prioritet ?? 9) ||
+                (a.deadline ?? "9999").localeCompare(b.deadline ?? "9999"),
+            );
           return (
             <div key={s} className="rounded-lg border bg-muted/30 p-2 space-y-2">
               <div className="flex items-center justify-between px-1">
