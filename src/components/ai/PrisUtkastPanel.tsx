@@ -53,6 +53,7 @@ export function PrisUtkastPanel({ utkastId, innehall, kommentar, onApproved }: {
       const res = (r.data.result ?? []) as any[];
       toast.success(`Godkänt. ${res.map((x) => `${x.sku}: ${x.status ?? x.error}`).join(", ")}`);
       setConfirm(null);
+      qc.invalidateQueries({ queryKey: ["ai_utkast"] });
       onApproved();
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   };
