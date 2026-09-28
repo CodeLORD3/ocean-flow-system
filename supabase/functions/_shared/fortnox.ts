@@ -164,8 +164,18 @@ export async function getAccessToken(sb: SupabaseClient, entity: string, force =
   throw new Error("Kunde inte erhålla access token (lås-timeout)");
 }
 
+export type FortnoxRequestOptions = {
+  /** Anropas före varje HTTP-anrop (strypning). */
+  beforeCall?: () => Promise<void>;
+  /** Anropas vid 429; ersätter standardpausen. */
+  on429?: (attempt: number) => Promise<void>;
+  /** Logga inte 429 som lyckas vid omförsök (endast den sista om alla försök misslyckas). */
+  quiet429?: boolean;
+};
+
 /**
  * Anropar Fortnox API med automatisk token-hantering, 429-backoff och loggning.
+ * Utan opts beter sig funktionen som tidigare för alla befintliga jobb.
  */
 export async function fortnoxRequest<T = any>(
   sb: SupabaseClient,
@@ -173,6 +183,7 @@ export async function fortnoxRequest<T = any>(
   method: "GET" | "POST" | "PUT" | "DELETE",
   path: string,
   body?: unknown,
+  opts?: FortnoxRequestOptions,
 ): Promise<T> {
   let forceRefresh = false;
   let did401 = false;
@@ -181,6 +192,7 @@ export async function fortnoxRequest<T = any>(
     const token = await getAccessToken(sb, entity, forceRefresh);
     forceRefresh = false;
 
+    if (opts?.beforeCall) await opts.beforeCall();
     const started = Date.now();
     const res = await fetch(FORTNOX_API + path, {
       method,
@@ -196,7 +208,8 @@ export async function fortnoxRequest<T = any>(
     try { parsed = text ? JSON.parse(text) : null; } catch { parsed = { raw: text }; }
 
     const ei = parsed?.ErrorInformation;
-    await sb.from("fortnox_api_log").insert({
+    const skipLog = opts?.quiet429 && res.status === 429 && attempt < 5;
+    if (!skipLog) await sb.from("fortnox_api_log").insert({
       legal_entity_code: entity,
       method,
       path,
@@ -208,7 +221,8 @@ export async function fortnoxRequest<T = any>(
     if (res.ok) return parsed as T;
 
     if (res.status === 429) {
-      await sleep(1200 * (attempt + 1));
+      if (opts?.on429) await opts.on429(attempt);
+      else await sleep(1200 * (attempt + 1));
       continue;
     }
     if (res.status === 401 && !did401) {

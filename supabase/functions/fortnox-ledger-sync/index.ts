@@ -16,8 +16,40 @@ const stockholmHour = () =>
 
 type Year = { Id: number; FromDate: string; ToDate: string };
 
+/**
+ * Strypning per bolag: högst 3 anrop/s, så att fakturajobb och inkorg alltid har
+ * marginal inom Fortnox gräns (~25 anrop / 5 s, delad per bolag). Vid 429 pausas
+ * bolaget minst 10 s. 429 som lyckas vid omförsök loggas inte i fortnox_api_log
+ * utan räknas i fortnox_ledger_sync_state.details.
+ */
+const MIN_GAP_MS = 334;
+const nextAt = new Map<string, number>();
+const hits429 = new Map<string, number>();
+const callsMade = new Map<string, number>();
+
+function ledgerOpts(entity: string) {
+  return {
+    quiet429: true,
+    beforeCall: async () => {
+      const now = Date.now();
+      const at = Math.max(now, nextAt.get(entity) ?? 0);
+      nextAt.set(entity, at + MIN_GAP_MS);
+      if (at > now) await sleep(at - now);
+      callsMade.set(entity, (callsMade.get(entity) ?? 0) + 1);
+    },
+    on429: async (attempt: number) => {
+      hits429.set(entity, (hits429.get(entity) ?? 0) + 1);
+      const pause = 10_000 * (attempt + 1);
+      nextAt.set(entity, Math.max(nextAt.get(entity) ?? 0, Date.now() + pause));
+      await sleep(pause);
+    },
+  };
+}
+const ledgerGet = <T = any>(sb: SupabaseClient, entity: string, path: string) =>
+  fortnoxRequest<T>(sb, entity, "GET", path, undefined, ledgerOpts(entity));
+
 async function listYears(sb: SupabaseClient, entity: string): Promise<Year[]> {
-  const res = await fortnoxRequest<any>(sb, entity, "GET", "/financialyears");
+  const res = await ledgerGet<any>(sb, entity, "/financialyears");
   return (res?.FinancialYears ?? []) as Year[];
 }
 
@@ -25,11 +57,10 @@ async function listVoucherHeads(sb: SupabaseClient, entity: string, yearId: numb
   const heads: any[] = [];
   for (let page = 1; page < 200; page++) {
     const lm = lastModified ? `&lastmodified=${encodeURIComponent(lastModified)}` : "";
-    const res = await fortnoxRequest<any>(sb, entity, "GET", `/vouchers?financialyear=${yearId}&limit=500&page=${page}${lm}`);
+    const res = await ledgerGet<any>(sb, entity, `/vouchers?financialyear=${yearId}&limit=500&page=${page}${lm}`);
     heads.push(...(res?.Vouchers ?? []));
     const total = Number(res?.MetaInformation?.["@TotalPages"] ?? 1);
     if (page >= total) break;
-    await sleep(250);
   }
   return heads;
 }
@@ -88,6 +119,15 @@ async function runSync(sb: SupabaseClient, body: any) {
     const runAt = new Date().toISOString();
     const { data: state } = await sb.from("fortnox_ledger_sync_state").select("*").eq("legal_entity_code", entity).maybeSingle();
     let fetchedNow = 0, balanceRows = 0, partial = false;
+    hits429.set(entity, 0); callsMade.set(entity, 0);
+    const today = new Date().toISOString().slice(0, 10);
+    const prev = state?.details?.rate_limit ?? {};
+    const rateLimit = () => ({
+      date: today,
+      calls_this_run: callsMade.get(entity) ?? 0,
+      retried_429_this_run: hits429.get(entity) ?? 0,
+      retried_429_today: (prev.date === today ? Number(prev.retried_429_today ?? 0) : 0) + (hits429.get(entity) ?? 0),
+    });
     const perYear: any[] = [];
     try {
       const years = (await listYears(sb, entity))
@@ -123,9 +163,10 @@ async function runSync(sb: SupabaseClient, body: any) {
         });
 
         let yearFetched = 0;
-        // Fortnox tillåter 25 anrop / 5 s: 4 parallella hämtningar per ~0,9 s.
+        // Detaljer hämtas bara när listan saknar rader; ett anrop i taget genom strypningen.
         const fetchOne = async (h: any) => {
-          const d = await fortnoxRequest<any>(sb, entity, "GET",
+          const listed = Array.isArray(h.VoucherRows) && h.VoucherRows.length > 0;
+          const d = listed ? null : await ledgerGet<any>(sb, entity,
             `/vouchers/${encodeURIComponent(h.VoucherSeries)}/${h.VoucherNumber}?financialyear=${y.Id}`);
           const v = d?.Voucher ?? h;
           const rows = (v.VoucherRows ?? []) as any[];
@@ -142,16 +183,18 @@ async function runSync(sb: SupabaseClient, body: any) {
             fetched_at: new Date().toISOString(),
           };
         };
-        for (let i = 0; i < todo.length; i += 4) {
+        for (let i = 0; i < todo.length; i += 10) {
           if (outOfTime()) { partial = true; break; }
-          const t0 = Date.now();
-          const batch = await Promise.all(todo.slice(i, i + 4).map(fetchOne));
+          const batch: any[] = [];
+          for (const h of todo.slice(i, i + 10)) {
+            if (outOfTime()) { partial = true; break; }
+            batch.push(await fetchOne(h));
+          }
+          if (!batch.length) break;
           const { error } = await sb.from("fortnox_vouchers")
             .upsert(batch, { onConflict: "legal_entity_code,financial_year,voucher_series,voucher_number" });
           if (error) throw new Error(error.message);
           yearFetched += batch.length; fetchedNow += batch.length;
-          const wait = 900 - (Date.now() - t0);
-          if (wait > 0) await sleep(wait);
         }
 
         const { data: n, error: balErr } = await sb.rpc("fortnox_rebuild_balances", { p_entity: entity, p_year: fy });
@@ -172,7 +215,7 @@ async function runSync(sb: SupabaseClient, body: any) {
         vouchers_fetched: fetchedNow,
         balance_rows: balanceRows,
         last_error: partial ? "Tidsbudget slut – fortsätter nästa körning" : null,
-        details: { partial, years: perYear, vouchers_total: count },
+        details: { partial, years: perYear, vouchers_total: count, rate_limit: rateLimit() },
         updated_at: new Date().toISOString(),
       });
       report.push({ entity, partial, vouchers_total: count, fetched_now: fetchedNow, balance_rows: balanceRows, years: perYear });
@@ -180,7 +223,7 @@ async function runSync(sb: SupabaseClient, body: any) {
       const msg = e instanceof Error ? e.message : String(e);
       await sb.from("fortnox_ledger_sync_state").upsert({
         legal_entity_code: entity, last_run_at: runAt, last_error: msg,
-        vouchers_fetched: fetchedNow, details: { years: perYear }, updated_at: new Date().toISOString(),
+        vouchers_fetched: fetchedNow, details: { years: perYear, rate_limit: rateLimit() }, updated_at: new Date().toISOString(),
       });
       report.push({ entity, error: msg, fetched_now: fetchedNow, years: perYear });
     }

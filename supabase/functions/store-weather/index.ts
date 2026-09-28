@@ -68,6 +68,130 @@ async function fetchJson(url: URL) {
   return JSON.parse(body);
 }
 
+async function syncStore(supabase: any, storeId: string, startDate: string, endDate: string): Promise<any> {
+  const { data: store, error: storeError } = await supabase
+    .from("stores")
+    .select("id, name, city, country, latitude, longitude, weather_timezone")
+    .eq("id", storeId)
+    .maybeSingle();
+  if (storeError) throw storeError;
+  if (!store) return { error: "Butiken finns inte", status: 404 };
+
+  let { latitude, longitude, weather_timezone: tz } = store as Record<string, any>;
+
+  // 1. Geokodning en gång per butik.
+  if (latitude == null || longitude == null) {
+    const place = String(store.city ?? store.name ?? "").trim();
+    if (!place) return { error: "Butiken saknar ort att geokoda", status: 422 };
+    const url = withKey(new URL(GEO_URL));
+    url.searchParams.set("name", place);
+    url.searchParams.set("count", "5");
+    url.searchParams.set("language", "sv");
+    url.searchParams.set("format", "json");
+    const geo = await fetchJson(url);
+    const results: any[] = geo?.results ?? [];
+    const hit =
+      results.find((r) => !store.country || r.country_code === store.country) ?? results[0];
+    if (!hit) return { error: `Kunde inte geokoda "${place}"`, status: 422 };
+    latitude = hit.latitude;
+    longitude = hit.longitude;
+    tz = hit.timezone ?? (store.country === "CH" ? "Europe/Zurich" : "Europe/Stockholm");
+    await supabase
+      .from("stores")
+      .update({ latitude, longitude, weather_timezone: tz, geocoded_at: new Date().toISOString() })
+      .eq("id", storeId);
+  }
+  const timezone = tz || (store.country === "CH" ? "Europe/Zurich" : "Europe/Stockholm");
+
+  // 2. Vad finns redan i cachen?
+  const { data: cached, error: cacheError } = await supabase
+    .from("store_weather_daily")
+    .select("*")
+    .eq("store_id", storeId)
+    .gte("weather_date", startDate)
+    .lte("weather_date", endDate);
+  if (cacheError) throw cacheError;
+
+  const today = stockholmToday();
+  const staleAfter = Date.now() - 3 * 3600 * 1000;
+  const byDate = new Map<string, any>((cached ?? []).map((r) => [r.weather_date, r]));
+  const missing = dayList(startDate, endDate).filter((d) => {
+    const row = byDate.get(d);
+    if (!row) return true;
+    // Prognosrader ersätts av arkivdata när dagen passerat, och uppdateras var 3:e timme.
+    if (row.source === "forecast" && (d < today || new Date(row.fetched_at).getTime() < staleAfter)) return true;
+    return false;
+  });
+
+  if (missing.length > 0) {
+    // Historiska datum går alltid till historik-API:t. Idag och framtida
+    // datum går till prognos-API:t enligt rapportens datumlogik.
+    const groups: { url: string; source: "archive" | "forecast"; days: string[] }[] = [
+      // Arkivet släpar några dagar; senaste fem dagarna hämtas från prognos-API:t (som har bakåtdata).
+      { url: ARCHIVE_URL, source: "archive", days: missing.filter((d) => d < addDays(today, -5)) },
+      { url: FORECAST_URL, source: "forecast", days: missing.filter((d) => d >= addDays(today, -5)) },
+    ];
+
+    for (const group of groups) {
+      if (group.days.length === 0) continue;
+      const from = group.days[0];
+      const to = group.days[group.days.length - 1];
+      const url = withKey(new URL(group.url));
+      url.searchParams.set("latitude", String(latitude));
+      url.searchParams.set("longitude", String(longitude));
+      url.searchParams.set("daily", DAILY);
+      url.searchParams.set("timezone", timezone);
+      url.searchParams.set("start_date", from);
+      url.searchParams.set("end_date", to);
+      let data: any;
+      try {
+        data = await fetchJson(url);
+      } catch (err) {
+        console.error(`Väderhämtning misslyckades (${group.source})`, err);
+        continue;
+      }
+      const daily = data?.daily;
+      const dates: string[] = daily?.time ?? [];
+      const wanted = new Set(group.days);
+      const rows = dates
+        .map((date, i) => {
+          const code = daily.weathercode?.[i] ?? null;
+          const wind = daily.windspeed_10m_max?.[i] ?? null;
+          return {
+            store_id: storeId,
+            weather_date: date,
+            temp_max: daily.temperature_2m_max?.[i] ?? null,
+            temp_min: daily.temperature_2m_min?.[i] ?? null,
+            precipitation_mm: daily.precipitation_sum?.[i] ?? null,
+            windspeed_max: wind,
+            weather_code: code,
+            weather_text: weatherText(code, wind),
+            source: group.source,
+            fetched_at: new Date().toISOString(),
+          };
+        })
+        .filter((r) => wanted.has(r.weather_date) && r.weather_code != null);
+      if (rows.length === 0) continue;
+      const { error: upsertError } = await supabase
+        .from("store_weather_daily")
+        .upsert(rows, { onConflict: "store_id,weather_date" });
+      if (upsertError) throw upsertError;
+      rows.forEach((r) => byDate.set(r.weather_date, r));
+    }
+  }
+
+  return {
+    store_id: storeId,
+    paid_tier: paid,
+    days: dayList(startDate, endDate)
+      .map((d) => byDate.get(d))
+      .filter(Boolean),
+  };
+}
+
+const stockholmToday = () =>
+  new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -82,140 +206,48 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !serviceRoleKey) return json({ error: "Serverkonfiguration saknas" }, 500);
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Inloggning krävs" }, 401);
-    const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? serviceRoleKey);
-    const { data: { user }, error: authError } = await authClient.auth.getUser(authHeader.slice(7));
-    if (authError || !user) return json({ error: "Ogiltig inloggning" }, 401);
+    const cronSecret = Deno.env.get("FORTNOX_CRON_SECRET");
+    const isCron = !!cronSecret && req.headers.get("x-cron-secret") === cronSecret;
+    if (!isCron) {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader?.startsWith("Bearer ")) return json({ error: "Inloggning krävs" }, 401);
+      const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? serviceRoleKey);
+      const { data: { user }, error: authError } = await authClient.auth.getUser(authHeader.slice(7));
+      if (authError || !user) return json({ error: "Ogiltig inloggning" }, 401);
+    }
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const payload = await req.json().catch(() => ({}));
-    const storeId = String(payload.store_id ?? "");
     const startDate = String(payload.start_date ?? "");
     const endDate = String(payload.end_date ?? "");
     const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+
+    // Schemalagd körning: alla aktiva butiker med koordinater, idag och i morgon (eller angivet intervall).
+    if (isCron) {
+      const from = dateRe.test(startDate) ? startDate : stockholmToday();
+      const to = dateRe.test(endDate) ? endDate : addDays(from, 1);
+      const { data: stores, error } = await supabase.from("stores").select("id, name")
+        .eq("active", true).not("latitude", "is", null).not("longitude", "is", null);
+      if (error) throw error;
+      const result: any[] = [];
+      for (const st of stores ?? []) {
+        try {
+          const r = await syncStore(supabase, st.id, from, to);
+          result.push({ butik: st.name, dagar: r.days?.length ?? 0, fel: r.error ?? null });
+        } catch (e) {
+          result.push({ butik: st.name, dagar: 0, fel: e instanceof Error ? e.message : String(e) });
+        }
+      }
+      return json({ from, to, stores: result });
+    }
+
+    const storeId = String(payload.store_id ?? "");
     if (!/^[0-9a-f-]{36}$/i.test(storeId) || !dateRe.test(startDate) || !dateRe.test(endDate) || startDate > endDate) {
       return json({ error: "Ogiltiga parametrar (store_id, start_date, end_date)" }, 400);
     }
-
-    const { data: store, error: storeError } = await supabase
-      .from("stores")
-      .select("id, name, city, country, latitude, longitude, weather_timezone")
-      .eq("id", storeId)
-      .maybeSingle();
-    if (storeError) throw storeError;
-    if (!store) return json({ error: "Butiken finns inte" }, 404);
-
-    let { latitude, longitude, weather_timezone: tz } = store as Record<string, any>;
-
-    // 1. Geokodning en gång per butik.
-    if (latitude == null || longitude == null) {
-      const place = String(store.city ?? store.name ?? "").trim();
-      if (!place) return json({ error: "Butiken saknar ort att geokoda" }, 422);
-      const url = withKey(new URL(GEO_URL));
-      url.searchParams.set("name", place);
-      url.searchParams.set("count", "5");
-      url.searchParams.set("language", "sv");
-      url.searchParams.set("format", "json");
-      const geo = await fetchJson(url);
-      const results: any[] = geo?.results ?? [];
-      const hit =
-        results.find((r) => !store.country || r.country_code === store.country) ?? results[0];
-      if (!hit) return json({ error: `Kunde inte geokoda "${place}"` }, 422);
-      latitude = hit.latitude;
-      longitude = hit.longitude;
-      tz = hit.timezone ?? (store.country === "CH" ? "Europe/Zurich" : "Europe/Stockholm");
-      await supabase
-        .from("stores")
-        .update({ latitude, longitude, weather_timezone: tz, geocoded_at: new Date().toISOString() })
-        .eq("id", storeId);
-    }
-    const timezone = tz || (store.country === "CH" ? "Europe/Zurich" : "Europe/Stockholm");
-
-    // 2. Vad finns redan i cachen?
-    const { data: cached, error: cacheError } = await supabase
-      .from("store_weather_daily")
-      .select("*")
-      .eq("store_id", storeId)
-      .gte("weather_date", startDate)
-      .lte("weather_date", endDate);
-    if (cacheError) throw cacheError;
-
-    const today = isoDate(new Date());
-    const staleAfter = Date.now() - 3 * 3600 * 1000;
-    const byDate = new Map<string, any>((cached ?? []).map((r) => [r.weather_date, r]));
-    const missing = dayList(startDate, endDate).filter((d) => {
-      const row = byDate.get(d);
-      if (!row) return true;
-      // Prognosrader ersätts av arkivdata när dagen passerat, och uppdateras var 3:e timme.
-      if (row.source === "forecast" && (d < today || new Date(row.fetched_at).getTime() < staleAfter)) return true;
-      return false;
-    });
-
-    if (missing.length > 0) {
-      // Historiska datum går alltid till historik-API:t. Idag och framtida
-      // datum går till prognos-API:t enligt rapportens datumlogik.
-      const groups: { url: string; source: "archive" | "forecast"; days: string[] }[] = [
-        { url: ARCHIVE_URL, source: "archive", days: missing.filter((d) => d < today) },
-        { url: FORECAST_URL, source: "forecast", days: missing.filter((d) => d >= today) },
-      ];
-
-      for (const group of groups) {
-        if (group.days.length === 0) continue;
-        const from = group.days[0];
-        const to = group.days[group.days.length - 1];
-        const url = withKey(new URL(group.url));
-        url.searchParams.set("latitude", String(latitude));
-        url.searchParams.set("longitude", String(longitude));
-        url.searchParams.set("daily", DAILY);
-        url.searchParams.set("timezone", timezone);
-        url.searchParams.set("start_date", from);
-        url.searchParams.set("end_date", to);
-        let data: any;
-        try {
-          data = await fetchJson(url);
-        } catch (err) {
-          console.error(`Väderhämtning misslyckades (${group.source})`, err);
-          continue;
-        }
-        const daily = data?.daily;
-        const dates: string[] = daily?.time ?? [];
-        const wanted = new Set(group.days);
-        const rows = dates
-          .map((date, i) => {
-            const code = daily.weathercode?.[i] ?? null;
-            const wind = daily.windspeed_10m_max?.[i] ?? null;
-            return {
-              store_id: storeId,
-              weather_date: date,
-              temp_max: daily.temperature_2m_max?.[i] ?? null,
-              temp_min: daily.temperature_2m_min?.[i] ?? null,
-              precipitation_mm: daily.precipitation_sum?.[i] ?? null,
-              windspeed_max: wind,
-              weather_code: code,
-              weather_text: weatherText(code, wind),
-              source: group.source,
-              fetched_at: new Date().toISOString(),
-            };
-          })
-          .filter((r) => wanted.has(r.weather_date) && r.weather_code != null);
-        if (rows.length === 0) continue;
-        const { error: upsertError } = await supabase
-          .from("store_weather_daily")
-          .upsert(rows, { onConflict: "store_id,weather_date" });
-        if (upsertError) throw upsertError;
-        rows.forEach((r) => byDate.set(r.weather_date, r));
-      }
-    }
-
-    return json({
-      store_id: storeId,
-      paid_tier: paid,
-      days: dayList(startDate, endDate)
-        .map((d) => byDate.get(d))
-        .filter(Boolean),
-    });
+    const r = await syncStore(supabase, storeId, startDate, endDate);
+    return json(r.error ? { error: r.error } : r, r.status ?? 200);
   } catch (err) {
     console.error("store-weather fel", err);
     return json({ error: err instanceof Error ? err.message : "Okänt fel" }, 500);
