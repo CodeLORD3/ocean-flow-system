@@ -13,6 +13,7 @@ import { dayRowsFrom, weekDayList } from "@/lib/weeklyReportDays";
 import { useStoreWeather, weatherLabel } from "@/hooks/useStoreWeather";
 import { weeklyReportPdf, weeklyReportXlsx, type ReportRow } from "@/lib/weeklyReportExport";
 import { StoreWeekDays } from "@/components/reports/StoreWeekDays";
+import { ZeroHoursWarning } from "@/components/reports/ZeroHoursWarning";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -490,6 +491,9 @@ export function WeeklyStoreReportsSection() {
                                 cur={curOf(row.store_id)}
                                 web={webForStore(row.store_id, row.week_start, row.week_end)}
                               />
+                              {!closed && (num(row.staff_hours) ?? 0) === 0 && (
+                                <ZeroHoursWarning storeId={row.store_id} weekStart={row.week_start} weekEnd={row.week_end} />
+                              )}
                               {row.drift_after_lock && row.drift_note && (
                                 <p className="mt-2 text-[10px] text-destructive">{row.drift_note}</p>
                               )}
