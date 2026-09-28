@@ -28,6 +28,7 @@ export interface AiUtkast {
   kanal: string | null;
   innehall: string | null;
   bilaga_url: string | null;
+  segment?: string | null;
   status: string | null;
   vd_kommentar: string | null;
   skickad: string | null;

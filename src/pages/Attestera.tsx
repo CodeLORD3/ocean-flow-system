@@ -10,6 +10,7 @@ import MarkdownDoc from "@/components/MarkdownDoc";
 import { useAiUtkast, useUpdateAiUtkast, UTKAST_STATUS, fmtDateTime, type AiUtkast } from "@/hooks/useAiTeam";
 import { cn } from "@/lib/utils";
 import { PrisUtkastPanel } from "@/components/ai/PrisUtkastPanel";
+import { VeckobrevSegmentPanel } from "@/components/customers/VeckobrevSegmentPanel";
 
 const ALL = "__alla";
 
@@ -132,6 +133,9 @@ export default function Attestera() {
             </div>
             {sel.typ === "pris" && (
               <PrisUtkastPanel utkastId={sel.id} innehall={innehall} kommentar={kommentar} onApproved={() => update.reset()} />
+            )}
+            {sel.typ === "veckobrev" && (
+              <VeckobrevSegmentPanel value={sel.segment ?? null} onChange={(seg) => save({ segment: seg }, "Segment sparat")} />
             )}
             <div className="space-y-1">
               <Label>VD-kommentar</Label>
