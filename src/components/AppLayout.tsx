@@ -72,6 +72,7 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   "/kunder": { title: "Kunder för utskick", breadcrumb: ["Hem", "Kunder för utskick"] },
   "/resultat": { title: "Resultat", breadcrumb: ["Hem", "Rapporter", "Resultat"] },
   "/likviditet": { title: "Likviditet", breadcrumb: ["Hem", "Ekonomi", "Likviditet"] },
+  "/ny-butik": { title: "Ny butik", breadcrumb: ["Hem", "Admin", "Ny butik"] },
   "/veckomal": { title: "Veckomål", breadcrumb: ["Hem", "Rapporter", "Veckomål"] },
   "/store-map": { title: "Översikt", breadcrumb: ["Hem", "Översikt"] },
   "/butikskarta": { title: "Butikskarta", breadcrumb: ["Hem", "Butikskarta"] },
