@@ -12765,9 +12765,16 @@ export type Database = {
           cost_price: number | null
           created_at: string | null
           id: string
+          new_price: number | null
+          old_price: number | null
           product_id: string
+          publish_status: string | null
+          published_at: string | null
           reason: string | null
           retail_suggested: number | null
+          sku: string | null
+          source_ai_utkast_id: number | null
+          valid_from: string | null
           wholesale_price: number | null
         }
         Insert: {
@@ -12775,9 +12782,16 @@ export type Database = {
           cost_price?: number | null
           created_at?: string | null
           id?: string
+          new_price?: number | null
+          old_price?: number | null
           product_id: string
+          publish_status?: string | null
+          published_at?: string | null
           reason?: string | null
           retail_suggested?: number | null
+          sku?: string | null
+          source_ai_utkast_id?: number | null
+          valid_from?: string | null
           wholesale_price?: number | null
         }
         Update: {
@@ -12785,9 +12799,16 @@ export type Database = {
           cost_price?: number | null
           created_at?: string | null
           id?: string
+          new_price?: number | null
+          old_price?: number | null
           product_id?: string
+          publish_status?: string | null
+          published_at?: string | null
           reason?: string | null
           retail_suggested?: number | null
+          sku?: string | null
+          source_ai_utkast_id?: number | null
+          valid_from?: string | null
           wholesale_price?: number | null
         }
         Relationships: [
@@ -12975,6 +12996,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "makrilltrade_articles_cache"
             referencedColumns: ["article_id"]
+          },
+        ]
+      }
+      price_publish_log: {
+        Row: {
+          ai_utkast_id: number | null
+          created_at: string
+          error: string | null
+          id: string
+          price_history_id: string | null
+          request: Json | null
+          response: Json | null
+          sku: string | null
+          status: string
+          target: string
+        }
+        Insert: {
+          ai_utkast_id?: number | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          price_history_id?: string | null
+          request?: Json | null
+          response?: Json | null
+          sku?: string | null
+          status: string
+          target: string
+        }
+        Update: {
+          ai_utkast_id?: number | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          price_history_id?: string | null
+          request?: Json | null
+          response?: Json | null
+          sku?: string | null
+          status?: string
+          target?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_publish_log_price_history_id_fkey"
+            columns: ["price_history_id"]
+            isOneToOne: false
+            referencedRelation: "price_history"
+            referencedColumns: ["id"]
           },
         ]
       }
