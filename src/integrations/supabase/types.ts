@@ -20486,6 +20486,24 @@ export type Database = {
           },
         ]
       }
+      user_start_page: {
+        Row: {
+          updated_at: string
+          user_id: string
+          vd_overview: boolean
+        }
+        Insert: {
+          updated_at?: string
+          user_id: string
+          vd_overview?: boolean
+        }
+        Update: {
+          updated_at?: string
+          user_id?: string
+          vd_overview?: boolean
+        }
+        Relationships: []
+      }
       vacation_balance_adjustments: {
         Row: {
           created_at: string
