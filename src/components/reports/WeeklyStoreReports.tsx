@@ -14,6 +14,7 @@ import { useStoreWeather, weatherLabel } from "@/hooks/useStoreWeather";
 import { weeklyReportPdf, weeklyReportXlsx, type ReportRow } from "@/lib/weeklyReportExport";
 import { StoreWeekDays } from "@/components/reports/StoreWeekDays";
 import { ZeroHoursWarning } from "@/components/reports/ZeroHoursWarning";
+import { TargetVsActual } from "@/components/reports/TargetVsActual";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -491,6 +492,18 @@ export function WeeklyStoreReportsSection() {
                                 cur={curOf(row.store_id)}
                                 web={webForStore(row.store_id, row.week_start, row.week_end)}
                               />
+                              <TargetVsActual
+                                storeId={row.store_id}
+                                isoYear={row.iso_year}
+                                isoWeek={row.iso_week}
+                                actual={num(row.total_sales_sek) ?? 0}
+                                cur={curOf(row.store_id)}
+                              />
+                              {row.currency && row.currency !== "SEK" && row.total_sales_sek_converted != null && (
+                                <p className="mt-1 font-mono text-[10px] tabular-nums text-muted-foreground">
+                                  Omräknat: {money(row.total_sales_sek_converted, "kr")}
+                                </p>
+                              )}
                               {!closed && (num(row.staff_hours) ?? 0) === 0 && (
                                 <ZeroHoursWarning storeId={row.store_id} weekStart={row.week_start} weekEnd={row.week_end} />
                               )}

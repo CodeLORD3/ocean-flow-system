@@ -1,3 +1,6 @@
+import { TargetVsActual } from "@/components/reports/TargetVsActual";
+import { isoWeekOf } from "@/hooks/useStoreTargets";
+import { useWeeklyStoreReports } from "@/hooks/useWeeklyStoreReports";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Trash2, Loader2, Receipt, UserPlus, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,6 +91,11 @@ export default function DailyReport() {
   // Kassan (egna kassor + externa Nimpos-kassor) är grunden för rapporten.
   usePosRealtime(true);
   const { data: pos } = usePosDaySummary(activeStoreId, date);
+  const currentWeek = isoWeekOf(new Date(`${date}T12:00:00`));
+  const { data: weekReports = [] } = useWeeklyStoreReports();
+  const weekRow = weekReports.find(
+    (r) => r.store_id === activeStoreId && r.iso_year === currentWeek.iso_year && r.iso_week === currentWeek.iso_week,
+  );
   // Butikens valuta styr både momssats och hur beloppen skrivs i rapporten.
   const { data: stores = [] } = useStores();
   const store = stores.find((s) => s.id === activeStoreId);
@@ -503,6 +511,21 @@ export default function DailyReport() {
         >
           {/* Kassan live — grund för stängningsrapporten */}
           {pos && <PosSalesCard summary={pos} onApply={applyPos} diff={posDiff} />}
+
+          {activeStoreId && currentWeek && (
+            <Card className="shadow-card">
+              <CardContent className="pb-3 pt-3">
+                <TargetVsActual
+                  storeId={activeStoreId}
+                  isoYear={currentWeek.iso_year}
+                  isoWeek={currentWeek.iso_week}
+                  actual={Number(weekRow?.total_sales_sek ?? 0)}
+                  cur={currencyLabel}
+                  label={`Vecka ${currentWeek.iso_week} hittills mot veckomål`}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Försäljning */}
           <Card className="shadow-card">

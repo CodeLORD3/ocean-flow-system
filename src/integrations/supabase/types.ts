@@ -20838,6 +20838,7 @@ export type Database = {
           corrected: boolean
           corrected_at: string | null
           created_at: string
+          currency: string | null
           daily_reports_count: number
           drift_after_lock: boolean
           drift_note: string | null
@@ -20854,6 +20855,7 @@ export type Database = {
           status: string
           store_id: string
           total_sales_sek: number
+          total_sales_sek_converted: number | null
           updated_at: string
           week_end: string
           week_start: string
@@ -20863,6 +20865,7 @@ export type Database = {
           corrected?: boolean
           corrected_at?: string | null
           created_at?: string
+          currency?: string | null
           daily_reports_count?: number
           drift_after_lock?: boolean
           drift_note?: string | null
@@ -20879,6 +20882,7 @@ export type Database = {
           status?: string
           store_id: string
           total_sales_sek?: number
+          total_sales_sek_converted?: number | null
           updated_at?: string
           week_end: string
           week_start: string
@@ -20888,6 +20892,7 @@ export type Database = {
           corrected?: boolean
           corrected_at?: string | null
           created_at?: string
+          currency?: string | null
           daily_reports_count?: number
           drift_after_lock?: boolean
           drift_note?: string | null
@@ -20904,6 +20909,7 @@ export type Database = {
           status?: string
           store_id?: string
           total_sales_sek?: number
+          total_sales_sek_converted?: number | null
           updated_at?: string
           week_end?: string
           week_start?: string
@@ -22501,6 +22507,7 @@ export type Database = {
         Args: { p_category: string; p_entity: string }
         Returns: number
       }
+      fx_to_sek: { Args: { _currency: string; _on: string }; Returns: number }
       get_employee_pnr: { Args: { _employee_id: string }; Returns: string }
       get_lineage: {
         Args: { p_entity_id: string; p_entity_type: string }
@@ -22552,6 +22559,7 @@ export type Database = {
       last_name_key: { Args: { v: string }; Returns: string }
       latin_norm: { Args: { v: string }; Returns: string }
       ledger_zero_empty_costs: { Args: never; Returns: number }
+      lock_weekly_reports: { Args: { _force?: boolean }; Returns: Json }
       lookup_employee_by_pnr: {
         Args: { _pnr: string }
         Returns: {
@@ -23018,6 +23026,10 @@ export type Database = {
       }
       stock_reconciliation_check: { Args: { _source?: string }; Returns: Json }
       stock_write_allowed: { Args: never; Returns: boolean }
+      store_expected_open_days: {
+        Args: { _from: string; _store_id: string; _to: string }
+        Returns: number
+      }
       store_replenishment_auto_send: { Args: never; Returns: number }
       store_report_allowed_products: {
         Args: { _store_id: string }

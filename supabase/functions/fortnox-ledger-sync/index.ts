@@ -49,7 +49,14 @@ Deno.serve(async (req) => {
   let body: any = {};
   try { body = req.method === "POST" ? await req.json() : {}; } catch { body = {}; }
   const force = body.force === true || !isCron;
-  if (!force && stockholmHour() !== 2) return json({ skipped: "inte 02:30 svensk tid" });
+  // Återupptagning (cron var 10:e minut): kör bara om något bolag har en ofullständig hämtning.
+  if (body.resume === true) {
+    const { data: st } = await sb.from("fortnox_ledger_sync_state").select("details, last_run_at");
+    const pending = (st ?? []).some((r: any) => r.details?.partial === true || r.details?.pending === true);
+    const busy = (st ?? []).some((r: any) => r.last_run_at && Date.now() - new Date(r.last_run_at).getTime() < 4 * 60_000);
+    if (!pending) return json({ skipped: "inget kvar att hämta" });
+    if (busy) return json({ skipped: "kedjan kör redan" });
+  } else if (!force && stockholmHour() !== 2) return json({ skipped: "inte 02:30 svensk tid" });
 
   // Arbetet körs i bakgrunden så att anroparen (cron eller föregående omgång) kan koppla ner direkt.
   const work = runSync(sb, body);
@@ -61,7 +68,7 @@ Deno.serve(async (req) => {
 async function runSync(sb: SupabaseClient, body: any) {
   const yearsBack = Math.min(Math.max(Number(body.years ?? 2), 1), 5); // innevarande + föregående
   const startedMs = Date.now();
-  const budgetMs = Math.min(Number(body.budget_ms ?? 40_000), 60_000);
+  const budgetMs = Math.min(Number(body.budget_ms ?? 110_000), 120_000);
   const outOfTime = () => Date.now() - startedMs > budgetMs;
 
   const { data: conns } = await sb.from("fortnox_connections")
@@ -89,13 +96,20 @@ async function runSync(sb: SupabaseClient, body: any) {
         .slice(0, yearsBack);
 
       for (const y of years) {
-        if (outOfTime()) { partial = true; break; }
+        if (outOfTime()) { partial = true; perYear.push({ financial_year: Number(y.FromDate.slice(0, 4)), fortnox_id: y.Id, not_started: true }); continue; }
         const fy = Number(y.FromDate.slice(0, 4));
         const heads = await listVoucherHeads(sb, entity, y.Id);
 
-        const { data: have } = await sb.from("fortnox_vouchers")
-          .select("voucher_series, voucher_number").eq("legal_entity_code", entity).eq("financial_year", fy).limit(100000);
-        const seen = new Set((have ?? []).map((v: any) => `${v.voucher_series}-${v.voucher_number}`));
+        // Hämtas sidvis: API:t returnerar högst 1 000 rader per anrop, annars hämtas redan sparade verifikationer om.
+        const seen = new Set<string>();
+        for (let from = 0; ; from += 1000) {
+          const { data: have, error: haveErr } = await sb.from("fortnox_vouchers")
+            .select("voucher_series, voucher_number").eq("legal_entity_code", entity).eq("financial_year", fy)
+            .order("id").range(from, from + 999);
+          if (haveErr) throw new Error(haveErr.message);
+          for (const v of have ?? []) seen.add(`${v.voucher_series}-${v.voucher_number}`);
+          if (!have || have.length < 1000) break;
+        }
 
         // Ändrade sedan senaste lyckade körning hämtas om.
         const changed = new Set<string>();
@@ -176,13 +190,17 @@ async function runSync(sb: SupabaseClient, body: any) {
   // Ofullständig körning (stor historik) → starta nästa omgång direkt, högst 200 kedjade omgångar.
   const depth = Number(body.chain_depth ?? 0);
   const unfinished = report.some((r) => r.partial) || entities.length > report.length;
-  if (unfinished && depth < 200 && body.chain !== false) {
-    const next = fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fortnox-ledger-sync`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-cron-secret": Deno.env.get("FORTNOX_CRON_SECRET") ?? "" },
-      body: JSON.stringify({ ...body, force: true, chain_depth: depth + 1 }),
-    }).then((r) => r.body?.cancel()).catch(() => {});
-    await next;
+  if (unfinished && depth < 1000 && body.chain !== false) {
+    // Nästa omgång startas direkt; misslyckas anropet tar återupptagnings-cronen över inom 10 minuter.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const ok = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fortnox-ledger-sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-cron-secret": Deno.env.get("FORTNOX_CRON_SECRET") ?? "" },
+        body: JSON.stringify({ ...body, resume: false, force: true, chain_depth: depth + 1 }),
+      }).then(async (r) => { await r.body?.cancel(); return r.status < 300; }).catch(() => false);
+      if (ok) break;
+      await sleep(2000 * (attempt + 1));
+    }
   }
 
   return { ran_at: new Date().toISOString(), chain_depth: depth, report };
