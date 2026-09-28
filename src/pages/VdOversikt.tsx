@@ -166,10 +166,8 @@ export default function VdOversikt() {
               <thead className="text-muted-foreground">
                 <tr className="text-left">
                   <th className="py-1 pr-2 font-normal">Butik</th>
-                  <th className="py-1 px-1 font-normal text-right">I dag</th>
-                  <th className="py-1 px-1 font-normal text-right">mot {dLabel(addDays(d.today, -7))}</th>
-                  <th className="py-1 px-1 font-normal text-right">I går</th>
-                  <th className="py-1 pl-1 font-normal text-right">mot {dLabel(addDays(d.yest, -7))}</th>
+                  <th className="py-1 px-1 font-normal text-right">I dag <span className="block">mot {dLabel(addDays(d.today, -7))}</span></th>
+                  <th className="py-1 pl-1 font-normal text-right">I går <span className="block">mot {dLabel(addDays(d.yest, -7))}</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -179,10 +177,8 @@ export default function VdOversikt() {
                   return (
                     <tr key={s.id} className="border-t">
                       <td className="py-1 pr-2 truncate max-w-[9rem]">{s.name}</td>
-                      <td className="py-1 px-1 text-right"><Money v={t0} /></td>
-                      <td className="py-1 px-1 text-right"><Pct a={t0} b={t7} /></td>
-                      <td className="py-1 px-1 text-right"><Money v={y0} /></td>
-                      <td className="py-1 pl-1 text-right"><Pct a={y0} b={y7} /></td>
+                      <td className="py-1 px-1 text-right"><Money v={t0} /><div><Pct a={t0} b={t7} /></div></td>
+                      <td className="py-1 pl-1 text-right"><Money v={y0} /><div><Pct a={y0} b={y7} /></div></td>
                     </tr>
                   );
                 })}
