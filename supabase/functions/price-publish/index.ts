@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
     const { data: maps } = await sb.from("shopify_product_map").select("shop_id, shopify_sku").not("shopify_sku", "is", null).eq("free_text_only", false).limit(200);
     const out: any[] = [];
     for (const shop of await shops()) {
-      const skus = (maps ?? []).filter((m: any) => m.shop_id === shop.id).slice(0, 3).map((m: any) => m.shopify_sku);
+      const skus = (maps ?? []).filter((m: any) => (m.shop_id ?? (shop.currency === "SEK" ? shop.id : null)) === shop.id).slice(0, 3).map((m: any) => m.shopify_sku);
       const r: any = { shop: shop.label, currency: shop.currency, mapped_sample: skus.length, prices: [], error: null };
       try {
         const d = await shopifyGql(shop, `query{ shop{ name currencyCode } }`, {});
