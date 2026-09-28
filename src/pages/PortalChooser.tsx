@@ -159,7 +159,8 @@ export default function PortalChooser() {
     // Admins land in wholesale view but can switch to any portal
     setSite(key === "admin" ? "wholesale" : key);
     setActiveStore(null, null);
-    navigate(route, { replace: true });
+    // Vänta tills portalvalet är satt, annars spärras adminrutter
+    setTimeout(() => navigate(route, { replace: true }), 0);
   };
 
   if (pickStore) {
