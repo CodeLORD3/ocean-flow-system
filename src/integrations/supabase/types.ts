@@ -18268,6 +18268,7 @@ export type Database = {
           created_at: string | null
           currency: string
           establishment_id: string | null
+          fortnox_cost_center: string | null
           fortnox_customer_number: string | null
           geocoded_at: string | null
           hours: string | null
@@ -18307,6 +18308,7 @@ export type Database = {
           created_at?: string | null
           currency: string
           establishment_id?: string | null
+          fortnox_cost_center?: string | null
           fortnox_customer_number?: string | null
           geocoded_at?: string | null
           hours?: string | null
@@ -18346,6 +18348,7 @@ export type Database = {
           created_at?: string | null
           currency?: string
           establishment_id?: string | null
+          fortnox_cost_center?: string | null
           fortnox_customer_number?: string | null
           geocoded_at?: string | null
           hours?: string | null
@@ -23104,6 +23107,10 @@ export type Database = {
           _store: string
         }
         Returns: undefined
+      }
+      ny_butik_steg: {
+        Args: { _p: Json; _step: string; _store_id: string }
+        Returns: Json
       }
       order_line_batches: {
         Args: { _reference_id: string; _reference_type: string }
