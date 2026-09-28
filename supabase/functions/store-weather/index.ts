@@ -127,8 +127,9 @@ async function syncStore(supabase: any, storeId: string, startDate: string, endD
     // Historiska datum går alltid till historik-API:t. Idag och framtida
     // datum går till prognos-API:t enligt rapportens datumlogik.
     const groups: { url: string; source: "archive" | "forecast"; days: string[] }[] = [
-      { url: ARCHIVE_URL, source: "archive", days: missing.filter((d) => d < today) },
-      { url: FORECAST_URL, source: "forecast", days: missing.filter((d) => d >= today) },
+      // Arkivet släpar några dagar; senaste fem dagarna hämtas från prognos-API:t (som har bakåtdata).
+      { url: ARCHIVE_URL, source: "archive", days: missing.filter((d) => d < addDays(today, -5)) },
+      { url: FORECAST_URL, source: "forecast", days: missing.filter((d) => d >= addDays(today, -5)) },
     ];
 
     for (const group of groups) {
