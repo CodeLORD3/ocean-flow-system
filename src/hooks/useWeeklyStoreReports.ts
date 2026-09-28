@@ -22,6 +22,8 @@ export type WeeklyStoreReport = {
   drift_note: string | null;
   corrected?: boolean;
   corrected_at?: string | null;
+  currency?: string | null;
+  total_sales_sek_converted?: number | null;
 };
 
 
