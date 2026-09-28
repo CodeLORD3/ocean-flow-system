@@ -15,6 +15,7 @@ import { ChevronDown, ChevronUp, FileText, Archive, Pencil, Trash2, Plus, Check,
 import { format } from "date-fns";
 import { sv } from "date-fns/locale";
 import { toast } from "sonner";
+import { PurchaseStorePicker } from "@/components/purchase/PurchaseStorePicker";
 
 type ArchivedReport = {
   id: string;
@@ -429,6 +430,7 @@ export default function PurchaseReportsArchive() {
                               )}
                             </div>
                             <div className="flex items-center gap-2">
+                              <PurchaseStorePicker table="purchase_reports" id={report.id} />
                               <span className="text-xs font-medium tabular-nums">
                                 {reportTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
                               </span>
