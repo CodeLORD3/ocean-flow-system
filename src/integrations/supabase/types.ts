@@ -17616,6 +17616,54 @@ export type Database = {
           },
         ]
       }
+      store_targets: {
+        Row: {
+          created_at: string | null
+          id: number
+          iso_week: number
+          iso_year: number
+          source: string | null
+          store_id: string
+          target_sales_ex_vat: number | null
+          target_staff_cost_pct: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: never
+          iso_week: number
+          iso_year: number
+          source?: string | null
+          store_id: string
+          target_sales_ex_vat?: number | null
+          target_staff_cost_pct?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: never
+          iso_week?: number
+          iso_year?: number
+          source?: string | null
+          store_id?: string
+          target_sales_ex_vat?: number | null
+          target_staff_cost_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_targets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_targets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_weather_daily: {
         Row: {
           created_at: string
@@ -18430,6 +18478,33 @@ export type Database = {
           name?: string
           phone?: string | null
           supplier_type?: string | null
+        }
+        Relationships: []
+      }
+      system_checks: {
+        Row: {
+          check_name: string
+          count: number | null
+          details: Json | null
+          id: number
+          run_at: string | null
+          status: string
+        }
+        Insert: {
+          check_name: string
+          count?: number | null
+          details?: Json | null
+          id?: never
+          run_at?: string | null
+          status: string
+        }
+        Update: {
+          check_name?: string
+          count?: number | null
+          details?: Json | null
+          id?: never
+          run_at?: string | null
+          status?: string
         }
         Relationships: []
       }
@@ -22717,6 +22792,7 @@ export type Database = {
         Args: { _message: string; _order_id: string; _to_store_id: string }
         Returns: string
       }
+      run_system_checks: { Args: never; Returns: Json }
       run_time_compliance_checks: {
         Args: { _from?: string; _to?: string }
         Returns: Json
