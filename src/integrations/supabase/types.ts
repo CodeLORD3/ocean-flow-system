@@ -6127,6 +6127,39 @@ export type Database = {
           },
         ]
       }
+      fortnox_account_balances: {
+        Row: {
+          account: string
+          balance: number
+          cost_center: string
+          financial_year: number
+          id: string
+          legal_entity_code: string
+          period: string
+          updated_at: string
+        }
+        Insert: {
+          account: string
+          balance?: number
+          cost_center?: string
+          financial_year: number
+          id?: string
+          legal_entity_code: string
+          period: string
+          updated_at?: string
+        }
+        Update: {
+          account?: string
+          balance?: number
+          cost_center?: string
+          financial_year?: number
+          id?: string
+          legal_entity_code?: string
+          period?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fortnox_api_log: {
         Row: {
           created_at: string
@@ -6474,6 +6507,42 @@ export type Database = {
         }
         Relationships: []
       }
+      fortnox_ledger_sync_state: {
+        Row: {
+          balance_rows: number
+          details: Json | null
+          last_error: string | null
+          last_run_at: string | null
+          last_success_at: string | null
+          last_voucher_date: string | null
+          legal_entity_code: string
+          updated_at: string
+          vouchers_fetched: number
+        }
+        Insert: {
+          balance_rows?: number
+          details?: Json | null
+          last_error?: string | null
+          last_run_at?: string | null
+          last_success_at?: string | null
+          last_voucher_date?: string | null
+          legal_entity_code: string
+          updated_at?: string
+          vouchers_fetched?: number
+        }
+        Update: {
+          balance_rows?: number
+          details?: Json | null
+          last_error?: string | null
+          last_run_at?: string | null
+          last_success_at?: string | null
+          last_voucher_date?: string | null
+          legal_entity_code?: string
+          updated_at?: string
+          vouchers_fetched?: number
+        }
+        Relationships: []
+      }
       fortnox_oauth_states: {
         Row: {
           created_at: string
@@ -6495,6 +6564,45 @@ export type Database = {
           expires_at?: string
           legal_entity_code?: string
           state?: string
+        }
+        Relationships: []
+      }
+      fortnox_vouchers: {
+        Row: {
+          cost_center: string | null
+          description: string | null
+          fetched_at: string
+          financial_year: number
+          id: string
+          legal_entity_code: string
+          rows: Json
+          transaction_date: string | null
+          voucher_number: number
+          voucher_series: string
+        }
+        Insert: {
+          cost_center?: string | null
+          description?: string | null
+          fetched_at?: string
+          financial_year: number
+          id?: string
+          legal_entity_code: string
+          rows?: Json
+          transaction_date?: string | null
+          voucher_number: number
+          voucher_series: string
+        }
+        Update: {
+          cost_center?: string | null
+          description?: string | null
+          fetched_at?: string
+          financial_year?: number
+          id?: string
+          legal_entity_code?: string
+          rows?: Json
+          transaction_date?: string | null
+          voucher_number?: number
+          voucher_series?: string
         }
         Relationships: []
       }
@@ -22308,6 +22416,10 @@ export type Database = {
           refresh_token: string
           status: string
         }[]
+      }
+      fortnox_rebuild_balances: {
+        Args: { p_entity: string; p_year: number }
+        Returns: number
       }
       fortnox_release_refresh: {
         Args: { p_entity: string }
