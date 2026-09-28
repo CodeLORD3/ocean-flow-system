@@ -22309,6 +22309,19 @@ export type Database = {
         Args: { _day?: string; _store_id: string }
         Returns: Json
       }
+      dagsrapport_paminnelse_butikschef: { Args: never; Returns: number }
+      dagsrapporter_saknas: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          day: string
+          store_id: string
+          store_name: string
+        }[]
+      }
+      daily_report_fill_pos: {
+        Args: { _day: string; _store_id: string }
+        Returns: string
+      }
       decide_absence_request: {
         Args: {
           _conflict_action?: string
