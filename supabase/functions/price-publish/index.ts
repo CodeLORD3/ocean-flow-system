@@ -186,6 +186,27 @@ Deno.serve(async (req) => {
     return json({ published: done });
   }
 
+  if (action === "shopify_check") {
+    // Endast läsning: bekräftar att varje aktiv webbutik svarar och läser gällande pris på mappade SKU:er.
+    const { data: maps } = await sb.from("shopify_product_map").select("shop_id, shopify_sku").not("shopify_sku", "is", null).eq("free_text_only", false).limit(200);
+    const out: any[] = [];
+    for (const shop of await shops()) {
+      const skus = (maps ?? []).filter((m: any) => m.shop_id === shop.id).slice(0, 3).map((m: any) => m.shopify_sku);
+      const r: any = { shop: shop.label, currency: shop.currency, mapped_sample: skus.length, prices: [], error: null };
+      try {
+        const d = await shopifyGql(shop, `query{ shop{ name currencyCode } }`, {});
+        r.shop_name = d?.shop?.name;
+        for (const s of skus) {
+          const v = await shopifyGql(shop, FIND, { q: `sku:'${String(s).replace(/'/g, "")}'` });
+          const hit = (v?.productVariants?.nodes ?? []).find((n: any) => n.sku === s);
+          r.prices.push({ sku: s, price: hit?.price ?? null });
+        }
+      } catch (e) { r.error = (e as Error).message; }
+      out.push(r);
+    }
+    return json({ active: await flowActive(), shops: out });
+  }
+
   const id = Number(body.utkast_id);
   if (!Number.isFinite(id)) return json({ error: "utkast_id saknas" }, 400);
   const { data: utkast } = await sb.from("ai_utkast").select("*").eq("id", id).maybeSingle();
