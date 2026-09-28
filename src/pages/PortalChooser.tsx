@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Store, Factory, Boxes, LogOut, Loader2, Shield } from "lucide-react";
 import { useStaffAuth, type PortalKey } from "@/contexts/StaffAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
 import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
@@ -153,9 +154,14 @@ export default function PortalChooser() {
       setSite(key);
       setActiveStore(null, null);
     }
-    // Landing page is always the overview page
-    sessionStorage.setItem("erp_last_route", "/organisation");
-    navigate("/organisation", { replace: true });
+    // Landing page is the overview page, or VD-översikt for admins who chose it
+    const go = (route: string) => { sessionStorage.setItem("erp_last_route", route); navigate(route, { replace: true }); };
+    if (key === "admin" && session?.user?.id) {
+      (supabase as any).from("user_start_page").select("vd_overview").eq("user_id", session.user.id).maybeSingle()
+        .then(({ data }: any) => go(data?.vd_overview ? "/vd" : "/organisation"), () => go("/organisation"));
+      return;
+    }
+    go("/organisation");
   };
 
   if (pickStore) {
