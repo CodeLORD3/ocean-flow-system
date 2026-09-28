@@ -165,5 +165,18 @@ Deno.serve(async (req) => {
     if (outOfTime()) break;
   }
 
-  return json({ ran_at: new Date().toISOString(), report });
+  // Ofullständig körning (stor historik) → starta nästa omgång direkt, högst 60 kedjade omgångar.
+  const depth = Number(body.chain_depth ?? 0);
+  const unfinished = report.some((r) => r.partial) || entities.length > report.length;
+  if (unfinished && depth < 60 && body.chain !== false) {
+    const next = fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fortnox-ledger-sync`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-cron-secret": Deno.env.get("FORTNOX_CRON_SECRET") ?? "" },
+      body: JSON.stringify({ ...body, force: true, chain_depth: depth + 1 }),
+    }).then((r) => r.body?.cancel()).catch(() => {});
+    // @ts-ignore EdgeRuntime finns i Supabase edge runtime
+    if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(new Promise((r) => setTimeout(r, 3000)).then(() => next));
+  }
+
+  return json({ ran_at: new Date().toISOString(), chain_depth: depth, report });
 });
