@@ -972,6 +972,36 @@ export type Database = {
           },
         ]
       }
+      bank_balances: {
+        Row: {
+          balance: number
+          balance_date: string
+          created_at: string
+          id: string
+          legal_entity_code: string
+          note: string | null
+          updated_at: string
+        }
+        Insert: {
+          balance: number
+          balance_date: string
+          created_at?: string
+          id?: string
+          legal_entity_code: string
+          note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          balance_date?: string
+          created_at?: string
+          id?: string
+          legal_entity_code?: string
+          note?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       batch_allocations: {
         Row: {
           allocated_at: string
@@ -6564,6 +6594,57 @@ export type Database = {
           expires_at?: string
           legal_entity_code?: string
           state?: string
+        }
+        Relationships: []
+      }
+      fortnox_supplier_invoices: {
+        Row: {
+          balance: number | null
+          cancelled: boolean
+          currency: string | null
+          due_date: string | null
+          fetched_at: string
+          given_number: string
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          legal_entity_code: string
+          paid: boolean
+          supplier_name: string | null
+          supplier_number: string | null
+          total: number | null
+        }
+        Insert: {
+          balance?: number | null
+          cancelled?: boolean
+          currency?: string | null
+          due_date?: string | null
+          fetched_at?: string
+          given_number: string
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          legal_entity_code: string
+          paid?: boolean
+          supplier_name?: string | null
+          supplier_number?: string | null
+          total?: number | null
+        }
+        Update: {
+          balance?: number | null
+          cancelled?: boolean
+          currency?: string | null
+          due_date?: string | null
+          fetched_at?: string
+          given_number?: string
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          legal_entity_code?: string
+          paid?: boolean
+          supplier_name?: string | null
+          supplier_number?: string | null
+          total?: number | null
         }
         Relationships: []
       }
@@ -19326,6 +19407,42 @@ export type Database = {
           },
         ]
       }
+      tax_calendar: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          estimated: boolean
+          id: string
+          legal_entity_code: string
+          note: string | null
+          tax_type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          due_date: string
+          estimated?: boolean
+          id?: string
+          legal_entity_code: string
+          note?: string | null
+          tax_type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          estimated?: boolean
+          id?: string
+          legal_entity_code?: string
+          note?: string | null
+          tax_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tax_tables: {
         Row: {
           created_at: string
@@ -22759,6 +22876,17 @@ export type Database = {
       last_name_key: { Args: { v: string }; Returns: string }
       latin_norm: { Args: { v: string }; Returns: string }
       ledger_zero_empty_costs: { Args: never; Returns: number }
+      likviditet_veckor: {
+        Args: { _entity: string; _start: string }
+        Returns: {
+          amount: number
+          category: string
+          direction: string
+          note: string
+          quality: string
+          week_start: string
+        }[]
+      }
       lock_weekly_reports: { Args: { _force?: boolean }; Returns: Json }
       lookup_employee_by_pnr: {
         Args: { _pnr: string }
