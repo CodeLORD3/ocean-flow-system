@@ -928,6 +928,111 @@ export type Database = {
           },
         ]
       }
+      authority_case_links: {
+        Row: {
+          case_id: string
+          id: string
+          link_id: string
+          link_type: string
+          skapad: string
+        }
+        Insert: {
+          case_id: string
+          id?: string
+          link_id: string
+          link_type: string
+          skapad?: string
+        }
+        Update: {
+          case_id?: string
+          id?: string
+          link_id?: string
+          link_type?: string
+          skapad?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "authority_case_links_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "authority_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      authority_cases: {
+        Row: {
+          ansvarig: string | null
+          atgard: string | null
+          beslutsdatum: string | null
+          bevis: Json
+          deadline: string | null
+          diarienummer: string | null
+          id: string
+          krav: string
+          legal_entity_id: string
+          myndighet: string
+          skapad: string
+          status: string
+          store_id: string | null
+          uppdaterad: string
+        }
+        Insert: {
+          ansvarig?: string | null
+          atgard?: string | null
+          beslutsdatum?: string | null
+          bevis?: Json
+          deadline?: string | null
+          diarienummer?: string | null
+          id?: string
+          krav: string
+          legal_entity_id: string
+          myndighet: string
+          skapad?: string
+          status?: string
+          store_id?: string | null
+          uppdaterad?: string
+        }
+        Update: {
+          ansvarig?: string | null
+          atgard?: string | null
+          beslutsdatum?: string | null
+          bevis?: Json
+          deadline?: string | null
+          diarienummer?: string | null
+          id?: string
+          krav?: string
+          legal_entity_id?: string
+          myndighet?: string
+          skapad?: string
+          status?: string
+          store_id?: string | null
+          uppdaterad?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "authority_cases_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "authority_cases_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "authority_cases_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       availability: {
         Row: {
           created_at: string

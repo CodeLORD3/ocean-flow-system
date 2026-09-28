@@ -90,6 +90,7 @@ import Kunder from "@/pages/Kunder";
 import Resultat from "@/pages/Resultat";
 import Likviditet from "@/pages/Likviditet";
 import NyButik from "@/pages/NyButik";
+import Myndighetsarenden from "@/pages/Myndighetsarenden";
 import Veckomal from "@/pages/Veckomal";
 import TaskDetail from "@/pages/TaskDetail";
 import StoreMap from "@/pages/StoreMap";
@@ -222,6 +223,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/resultat": { component: <Resultat /> },
   "/likviditet": { component: <Likviditet /> },
   "/ny-butik": { component: <NyButik /> },
+  "/myndighetsarenden": { component: <Myndighetsarenden /> },
   "/veckomal": { component: <Veckomal /> },
   "/store-map": { component: <StoreMap /> },
   "/butikskarta": { component: <StoreMap mapOnly /> },

@@ -120,6 +120,7 @@ const orgNav = [
   { title: "Anläggningar", url: "/establishments", icon: Building2 },
   { title: "Bolag", url: "/legal-entities", icon: Landmark },
   { title: "Egenkontroll", url: "/food-safety", icon: ShieldCheck },
+  { title: "Myndighetsärenden", url: "/myndighetsarenden", icon: ShieldCheck },
 ];
 
 const staffNav = [
