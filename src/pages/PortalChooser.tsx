@@ -141,27 +141,26 @@ export default function PortalChooser() {
     navigate("/store-map", { replace: true });
   };
 
-  const enterPortal = (key: PortalKey) => {
-    if (key === "admin") {
-      // Admins land in wholesale view but can switch to any portal
-      setSite("wholesale");
-      setActiveStore(null, null);
-    } else if (key === "shop") {
+  const enterPortal = async (key: PortalKey) => {
+    if (key === "shop") {
       // Butiksportalen kräver alltid ett aktivt butiksval
       setPickStore(true);
       return;
-    } else {
-      setSite(key);
-      setActiveStore(null, null);
     }
     // Landing page is the overview page, or VD-översikt for admins who chose it
-    const go = (route: string) => { sessionStorage.setItem("erp_last_route", route); navigate(route, { replace: true }); };
-    if (key === "admin" && session?.user?.id) {
-      (supabase as any).from("user_start_page").select("vd_overview").eq("user_id", session.user.id).maybeSingle()
-        .then(({ data }: any) => go(data?.vd_overview ? "/vd" : "/organisation"), () => go("/organisation"));
-      return;
+    let route = "/organisation";
+    if ((key === "admin" || key === "wholesale") && session?.user?.id) {
+      try {
+        const { data } = await (supabase as any).from("user_start_page").select("vd_overview").eq("user_id", session.user.id).maybeSingle();
+        if (data?.vd_overview) route = "/vd";
+      } catch { /* fall back to overview */ }
     }
-    go("/organisation");
+    sessionStorage.setItem("erp_last_route", route);
+    // Admins land in wholesale view but can switch to any portal
+    setSite(key === "admin" ? "wholesale" : key);
+    setActiveStore(null, null);
+    // Vänta tills portalvalet är satt, annars spärras adminrutter
+    setTimeout(() => navigate(route, { replace: true }), 0);
   };
 
   if (pickStore) {

@@ -553,6 +553,7 @@ export type Database = {
           innehall: string | null
           kanal: string | null
           mottagare: string | null
+          segment: string | null
           skapad: string | null
           skapad_av: string | null
           skickad: string | null
@@ -568,6 +569,7 @@ export type Database = {
           innehall?: string | null
           kanal?: string | null
           mottagare?: string | null
+          segment?: string | null
           skapad?: string | null
           skapad_av?: string | null
           skickad?: string | null
@@ -583,6 +585,7 @@ export type Database = {
           innehall?: string | null
           kanal?: string | null
           mottagare?: string | null
+          segment?: string | null
           skapad?: string | null
           skapad_av?: string | null
           skickad?: string | null
@@ -3272,6 +3275,36 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_exports: {
+        Row: {
+          created_at: string
+          exported_by: string | null
+          exported_by_name: string | null
+          filters: Json
+          format: string
+          id: number
+          row_count: number
+        }
+        Insert: {
+          created_at?: string
+          exported_by?: string | null
+          exported_by_name?: string | null
+          filters?: Json
+          format: string
+          id?: never
+          row_count: number
+        }
+        Update: {
+          created_at?: string
+          exported_by?: string | null
+          exported_by_name?: string | null
+          filters?: Json
+          format?: string
+          id?: never
+          row_count?: number
+        }
+        Relationships: []
+      }
       customer_order_events: {
         Row: {
           created_at: string
@@ -4082,12 +4115,17 @@ export type Database = {
         Row: {
           anonymized_at: string | null
           avatar_url: string | null
+          avg_purchase_90d: number | null
           booking_block_reason: string | null
           booking_blocked: boolean
           booking_blocked_at: string | null
           booking_blocked_by: string | null
           city: string | null
           company_name: string | null
+          consent_at: string | null
+          consent_email: boolean
+          consent_source: string | null
+          consent_whatsapp: boolean
           contact_reference: string | null
           created_at: string
           created_by: string | null
@@ -4096,6 +4134,7 @@ export type Database = {
           email_normalized: string | null
           excluded_allergens: string[]
           first_name: string | null
+          home_store_id: string | null
           id: string
           is_company: boolean
           last_name: string | null
@@ -4109,7 +4148,10 @@ export type Database = {
           phone: string | null
           phone_normalized: string | null
           postal_code: string | null
+          purchases_90d: number | null
           requires_identification_mark: boolean
+          segment: string | null
+          segment_updated_at: string | null
           shopify_customer_id: string | null
           source: string | null
           store_id: string | null
@@ -4120,12 +4162,17 @@ export type Database = {
         Insert: {
           anonymized_at?: string | null
           avatar_url?: string | null
+          avg_purchase_90d?: number | null
           booking_block_reason?: string | null
           booking_blocked?: boolean
           booking_blocked_at?: string | null
           booking_blocked_by?: string | null
           city?: string | null
           company_name?: string | null
+          consent_at?: string | null
+          consent_email?: boolean
+          consent_source?: string | null
+          consent_whatsapp?: boolean
           contact_reference?: string | null
           created_at?: string
           created_by?: string | null
@@ -4134,6 +4181,7 @@ export type Database = {
           email_normalized?: string | null
           excluded_allergens?: string[]
           first_name?: string | null
+          home_store_id?: string | null
           id?: string
           is_company?: boolean
           last_name?: string | null
@@ -4147,7 +4195,10 @@ export type Database = {
           phone?: string | null
           phone_normalized?: string | null
           postal_code?: string | null
+          purchases_90d?: number | null
           requires_identification_mark?: boolean
+          segment?: string | null
+          segment_updated_at?: string | null
           shopify_customer_id?: string | null
           source?: string | null
           store_id?: string | null
@@ -4158,12 +4209,17 @@ export type Database = {
         Update: {
           anonymized_at?: string | null
           avatar_url?: string | null
+          avg_purchase_90d?: number | null
           booking_block_reason?: string | null
           booking_blocked?: boolean
           booking_blocked_at?: string | null
           booking_blocked_by?: string | null
           city?: string | null
           company_name?: string | null
+          consent_at?: string | null
+          consent_email?: boolean
+          consent_source?: string | null
+          consent_whatsapp?: boolean
           contact_reference?: string | null
           created_at?: string
           created_by?: string | null
@@ -4172,6 +4228,7 @@ export type Database = {
           email_normalized?: string | null
           excluded_allergens?: string[]
           first_name?: string | null
+          home_store_id?: string | null
           id?: string
           is_company?: boolean
           last_name?: string | null
@@ -4185,7 +4242,10 @@ export type Database = {
           phone?: string | null
           phone_normalized?: string | null
           postal_code?: string | null
+          purchases_90d?: number | null
           requires_identification_mark?: boolean
+          segment?: string | null
+          segment_updated_at?: string | null
           shopify_customer_id?: string | null
           source?: string | null
           store_id?: string | null
@@ -4206,6 +4266,20 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_retail_home_store_id_fkey"
+            columns: ["home_store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "customers_retail_home_store_id_fkey"
+            columns: ["home_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
           {
@@ -23377,6 +23451,7 @@ export type Database = {
         Args: { _date: string; _store_id: string }
         Returns: undefined
       }
+      refresh_customer_segments: { Args: never; Returns: number }
       refresh_weekly_corrected_flag: {
         Args: { _date: string; _store_id: string }
         Returns: undefined
