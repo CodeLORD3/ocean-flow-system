@@ -10,6 +10,7 @@
  */
 import { adminClient, corsHeaders, json, requireUser } from "../_shared/fortnox.ts";
 import { parsePriceDraft, roundHalf, stopReason } from "./parse.ts";
+import { adminToken } from "../_shared/shopify-shops.ts";
 
 const sb = adminClient();
 const today = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
@@ -27,8 +28,9 @@ async function shops() {
 }
 
 async function shopifyGql(shop: any, query: string, variables: Record<string, unknown>) {
-  const token = Deno.env.get(shop.admin_token_env ?? "") ?? "";
-  if (!token) throw new Error(`Hemligheten ${shop.admin_token_env} saknas`);
+  // Samma tokenkedja som shopify-consent-import: namngiven hemlighet → sparad token → client_credentials.
+  const token = (await adminToken(sb as any, shop)) ?? "";
+  if (!token) throw new Error(`Admin-token saknas för ${shop.label} (${shop.admin_token_env} eller klientuppgifter)`);
   const res = await fetch(`https://${shop.shop_domain}/admin/api/${shop.api_version || "2024-10"}/graphql.json`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": token },
