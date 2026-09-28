@@ -51,6 +51,14 @@ Deno.serve(async (req) => {
   const force = body.force === true || !isCron;
   if (!force && stockholmHour() !== 2) return json({ skipped: "inte 02:30 svensk tid" });
 
+  // Arbetet körs i bakgrunden så att anroparen (cron eller föregående omgång) kan koppla ner direkt.
+  const work = runSync(sb, body);
+  // @ts-ignore EdgeRuntime finns i Supabase edge runtime
+  if (typeof EdgeRuntime !== "undefined") { EdgeRuntime.waitUntil(work); return json({ accepted: true }, 202); }
+  return json(await work);
+});
+
+async function runSync(sb: SupabaseClient, body: any) {
   const yearsBack = Math.min(Math.max(Number(body.years ?? 2), 1), 5); // innevarande + föregående
   const startedMs = Date.now();
   const budgetMs = Math.min(Number(body.budget_ms ?? 40_000), 60_000);
@@ -174,9 +182,8 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json", "x-cron-secret": Deno.env.get("FORTNOX_CRON_SECRET") ?? "" },
       body: JSON.stringify({ ...body, force: true, chain_depth: depth + 1 }),
     }).then((r) => r.body?.cancel()).catch(() => {});
-    // @ts-ignore EdgeRuntime finns i Supabase edge runtime
-    if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(new Promise((r) => setTimeout(r, 3000)).then(() => next));
+    await next;
   }
 
-  return json({ ran_at: new Date().toISOString(), chain_depth: depth, report });
-});
+  return { ran_at: new Date().toISOString(), chain_depth: depth, report };
+}
