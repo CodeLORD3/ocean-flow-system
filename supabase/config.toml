@@ -106,3 +106,6 @@ verify_jwt = false
 
 [functions.fortnox-import-employees]
 verify_jwt = false
+
+[functions.fortnox-ledger-sync]
+verify_jwt = false
