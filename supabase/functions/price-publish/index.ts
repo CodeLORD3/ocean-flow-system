@@ -10,6 +10,7 @@
  */
 import { adminClient, corsHeaders, json, requireUser } from "../_shared/fortnox.ts";
 import { parsePriceDraft, roundHalf, stopReason } from "./parse.ts";
+import { adminToken } from "../_shared/shopify-shops.ts";
 
 const sb = adminClient();
 const today = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
@@ -27,8 +28,9 @@ async function shops() {
 }
 
 async function shopifyGql(shop: any, query: string, variables: Record<string, unknown>) {
-  const token = Deno.env.get(shop.admin_token_env ?? "") ?? "";
-  if (!token) throw new Error(`Hemligheten ${shop.admin_token_env} saknas`);
+  // Samma tokenkedja som shopify-consent-import: namngiven hemlighet → sparad token → client_credentials.
+  const token = (await adminToken(sb as any, shop)) ?? "";
+  if (!token) throw new Error(`Admin-token saknas för ${shop.label} (${shop.admin_token_env} eller klientuppgifter)`);
   const res = await fetch(`https://${shop.shop_domain}/admin/api/${shop.api_version || "2024-10"}/graphql.json`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": token },
@@ -182,6 +184,27 @@ Deno.serve(async (req) => {
       done++;
     }
     return json({ published: done });
+  }
+
+  if (action === "shopify_check") {
+    // Endast läsning: bekräftar att varje aktiv webbutik svarar och läser gällande pris på mappade SKU:er.
+    const { data: maps } = await sb.from("shopify_product_map").select("shop_id, shopify_sku").not("shopify_sku", "is", null).eq("free_text_only", false).limit(200);
+    const out: any[] = [];
+    for (const shop of await shops()) {
+      const skus = (maps ?? []).filter((m: any) => (m.shop_id ?? (shop.currency === "SEK" ? shop.id : null)) === shop.id).slice(0, 3).map((m: any) => m.shopify_sku);
+      const r: any = { shop: shop.label, currency: shop.currency, mapped_sample: skus.length, prices: [], error: null };
+      try {
+        const d = await shopifyGql(shop, `query{ shop{ name currencyCode } }`, {});
+        r.shop_name = d?.shop?.name;
+        for (const s of skus) {
+          const v = await shopifyGql(shop, FIND, { q: `sku:'${String(s).replace(/'/g, "")}'` });
+          const hit = (v?.productVariants?.nodes ?? []).find((n: any) => n.sku === s);
+          r.prices.push({ sku: s, price: hit?.price ?? null });
+        }
+      } catch (e) { r.error = (e as Error).message; }
+      out.push(r);
+    }
+    return json({ active: await flowActive(), shops: out });
   }
 
   const id = Number(body.utkast_id);
