@@ -393,6 +393,461 @@
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
+      },
+      {
+        "name": "lista_dagsrapporter",
+        "title": "Lista dagsrapporter",
+        "description": "Listar butikernas dagsrapporter med försäljning, kvitton, personal och svinn. Filter: from_date, to_date, store_id eller store_code, limit. Nyast först.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Från och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "to_date": {
+              "$ref": "#/properties/from_date",
+              "description": "Till och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "store_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Butikens id."
+            },
+            "store_code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Butikskod, alternativ till store_id."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Antal rader, standard 100."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lista_veckorapporter",
+        "title": "Lista veckorapporter",
+        "description": "Listar veckorapporter per butik med försäljning, timmar och låsstatus. Datum filtreras på veckostart. Filter: from_date, to_date, store_id eller store_code, limit. Nyast först.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Från och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "to_date": {
+              "$ref": "#/properties/from_date",
+              "description": "Till och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "store_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Butikens id."
+            },
+            "store_code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Butikskod, alternativ till store_id."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Antal rader, standard 100."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lista_kundordrar_ai",
+        "title": "Lista kundordrar för AI-teamet",
+        "description": "Listar kundordrar med alla orderfält. Datum filtreras på önskat datum. Kan även filtreras på pack_status och status. Filter: from_date, to_date, store_id eller store_code, limit. Nyast först.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Från och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "to_date": {
+              "$ref": "#/properties/from_date",
+              "description": "Till och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "store_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Butikens id."
+            },
+            "store_code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Butikskod, alternativ till store_id."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Antal rader, standard 100."
+            },
+            "pack_status": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Packstatus."
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Orderstatus."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lista_avvikelser",
+        "title": "Lista avvikelser",
+        "description": "Listar avvikelser med åtgärder, ansvarig, förfallodatum och stängning. Datum filtreras på skapad. Filter: from_date, to_date, store_id eller store_code, limit. Nyast först.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Från och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "to_date": {
+              "$ref": "#/properties/from_date",
+              "description": "Till och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "store_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Butikens id."
+            },
+            "store_code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Butikskod, alternativ till store_id."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Antal rader, standard 100."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lista_forbattringsforslag",
+        "title": "Lista förbättringsförslag",
+        "description": "Listar förbättringsförslag med observation, förslag, status och beslut. Datum filtreras på skapad. Filter: from_date, to_date, store_id eller store_code, limit. Nyast först.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Från och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "to_date": {
+              "$ref": "#/properties/from_date",
+              "description": "Till och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "store_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Butikens id."
+            },
+            "store_code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Butikskod, alternativ till store_id."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Antal rader, standard 100."
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Status."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lista_checklistdagar",
+        "title": "Lista checklistdagar",
+        "description": "Listar checklistdagar per butik med pass, ansvarig och status. Filter: from_date, to_date, store_id eller store_code, limit. Nyast först.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Från och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "to_date": {
+              "$ref": "#/properties/from_date",
+              "description": "Till och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "store_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Butikens id."
+            },
+            "store_code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Butikskod, alternativ till store_id."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Antal rader, standard 100."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lista_fortnox_fakturajobb",
+        "title": "Lista Fortnox-fakturajobb",
+        "description": "Listar fakturajobb mot Fortnox med status, dokumentnummer, belopp och fel. Saknar butikskoppling. Datum filtreras på skapad. Filter: from_date, to_date, store_id eller store_code, limit. Nyast först.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Från och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "to_date": {
+              "$ref": "#/properties/from_date",
+              "description": "Till och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "store_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Butikens id."
+            },
+            "store_code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Butikskod, alternativ till store_id."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Antal rader, standard 100."
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Jobbstatus."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lista_inkopsrapporter",
+        "title": "Lista inköpsrapporter",
+        "description": "Listar inköpsdokument som fakturor och följesedlar med leverantör, belopp och status. Saknar butikskoppling. Datum filtreras på dokumentdatum. Filter: from_date, to_date, store_id eller store_code, limit. Nyast först.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Från och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "to_date": {
+              "$ref": "#/properties/from_date",
+              "description": "Till och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "store_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Butikens id."
+            },
+            "store_code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Butikskod, alternativ till store_id."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Antal rader, standard 100."
+            },
+            "document_type": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Dokumenttyp."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lista_oppettider",
+        "title": "Lista öppettider",
+        "description": "Listar butikernas öppettider per veckodag (1 måndag till 7 söndag). Datumfilter ignoreras eftersom tabellen saknar datum. Filter: from_date, to_date, store_id eller store_code, limit. Nyast först.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Från och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "to_date": {
+              "$ref": "#/properties/from_date",
+              "description": "Till och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "store_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Butikens id."
+            },
+            "store_code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Butikskod, alternativ till store_id."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Antal rader, standard 100."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lista_butiksvader",
+        "title": "Lista butiksväder",
+        "description": "Listar dagligt väder per butik med temperatur, nederbörd och vind. Filter: from_date, to_date, store_id eller store_code, limit. Nyast först.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Från och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "to_date": {
+              "$ref": "#/properties/from_date",
+              "description": "Till och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "store_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Butikens id."
+            },
+            "store_code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Butikskod, alternativ till store_id."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Antal rader, standard 100."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
       }
     ]
   }

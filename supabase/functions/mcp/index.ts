@@ -364,13 +364,182 @@ var uppdateraAiUtkast = defineTool5({
   }
 });
 
+// src/lib/mcp/tools/ai-read.ts
+import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@3.0.1";
+import { z as z6 } from "npm:zod@^3.25.76";
+var deny2 = { content: [{ type: "text", text: "Inte inloggad." }], isError: true };
+var fail2 = (m) => ({ content: [{ type: "text", text: m }], isError: true });
+var ok2 = (key, v) => {
+  const json = JSON.parse(JSON.stringify(v ?? null));
+  return {
+    content: [{ type: "text", text: JSON.stringify(json) }],
+    structuredContent: { [key]: json }
+  };
+};
+var read2 = { readOnlyHint: true, idempotentHint: true, openWorldHint: false };
+var datum = z6.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+var common = {
+  from_date: datum.optional().describe("Fr\xE5n och med datum, \xC5\xC5\xC5\xC5-MM-DD."),
+  to_date: datum.optional().describe("Till och med datum, \xC5\xC5\xC5\xC5-MM-DD."),
+  store_id: z6.string().uuid().optional().describe("Butikens id."),
+  store_code: z6.string().trim().min(1).optional().describe("Butikskod, alternativ till store_id."),
+  limit: z6.number().int().min(1).max(500).optional().describe("Antal rader, standard 100.")
+};
+function makeTool(s) {
+  return defineTool6({
+    name: s.name,
+    title: s.title,
+    description: s.description,
+    inputSchema: { ...common, ...s.extra ?? {} },
+    annotations: read2,
+    handler: async (args, ctx) => {
+      if (!ctx.isAuthenticated()) return deny2;
+      const a = args;
+      const db = supabaseForUser(ctx);
+      let storeId = a.store_id;
+      if (!storeId && a.store_code) {
+        const { data: data2, error: error2 } = await db.from("stores").select("id").eq("store_code", a.store_code).maybeSingle();
+        if (error2) return fail2(error2.message);
+        if (!data2) return fail2(`Ingen butik med kod ${a.store_code}.`);
+        storeId = data2.id;
+      }
+      if (storeId && !s.hasStore) return fail2("Tabellen saknar butikskoppling; filtrera utan butik.");
+      let q = db.from(s.table).select(s.columns ?? "*").order(s.orderCol, { ascending: false }).limit(a.limit ?? 100);
+      if (storeId) q = q.eq("store_id", storeId);
+      if (s.dateCol && a.from_date) q = q.gte(s.dateCol, a.from_date);
+      if (s.dateCol && a.to_date) q = q.lte(s.dateCol, s.dateIsTimestamp ? `${a.to_date}T23:59:59.999` : a.to_date);
+      if (s.applyExtra) q = s.applyExtra(q, a);
+      const { data, error } = await q;
+      return error ? fail2(error.message) : ok2(s.key, data ?? []);
+    }
+  });
+}
+var note = " Filter: from_date, to_date, store_id eller store_code, limit. Nyast f\xF6rst.";
+var listaDagsrapporter = makeTool({
+  name: "lista_dagsrapporter",
+  title: "Lista dagsrapporter",
+  description: "Listar butikernas dagsrapporter med f\xF6rs\xE4ljning, kvitton, personal och svinn." + note,
+  table: "daily_reports",
+  key: "dagsrapporter",
+  dateCol: "report_date",
+  orderCol: "report_date",
+  hasStore: true
+});
+var listaVeckorapporter = makeTool({
+  name: "lista_veckorapporter",
+  title: "Lista veckorapporter",
+  description: "Listar veckorapporter per butik med f\xF6rs\xE4ljning, timmar och l\xE5sstatus. Datum filtreras p\xE5 veckostart." + note,
+  table: "weekly_store_reports",
+  key: "veckorapporter",
+  dateCol: "week_start",
+  orderCol: "week_start",
+  hasStore: true
+});
+var listaKundordrarAi = makeTool({
+  name: "lista_kundordrar_ai",
+  title: "Lista kundordrar f\xF6r AI-teamet",
+  description: "Listar kundordrar med alla orderf\xE4lt. Datum filtreras p\xE5 \xF6nskat datum. Kan \xE4ven filtreras p\xE5 pack_status och status." + note,
+  table: "customer_orders",
+  key: "kundordrar",
+  dateCol: "wanted_date",
+  orderCol: "wanted_date",
+  hasStore: true,
+  extra: {
+    pack_status: z6.string().trim().min(1).optional().describe("Packstatus."),
+    status: z6.string().trim().min(1).optional().describe("Orderstatus.")
+  },
+  applyExtra: (q, a) => {
+    if (a.pack_status) q = q.eq("pack_status", a.pack_status);
+    if (a.status) q = q.eq("status", a.status);
+    return q;
+  }
+});
+var listaAvvikelser = makeTool({
+  name: "lista_avvikelser",
+  title: "Lista avvikelser",
+  description: "Listar avvikelser med \xE5tg\xE4rder, ansvarig, f\xF6rfallodatum och st\xE4ngning. Datum filtreras p\xE5 skapad." + note,
+  table: "deviations",
+  key: "avvikelser",
+  dateCol: "created_at",
+  dateIsTimestamp: true,
+  orderCol: "created_at",
+  hasStore: true
+});
+var listaForbattringsforslag = makeTool({
+  name: "lista_forbattringsforslag",
+  title: "Lista f\xF6rb\xE4ttringsf\xF6rslag",
+  description: "Listar f\xF6rb\xE4ttringsf\xF6rslag med observation, f\xF6rslag, status och beslut. Datum filtreras p\xE5 skapad." + note,
+  table: "improvement_suggestions",
+  key: "forslag",
+  dateCol: "created_at",
+  dateIsTimestamp: true,
+  orderCol: "created_at",
+  hasStore: true,
+  extra: { status: z6.string().trim().min(1).optional().describe("Status.") },
+  applyExtra: (q, a) => a.status ? q.eq("status", a.status) : q
+});
+var listaChecklistdagar = makeTool({
+  name: "lista_checklistdagar",
+  title: "Lista checklistdagar",
+  description: "Listar checklistdagar per butik med pass, ansvarig och status." + note,
+  table: "checklist_days",
+  key: "checklistdagar",
+  dateCol: "checklist_date",
+  orderCol: "checklist_date",
+  hasStore: true
+});
+var listaFortnoxFakturajobb = makeTool({
+  name: "lista_fortnox_fakturajobb",
+  title: "Lista Fortnox-fakturajobb",
+  description: "Listar fakturajobb mot Fortnox med status, dokumentnummer, belopp och fel. Saknar butikskoppling. Datum filtreras p\xE5 skapad." + note,
+  table: "fortnox_invoice_jobs",
+  key: "fakturajobb",
+  dateCol: "created_at",
+  dateIsTimestamp: true,
+  orderCol: "created_at",
+  hasStore: false,
+  extra: { status: z6.string().trim().min(1).optional().describe("Jobbstatus.") },
+  applyExtra: (q, a) => a.status ? q.eq("status", a.status) : q
+});
+var listaInkopsrapporter = makeTool({
+  name: "lista_inkopsrapporter",
+  title: "Lista ink\xF6psrapporter",
+  description: "Listar ink\xF6psdokument som fakturor och f\xF6ljesedlar med leverant\xF6r, belopp och status. Saknar butikskoppling. Datum filtreras p\xE5 dokumentdatum." + note,
+  table: "purchase_reports",
+  key: "inkopsrapporter",
+  dateCol: "document_date",
+  orderCol: "created_at",
+  hasStore: false,
+  extra: { document_type: z6.string().trim().min(1).optional().describe("Dokumenttyp.") },
+  applyExtra: (q, a) => a.document_type ? q.eq("document_type", a.document_type) : q
+});
+var listaOppettider = makeTool({
+  name: "lista_oppettider",
+  title: "Lista \xF6ppettider",
+  description: "Listar butikernas \xF6ppettider per veckodag (1 m\xE5ndag till 7 s\xF6ndag). Datumfilter ignoreras eftersom tabellen saknar datum." + note,
+  table: "store_opening_hours",
+  key: "oppettider",
+  orderCol: "updated_at",
+  hasStore: true
+});
+var listaButiksvader = makeTool({
+  name: "lista_butiksvader",
+  title: "Lista butiksv\xE4der",
+  description: "Listar dagligt v\xE4der per butik med temperatur, nederb\xF6rd och vind." + note,
+  table: "store_weather_daily",
+  key: "vader",
+  dateCol: "weather_date",
+  orderCol: "weather_date",
+  hasStore: true
+});
+
 // src/lib/mcp/index.ts
 var projectRef = "tzcvoqnrhjtrxlzhhdmu";
 var mcp_default = defineMcp({
   name: "makrill-erp",
   title: "Makrill ERP",
   version: "0.1.0",
-  instructions: "Verktyg f\xF6r Makrill ERP. L\xE4sande verktyg som k\xF6rs som den inloggade anv\xE4ndaren: list_stores f\xF6r butiker och driftst\xE4llen, search_products f\xF6r varor och priser, list_customer_orders f\xF6r kundbest\xE4llningar och get_lot f\xF6r partisp\xE5rbarhet. AI-teamet: lista_ai_uppgifter, skapa_ai_uppgift, uppdatera_ai_uppgift, lista_ai_utkast, skapa_ai_utkast och uppdatera_ai_utkast (kr\xE4ver administrat\xF6rsroll).",
+  instructions: "Verktyg f\xF6r Makrill ERP. L\xE4sande verktyg som k\xF6rs som den inloggade anv\xE4ndaren: list_stores f\xF6r butiker och driftst\xE4llen, search_products f\xF6r varor och priser, list_customer_orders f\xF6r kundbest\xE4llningar och get_lot f\xF6r partisp\xE5rbarhet. AI-teamet: lista_ai_uppgifter, skapa_ai_uppgift, uppdatera_ai_uppgift, lista_ai_utkast, skapa_ai_utkast och uppdatera_ai_utkast (kr\xE4ver administrat\xF6rsroll). L\xE4sverktyg f\xF6r AI-teamet: lista_dagsrapporter, lista_veckorapporter, lista_kundordrar_ai, lista_avvikelser, lista_forbattringsforslag, lista_checklistdagar, lista_fortnox_fakturajobb, lista_inkopsrapporter, lista_oppettider och lista_butiksvader.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"
@@ -385,7 +554,17 @@ var mcp_default = defineMcp({
     uppdateraAiUppgift,
     listaAiUtkast,
     skapaAiUtkast,
-    uppdateraAiUtkast
+    uppdateraAiUtkast,
+    listaDagsrapporter,
+    listaVeckorapporter,
+    listaKundordrarAi,
+    listaAvvikelser,
+    listaForbattringsforslag,
+    listaChecklistdagar,
+    listaFortnoxFakturajobb,
+    listaInkopsrapporter,
+    listaOppettider,
+    listaButiksvader
   ]
 });
 
