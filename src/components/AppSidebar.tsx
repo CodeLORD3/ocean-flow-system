@@ -132,6 +132,7 @@ const financeNav = [
   { title: "Dagsrapport", url: "/dagsrapport", icon: FileText },
   { title: "Veckomål", url: "/veckomal", icon: BarChart3 },
   { title: "Resultat", url: "/resultat", icon: BarChart3 },
+  { title: "Likviditet", url: "/likviditet", icon: BarChart3 },
   { title: "Försvunnet ur lagret", url: "/stock-disappearance", icon: Package },
   { title: "Kassa live", url: "/pos-live", icon: Radio },
   { title: "POS-fundament", url: "/pos-fundament", icon: Radio },
