@@ -21471,6 +21471,56 @@ export type Database = {
         }
         Relationships: []
       }
+      pk_logged_times_effective: {
+        Row: {
+          allocation_source: string | null
+          connection_id: string | null
+          costgroup_name: string | null
+          costgroup_url: string | null
+          effective_store_id: string | null
+          employee_id: string | null
+          hours: number | null
+          id: string | null
+          is_admin: boolean | null
+          is_canceled: boolean | null
+          raw_store_id: string | null
+          staff_url: string | null
+          start: string | null
+          stop: string | null
+          work_date: string | null
+          work_time_sec: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pk_costgroups_store_id_fkey"
+            columns: ["raw_store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "pk_costgroups_store_id_fkey"
+            columns: ["raw_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pk_logged_times_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "pk_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pk_staff_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pos_price_overview: {
         Row: {
           barcode: string | null
@@ -23061,6 +23111,13 @@ export type Database = {
       }
       vacation_year_of: { Args: { _d: string }; Returns: number }
       vacation_year_rollover: { Args: { _from_year?: number }; Returns: Json }
+      weekly_open_days_count: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          open_days: number
+          store_id: string
+        }[]
+      }
       wholesale_price_for: {
         Args: { _product_id: string; _store_id: string }
         Returns: {
