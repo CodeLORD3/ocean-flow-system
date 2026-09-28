@@ -11,6 +11,9 @@ export const FORTNOX_SCOPES = [
 
   // Lön: närvaro-, frånvaro- och lönetransaktioner samt anställda (etapp 5).
   "salary",
+
+  // Bokföring: verifikationer, kontoplan och saldon.
+  "bookkeeping",
 ];
 
 export const LEGAL_ENTITIES: Record<string, string> = {
