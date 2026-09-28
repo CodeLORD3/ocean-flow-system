@@ -504,6 +504,71 @@ export type Database = {
           },
         ]
       }
+      ai_trigger_log: {
+        Row: {
+          ai_uppgift_id: number | null
+          fel: string | null
+          händelse: string
+          id: number
+          käll_id: string
+          källtabell: string
+          skapad: string
+          webhook_status: string | null
+        }
+        Insert: {
+          ai_uppgift_id?: number | null
+          fel?: string | null
+          händelse: string
+          id?: never
+          käll_id: string
+          källtabell: string
+          skapad?: string
+          webhook_status?: string | null
+        }
+        Update: {
+          ai_uppgift_id?: number | null
+          fel?: string | null
+          händelse?: string
+          id?: never
+          käll_id?: string
+          källtabell?: string
+          skapad?: string
+          webhook_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_trigger_log_ai_uppgift_id_fkey"
+            columns: ["ai_uppgift_id"]
+            isOneToOne: false
+            referencedRelation: "ai_uppgifter"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_trigger_settings: {
+        Row: {
+          aktiv: boolean
+          händelse: string
+          hemlighet: string | null
+          uppdaterad: string
+          url: string | null
+        }
+        Insert: {
+          aktiv?: boolean
+          händelse: string
+          hemlighet?: string | null
+          uppdaterad?: string
+          url?: string | null
+        }
+        Update: {
+          aktiv?: boolean
+          händelse?: string
+          hemlighet?: string | null
+          uppdaterad?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       ai_uppgifter: {
         Row: {
           deadline: string | null
@@ -22762,6 +22827,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      ai_trigger_fire: {
+        Args: { _event: string; _id: string; _table: string }
+        Returns: undefined
       }
       anonymize_retail_customer: {
         Args: { _customer_id: string; _reason?: string }
