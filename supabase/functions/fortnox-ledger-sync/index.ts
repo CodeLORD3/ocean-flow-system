@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
 
   const yearsBack = Math.min(Math.max(Number(body.years ?? 2), 1), 5); // innevarande + föregående
   const startedMs = Date.now();
-  const budgetMs = Math.min(Number(body.budget_ms ?? 120_000), 140_000);
+  const budgetMs = Math.min(Number(body.budget_ms ?? 40_000), 60_000);
   const outOfTime = () => Date.now() - startedMs > budgetMs;
 
   const { data: conns } = await sb.from("fortnox_connections")
@@ -165,10 +165,10 @@ Deno.serve(async (req) => {
     if (outOfTime()) break;
   }
 
-  // Ofullständig körning (stor historik) → starta nästa omgång direkt, högst 60 kedjade omgångar.
+  // Ofullständig körning (stor historik) → starta nästa omgång direkt, högst 200 kedjade omgångar.
   const depth = Number(body.chain_depth ?? 0);
   const unfinished = report.some((r) => r.partial) || entities.length > report.length;
-  if (unfinished && depth < 60 && body.chain !== false) {
+  if (unfinished && depth < 200 && body.chain !== false) {
     const next = fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fortnox-ledger-sync`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-cron-secret": Deno.env.get("FORTNOX_CRON_SECRET") ?? "" },
