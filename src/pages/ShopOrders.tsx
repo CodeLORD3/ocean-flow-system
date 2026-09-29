@@ -22,6 +22,7 @@ import { ProductThumb } from "@/components/products/ProductThumb";
 import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 import { OrderPhotosButton, ORDER_PHOTO_ENTITY, ORDER_LINE_PHOTO_ENTITY } from "@/components/orders/OrderPhotos";
 import { OpenOrderEditor } from "@/components/orders/OpenOrderEditor";
+import { DeleteShopOrderButton, DELETABLE_SHOP_ORDER_STATUSES } from "@/components/orders/DeleteShopOrderButton";
 
 import DeliveryNote from "@/components/DeliveryNote";
 
@@ -265,6 +266,11 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                   </Button>
                 </div>
               )}
+              {DELETABLE_SHOP_ORDER_STATUSES.includes(o.status) && (
+                <div className="border-t border-border px-4 py-3">
+                  <DeleteShopOrderButton order={o} large />
+                </div>
+              )}
 
               {isExpanded && (
                 <div className="border-t border-border bg-card px-3 py-3">
@@ -357,6 +363,8 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                           )}
                         </td>
                         <td className="px-1.5 py-0.5 text-right">
+                          <span className="inline-flex items-center gap-1">
+                          <DeleteShopOrderButton order={o} />
                           {o.status === "Öppen" && o.open_locked_at ? (
                             <Badge variant="outline" className="border-success/30 bg-success/15 text-success text-[10px] gap-1">
                               <Lock className="h-3 w-3" /> Låst
@@ -367,6 +375,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                               {o.status}
                             </Badge>
                           )}
+                          </span>
                         </td>
                       </tr>
                       {isExpanded && (
