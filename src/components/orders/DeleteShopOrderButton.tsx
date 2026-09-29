@@ -44,7 +44,7 @@ export function DeleteShopOrderButton({ order, large = false }: { order: any; la
         aria-label="Ta bort order"
         className={large
           ? "h-14 w-full gap-2 text-[17px] border-destructive/40 text-destructive hover:bg-destructive/10"
-          : "h-5 w-5 p-0 border-destructive/40 text-destructive hover:bg-destructive/10"}
+          : "inline-flex h-5 w-5 min-w-5 shrink-0 aspect-square items-center justify-center gap-0 rounded p-0 leading-none border-destructive/40 text-destructive hover:bg-destructive/10 [&_svg]:size-3"}
         onClick={(e) => { e.stopPropagation(); setOpen(true); }}
       >
         <Trash2 className={large ? "h-5 w-5" : "h-3 w-3"} />
