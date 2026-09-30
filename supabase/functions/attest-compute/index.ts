@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
   const toIso = svenskDagSista(to).toISOString();
   let entryQuery = db
     .from("time_entries")
-    .select("id, employee_id, store_id, legal_entity_id, station_id, type, occurred_at, corrects_entry_id")
+    .select("id, employee_id, store_id, legal_entity_id, station_id, type, occurred_at, corrects_entry_id, correction_kind")
     .gte("occurred_at", fromIso)
     .lte("occurred_at", toIso)
     .order("occurred_at", { ascending: true });
@@ -99,11 +99,16 @@ Deno.serve(async (req) => {
   const { data: rawEntries, error: entryErr } = await entryQuery;
   if (entryErr) return json({ error: entryErr.message }, 500);
 
-  // Append-only-journalen: korrigerade poster räknas bort.
+  // Append-only-journalen: korrigerade poster och makuleringar räknas bort. Testpersoner attesteras aldrig.
   const corrected = new Set(
     (rawEntries ?? []).map((e) => (e as Entry).corrects_entry_id).filter(Boolean) as string[],
   );
-  const entries = (rawEntries ?? []).filter((e) => !corrected.has((e as Entry).id)) as Entry[];
+  const { data: testRows } = await db.from("employees").select("id").eq("is_test", true);
+  const testIds = new Set(((testRows ?? []) as { id: string }[]).map((r) => r.id));
+  const entries = (rawEntries ?? []).filter((e) => {
+    const row = e as Entry & { correction_kind?: string | null };
+    return !corrected.has(row.id) && row.correction_kind !== "void" && !testIds.has(row.employee_id);
+  }) as Entry[];
 
   // Stationstoleranser
   const { data: stations } = await db.from("clock_stations").select("id, profile");

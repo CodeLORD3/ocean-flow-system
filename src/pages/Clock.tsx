@@ -153,6 +153,8 @@ export default function Clock() {
       await refreshQueue();
     };
     void drain();
+    // Äldre poster i serverns felkö kan bara läsas av enheten som krypterade dem.
+    if (navigator.onLine && storedSession()) void restoreServerFailures().catch(() => 0);
     const t = setInterval(() => void refreshOnSite(), 60_000);
     const q = setInterval(() => void drain(), 30_000);
     return () => {
