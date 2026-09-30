@@ -1125,7 +1125,7 @@ export default function ShopOrders() {
                 <Separator />
                 <div className="flex items-center justify-between gap-2">
                   <div className="text-sm font-semibold text-foreground sm:text-xs sm:font-medium sm:text-muted-foreground">
-                    2. I beställningen: {orderLines.length} produkt{orderLines.length > 1 ? "er" : ""}
+                    3. I beställningen: {orderLines.length} produkt{orderLines.length > 1 ? "er" : ""}
                   </div>
                   <Button
                     variant="outline"
