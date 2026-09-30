@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStores } from "@/hooks/useStores";
 import { useEmployees } from "@/hooks/useEmployees";
+import { PkReviewPanel } from "@/components/staff/PkReviewPanel";
 import {
   DEVIATION_LABEL,
   useAttestations,
@@ -300,6 +301,7 @@ export default function Attestations() {
 
   return (
     <IndustryFrame className="ind-page space-y-6 p-4 md:p-6">
+      <PkReviewPanel />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <SectionLabel>Attest</SectionLabel>
