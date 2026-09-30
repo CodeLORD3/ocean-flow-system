@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from "@/lib/unsavedChanges";
 import { useMemo, useState } from "react";
 import { FileSignature, Plus, Trash2, ArrowUp, ArrowDown, Send, Eye, X, RotateCcw, Download, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -156,6 +157,7 @@ function ContractEditor({ contract, templateSections, onClose }: { contract: Emp
   };
 
   const run = async (a: "send" | "cancel" | "preview" | "refresh") => {
+
     // iPhone blockerar fönster som öppnas efter await — öppna direkt, sätt adressen sen.
     const win = a === "preview" ? window.open("", "_blank") : null;
     try {
