@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PackageCheck, Send, ShoppingBasket, Truck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { NumberField } from "@/components/ui/number-field";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useSite } from "@/contexts/SiteContext";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
@@ -158,13 +159,13 @@ export default function StoreOrderToday() {
                 {l.comment ? ` · ${l.comment}` : ""}
               </p>
               <div className="flex items-center gap-3">
-                <Input
-                  defaultValue={String(l.quantity_ordered).replace(".", ",")}
+                <NumberField
+                  value={l.quantity_ordered}
                   onBlur={(e) => {
-                    const v = Number(e.target.value.replace(",", "."));
+                    const v = Number(e.target.value.replace(",", ".")) || 0;
                     if (v > 0) updateLine.mutate({ lineId: l.id, quantity: v, comment: l.comment });
                   }}
-                  className="h-14 w-24 min-h-[56px] text-center text-[19px] tabular-nums"
+                  className="h-14 sm:h-14 w-24 min-h-[56px] text-center text-[19px] tabular-nums"
                 />
                 <span className="text-[17px] text-muted-foreground">{l.unit}</span>
                 <button
@@ -258,10 +259,10 @@ export default function StoreOrderToday() {
                       Skickat {fmtQty(Number(l.quantity_shipped ?? 0), l.unit)}
                     </span>
                   </span>
-                  <Input
+                  <NumberField
                     value={received[l.id] ?? String(l.quantity_shipped ?? 0).replace(".", ",")}
-                    onChange={(e) => setReceived({ ...received, [l.id]: e.target.value })}
-                    className="h-14 w-24 min-h-[56px] text-center text-[19px] tabular-nums"
+                    onValueChange={(raw) => setReceived({ ...received, [l.id]: raw })}
+                    className="h-14 sm:h-14 w-24 min-h-[56px] text-center text-[19px] tabular-nums"
                   />
                 </div>
               ))}

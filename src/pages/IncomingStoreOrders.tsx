@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, Package, Send, Truck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { NumberField } from "@/components/ui/number-field";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -86,12 +87,12 @@ function PickRow({
               {lot.bestBefore ? ` · bäst före ${lot.bestBefore}` : ""} ·{" "}
               <span className="tabular-nums text-muted-foreground">{lot.quantityKg} kg</span>
             </span>
-            <Input
+            <NumberField
               disabled={disabled}
               value={values[lot.lotId ?? "none"] ?? ""}
-              onChange={(e) => setValues({ ...values, [lot.lotId ?? "none"]: e.target.value })}
+              onValueChange={(raw) => setValues({ ...values, [lot.lotId ?? "none"]: raw.replace(",", ".") })}
               placeholder="vägd vikt"
-              className="h-9 w-28 text-right tabular-nums"
+              className="h-9 sm:h-9 w-28 text-right tabular-nums"
             />
           </div>
         ))}
@@ -231,12 +232,12 @@ export default function IncomingStoreOrders() {
                             önskat {l.quantity_ordered} {l.unit}
                           </span>
                           {o.status === "skickad" && (
-                            <Input
+                            <NumberField
                               value={quantities[l.id] ?? String(l.quantity_ordered)}
-                              onChange={(e) =>
-                                setQuantities({ ...quantities, [l.id]: e.target.value })
+                              onValueChange={(raw) =>
+                                setQuantities({ ...quantities, [l.id]: raw })
                               }
-                              className="h-9 w-24 text-right tabular-nums"
+                              className="h-9 sm:h-9 w-24 text-right tabular-nums"
                             />
                           )}
                           <Badge variant={l.line_status === "avvisad" ? "destructive" : "outline"}>
