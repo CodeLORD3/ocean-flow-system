@@ -335,6 +335,13 @@ export async function resolveSelfPunch(
       for (const w of wps ?? []) if (w.store_id) storeIds.add(w.store_id as string);
     }
   }
+  // Plattformsadministratörer får testa mobilstämpling på alla arbetsplatser där den är påslagen
+  // (geofence gäller fortfarande).
+  const { data: adminRole } = await db.from("user_roles").select("role").eq("user_id", userId).eq("role", "platform_admin").maybeSingle();
+  if (adminRole) {
+    const { data: openSites } = await db.from("work_sites").select("store_id").eq("is_active", true).eq("mobile_self_punch", true);
+    for (const s of openSites ?? []) if (s.store_id) storeIds.add(s.store_id as string);
+  }
   if (storeIds.size === 0) return { error: "Mobilstämpling är inte öppen för dig.", status: 403 };
 
   const { data: sites } = await db
