@@ -32,6 +32,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { edgeErrorMessage } from "@/lib/edgeError";
 import { useSite } from "@/contexts/SiteContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -274,8 +275,8 @@ export default function Receiving() {
             : undefined,
         );
       } catch (err) {
-
         console.error("Stock transfer to Raw-lager error:", err);
+        toast({ title: "Lagret kunde inte flyttas till butiken", description: await edgeErrorMessage(err, "Mottagningen sparades men lagret flyttades inte. Kontakta grossisten innan du tar emot igen."), variant: "destructive" });
       }
 
       // Bäst före och ankomstdatum hör till partiet, inte till lagerplatsraden.
@@ -299,7 +300,10 @@ export default function Receiving() {
             _location_id: rawLocation.id,
             _best_before: report.expiry_date || null,
           });
-          if (linkErr) console.error("receiving_link_lot:", linkErr);
+          if (linkErr) {
+            console.error("receiving_link_lot:", linkErr);
+            toast({ title: "Partiet kunde inte kopplas", description: `${line.products?.name ?? "Vara"}: ${linkErr.message}`, variant: "destructive" });
+          }
         }
       }
 
