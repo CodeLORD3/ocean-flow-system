@@ -11741,6 +11741,69 @@ export type Database = {
           },
         ]
       }
+      pk_time_imports: {
+        Row: {
+          created_at: string
+          employee_id: string | null
+          hours: number | null
+          identifier: string | null
+          imported_start: string | null
+          imported_stop: string | null
+          in_entry_id: string | null
+          message: string | null
+          moved_from_admin: boolean
+          pk_logged_time_id: string
+          pk_start: string | null
+          pk_stop: string | null
+          status: string
+          store_id: string | null
+          updated_at: string
+          ut_entry_id: string | null
+          work_date: string | null
+          work_site_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          employee_id?: string | null
+          hours?: number | null
+          identifier?: string | null
+          imported_start?: string | null
+          imported_stop?: string | null
+          in_entry_id?: string | null
+          message?: string | null
+          moved_from_admin?: boolean
+          pk_logged_time_id: string
+          pk_start?: string | null
+          pk_stop?: string | null
+          status: string
+          store_id?: string | null
+          updated_at?: string
+          ut_entry_id?: string | null
+          work_date?: string | null
+          work_site_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string | null
+          hours?: number | null
+          identifier?: string | null
+          imported_start?: string | null
+          imported_stop?: string | null
+          in_entry_id?: string | null
+          message?: string | null
+          moved_from_admin?: boolean
+          pk_logged_time_id?: string
+          pk_start?: string | null
+          pk_stop?: string | null
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+          ut_entry_id?: string | null
+          work_date?: string | null
+          work_site_id?: string | null
+        }
+        Relationships: []
+      }
       pk_work_periods: {
         Row: {
           additional_salaries: Json | null
@@ -21875,6 +21938,8 @@ export type Database = {
         Row: {
           created_at: string
           employee_id: string | null
+          handled_at: string | null
+          handled_note: string | null
           id: string
           legal_entity_id: string | null
           minutes: number
@@ -21888,6 +21953,8 @@ export type Database = {
         Insert: {
           created_at?: string
           employee_id?: string | null
+          handled_at?: string | null
+          handled_note?: string | null
           id?: string
           legal_entity_id?: string | null
           minutes?: number
@@ -21901,6 +21968,8 @@ export type Database = {
         Update: {
           created_at?: string
           employee_id?: string | null
+          handled_at?: string | null
+          handled_note?: string | null
           id?: string
           legal_entity_id?: string | null
           minutes?: number
@@ -23378,6 +23447,7 @@ export type Database = {
           work_time_sec: number
         }[]
       }
+      pk_import_run: { Args: { _from?: string }; Returns: Json }
       pk_mapped_stores: {
         Args: never
         Returns: {
