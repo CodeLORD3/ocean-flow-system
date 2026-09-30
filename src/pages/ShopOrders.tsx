@@ -43,6 +43,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format, getDay } from "date-fns";
+import { sv } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
@@ -797,8 +798,8 @@ export default function ShopOrders() {
   const handleCreateOrder = async (asOpen = false) => {
     const validLines = orderLines.filter(l => l.quantity && Number(l.quantity) > 0);
     if (validLines.length === 0) return;
-    if (!desiredDeliveryDate && !asOpen) {
-      toast({ title: "Välj avgångsdatum", description: "Du måste välja ett avgångsdatum innan du kan skicka beställningen.", variant: "destructive" });
+    if (!desiredDeliveryDate) {
+      toast({ title: "Välj leveransdag", description: "Du måste välja leveransdag innan beställningen kan sparas.", variant: "destructive" });
       return;
     }
 
@@ -945,6 +946,38 @@ export default function ShopOrders() {
             </div>
           </CardHeader>
           <CardContent className="min-h-0 flex-1 space-y-4 overflow-y-auto pb-2 sm:overflow-visible">
+            {/* Steg 1: leveransdag krävs innan varor kan väljas */}
+            <div className="space-y-1.5 rounded-md border border-primary/30 bg-primary/5 p-3">
+              <Label className="text-sm font-semibold sm:text-xs">
+                1. Välj leveransdag <span className="text-destructive">*</span>
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn("h-12 w-full justify-start text-left font-normal sm:h-9 sm:text-xs", !desiredDeliveryDate && "text-muted-foreground")}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {desiredDeliveryDate ? format(desiredDeliveryDate, "EEEE d MMMM yyyy", { locale: sv }) : "Välj leveransdag…"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={desiredDeliveryDate}
+                    onSelect={(d) => { setDesiredDeliveryDate(d); if (d) setTimeout(() => searchInputRef.current?.focus({ preventScroll: true }), 80); }}
+                    disabled={isDateDisabled}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              {!desiredDeliveryDate && (
+                <p className="text-xs text-muted-foreground">Välj leveransdag först — sedan kan du lägga till varor.</p>
+              )}
+            </div>
+
+            <div className={cn("space-y-4", !desiredDeliveryDate && "hidden")}>
             {/* Copy last order + Product search */}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sticky top-0 z-20 bg-card pb-2 sm:static sm:bg-transparent sm:pb-0">
               <div className="relative flex-1">
@@ -1530,6 +1563,7 @@ export default function ShopOrders() {
                   <ShoppingCart className="h-3.5 w-3.5" /> Skicka beställning
                 </Button>
               </div>
+            </div>
             </div>
 
             {/* Confirmation dialog */}

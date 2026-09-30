@@ -379,7 +379,12 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
       )}
 
       {/* Produktsök */}
-      <div className={cn("relative", isLocked && "hidden")}>
+      {!isLocked && !order.desired_delivery_date && (
+        <div className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
+          Välj leveransdag nedan innan du lägger till fler varor.
+        </div>
+      )}
+      <div className={cn("relative", (isLocked || !order.desired_delivery_date) && "hidden")}>
         <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
