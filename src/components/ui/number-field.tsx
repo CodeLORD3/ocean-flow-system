@@ -33,8 +33,8 @@ export const NumberField = React.forwardRef<HTMLInputElement, Props>(
     // Egen textbuffert så att "2," och "-" går att skriva även när föräldern sparar ett tal.
     const [text, setText] = React.useState(() => show(value));
     React.useEffect(() => {
-      if (typeof value === "string") { setText(value); return; }
-      if (parseNumber(text) !== (value ?? null)) setText(show(value));
+      // Byt bara text när värdet verkligen ändrats utifrån ("2," och "2." är samma tal).
+      if (parseNumber(text) !== parseNumber(value)) setText(show(value));
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [value]);
     return (
