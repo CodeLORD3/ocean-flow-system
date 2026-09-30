@@ -958,7 +958,7 @@ export default function ShopOrders() {
                   Sök produkt, skriv antal — och fortsätt söka nästa produkt. Allt du lägger till hamnar i
                   <strong className="text-foreground"> samma beställning</strong>. Skicka först när allt är med.
                 </CardDescription>
-                <CardDescription className="text-[15px] sm:hidden">
+                <CardDescription className="text-[15px] group-data-[kb=true]:hidden sm:hidden">
                   Sök en produkt, skriv antal, sök nästa. Allt hamnar i samma beställning.
                 </CardDescription>
               </div>
