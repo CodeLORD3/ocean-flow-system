@@ -105,11 +105,11 @@ export function SelfPunchCard() {
   return (
     <Card id={SELF_PUNCH_ANCHOR} className="scroll-mt-20">
       <CardContent className="p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-primary" />
+        <div className="flex items-center gap-3">
+          <Clock className="h-7 w-7 shrink-0 text-primary" />
           <div className="min-w-0">
-            <p className="font-semibold text-foreground">Stämpla</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-lg font-semibold leading-tight text-foreground">Stämpla</p>
+            <p className="text-base font-medium text-foreground">
               {status.last_type === "rast_start"
                 ? "På rast"
                 : inShift && status.punched_in_since
@@ -118,26 +118,26 @@ export function SelfPunchCard() {
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button size="lg" className="flex-1 min-w-[140px]" disabled={busy} onClick={() => punch(primary)}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <MapPin className="h-4 w-4 mr-1" />}
+        <div className="flex flex-col gap-3">
+          <Button className="h-16 w-full text-xl font-semibold" disabled={busy} onClick={() => punch(primary)}>
+            {busy ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : <MapPin className="h-6 w-6 mr-2" />}
             {LABEL[primary]}
           </Button>
           {(status.last_type === "in" || status.last_type === "rast_slut") && (
-            <Button size="lg" variant="outline" disabled={busy} onClick={() => punch("rast_start")}>Börja rast</Button>
+            <Button variant="outline" className="h-14 w-full text-lg" disabled={busy} onClick={() => punch("rast_start")}>Börja rast</Button>
           )}
         </div>
         {message && (
-          <p className={`text-sm ${message.tone === "error" ? "text-destructive" : "text-success"}`}>{message.text}</p>
+          <p role="status" className={`text-base font-medium ${message.tone === "error" ? "text-destructive" : "text-success"}`}>{message.text}</p>
         )}
         {locationDenied && (
-          <div className="rounded-md border border-border bg-muted/40 p-3 text-sm space-y-2">
+          <div className="rounded-md border border-border bg-muted/40 p-3 text-base space-y-2">
             <p className="font-semibold">Så slår du på platstjänsten</p>
             <p><span className="font-medium">iPhone:</span> Inställningar → Integritet och säkerhet → Platstjänster → Safari-webbplatser → Vid användning. Öppna sedan appen igen.</p>
             <p><span className="font-medium">Android:</span> Chrome → ⋮ → Inställningar → Webbplatsinställningar → Plats → tillåt den här webbplatsen.</p>
           </div>
         )}
-        <p className="text-xs text-muted-foreground">Din position kontrolleras mot butiken vid varje stämpling.</p>
+        <p className="text-sm text-muted-foreground">Din position kontrolleras mot butiken vid varje stämpling.</p>
       </CardContent>
     </Card>
   );

@@ -70,7 +70,7 @@ export function OverviewQuickBar({
   /** Grön ruta när rapporten är klar, annars vanlig ljus ruta. */
   const boxClass = (done: boolean) =>
     cn(
-      "flex items-center gap-3 rounded-2xl border px-5 py-5 text-left shadow-sm transition",
+      "flex min-h-[64px] items-center gap-3 rounded-2xl border px-4 py-4 text-left shadow-sm transition sm:px-5 sm:py-5",
       done
         ? "border-emerald-500/50 bg-emerald-50 ring-1 ring-emerald-500/40 hover:bg-emerald-100 dark:bg-emerald-500/10"
         : "border-border bg-card ring-1 ring-primary/30 hover:bg-muted",
@@ -110,7 +110,7 @@ export function OverviewQuickBar({
             </span>
             <span
               className={cn(
-                "block text-xs",
+                "block text-sm sm:text-xs",
                 dailyDone ? "text-emerald-700/80 dark:text-emerald-300/80" : "text-muted-foreground",
               )}
             >
@@ -135,7 +135,7 @@ export function OverviewQuickBar({
             </span>
             <span
               className={cn(
-                "block text-xs",
+                "block text-sm sm:text-xs",
                 countDone ? "text-emerald-700/80 dark:text-emerald-300/80" : "text-muted-foreground",
               )}
             >
@@ -149,12 +149,12 @@ export function OverviewQuickBar({
         <button
           type="button"
           onClick={openTasks}
-          className="flex items-center gap-3 rounded-2xl border border-border bg-primary px-5 py-5 text-left text-primary-foreground shadow-sm transition hover:brightness-110"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-primary px-4 py-4 text-left text-primary-foreground sm:px-5 sm:py-5 shadow-sm transition hover:brightness-110"
         >
           <ClipboardList className="h-7 w-7 shrink-0" />
           <span className="min-w-0">
             <span className="block font-heading text-lg font-semibold leading-tight">Dagens uppgifter</span>
-            <span className="block text-xs tabular-nums opacity-80">
+            <span className="block text-sm tabular-nums opacity-90 sm:text-xs">
               {total - done} kvar av {total}
             </span>
           </span>
@@ -163,12 +163,12 @@ export function OverviewQuickBar({
           <button
             type="button"
             onClick={() => document.getElementById(SELF_PUNCH_ANCHOR)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-            className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-5 text-left shadow-sm transition hover:bg-muted"
+            className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-4 text-left shadow-sm transition hover:bg-muted sm:px-5 sm:py-5"
           >
             <Clock className="h-7 w-7 shrink-0 text-primary" />
             <span className="min-w-0">
               <span className="block font-heading text-lg font-semibold leading-tight">{punchLabel}</span>
-              <span className="block text-xs text-muted-foreground">{punchSub}</span>
+              <span className="block text-sm text-muted-foreground sm:text-xs">{punchSub}</span>
             </span>
           </button>
         )}
@@ -177,7 +177,7 @@ export function OverviewQuickBar({
 
       <div className="rounded-2xl border border-border bg-card px-4 py-3">
         <div className="flex items-end justify-between">
-          <p className="text-xs text-muted-foreground">Klart idag</p>
+          <p className="text-sm text-muted-foreground sm:text-xs">Klart idag</p>
           <p className={cn("font-heading text-3xl font-semibold tabular-nums leading-none", t.text)}>{pct} %</p>
         </div>
         {bars.length > 0 ? (
@@ -198,7 +198,7 @@ export function OverviewQuickBar({
             <div className={cn("h-full rounded-full", t.bar)} style={{ width: `${Math.min(100, pct)}%` }} />
           </div>
         )}
-        <p className="mt-1.5 text-[11px] tabular-nums text-muted-foreground">
+        <p className="mt-1.5 text-sm tabular-nums sm:text-[11px] text-muted-foreground">
           {done} av {total} uppgifter avbockade
         </p>
       </div>
