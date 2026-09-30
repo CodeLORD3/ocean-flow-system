@@ -306,11 +306,13 @@ export async function resolveSelfPunch(
   for (const e of emps ?? []) {
     if (e.store_id && e.is_active !== false && (!e.end_date || String(e.end_date) >= today)) storeIds.add(e.store_id as string);
   }
-  // Planerat pass i butiken inom ±14 dagar.
-  const shiftFrom = addDaysIso(today, -14);
+  // Planerat pass i butiken 30 dagar bakåt till 14 dagar framåt (schema och butikens planerade pass).
+  const shiftFrom = addDaysIso(today, -30);
   const shiftTo = addDaysIso(today, 14);
   const { data: shifts } = await db.from("shifts").select("store_id").eq("employee_id", emp.id).gte("date", shiftFrom).lte("date", shiftTo);
   for (const s of shifts ?? []) if (s.store_id) storeIds.add(s.store_id as string);
+  const { data: planned } = await db.from("staff_planned_shifts").select("store_id").eq("staff_id", staff.id).gte("shift_date", shiftFrom).lte("shift_date", shiftTo);
+  for (const s of planned ?? []) if (s.store_id) storeIds.add(s.store_id as string);
   // Personalkollen-tid i butiken senaste 60 dagarna (via kostnadsställe eller arbetsplats).
   const { data: pkStaff } = await db.from("pk_staff").select("url, connection_id").eq("employee_id", emp.id);
   if (pkStaff?.length) {
