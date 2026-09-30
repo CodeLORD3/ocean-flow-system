@@ -11744,7 +11744,12 @@ export type Database = {
       pk_time_imports: {
         Row: {
           created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision: string | null
           employee_id: string | null
+          entry_ids: string[]
+          fingerprint: string | null
           hours: number | null
           identifier: string | null
           imported_start: string | null
@@ -11752,7 +11757,14 @@ export type Database = {
           in_entry_id: string | null
           message: string | null
           moved_from_admin: boolean
+          own_in_id: string | null
+          own_minutes: number | null
+          own_start: string | null
+          own_stop: string | null
+          own_ut_id: string | null
+          pending: Json | null
           pk_logged_time_id: string
+          pk_minutes: number | null
           pk_start: string | null
           pk_stop: string | null
           status: string
@@ -11764,7 +11776,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
           employee_id?: string | null
+          entry_ids?: string[]
+          fingerprint?: string | null
           hours?: number | null
           identifier?: string | null
           imported_start?: string | null
@@ -11772,7 +11789,14 @@ export type Database = {
           in_entry_id?: string | null
           message?: string | null
           moved_from_admin?: boolean
+          own_in_id?: string | null
+          own_minutes?: number | null
+          own_start?: string | null
+          own_stop?: string | null
+          own_ut_id?: string | null
+          pending?: Json | null
           pk_logged_time_id: string
+          pk_minutes?: number | null
           pk_start?: string | null
           pk_stop?: string | null
           status: string
@@ -11784,7 +11808,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
           employee_id?: string | null
+          entry_ids?: string[]
+          fingerprint?: string | null
           hours?: number | null
           identifier?: string | null
           imported_start?: string | null
@@ -11792,7 +11821,14 @@ export type Database = {
           in_entry_id?: string | null
           message?: string | null
           moved_from_admin?: boolean
+          own_in_id?: string | null
+          own_minutes?: number | null
+          own_start?: string | null
+          own_stop?: string | null
+          own_ut_id?: string | null
+          pending?: Json | null
           pk_logged_time_id?: string
+          pk_minutes?: number | null
           pk_start?: string | null
           pk_stop?: string | null
           status?: string
@@ -23447,7 +23483,15 @@ export type Database = {
           work_time_sec: number
         }[]
       }
-      pk_import_run: { Args: { _from?: string }; Returns: Json }
+      pk_import_decide: {
+        Args: { _decision: string; _pk_logged_time_id: string }
+        Returns: Json
+      }
+      pk_import_run: { Args: { _from?: string; _only?: string }; Returns: Json }
+      pk_link_staff: {
+        Args: { _employee_id: string; _pk_staff_id: string }
+        Returns: Json
+      }
       pk_mapped_stores: {
         Args: never
         Returns: {
@@ -23469,6 +23513,17 @@ export type Database = {
           work_time_sec: number
         }[]
       }
+      pk_own_journal: {
+        Args: { _emp: string; _from: string; _to: string }
+        Returns: {
+          e: string
+          in_id: string
+          kind: string
+          s: string
+          ut_id: string
+        }[]
+      }
+      pk_reconcile_check: { Args: { _ts?: string }; Returns: Json }
       pnr_hash: { Args: { _pnr: string }; Returns: string }
       pos_apply_markdowns: { Args: never; Returns: number }
       pos_create_override: {
@@ -23866,6 +23921,7 @@ export type Database = {
       }
       sumup_name_key: { Args: { _name: string }; Returns: string }
       svensk_dag: { Args: { _grans?: string; _ts: string }; Returns: string }
+      te_effective_leaf: { Args: { _id: string }; Returns: string }
       trace_lot_to_invoices: {
         Args: { _lot_id: string }
         Returns: {
