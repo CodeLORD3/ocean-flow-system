@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from "@/lib/unsavedChanges";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { purchaseDateFor } from "@/lib/purchaseLead";
 import { useCustomerDemand, type CustomerDemand } from "@/hooks/useCustomerDemand";
@@ -218,6 +219,7 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
     refresh();
   };
 
+  useUnsavedChanges(Object.keys(drafts).length > 0);
   const saveQty = async (line: any, value: string) => {
     const qty = Number(String(value).replace(",", "."));
     if (!value || !isFinite(qty) || qty <= 0) return;

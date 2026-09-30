@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from "@/lib/unsavedChanges";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -126,6 +127,7 @@ export default function FoodSafety() {
   };
 
   /** close skickas som argument — state hinner inte uppdateras före sparningen. */
+  useUnsavedChanges(!!devForm || Object.values(values).some((v) => !!v));
   const doSaveDeviation = async (close = false) => {
     if (!devForm?.description?.trim()) {
       toast.error("Avvikelsen behöver en beskrivning.");

@@ -156,8 +156,8 @@ function ContractEditor({ contract, templateSections, onClose }: { contract: Emp
     toast({ title: "Avtalet är sparat" });
   };
 
+  useUnsavedChanges(!!dirty && !locked);
   const run = async (a: "send" | "cancel" | "preview" | "refresh") => {
-
     // iPhone blockerar fönster som öppnas efter await — öppna direkt, sätt adressen sen.
     const win = a === "preview" ? window.open("", "_blank") : null;
     try {
