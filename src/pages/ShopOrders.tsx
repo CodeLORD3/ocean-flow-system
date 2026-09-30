@@ -198,7 +198,8 @@ const DONE_STATUSES = ["Levererad", "Klar / Levererad", "Arkiverad", "Avbruten"]
 
 const FOLLJESEDEL_STATUSES = ["Skickad", "Levererad", "Klar / Levererad", "Arkiverad"];
 
-function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDateDisabled }: {
+function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDateDisabled, onCopy }: {
+  onCopy?: (order: any) => void;
   orders: any[];
   emptyMsg: string;
   products: any[];
@@ -304,6 +305,17 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                     onClick={(e) => { e.stopPropagation(); setFolljesedelOrder(o); }}
                   >
                     <FileText className="h-5 w-5" /> Skriv ut följesedel
+                  </Button>
+                </div>
+              )}
+              {onCopy && (
+                <div className="border-t border-border px-4 py-3">
+                  <Button
+                    variant="outline"
+                    className="h-14 w-full gap-2 text-[17px]"
+                    onClick={(e) => { e.stopPropagation(); onCopy(o); }}
+                  >
+                    <Copy className="h-5 w-5" /> Kopiera
                   </Button>
                 </div>
               )}
@@ -421,6 +433,17 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                               {o.status}
                             </Badge>
                           )}
+                          {onCopy && (
+                            <button
+                              type="button"
+                              title="Kopiera till ny beställning"
+                              aria-label="Kopiera"
+                              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                              onClick={(e) => { e.stopPropagation(); onCopy(o); }}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center">
                             <DeleteShopOrderButton order={o} />
                           </span>
@@ -431,6 +454,13 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                         <tr>
                           <td colSpan={9} className="p-0">
                             <div className="border-l-2 border-l-primary bg-card px-3 py-2 space-y-2">
+                              {onCopy && (
+                                <div className="flex justify-end">
+                                  <Button size="sm" variant="outline" className="h-7 gap-1.5 text-xs" onClick={() => onCopy(o)}>
+                                    <Copy className="h-3.5 w-3.5" /> Kopiera
+                                  </Button>
+                                </div>
+                              )}
                               {o.status === "Öppen" ? (
                                 <OpenOrderEditor
                                   order={o}
@@ -770,6 +800,71 @@ export default function ShopOrders() {
     setFocusProductId(p.id);
   };
 
+  /**
+   * Kopiering: samma varor och mängder som grund. Varor som inte längre kan
+   * beställas (inaktiva eller kategori dold för butiken) tas bort och listas.
+   * Priser läses alltid från dagens prislista; status, packning, levererat,
+   * avvikelser och prioritet följer inte med.
+   */
+  const [copySource, setCopySource] = useState<any | null>(null);
+  const [copyDropped, setCopyDropped] = useState<string[]>([]);
+  const applyCopy = (src: any) => {
+    const byId = new Map(products.map((p: any) => [p.id, p]));
+    const dropped: string[] = [];
+    const lines: OrderLine[] = [];
+    for (const l of src?.shop_order_lines ?? []) {
+      const p: any = byId.get(l.product_id);
+      if (!p || !isCategoryVisible(p.category)) {
+        dropped.push(l.products?.name || p?.name || "Okänd vara");
+        continue;
+      }
+      if (lines.some((x) => x.product_id === p.id)) continue;
+      lines.push({
+        product_id: p.id,
+        product_name: p.name,
+        unit: l.unit || p.unit || "ST",
+        quantity: l.quantity_ordered ? String(l.quantity_ordered) : "",
+        category: p.category || null,
+        image_url: p.image_url ?? null,
+        priority: "nice" as LinePriority,
+        priorityQty: "",
+        priorityNote: "",
+      });
+    }
+    setOrderLines(lines);
+    setCopyDropped(dropped);
+    toast({
+      title: "Beställning kopierad",
+      description: `${lines.length} varor tillagda${dropped.length ? `, ${dropped.length} kunde inte tas med` : ""}. Inget är skickat.`,
+    });
+  };
+  const startCopy = (src: any) => {
+    setOrderLines([]);
+    setOrderNote("");
+    setDesiredDeliveryDate(undefined);
+    setCopyDropped([]);
+    setCopySource(src);
+    setCreatingOrder(true);
+  };
+  useEffect(() => {
+    if (!copySource || !desiredDeliveryDate) return;
+    applyCopy(copySource);
+    setCopySource(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [copySource, desiredDeliveryDate]);
+  /** Senaste beställning med samma leveransveckodag som vald leveransdag. */
+  const sameWeekdayOrder = useMemo(() => {
+    if (!desiredDeliveryDate) return null;
+    const wd = getDay(desiredDeliveryDate);
+    const pick = format(desiredDeliveryDate, "yyyy-MM-dd");
+    return (
+      orders
+        .filter((o: any) => o.desired_delivery_date && o.desired_delivery_date !== pick && o.shop_order_lines?.length &&
+          getDay(new Date(o.desired_delivery_date + "T00:00:00")) === wd)
+        .sort((a: any, b: any) => String(b.desired_delivery_date).localeCompare(String(a.desired_delivery_date)))[0] ?? null
+    );
+  }, [orders, desiredDeliveryDate]);
+
   // Efter att en produkt lagts till: hoppa direkt till antal-fältet.
   // Ett försök per tillagd produkt — fokus får aldrig hänga kvar och trigga om effekten.
   useEffect(() => {
@@ -954,6 +1049,7 @@ export default function ShopOrders() {
       {/* Aktiva beställningar — tidigare ordrar visas inte i butiksportalen */}
       {!creatingOrder && (
         <OrderTable
+          onCopy={startCopy}
           orders={liveOrders}
           products={products}
           toast={toast}
@@ -1021,7 +1117,29 @@ export default function ShopOrders() {
                 </PopoverContent>
               </Popover>
               {!desiredDeliveryDate && (
-                <p className="text-xs text-muted-foreground">Välj leveransdag först — sedan kan du lägga till varor.</p>
+                <p className="text-xs text-muted-foreground">
+                  {copySource ? "Välj leveransdag för kopian — sedan läggs varorna in så att du kan ändra dem." : "Välj leveransdag först — sedan kan du lägga till varor."}
+                </p>
+              )}
+              {desiredDeliveryDate && sameWeekdayOrder && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12 w-full justify-start gap-2 text-sm sm:h-8 sm:w-auto sm:text-xs"
+                  onClick={() => applyCopy(sameWeekdayOrder)}
+                >
+                  <Copy className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                  Samma som förra {format(desiredDeliveryDate, "EEEE", { locale: sv })} ({format(new Date(sameWeekdayOrder.desired_delivery_date + "T00:00:00"), "d MMM", { locale: sv })})
+                </Button>
+              )}
+              {copyDropped.length > 0 && (
+                <div className="rounded-md border border-warning/40 bg-warning/10 p-2 text-xs">
+                  <div className="font-semibold">Kunde inte tas med (går inte längre att beställa):</div>
+                  <ul className="mt-1 list-disc pl-4">
+                    {copyDropped.map((n, i) => <li key={i}>{n}</li>)}
+                  </ul>
+                  <button type="button" className="mt-1 underline" onClick={() => setCopyDropped([])}>Dölj</button>
+                </div>
               )}
             </div>
 
@@ -1107,20 +1225,7 @@ export default function ShopOrders() {
                     toast({ title: "Ingen rader att kopiera", variant: "destructive" });
                     return;
                   }
-                  const copied: OrderLine[] = picked.shop_order_lines.map((l: any) => ({
-                    product_id: l.product_id,
-                    product_name: l.products?.name || "–",
-                    unit: l.unit || l.products?.unit || "ST",
-                    quantity: String(l.quantity_ordered || ""),
-                    category: l.products?.category || null,
-                    image_url: l.products?.image_url ?? null,
-                    priority: normalizePriority(l.priority),
-                    priorityQty: l.priority_qty != null ? String(l.priority_qty) : "",
-                    priorityNote: l.priority_note || "",
-                  }));
-
-                  setOrderLines(copied);
-                  toast({ title: "Order kopierad", description: `${copied.length} produkter tillagda från vecka ${displayOrderWeek(picked)}` });
+                  applyCopy(picked);
                 }}
               >
                 <SelectTrigger className="h-8 text-xs w-auto gap-1.5 whitespace-nowrap" disabled={orders.length === 0}>
