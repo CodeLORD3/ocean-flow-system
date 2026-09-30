@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { svenskDatum } from "@/lib/swedishTime";
 import type { MapTask } from "@/hooks/useStoreMap";
 
 /** Alltid grönt — stapeln visar hur mycket som är klart. */
@@ -24,7 +25,7 @@ export function OverviewQuickBar({
   day?: string;
 }) {
   const navigate = useNavigate();
-  const date = day || new Date().toISOString().slice(0, 10);
+  const date = day || svenskDatum();
 
   /** Är dagsrapporten skriven för dagen? Då lyser knappen grön. */
   const { data: dailyDone = false } = useQuery({

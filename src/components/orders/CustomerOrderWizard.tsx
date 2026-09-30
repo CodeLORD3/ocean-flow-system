@@ -1,3 +1,4 @@
+import { svenskDatum } from "@/lib/swedishTime";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -128,7 +129,7 @@ export function CustomerOrderWizard({
   const [status, setStatus] = useState("ny");
   const [orderType, setOrderType] = useState<OrderType>("upphamtning");
   const [address, setAddress] = useState({ street: "", postal_code: "", city: "" });
-  const [wantedDate, setWantedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [wantedDate, setWantedDate] = useState(() => svenskDatum());
   const [wantedTime, setWantedTime] = useState("");
   const [source, setSource] = useState("telefon");
   const [guestCount, setGuestCount] = useState("");
