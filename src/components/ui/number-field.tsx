@@ -7,14 +7,16 @@ type Props = Omit<React.ComponentProps<"input">, "type" | "onChange" | "value"> 
   value?: string | number | null;
   /** Heltal (styck) ger sifferbord utan decimaltecken. */
   integer?: boolean;
+  /** Tillåt minus (t.ex. frystemperatur, banksaldo). iPhones decimalbord saknar minus, därför textbord. */
+  allowNegative?: boolean;
   onValueChange?: (raw: string, parsed: number | null) => void;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
 };
 
-/** Tolkar svenskt tal, "1,5" → 1.5. Tomt fält ger null. */
-export const parseNumber = (raw: string): number | null => {
-  const t = String(raw ?? "").replace(/\s/g, "").replace(",", ".").trim();
-  if (t === "") return null;
+/** Tolkar svenskt tal, "1,5" → 1.5, "−2,5" → -2.5. Tomt fält ger null. */
+export const parseNumber = (raw: string | number | null | undefined): number | null => {
+  const t = String(raw ?? "").replace(/\s/g, "").replace(/[−–]/g, "-").replace(",", ".").trim();
+  if (t === "" || t === "-" || t === ".") return null;
   const n = Number(t);
   return Number.isFinite(n) ? n : null;
 };
@@ -24,12 +26,16 @@ export const parseNumber = (raw: string): number | null => {
  * och komma tillåtet. Större tryckyta på mobil, kompakt på dator.
  */
 export const NumberField = React.forwardRef<HTMLInputElement, Props>(
-  ({ className, integer, value, onValueChange, onChange, ...rest }, ref) => (
+  ({ className, integer, allowNegative, value, onValueChange, onChange, ...rest }, ref) => (
     <Input
       ref={ref}
       type="text"
-      inputMode={integer ? "numeric" : "decimal"}
-      pattern={integer ? "[0-9]*" : "[0-9]*[.,]?[0-9]*"}
+      inputMode={allowNegative ? "text" : integer ? "numeric" : "decimal"}
+      pattern={
+        allowNegative
+          ? integer ? "-?[0-9]*" : "-?[0-9]*[.,]?[0-9]*"
+          : integer ? "[0-9]*" : "[0-9]*[.,]?[0-9]*"
+      }
       autoComplete="off"
       enterKeyHint="done"
       value={value === null || value === undefined ? "" : String(value)}
