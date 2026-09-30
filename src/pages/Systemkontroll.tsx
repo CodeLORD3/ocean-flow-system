@@ -81,7 +81,7 @@ export default function Systemkontroll() {
       </div>
 
       <div className="border rounded-md px-3 py-2 text-sm">
-        <span className="font-medium">Nattlig utloggning 03:30</span>
+        <span className="font-medium">Nattlig utloggning 04:30</span>
         <span className="text-muted-foreground">
           {logout
             ? ` · senaste ${fmt(logout.ran_at)} · ${logout.sessions_ended} inloggningar avslutade · ${logout.oauth_sessions_kept} agentkopplingar behölls`
