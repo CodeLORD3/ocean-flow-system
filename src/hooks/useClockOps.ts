@@ -46,6 +46,7 @@ export function useWrongSystemPunches(from: string, to: string) {
         .select("id, store_id, legal_entity_id, employee_id, pk_staff_name, work_date, punch_count, minutes")
         .gte("work_date", from)
         .lte("work_date", to)
+        .is("handled_at" as never, null)
         .order("work_date", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as WrongSystemPunch[];

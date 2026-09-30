@@ -98,7 +98,8 @@ Deno.serve(async (req) => {
   }
   // Bolagsgemensamma kostnadsställen (t.ex. Administration) ska kunna väljas
   // även på en station som hör till en butik.
-  if (station.legal_entity_id) {
+  // Har butiken eget driftställe används bara det (inga bolagsgemensamma val).
+  if (station.legal_entity_id && collected.length === 0) {
     const { data: entitySites } = await db
       .from("work_sites")
       .select(SITE_COLS)

@@ -1,4 +1,5 @@
 import { ClockOpsCards } from "@/components/staff/ClockOpsCards";
+import { PkImportCard } from "@/components/staff/PkImportCard";
 import { thumbUrl, THUMB_CARD } from "@/lib/imageThumb";
 import { motion } from "framer-motion";
 import { displayOrderWeek } from "@/lib/orderWeek";
@@ -339,6 +340,7 @@ export default function OrganisationOverview() {
 
       {/* Daglig driftbevakning av stämpelklockan — primär bevakning från 2026-09-16 */}
       {!isShop && <ClockOpsCards />}
+      {!isShop && <PkImportCard />}
 
       {/* KPI Row */}
 
