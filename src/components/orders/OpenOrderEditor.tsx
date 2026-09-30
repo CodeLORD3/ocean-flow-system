@@ -483,10 +483,11 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
                       ref={(el) => {
                         qtyRefs.current[l.id] = el;
                       }}
-                      type="number"
+                      type="text"
                       inputMode="decimal"
-                      step="0.1"
-                      value={drafts[l.id] ?? String(l.quantity_ordered ?? "")}
+                      pattern="[0-9]*[.,]?[0-9]*"
+                      autoComplete="off"
+                      value={drafts[l.id] ?? String(l.quantity_ordered ?? "").replace(".", ",")}
                       onChange={(e) => setDrafts((d) => ({ ...d, [l.id]: e.target.value }))}
                       onFocus={(e) => e.currentTarget.select()}
                       onBlur={(e) => {
