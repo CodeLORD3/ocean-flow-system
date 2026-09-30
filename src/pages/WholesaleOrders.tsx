@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumberField, parseNumber } from "@/components/ui/number-field";
+import { edgeErrorMessage } from "@/lib/edgeError";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -476,7 +478,7 @@ export default function WholesaleOrders() {
   };
 
   const handleCreateWholesaleOrder = async () => {
-    const validLines = newOrderLines.filter(l => l.quantity && Number(l.quantity) > 0);
+    const validLines = newOrderLines.filter(l => l.quantity && (parseNumber(l.quantity) ?? 0) > 0);
     if (validLines.length === 0 || !selectedCustomer?.store_id || !newOrderDeliveryDate) return;
 
     const weekNum = `V${Math.ceil((new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))}`;
@@ -505,7 +507,7 @@ export default function WholesaleOrders() {
     const lines = validLines.map(l => ({
       shop_order_id: order.id,
       product_id: l.product_id,
-      quantity_ordered: Number(l.quantity),
+      quantity_ordered: (parseNumber(l.quantity) ?? 0),
       unit: l.unit,
       delivery_date: deliveryDateStr,
       order_date: purchaseDateFor(deliveryDateStr, leadMap.get(l.product_id) ?? 0),
@@ -902,7 +904,7 @@ export default function WholesaleOrders() {
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" size="sm" onClick={() => { setCreatingOrder(false); resetCreateForm(); }}>Avbryt</Button>
-                  <Button size="sm" className="gap-1.5" onClick={() => setConfirmCreateOpen(true)} disabled={!selectedCustomerId || newOrderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !newOrderDeliveryDate}>
+                  <Button size="sm" className="gap-1.5" onClick={() => setConfirmCreateOpen(true)} disabled={!selectedCustomerId || newOrderLines.filter(l => l.quantity && (parseNumber(l.quantity) ?? 0) > 0).length === 0 || !newOrderDeliveryDate}>
                     <ShoppingCart className="h-3.5 w-3.5" /> Skapa order
                   </Button>
                 </div>
@@ -1315,7 +1317,7 @@ export default function WholesaleOrders() {
           <DialogHeader>
             <DialogTitle className="font-heading">Bekräfta order</DialogTitle>
             <DialogDescription className="text-xs">
-              Skapa order med {newOrderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkt(er) åt {selectedCustomer?.name}?
+              Skapa order med {newOrderLines.filter(l => l.quantity && (parseNumber(l.quantity) ?? 0) > 0).length} produkt(er) åt {selectedCustomer?.name}?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
