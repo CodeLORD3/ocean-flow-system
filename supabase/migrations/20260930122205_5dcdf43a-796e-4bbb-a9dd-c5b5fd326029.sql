@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.sessions_valid_from() TO anon;
