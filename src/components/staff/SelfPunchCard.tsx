@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,23 +42,33 @@ function getPosition(): Promise<GeolocationPosition> {
   });
 }
 
+export const SELF_PUNCH_KEY = ["self-punch-status"];
+
+/** Delad status för mobilstämpling: null = personen har inte rätt att stämpla med mobilen. */
+export function useSelfPunchStatus() {
+  return useQuery({
+    queryKey: SELF_PUNCH_KEY,
+    staleTime: 30_000,
+    retry: false,
+    queryFn: async (): Promise<Status | null> => {
+      const r = await call({ mode: "lookup" });
+      return r.data?.status === "found" ? (r.data as Status) : null;
+    },
+  });
+}
+
+export const SELF_PUNCH_ANCHOR = "self-punch-card";
+
 /** Personlig mobilstämpling på startsidan. Visas bara för den som har rätt. */
 export function SelfPunchCard() {
-  const [status, setStatus] = useState<Status | null>(null);
-  const [allowed, setAllowed] = useState(false);
+  const qc = useQueryClient();
+  const { data: status } = useSelfPunchStatus();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
+  const load = () => qc.invalidateQueries({ queryKey: SELF_PUNCH_KEY });
 
-  const load = useCallback(async () => {
-    const r = await call({ mode: "lookup" });
-    if (r.data?.status === "found") { setAllowed(true); setStatus(r.data as Status); }
-    else if (r.status === 403 || r.status === 401) setAllowed(false);
-  }, []);
-
-  useEffect(() => { void load(); }, [load]);
-
-  if (!allowed || !status) return null;
+  if (!status) return null;
 
   const punch = async (action: string) => {
     setBusy(true);
@@ -92,7 +103,7 @@ export function SelfPunchCard() {
   const primary = status.suggested_action;
 
   return (
-    <Card>
+    <Card id={SELF_PUNCH_ANCHOR} className="scroll-mt-20">
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <Clock className="h-5 w-5 text-primary" />
