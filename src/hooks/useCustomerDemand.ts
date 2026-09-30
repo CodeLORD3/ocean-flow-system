@@ -37,7 +37,7 @@ export function useCustomerDemand(storeId?: string | null, deliveryDate?: string
       // 1. Öppna kundbeställningar med önskad dag till och med valt datum.
       const { data: orders, error: oErr } = await supabase
         .from("customer_orders")
-        .select("id, status, customer_name, wanted_date")
+        .select("id, status, customer_name_snapshot, wanted_date")
         .eq("store_id", storeId)
         .lte("wanted_date", deliveryDate)
         .limit(2000);
@@ -73,8 +73,8 @@ export function useCustomerDemand(storeId?: string | null, deliveryDate?: string
             late: false,
           } as CustomerDemand);
         entry.quantity += qty;
-        if (order?.customer_name && !entry.customers.includes(order.customer_name)) {
-          entry.customers.push(order.customer_name);
+        if (order?.customer_name_snapshot && !entry.customers.includes(order.customer_name_snapshot)) {
+          entry.customers.push(order.customer_name_snapshot);
         }
         if (order?.wanted_date) {
           if (!entry.earliestDate || order.wanted_date < entry.earliestDate) entry.earliestDate = order.wanted_date;

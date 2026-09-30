@@ -45,12 +45,19 @@ import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
   Archive, CalendarIcon, Pencil, Send, FileText, Copy, Eye, Users, Lock,
+  AlertTriangle,
 } from "lucide-react";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 import { OrderPhotosButton, ORDER_PHOTO_ENTITY, ORDER_LINE_PHOTO_ENTITY } from "@/components/orders/OrderPhotos";
 import { OpenOrderEditor } from "@/components/orders/OpenOrderEditor";
 import { DeleteShopOrderButton, DELETABLE_SHOP_ORDER_STATUSES } from "@/components/orders/DeleteShopOrderButton";
+
+const MISSING_DATE_WARNING = "Ej skickad till grossist, välj leveransdag";
+function isStaleUndatedOpenOrder(o: any): boolean {
+  if (o?.status !== "Öppen" || o?.desired_delivery_date) return false;
+  return Date.now() - new Date(o.created_at).getTime() > 60 * 60 * 1000;
+}
 
 import DeliveryNote from "@/components/DeliveryNote";
 
@@ -233,6 +240,11 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                     <p className="mt-0.5 text-[15px] text-muted-foreground">
                       {displayOrderWeek(o)} · lagd {new Date(o.created_at).toLocaleDateString("sv-SE")}
                     </p>
+                    {isStaleUndatedOpenOrder(o) && (
+                      <p className="mt-1 flex items-center gap-1 text-[14px] font-semibold text-destructive">
+                        <AlertTriangle className="h-4 w-4 shrink-0" /> {MISSING_DATE_WARNING}
+                      </p>
+                    )}
                   </div>
                   {o.status === "Öppen" && o.open_locked_at ? (
                     <Badge variant="outline" className="shrink-0 gap-1 border-success/30 bg-success/15 text-success text-[13px]">
@@ -366,7 +378,13 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                         <td className="px-1.5 py-0.5 font-mono font-medium text-foreground">{displayOrderWeek(o)}</td>
                         <td className="px-1.5 py-0.5 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                         <td className="px-1.5 py-0.5 text-muted-foreground">{o.stores?.name || "–"}</td>
-                        <td className="px-1.5 py-0.5 text-muted-foreground">{o.desired_delivery_date || "–"}</td>
+                        <td className="px-1.5 py-0.5 text-muted-foreground">
+                          {isStaleUndatedOpenOrder(o) ? (
+                            <span className="inline-flex items-center gap-1 font-semibold text-destructive" title={MISSING_DATE_WARNING}>
+                              <AlertTriangle className="h-3 w-3 shrink-0" /> {MISSING_DATE_WARNING}
+                            </span>
+                          ) : (o.desired_delivery_date || "–")}
+                        </td>
                         <td className="px-1.5 py-0.5 text-right text-foreground">{lines.length}</td>
                         <td className="px-1.5 py-0.5 text-muted-foreground text-[10px] max-w-48 truncate">
                           {lines.length === 0 ? (
