@@ -268,11 +268,17 @@ export interface SelfPunchContext {
   workSiteId: string;
 }
 
+function addDaysIso(day: string, n: number): string {
+  const d = new Date(`${day}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 /**
  * Personlig mobilstämpling: inloggad personal stämplar från egen telefon via
  * vanliga ERP-inloggningen. Tillåts på arbetsplatser med mobile_self_punch där
- * personen har butiken i en anställning, som staff.store_id eller har ett
- * planerat pass där i dag. Stämplingen går sedan genom samma regler som klockan.
+ * personen har butiken i en anställning, som staff.store_id, har ett
+ * planerat pass där inom ±14 dagar eller Personalkollen-tid där senaste 60 dagarna. Stämplingen går sedan genom samma regler som klockan.
  */
 export async function resolveSelfPunch(
   db: SupabaseClient,
@@ -300,8 +306,33 @@ export async function resolveSelfPunch(
   for (const e of emps ?? []) {
     if (e.store_id && e.is_active !== false && (!e.end_date || String(e.end_date) >= today)) storeIds.add(e.store_id as string);
   }
-  const { data: shifts } = await db.from("shifts").select("store_id").eq("employee_id", emp.id).eq("date", today);
+  // Planerat pass i butiken inom ±14 dagar.
+  const shiftFrom = addDaysIso(today, -14);
+  const shiftTo = addDaysIso(today, 14);
+  const { data: shifts } = await db.from("shifts").select("store_id").eq("employee_id", emp.id).gte("date", shiftFrom).lte("date", shiftTo);
   for (const s of shifts ?? []) if (s.store_id) storeIds.add(s.store_id as string);
+  // Personalkollen-tid i butiken senaste 60 dagarna (via kostnadsställe eller arbetsplats).
+  const { data: pkStaff } = await db.from("pk_staff").select("url, connection_id").eq("employee_id", emp.id);
+  if (pkStaff?.length) {
+    const since = new Date(Date.now() - 60 * 86_400_000).toISOString();
+    const { data: lts } = await db
+      .from("pk_logged_times")
+      .select("costgroup_url, workplace_url, connection_id")
+      .in("staff_url", pkStaff.map((p) => p.url as string))
+      .eq("is_canceled", false)
+      .gte("start", since)
+      .limit(1000);
+    const cgUrls = [...new Set((lts ?? []).map((l) => l.costgroup_url as string).filter(Boolean))];
+    const wpUrls = [...new Set((lts ?? []).map((l) => l.workplace_url as string).filter(Boolean))];
+    if (cgUrls.length) {
+      const { data: cgs } = await db.from("pk_costgroups").select("store_id").in("url", cgUrls);
+      for (const c of cgs ?? []) if (c.store_id) storeIds.add(c.store_id as string);
+    }
+    if (wpUrls.length) {
+      const { data: wps } = await db.from("pk_workplaces").select("store_id").in("url", wpUrls);
+      for (const w of wps ?? []) if (w.store_id) storeIds.add(w.store_id as string);
+    }
+  }
   if (storeIds.size === 0) return { error: "Mobilstämpling är inte öppen för dig.", status: 403 };
 
   const { data: sites } = await db
