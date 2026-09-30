@@ -23124,6 +23124,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      confirm_production_report: { Args: { _report_id: string }; Returns: Json }
       contract_signer_data: { Args: { _contract_id: string }; Returns: Json }
       cost_read_allowed: { Args: { _store_id: string }; Returns: boolean }
       current_staff: {
