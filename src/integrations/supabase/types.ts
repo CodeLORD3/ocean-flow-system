@@ -23498,6 +23498,7 @@ export type Database = {
           store_id: string
         }[]
       }
+      pk_neutralize_lone_inside: { Args: never; Returns: number }
       pk_overhead_daily_cost: {
         Args: { _date: string }
         Returns: {
