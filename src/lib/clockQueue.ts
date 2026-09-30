@@ -1,4 +1,4 @@
-import { punch, recordClockSyncFailure, type PunchContext } from "@/lib/clockApi";
+import { punch, recordClockSyncFailure, listClockSyncFailures, restoreClockSyncFailure, type PunchContext } from "@/lib/clockApi";
 import { svenskTid } from "@/lib/swedishTime";
 
 const DB_NAME = "mt-clock";
@@ -132,4 +132,31 @@ export async function syncQueue(): Promise<number> {
     }
   }
   return ok;
+}
+
+const fromBase64 = (value: string) => Uint8Array.from(atob(value), (c) => c.charCodeAt(0));
+
+/**
+ * Återställ stationens egna poster i serverns felkö. Nyckeln finns bara i den här enheten,
+ * så dekrypteringen sker här; poster från andra enheter går inte att läsa och lämnas öppna.
+ */
+export async function restoreServerFailures(): Promise<number> {
+  const failures = await listClockSyncFailures().catch(() => []);
+  if (!failures.length) return 0;
+  const key = await deviceKey();
+  let restored = 0;
+  for (const f of failures) {
+    let identifier = "";
+    try {
+      const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromBase64(f.identifier_iv) }, key, fromBase64(f.identifier_cipher));
+      identifier = new TextDecoder().decode(plain);
+      const res = await restoreClockSyncFailure(f.id, identifier);
+      if (res.ok) restored += 1;
+    } catch {
+      // Annan enhets nyckel eller nätverksfel: lämna felet öppet.
+    } finally {
+      identifier = "";
+    }
+  }
+  return restored;
 }

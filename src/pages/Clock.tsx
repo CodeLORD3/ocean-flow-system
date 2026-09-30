@@ -31,7 +31,7 @@ import {
   type ClockStationInfo,
   type OnSitePerson,
 } from "@/lib/clockApi";
-import { enqueuePunch, queuedCount, syncQueue } from "@/lib/clockQueue";
+import { enqueuePunch, queuedCount, syncQueue, restoreServerFailures } from "@/lib/clockQueue";
 import { dagsavslutText } from "@/lib/dagsavslut";
 
 type Action = "in" | "ut" | "rast_start" | "rast_slut";
@@ -137,6 +137,7 @@ export default function Clock() {
     const goOnline = async () => {
       setOnline(true);
       await syncQueue().catch(() => 0);
+      await restoreServerFailures().catch(() => 0);
       await refreshQueue();
       await refreshOnSite();
     };

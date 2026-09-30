@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
       return json(req, { ok: false, reason: "ingen_anstalld" });
     }
     if (emp.is_test) {
-      await db.from("clock_sync_failures").update({ status: "resolved", resolution_note: "Testperson – ingen stämpling skapad", handled_at: new Date().toISOString() }).eq("id", id);
+      await db.from("clock_sync_failures").update({ status: "registered", resolution_note: "Testperson – ingen stämpling skapad", handled_at: new Date().toISOString() }).eq("id", id);
       return json(req, { ok: true, test: true });
     }
     const { data: sites } = await db.from("work_sites").select("id, cost_center").eq("store_id", f.store_id).eq("is_active", true).order("sort_order").limit(1);
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       entryId = ex?.id;
     }
     await db.from("clock_sync_failures").update({
-      status: "resolved", resolved_entry_id: entryId ?? null, handled_at: new Date().toISOString(),
+      status: "registered", resolved_entry_id: entryId ?? null, handled_at: new Date().toISOString(),
       resolution_note: "Dekrypterad på stationen och återskapad på butikens driftställe", updated_at: new Date().toISOString(),
     }).eq("id", id);
     await db.rpc("pk_import_run", {});
