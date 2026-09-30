@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
   const selfPunch = body.self_punch === true;
   let selfWorkSiteId: string | null = null;
   let selfHit: EmployeeHit | null = null;
-  let station;
+  let station: import("../_shared/clock.ts").Station;
   let expiresAt: string | null = null;
   if (selfPunch) {
     const r = await resolveSelfPunch(db, req);
@@ -200,6 +200,7 @@ Deno.serve(async (req) => {
   } else if (!selfPunch) {
     await resetFailedLookup(db, station.id);
   }
+  if (!hit) return json(req, { error: "Personen hittades inte." }, 404);
 
   // Behörighet att stämpla: testpersoner, avslutade anställningar och personer
   // utan anställning i stationens bolag ska avvisas med ett tydligt besked.
