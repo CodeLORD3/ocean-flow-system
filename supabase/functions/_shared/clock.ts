@@ -342,6 +342,9 @@ export async function resolveSelfPunch(
     const { data: openSites } = await db.from("work_sites").select("store_id").eq("is_active", true).eq("mobile_self_punch", true);
     for (const s of openSites ?? []) if (s.store_id) storeIds.add(s.store_id as string);
   }
+  // Uttryckligen tillagd personal per arbetsplats (work_sites.mobile_self_punch_staff_ids).
+  const { data: listed } = await db.from("work_sites").select("store_id").eq("is_active", true).eq("mobile_self_punch", true).contains("mobile_self_punch_staff_ids", [staff.id]);
+  for (const s of listed ?? []) if (s.store_id) storeIds.add(s.store_id as string);
   if (storeIds.size === 0) return { error: "Mobilstämpling är inte öppen för dig.", status: 403 };
 
   const { data: sites } = await db
