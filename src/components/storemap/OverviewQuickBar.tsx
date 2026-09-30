@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { svenskDatum } from "@/lib/swedishTime";
 import type { MapTask } from "@/hooks/useStoreMap";
+import { SelfPunchCard, SELF_PUNCH_ANCHOR, useSelfPunchStatus } from "@/components/staff/SelfPunchCard";
 
 /** Alltid grönt — stapeln visar hur mycket som är klart. */
 function tone(_pct: number) {
@@ -24,7 +26,13 @@ export function OverviewQuickBar({
   day?: string;
 }) {
   const navigate = useNavigate();
-  const date = day || new Date().toISOString().slice(0, 10);
+  /** Mobilstämpling: rutan visas bara för den som har rätt, och heter efter status. */
+  const { data: punch } = useSelfPunchStatus();
+  const punchLabel = punch ? (punch.suggested_action === "in" ? "Stämpla in" : "Stämpla ut") : null;
+  const punchSub = punch
+    ? punch.last_type === "rast_start" ? "På rast" : punch.suggested_action === "in" ? "Inte instämplad" : "Instämplad"
+    : "";
+  const date = day || svenskDatum();
 
   /** Är dagsrapporten skriven för dagen? Då lyser knappen grön. */
   const { data: dailyDone = false } = useQuery({
@@ -81,6 +89,8 @@ export function OverviewQuickBar({
 
   return (
     <div className="space-y-3">
+      {/* Personlig mobilstämpling överst för den som har rätt */}
+      <SelfPunchCard />
       {/* Dagsrapport och inventeringsrapport ligger allra högst upp i Översikt */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button type="button" onClick={() => navigate("/dagsrapport")} className={boxClass(dailyDone)}>
@@ -149,17 +159,19 @@ export function OverviewQuickBar({
             </span>
           </span>
         </button>
-        <button
-          type="button"
-          onClick={() => navigate("/clock")}
-          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-5 text-left shadow-sm transition hover:bg-muted"
-        >
-          <Clock className="h-7 w-7 shrink-0 text-primary" />
-          <span className="min-w-0">
-            <span className="block font-heading text-lg font-semibold leading-tight">Stämpla in</span>
-            <span className="block text-xs text-muted-foreground">Stämpelklockan för butiken</span>
-          </span>
-        </button>
+        {punchLabel && (
+          <button
+            type="button"
+            onClick={() => document.getElementById(SELF_PUNCH_ANCHOR)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-5 text-left shadow-sm transition hover:bg-muted"
+          >
+            <Clock className="h-7 w-7 shrink-0 text-primary" />
+            <span className="min-w-0">
+              <span className="block font-heading text-lg font-semibold leading-tight">{punchLabel}</span>
+              <span className="block text-xs text-muted-foreground">{punchSub}</span>
+            </span>
+          </button>
+        )}
       </div>
 
 

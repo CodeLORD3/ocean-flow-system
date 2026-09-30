@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberField } from "@/components/ui/number-field";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -395,14 +396,11 @@ function EditableRow({
       </TableCell>
 
       <TableCell className="py-0.5 px-1 w-[68px]">
-        <Input
+        <NumberField
           ref={qtyInputRef}
-          type="number"
-          inputMode="decimal"
-          defaultValue={line.quantity}
-          onFocus={(e) => e.target.select()}
-          onChange={(e) => commitField("quantity", parseFloat(e.target.value) || 0)}
-          className="h-6 w-full text-[11px] border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right tabular-nums"
+          value={line.quantity}
+          onValueChange={(_raw, n) => commitField("quantity", n ?? 0)}
+          className="h-6 sm:h-6 w-full text-[11px] border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right tabular-nums"
         />
       </TableCell>
       <TableCell className="py-0.5 px-1 w-[64px]">
@@ -417,13 +415,10 @@ function EditableRow({
         </Select>
       </TableCell>
       <TableCell className="py-0.5 px-1 w-[58px]">
-        <Input
-          type="number"
-          inputMode="decimal"
-          defaultValue={line.unit_price ?? 0}
-          onFocus={(e) => e.target.select()}
-          onChange={(e) => commitField("unit_price", parseFloat(e.target.value) || 0)}
-          className="h-6 text-[11px] w-14 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right"
+        <NumberField
+          value={line.unit_price ?? 0}
+          onValueChange={(_raw, n) => commitField("unit_price", n ?? 0)}
+          className="h-6 sm:h-6 text-[11px] w-14 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right"
         />
       </TableCell>
       <TableCell className="py-0.5 px-1 w-[88px]">
@@ -1931,13 +1926,11 @@ export default function PurchaseReporting() {
                       </div>
                       <div>
                         <Label>Inköpspris</Label>
-                        <Input type="number"
- inputMode="decimal" value={newProduct.cost_price} onChange={(e) => setNewProduct((p) => ({ ...p, cost_price: e.target.value }))} />
+                        <NumberField className="h-10 text-left font-sans" value={newProduct.cost_price} onValueChange={(raw) => setNewProduct((p) => ({ ...p, cost_price: raw.replace(",", ".") }))} />
                       </div>
                       <div>
                         <Label>Grossistpris</Label>
-                        <Input type="number"
- inputMode="decimal" value={newProduct.wholesale_price} onChange={(e) => setNewProduct((p) => ({ ...p, wholesale_price: e.target.value }))} />
+                        <NumberField className="h-10 text-left font-sans" value={newProduct.wholesale_price} onValueChange={(raw) => setNewProduct((p) => ({ ...p, wholesale_price: raw.replace(",", ".") }))} />
                       </div>
                     </div>
                   </div>

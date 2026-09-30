@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { NumberField } from "@/components/ui/number-field";
 import { Label } from "@/components/ui/label";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
@@ -409,34 +410,32 @@ export function InlineOrderPacking({
                 <div className="grid gap-1.5 border-t border-border px-2 pb-2 pt-1.5 sm:grid-cols-[1fr_1fr_auto]">
                   <div className="space-y-0.5">
                     <Label className="text-[11px] text-muted-foreground">Vägd vikt ({l.unit})</Label>
-                    <Input
-                      inputMode="decimal"
-                      className="h-8 font-mono text-sm tabular-nums"
+                    <NumberField
+                      className="h-8 sm:h-8 text-left font-mono text-sm tabular-nums"
                       value={weights[l.id] ?? ""}
-                      onChange={(e) => setWeights({ ...weights, [l.id]: e.target.value })}
+                      onValueChange={(raw) => setWeights({ ...weights, [l.id]: raw.replace(",", ".") })}
                     />
                   </div>
                   <div className="space-y-0.5">
                     <Label className="text-[11px] text-muted-foreground">
                       {l.price_locked ? `Betalt pris / ${l.unit} (låst)` : `Dagens pris / ${l.unit}`}
                     </Label>
-                    <Input
-                      inputMode="decimal"
+                    <NumberField
                       readOnly={!!l.price_locked}
                       title={
                         l.price_locked
                           ? "Webbordern är förskottsbetald — radpriset är låst från Shopify."
                           : undefined
                       }
-                      className={`h-8 font-mono text-sm tabular-nums ${
+                      className={`h-8 sm:h-8 text-left font-mono text-sm tabular-nums ${
                         l.price_locked ? "bg-muted text-muted-foreground" : ""
                       }`}
                       value={prices[l.id] ?? ""}
-                      onChange={(e) => {
+                      onValueChange={(_raw, n) => {
                         if (l.price_locked) return;
                         setPrices({
                           ...prices,
-                          [l.id]: Number(String(e.target.value).replace(",", ".")) || 0,
+                          [l.id]: n ?? 0,
                         });
                       }}
                     />

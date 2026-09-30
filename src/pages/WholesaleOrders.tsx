@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumberField, parseNumber } from "@/components/ui/number-field";
+import { edgeErrorMessage } from "@/lib/edgeError";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -476,7 +478,7 @@ export default function WholesaleOrders() {
   };
 
   const handleCreateWholesaleOrder = async () => {
-    const validLines = newOrderLines.filter(l => l.quantity && Number(l.quantity) > 0);
+    const validLines = newOrderLines.filter(l => l.quantity && (parseNumber(l.quantity) ?? 0) > 0);
     if (validLines.length === 0 || !selectedCustomer?.store_id || !newOrderDeliveryDate) return;
 
     const weekNum = `V${Math.ceil((new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))}`;
@@ -505,7 +507,7 @@ export default function WholesaleOrders() {
     const lines = validLines.map(l => ({
       shop_order_id: order.id,
       product_id: l.product_id,
-      quantity_ordered: Number(l.quantity),
+      quantity_ordered: (parseNumber(l.quantity) ?? 0),
       unit: l.unit,
       delivery_date: deliveryDateStr,
       order_date: purchaseDateFor(deliveryDateStr, leadMap.get(l.product_id) ?? 0),
@@ -708,6 +710,7 @@ export default function WholesaleOrders() {
           .in("status", ["Packad", "Pågående", "Ny", "", "Skickad"]);
       } catch (err) {
         console.error("Stock transfer error:", err);
+        toast({ title: "Lagerflytten till transport misslyckades", description: await edgeErrorMessage(err, "Kontrollera ordern och försök igen."), variant: "destructive" });
       }
     }
 
@@ -872,8 +875,7 @@ export default function WholesaleOrders() {
                             <tr key={line.product_id} className="border-b border-border/30">
                               <td className="py-2 font-medium text-foreground">{line.product_name}</td>
                               <td className="py-2 text-muted-foreground">{line.unit}</td>
-                              <td className="py-2 text-right"><Input type="number"
- inputMode="decimal" step="0.1" value={line.quantity} onChange={e => updateNewLine(idx, e.target.value)} className="h-7 text-xs w-24 ml-auto text-right" placeholder="0" autoFocus={idx === 0} /></td>
+                              <td className="py-2 text-right"><NumberField value={line.quantity} onValueChange={(raw) => updateNewLine(idx, raw)} className="h-7 text-xs w-24 ml-auto text-right" placeholder="0" autoFocus={idx === 0} /></td>
                               <td className="py-2"><Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeNewLine(idx)}><X className="h-3 w-3" /></Button></td>
                             </tr>
                           ))}
@@ -902,7 +904,7 @@ export default function WholesaleOrders() {
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" size="sm" onClick={() => { setCreatingOrder(false); resetCreateForm(); }}>Avbryt</Button>
-                  <Button size="sm" className="gap-1.5" onClick={() => setConfirmCreateOpen(true)} disabled={!selectedCustomerId || newOrderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !newOrderDeliveryDate}>
+                  <Button size="sm" className="gap-1.5" onClick={() => setConfirmCreateOpen(true)} disabled={!selectedCustomerId || newOrderLines.filter(l => l.quantity && (parseNumber(l.quantity) ?? 0) > 0).length === 0 || !newOrderDeliveryDate}>
                     <ShoppingCart className="h-3.5 w-3.5" /> Skapa order
                   </Button>
                 </div>
@@ -1315,7 +1317,7 @@ export default function WholesaleOrders() {
           <DialogHeader>
             <DialogTitle className="font-heading">Bekräfta order</DialogTitle>
             <DialogDescription className="text-xs">
-              Skapa order med {newOrderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkt(er) åt {selectedCustomer?.name}?
+              Skapa order med {newOrderLines.filter(l => l.quantity && (parseNumber(l.quantity) ?? 0) > 0).length} produkt(er) åt {selectedCustomer?.name}?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -1369,12 +1371,17 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
     staleTime: 5 * 60 * 1000,
   });
 
-  const savePackedValue = async (el: HTMLInputElement, line: any, qtyOrdered: number, availableStock: number, orderId: string) => {
-    const val = Number(el.value);
-    if (!val || val <= 0) return;
+  /** Sparar packad mängd. Raden blir "Packad" bara när man trycker på knappen Packad. */
+  const savePackedValue = async (el: HTMLInputElement | null, line: any, qtyOrdered: number, availableStock: number, orderId: string, markPacked = false) => {
+    if (!el) return;
+    const val = parseNumber(el.value);
+    if (!val || val <= 0) {
+      if (markPacked) toast({ title: "Skriv packad mängd först", variant: "destructive" });
+      return;
+    }
     if (!infiniteStock && val > availableStock) {
       toast({ title: "Otillräckligt lager", description: `Max tillgängligt: ${Number(availableStock.toFixed(1))}`, variant: "destructive" });
-      el.value = String(Number(availableStock.toFixed(1)));
+      el.value = String(Number(availableStock.toFixed(1))).replace(".", ",");
       return;
     }
     const unit = line.unit || line.products?.unit || "kg";
@@ -1384,13 +1391,22 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
         ? `+${(val - qtyOrdered).toFixed(1)} ${unit} mer än beställt`
         : `-${(qtyOrdered - val).toFixed(1)} ${unit} mindre än beställt`;
     }
-    await supabase
+    if (!markPacked && Number(line.quantity_delivered || 0) === val) return;
+    const { error } = await supabase
       .from("shop_order_lines")
       .update({ quantity_delivered: val, deviation })
       .eq("id", line.id);
+    if (error) {
+      toast({ title: "Kunde inte spara packad mängd", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (!markPacked) return;
     updateLineStatus.mutate(
       { lineId: line.id, newStatus: "Packad", orderId },
-      { onSuccess: () => toast({ title: `Packad: ${val} ${unit}` }) }
+      {
+        onSuccess: () => toast({ title: `Packad: ${String(val).replace(".", ",")} ${unit}` }),
+        onError: (e: any) => toast({ title: "Kunde inte markera som packad", description: e?.message ?? "Försök igen.", variant: "destructive" }),
+      }
     );
   };
   const { data: allStock = [] } = useAllStockByLocation();
@@ -1447,6 +1463,14 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
   const [altSearch, setAltSearch] = useState("");
 
   const handleMarkUnavailable = async (line: any) => {
+    if (!window.confirm(`Markera "${line.products?.name ?? "varan"}" som ej tillgänglig? Butiken får en förfrågan.`)) return;
+    try {
+      await doMarkUnavailable(line);
+    } catch (e: any) {
+      toast({ title: "Kunde inte skicka förfrågan", description: e?.message ?? "Försök igen.", variant: "destructive" });
+    }
+  };
+  const doMarkUnavailable = async (line: any) => {
     await createChange.mutateAsync({
       shop_order_id: order.id,
       order_line_id: line.id,
@@ -1678,19 +1702,20 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                       return isLocked ? (
                         <span className="w-16 inline-block text-right text-xs font-mono text-muted-foreground">{qtyDelivered || "–"}</span>
                       ) : (
+                        <span className="inline-flex items-center gap-1">
                         <input
-                          type="number"
+                          id={`packed-${line.id}`}
+                          type="text"
                           inputMode="decimal"
-                          min={0}
-                          max={infiniteStock ? undefined : availableStock}
-                          defaultValue={qtyDelivered || ""}
+                          pattern="[0-9]*[.,]?[0-9]*"
+                          autoComplete="off"
+                          defaultValue={qtyDelivered ? String(qtyDelivered).replace(".", ",") : ""}
                           placeholder="0"
                           className="w-16 h-6 text-right text-xs font-mono bg-background border border-border rounded px-1 focus:outline-none focus:ring-1 focus:ring-primary"
-                          onKeyDown={async (e) => {
+                          onKeyDown={(e) => {
                             if (e.key === "Enter") {
                               e.preventDefault();
-                              const el = e.target as HTMLInputElement;
-                              await savePackedValue(el, line, qtyOrdered, availableStock, order.id);
+                              (e.target as HTMLInputElement).blur();
                             }
                           }}
                           onBlur={async (e) => {
@@ -1698,6 +1723,17 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                             await savePackedValue(el, line, qtyOrdered, availableStock, order.id);
                           }}
                         />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-1.5 text-[10px] text-success border-success/30"
+                          disabled={updateLineStatus.isPending}
+                          onClick={() => savePackedValue(document.getElementById(`packed-${line.id}`) as HTMLInputElement | null, line, qtyOrdered, availableStock, order.id, true)}
+                        >
+                          Packad
+                        </Button>
+                        </span>
                       );
                     })()}
                   </td>

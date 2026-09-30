@@ -1,3 +1,4 @@
+import { svenskDatum, laggTillSvenskaDagar } from "@/lib/swedishTime";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, ShoppingCart, Sigma, Archive, ArchiveRestore, Clock, Check, Printer, CheckSquare, Truck, ChevronDown, ChevronRight, Undo2, Copy } from "lucide-react";
@@ -77,12 +78,9 @@ const TABS: { id: OrderTab; hint: string; muted?: boolean }[] = [
 const nf = (v: any, d = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
 
-const today = () => new Date().toISOString().slice(0, 10);
-const tomorrow = () => {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
-};
+// Svensk kalenderdag — UTC gav gårdagens datum mellan 00 och 02.
+const today = () => svenskDatum();
+const tomorrow = () => laggTillSvenskaDagar(svenskDatum(), 1);
 
 const dayLabel = (iso: string) => {
   const t = today();
@@ -484,12 +482,14 @@ export default function CustomerOrders() {
             size="lg"
             className="h-12 px-5 text-base"
             disabled={archiveOrders.isPending}
-            onClick={() =>
+            onClick={() => {
+              const n = marked.length;
+              if (!window.confirm(isArchiveView ? `Återställa ${n} beställning${n === 1 ? "" : "ar"}?` : `Arkivera ${n} beställning${n === 1 ? "" : "ar"}? De försvinner från dagens lista.`)) return;
               archiveOrders.mutate(
                 { ids: marked, archive: !isArchiveView },
                 { onSuccess: () => setMarked([]) },
-              )
-            }
+              );
+            }}
           >
             {isArchiveView ? (
               <>
@@ -512,7 +512,12 @@ export default function CustomerOrders() {
               type="date"
               className="h-10 w-[9.5rem] text-sm"
               disabled={moveOrders.isPending}
-              onChange={(e) => e.target.value && moveTo(e.target.value, marked)}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (!v) return;
+                if (window.confirm(`Flytta ${marked.length} beställning${marked.length === 1 ? "" : "ar"} till ${dayLabel(v)} (${v})?`)) moveTo(v, marked);
+                else e.target.value = "";
+              }}
             />
           </div>
         )}
@@ -527,7 +532,12 @@ export default function CustomerOrders() {
               type="date"
               className="h-10 w-[9.5rem] text-sm"
               disabled={duplicateOrders.isPending}
-              onChange={(e) => e.target.value && copyTo(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (!v) return;
+                if (window.confirm(`Kopiera ${marked.length} beställning${marked.length === 1 ? "" : "ar"} till ${dayLabel(v)} (${v})? Originalen ligger kvar.`)) copyTo(v);
+                else e.target.value = "";
+              }}
             />
           </div>
         )}

@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from "@/lib/unsavedChanges";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { purchaseDateFor } from "@/lib/purchaseLead";
 import { useCustomerDemand, type CustomerDemand } from "@/hooks/useCustomerDemand";
@@ -218,6 +219,7 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
     refresh();
   };
 
+  useUnsavedChanges(Object.keys(drafts).length > 0);
   const saveQty = async (line: any, value: string) => {
     const qty = Number(String(value).replace(",", "."));
     if (!value || !isFinite(qty) || qty <= 0) return;
@@ -483,10 +485,11 @@ export function OpenOrderEditor({ order, products, toast, isDateDisabled, allowe
                       ref={(el) => {
                         qtyRefs.current[l.id] = el;
                       }}
-                      type="number"
+                      type="text"
                       inputMode="decimal"
-                      step="0.1"
-                      value={drafts[l.id] ?? String(l.quantity_ordered ?? "")}
+                      pattern="[0-9]*[.,]?[0-9]*"
+                      autoComplete="off"
+                      value={drafts[l.id] ?? String(l.quantity_ordered ?? "").replace(".", ",")}
                       onChange={(e) => setDrafts((d) => ({ ...d, [l.id]: e.target.value }))}
                       onFocus={(e) => e.currentTarget.select()}
                       onBlur={(e) => {

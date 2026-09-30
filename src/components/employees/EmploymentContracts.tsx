@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from "@/lib/unsavedChanges";
 import { useMemo, useState } from "react";
 import { FileSignature, Plus, Trash2, ArrowUp, ArrowDown, Send, Eye, X, RotateCcw, Download, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -104,8 +105,11 @@ function statusTone(s: EmploymentContract["status"]) {
 function ContractRow({ c, onOpen }: { c: EmploymentContract; onOpen: () => void }) {
   const { toast } = useToast();
   const openSigned = async () => {
+    // iPhone blockerar fönster som öppnas efter await — öppna direkt, sätt adressen sen.
+    const win = window.open("", "_blank");
     const url = c.signed_pdf_path ? await employeeDocumentUrl(c.signed_pdf_path) : null;
-    if (url) window.open(url, "_blank"); else toast({ title: "Kunde inte öppna filen", variant: "destructive" });
+    if (url) { if (win) win.location.href = url; else window.location.href = url; }
+    else { win?.close(); toast({ title: "Kunde inte öppna filen", variant: "destructive" }); }
   };
   return (
     <div className="flex items-center gap-3 rounded-lg border border-border p-3">
@@ -152,14 +156,21 @@ function ContractEditor({ contract, templateSections, onClose }: { contract: Emp
     toast({ title: "Avtalet är sparat" });
   };
 
+  useUnsavedChanges(!!dirty && !locked);
   const run = async (a: "send" | "cancel" | "preview" | "refresh") => {
+    // iPhone blockerar fönster som öppnas efter await — öppna direkt, sätt adressen sen.
+    const win = a === "preview" ? window.open("", "_blank") : null;
     try {
       if (dirty && !locked) await update.mutateAsync({ id: contract.id, sections });
       const res = await action.mutateAsync({ contract_id: contract.id, action: a });
-      if (a === "preview" && res?.url) window.open(res.url, "_blank");
+      if (a === "preview") {
+        if (res?.url) { if (win) win.location.href = res.url; else window.location.href = res.url; }
+        else win?.close();
+      }
       if (a === "send") toast({ title: "Avtalet är skickat", description: "Båda parter får ett mejl och skriver under med BankID." });
       if (a === "cancel") toast({ title: "Avtalet är avbrutet" });
     } catch (e: any) {
+      win?.close();
       toast({ title: "Det gick inte", description: e.message, variant: "destructive" });
     }
   };

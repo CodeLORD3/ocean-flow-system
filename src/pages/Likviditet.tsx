@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { NumberField, parseNumber } from "@/components/ui/number-field";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -96,7 +97,7 @@ export default function Likviditet() {
   const [bank, setBank] = useState({ balance_date: new Date().toISOString().slice(0, 10), balance: "" });
   const saveBank = useMutation({
     mutationFn: async () => {
-      const { error } = await db.from("bank_balances").upsert({ legal_entity_code: entity, balance_date: bank.balance_date, balance: Number(bank.balance.replace(/\s/g, "").replace(",", ".")) }, { onConflict: "legal_entity_code,balance_date" });
+      const { error } = await db.from("bank_balances").upsert({ legal_entity_code: entity, balance_date: bank.balance_date, balance: parseNumber(bank.balance) ?? 0 }, { onConflict: "legal_entity_code,balance_date" });
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Banksaldo sparat"); setBank({ ...bank, balance: "" }); refresh(); },
@@ -196,7 +197,7 @@ export default function Likviditet() {
         <TabsContent value="bank" className="space-y-3">
           <div className="flex flex-wrap items-end gap-2">
             <div><Label className="text-xs">Datum</Label><Input type="date" className="h-8" value={bank.balance_date} onChange={(e) => setBank({ ...bank, balance_date: e.target.value })} /></div>
-            <div><Label className="text-xs">Saldo</Label><Input className="h-8 w-40 font-mono" inputMode="decimal" value={bank.balance} onChange={(e) => setBank({ ...bank, balance: e.target.value })} /></div>
+            <div><Label className="text-xs">Saldo</Label><NumberField allowNegative className="h-8 sm:h-8 w-40 text-left" value={bank.balance} onValueChange={(raw) => setBank({ ...bank, balance: raw })} /></div>
             <Button size="sm" disabled={!bank.balance || saveBank.isPending} onClick={() => saveBank.mutate()}>Spara</Button>
           </div>
           <Table>

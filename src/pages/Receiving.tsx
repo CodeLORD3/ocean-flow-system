@@ -17,6 +17,7 @@ import {
 import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumberField } from "@/components/ui/number-field";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -31,6 +32,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { edgeErrorMessage } from "@/lib/edgeError";
 import { useSite } from "@/contexts/SiteContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -273,8 +275,8 @@ export default function Receiving() {
             : undefined,
         );
       } catch (err) {
-
         console.error("Stock transfer to Raw-lager error:", err);
+        toast({ title: "Lagret kunde inte flyttas till butiken", description: await edgeErrorMessage(err, "Mottagningen sparades men lagret flyttades inte. Kontakta grossisten innan du tar emot igen."), variant: "destructive" });
       }
 
       // Bäst före och ankomstdatum hör till partiet, inte till lagerplatsraden.
@@ -298,7 +300,10 @@ export default function Receiving() {
             _location_id: rawLocation.id,
             _best_before: report.expiry_date || null,
           });
-          if (linkErr) console.error("receiving_link_lot:", linkErr);
+          if (linkErr) {
+            console.error("receiving_link_lot:", linkErr);
+            toast({ title: "Partiet kunde inte kopplas", description: `${line.products?.name ?? "Vara"}: ${linkErr.message}`, variant: "destructive" });
+          }
         }
       }
 
@@ -570,14 +575,11 @@ export default function Receiving() {
                     <Label className="text-[9px] uppercase tracking-wide text-muted-foreground">
                       Kurs {SUPPLIER_CURRENCY}→{localCurrency}
                     </Label>
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.0001"
+                    <NumberField
                       value={fxOverride}
                       placeholder={liveFx ? String(liveFx.rate) : "0.0000"}
-                      onChange={(e) => setFxOverride(e.target.value)}
-                      className="h-6 w-28 text-[10px] bg-background font-mono tabular-nums"
+                      onValueChange={(raw) => setFxOverride(raw.replace(",", "."))}
+                      className="h-6 sm:h-6 text-left w-28 text-[10px] bg-background font-mono tabular-nums"
                     />
                     <span className="text-[9px] text-muted-foreground">
                       Använd kurs: <span className="font-mono tabular-nums">{effectiveFx ? effectiveFx.toFixed(4) : "–"}</span> · {fxSource}
@@ -681,13 +683,10 @@ export default function Receiving() {
                           <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
                             Mottagen mängd
                           </Label>
-                          <Input
-                            type="number"
-                            inputMode="decimal"
-                            step="0.1"
+                          <NumberField
                             value={report.quantity_received || ""}
-                            onChange={(e) => updateLineReport(line.id, "quantity_received", e.target.value)}
-                            className="h-6 text-[10px] bg-background"
+                            onValueChange={(raw) => updateLineReport(line.id, "quantity_received", raw.replace(",", "."))}
+                            className="h-6 sm:h-6 text-left text-[10px] bg-background"
                             placeholder={String(line.quantity_ordered)}
                           />
                         </div>
@@ -727,13 +726,10 @@ export default function Receiving() {
                               Bokfört värde per {line.products?.unit || "kg"} ({localCurrency}) — auto, redigerbart
                             </Label>
                             <div className="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                inputMode="decimal"
-                                step="0.01"
+                              <NumberField
                                 value={report.unit_cost_local || ""}
-                                onChange={(e) => updateLineReport(line.id, "unit_cost_local", e.target.value)}
-                                className="h-6 text-[10px] bg-background w-32 font-mono tabular-nums"
+                                onValueChange={(raw) => updateLineReport(line.id, "unit_cost_local", raw.replace(",", "."))}
+                                className="h-6 sm:h-6 text-left text-[10px] bg-background w-32 font-mono tabular-nums"
                                 placeholder={autoChfCost(line) || "0.00"}
                               />
                               <span className="text-[9px] text-muted-foreground">

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { NumberField, parseNumber } from "@/components/ui/number-field";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
@@ -359,13 +360,11 @@ export function TaskPerformPanel({
         {task.requires_value && (
           <div>
             <label className="text-sm font-medium">{valueLabel(task)}</label>
-            <Input
-              type="number"
-              inputMode="decimal"
-              step="0.1"
-              defaultValue={task.completion_value ?? ""}
-              onBlur={(e) => onUpdate({ completion_value: e.target.value === "" ? null : Number(e.target.value) })}
-              className="h-14 text-xl"
+            <NumberField
+              allowNegative
+              value={task.completion_value ?? ""}
+              onBlur={(e) => onUpdate({ completion_value: parseNumber(e.target.value) })}
+              className="h-14 sm:h-14 text-left text-xl"
             />
           </div>
         )}

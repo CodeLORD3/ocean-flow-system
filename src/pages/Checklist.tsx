@@ -196,7 +196,8 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
     }
   };
 
-  const canHardDelete = !!deleteTarget;
+  // Permanent radering bara för admin; personal kan bara arkivera.
+  const canHardDelete = !!deleteTarget && isAdmin;
 
   const handleHardDelete = async (tpl: ChecklistTemplate) => {
     try {
@@ -274,7 +275,7 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
           <ClipboardCheck
             className={cn("h-5 w-5 md:h-7 md:w-7", done ? "text-emerald-500" : "text-primary")}
           />
-          <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+          <div className={cn("flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100", !isAdmin && "hidden")}>
             {isAdmin && (
               <span onClick={(e) => e.stopPropagation()}>
                 <ChecklistCopyDialog

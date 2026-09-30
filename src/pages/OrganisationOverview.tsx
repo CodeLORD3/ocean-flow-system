@@ -44,6 +44,7 @@ import { PurchaseWeekCard } from "@/components/dashboard/PurchaseWeekCard";
 import { OnDutyStaff } from "@/components/staff/OnDutyStaff";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SelfPunchCard } from "@/components/staff/SelfPunchCard";
 
 import {
   BarChart,
@@ -304,6 +305,8 @@ export default function OrganisationOverview() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 sm:space-y-6 max-w-full overflow-x-hidden">
+      {/* Personlig mobilstämpling överst för den som har rätt */}
+      <SelfPunchCard />
       {site === "wholesale" && <DayCloseOverview />}
       {/* Ingång till räkningen — det första en butiksanställd ser på telefon */}
       {isShop && (
