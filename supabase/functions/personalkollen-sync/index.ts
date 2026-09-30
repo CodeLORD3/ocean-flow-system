@@ -795,5 +795,14 @@ Deno.serve(async (req) => {
     }
   }
 
-  return json({ ok: !failed, results: out, warnings }, failed ? 500 : 200);
+  // Tillfällig import av PK-pass till time_entries (styrs av system_settings.pk_import_enabled).
+  let pk_import: unknown = null;
+  try {
+    const { data, error } = await db.rpc("pk_import_run", {});
+    pk_import = error ? { error: error.message } : data;
+  } catch (e) {
+    pk_import = { error: String((e as Error).message ?? e) };
+  }
+
+  return json({ ok: !failed, results: out, warnings, pk_import }, failed ? 500 : 200);
 });

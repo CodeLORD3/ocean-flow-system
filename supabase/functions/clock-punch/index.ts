@@ -296,13 +296,19 @@ Deno.serve(async (req) => {
 
   const workSiteId = selfPunch ? selfWorkSiteId : body.work_site_id ? String(body.work_site_id) : null;
   let workSite: WorkSite | null = null;
-  if (workSiteId) {
+  // En station kopplad till en butik använder alltid butikens eget driftställe.
+  // Personalen väljer aldrig driftställe vid en butiksstation.
+  let storeSites: WorkSite[] = [];
+  if (!selfPunch && station.store_id) {
+    const { data } = await db.from("work_sites").select(WORK_SITE_COLUMNS).eq("store_id", station.store_id).eq("is_active", true).order("sort_order");
+    storeSites = (data ?? []) as WorkSite[];
+  }
+  if (storeSites.length > 0) {
+    workSite = storeSites.find((s) => s.id === workSiteId) ?? storeSites[0];
+  } else if (workSiteId) {
     const { data } = await db.from("work_sites").select(WORK_SITE_COLUMNS).eq("id", workSiteId).eq("is_active", true).maybeSingle();
     workSite = (data as WorkSite | null) ?? null;
     if (!workSite) return json(req, { error: "Driftstället är inte aktivt." }, 400);
-  } else if (station.store_id) {
-    const { data } = await db.from("work_sites").select(WORK_SITE_COLUMNS).eq("store_id", station.store_id).eq("is_active", true).order("sort_order").limit(2);
-    if ((data ?? []).length === 1) workSite = (data?.[0] as WorkSite) ?? null;
   }
   // Fallback: butiken kanske inte har egna driftställen. Då gäller bolagets
   // enda driftställe. Saknas även det stämplar vi på stationens enhet — en
