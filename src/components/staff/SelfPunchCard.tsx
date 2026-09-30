@@ -31,9 +31,12 @@ function getPosition(): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) return reject(new Error("Telefonen saknar platstjänst."));
     navigator.geolocation.getCurrentPosition(resolve, (e) => {
-      reject(new Error(e.code === e.PERMISSION_DENIED
-        ? "Platstjänsten är avstängd eller nekad. Tillåt plats för webbläsaren och försök igen."
-        : "Kunde inte läsa din position. Gå utomhus eller närmare butiken och försök igen."));
+      if (e.code === e.PERMISSION_DENIED) {
+        const err = new Error("Platstjänsten är avstängd eller nekad.");
+        (err as Error & { denied?: boolean }).denied = true;
+        return reject(err);
+      }
+      reject(new Error("Kunde inte läsa din position. Gå utomhus eller närmare butiken och försök igen."));
     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
   });
 }
@@ -44,6 +47,7 @@ export function SelfPunchCard() {
   const [allowed, setAllowed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
+  const [locationDenied, setLocationDenied] = useState(false);
 
   const load = useCallback(async () => {
     const r = await call({ mode: "lookup" });
@@ -58,6 +62,7 @@ export function SelfPunchCard() {
   const punch = async (action: string) => {
     setBusy(true);
     setMessage(null);
+    setLocationDenied(false);
     try {
       const pos = await getPosition();
       const r = await call({
@@ -77,6 +82,7 @@ export function SelfPunchCard() {
       }
     } catch (e) {
       setMessage({ tone: "error", text: (e as Error).message });
+      if ((e as { denied?: boolean }).denied) setLocationDenied(true);
     } finally {
       setBusy(false);
     }
@@ -112,6 +118,13 @@ export function SelfPunchCard() {
         </div>
         {message && (
           <p className={`text-sm ${message.tone === "error" ? "text-destructive" : "text-success"}`}>{message.text}</p>
+        )}
+        {locationDenied && (
+          <div className="rounded-md border border-border bg-muted/40 p-3 text-sm space-y-2">
+            <p className="font-semibold">Så slår du på platstjänsten</p>
+            <p><span className="font-medium">iPhone:</span> Inställningar → Integritet och säkerhet → Platstjänster → Safari-webbplatser → Vid användning. Öppna sedan appen igen.</p>
+            <p><span className="font-medium">Android:</span> Chrome → ⋮ → Inställningar → Webbplatsinställningar → Plats → tillåt den här webbplatsen.</p>
+          </div>
         )}
         <p className="text-xs text-muted-foreground">Din position kontrolleras mot butiken vid varje stämpling.</p>
       </CardContent>
