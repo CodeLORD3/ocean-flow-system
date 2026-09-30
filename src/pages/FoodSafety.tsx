@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumberField, parseNumber } from "@/components/ui/number-field";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -102,10 +103,14 @@ export default function FoodSafety() {
       toast.error("Fyll i ett värde först.");
       return;
     }
+    if (!isBool && parseNumber(raw) === null) {
+      toast.error("Värdet måste vara ett tal, t.ex. 4,5 eller -18.");
+      return;
+    }
     try {
       const rec = await register.mutateAsync({
         controlPointId: p.id,
-        valueNumeric: isBool ? null : Number(raw.replace(",", ".")),
+        valueNumeric: isBool ? null : parseNumber(raw),
         valueBool: isBool ? !!boolValue : null,
         instrumentId: p.instrument_id ?? null,
       });
@@ -120,14 +125,16 @@ export default function FoodSafety() {
     }
   };
 
-  const doSaveDeviation = async () => {
+  /** close skickas som argument — state hinner inte uppdateras före sparningen. */
+  const doSaveDeviation = async (close = false) => {
     if (!devForm?.description?.trim()) {
       toast.error("Avvikelsen behöver en beskrivning.");
       return;
     }
     try {
-      await saveDeviation.mutateAsync(devForm);
-      toast.success(devForm.close ? "Avvikelsen är stängd." : "Avvikelsen är sparad.");
+      const form = { ...devForm, close: close || !!devForm.close };
+      await saveDeviation.mutateAsync(form);
+      toast.success(form.close ? "Avvikelsen är stängd." : "Avvikelsen är sparad.");
       setDevForm(null);
     } catch (e: any) {
       toast.error(e.message || "Avvikelsen kunde inte sparas.");
@@ -266,15 +273,15 @@ export default function FoodSafety() {
                       </div>
                     ) : (
                       <div className="flex gap-1">
-                        <Input
+                        <NumberField
+                          allowNegative
                           value={values[p.id] ?? ""}
-                          onChange={(e) => setValues((v) => ({ ...v, [p.id]: e.target.value }))}
+                          onValueChange={(raw) => setValues((v) => ({ ...v, [p.id]: raw }))}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") saveMeasurement(p);
                           }}
-                          inputMode="decimal"
                           placeholder={p.unit}
-                          className="h-11 w-24 text-center font-mono text-base tabular-nums"
+                          className="h-11 sm:h-11 w-24 text-center font-mono text-base tabular-nums"
                         />
                         <Button size="sm" className="h-11 px-4 text-sm" onClick={() => saveMeasurement(p)}>
                           Spara
@@ -530,30 +537,20 @@ export default function FoodSafety() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Gräns min</Label>
-                <Input
+                <NumberField
+                  allowNegative
                   value={pointForm.limit_min ?? ""}
-                  onChange={(e) =>
-                    setPointForm({
-                      ...pointForm,
-                      limit_min: e.target.value ? Number(e.target.value.replace(",", ".")) : null,
-                    })
-                  }
-                  inputMode="decimal"
-                  className="h-8 font-mono text-xs"
+                  onValueChange={(_raw, n) => setPointForm({ ...pointForm, limit_min: n })}
+                  className="h-8 sm:h-8 text-left font-mono text-xs"
                 />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Gräns max</Label>
-                <Input
+                <NumberField
+                  allowNegative
                   value={pointForm.limit_max ?? ""}
-                  onChange={(e) =>
-                    setPointForm({
-                      ...pointForm,
-                      limit_max: e.target.value ? Number(e.target.value.replace(",", ".")) : null,
-                    })
-                  }
-                  inputMode="decimal"
-                  className="h-8 font-mono text-xs"
+                  onValueChange={(_raw, n) => setPointForm({ ...pointForm, limit_max: n })}
+                  className="h-8 sm:h-8 text-left font-mono text-xs"
                 />
               </div>
               <div className="space-y-1 sm:col-span-2">
@@ -668,7 +665,7 @@ export default function FoodSafety() {
             </div>
           )}
           <DialogFooter className="gap-2">
-            <Button size="sm" variant="outline" className="text-xs" onClick={doSaveDeviation}>
+            <Button size="sm" variant="outline" className="text-xs" onClick={() => doSaveDeviation(false)}>
               Spara
             </Button>
             {devForm && !devForm.closed_at && (
@@ -676,8 +673,7 @@ export default function FoodSafety() {
                 size="sm"
                 className="text-xs"
                 onClick={() => {
-                  setDevForm({ ...devForm, close: true });
-                  setTimeout(doSaveDeviation, 0);
+                  void doSaveDeviation(true);
                 }}
               >
                 Stäng avvikelsen
