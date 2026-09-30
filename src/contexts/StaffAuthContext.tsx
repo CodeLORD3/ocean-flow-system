@@ -134,7 +134,7 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Nattlig utloggning 03:30: sessioner inloggade före senaste körningen loggas ut.
+  // Nattlig utloggning 04:30: sessioner inloggade före senaste körningen loggas ut.
   useEffect(() => {
     if (!user) return;
     try { if (user.last_sign_in_at) localStorage.setItem("erp_last_sign_in_at", user.last_sign_in_at); } catch { /* ignore */ }
@@ -151,10 +151,14 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     };
     void check();
     const onVisible = () => { if (document.visibilityState === "visible") void check(); };
+    // iOS-hemskärmsappar laddas inte om när de öppnas: kontrollera även vid bfcache-återställning.
+    const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) void check(); };
     window.addEventListener("focus", check);
+    window.addEventListener("pageshow", onPageShow);
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       window.removeEventListener("focus", check);
+      window.removeEventListener("pageshow", onPageShow);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [user?.id, user?.last_sign_in_at]);

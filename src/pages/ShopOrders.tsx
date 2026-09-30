@@ -522,6 +522,8 @@ export default function ShopOrders() {
   const qtyRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const startNewOrder = () => {
+    setCopySource(null);
+    setCopyDropped([]);
     setCreatingOrder(true);
     requestAnimationFrame(() => {
       searchInputRef.current?.focus({ preventScroll: true });

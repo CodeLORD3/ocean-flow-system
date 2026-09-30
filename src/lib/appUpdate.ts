@@ -50,7 +50,29 @@ function reloadOnce() {
     return;
   }
   reloadingForUpdate = true;
-  window.location.reload();
+  if (isStandalone()) void hardReload();
+  else window.location.reload();
+}
+
+/** Hemskärmsapp (iPhone/Android). */
+function isStandalone() {
+  return window.matchMedia?.("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+}
+
+/** Hemskärmsappar håller hårt i gammal kod: avregistrera service worker, töm cache och ladda om. */
+async function hardReload() {
+  try {
+    const regs = (await navigator.serviceWorker?.getRegistrations?.()) ?? [];
+    await Promise.allSettled(regs.map((r) => r.unregister()));
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.allSettled(keys.map((k) => caches.delete(k)));
+    }
+  } finally {
+    const url = new URL(window.location.href);
+    url.searchParams.set("_v", String(Date.now()));
+    window.location.replace(url.toString());
+  }
 }
 
 export function registerAppUpdates() {
@@ -80,6 +102,8 @@ export function registerAppUpdates() {
     if (document.visibilityState === "visible") void checkForUpdateNow();
   });
   window.addEventListener("focus", () => void checkForUpdateNow());
+  // iOS väcker hemskärmsappar från bakgrunden utan omladdning (bfcache).
+  window.addEventListener("pageshow", (e) => { if (e.persisted) void checkForUpdateNow(); });
 }
 
 /**
