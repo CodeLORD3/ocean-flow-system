@@ -82,6 +82,11 @@ const maskedDisplay = (value: string) => {
 const DIGIT_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 const CODE_KEYS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split("");
 
+/** Offline vet klockan inte senaste stämplingen — visa alla val (IN, UT och rast). */
+function foundActions(found: { id: string; suggested: Action }): readonly string[] {
+  return found.id === "offline" ? ["in", "ut", "rast_start", "rast_slut"] : (VALID_ACTIONS[found.suggested] as readonly string[]);
+}
+
 export default function Clock() {
   const navigate = useNavigate();
   const [station, setStation] = useState<ClockStationInfo | null>(storedStation());
@@ -505,23 +510,23 @@ export default function Clock() {
               {/* Nuläget i klartext innan man trycker: in, på rast eller ute. */}
               <div className={`ind-row ${found.suggested === "in" ? "ind-row--edge-neutral" : "ind-row--edge-accent"}`}>
                 <StatusLabel tone={found.suggested === "in" ? "neutral" : "ok"}>
-                  {found.suggested === "in" ? "Inte instämplad" : found.suggested === "rast_slut" ? "På rast" : "Instämplad"}
+                  {found.id === "offline" ? "Offline — välj IN, UT eller rast" : found.suggested === "in" ? "Inte instämplad" : found.suggested === "rast_slut" ? "På rast" : "Instämplad"}
                 </StatusLabel>
-                <span className="text-sm">{FOUND_STATE[found.suggested]}</span>
+                <span className="text-sm">{found.id === "offline" ? "Stämplingen sparas och skickas när nätet är tillbaka." : FOUND_STATE[found.suggested]}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {VALID_ACTIONS[found.suggested].includes("in") && (
+              {foundActions(found).includes("in") && (
                 <IndustryButton variant={found.suggested === "in" ? "primary" : "secondary"} size="kiosk" corners onClick={() => handlePunch("in")} disabled={busy}>IN</IndustryButton>
               )}
-              {VALID_ACTIONS[found.suggested].includes("ut") && (
+              {foundActions(found).includes("ut") && (
                 <IndustryButton variant={found.suggested === "ut" ? "primary" : "secondary"} size="kiosk" corners={found.suggested === "ut"} onClick={() => handlePunch("ut")} disabled={busy}>UT</IndustryButton>
               )}
-              {breaksEnabled && VALID_ACTIONS[found.suggested].includes("rast_start") && (
+              {breaksEnabled && foundActions(found).includes("rast_start") && (
                 <IndustryButton variant={found.suggested === "rast_start" ? "primary" : "secondary"} size="kiosk" corners={found.suggested === "rast_start"} onClick={() => handlePunch("rast_start")} disabled={busy}>Rast börjar</IndustryButton>
               )}
-              {VALID_ACTIONS[found.suggested].includes("rast_slut") && (
+              {foundActions(found).includes("rast_slut") && (
                 <IndustryButton variant="primary" size="kiosk" corners onClick={() => handlePunch("rast_slut")} disabled={busy}>Rast slutar</IndustryButton>
               )}
             </div>
