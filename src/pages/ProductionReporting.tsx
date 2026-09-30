@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberField } from "@/components/ui/number-field";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -175,14 +176,11 @@ function EditableRow({
         </Popover>
       </TableCell>
       <TableCell className="py-0.5 px-1 w-[60px]">
-        <Input
+        <NumberField
           ref={qtyInputRef}
-          type="number"
-          inputMode="decimal"
-          defaultValue={line.quantity}
-          onFocus={(e) => e.target.select()}
-          onChange={(e) => commitField("quantity", parseFloat(e.target.value) || 0)}
-          className="h-6 text-[11px] w-14 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right"
+          value={line.quantity}
+          onValueChange={(_raw, n) => commitField("quantity", n ?? 0)}
+          className="h-6 sm:h-6 text-[11px] w-14 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right"
         />
       </TableCell>
       <TableCell className="py-0.5 px-1 w-[42px]">
@@ -230,7 +228,7 @@ function EditableRow({
         />
       </TableCell>
       <TableCell className="py-0.5 px-0 w-6">
-        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onDelete}>
+        <Button variant="ghost" size="icon" className="h-5 w-5" aria-label="Ta bort rad" onClick={() => { if (window.confirm(`Ta bort raden "${line.product_name ?? ""}"?`)) onDelete(); }}>
           <Trash2 className="h-2.5 w-2.5 text-destructive" />
         </Button>
       </TableCell>
@@ -477,50 +475,30 @@ export default function ProductionReporting() {
 
   const confirmReport = useMutation({
     mutationFn: async (reportId: string) => {
-      const lines = allLines.filter((l) => l.report_id === reportId);
-      const total = lines.reduce((s, l) => s + l.quantity, 0);
-
-      // Lagerplatsen är utpekad, inte namnmatchad: sex lagerplatser heter
-      // "Grossist Flytande" och en namnuppslagning träffade fel eller kraschade.
-      const flytandeLocId = GROSSIST_FLYTANDE_ID;
-
-      // Transfer each produced line to Grossist Flytande
-      for (const line of lines) {
-        if (!line.product_id || line.quantity <= 0) continue;
-        const product = products.find((p: any) => p.id === line.product_id);
-        const unitCost = Number(product?.cost_price) || 0;
-        // Producerade varor bokförs som tillverkning in via rörelseloggen.
-        await recordMovement({
-          productId: line.product_id,
-          locationId: flytandeLocId,
-
-          quantityKg: line.quantity,
-          movementType: "tillverkning_in",
-          unitCost: unitCost || null,
-          referenceType: "production_report",
-          referenceId: reportId,
-          note: "Bekräftad produktionsrapport",
-        });
-      }
-
-
-      // Auto-update order line statuses (no-op, kept for compatibility)
-      const confirmedProductIds = lines.map((l) => l.product_id!).filter(Boolean);
-      await markOrderLinesBehandlas(confirmedProductIds);
-
-      // Lock the report
-      const { error } = await supabase
-        .from("production_reports")
-        .update({ status: "Bekräftad", total_quantity: total })
-        .eq("id", reportId);
+      // En databastransaktion: alla rörelser bokas och rapporten låses — eller ingenting.
+      // Idempotent per rapport, så ett nytt tryck efter fel bokar aldrig dubbelt.
+      const { data, error } = await supabase.rpc("confirm_production_report" as any, { _report_id: reportId });
       if (error) throw error;
+      const lines = allLines.filter((l) => l.report_id === reportId);
+      await markOrderLinesBehandlas(lines.map((l) => l.product_id!).filter(Boolean));
+      return data as { status?: string } | null;
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["production-reports"] });
       queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
-      toast({ title: "Produktion bekräftad", description: "Producerade varor har lagts till i Grossist Flytande." });
+      toast(res?.status === "redan_bekraftad"
+        ? { title: "Redan bekräftad", description: "Rapporten var redan bokad. Inget lades till två gånger." }
+        : { title: "Produktion bekräftad", description: "Producerade varor har lagts till i Grossist Flytande." });
+    },
+    onError: (e: any) => {
+      queryClient.invalidateQueries({ queryKey: ["production-reports"] });
+      toast({
+        title: "Kunde inte bekräfta produktionen",
+        description: `${e?.message ?? "Okänt fel"}. Inget har bokats i lagret — försök igen.`,
+        variant: "destructive",
+      });
     },
   });
 
