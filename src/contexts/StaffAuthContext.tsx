@@ -145,6 +145,8 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
       if (validFrom && signedIn && signedIn < validFrom) {
         try { sessionStorage.setItem("nightly_logout", "1"); } catch { /* ignore */ }
         await hardSignOut();
+      } else {
+        try { sessionStorage.removeItem("nightly_logout"); } catch { /* ignore */ }
       }
     };
     void check();
