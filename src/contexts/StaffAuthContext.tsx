@@ -137,6 +137,7 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
   // Nattlig utloggning 03:30: sessioner inloggade före senaste körningen loggas ut.
   useEffect(() => {
     if (!user) return;
+    try { if (user.last_sign_in_at) localStorage.setItem("erp_last_sign_in_at", user.last_sign_in_at); } catch { /* ignore */ }
     const check = async () => {
       const { data } = await supabase.rpc("sessions_valid_from");
       const validFrom = data ? new Date(data as string).getTime() : 0;
