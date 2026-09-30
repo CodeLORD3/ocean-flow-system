@@ -6,9 +6,37 @@ import { createPortal } from "react-dom";
 /** På telefon läggs beställningsvyn som egen helskärm ovanpå allt; på dator ligger den kvar i sidan. */
 function CreatePanelShell({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
+  // Tangentbordet tar halva skärmen: följ den synliga ytan och göm knapparna nedtill medan man skriver.
+  const [vh, setVh] = React.useState<number | null>(null);
+  const [typing, setTyping] = React.useState(false);
+  React.useEffect(() => {
+    if (!isMobile) return;
+    const vv = window.visualViewport;
+    const onResize = () => { if (vv) { setVh(vv.height); window.scrollTo(0, 0); } };
+    const isText = (el: EventTarget | null) =>
+      el instanceof HTMLTextAreaElement ||
+      (el instanceof HTMLInputElement && !["button", "checkbox", "radio", "submit"].includes(el.type));
+    const onIn = (e: FocusEvent) => setTyping(isText(e.target));
+    const onOut = () => setTimeout(() => setTyping(isText(document.activeElement)), 50);
+    onResize();
+    vv?.addEventListener("resize", onResize);
+    document.addEventListener("focusin", onIn);
+    document.addEventListener("focusout", onOut);
+    return () => {
+      vv?.removeEventListener("resize", onResize);
+      document.removeEventListener("focusin", onIn);
+      document.removeEventListener("focusout", onOut);
+    };
+  }, [isMobile]);
   if (!isMobile) return <>{children}</>;
   return createPortal(
-    <div className="fixed inset-0 z-[70] flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">{children}</div>,
+    <div
+      data-kb={typing ? "true" : "false"}
+      style={vh ? { height: vh, maxHeight: vh } : undefined}
+      className="group fixed inset-x-0 top-0 z-[70] flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] data-[kb=true]:pb-0"
+    >
+      {children}
+    </div>,
     document.body,
   );
 }
@@ -961,9 +989,11 @@ export default function ShopOrders() {
                     {desiredDeliveryDate ? format(desiredDeliveryDate, "EEEE d MMMM yyyy", { locale: sv }) : "Välj leveransdag…"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="z-[80] w-auto p-0" align="start">
                   <Calendar
                     mode="single"
+                    locale={sv}
+                    weekStartsOn={1}
                     selected={desiredDeliveryDate}
                     onSelect={(d) => { setDesiredDeliveryDate(d); if (d) setTimeout(() => searchInputRef.current?.focus({ preventScroll: true }), 80); }}
                     disabled={isDateDisabled}
@@ -982,7 +1012,7 @@ export default function ShopOrders() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sticky top-0 z-20 bg-card pb-2 sm:static sm:bg-transparent sm:pb-0">
               <div className="relative flex-1">
                 <Label className="text-sm font-semibold mb-1.5 block sm:text-xs sm:font-medium">
-                  1. Lägg till produkter <span className="font-normal text-muted-foreground">(en åt gången — de samlas i samma beställning)</span>
+                  2. Lägg till produkter <span className="font-normal text-muted-foreground">(en åt gången — de samlas i samma beställning)</span>
                 </Label>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -1495,7 +1525,7 @@ export default function ShopOrders() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
-                  className="w-auto p-0"
+                  className="z-[80] w-auto p-0"
                   align="start"
                   onKeyDown={(e) => {
                     if (e.key !== "Enter") return;
@@ -1532,7 +1562,7 @@ export default function ShopOrders() {
               />
             </div>
 
-            <div className="sticky bottom-0 z-20 -mx-4 border-t border-border bg-card px-4 py-3 space-y-2 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:pt-2">
+            <div className="sticky bottom-0 z-20 -mx-4 border-t border-border bg-card px-4 py-3 space-y-2 group-data-[kb=true]:hidden sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:pt-2">
               <p className="text-xs text-muted-foreground sm:hidden">
                 {orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkter klara — lägg till fler innan du skickar.
               </p>
