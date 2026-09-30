@@ -482,12 +482,14 @@ export default function CustomerOrders() {
             size="lg"
             className="h-12 px-5 text-base"
             disabled={archiveOrders.isPending}
-            onClick={() =>
+            onClick={() => {
+              const n = marked.length;
+              if (!window.confirm(isArchiveView ? `Återställa ${n} beställning${n === 1 ? "" : "ar"}?` : `Arkivera ${n} beställning${n === 1 ? "" : "ar"}? De försvinner från dagens lista.`)) return;
               archiveOrders.mutate(
                 { ids: marked, archive: !isArchiveView },
                 { onSuccess: () => setMarked([]) },
-              )
-            }
+              );
+            }}
           >
             {isArchiveView ? (
               <>
@@ -510,7 +512,12 @@ export default function CustomerOrders() {
               type="date"
               className="h-10 w-[9.5rem] text-sm"
               disabled={moveOrders.isPending}
-              onChange={(e) => e.target.value && moveTo(e.target.value, marked)}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (!v) return;
+                if (window.confirm(`Flytta ${marked.length} beställning${marked.length === 1 ? "" : "ar"} till ${dayLabel(v)} (${v})?`)) moveTo(v, marked);
+                else e.target.value = "";
+              }}
             />
           </div>
         )}
@@ -525,7 +532,12 @@ export default function CustomerOrders() {
               type="date"
               className="h-10 w-[9.5rem] text-sm"
               disabled={duplicateOrders.isPending}
-              onChange={(e) => e.target.value && copyTo(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (!v) return;
+                if (window.confirm(`Kopiera ${marked.length} beställning${marked.length === 1 ? "" : "ar"} till ${dayLabel(v)} (${v})? Originalen ligger kvar.`)) copyTo(v);
+                else e.target.value = "";
+              }}
             />
           </div>
         )}
