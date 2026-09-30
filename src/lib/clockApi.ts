@@ -119,6 +119,19 @@ export async function recordClockSyncFailure(payload: Record<string, unknown>) {
   return call<{ ok: boolean }>("clock-sync-failure", payload, token);
 }
 
+export interface ServerSyncFailure { id: string; identifier_cipher: string; identifier_iv: string; punch_type: string; occurred_at: string }
+export async function listClockSyncFailures() {
+  const token = storedSession();
+  if (!token) return [] as ServerSyncFailure[];
+  const res = await call<{ failures: ServerSyncFailure[] }>("clock-sync-failure", { mode: "list" }, token);
+  return res.failures ?? [];
+}
+export async function restoreClockSyncFailure(id: string, identifier: string) {
+  const token = storedSession();
+  if (!token) throw new Error("Stationen är inte aktiverad.");
+  return call<{ ok: boolean; reason?: string }>("clock-sync-failure", { mode: "restore", id, identifier }, token);
+}
+
 export interface OnSitePerson { first_name: string; initial: string; since: string; on_break: boolean; }
 export async function statusOnSite(): Promise<OnSitePerson[]> {
   const token = storedSession();

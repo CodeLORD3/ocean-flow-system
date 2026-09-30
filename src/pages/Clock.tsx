@@ -31,7 +31,7 @@ import {
   type ClockStationInfo,
   type OnSitePerson,
 } from "@/lib/clockApi";
-import { enqueuePunch, queuedCount, syncQueue } from "@/lib/clockQueue";
+import { enqueuePunch, queuedCount, syncQueue, restoreServerFailures } from "@/lib/clockQueue";
 import { dagsavslutText } from "@/lib/dagsavslut";
 
 type Action = "in" | "ut" | "rast_start" | "rast_slut";
@@ -137,6 +137,7 @@ export default function Clock() {
     const goOnline = async () => {
       setOnline(true);
       await syncQueue().catch(() => 0);
+      await restoreServerFailures().catch(() => 0);
       await refreshQueue();
       await refreshOnSite();
     };
@@ -152,6 +153,8 @@ export default function Clock() {
       await refreshQueue();
     };
     void drain();
+    // Äldre poster i serverns felkö kan bara läsas av enheten som krypterade dem.
+    if (navigator.onLine && storedSession()) void restoreServerFailures().catch(() => 0);
     const t = setInterval(() => void refreshOnSite(), 60_000);
     const q = setInterval(() => void drain(), 30_000);
     return () => {
