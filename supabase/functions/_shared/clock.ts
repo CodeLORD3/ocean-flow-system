@@ -255,3 +255,80 @@ export function effectiveLast<T extends JournalRow>(rows: T[], now = Date.now())
 /** Är personen inne på ett öppet pass just nu? */
 export const isOpenShift = (type: string | null | undefined) =>
   type === "in" || type === "rast_start" || type === "rast_slut";
+
+/** Dagens datum i Stockholm (YYYY-MM-DD). */
+export function stockholmToday(now = new Date()): string {
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+
+export interface SelfPunchContext {
+  userId: string;
+  employee: { id: string; first_name: string; last_name: string; pnr_masked: string | null; is_active: boolean };
+  station: Station;
+  workSiteId: string;
+}
+
+/**
+ * Personlig mobilstämpling: inloggad personal stämplar från egen telefon via
+ * vanliga ERP-inloggningen. Tillåts på arbetsplatser med mobile_self_punch där
+ * personen har butiken i en anställning, som staff.store_id eller har ett
+ * planerat pass där i dag. Stämplingen går sedan genom samma regler som klockan.
+ */
+export async function resolveSelfPunch(
+  db: SupabaseClient,
+  req: Request,
+): Promise<{ ctx: SelfPunchContext } | { error: string; status: number }> {
+  const auth = req.headers.get("Authorization") ?? "";
+  if (!auth.startsWith("Bearer ")) return { error: "Logga in för att stämpla.", status: 401 };
+  const { data: userData, error: userErr } = await db.auth.getUser(auth.slice(7));
+  const userId = userData?.user?.id;
+  if (userErr || !userId) return { error: "Inloggningen har gått ut. Logga in igen.", status: 401 };
+
+  const { data: staff } = await db.from("staff").select("id, store_id").eq("user_id", userId).maybeSingle();
+  if (!staff) return { error: "Du saknar personalkonto för stämpling.", status: 403 };
+  const { data: emp } = await db
+    .from("employees")
+    .select("id, first_name, last_name, pnr_masked, is_active")
+    .eq("staff_id", staff.id)
+    .maybeSingle();
+  if (!emp) return { error: "Ditt konto är inte kopplat till ett personalkort. Kontakta kontoret.", status: 403 };
+
+  const today = stockholmToday();
+  const storeIds = new Set<string>();
+  if (staff.store_id) storeIds.add(staff.store_id as string);
+  const { data: emps } = await db.from("employments").select("store_id, is_active, start_date, end_date").eq("employee_id", emp.id);
+  for (const e of emps ?? []) {
+    if (e.store_id && e.is_active !== false && (!e.end_date || String(e.end_date) >= today)) storeIds.add(e.store_id as string);
+  }
+  const { data: shifts } = await db.from("shifts").select("store_id").eq("employee_id", emp.id).eq("date", today);
+  for (const s of shifts ?? []) if (s.store_id) storeIds.add(s.store_id as string);
+  if (storeIds.size === 0) return { error: "Mobilstämpling är inte öppen för dig.", status: 403 };
+
+  const { data: sites } = await db
+    .from("work_sites")
+    .select("id, store_id, legal_entity_id")
+    .eq("is_active", true)
+    .eq("mobile_self_punch", true)
+    .in("store_id", [...storeIds])
+    .order("sort_order")
+    .limit(1);
+  const site = sites?.[0];
+  if (!site) return { error: "Mobilstämpling är inte öppen för din butik.", status: 403 };
+
+  let legalEntityId = (site.legal_entity_id as string | null) ?? null;
+  if (!legalEntityId) {
+    const { data: store } = await db.from("stores").select("legal_entity_id").eq("id", site.store_id).maybeSingle();
+    legalEntityId = (store?.legal_entity_id as string | null) ?? null;
+  }
+  return {
+    ctx: {
+      userId,
+      employee: emp as SelfPunchContext["employee"],
+      workSiteId: site.id as string,
+      station: { id: "", name: "Mobilstämpling", store_id: site.store_id as string, legal_entity_id: legalEntityId, status: "active", profile: {} },
+    },
+  };
+}
+
+/** Mobilstämpling kräver alltid position inom geofence. */
+export const SELF_PUNCH_NOTE = "Mobilstämpling (egen inloggning)";

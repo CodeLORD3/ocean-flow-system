@@ -26,6 +26,8 @@ import {
   registerFailedLookup,
   resetFailedLookup,
   requireStation,
+  resolveSelfPunch,
+  SELF_PUNCH_NOTE,
   service,
   type PunchType,
 } from "../_shared/clock.ts";
@@ -73,25 +75,41 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return json(req, { error: "Ogiltig förfrågan" }, 400); }
 
   const db = service();
-  const ctx = await requireStation(db, req, body);
-  if (!ctx) return json(req, { error: "Stationen är inte aktiverad. Ange aktiveringskod." }, 401);
-  const { station, expiresAt } = ctx;
+  // Personlig mobilstämpling (self_punch): inloggad personal, ingen station.
+  const selfPunch = body.self_punch === true;
+  let selfWorkSiteId: string | null = null;
+  let selfHit: EmployeeHit | null = null;
+  let station;
+  let expiresAt: string | null = null;
+  if (selfPunch) {
+    const r = await resolveSelfPunch(db, req);
+    if ("error" in r) return json(req, { error: r.error }, r.status);
+    station = r.ctx.station;
+    selfWorkSiteId = r.ctx.workSiteId;
+    selfHit = r.ctx.employee;
+  } else {
+    const ctx = await requireStation(db, req, body);
+    if (!ctx) return json(req, { error: "Stationen är inte aktiverad. Ange aktiveringskod." }, 401);
+    station = ctx.station;
+    expiresAt = ctx.expiresAt;
+  }
   const mode = String(body.mode ?? "lookup");
-  const rawIdentifier = String(body.identifier ?? "").trim();
+  const rawIdentifier = selfPunch ? "" : String(body.identifier ?? "").trim();
   const action = String(body.action ?? "") as PunchType;
-  const offlineQueued = body.offline_queued === true;
-  if (!rawIdentifier) return json(req, { error: "Ange personnummer eller kortnummer." }, 400);
+  // Mobilstämpling köas aldrig offline: servern ska se positionen i stunden.
+  const offlineQueued = !selfPunch && body.offline_queued === true;
+  if (!selfPunch && !rawIdentifier) return json(req, { error: "Ange personnummer eller kortnummer." }, 400);
 
-  const pnr = normalizePnr(rawIdentifier);
+  const pnr = selfPunch ? null : normalizePnr(rawIdentifier);
 
-  let hit: EmployeeHit | null = null;
+  let hit: EmployeeHit | null = selfHit;
   let hash: string | null = null;
   if (pnr) {
     hash = await pnrHash(pnr);
     const { data } = await db.from("employees").select("id, first_name, last_name, pnr_masked, is_active").eq("pnr_hash", hash).maybeSingle();
     hit = (data as EmployeeHit | null) ?? null;
   }
-  if (!hit) {
+  if (!hit && !selfPunch) {
     const { data } = await db.from("employees").select("id, first_name, last_name, pnr_masked, is_active").eq("alt_clock_identifier", rawIdentifier).maybeSingle();
     hit = (data as EmployeeHit | null) ?? null;
   }
@@ -116,6 +134,9 @@ Deno.serve(async (req) => {
     openShift = isOpenShift(effectiveLast(lastRows ?? [])?.type);
   }
   const blocked = !hit || (!hit.is_active && !openShift);
+  if (selfPunch && blocked) {
+    return json(req, { error: "Ditt personalkort är inte aktivt. Kontakta kontoret." }, 403);
+  }
 
   // Spärren för upprepade felförsök gäller bara okända identiteter. Känd
   // personal i kön ska aldrig hindras av någon annans felslag.
@@ -176,7 +197,7 @@ Deno.serve(async (req) => {
     if (!hit || !hit.is_active) {
       return json(req, { status: "pending_registration", message: "Registrering väntar på godkännande.", expires_at: expiresAt });
     }
-  } else {
+  } else if (!selfPunch) {
     await resetFailedLookup(db, station.id);
   }
 
@@ -242,6 +263,11 @@ Deno.serve(async (req) => {
     .limit(60);
   const last = (effectiveLast(recent ?? [])?.type ?? undefined) as PunchType | undefined;
   const suggested: PunchType = last === "in" || last === "rast_slut" ? "ut" : last === "rast_start" ? "rast_slut" : "in";
+  if (mode === "lookup" && selfPunch) {
+    const lastRow = effectiveLast(recent ?? []);
+    const { data: openIn } = await db.from("time_entries").select("occurred_at").eq("employee_id", hit.id).eq("type", "in").order("occurred_at", { ascending: false }).limit(1).maybeSingle();
+    return json(req, { status: "found", employee: { id: hit.id, first_name: hit.first_name }, last_type: last ?? null, last_at: lastRow?.occurred_at ?? null, punched_in_since: isOpenShift(last) ? openIn?.occurred_at ?? null : null, suggested_action: suggested, store_id: station.store_id });
+  }
   if (mode === "lookup") return json(req, { status: "found", employee: { id: hit.id, first_name: hit.first_name, pnr_masked: hit.pnr_masked ?? (pnr ? maskPnr(pnr) : null) }, last_type: last ?? null, suggested_action: suggested, expires_at: expiresAt });
   if (!PUNCH_TYPES.includes(action)) return json(req, { error: "Ogiltig åtgärd." }, 400);
   // Ett öppet pass får avslutas, men en provisorisk eller inaktiverad person
@@ -267,7 +293,7 @@ Deno.serve(async (req) => {
     return json(req, { error: "Ingen pågående rast att avsluta." }, 409);
   }
 
-  const workSiteId = body.work_site_id ? String(body.work_site_id) : null;
+  const workSiteId = selfPunch ? selfWorkSiteId : body.work_site_id ? String(body.work_site_id) : null;
   let workSite: WorkSite | null = null;
   if (workSiteId) {
     const { data } = await db.from("work_sites").select(WORK_SITE_COLUMNS).eq("id", workSiteId).eq("is_active", true).maybeSingle();
@@ -309,12 +335,16 @@ Deno.serve(async (req) => {
   let geofenceOk: boolean | null = null;
   if (workSite && workSite.geofence_lat !== null && workSite.geofence_lng !== null) {
     if (latitude === null || longitude === null) {
-      if (workSite.allow_mobile_punch) return json(req, { error: "Platsåtkomst krävs för mobil stämpling." }, 403);
+      if (workSite.allow_mobile_punch || selfPunch) return json(req, { error: "Platsåtkomst krävs för mobil stämpling." }, 403);
     } else {
       distance = distanceMetres(latitude, longitude, workSite.geofence_lat, workSite.geofence_lng);
       geofenceOk = distance <= workSite.geofence_radius_m;
       if (!geofenceOk) return json(req, { error: `Du är ${Math.round(distance)} meter från driftstället. Stämpling nekad.`, distance_m: distance }, 403);
     }
+  }
+
+  if (selfPunch && geofenceOk !== true) {
+    return json(req, { error: "Arbetsplatsen saknar giltig position för mobilstämpling. Kontakta kontoret." }, 403);
   }
 
   // Serverns tid gäller. Enhetens tid godtas bara för offlineköade stämplingar
@@ -375,7 +405,7 @@ Deno.serve(async (req) => {
   const entryPayload = {
     client_punch_id: clientPunchId,
     employee_id: hit.id,
-    station_id: station.id,
+    station_id: selfPunch ? null : station.id,
     store_id: station.store_id,
     legal_entity_id: station.legal_entity_id,
     work_site_id: workSite?.id ?? null,
@@ -392,7 +422,7 @@ Deno.serve(async (req) => {
     rounded_at: roundedAt,
     registered_at: new Date().toISOString(),
     source: "clock",
-    note: [body.note ? String(body.note).slice(0, 400) : null, timeNote].filter(Boolean).join(" ") || null,
+    note: [selfPunch ? SELF_PUNCH_NOTE : null, body.note ? String(body.note).slice(0, 400) : null, timeNote].filter(Boolean).join(" ") || null,
   };
   const { data: inserted, error } = await db
     .from("time_entries")
