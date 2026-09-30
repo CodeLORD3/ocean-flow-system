@@ -21905,6 +21905,7 @@ export type Database = {
           ledger_required: Database["public"]["Enums"]["ledger_obligation"]
           legal_entity_id: string | null
           mobile_self_punch: boolean
+          mobile_self_punch_staff_ids: string[]
           name: string
           posting_cost_center: string
           sort_order: number
@@ -21926,6 +21927,7 @@ export type Database = {
           ledger_required?: Database["public"]["Enums"]["ledger_obligation"]
           legal_entity_id?: string | null
           mobile_self_punch?: boolean
+          mobile_self_punch_staff_ids?: string[]
           name: string
           posting_cost_center: string
           sort_order?: number
@@ -21947,6 +21949,7 @@ export type Database = {
           ledger_required?: Database["public"]["Enums"]["ledger_obligation"]
           legal_entity_id?: string | null
           mobile_self_punch?: boolean
+          mobile_self_punch_staff_ids?: string[]
           name?: string
           posting_cost_center?: string
           sort_order?: number
