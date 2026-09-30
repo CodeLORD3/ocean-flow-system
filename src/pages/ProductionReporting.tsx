@@ -686,10 +686,8 @@ export default function ProductionReporting() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Inköpspris</Label><Input type="number"
- inputMode="decimal" value={newProduct.cost_price} onChange={(e) => setNewProduct((p) => ({ ...p, cost_price: e.target.value }))} /></div>
-                <div><Label>Grossistpris</Label><Input type="number"
- inputMode="decimal" value={newProduct.wholesale_price} onChange={(e) => setNewProduct((p) => ({ ...p, wholesale_price: e.target.value }))} /></div>
+                <div><Label>Inköpspris</Label><NumberField className="h-10 text-left font-sans" value={newProduct.cost_price} onValueChange={(raw) => setNewProduct((p) => ({ ...p, cost_price: raw.replace(",", ".") }))} /></div>
+                <div><Label>Grossistpris</Label><NumberField className="h-10 text-left font-sans" value={newProduct.wholesale_price} onValueChange={(raw) => setNewProduct((p) => ({ ...p, wholesale_price: raw.replace(",", ".") }))} /></div>
               </div>
             </div>
             <DialogFooter>
