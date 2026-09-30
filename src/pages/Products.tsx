@@ -37,6 +37,7 @@ import { AllergenBadge } from "@/components/products/AllergenBadge";
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { NumberField } from "@/components/ui/number-field";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -1679,37 +1680,28 @@ export default function Products() {
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-xs">Reservpris (SEK)</Label>
-                    <Input
+                    <NumberField
                       value={form.cost_price}
-                      onChange={(e) => setField("cost_price", e.target.value)}
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      className="h-8 text-xs"
+                      onValueChange={(raw) => setField("cost_price", raw.replace(",", "."))}
+                      className="h-8 sm:h-8 text-left text-xs"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">
                       Grossistpris <span className="text-muted-foreground">+35%</span>
                     </Label>
-                    <Input
+                    <NumberField
                       value={form.wholesale_price}
-                      onChange={(e) => setField("wholesale_price", e.target.value)}
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      className="h-8 text-xs bg-muted/50"
+                      onValueChange={(raw) => setField("wholesale_price", raw.replace(",", "."))}
+                      className="h-8 sm:h-8 text-left text-xs bg-muted/50"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Rek. butikspris</Label>
-                    <Input
+                    <NumberField
                       value={form.retail_suggested}
-                      onChange={(e) => setField("retail_suggested", e.target.value)}
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      className="h-8 text-xs"
+                      onValueChange={(raw) => setField("retail_suggested", raw.replace(",", "."))}
+                      className="h-8 sm:h-8 text-left text-xs"
                     />
                   </div>
                 </div>
@@ -1732,13 +1724,10 @@ export default function Products() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Nettovikt per styck (KG)</Label>
-                <Input
+                <NumberField
                   value={form.weight_per_piece}
-                  onChange={(e) => setField("weight_per_piece", e.target.value)}
-                  type="number"
-                  inputMode="decimal"
-                  step="0.001"
-                  className="h-8 text-xs"
+                  onValueChange={(raw) => setField("weight_per_piece", raw.replace(",", "."))}
+                  className="h-8 sm:h-8 text-left text-xs"
                 />
                 <p className="text-[10px] text-muted-foreground">
                   Fylls i på allt som räknas i styck (burk, påse, hink, hel fisk). Utan den kan lagret inte
@@ -1884,46 +1873,34 @@ export default function Products() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Reservpris</Label>
-                <Input
+                <NumberField
                   value={subForm.cost_price}
-                  onChange={(e) => setSubForm((f) => ({ ...f, cost_price: e.target.value }))}
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  className="h-8 text-xs"
+                  onValueChange={(raw) => setSubForm((f) => ({ ...f, cost_price: raw.replace(",", ".") }))}
+                  className="h-8 sm:h-8 text-left text-xs"
                 />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Grossistpris</Label>
-                <Input
+                <NumberField
                   value={subForm.wholesale_price}
-                  onChange={(e) => setSubForm((f) => ({ ...f, wholesale_price: e.target.value }))}
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  className="h-8 text-xs"
+                  onValueChange={(raw) => setSubForm((f) => ({ ...f, wholesale_price: raw.replace(",", ".") }))}
+                  className="h-8 sm:h-8 text-left text-xs"
                 />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Rek. butik</Label>
-                <Input
+                <NumberField
                   value={subForm.retail_suggested}
-                  onChange={(e) => setSubForm((f) => ({ ...f, retail_suggested: e.target.value }))}
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  className="h-8 text-xs"
+                  onValueChange={(raw) => setSubForm((f) => ({ ...f, retail_suggested: raw.replace(",", ".") }))}
+                  className="h-8 sm:h-8 text-left text-xs"
                 />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Vikt/st (kg)</Label>
-                <Input
+                <NumberField
                   value={subForm.weight_per_piece}
-                  onChange={(e) => setSubForm((f) => ({ ...f, weight_per_piece: e.target.value }))}
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  className="h-8 text-xs"
+                  onValueChange={(raw) => setSubForm((f) => ({ ...f, weight_per_piece: raw.replace(",", ".") }))}
+                  className="h-8 sm:h-8 text-left text-xs"
                 />
               </div>
             </div>
