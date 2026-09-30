@@ -342,7 +342,10 @@ Deno.serve(async (req) => {
   let geofenceOk: boolean | null = null;
   if (workSite && workSite.geofence_lat !== null && workSite.geofence_lng !== null) {
     if (latitude === null || longitude === null) {
-      if (workSite.allow_mobile_punch || selfPunch) return json(req, { error: "Platsåtkomst krävs för mobil stämpling." }, 403);
+      // Fast butiksstation i sin egen butik: stämplingen får aldrig stoppas av saknad position.
+      const fixedStoreStation = !selfPunch && !!station.store_id && workSite.store_id === station.store_id &&
+        !(station.profile as { multi_device?: boolean } | null)?.multi_device;
+      if (!fixedStoreStation && (workSite.allow_mobile_punch || selfPunch)) return json(req, { error: "Platsåtkomst krävs för mobil stämpling." }, 403);
     } else {
       distance = distanceMetres(latitude, longitude, workSite.geofence_lat, workSite.geofence_lng);
       geofenceOk = distance <= workSite.geofence_radius_m;
