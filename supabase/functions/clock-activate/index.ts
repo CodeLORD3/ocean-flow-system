@@ -37,7 +37,11 @@ Deno.serve(async (req) => {
 
   // Koden binds till en enhet: så länge stationen har en levande session kan
   // samma kod inte aktivera en andra enhet. Byte av enhet kräver rotation.
-  const { data: live } = await db
+  // Profilflaggan multi_device (t.ex. "Eriksberg mobil" på personalens egna
+  // telefoner) ger en session per enhet i stället för 409. Rotering av koden
+  // raderar fortfarande alla sessioner.
+  const multiDevice = (station.profile as { multi_device?: boolean } | null)?.multi_device === true;
+  const { data: live } = multiDevice ? { data: null } : await db
     .from("clock_station_sessions")
     .select("id")
     .eq("station_id", station.id)

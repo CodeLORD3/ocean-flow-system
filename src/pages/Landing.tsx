@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,18 @@ export default function Landing() {
   const [showPwd, setShowPwd] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nightlyLogout, setNightlyLogout] = useState(false);
+  useEffect(() => {
+    let flagged = false;
+    try { flagged = sessionStorage.getItem("nightly_logout") === "1"; } catch { /* ignore */ }
+    if (flagged) { setNightlyLogout(true); return; }
+    let last: string | null = null;
+    try { last = localStorage.getItem("erp_last_sign_in_at"); } catch { /* ignore */ }
+    if (!last) return;
+    void supabase.rpc("sessions_valid_from").then(({ data }) => {
+      if (data && new Date(last as string).getTime() < new Date(data as string).getTime()) setNightlyLogout(true);
+    });
+  }, []);
 
   if (loading) {
     return (
@@ -54,6 +66,11 @@ export default function Landing() {
         </p>
       }
     >
+      {nightlyLogout && !error && (
+        <div className="mb-4 p-2.5 bg-muted border border-border rounded text-foreground text-xs">
+          Du har loggats ut för nattlig uppdatering. Logga in igen.
+        </div>
+      )}
       {error && (
         <div className="mb-4 p-2.5 bg-destructive/10 border border-destructive/20 rounded text-destructive text-xs">
           {error}

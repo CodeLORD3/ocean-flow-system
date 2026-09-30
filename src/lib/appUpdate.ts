@@ -27,8 +27,28 @@ function isPreviewHost() {
   );
 }
 
+function isEditing() {
+  const el = document.activeElement as HTMLElement | null;
+  return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable);
+}
+
+function showBanner() {
+  if (document.getElementById("app-update-banner")) return;
+  const b = document.createElement("div");
+  b.id = "app-update-banner";
+  b.textContent = "Ny version, laddar om när du lämnat fältet";
+  b.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:2147483647;padding:8px 12px;text-align:center;font-size:14px;font-weight:600;background:hsl(var(--primary));color:hsl(var(--primary-foreground))";
+  document.body.appendChild(b);
+}
+
 function reloadOnce() {
   if (reloadingForUpdate) return;
+  // Pågående inmatning: visa banner och ladda om först när fältet lämnas.
+  if (isEditing()) {
+    showBanner();
+    document.addEventListener("focusout", () => setTimeout(() => { if (!isEditing()) reloadOnce(); }, 300), { once: true });
+    return;
+  }
   reloadingForUpdate = true;
   window.location.reload();
 }

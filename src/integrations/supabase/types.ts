@@ -10049,6 +10049,36 @@ export type Database = {
           },
         ]
       }
+      nightly_logout_runs: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          oauth_sessions_kept: number
+          ran_at: string
+          sessions_ended: number
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          oauth_sessions_kept?: number
+          ran_at?: string
+          sessions_ended?: number
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          oauth_sessions_kept?: number
+          ran_at?: string
+          sessions_ended?: number
+          status?: string
+        }
+        Relationships: []
+      }
       nimpos_product_map: {
         Row: {
           barcode: string | null
@@ -21775,6 +21805,7 @@ export type Database = {
           ledger_note: string | null
           ledger_required: Database["public"]["Enums"]["ledger_obligation"]
           legal_entity_id: string | null
+          mobile_self_punch: boolean
           name: string
           posting_cost_center: string
           sort_order: number
@@ -21795,6 +21826,7 @@ export type Database = {
           ledger_note?: string | null
           ledger_required?: Database["public"]["Enums"]["ledger_obligation"]
           legal_entity_id?: string | null
+          mobile_self_punch?: boolean
           name: string
           posting_cost_center: string
           sort_order?: number
@@ -21815,6 +21847,7 @@ export type Database = {
           ledger_note?: string | null
           ledger_required?: Database["public"]["Enums"]["ledger_obligation"]
           legal_entity_id?: string | null
+          mobile_self_punch?: boolean
           name?: string
           posting_cost_center?: string
           sort_order?: number
@@ -23267,6 +23300,7 @@ export type Database = {
         }
         Returns: string
       }
+      nightly_logout_run: { Args: never; Returns: Json }
       nimpos_health: { Args: { _date?: string }; Returns: Json }
       normalize_email: { Args: { v: string }; Returns: string }
       normalize_phone_se: { Args: { v: string }; Returns: string }
@@ -23690,6 +23724,7 @@ export type Database = {
         Args: { _employee_id: string; _pnr: string }
         Returns: undefined
       }
+      sessions_valid_from: { Args: never; Returns: string }
       set_employee_pnr: {
         Args: { _employee_id: string; _pnr: string }
         Returns: undefined

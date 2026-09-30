@@ -11,6 +11,7 @@ import { useStores } from "@/hooks/useStores";
 import { OurStoresSection } from "@/components/dashboard/OurStoresSection";
 import { ParallelRunCards } from "@/components/staff/ParallelRunCards";
 import { ClockOpsCards } from "@/components/staff/ClockOpsCards";
+import { SelfPunchCard } from "@/components/staff/SelfPunchCard";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import { PosTodayLive } from "@/components/dashboard/PosTodayLive";
 
@@ -239,6 +240,7 @@ export default function Dashboard() {
       {isShop && (
         <motion.div variants={fadeUp} className="space-y-3">
           <h1 className="text-lg font-heading font-bold text-foreground">{activeStoreName} — Översikt</h1>
+          <SelfPunchCard />
           <EntityImageGallery
             entityType="store"
             entityId={activeStoreId!}

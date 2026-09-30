@@ -134,6 +134,31 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Nattlig utloggning 03:30: sessioner inloggade före senaste körningen loggas ut.
+  useEffect(() => {
+    if (!user) return;
+    try { if (user.last_sign_in_at) localStorage.setItem("erp_last_sign_in_at", user.last_sign_in_at); } catch { /* ignore */ }
+    const check = async () => {
+      const { data } = await supabase.rpc("sessions_valid_from");
+      const validFrom = data ? new Date(data as string).getTime() : 0;
+      const signedIn = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : 0;
+      if (validFrom && signedIn && signedIn < validFrom) {
+        try { sessionStorage.setItem("nightly_logout", "1"); } catch { /* ignore */ }
+        await hardSignOut();
+      } else {
+        try { sessionStorage.removeItem("nightly_logout"); } catch { /* ignore */ }
+      }
+    };
+    void check();
+    const onVisible = () => { if (document.visibilityState === "visible") void check(); };
+    window.addEventListener("focus", check);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", check);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [user?.id, user?.last_sign_in_at]);
+
   const clearLocal = () => {
     try {
       sessionStorage.removeItem("erp_site_context");

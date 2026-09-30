@@ -41,6 +41,15 @@ export default function Systemkontroll() {
     },
   });
 
+  const { data: logout } = useQuery({
+    queryKey: ["nightly_logout_runs", "latest"],
+    queryFn: async () => {
+      const { data, error } = await db.from("nightly_logout_runs").select("*").order("ran_at", { ascending: false }).limit(1);
+      if (error) throw error;
+      return (data?.[0] ?? null) as { ran_at: string; sessions_ended: number; oauth_sessions_kept: number; message: string | null } | null;
+    },
+  });
+
   const run = useMutation({
     mutationFn: async () => {
       const { error } = await db.rpc("run_system_checks_now");
@@ -69,6 +78,16 @@ export default function Systemkontroll() {
         <Button onClick={() => run.mutate()} disabled={run.isPending}>
           <Play className="h-4 w-4 mr-1" /> {run.isPending ? "Kör…" : "Kör nu"}
         </Button>
+      </div>
+
+      <div className="border rounded-md px-3 py-2 text-sm">
+        <span className="font-medium">Nattlig utloggning 03:30</span>
+        <span className="text-muted-foreground">
+          {logout
+            ? ` · senaste ${fmt(logout.ran_at)} · ${logout.sessions_ended} inloggningar avslutade · ${logout.oauth_sessions_kept} agentkopplingar behölls`
+            : " · ingen körning ännu"}
+        </span>
+        {logout?.message && <p className="text-xs text-destructive mt-1">{logout.message}</p>}
       </div>
 
       {isLoading && <p className="text-sm text-muted-foreground">Laddar…</p>}
