@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { IndustryRow, SectionLabel, DecisionBar, DecisionMetric } from "@/components/industry";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { PkReviewPanel } from "@/components/staff/PkReviewPanel";
 
 type Row = { status: string; hours: number | null; moved_from_admin: boolean; store_id: string | null };
 
@@ -45,7 +46,8 @@ export function PkImportCard() {
 
   if (!data) return null;
   return (
-    <section>
+    <section className="space-y-3">
+      <PkReviewPanel showUnlinked />
       <div className="mb-2 flex items-end justify-between gap-3">
         <div>
           <SectionLabel>HR-kontroll</SectionLabel>
@@ -60,6 +62,7 @@ export function PkImportCard() {
         <DecisionMetric label="Timmar" value={fmtH(imported.reduce((s, r) => s + Number(r.hours ?? 0), 0))} />
         <DecisionMetric label="Matchade mot egen stämpling" value={String(rows.filter((r) => r.status === "matchad_egen").length)} />
         <DecisionMetric label="Ej kopplade" value={String(rows.filter((r) => r.status === "ej_kopplad" || r.status === "ej_mappad").length)} tone={rows.some((r) => r.status === "ej_kopplad") ? "progress" : "ok"} />
+        <DecisionMetric label="Att granska" value={String(rows.filter((r) => ["konflikt","saknar_utstampling","vantar_attest"].includes(r.status)).length)} tone={rows.some((r) => ["konflikt","saknar_utstampling","vantar_attest"].includes(r.status)) ? "alert" : "ok"} />
         <DecisionMetric label="Fel" value={String(rows.filter((r) => r.status === "fel").length)} tone={rows.some((r) => r.status === "fel") ? "alert" : "ok"} />
       </DecisionBar>
       {[...perStore.entries()].sort((a, b) => b[1].h - a[1].h).map(([id, v]) => (
