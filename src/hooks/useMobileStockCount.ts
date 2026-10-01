@@ -147,7 +147,7 @@ export function useCountItems(locationId?: string | null) {
       const { data: balances, error } = await supabase
         .from("product_stock_locations")
         .select(
-          "product_id, quantity, products(name, sku, unit, category, cost_price, image_url, weight_per_piece)",
+          "product_id, quantity, in_count_list, products(name, sku, unit, category, cost_price, image_url, weight_per_piece)",
         )
         .eq("location_id", locationId!);
       if (error) throw error;
@@ -183,11 +183,11 @@ export function useCountItems(locationId?: string | null) {
 
       const items: CountItem[] = [];
       for (const row of (balances || []) as any[]) {
-        // Bara varor som verkligen finns inlevererade på platsen. Varor utan
-        // saldo läggs till i slutet av räkningen om de ändå står i hyllan.
+        // Varor med saldo på platsen, plus varor som tidigare räknats här
+        // (in_count_list) — så att en tillagd vara finns kvar nästa gång.
         const lotsHere = lotQty.get(row.product_id);
         const hasLotQty = !!lotsHere && lotsHere.size > 0;
-        if (Number(row.quantity || 0) <= 0.0005 && !hasLotQty) continue;
+        if (Number(row.quantity || 0) <= 0.0005 && !hasLotQty && !row.in_count_list) continue;
         const p = row.products || {};
         const base = {
           productId: row.product_id as string,
