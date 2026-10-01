@@ -25,6 +25,7 @@ import { useDeletePlannedShift } from "@/hooks/usePlannedShifts";
 import { SegmentSwitch } from "@/components/staff/ui";
 import { StaffPageShell, StaffMetric } from "@/components/staff/StaffPageShell";
 import type { AbsenceMark, ActualMark, ComingGoingEvent, DayCell, ShiftCellItem, WeekRow } from "@/components/schedule/scheduleViewTypes";
+import { ScheduleImportDialog } from "@/components/schedule/ScheduleImportDialog";
 
 const DAY_NAMES = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
 
@@ -76,6 +77,8 @@ export default function StaffSchedule() {
   const [salaryStaff, setSalaryStaff] = useState<any | null>(null);
   const [accessStaff, setAccessStaff] = useState<any | null>(null);
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const importStoreId = storeFilter !== "all" ? storeFilter : null;
 
   const { data: stores = [] } = useStores(true);
   const { data: staff = [], isLoading: staffLoading } = useStaff();
@@ -307,6 +310,15 @@ export default function StaffSchedule() {
               ariaLabel="Välj schemavy"
               options={[{ value: "week", label: "Vecka" }, { value: "day", label: "Dag" }]}
             />
+            <button
+              type="button"
+              className="sl-btn"
+              disabled={!importStoreId}
+              title={storeFilter === "all" ? "Välj en enhet först" : undefined}
+              onClick={() => setImportOpen(true)}
+            >
+              <Upload size={15} /> Importera schema
+            </button>
             <button type="button" className="sl-btn sl-btn--primary" onClick={() => openDialog(null, selectedDay)}><Plus size={15} /> Planera pass</button>
           </>
         }
@@ -415,6 +427,15 @@ export default function StaffSchedule() {
 
 
       <PlannedShiftDialog open={dialogOpen} onOpenChange={setDialogOpen} storeId={dialogStore ?? stores[0]?.id ?? ""} storeName={storeName(dialogStore)} day={dialogDay} editing={editing} />
+      {importOpen && importStoreId ? (
+        <ScheduleImportDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          storeId={importStoreId}
+          legalEntityId={(storeById.get(importStoreId) as any)?.legal_entity_id ?? null}
+          anchor={days[0]}
+        />
+      ) : null}
       <StaffSalaryDialog open={!!salaryStaff} onOpenChange={(open) => !open && setSalaryStaff(null)} staff={salaryStaff} />
       <StaffAccessDialog open={!!accessStaff} onOpenChange={(open) => !open && setAccessStaff(null)} staff={accessStaff} />
     </motion.main>
