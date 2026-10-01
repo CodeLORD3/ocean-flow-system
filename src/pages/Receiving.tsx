@@ -47,8 +47,18 @@ import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 import { useFxRate } from "@/hooks/useFxRate";
 
 import { ProductThumb } from "@/components/products/ProductThumb";
+import { useProducts } from "@/hooks/useProducts";
+import { receiveUnpackedProduct } from "@/lib/receivingCorrections";
+import { TransportResidualPanel } from "@/components/inventory/TransportResidualPanel";
 
-const REPORT_TYPES = ["Skadad", "Fel kvantitet", "Dålig kvalitet", "Saknas", "Annat"];
+const REPORT_TYPES = ["Skadad", "Fel kvantitet", "Fel vara", "Dålig kvalitet", "Saknas", "Annat"];
+
+interface ExtraLine {
+  key: string;
+  name: string;
+  productId: string;
+  qty: string;
+}
 
 interface LineReport {
   status: "Godkänd" | "Rapporterad";
@@ -61,6 +71,9 @@ interface LineReport {
   expiry_date?: string;
   // NEW: per-unit cost in shop's local currency (CHF for Zollikon)
   unit_cost_local?: string;
+  /** Vara som faktiskt kom i stället för den beställda (Fel vara). */
+  swap_name?: string;
+  swap_product_id?: string;
 }
 
 // Helper: color-code expiry dates entered during receiving
@@ -72,6 +85,14 @@ export default function Receiving() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const submitReport = useSubmitReceivingReport();
   const [lineReports, setLineReports] = useState<Record<string, LineReport>>({});
+  const [extraLines, setExtraLines] = useState<ExtraLine[]>([]);
+  const { data: allProducts = [] } = useProducts();
+  const productByName = useMemo(() => {
+    const m = new Map<string, any>();
+    for (const p of allProducts as any[]) m.set(String(p.name).toLowerCase().trim(), p);
+    return m;
+  }, [allProducts]);
+  const findProduct = (name: string) => productByName.get(name.toLowerCase().trim());
   const { data: currencySettings } = useCurrencySettings();
 
   // Butiksraden bär bolagets valuta (Componia AG = CHF för Zollikon och Morges)
@@ -195,6 +216,7 @@ export default function Receiving() {
       };
     });
     setLineReports(initial);
+    setExtraLines([]);
   };
 
   const updateLineReport = (lineId: string, field: string, value: string) => {
@@ -219,14 +241,30 @@ export default function Receiving() {
       if (!confirmed) return;
     }
 
+    // Fel vara och tillagda varor måste peka på en riktig produkt.
+    for (const [, r] of Object.entries(lineReports)) {
+      if (r.status === "Rapporterad" && r.report_type === "Fel vara" && !r.swap_product_id) {
+        toast({ title: "Välj vilken vara som kom", description: "En rad är markerad Fel vara men saknar vara.", variant: "destructive" });
+        return;
+      }
+    }
+    const extras = extraLines.filter((e) => e.name.trim() || Number(e.qty) > 0);
+    if (extras.some((e) => !e.productId || !(Number(e.qty) > 0))) {
+      toast({ title: "Komplettera tillagda varor", description: "Välj vara och ange mängd för varje tillagd rad.", variant: "destructive" });
+      return;
+    }
+    const isSwap = (r: LineReport) => r.status === "Rapporterad" && r.report_type === "Fel vara" && !!r.swap_product_id;
+
     const reports = Object.entries(lineReports).map(([lineId, report]) => ({
       shop_order_id: selectedOrder.id,
       order_line_id: lineId,
       store_id: activeStoreId,
       status: report.status,
       report_type: report.status === "Rapporterad" ? report.report_type : null,
-      notes: report.notes || null,
-      quantity_received: report.quantity_received ? Number(report.quantity_received) : null,
+      notes: isSwap(report)
+        ? `Fel vara: kom ${report.swap_name} (${report.quantity_received || 0})${report.notes ? ` · ${report.notes}` : ""}`
+        : report.notes || null,
+      quantity_received: isSwap(report) ? 0 : report.quantity_received ? Number(report.quantity_received) : null,
       reported_by: "Butik",
     }));
 
@@ -239,9 +277,11 @@ export default function Receiving() {
         await supabase
           .from("shop_order_lines")
           .update({
-            quantity_delivered: report.quantity_received ? Number(report.quantity_received) : 0,
+            quantity_delivered: isSwap(report) ? 0 : report.quantity_received ? Number(report.quantity_received) : 0,
             status: "Klar / Levererad",
-            deviation: report.status === "Rapporterad" ? report.report_type || "Rapporterad" : null,
+            deviation: isSwap(report)
+              ? `Fel vara: kom ${report.swap_name}`
+              : report.status === "Rapporterad" ? report.report_type || "Rapporterad" : null,
           })
           .eq("id", lineId);
       }
@@ -262,6 +302,15 @@ export default function Receiving() {
             }
           }
         }
+        // Bara det som faktiskt togs emot flyttas — resten ligger kvar på
+        // transportlagret tills grossisten rett ut det.
+        const receivedMap: Record<string, number> = {};
+        for (const [lineId, report] of Object.entries(lineReports)) {
+          const line = (selectedOrder.shop_order_lines || []).find((l: any) => l.id === lineId);
+          if (!line) continue;
+          const q = isSwap(report) ? 0 : Number(report.quantity_received) || 0;
+          receivedMap[line.product_id] = (receivedMap[line.product_id] || 0) + q;
+        }
         await moveStockToRawLager(
           selectedOrder.id,
           activeStoreId,
@@ -273,7 +322,39 @@ export default function Receiving() {
                 sourceCostByProductId: sourceCostMap,
               }
             : undefined,
+          receivedMap,
         );
+
+        // Varor som kom men inte låg på transportlagret.
+        for (const [, report] of Object.entries(lineReports)) {
+          if (!isSwap(report)) continue;
+          await receiveUnpackedProduct({
+            orderId: selectedOrder.id,
+            storeId: activeStoreId,
+            productId: report.swap_product_id!,
+            quantityKg: Number(report.quantity_received) || 0,
+            note: "Fel vara vid inleverans",
+          });
+        }
+        for (const e of extras) {
+          const p = findProduct(e.name);
+          await supabase.from("shop_order_lines").insert({
+            shop_order_id: selectedOrder.id,
+            product_id: e.productId,
+            quantity_ordered: 0,
+            quantity_delivered: Number(e.qty),
+            unit: p?.unit ?? null,
+            status: "Klar / Levererad",
+            deviation: "Ej packad hos grossist",
+          } as any);
+          await receiveUnpackedProduct({
+            orderId: selectedOrder.id,
+            storeId: activeStoreId,
+            productId: e.productId,
+            quantityKg: Number(e.qty),
+            note: "Kom med men saknades på följesedeln",
+          });
+        }
       } catch (err) {
         console.error("Stock transfer to Raw-lager error:", err);
         toast({ title: "Lagret kunde inte flyttas till butiken", description: await edgeErrorMessage(err, "Mottagningen sparades men lagret flyttades inte. Kontakta grossisten innan du tar emot igen."), variant: "destructive" });
@@ -322,6 +403,7 @@ export default function Receiving() {
       qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
       qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["transport-residuals"] });
       setSelectedOrder(null);
     } catch (err: any) {
       toast({ title: "Fel", description: err.message, variant: "destructive" });
@@ -358,7 +440,8 @@ export default function Receiving() {
     return existingReports.filter((r: any) => r.shop_order_id === viewReportOrder.id);
   }, [viewReportOrder, existingReports]);
 
-  const hasIssuesInReport = Object.values(lineReports).some((r) => r.status === "Rapporterad");
+  const hasIssuesInReport =
+    Object.values(lineReports).some((r) => r.status === "Rapporterad") || extraLines.length > 0;
 
   const filteredUnreported = unreportedOrders.filter(
     (o: any) => !search || displayOrderWeek(o).toLowerCase().includes(search.toLowerCase()),
@@ -376,6 +459,8 @@ export default function Receiving() {
           Leveranser som har skickats från grossist. Godkänn hela leveransen eller rapportera avvikelser per produkt.
         </p>
       </div>
+
+      <TransportResidualPanel />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -779,6 +864,56 @@ export default function Receiving() {
                               </Select>
                             </div>
                           </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-8 text-[11px]"
+                              onClick={() =>
+                                setLineReports((prev) => ({
+                                  ...prev,
+                                  [line.id]: { ...prev[line.id], report_type: "Saknas", quantity_received: "0", swap_name: undefined, swap_product_id: undefined },
+                                }))
+                              }
+                            >
+                              Kom inte (0)
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-8 text-[11px]"
+                              onClick={() => updateLineReport(line.id, "report_type", "Fel vara")}
+                            >
+                              Fel vara, byt
+                            </Button>
+                          </div>
+                          {report.report_type === "Fel vara" && (
+                            <div className="space-y-1">
+                              <Label className="text-[10px]">Vilken vara kom? (mängden ovan gäller den)</Label>
+                              <Input
+                                list="receiving-products"
+                                value={report.swap_name || ""}
+                                onChange={(e) => {
+                                  const name = e.target.value;
+                                  const p = findProduct(name);
+                                  setLineReports((prev) => ({
+                                    ...prev,
+                                    [line.id]: { ...prev[line.id], swap_name: name, swap_product_id: p?.id },
+                                  }));
+                                }}
+                                placeholder="Sök vara…"
+                                className="h-8 text-xs"
+                              />
+                              {report.swap_name && !report.swap_product_id && (
+                                <p className="text-[10px] text-destructive">Välj en vara ur listan.</p>
+                              )}
+                              <p className="text-[10px] text-muted-foreground">
+                                {line.products?.name} stannar på transportlagret tills grossisten rett ut det.
+                              </p>
+                            </div>
+                          )}
                           <div className="space-y-1">
                             <Label className="text-[10px]">Anteckning</Label>
                             <Textarea
@@ -793,6 +928,59 @@ export default function Receiving() {
                     </div>
                   );
                 })}
+              </div>
+
+              <div className="space-y-2 rounded-lg border border-dashed p-3">
+                <div className="text-xs font-medium">Varor som kom med men saknas på följesedeln</div>
+                {extraLines.map((e) => (
+                  <div key={e.key} className="flex items-center gap-2">
+                    <Input
+                      list="receiving-products"
+                      value={e.name}
+                      onChange={(ev) => {
+                        const name = ev.target.value;
+                        const p = findProduct(name);
+                        setExtraLines((prev) => prev.map((x) => (x.key === e.key ? { ...x, name, productId: p?.id ?? "" } : x)));
+                      }}
+                      placeholder="Sök vara…"
+                      className={`h-8 text-xs flex-1 ${e.name && !e.productId ? "border-destructive" : ""}`}
+                    />
+                    <NumberField
+                      value={e.qty}
+                      onValueChange={(raw) =>
+                        setExtraLines((prev) => prev.map((x) => (x.key === e.key ? { ...x, qty: raw.replace(",", ".") } : x)))
+                      }
+                      placeholder="Mängd"
+                      className="h-8 w-24 text-xs"
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8"
+                      aria-label="Ta bort rad"
+                      onClick={() => setExtraLines((prev) => prev.filter((x) => x.key !== e.key))}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs"
+                  onClick={() =>
+                    setExtraLines((prev) => [...prev, { key: Math.random().toString(36).slice(2), name: "", productId: "", qty: "" }])
+                  }
+                >
+                  + Lägg till vara som kom med
+                </Button>
+                <datalist id="receiving-products">
+                  {(allProducts as any[]).map((p) => (
+                    <option key={p.id} value={p.name} />
+                  ))}
+                </datalist>
               </div>
 
               {hasIssuesInReport && (
