@@ -267,6 +267,12 @@ export async function moveStockToRawLager(
     fxRate: number;
     sourceCostByProductId?: Record<string, number>;
   },
+  /**
+   * Mängd som butiken faktiskt tog emot per produkt. Bara den flyttas till
+   * butiken — resten stannar på transportlagret som avvikelse att reda ut.
+   * Utelämnad = allt som ligger på transportlagret för ordern flyttas.
+   */
+  receivedByProductId?: Record<string, number>,
 ) {
   const transportId = await getTransportlagerId(storeId);
   if (!transportId) {
@@ -301,14 +307,20 @@ export async function moveStockToRawLager(
       (await currentBalance(productId, transportId)).avgCost ??
       null;
     const sourceCost = fx?.sourceCostByProductId?.[productId] ?? null;
+    let remaining =
+      receivedByProductId && productId in receivedByProductId
+        ? Math.max(0, Number(receivedByProductId[productId]) || 0)
+        : Infinity;
 
     for (const lot of lots) {
-      if (lot.quantityKg <= 0) continue;
+      if (lot.quantityKg <= 0 || remaining <= 0.0005) continue;
+      const qty = Math.round(Math.min(lot.quantityKg, remaining) * 1000) / 1000;
+      remaining -= qty;
       await transferStock({
         productId,
         fromLocationId: transportId,
         toLocationId: rawLagerId,
-        quantityKg: lot.quantityKg,
+        quantityKg: qty,
         // Samma parti som grossisten skapade — inget nytt parti i butiksledet.
         lotId: lot.lotId,
         unitCost: cost || null,
