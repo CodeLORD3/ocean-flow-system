@@ -13669,6 +13669,7 @@ export type Database = {
           avg_cost: number
           expiry_date: string | null
           id: string
+          in_count_list: boolean
           location_id: string
           min_stock: number | null
           product_id: string
@@ -13683,6 +13684,7 @@ export type Database = {
           avg_cost?: number
           expiry_date?: string | null
           id?: string
+          in_count_list?: boolean
           location_id: string
           min_stock?: number | null
           product_id: string
@@ -13697,6 +13699,7 @@ export type Database = {
           avg_cost?: number
           expiry_date?: string | null
           id?: string
+          in_count_list?: boolean
           location_id?: string
           min_stock?: number | null
           product_id?: string
