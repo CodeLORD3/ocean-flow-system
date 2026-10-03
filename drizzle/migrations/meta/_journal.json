@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791006482713,
+      "tag": "0000_customer_order_to_own_store",
+      "breakpoints": true
+    }
+  ]
+}
