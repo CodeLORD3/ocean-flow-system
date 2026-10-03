@@ -48,6 +48,8 @@ import { useFxRate } from "@/hooks/useFxRate";
 
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { useProducts } from "@/hooks/useProducts";
+import { useIncomingTransfers } from "@/hooks/useTransferOrders";
+import { Link } from "react-router-dom";
 import { receiveUnpackedProduct } from "@/lib/receivingCorrections";
 import { TransportResidualPanel } from "@/components/inventory/TransportResidualPanel";
 
@@ -94,6 +96,7 @@ export default function Receiving() {
   }, [allProducts]);
   const findProduct = (name: string) => productByName.get(name.toLowerCase().trim());
   const { data: currencySettings } = useCurrencySettings();
+  const { data: incomingTransfers = [] } = useIncomingTransfers(activeStoreId || null);
 
   // Butiksraden bär bolagets valuta (Componia AG = CHF för Zollikon och Morges)
   const { data: activeStore } = useQuery({
