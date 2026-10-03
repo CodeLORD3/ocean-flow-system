@@ -48,6 +48,8 @@ import { useFxRate } from "@/hooks/useFxRate";
 
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { useProducts } from "@/hooks/useProducts";
+import { useIncomingTransfers } from "@/hooks/useTransferOrders";
+import { Link } from "react-router-dom";
 import { receiveUnpackedProduct } from "@/lib/receivingCorrections";
 import { TransportResidualPanel } from "@/components/inventory/TransportResidualPanel";
 
@@ -94,6 +96,7 @@ export default function Receiving() {
   }, [allProducts]);
   const findProduct = (name: string) => productByName.get(name.toLowerCase().trim());
   const { data: currencySettings } = useCurrencySettings();
+  const { data: incomingTransfers = [] } = useIncomingTransfers(activeStoreId || null);
 
   // Butiksraden bär bolagets valuta (Componia AG = CHF för Zollikon och Morges)
   const { data: activeStore } = useQuery({
@@ -509,6 +512,36 @@ export default function Receiving() {
           className="pl-8 h-8 text-xs"
         />
       </div>
+
+      {incomingTransfers.length > 0 && (
+        <Card className="shadow-card border-primary/40">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-heading flex items-center gap-2">
+              <Truck className="h-4 w-4 text-primary" /> Lagerflytt från annan butik
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Varor som en annan butik har skickat hit. Tryck för att kontrollera och ta emot.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {incomingTransfers.map((t: any) => (
+              <Link
+                key={t.id}
+                to="/stock-transfers"
+                className="flex min-h-14 items-center justify-between gap-3 rounded-md border border-border p-3 hover:bg-muted/50"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground">{t.reason || t.order_number}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t.order_number} · {(t.transfer_order_lines || []).length} varor
+                  </p>
+                </div>
+                <Badge variant="secondary" className="shrink-0">Ta emot</Badge>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Pending deliveries */}
       <Card className="shadow-card">
