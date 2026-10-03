@@ -492,7 +492,8 @@ export function InlineOrderPacking({
       </ul>
 
       <div className="flex flex-wrap gap-2">
-        {allPacked && !["levererad", "avhamtad"].includes(order.status) && (
+        <SendToStoreButton order={order} />
+        {allPacked && !internalStore && !["levererad", "avhamtad"].includes(order.status) && (
           <Button className="h-11" onClick={handOver}>
             <CheckCircle2 className="mr-2 h-4 w-4" />
             {order.order_type === "leverans" ? "Levererad" : "Avhämtad"}

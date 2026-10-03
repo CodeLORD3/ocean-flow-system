@@ -450,7 +450,8 @@ export function CustomerOrderCard({
                 <Button variant="outline" className="h-12" onClick={printLabels}>
                   <Printer className="mr-2 h-4 w-4" /> Skriv etiketter
                 </Button>
-                {order.pack_status === "packad" && (
+                <SendToStoreButton order={order} />
+                {order.pack_status === "packad" && !internalStore && (
                   <Button
                     className="h-12"
                     onClick={() =>
