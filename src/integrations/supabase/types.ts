@@ -3809,6 +3809,7 @@ export type Database = {
           guest_count: number | null
           handed_over_at: string | null
           id: string
+          internal_transfer_id: string | null
           is_web_order: boolean
           needs_approval: boolean
           no_show_at: string | null
@@ -3875,6 +3876,7 @@ export type Database = {
           guest_count?: number | null
           handed_over_at?: string | null
           id?: string
+          internal_transfer_id?: string | null
           is_web_order?: boolean
           needs_approval?: boolean
           no_show_at?: string | null
@@ -3941,6 +3943,7 @@ export type Database = {
           guest_count?: number | null
           handed_over_at?: string | null
           id?: string
+          internal_transfer_id?: string | null
           is_web_order?: boolean
           needs_approval?: boolean
           no_show_at?: string | null
@@ -4306,6 +4309,7 @@ export type Database = {
           first_name: string | null
           home_store_id: string | null
           id: string
+          internal_store_id: string | null
           is_company: boolean
           last_name: string | null
           legal_entity_id: string | null
@@ -4353,6 +4357,7 @@ export type Database = {
           first_name?: string | null
           home_store_id?: string | null
           id?: string
+          internal_store_id?: string | null
           is_company?: boolean
           last_name?: string | null
           legal_entity_id?: string | null
@@ -4400,6 +4405,7 @@ export type Database = {
           first_name?: string | null
           home_store_id?: string | null
           id?: string
+          internal_store_id?: string | null
           is_company?: boolean
           last_name?: string | null
           legal_entity_id?: string | null
@@ -4448,6 +4454,20 @@ export type Database = {
           {
             foreignKeyName: "customers_retail_home_store_id_fkey"
             columns: ["home_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_retail_internal_store_id_fkey"
+            columns: ["internal_store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "customers_retail_internal_store_id_fkey"
+            columns: ["internal_store_id"]
             isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
@@ -23851,6 +23871,10 @@ export type Database = {
       run_system_checks_scheduled: { Args: never; Returns: Json }
       run_time_compliance_checks: {
         Args: { _from?: string; _to?: string }
+        Returns: Json
+      }
+      send_customer_order_to_store: {
+        Args: { _order_id: string; _to_store_id: string }
         Returns: Json
       }
       service_set_employee_pnr: {

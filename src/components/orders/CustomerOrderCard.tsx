@@ -1,3 +1,4 @@
+import { SendToStoreButton, useInternalStore } from "@/components/orders/SendToStoreButton";
 import { sortLinesByCategory } from "@/lib/productCategories";
 import { OrdererName } from "@/components/orders/OrdererName";
 import { useEffect, useMemo, useState } from "react";
@@ -118,6 +119,7 @@ export function CustomerOrderCard({
     })();
   }, [order?.id, open]);
 
+  const { data: internalStore } = useInternalStore((order as any)?.customer_id);
   if (!order) return null;
 
   const actualTotal = lines.reduce((s, l) => {
@@ -450,7 +452,8 @@ export function CustomerOrderCard({
                 <Button variant="outline" className="h-12" onClick={printLabels}>
                   <Printer className="mr-2 h-4 w-4" /> Skriv etiketter
                 </Button>
-                {order.pack_status === "packad" && (
+                <SendToStoreButton order={order} />
+                {order.pack_status === "packad" && !internalStore && (
                   <Button
                     className="h-12"
                     onClick={() =>

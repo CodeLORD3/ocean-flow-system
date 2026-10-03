@@ -1,3 +1,4 @@
+import { SendToStoreButton, useInternalStore } from "@/components/orders/SendToStoreButton";
 import { sortLinesByCategory } from "@/lib/productCategories";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -130,6 +131,7 @@ export function InlineOrderPacking({
 
   const active = lines.filter((l) => l.pack_status !== "struken");
   const allPacked = active.length > 0 && active.every((l) => l.pack_status === "packad");
+  const { data: internalStore } = useInternalStore((order as any).customer_id);
 
   const doPack = async (line: CustomerOrderLine) => {
     const qty = Number(String(weights[line.id] ?? "").replace(",", "."));
@@ -492,7 +494,8 @@ export function InlineOrderPacking({
       </ul>
 
       <div className="flex flex-wrap gap-2">
-        {allPacked && !["levererad", "avhamtad"].includes(order.status) && (
+        <SendToStoreButton order={order} />
+        {allPacked && !internalStore && !["levererad", "avhamtad"].includes(order.status) && (
           <Button className="h-11" onClick={handOver}>
             <CheckCircle2 className="mr-2 h-4 w-4" />
             {order.order_type === "leverans" ? "Levererad" : "Avhämtad"}
