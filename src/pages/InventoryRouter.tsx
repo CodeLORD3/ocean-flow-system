@@ -13,6 +13,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import CountMobile from "@/pages/CountMobile";
 import CountEntryButton from "@/components/inventory/mobile/CountEntryButton";
+import PendingReceivingBanner from "@/components/inventory/PendingReceivingBanner";
 
 
 type SubTab =
@@ -83,6 +84,7 @@ export default function InventoryRouter() {
 
 
       <div className="pt-4">
+        <PendingReceivingBanner />
         <div style={{ display: tab === "lager" ? "block" : "none" }}>
           <Inventory />
         </div>
