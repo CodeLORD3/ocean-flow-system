@@ -130,6 +130,7 @@ export function InlineOrderPacking({
 
   const active = lines.filter((l) => l.pack_status !== "struken");
   const allPacked = active.length > 0 && active.every((l) => l.pack_status === "packad");
+  const { data: internalStore } = useInternalStore((order as any).customer_id);
 
   const doPack = async (line: CustomerOrderLine) => {
     const qty = Number(String(weights[line.id] ?? "").replace(",", "."));
