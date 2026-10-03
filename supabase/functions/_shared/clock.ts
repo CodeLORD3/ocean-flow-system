@@ -335,16 +335,17 @@ export async function resolveSelfPunch(
       for (const w of wps ?? []) if (w.store_id) storeIds.add(w.store_id as string);
     }
   }
+  const adminOnly = new Set<string>();
   // Plattformsadministratörer får testa mobilstämpling på alla arbetsplatser där den är påslagen
   // (geofence gäller fortfarande).
   const { data: adminRole } = await db.from("user_roles").select("role").eq("user_id", userId).eq("role", "platform_admin").maybeSingle();
   if (adminRole) {
     const { data: openSites } = await db.from("work_sites").select("store_id").eq("is_active", true).eq("mobile_self_punch", true);
-    for (const s of openSites ?? []) if (s.store_id) storeIds.add(s.store_id as string);
+    for (const s of openSites ?? []) if (s.store_id && !storeIds.has(s.store_id as string)) { storeIds.add(s.store_id as string); adminOnly.add(s.store_id as string); }
   }
   // Uttryckligen tillagd personal per arbetsplats (work_sites.mobile_self_punch_staff_ids).
   const { data: listed } = await db.from("work_sites").select("store_id").eq("is_active", true).eq("mobile_self_punch", true).contains("mobile_self_punch_staff_ids", [staff.id]);
-  for (const s of listed ?? []) if (s.store_id) storeIds.add(s.store_id as string);
+  for (const s of listed ?? []) if (s.store_id) { storeIds.add(s.store_id as string); adminOnly.delete(s.store_id as string); }
   if (storeIds.size === 0) return { error: "Mobilstämpling är inte öppen för dig.", status: 403 };
 
   const { data: sites } = await db
@@ -353,9 +354,9 @@ export async function resolveSelfPunch(
     .eq("is_active", true)
     .eq("mobile_self_punch", true)
     .in("store_id", [...storeIds])
-    .order("sort_order")
-    .limit(1);
-  const site = sites?.[0];
+    .order("sort_order");
+  // Egen butik går före arbetsplatser som bara öppnats via administratörsrätt.
+  const site = (sites ?? []).find((x) => !adminOnly.has(x.store_id as string)) ?? sites?.[0];
   if (!site) return { error: "Mobilstämpling är inte öppen för din butik.", status: 403 };
 
   let legalEntityId = (site.legal_entity_id as string | null) ?? null;
