@@ -81,6 +81,11 @@ Deno.serve(async (req) => {
   let selfHit: EmployeeHit | null = null;
   let station: import("../_shared/clock.ts").Station;
   let expiresAt: string | null = null;
+  const selfSiteNeedsLocation = async () => {
+    if (!selfWorkSiteId) return true;
+    const { data } = await db.from("work_sites").select("geofence_lat, geofence_lng").eq("id", selfWorkSiteId).maybeSingle();
+    return !!data && data.geofence_lat !== null && data.geofence_lng !== null;
+  };
   if (selfPunch) {
     const r = await resolveSelfPunch(db, req);
     if ("error" in r) return json(req, { error: r.error }, r.status);
@@ -267,7 +272,7 @@ Deno.serve(async (req) => {
   if (mode === "lookup" && selfPunch) {
     const lastRow = effectiveLast(recent ?? []);
     const { data: openIn } = await db.from("time_entries").select("occurred_at").eq("employee_id", hit.id).eq("type", "in").order("occurred_at", { ascending: false }).limit(1).maybeSingle();
-    return json(req, { status: "found", employee: { id: hit.id, first_name: hit.first_name }, last_type: last ?? null, last_at: lastRow?.occurred_at ?? null, punched_in_since: isOpenShift(last) ? openIn?.occurred_at ?? null : null, suggested_action: suggested, store_id: station.store_id });
+    return json(req, { status: "found", employee: { id: hit.id, first_name: hit.first_name }, last_type: last ?? null, last_at: lastRow?.occurred_at ?? null, punched_in_since: isOpenShift(last) ? openIn?.occurred_at ?? null : null, suggested_action: suggested, store_id: station.store_id, requires_location: await selfSiteNeedsLocation() });
   }
   if (mode === "lookup") return json(req, { status: "found", employee: { id: hit.id, first_name: hit.first_name, pnr_masked: hit.pnr_masked ?? (pnr ? maskPnr(pnr) : null) }, last_type: last ?? null, suggested_action: suggested, expires_at: expiresAt });
   if (!PUNCH_TYPES.includes(action)) return json(req, { error: "Ogiltig åtgärd." }, 400);
@@ -353,7 +358,9 @@ Deno.serve(async (req) => {
     }
   }
 
-  if (selfPunch && geofenceOk !== true) {
+  // Arbetsplats med platskontrollen avstängd (ingen position sparad) släpps igenom.
+  const siteHasGeofence = !!workSite && workSite.geofence_lat !== null && workSite.geofence_lng !== null;
+  if (selfPunch && siteHasGeofence && geofenceOk !== true) {
     return json(req, { error: "Arbetsplatsen saknar giltig position för mobilstämpling. Kontakta kontoret." }, 403);
   }
 

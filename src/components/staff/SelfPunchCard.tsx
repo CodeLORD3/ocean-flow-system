@@ -10,6 +10,7 @@ type Status = {
   punched_in_since: string | null;
   suggested_action: "in" | "ut" | "rast_start" | "rast_slut";
   employee: { first_name: string };
+  requires_location?: boolean;
 };
 
 const LABEL: Record<string, string> = { in: "Stämpla in", ut: "Stämpla ut", rast_start: "Börja rast", rast_slut: "Avsluta rast" };
@@ -75,14 +76,12 @@ export function SelfPunchCard() {
     setMessage(null);
     setLocationDenied(false);
     try {
-      const pos = await getPosition();
+      const pos = status.requires_location === false ? null : await getPosition();
       const r = await call({
         mode: "punch",
         action,
         client_punch_id: crypto.randomUUID(),
-        punch_lat: pos.coords.latitude,
-        punch_lng: pos.coords.longitude,
-        punch_accuracy_m: pos.coords.accuracy,
+        ...(pos ? { punch_lat: pos.coords.latitude, punch_lng: pos.coords.longitude, punch_accuracy_m: pos.coords.accuracy } : {}),
       });
       if (r.error) {
         const outside = /meter från/.test(r.error);
@@ -137,7 +136,7 @@ export function SelfPunchCard() {
             <p><span className="font-medium">Android:</span> Chrome → ⋮ → Inställningar → Webbplatsinställningar → Plats → tillåt den här webbplatsen.</p>
           </div>
         )}
-        <p className="text-sm text-muted-foreground">Din position kontrolleras mot butiken vid varje stämpling.</p>
+        {status.requires_location !== false && <p className="text-sm text-muted-foreground">Din position kontrolleras mot butiken vid varje stämpling.</p>}
       </CardContent>
     </Card>
   );
