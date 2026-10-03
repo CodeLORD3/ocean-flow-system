@@ -118,6 +118,7 @@ export function CustomerOrderCard({
     })();
   }, [order?.id, open]);
 
+  const { data: internalStore } = useInternalStore((order as any)?.customer_id);
   if (!order) return null;
 
   const actualTotal = lines.reduce((s, l) => {
@@ -186,7 +187,6 @@ export function CustomerOrderCard({
   };
 
   const customerName = order.customers_retail?.name || order.customer_name_snapshot || "Kund";
-  const { data: internalStore } = useInternalStore((order as any).customer_id);
   const uncollected = isUncollected(order);
 
   /** Preliminär offert — priset räknas alltid om mot dagens pris vid packning. */
