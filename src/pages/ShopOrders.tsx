@@ -64,6 +64,7 @@ import DeliveryNote from "@/components/DeliveryNote";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { OrderAuditLine } from "@/components/orders/OrderAuditLine";
 import { Input } from "@/components/ui/input";
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { ShopOrderHistory } from "@/components/orders/ShopOrderHistory";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1070,6 +1071,7 @@ export default function ShopOrders() {
       )}
 
       {!creatingOrder && listTab === "historik" && (
+        <SectionErrorBoundary label="Historiken">
         <ShopOrderHistory
           storeId={activeStoreId}
           products={products}
@@ -1088,10 +1090,12 @@ export default function ShopOrders() {
             />
           )}
         />
+        </SectionErrorBoundary>
       )}
 
       {/* Aktiva beställningar */}
       {!creatingOrder && listTab === "ordrar" && (
+        <SectionErrorBoundary label="Ordrarna">
         <OrderTable
           onCopy={startCopy}
           orders={liveOrders}
@@ -1101,6 +1105,7 @@ export default function ShopOrders() {
           isDateDisabled={isDateDisabled}
           emptyMsg="Inga aktiva beställningar just nu. Klicka &quot;Ny beställning&quot; för att börja."
         />
+        </SectionErrorBoundary>
       )}
 
 
