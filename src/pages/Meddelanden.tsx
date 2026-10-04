@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { fmtDateTime } from "@/hooks/useAiTeam";
-import { describeEdgeError } from "@/lib/edgeError";
+import { edgeErrorMessage } from "@/lib/edgeError";
 
 const db = supabase as unknown as { from: (t: string) => any };
 const CATS: Record<string, string> = { makrill_erp: "Makrill ERP", klagomal: "Klagomål", kvalitet: "Kvalitet", arbetsmiljo: "Arbetsmiljö", ide: "Idé" };
@@ -60,7 +60,7 @@ export default function Meddelanden() {
     setSending(true);
     const { data, error } = await supabase.functions.invoke("send_whatsapp", { body: {} });
     setSending(false);
-    if (error) return toast.error(await describeEdgeError(error));
+    if (error) return toast.error(await edgeErrorMessage(error, data));
     toast.success(`Skickade ${data?.skickade ?? 0} av ${data?.total ?? 0} godkända utkast`);
   };
 
