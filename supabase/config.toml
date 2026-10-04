@@ -109,3 +109,9 @@ verify_jwt = false
 
 [functions.fortnox-ledger-sync]
 verify_jwt = false
+
+[functions.receive_whatsapp]
+verify_jwt = false
+
+[functions.send_whatsapp]
+verify_jwt = false
