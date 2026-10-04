@@ -323,7 +323,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
               )}
               {DELETABLE_SHOP_ORDER_STATUSES.includes(o.status) && (
                 <div className="border-t border-border px-4 py-3">
-                  <DeleteShopOrderButton order={o} large />
+                  {!readOnly && <DeleteShopOrderButton order={o} large />}
                 </div>
               )}
 
@@ -448,7 +448,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                             </button>
                           )}
                           <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center">
-                            <DeleteShopOrderButton order={o} />
+                            {!readOnly && <DeleteShopOrderButton order={o} />}
                           </span>
                           </span>
                         </td>
