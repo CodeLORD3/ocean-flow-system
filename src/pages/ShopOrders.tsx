@@ -64,6 +64,7 @@ import DeliveryNote from "@/components/DeliveryNote";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { OrderAuditLine } from "@/components/orders/OrderAuditLine";
 import { Input } from "@/components/ui/input";
+import { ShopOrderHistory } from "@/components/orders/ShopOrderHistory";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -750,6 +751,7 @@ export default function ShopOrders() {
   }, [activeStoreId, qc]);
 
 
+  const [listTab, setListTab] = useState<"ordrar" | "historik">("ordrar");
   // Split orders
   const liveOrders = useMemo(() => orders.filter((o: any) => LIVE_STATUSES.includes(o.status)), [orders]);
   const doneOrders = useMemo(() => orders.filter((o: any) => DONE_STATUSES.includes(o.status)), [orders]);
@@ -1051,8 +1053,45 @@ export default function ShopOrders() {
         </Button>
       </div>
 
-      {/* Aktiva beställningar — tidigare ordrar visas inte i butiksportalen */}
       {!creatingOrder && (
+        <div className="flex gap-1 border-b border-border" role="tablist">
+          {(["ordrar", "historik"] as const).map((t) => (
+            <button
+              key={t}
+              role="tab"
+              aria-selected={listTab === t}
+              onClick={() => setListTab(t)}
+              className={`-mb-px border-b-2 px-4 py-2 text-[16px] font-medium sm:text-xs ${listTab === t ? "border-primary text-foreground" : "border-transparent text-muted-foreground"}`}
+            >
+              {t === "ordrar" ? `Ordrar (${liveOrders.length})` : "Historik"}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!creatingOrder && listTab === "historik" && (
+        <ShopOrderHistory
+          storeId={activeStoreId}
+          products={products}
+          toast={toast}
+          allowedWeekdays={allowedWeekdays}
+          isDateDisabled={isDateDisabled}
+          renderTable={(list: any[], emptyMsg: string) => (
+            <OrderTable
+              readOnly
+              orders={list}
+              products={products}
+              toast={toast}
+              allowedWeekdays={allowedWeekdays}
+              isDateDisabled={isDateDisabled}
+              emptyMsg={emptyMsg}
+            />
+          )}
+        />
+      )}
+
+      {/* Aktiva beställningar */}
+      {!creatingOrder && listTab === "ordrar" && (
         <OrderTable
           onCopy={startCopy}
           orders={liveOrders}
@@ -1872,7 +1911,7 @@ export default function ShopOrders() {
 
 
 /* ---- Inline edit component for order detail ---- */
-function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays, isDateDisabled, inline }: {
+function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays, isDateDisabled, inline, readOnly }: {
   order: any;
   products: any[];
   onClose: () => void;
