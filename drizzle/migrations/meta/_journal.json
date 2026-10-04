@@ -8,6 +8,13 @@
       "when": 1791006482713,
       "tag": "0000_customer_order_to_own_store",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791130918187,
+      "tag": "0001_whatsapp_twoway",
+      "breakpoints": true
     }
   ]
 }
