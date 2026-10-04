@@ -198,8 +198,9 @@ const DONE_STATUSES = ["Levererad", "Klar / Levererad", "Arkiverad", "Avbruten"]
 
 const FOLLJESEDEL_STATUSES = ["Skickad", "Levererad", "Klar / Levererad", "Arkiverad"];
 
-function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDateDisabled, onCopy }: {
+function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDateDisabled, onCopy, readOnly }: {
   onCopy?: (order: any) => void;
+  readOnly?: boolean;
   orders: any[];
   emptyMsg: string;
   products: any[];
@@ -327,7 +328,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
 
               {isExpanded && (
                 <div className="border-t border-border bg-card px-3 py-3">
-                  {o.status === "Öppen" ? (
+                  {o.status === "Öppen" && !readOnly ? (
                     <OpenOrderEditor
                       order={o}
                       products={products}
@@ -338,6 +339,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                     />
                   ) : (
                     <OrderDetailWithEdit
+ readOnly={readOnly}
                       order={o}
                       products={products}
                       onClose={() => setExpandedId(null)}
@@ -461,7 +463,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                                   </Button>
                                 </div>
                               )}
-                              {o.status === "Öppen" ? (
+                              {o.status === "Öppen" && !readOnly ? (
                                 <OpenOrderEditor
                                   order={o}
                                   products={products}
@@ -472,6 +474,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                                 />
                               ) : (
                               <OrderDetailWithEdit
+ readOnly={readOnly}
                                 order={o}
                                 products={products}
                                 onClose={() => setExpandedId(null)}
@@ -1877,11 +1880,12 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
   allowedWeekdays: Set<number> | null;
   isDateDisabled: (date: Date) => boolean;
   inline?: boolean;
+  readOnly?: boolean;
 }) {
   const createChange = useCreateChangeRequest();
   const resolveChange = useResolveChangeRequest();
   const { data: pendingChanges = [] } = useOrderChangeRequests(order.id);
-  const isEditable = LIVE_STATUSES.includes(order.status);
+  const isEditable = !readOnly && LIVE_STATUSES.includes(order.status);
 
   const [editMode, setEditMode] = useState(false);
   const [editLines, setEditLines] = useState<{ line_id: string; product_name: string; unit: string; old_qty: number; new_qty: string }[]>([]);
