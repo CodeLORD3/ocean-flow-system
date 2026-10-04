@@ -10396,6 +10396,54 @@ export type Database = {
           },
         ]
       }
+      notification_recipients: {
+        Row: {
+          active: boolean
+          channel: string
+          consent_at: string | null
+          created_at: string
+          id: string
+          name: string
+          phone_e164: string
+          store_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          channel?: string
+          consent_at?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          phone_e164: string
+          store_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          channel?: string
+          consent_at?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          phone_e164?: string
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_recipients_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "notification_recipients_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -16654,6 +16702,74 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_feedback: {
+        Row: {
+          category: string | null
+          handled: boolean
+          id: string
+          message: string | null
+          received_at: string
+          recipient_id: string | null
+          sender_phone: string
+          store_id: string | null
+          task_id: number | null
+          twilio_message_sid: string
+        }
+        Insert: {
+          category?: string | null
+          handled?: boolean
+          id?: string
+          message?: string | null
+          received_at?: string
+          recipient_id?: string | null
+          sender_phone: string
+          store_id?: string | null
+          task_id?: number | null
+          twilio_message_sid: string
+        }
+        Update: {
+          category?: string | null
+          handled?: boolean
+          id?: string
+          message?: string | null
+          received_at?: string
+          recipient_id?: string | null
+          sender_phone?: string
+          store_id?: string | null
+          task_id?: number | null
+          twilio_message_sid?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_feedback_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "notification_recipients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_feedback_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "staff_feedback_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_feedback_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "ai_uppgifter"
             referencedColumns: ["id"]
           },
         ]
