@@ -15,6 +15,13 @@
       "when": 1791130918187,
       "tag": "0001_whatsapp_twoway",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791192447436,
+      "tag": "0002_shifts_store_colleagues_read",
+      "breakpoints": true
     }
   ]
 }

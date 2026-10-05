@@ -91,3 +91,37 @@ export function usePlannedShiftsRange(from: string, to: string, storeId?: string
     },
   });
 }
+
+/**
+ * Publicerade pass från schemaimporten (`shifts`), omformade till samma form
+ * som planerade pass. Id prefixas med "imp:" så de inte kan redigeras som planerade.
+ */
+export function useImportedShiftsRange(from: string, to: string, storeId?: string | null) {
+  return useQuery({
+    queryKey: ["imported-shifts-range", from, to, storeId ?? "all"],
+    enabled: !!from && !!to,
+    queryFn: async () => {
+      let q = supabase
+        .from("shifts")
+        .select("id, store_id, date, start_time, end_time, note, employee_id, employees(staff_id)")
+        .eq("status", "published")
+        .not("employee_id", "is", null)
+        .gte("date", from)
+        .lte("date", to);
+      if (storeId) q = q.eq("store_id", storeId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return ((data ?? []) as any[])
+        .filter((r) => r.employees?.staff_id)
+        .map((r) => ({
+          id: `imp:${r.id}`,
+          staff_id: r.employees.staff_id as string,
+          store_id: r.store_id,
+          shift_date: r.date,
+          start_time: String(r.start_time).slice(0, 5),
+          end_time: String(r.end_time).slice(0, 5),
+          note: r.note ?? null,
+        })) as PlannedShiftRow[];
+    },
+  });
+}
