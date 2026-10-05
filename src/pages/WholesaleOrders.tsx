@@ -40,6 +40,7 @@ import { useCustomers } from "@/hooks/useCustomers";
 import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
 import { OrdererName } from "@/components/orders/OrdererName";
 import { LinePriorityBadge } from "@/components/orders/linePriority";
+import { OrderNoteCallout, LineNoteText, OrderNoteMarker, hasOrderNote, lineNoteCount, escapeHtml } from "@/components/orders/OrderNoteCallout";
 import { useCustomerNeedByProduct, useOrderHistoryStats, useOutstandingOrdered } from "@/hooks/usePurchaseReconciliation";
 import { addDays, mondayOf, weekRange } from "@/lib/purchaseReconciliation";
 import { useProducts } from "@/hooks/useProducts";
@@ -114,12 +115,13 @@ const formatOrderValue = (order: any) => (order.shop_order_lines || []).reduce(
 const printWholesalePackLists = (selectedOrders: any[]) => {
   if (selectedOrders.length === 0) return;
   const pages = selectedOrders.map((order) => {
-    const rows = (order.shop_order_lines || []).map((line: any) => `<tr><td class="box"></td><td>${line.products?.name || "–"}</td><td>${line.products?.category || "–"}</td><td class="qty">${line.quantity_ordered || 0}</td><td>${line.unit || line.products?.unit || "–"}</td><td class="qty"></td></tr>`).join("");
-    return `<section class="page"><header><h1>Grossist — packlista</h1><strong>${order.stores?.name || "Okänd butik"}</strong><span>Order ${displayOrderWeek(order)} · Leverans ${orderDate(order) || "–"}</span></header><table><thead><tr><th></th><th>Produkt</th><th>Kategori</th><th>Beställt</th><th>Enhet</th><th>Packat</th></tr></thead><tbody>${rows}</tbody></table><footer>Anteckning: ${order.notes || ""}</footer></section>`;
+    const rows = (order.shop_order_lines || []).map((line: any) => `<tr><td class="box"></td><td>${escapeHtml(line.products?.name || "–")}${line.priority_note ? `<div class="lnote">Anteckning: ${escapeHtml(line.priority_note)}</div>` : ""}</td><td>${escapeHtml(line.products?.category || "–")}</td><td class="qty">${line.quantity_ordered || 0}</td><td>${line.unit || line.products?.unit || "–"}</td><td class="qty"></td></tr>`).join("");
+    const note = (order.notes || "").trim() ? `<div class="onote"><b>Anteckning från butiken</b><div>${escapeHtml(order.notes)}</div></div>` : "";
+    return `<section class="page"><header><h1>Grossist — packlista</h1><strong>${escapeHtml(order.stores?.name || "Okänd butik")}</strong><span>Order ${displayOrderWeek(order)} · Leverans ${orderDate(order) || "–"}</span></header>${note}<table><thead><tr><th></th><th>Produkt</th><th>Kategori</th><th>Beställt</th><th>Enhet</th><th>Packat</th></tr></thead><tbody>${rows}</tbody></table></section>`;
   }).join("");
   const printWindow = window.open("", "_blank", "width=900,height=700");
   if (!printWindow) return;
-  printWindow.document.write(`<html><head><title>Grossistens packlistor</title><style>body{font-family:Arial,sans-serif;color:#111}.page{page-break-after:always;padding:12mm}.page:last-child{page-break-after:auto}header{display:grid;gap:4px;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:16px}h1{font-size:24px;margin:0}header strong{font-size:18px}header span{color:#555}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #bbb;padding:8px 6px;text-align:left}th{background:#222;color:#fff;text-transform:uppercase;font-size:11px}.box{width:28px;height:20px}.box:after{content:"";display:block;width:14px;height:14px;border:1px solid #333}.qty{text-align:right;width:70px}footer{margin-top:18px;border-top:1px solid #bbb;padding-top:12px}</style></head><body>${pages}<script>window.onload=function(){window.print();window.close()}<\\/script></body></html>`);
+  printWindow.document.write(`<html><head><title>Grossistens packlistor</title><style>body{font-family:Arial,sans-serif;color:#111}.page{page-break-after:always;padding:12mm}.page:last-child{page-break-after:auto}header{display:grid;gap:4px;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:16px}h1{font-size:24px;margin:0}header strong{font-size:18px}header span{color:#555}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #bbb;padding:8px 6px;text-align:left}th{background:#222;color:#fff;text-transform:uppercase;font-size:11px}.box{width:28px;height:20px}.box:after{content:"";display:block;width:14px;height:14px;border:1px solid #333}.qty{text-align:right;width:70px}.onote{border:3px solid #111;padding:8px 10px;margin-bottom:14px;font-size:17px;white-space:pre-wrap}.onote b{display:block;font-size:13px;text-transform:uppercase;margin-bottom:4px}.lnote{font-style:italic;font-weight:600;font-size:14px;white-space:pre-wrap;border-left:3px solid #111;padding-left:6px;margin-top:2px}</style></head><body>${pages}<script>window.onload=function(){window.print();window.close()}<\\/script></body></html>`);
   printWindow.document.close();
 };
 
@@ -236,7 +238,7 @@ function WholesaleOrderAccordionRow({
         >
           <div className="hidden min-h-5 w-full min-w-0 items-center text-xs sm:flex">
             <span className="w-36 shrink-0 border-r border-grid-line/70 pr-3 font-mono text-[11px] font-semibold tabular-nums">{day}<span className="block text-[10px] font-normal text-muted-foreground">{displayOrderWeek(order)}</span></span>
-            <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "text-[13px] font-bold tracking-tight" : "font-semibold"}`}>{order.stores?.name || "Okänd butik"}<OrdererName name={order.created_by} className="block text-[10px] font-normal text-muted-foreground" /></span>
+            <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "text-[13px] font-bold tracking-tight" : "font-semibold"}`}><span className="flex min-w-0 items-center gap-2"><span className="truncate">{order.stores?.name || "Okänd butik"}</span><OrderNoteMarker order={order} className="shrink-0" /></span><OrdererName name={order.created_by} className="block text-[10px] font-normal text-muted-foreground" /></span>
             <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 text-center font-mono text-[10px] tabular-nums text-muted-foreground">{orderLines} rader</span>
              <span className="flex w-32 shrink-0 items-center overflow-hidden border-r border-grid-line/70 px-2">{statusChip}</span>
              <span className="flex w-12 shrink-0 items-center justify-center border-r border-grid-line/70 px-2">
@@ -250,6 +252,7 @@ function WholesaleOrderAccordionRow({
               <span className={`min-w-0 flex-1 break-words leading-snug ${open ? "text-[17px] font-bold" : "text-[15px] font-semibold"}`}>{order.stores?.name || "Okänd butik"}</span>
               <ChevronDown className={`mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
             </div>
+            <OrderNoteMarker order={order} className="text-[13px]" />
             <div className="flex flex-wrap items-center gap-1.5">{statusChip}<span className="font-mono text-[11px] text-muted-foreground">{day} · {orderLines} rader</span><OrdererName name={order.created_by} className="text-[11px] text-muted-foreground" /></div>
             <div className="font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</div>
           </div>
@@ -1113,7 +1116,7 @@ export default function WholesaleOrders() {
                           <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
                             {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
                           </td>
-                          <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                          <td className="p-3"><OrderNoteMarker order={o} />{!hasOrderNote(o) && !lineNoteCount(o) && <span className="text-muted-foreground">–</span>}</td>
                         </tr>
                         {expandedOrderIds.has(o.id) && (
                           <tr>
@@ -1534,6 +1537,12 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
 
   return (
     <>
+      <OrderNoteCallout note={order.notes} className="mx-2 mb-2" />
+      {lineNoteCount(order) > 0 && (
+        <div className="mx-2 mb-2 text-sm font-semibold text-warning-foreground">
+          📝 {lineNoteCount(order)} {lineNoteCount(order) === 1 ? "rad har" : "rader har"} egen anteckning — se under produktnamnet.
+        </div>
+      )}
       <div className="flex items-center gap-2 px-2 pb-1">
         <span className="text-xs text-muted-foreground">Bilder på ordern:</span>
         <OrderPhotosButton
@@ -1647,11 +1656,11 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                          priority={line.priority}
                          qty={line.priority_qty}
                          unit={line.unit || line.products?.unit}
-                         note={line.priority_note}
                          showLabel={false}
                          className="shrink-0"
                        />
                      </div>
+                     <LineNoteText note={line.priority_note} className="sticky left-2 max-w-[calc(100vw-4rem)] sm:max-w-none" />
                      {matchAlt && (
                        <button
                          type="button"
