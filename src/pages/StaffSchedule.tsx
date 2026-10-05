@@ -380,6 +380,7 @@ export default function StaffSchedule() {
                 if (shift) openDialog(shift.staff_id, shift.shift_date, shift.id);
               }}
               onDelete={() => {
+                if (readOnly || inspectorData.shiftId.startsWith("imp:")) return;
                 deleteShift.mutate(inspectorData.shiftId);
                 setSelectedShiftId(null);
               }}
