@@ -121,6 +121,14 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                 </div>
               </div>
 
+              {/* Notes — överst så de aldrig missas */}
+              {order.notes && (
+                <div style={{ marginTop: 10, border: "3px solid #111", borderRadius: 4, padding: "8px 10px" }}>
+                  <div style={{ fontWeight: 800, fontSize: 15, textTransform: "uppercase", marginBottom: 4 }}>Anteckning från butiken / Notes</div>
+                  <div style={{ fontSize: 17, whiteSpace: "pre-wrap" }}>{order.notes}</div>
+                </div>
+              )}
+
               {/* Product table — flex-grow to fill A4 space */}
               <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
@@ -148,6 +156,11 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                         </td>
                         <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 15, fontWeight: 500 }}>
                           {line.products?.name || "—"}
+                          {line.priority_note && (
+                            <div style={{ fontStyle: "italic", fontWeight: 600, fontSize: 14, marginTop: 2, whiteSpace: "pre-wrap", borderLeft: "3px solid #111", paddingLeft: 6 }}>
+                              Anteckning: {line.priority_note}
+                            </div>
+                          )}
                         </td>
                         <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 14, color: "#555" }}>
                           {line.products?.category || "—"}
@@ -201,13 +214,6 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                 </table>
               </div>
 
-              {/* Notes */}
-              {order.notes && (
-                <div style={{ marginTop: 16 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, textTransform: "uppercase", color: "#444", marginBottom: 4 }}>Anteckning / Notes</div>
-                  <div style={{ border: "1px solid #ccc", borderRadius: 3, padding: 8, fontSize: 16, minHeight: 30 }}>{order.notes}</div>
-                </div>
-              )}
 
               {/* Signatures */}
               <div style={{ display: "flex", gap: 16, marginTop: 24 }}>
