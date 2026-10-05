@@ -10,7 +10,7 @@ import type { StaffProfile } from "@/contexts/StaffAuthContext";
 export type StaffLevel = "employee" | "manager" | "admin";
 
 /** Sidor en vanlig anställd får öppna. */
-const EMPLOYEE_PATHS = ["/my-shifts", "/my-time", "/profile"];
+const EMPLOYEE_PATHS = ["/staff-schedule", "/my-shifts", "/my-time", "/profile"];
 
 /** Sidor som är stängda för butikschef (lön, regler, integrationer, register). */
 const MANAGER_BLOCKED = [

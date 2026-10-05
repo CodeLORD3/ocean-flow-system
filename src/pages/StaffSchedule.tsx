@@ -8,6 +8,8 @@ import { useStaff } from "@/hooks/useStaff";
 import { usePlannedShiftsRange } from "@/hooks/usePlannedShifts";
 import { useShiftsRange } from "@/hooks/useStaffShifts";
 import { useAbsenceRequests, useAbsenceTypes } from "@/hooks/useAbsence";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import { staffLevelOf } from "@/lib/staffModuleAccess";
 import { PlannedShiftDialog } from "@/components/livestaff/PlannedShiftDialog";
 import { StaffAccessDialog } from "@/components/staff/StaffAccessDialog";
 import { StaffSalaryDialog } from "@/components/staff/StaffSalaryDialog";
@@ -84,7 +86,14 @@ export default function StaffSchedule() {
   const { data: staff = [], isLoading: staffLoading } = useStaff();
   const days = useMemo(() => dateRange(anchor), [anchor]);
   const selectedDay = view === "day" ? dayViewDate : days[0];
-  const { data: planned = [], isLoading: plannedLoading } = usePlannedShiftsRange(days[0], days[6], storeFilter === "all" ? null : storeFilter);
+  const { data: ownPlanned = [], isLoading: plannedLoading } = usePlannedShiftsRange(days[0], days[6], storeFilter === "all" ? null : storeFilter);
+  const { data: imported = [] } = useImportedShiftsRange(days[0], days[6], storeFilter === "all" ? null : storeFilter);
+  const planned = useMemo(() => {
+    const seen = new Set(ownPlanned.map((s) => `${s.staff_id}|${s.shift_date}|${s.start_time.slice(0, 5)}`));
+    return [...ownPlanned, ...imported.filter((s) => !seen.has(`${s.staff_id}|${s.shift_date}|${s.start_time}`))];
+  }, [ownPlanned, imported]);
+  const { staff: me } = useStaffAuth();
+  const readOnly = staffLevelOf(me) === "employee";
   const { data: actualShifts = [] } = useShiftsRange(days[0], days[6], storeFilter === "all" ? null : storeFilter);
   const { data: absenceRequests = [] } = useAbsenceRequests(undefined, storeFilter === "all" ? null : storeFilter);
   const { data: absenceTypes = [] } = useAbsenceTypes();
@@ -209,6 +218,7 @@ export default function StaffSchedule() {
   const extraCount = rows.filter((row) => row.extraMinutes > 0).length;
 
   const openDialog = (staffId: string | null, day: string, shiftId?: string) => {
+    if (readOnly || shiftId?.startsWith("imp:")) return;
     const shift = shiftId ? visibleShifts.find((item) => item.id === shiftId) ?? null : null;
     setDialogDay(day);
     setDialogStore(shift?.store_id ?? (storeFilter === "all" ? stores[0]?.id ?? null : storeFilter));
@@ -223,7 +233,7 @@ export default function StaffSchedule() {
       return;
     }
     setSelectedShiftId(null);
-    openDialog(staffId, day);
+    if (!readOnly) openDialog(staffId, day);
   };
 
   const shiftPeriod = (delta: number) => {
@@ -310,6 +320,7 @@ export default function StaffSchedule() {
               ariaLabel="Välj schemavy"
               options={[{ value: "week", label: "Vecka" }, { value: "day", label: "Dag" }]}
             />
+            {readOnly ? null : <>
             <button
               type="button"
               className="sl-btn"
@@ -320,16 +331,17 @@ export default function StaffSchedule() {
               <Upload size={15} /> Importera schema
             </button>
             <button type="button" className="sl-btn sl-btn--primary" onClick={() => openDialog(null, selectedDay)}><Plus size={15} /> Planera pass</button>
+            </>}
           </>
         }
         metrics={
           <>
             <StaffMetric label="Schemalagda timmar" value={formatDecimalHours(weekMinutes)} hint={`arbetad ${formatHm(actualMinutes)}`} />
-            <StaffMetric
+            {readOnly ? null : <StaffMetric
               label="Lönekostnad"
               value={weekCost > 0 ? formatKrPrel(weekCost) : "—"}
               hint={laborRatio === null ? "omsättning saknas" : `${laborRatio.toFixed(1)} % av omsättning`}
-            />
+            />}
             <StaffMetric
               label="Kräver åtgärd"
               value={violationCount + extraCount + missingRates}
@@ -395,7 +407,7 @@ export default function StaffSchedule() {
                 coverage={coverage}
                 selectedShiftId={selectedShiftId}
                 onShiftClick={handleShiftClick}
-                onSalaryClick={(id) => setSalaryStaff(staff.find((person: any) => person.id === id) ?? null)}
+                onSalaryClick={readOnly ? () => {} : (id) => setSalaryStaff(staff.find((person: any) => person.id === id) ?? null)}
                 storeName={storeName}
               />
             ) : (
@@ -408,7 +420,7 @@ export default function StaffSchedule() {
                   gap={gap}
                   selectedShiftId={selectedShiftId}
                   onShiftClick={handleShiftClick}
-                  onAdd={(staffId, day) => openDialog(staffId, day)}
+                  onAdd={(staffId, day) => !readOnly && openDialog(staffId, day)}
                   nowMinutes={selectedDay === dateKey() ? now.getHours() * 60 + now.getMinutes() : null}
                 />
               </div>
