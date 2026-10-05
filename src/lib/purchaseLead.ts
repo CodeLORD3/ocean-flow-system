@@ -24,7 +24,13 @@ export function purchaseLeadDays(product: PurchaseLeadProduct | number | null | 
   return product?.requires_processing ? 1 : 0;
 }
 
-/** Inköpsdatum (yyyy-MM-dd) för en leveransdag och en vara. */
+/**
+ * Inköpsdatum (yyyy-MM-dd) för en leveransdag och en vara.
+ *
+ * Inköpsdagen blir aldrig tidigare än i dag: en sen beställning (t.ex. filé
+ * till i morgon som läggs i eftermiddag) hamnar annars på en inköpsdag som
+ * redan passerat och syns aldrig i inköparnas lista.
+ */
 export function purchaseDateFor(
   deliveryDate: string | Date | null | undefined,
   product: PurchaseLeadProduct | number | null | undefined,
@@ -32,7 +38,9 @@ export function purchaseDateFor(
   if (!deliveryDate) return null;
   const base = typeof deliveryDate === "string" ? parseISO(deliveryDate) : deliveryDate;
   if (Number.isNaN(base.getTime())) return null;
-  return format(addDays(base, -purchaseLeadDays(product)), "yyyy-MM-dd");
+  const planned = format(addDays(base, -purchaseLeadDays(product)), "yyyy-MM-dd");
+  const today = format(new Date(), "yyyy-MM-dd");
+  return planned < today ? today : planned;
 }
 
 /** Kort förklaring till varför varan köps tidigare, eller null när den köps samma dag. */
