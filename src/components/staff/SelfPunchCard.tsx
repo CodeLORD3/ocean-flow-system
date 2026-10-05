@@ -16,17 +16,27 @@ type Status = {
 const LABEL: Record<string, string> = { in: "Stämpla in", ut: "Stämpla ut", rast_start: "Börja rast", rast_slut: "Avsluta rast" };
 const time = (iso: string) => new Date(iso).toLocaleTimeString("sv-SE", { timeZone: "Europe/Stockholm", hour: "2-digit", minute: "2-digit" });
 
+// Direkt fetch i stället för functions.invoke: nekade stämplingar (t.ex. utanför geofence)
+// är förväntade svar och ska visas i kortet, inte rapporteras som krasch.
 async function call(body: Record<string, unknown>): Promise<{ data?: any; error?: string; status?: number }> {
-  const { data, error } = await supabase.functions.invoke("clock-punch", { body: { self_punch: true, ...body } });
-  if (!error) return { data };
-  const ctx = (error as { context?: Response }).context;
-  let msg = "Kunde inte nå stämplingen. Försök igen.";
-  let status: number | undefined;
-  if (ctx) {
-    status = ctx.status;
-    try { msg = (await ctx.json())?.error ?? msg; } catch { /* ignore */ }
+  try {
+    const { data: s } = await supabase.auth.getSession();
+    const token = s.session?.access_token;
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clock-punch`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ self_punch: true, ...body }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) return { data };
+    return { error: (data as { error?: string })?.error ?? "Kunde inte nå stämplingen. Försök igen.", status: res.status };
+  } catch {
+    return { error: "Kunde inte nå stämplingen. Försök igen." };
   }
-  return { error: msg, status };
 }
 
 function getPosition(): Promise<GeolocationPosition> {
