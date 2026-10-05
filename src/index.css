@@ -145,12 +145,6 @@
     padding-top: env(safe-area-inset-top);
   }
 
-  /* Inre ytor som faktiskt ska kunna skrollas i sidled (breda tabeller) får det */
-  [class*="overflow-x-auto"],
-  [class*="overflow-x-scroll"] {
-    touch-action: pan-x pan-y;
-    overscroll-behavior-x: contain;
-  }
 
   /* On mobile, prevent iOS zoom-on-focus by ensuring inputs are at least 16px.
      !important is required because Tailwind text-sm/text-xs utilities would win. */
