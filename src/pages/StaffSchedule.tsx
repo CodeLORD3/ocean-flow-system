@@ -340,7 +340,7 @@ export default function StaffSchedule() {
             {readOnly ? null : <StaffMetric
               label="Lönekostnad"
               value={weekCost > 0 ? formatKrPrel(weekCost) : "—"}
-              hint={laborRatio === null ? "omsättning saknas" : `${laborRatio.toFixed(1)} % av omsättning`}
+              hint={scopeStoreIds.every((id) => !unitHasSales(storeById.get(id) as any)) ? "preliminär" : laborRatio === null ? "omsättning saknas" : `${laborRatio.toFixed(1)} % av omsättning`}
             />}
             <StaffMetric
               label="Kräver åtgärd"
