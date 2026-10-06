@@ -41,6 +41,7 @@ import LiveStaff from "@/pages/LiveStaff";
 import Personalkollen from "@/pages/Integrations/Personalkollen";
 import IntegrationLog from "@/pages/IntegrationLog";
 import NegativeFlags from "@/pages/NegativeFlags";
+import LotPage from "@/pages/LotPage";
 import ClockStations from "@/pages/ClockStations";
 import TimeEntriesPage from "@/pages/TimeEntriesPage";
 import MyTime from "@/pages/MyTime";
@@ -281,13 +282,16 @@ export function KeepAliveTabs() {
         const kund = tab.path.match(/^\/customer-orders\/kund\/([^/]+)$/);
         const uppgift = tab.path.match(/^\/uppgift\/([^/]+)$/);
         const person = tab.path.match(/^\/person\/([^/]+)$/);
+        const lotM = tab.path.match(/^\/lot\/([^/]+)$/);
         const route: RouteEntry | undefined = kund
           ? { component: <RetailCustomerProfile customerId={kund[1]} /> }
           : uppgift
             ? { component: <TaskDetail taskId={uppgift[1]} /> }
             : person
               ? { component: <PersonPage staffId={person[1]} /> }
-              : ROUTE_MAP[tab.path];
+              : lotM
+                ? { component: <LotPage lotId={lotM[1]} /> }
+                : ROUTE_MAP[tab.path];
         if (!route) return null;
 
         const isActive = tab.path === activeTab;

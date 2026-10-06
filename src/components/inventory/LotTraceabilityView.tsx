@@ -1,3 +1,4 @@
+import { printLotLabelById } from "@/lib/lotQrLabelPdf";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -828,6 +829,7 @@ export default function LotTraceabilityView({
                     {lot.suppliers?.name ? ` · ${lot.suppliers.name}` : ""}
                     {lot.best_before ? ` · bäst före ${lot.best_before}` : ""}
                   </p>
+                  <Button size="sm" variant="outline" className="mt-1 h-7 gap-1 text-xs print:hidden" onClick={() => printLotLabelById(lot.id)}>Skriv ut etikett</Button>
                   <div className="mt-1">
                     <AuctionLotNumberField lotId={lot.id} value={(lot as any).supplier_lot_id} readOnly={!!storeId} />
                   </div>

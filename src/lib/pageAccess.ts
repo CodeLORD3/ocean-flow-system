@@ -154,7 +154,9 @@ export function canAccessRoute(site: SiteMode, pathWithQuery: string): boolean {
     ? "/customer-orders"
     : path.startsWith("/uppgift/")
       ? "/uppgifter"
-      : path.startsWith("/person/")
+      : path.startsWith("/lot/")
+        ? "/traceability"
+        : path.startsWith("/person/")
         ? "/person"
         : path;
   const allowed = ROUTE_ACCESS[key];
