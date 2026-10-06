@@ -1,3 +1,4 @@
+import { unitHasSales } from "@/lib/unitTypes";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { focalStyle } from "@/lib/imageFocal";
@@ -34,7 +35,7 @@ export function OurStoresSection({ storeFilterId }: { storeFilterId?: string | n
         .eq("is_wholesale", false)
         .order("name");
       if (error) throw error;
-      return data as Store[];
+      return (data as Store[]).filter((s) => unitHasSales(s as any));
     },
   });
 

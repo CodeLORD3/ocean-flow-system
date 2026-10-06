@@ -1,3 +1,4 @@
+import { unitHasSales } from "@/lib/unitTypes";
 import { motion } from "framer-motion";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import {
@@ -274,7 +275,7 @@ export default function Dashboard() {
 
       {/* Kassan idag (live från Nimpos + egna kassor) */}
       <motion.div variants={fadeUp}>
-        <PosTodayLive storeId={isShop ? activeStoreId : null} />
+        {unitHasSales(stores.find((s) => s.id === activeStoreId)) && <PosTodayLive storeId={isShop ? activeStoreId : null} />}
       </motion.div>
 
       {/* Our stores */}
