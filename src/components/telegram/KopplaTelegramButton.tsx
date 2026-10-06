@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,11 +47,9 @@ export default function KopplaTelegramButton({ employeeId, size = "sm" }: { empl
 /** Samma knapp för inloggad personal: slår upp den anställde via staff-id. */
 export function KopplaTelegramForStaff({ staffId }: { staffId: string }) {
   const [empId, setEmpId] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
-  if (!loaded) {
-    setLoaded(true);
+  useEffect(() => {
     supabase.from("employees").select("id").eq("staff_id", staffId).limit(1).maybeSingle()
       .then(({ data }) => setEmpId((data as any)?.id ?? null));
-  }
+  }, [staffId]);
   return <KopplaTelegramButton employeeId={empId} />;
 }
