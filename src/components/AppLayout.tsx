@@ -1,3 +1,4 @@
+import LotScanButton from "@/components/lots/LotScanButton";
 import { useState, useEffect } from "react";
 import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -322,6 +323,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
 
 
+              <LotScanButton className="md:hidden h-10 w-10" />
                <MyNoticeCenter />
               <HrNotificationCenter />
 
