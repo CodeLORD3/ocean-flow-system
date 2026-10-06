@@ -24295,6 +24295,7 @@ export type Database = {
         | "group_admin"
         | "platform_admin"
         | "multi_store_manager"
+        | "owner"
       ledger_obligation: "ja" | "nej" | "utred"
       location_type:
         | "inkopslager"
@@ -24455,6 +24456,7 @@ export const Constants = {
         "group_admin",
         "platform_admin",
         "multi_store_manager",
+        "owner",
       ],
       ledger_obligation: ["ja", "nej", "utred"],
       location_type: [

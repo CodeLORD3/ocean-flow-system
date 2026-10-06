@@ -50,6 +50,13 @@
       "when": 1791295323547,
       "tag": "0006_telefonist_revoke_anon",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791313494852,
+      "tag": "0007_add_owner_role",
+      "breakpoints": true
     }
   ]
 }
