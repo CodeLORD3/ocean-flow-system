@@ -124,6 +124,7 @@ export default function SchedulePlanner() {
 
   const { data: stores = [] } = useStores();
   const store = stores.find((s) => s.id === storeId);
+  const storeHasSales = unitHasSales(store as any);
   const { data: employees = [] } = useEmployees(false);
   const { data: employments = [] } = useAllEmployments();
   const { data: shiftTypes = [] } = useShiftTypes();
@@ -1007,6 +1008,7 @@ export default function SchedulePlanner() {
                       </span>
                     </td>
                   </tr>
+                  {storeHasSales && (<>
                   <tr className="border-t border-border/60">
                     <td className="px-3 py-2">
                       <SectionLabel>Behov (ca)</SectionLabel>
@@ -1148,6 +1150,7 @@ export default function SchedulePlanner() {
                       </span>
                     </td>
                   </tr>
+                  </>)}
                 </tfoot>
               </table>
               <div className="space-y-2 px-3 py-3">

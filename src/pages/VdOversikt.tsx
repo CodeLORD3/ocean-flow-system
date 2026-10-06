@@ -38,7 +38,7 @@ async function loadData() {
   const in4w = addDays(mon, 28);
 
   const [stores, reports, fx, targets, waiting, drafts, lastRun, devs, custInv, supInv, bank] = await Promise.all([
-    db.from("stores").select("id,name,currency").eq("active", true).order("name"),
+    db.from("stores").select("id,name,currency").eq("active", true).not("unit_type", "in", "(produktion,admin,overhead)").order("name"),
     db.from("daily_reports").select("store_id,report_date,net_sales,currency").gte("report_date", from < mon ? from : mon).lte("report_date", today),
     db.from("fx_daily_rates").select("base_currency,rate,rate_date").eq("quote_currency", "SEK").lte("rate_date", today).order("rate_date", { ascending: false }).limit(20),
     db.from("store_targets").select("store_id,target_sales_ex_vat").eq("iso_year", year).eq("iso_week", week),
