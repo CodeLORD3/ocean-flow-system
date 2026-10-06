@@ -43,3 +43,15 @@ export default function KopplaTelegramButton({ employeeId, size = "sm" }: { empl
     </>
   );
 }
+
+/** Samma knapp för inloggad personal: slår upp den anställde via staff-id. */
+export function KopplaTelegramForStaff({ staffId }: { staffId: string }) {
+  const [empId, setEmpId] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  if (!loaded) {
+    setLoaded(true);
+    supabase.from("employees").select("id").eq("staff_id", staffId).limit(1).maybeSingle()
+      .then(({ data }) => setEmpId((data as any)?.id ?? null));
+  }
+  return <KopplaTelegramButton employeeId={empId} />;
+}

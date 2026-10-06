@@ -30,6 +30,7 @@ import {
 } from "@/hooks/useStaffShifts";
 import { dagsavslutSaknas, dagsavslutStatus, type DagsavslutPost } from "@/lib/dagsavslut";
 import { DayCloseReminderDialog } from "@/components/staff/DayCloseReminderDialog";
+import { KopplaTelegramForStaff } from "@/components/telegram/KopplaTelegramButton";
 
 type TabKey = "uppgifter" | "tid" | "aktivitet" | "profil";
 
@@ -253,6 +254,7 @@ export default function StaffProfile() {
                   <p className="truncate text-sm text-muted-foreground">
                     {[role, staff.workplace].filter(Boolean).join("  ·  ") || "Personal"}
                   </p>
+                  <div className="mt-2"><KopplaTelegramForStaff staffId={staff.id} /></div>
                   {/* Dagens uppgifter direkt vid namnet, i färg */}
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground">
