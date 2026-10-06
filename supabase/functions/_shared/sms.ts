@@ -36,7 +36,7 @@ export function normalizePhoneSe(raw: unknown): string | null {
 
 export async function sendSms(
   db: SupabaseClient,
-  args: { phone: string; type: SmsType; text: string; orderId?: string | null },
+  args: { phone: string; type: SmsType; text: string; orderId?: string | null; forceTestMode?: boolean },
 ): Promise<{ ok: boolean; testMode: boolean; error?: string }> {
   const base = {
     phone_normalized: args.phone,
@@ -44,7 +44,7 @@ export async function sendSms(
     customer_order_id: args.orderId ?? null,
   };
 
-  if (smsTestMode()) {
+  if (args.forceTestMode || smsTestMode()) {
     console.log(`[SMS TESTLÄGE] ${args.type} → ${args.phone}: ${args.text}`);
     await db.from("sms_log").insert({ ...base, status: "testlage" });
     return { ok: true, testMode: true };

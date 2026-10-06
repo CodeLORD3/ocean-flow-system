@@ -146,7 +146,8 @@ async function registrera(raw: unknown): Promise<Utfall> {
           status = "fel";
         } else {
           const text = `Samtal kopplas: ${f.namn}${f.foretag ? `, ${f.foretag}` : ""}. Gäller: ${f.arende}`.slice(0, 300);
-          const r = await sendSms(d, { phone: vdNr!, type: "telefonist", text });
+          const forceTestMode = (Deno.env.get("TELEFON_SMS_TEST_MODE") ?? "").toLowerCase() === "true";
+          const r = await sendSms(d, { phone: vdNr!, type: "telefonist", text, forceTestMode });
           status = r.ok ? (r.testMode ? "testlage" : "skickad") : "fel";
         }
       } catch { status = "fel"; }
