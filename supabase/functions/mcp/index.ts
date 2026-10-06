@@ -626,6 +626,76 @@ var listaNegativtLager = defineTool6({
   }
 });
 
+// src/lib/mcp/logging.ts
+var SAFE_KEYS = /* @__PURE__ */ new Set([
+  "id",
+  "status",
+  "typ",
+  "kanal",
+  "limit",
+  "from_date",
+  "to_date",
+  "store_id",
+  "store_code",
+  "legal_entity_code",
+  "pack_status",
+  "document_type",
+  "atgard",
+  "kategori",
+  "prioritet",
+  "lot_number"
+]);
+function summarize(args) {
+  if (!args || typeof args !== "object") return "";
+  const parts = Object.entries(args).map(
+    ([k, v]) => SAFE_KEYS.has(k) && (typeof v === "string" || typeof v === "number" || typeof v === "boolean") ? `${k}=${String(v).slice(0, 40)}` : k
+  );
+  return parts.join(", ").slice(0, 300);
+}
+function uppgiftId(tool, args, res) {
+  if (!tool.includes("ai_uppgift")) return null;
+  const a = args ?? {};
+  if (typeof a.id === "number") return a.id;
+  const sc = res?.structuredContent;
+  return typeof sc?.uppgift?.id === "number" ? sc.uppgift.id : null;
+}
+function errorText(res) {
+  const c = res?.content;
+  return c?.find((x) => x.type === "text")?.text?.slice(0, 500) ?? "fel";
+}
+function withLogging(tool) {
+  const inner = tool.handler;
+  const handler = async (args, ctx, ...rest) => {
+    const start = Date.now();
+    let res;
+    let thrown;
+    try {
+      res = await inner(args, ctx, ...rest);
+    } catch (e) {
+      thrown = e;
+    }
+    try {
+      if (ctx.isAuthenticated() && ctx.getToken()) {
+        const isErr = thrown !== void 0 || res?.isError === true;
+        await supabaseForUser(ctx).from("mcp_calls").insert({
+          user_id: ctx.getUserId(),
+          agent: ctx.getClientId() ?? null,
+          tool: tool.name,
+          args_summary: summarize(args),
+          result: isErr ? "fel" : "ok",
+          error: !isErr ? null : thrown !== void 0 ? String(thrown?.message ?? thrown).slice(0, 500) : errorText(res),
+          duration_ms: Date.now() - start,
+          ai_uppgift_id: uppgiftId(tool.name, args, res)
+        });
+      }
+    } catch {
+    }
+    if (thrown !== void 0) throw thrown;
+    return res;
+  };
+  return { ...tool, handler };
+}
+
 // src/lib/mcp/index.ts
 var projectRef = "tzcvoqnrhjtrxlzhhdmu";
 var mcp_default = defineMcp({
@@ -662,7 +732,7 @@ var mcp_default = defineMcp({
     listaLeverantorsfakturor,
     listaInleveranser,
     listaNegativtLager
-  ]
+  ].map(withLogging)
 });
 
 // lovable-mcp-supabase-entry.ts
