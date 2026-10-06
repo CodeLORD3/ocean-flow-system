@@ -71,6 +71,13 @@
       "when": 1791314113106,
       "tag": "0009_add_contributor_role",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791314164387,
+      "tag": "0010_caballaflow_contributors",
+      "breakpoints": true
     }
   ]
 }

@@ -6521,6 +6521,7 @@ export type Database = {
           done_by: string | null
           id: string
           owner: string
+          owner_user_id: string | null
           phase: string
           prompt: string | null
           sort_order: number
@@ -6534,7 +6535,8 @@ export type Database = {
           done_at?: string | null
           done_by?: string | null
           id?: string
-          owner: string
+          owner?: string
+          owner_user_id?: string | null
           phase?: string
           prompt?: string | null
           sort_order?: number
@@ -6549,6 +6551,7 @@ export type Database = {
           done_by?: string | null
           id?: string
           owner?: string
+          owner_user_id?: string | null
           phase?: string
           prompt?: string | null
           sort_order?: number
@@ -23629,6 +23632,25 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      flow_members: {
+        Args: never
+        Returns: {
+          full_name: string
+          role: string
+          user_id: string
+        }[]
+      }
+      flow_set_contributor: {
+        Args: { _on: boolean; _user_id: string }
+        Returns: undefined
+      }
+      flow_staff_candidates: {
+        Args: { _search: string }
+        Returns: {
+          full_name: string
+          user_id: string
+        }[]
+      }
       fortnox_auto_match_customers: {
         Args: { p_entity: string }
         Returns: number
@@ -23766,6 +23788,7 @@ export type Database = {
       }
       inventering_paminnelse: { Args: never; Returns: number }
       is_auction_user: { Args: never; Returns: boolean }
+      is_flow_member: { Args: never; Returns: boolean }
       is_flow_owner: { Args: never; Returns: boolean }
       is_investor: { Args: never; Returns: boolean }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
