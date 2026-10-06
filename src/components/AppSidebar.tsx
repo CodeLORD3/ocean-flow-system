@@ -80,7 +80,7 @@ import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
 import { canOpenStaffPage, staffLevelOf } from "@/lib/staffModuleAccess";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useNyaTelefonMeddelanden } from "@/hooks/useNyaTelefonMeddelanden";
-import { useIsFlowOwner } from "@/hooks/useFlow";
+import { useIsFlowMember } from "@/hooks/useFlow";
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: BarChart3 },
@@ -212,7 +212,7 @@ export function AppSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "o
   const { data: nyaSamtal = 0 } = useNyaTelefonMeddelanden();
   const { staff } = useStaffAuth();
   const staffLevel = staffLevelOf(staff);
-  const { data: isFlowOwner = false } = useIsFlowOwner();
+  const { data: isFlowOwner = false } = useIsFlowMember();
 
   // Varje sektion kan fällas ihop så att alla kategorier syns i korta fönster.
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
