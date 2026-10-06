@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { /* tom */ }
 
   // Godkänt utkast (från trigger). Läser om utkastet — anroparen litas inte på.
-  if (body.draft_id != null && !req.headers.get("Authorization")?.startsWith("Bearer ey") || (body.draft_id != null && Object.keys(body).length === 1)) {
+  if (body.draft_id != null) {
     const { data: d } = await db.from("ai_utkast").select("id, kanal, status, mottagare, innehall").eq("id", Number(body.draft_id)).maybeSingle();
     if (!d || d.kanal !== "telegram" || d.status !== "godkänt") return json({ skipped: "inte ett godkänt Telegram-utkast" });
     if (!hasBotToken()) return json({ skipped: "TELEGRAM_BOT_TOKEN saknas, utkastet ligger kvar som godkänt" });
