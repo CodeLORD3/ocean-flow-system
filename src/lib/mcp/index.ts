@@ -6,6 +6,8 @@ import getLotTool from "./tools/get-lot";
 import { listaAiUppgifter, skapaAiUppgift, uppdateraAiUppgift, listaAiUtkast, skapaAiUtkast, uppdateraAiUtkast } from "./tools/ai-team";
 import { listaDagsrapporter, listaVeckorapporter, listaKundordrarAi, listaAvvikelser, listaForbattringsforslag, listaChecklistdagar, listaFortnoxFakturajobb, listaInkopsrapporter, listaOppettider, listaButiksvader, listaTelefonsamtal, listaLeverantorsfakturor, listaInleveranser, listaNegativtLager } from "./tools/ai-read";
 
+import { withLogging } from "./logging";
+
 const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unset";
 
 export default defineMcp({
@@ -43,5 +45,5 @@ export default defineMcp({
     listaLeverantorsfakturor,
     listaInleveranser,
     listaNegativtLager,
-  ],
+  ].map(withLogging),
 });

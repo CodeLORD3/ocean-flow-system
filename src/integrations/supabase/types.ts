@@ -581,6 +581,7 @@ export type Database = {
           tilldelad: string | null
           underlag: string | null
           uppdaterad: string | null
+          uppdaterad_av: string | null
           uppgift: string
         }
         Insert: {
@@ -594,6 +595,7 @@ export type Database = {
           tilldelad?: string | null
           underlag?: string | null
           uppdaterad?: string | null
+          uppdaterad_av?: string | null
           uppgift: string
         }
         Update: {
@@ -607,6 +609,7 @@ export type Database = {
           tilldelad?: string | null
           underlag?: string | null
           uppdaterad?: string | null
+          uppdaterad_av?: string | null
           uppgift?: string
         }
         Relationships: []
@@ -626,6 +629,7 @@ export type Database = {
           titel: string
           typ: string | null
           uppdaterad: string | null
+          uppdaterad_av: string | null
           vd_kommentar: string | null
         }
         Insert: {
@@ -642,6 +646,7 @@ export type Database = {
           titel: string
           typ?: string | null
           uppdaterad?: string | null
+          uppdaterad_av?: string | null
           vd_kommentar?: string | null
         }
         Update: {
@@ -658,6 +663,7 @@ export type Database = {
           titel?: string
           typ?: string | null
           uppdaterad?: string | null
+          uppdaterad_av?: string | null
           vd_kommentar?: string | null
         }
         Relationships: []
@@ -10103,6 +10109,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mcp_calls: {
+        Row: {
+          agent: string | null
+          ai_uppgift_id: number | null
+          args_summary: string | null
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          id: string
+          result: string
+          tool: string
+          user_id: string | null
+        }
+        Insert: {
+          agent?: string | null
+          ai_uppgift_id?: number | null
+          args_summary?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          result: string
+          tool: string
+          user_id?: string | null
+        }
+        Update: {
+          agent?: string | null
+          ai_uppgift_id?: number | null
+          args_summary?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          result?: string
+          tool?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       meeting_protocol_items: {
         Row: {
