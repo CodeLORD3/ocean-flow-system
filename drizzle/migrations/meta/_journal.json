@@ -85,6 +85,13 @@
       "when": 1791315819002,
       "tag": "0011_mcp_calls_och_uppdaterad_av",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791316736362,
+      "tag": "0012_integration_log",
+      "breakpoints": true
     }
   ]
 }
