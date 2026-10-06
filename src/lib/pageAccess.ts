@@ -70,6 +70,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   "/stock-transfers": all(BUTIK, GROSSIST, ADMIN),
   "/waste": all(BUTIK, GROSSIST, ADMIN),
   "/stock-disappearance": all(BUTIK, GROSSIST, ADMIN),
+  "/negativa-saldon": all(BUTIK, GROSSIST, ADMIN),
   "/arrivals": all(GROSSIST, ADMIN),
   "/external-production": all(GROSSIST, ADMIN),
 
