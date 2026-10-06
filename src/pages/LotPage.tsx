@@ -252,10 +252,10 @@ export default function LotPage({ lotId }: { lotId: string }) {
         <CardContent className="space-y-1 text-sm">
           <div>Leverantör: {lot.suppliers?.name || "–"}</div>
           {(originQ.data?.auctions ?? []).map((a) => (
-            <div key={a.id}>Auktion: {a.auction_lot_number || a.lot_number || ""} {a.auction_date ? svD(a.auction_date) : a.created_at ? svD(a.created_at) : ""}</div>
+            <div key={a.id}>Auktionsköp {a.purchase_date ? svD(a.purchase_date) : svD(a.created_at)}{a.price_per_kg ? ` · ${Number(a.price_per_kg).toLocaleString("sv-SE")} kr/kg` : ""}</div>
           ))}
           {(originQ.data?.deliveries ?? []).map((d) => (
-            <div key={d.id}>Inleverans: {d.incoming_deliveries?.delivery_number || d.incoming_deliveries?.reference || ""} {d.incoming_deliveries?.created_at ? svD(d.incoming_deliveries.created_at) : ""}</div>
+            <div key={d.id}>Inleverans {d.incoming_deliveries?.delivery_number || ""} {d.incoming_deliveries?.received_date ? svD(d.incoming_deliveries.received_date) : ""}</div>
           ))}
           {(chainQ.data?.back ?? []).map((c) => (
             <button key={c.id} className="block text-left underline break-words" onClick={() => navigate(`/lot/${c.id}`)}>
