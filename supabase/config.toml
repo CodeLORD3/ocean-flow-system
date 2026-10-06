@@ -133,3 +133,6 @@ verify_jwt = false
 
 [functions.telegram-ai-suggest]
 verify_jwt = false
+
+[functions.voice-report]
+verify_jwt = false
