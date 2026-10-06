@@ -7,7 +7,7 @@
  */
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-export type SmsType = "otp" | "bekraftelse" | "paminnelse" | "paminnelse_tidig";
+export type SmsType = "otp" | "bekraftelse" | "paminnelse" | "paminnelse_tidig" | "telefonist";
 
 /** Alfanumerisk avsändare hos 46elks — max 11 tecken. */
 function sender(): string {
