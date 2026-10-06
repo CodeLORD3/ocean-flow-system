@@ -198,6 +198,9 @@ function WholesaleOrderAccordionRow({
   onArchive,
   onClose,
 }: WholesaleOrderAccordionRowProps) {
+  const placedAt = order.created_at
+    ? new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(order.created_at))
+    : null;
   const rowTone = order.status === "Avbruten"
     ? { row: "bg-row-off", hover: "hover:bg-row-off-hover", edge: "bg-row-off-edge", chip: "bg-card text-row-off-text border-row-off-edge" }
     : order.status === "Levererad" || order.status === "Klar / Levererad"
