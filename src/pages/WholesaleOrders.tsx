@@ -238,7 +238,7 @@ function WholesaleOrderAccordionRow({
         >
           <div className="hidden min-h-5 w-full min-w-0 items-center text-xs sm:flex">
             <span className="w-36 shrink-0 border-r border-grid-line/70 pr-3 font-mono text-[11px] font-semibold tabular-nums">{day}<span className="block text-[10px] font-normal text-muted-foreground">{displayOrderWeek(order)}</span></span>
-            <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "text-[13px] font-bold tracking-tight" : "font-semibold"}`}><span className="flex min-w-0 items-center gap-2"><span className="truncate">{order.stores?.name || "Okänd butik"}</span><OrderNoteMarker order={order} className="shrink-0" /></span><OrdererName name={order.created_by} className="block text-[10px] font-normal text-muted-foreground" /></span>
+            <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "text-[13px] font-bold tracking-tight" : "font-semibold"}`}><span className="flex min-w-0 items-center gap-2"><span className="truncate">{order.stores?.name || "Okänd butik"}</span><OrderNoteMarker order={order} className="shrink-0" /></span><span className="flex min-w-0 items-center gap-1.5 text-[10px] font-normal text-muted-foreground"><OrdererName name={order.created_by} className="truncate" />{placedAt && <span className="shrink-0 font-mono tabular-nums">· Lagd {placedAt}</span>}</span></span>
             <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 text-center font-mono text-[10px] tabular-nums text-muted-foreground">{orderLines} rader</span>
              <span className="flex w-32 shrink-0 items-center overflow-hidden border-r border-grid-line/70 px-2">{statusChip}</span>
              <span className="flex w-12 shrink-0 items-center justify-center border-r border-grid-line/70 px-2">
@@ -254,6 +254,7 @@ function WholesaleOrderAccordionRow({
             </div>
             <OrderNoteMarker order={order} className="text-[13px]" />
             <div className="flex flex-wrap items-center gap-1.5">{statusChip}<span className="font-mono text-[11px] text-muted-foreground">{day} · {orderLines} rader</span><OrdererName name={order.created_by} className="text-[11px] text-muted-foreground" /></div>
+            {placedAt && <div className="font-mono text-[11px] tabular-nums text-muted-foreground">Lagd {placedAt}</div>}
             <div className="font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</div>
           </div>
         </button>
