@@ -339,9 +339,19 @@ export async function approveCountReport(reportId: string, approvedBy: string | 
     .eq("report_id", reportId);
   if (lineErr) throw lineErr;
 
+  // En äldre räkning får aldrig skriva över en nyare på samma lagerplats.
+  const { data: newer } = await supabase
+    .from("inventory_reports")
+    .select("id")
+    .eq("location_id", locationId)
+    .gt("reported_at", (report as any).reported_at)
+    .limit(1);
+  if (newer && newer.length)
+    throw new Error("Det finns en nyare räkning för samma lagerplats. Godkänn den i stället.");
+
   let written = 0;
+  // Alltid mot aktuellt saldo — inte mot avvikelsen när räkningen skickades.
   for (const l of (lines || []) as any[]) {
-    if (!Number(l.diff_kg)) continue;
     const movement = await setBalance({
       productId: l.product_id,
       locationId,
@@ -349,6 +359,26 @@ export async function approveCountReport(reportId: string, approvedBy: string | 
       movementType: "inventering",
       unitCost: Number(l.cost_price) || null,
       note: `Inventering godkänd — ${(report as any).location_name ?? "lagerplats"}`,
+      referenceType: "inventory_report",
+      referenceId: reportId,
+    });
+    if (movement) written += 1;
+  }
+
+  // Varor med saldo som inte räknades nollställs: räkningen är hela lagret.
+  const counted = new Set(((lines || []) as any[]).map((l) => l.product_id));
+  const { data: stockRows } = await supabase
+    .from("product_stock_locations")
+    .select("product_id, quantity")
+    .eq("location_id", locationId);
+  for (const s of (stockRows || []) as any[]) {
+    if (counted.has(s.product_id) || Math.abs(Number(s.quantity) || 0) < 0.0005) continue;
+    const movement = await setBalance({
+      productId: s.product_id,
+      locationId,
+      targetQuantityKg: 0,
+      movementType: "inventering",
+      note: "Ej räknad vid inventering — nollställd",
       referenceType: "inventory_report",
       referenceId: reportId,
     });
