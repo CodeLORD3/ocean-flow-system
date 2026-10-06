@@ -24097,6 +24097,7 @@ export type Database = {
         Args: { _employee_id: string; _first_day: string }
         Returns: Json
       }
+      unit_has_sales: { Args: { _store_id: string }; Returns: boolean }
       unpost_purchase_report: { Args: { _report_id: string }; Returns: Json }
       user_company_ids: { Args: { _user_id: string }; Returns: string[] }
       user_portals: { Args: { _user_id: string }; Returns: string[] }
