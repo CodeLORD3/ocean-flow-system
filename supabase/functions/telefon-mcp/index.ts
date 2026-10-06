@@ -11,7 +11,6 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { sendSms, normalizePhoneSe } from "../_shared/sms.ts";
 
-console.log("telefon-mcp start, sms-testlage:", (Deno.env.get("TELEFON_SMS_TEST_MODE") ?? "") === "true");
 const GRANS_10MIN = 60;
 const GRANS_DYGN = 1500;
 const SMS_GRANS_DYGN = 200;
