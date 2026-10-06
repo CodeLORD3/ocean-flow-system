@@ -3,12 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
-export type FlowOwner = "tim" | "baldvin" | "joakim";
-export const FLOW_OWNERS: { key: FlowOwner; label: string }[] = [
-  { key: "tim", label: "Tim" },
-  { key: "baldvin", label: "Baldvin" },
-  { key: "joakim", label: "Joakim" },
-];
 export const FLOW_PHASES = [
   { key: "kopplingar", label: "Kopplingar" },
   { key: "idag", label: "I dag" },
@@ -18,6 +12,7 @@ export const FLOW_PHASES = [
 export const PROMPT_STATUS: Record<string, string> = {
   forslag: "Förslag", godkand: "Godkänd", kors: "Körs", klar: "Klar", avvisad: "Avvisad", fel: "Fel",
 };
+export const ROLE_LABEL: Record<string, string> = { owner: "Ägare", contributor: "Bidragsgivare" };
 
 export interface FlowPrompt {
   id: string; title: string; target: string; risk: string; why: string | null; prompt: string;
@@ -25,24 +20,50 @@ export interface FlowPrompt {
   approved_at: string | null; result: string | null; ran_at: string | null;
 }
 export interface FlowTask {
-  id: string; title: string; owner: FlowOwner; phase: string; sort_order: number; status: string;
+  id: string; title: string; owner_user_id: string | null; phase: string; sort_order: number; status: string;
   why: string | null; steps: string | null; prompt: string | null; done_at: string | null; done_by: string | null;
 }
 export interface FlowMessage { id: string; author: string; author_name: string | null; body: string; created_at: string }
 export interface FlowLog { id: string; agent: string; created_at: string; text: string }
+export interface FlowMember { user_id: string; full_name: string; role: "owner" | "contributor" }
 
 const db = supabase as any;
 
-export function useIsFlowOwner() {
+function useRoleCheck(fn: string) {
   const { user } = useStaffAuth();
   return useQuery({
-    queryKey: ["flow-owner", user?.id],
+    queryKey: [fn, user?.id],
     enabled: !!user,
-    staleTime: 5 * 60_000,
+    staleTime: 60_000,
     queryFn: async () => {
-      const { data, error } = await db.rpc("is_flow_owner");
+      const { data, error } = await db.rpc(fn);
       if (error) return false;
       return !!data;
+    },
+  });
+}
+export const useIsFlowOwner = () => useRoleCheck("is_flow_owner");
+export const useIsFlowMember = () => useRoleCheck("is_flow_member");
+
+export function useFlowMembers() {
+  return useQuery({
+    queryKey: ["flow-members"],
+    queryFn: async () => {
+      const { data, error } = await db.rpc("flow_members");
+      if (error) throw error;
+      return (data ?? []) as FlowMember[];
+    },
+  });
+}
+
+export function useFlowCandidates(search: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["flow-candidates", search],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await db.rpc("flow_staff_candidates", { _search: search });
+      if (error) throw error;
+      return (data ?? []) as { user_id: string; full_name: string }[];
     },
   });
 }
@@ -123,7 +144,7 @@ export function useFlowMutations() {
       onSuccess: () => inv("flow-prompts"),
     }),
     saveTask: useMutation({
-      mutationFn: async (t: Partial<FlowTask> & { title: string; owner: FlowOwner }) => {
+      mutationFn: async (t: Partial<FlowTask> & { title: string; owner_user_id: string }) => {
         const { error } = t.id
           ? await db.from("flow_tasks").update(t).eq("id", t.id)
           : await db.from("flow_tasks").insert(t);
@@ -145,6 +166,13 @@ export function useFlowMutations() {
         if (error) throw error;
       },
       onSuccess: () => inv("flow-messages"),
+    }),
+    setContributor: useMutation({
+      mutationFn: async ({ userId, on }: { userId: string; on: boolean }) => {
+        const { error } = await db.rpc("flow_set_contributor", { _user_id: userId, _on: on });
+        if (error) throw error;
+      },
+      onSuccess: () => { inv("flow-members"); },
     }),
   };
 }
