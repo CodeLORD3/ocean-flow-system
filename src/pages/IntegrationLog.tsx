@@ -1,4 +1,5 @@
 import { useState } from "react";
+import TelegramAdminCard from "@/components/telegram/TelegramAdminCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +37,7 @@ export default function IntegrationLog() {
 
   return (
     <div className="space-y-4 p-4">
+      <TelegramAdminCard />
       <div>
         <h1 className="text-xl font-semibold">Integrationslogg</h1>
         <p className="text-sm text-muted-foreground">Alla anrop genom dörren för externa kopplingar. Senaste 200.</p>
