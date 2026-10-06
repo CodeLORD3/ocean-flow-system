@@ -84,6 +84,7 @@ import Checklist from "@/pages/Checklist";
 import Uppgifter from "@/pages/Uppgifter";
 import Attestera from "@/pages/Attestera";
 import Tavlan from "@/pages/Tavlan";
+import Samtal from "@/pages/Samtal";
 import Meddelanden from "@/pages/Meddelanden";
 import Systemkontroll from "@/pages/Systemkontroll";
 import VdOversikt from "@/pages/VdOversikt";
@@ -218,6 +219,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/uppgifter": { component: <Uppgifter /> },
   "/attestera": { component: <Attestera /> },
   "/tavlan": { component: <Tavlan /> },
+  "/samtal": { component: <Samtal /> },
   "/meddelanden": { component: <Meddelanden /> },
   "/systemkontroll": { component: <Systemkontroll /> },
   "/vd": { component: <VdOversikt /> },
