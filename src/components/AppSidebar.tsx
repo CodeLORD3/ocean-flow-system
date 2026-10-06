@@ -162,6 +162,7 @@ const financeNav = [
   { title: "Produktion — så gör vi", url: "/produktion-recept", icon: CookingPot },
   { title: "Omvandlingsrecept", url: "/transformation-recipes", icon: CookingPot },
   { title: "Fortnox", url: "/fortnox", icon: Plug },
+  { title: "Integrationslogg", url: "/integration-log", icon: Plug },
   { title: "Ekonomi", url: "/finance", icon: CreditCard },
   { title: "Prognoser", url: "/forecasts", icon: TrendingUp },
 ];

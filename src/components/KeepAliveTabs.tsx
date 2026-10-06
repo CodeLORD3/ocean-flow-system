@@ -39,6 +39,7 @@ import AuditRouter from "@/pages/AuditRouter";
 import BugReports from "@/pages/BugReports";
 import LiveStaff from "@/pages/LiveStaff";
 import Personalkollen from "@/pages/Integrations/Personalkollen";
+import IntegrationLog from "@/pages/IntegrationLog";
 import ClockStations from "@/pages/ClockStations";
 import TimeEntriesPage from "@/pages/TimeEntriesPage";
 import MyTime from "@/pages/MyTime";
@@ -191,6 +192,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/attestations": { component: <Attestations /> },
 
   "/fortnox": { component: <FortnoxSettings /> },
+  "/integration-log": { component: <IntegrationLog /> },
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
   "/trade-offers": { component: <TradeOffers /> },
   "/trade-history": { component: <TradeHistory /> },

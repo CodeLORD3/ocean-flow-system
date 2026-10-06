@@ -8184,6 +8184,51 @@ export type Database = {
           },
         ]
       }
+      integration_log: {
+        Row: {
+          action: string | null
+          av: string | null
+          butik: string | null
+          created_at: string
+          data_sammanfattning: string | null
+          duration_ms: number | null
+          error: string | null
+          id: string
+          kall_id: string | null
+          kalla: string | null
+          result: string
+          svar: Json | null
+        }
+        Insert: {
+          action?: string | null
+          av?: string | null
+          butik?: string | null
+          created_at?: string
+          data_sammanfattning?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          kall_id?: string | null
+          kalla?: string | null
+          result: string
+          svar?: Json | null
+        }
+        Update: {
+          action?: string | null
+          av?: string | null
+          butik?: string | null
+          created_at?: string
+          data_sammanfattning?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          kall_id?: string | null
+          kalla?: string | null
+          result?: string
+          svar?: Json | null
+        }
+        Relationships: []
+      }
       intercompany_invoices: {
         Row: {
           amount_ex_vat: number
