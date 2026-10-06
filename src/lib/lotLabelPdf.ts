@@ -1,100 +1,88 @@
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
-import { drawIdentificationMark } from "@/lib/identificationMark";
 
 /**
- * Partietiketter för Brother QL-800. Formatet är 62 × 29 mm (DK-11209/DK-22205
- * kapad), en etikett per sida så att skrivaren matar rätt. QR-koden innehåller
- * partinummret, så en skanning i lagret leder direkt till rätt parti.
+ * Partietikett för Brother QL (62 mm löpande rulle), 62 × 40 mm.
+ * QR-koden länkar till partiets sida i Makrill.
  */
+const W = 62;
+const H = 40;
 
 export interface LotLabel {
+  lotId: string;
   lotNumber: string;
-  productName: string;
-  quantityKg?: number | null;
+  species: string;
+  latinName?: string | null;
   catchArea?: string | null;
-  vesselName?: string | null;
+  weightKg?: number | null;
   bestBefore?: string | null;
-  /** Hållbarhet efter öppnad förpackning, i dagar. */
-  shelfLifeOpenDays?: number | null;
-  supplierLotNumber?: string | null;
-  /** Identifieringsmärke, exempelvis "SE 6742 EG". Skrivs som ovalt märke. */
-  identificationMark?: string | null;
+  supplier?: string | null;
 }
 
-const LABEL_W = 62;
-const LABEL_H = 29;
+const kg1 = (n: number) => Number(n).toLocaleString("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const svDate = (d: string) => new Date(d).toLocaleDateString("sv-SE");
 
-const nf = (v: number | null | undefined) =>
-  v === null || v === undefined
-    ? null
-    : Number(v).toLocaleString("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+export const lotUrl = (lotId: string) => `${window.location.origin}/lot/${lotId}`;
 
-async function qrDataUrl(value: string) {
-  return QRCode.toDataURL(value, { margin: 0, width: 200, errorCorrectionLevel: "M" });
-}
-
-export async function buildLotLabelDoc(labels: LotLabel[], copiesPerLabel = 1) {
-  const doc = new jsPDF({ unit: "mm", format: [LABEL_W, LABEL_H], orientation: "landscape" });
+export async function printLotLabels(labels: LotLabel[]) {
+  const doc = new jsPDF({ unit: "mm", format: [W, H], orientation: "landscape" });
   let first = true;
+  for (const l of labels) {
+    if (!first) doc.addPage([W, H], "landscape");
+    first = false;
+    const qr = await QRCode.toDataURL(lotUrl(l.lotId), { margin: 0, width: 300, errorCorrectionLevel: "M" });
+    doc.addImage(qr, "PNG", 2, 2, 22, 22);
 
-  for (const label of labels) {
-    const qr = await qrDataUrl(label.lotNumber);
-    for (let c = 0; c < Math.max(1, copiesPerLabel); c++) {
-      if (!first) doc.addPage([LABEL_W, LABEL_H], "landscape");
-      first = false;
+    const x = 26;
+    const tw = W - x - 2;
+    doc.setTextColor(0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    const sp = doc.splitTextToSize(l.species || "–", tw).slice(0, 2);
+    doc.text(sp, x, 5);
+    let y = 5 + sp.length * 3.6;
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(6.5);
+    if (l.latinName) { doc.text(doc.splitTextToSize(l.latinName, tw)[0], x, y); y += 3; }
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    if (l.catchArea) { doc.text(doc.splitTextToSize(`Fångst: ${l.catchArea}`, tw)[0], x, y); y += 3.2; }
+    if (l.bestBefore) { doc.text(`Bäst före: ${svDate(l.bestBefore)}`, x, y); y += 3.2; }
 
-      const qrSize = 21;
-      doc.addImage(qr, "PNG", LABEL_W - qrSize - 2, (LABEL_H - qrSize) / 2, qrSize, qrSize);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    if (l.weightKg != null) doc.text(`${kg1(l.weightKg)} kg`, x, 23);
 
-      const textWidth = LABEL_W - qrSize - 7;
-      doc.setTextColor(0);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text(doc.splitTextToSize(label.productName, textWidth)[0] ?? "", 3, 6);
-
-      doc.setFontSize(10);
-      doc.text(label.lotNumber, 3, 11.5);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(6.5);
-      const rows = [
-        nf(label.quantityKg) ? `${nf(label.quantityKg)} kg` : null,
-        label.catchArea,
-        label.vesselName,
-        label.bestBefore ? `Bäst före ${label.bestBefore}` : null,
-        label.shelfLifeOpenDays ? `Öppnad: ${label.shelfLifeOpenDays} dagar` : null,
-        label.supplierLotNumber ? `Lev.parti ${label.supplierLotNumber}` : null,
-      ].filter(Boolean) as string[];
-
-      const hasMark = !!label.identificationMark;
-      const markW = 15;
-      const rowWidth = hasMark ? textWidth - markW - 1 : textWidth;
-
-      let y = 15.5;
-      for (const row of rows.slice(0, hasMark ? 3 : 4)) {
-        doc.text(doc.splitTextToSize(row, rowWidth)[0] ?? "", 3, y);
-        y += 3.1;
-      }
-
-      if (hasMark) {
-        drawIdentificationMark(doc, 3 + rowWidth + 1, 15, markW, 9, {
-          markText: label.identificationMark,
-        });
-      }
-    }
+    doc.setFont("courier", "bold");
+    doc.setFontSize(9);
+    doc.text(l.lotNumber || "", 2, 29.5);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    if (l.supplier) doc.text(doc.splitTextToSize(`Leverantör: ${l.supplier}`, W - 4).slice(0, 2), 2, 33.5);
   }
-
-  return doc;
+  doc.autoPrint();
+  const url = doc.output("bloburl");
+  window.open(url as unknown as string, "_blank");
 }
 
-/** Öppnar etiketterna i ny flik — därifrån skrivs de ut på QL-800. */
-export async function openLotLabels(labels: LotLabel[], copiesPerLabel = 1) {
-  const doc = await buildLotLabelDoc(labels, copiesPerLabel);
-  window.open(doc.output("bloburl") as any, "_blank");
-}
-
-export async function downloadLotLabels(labels: LotLabel[], copiesPerLabel = 1) {
-  const doc = await buildLotLabelDoc(labels, copiesPerLabel);
-  doc.save(`partietiketter-${new Date().toISOString().slice(0, 10)}.pdf`);
+/** Hämtar partiets uppgifter och skriver ut en etikett. */
+export async function printLotLabelById(lotId: string, weightKg?: number | null) {
+  const { supabase } = await import("@/integrations/supabase/client");
+  const { data, error } = await supabase
+    .from("lots")
+    .select("id, lot_number, commercial_name, latin_name, catch_area, best_before, quantity_kg, suppliers(name), products(name)")
+    .eq("id", lotId)
+    .maybeSingle();
+  if (error || !data) throw new Error("Partiet hittades inte");
+  const l: any = data;
+  await printLotLabels([{
+    lotId: l.id,
+    lotNumber: l.lot_number,
+    species: l.commercial_name || l.products?.name || "",
+    latinName: l.latin_name,
+    catchArea: l.catch_area,
+    weightKg: weightKg ?? l.quantity_kg,
+    bestBefore: l.best_before,
+    supplier: l.suppliers?.name,
+  }]);
 }
