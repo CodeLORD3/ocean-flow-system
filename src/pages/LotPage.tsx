@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Printer, MoveRight, Shuffle, Trash2, ClipboardCheck } from "lucide-react";
-import { printLotLabelById } from "@/lib/lotLabelPdf";
+import { printLotLabelById } from "@/lib/lotQrLabelPdf";
 import { recordMovement, transferStock, lotUnitCost } from "@/lib/stockLedger";
 import { performTransformation, suggestTransformKind } from "@/lib/stockTransform";
 
