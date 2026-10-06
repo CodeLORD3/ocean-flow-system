@@ -57,6 +57,13 @@
       "when": 1791313494852,
       "tag": "0007_add_owner_role",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791313540476,
+      "tag": "0008_caballaflow",
+      "breakpoints": true
     }
   ]
 }
