@@ -6421,6 +6421,144 @@ export type Database = {
           },
         ]
       }
+      flow_agent_log: {
+        Row: {
+          agent: string
+          created_at: string
+          id: string
+          text: string
+        }
+        Insert: {
+          agent: string
+          created_at?: string
+          id?: string
+          text: string
+        }
+        Update: {
+          agent?: string
+          created_at?: string
+          id?: string
+          text?: string
+        }
+        Relationships: []
+      }
+      flow_messages: {
+        Row: {
+          author: string
+          author_name: string | null
+          body: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          author?: string
+          author_name?: string | null
+          body: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          author?: string
+          author_name?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      flow_prompts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string
+          id: string
+          prompt: string
+          ran_at: string | null
+          result: string | null
+          risk: string
+          status: string
+          target: string
+          title: string
+          why: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          prompt: string
+          ran_at?: string | null
+          result?: string | null
+          risk?: string
+          status?: string
+          target: string
+          title: string
+          why?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          prompt?: string
+          ran_at?: string | null
+          result?: string | null
+          risk?: string
+          status?: string
+          target?: string
+          title?: string
+          why?: string | null
+        }
+        Relationships: []
+      }
+      flow_tasks: {
+        Row: {
+          created_at: string
+          done_at: string | null
+          done_by: string | null
+          id: string
+          owner: string
+          phase: string
+          prompt: string | null
+          sort_order: number
+          status: string
+          steps: string | null
+          title: string
+          why: string | null
+        }
+        Insert: {
+          created_at?: string
+          done_at?: string | null
+          done_by?: string | null
+          id?: string
+          owner: string
+          phase?: string
+          prompt?: string | null
+          sort_order?: number
+          status?: string
+          steps?: string | null
+          title: string
+          why?: string | null
+        }
+        Update: {
+          created_at?: string
+          done_at?: string | null
+          done_by?: string | null
+          id?: string
+          owner?: string
+          phase?: string
+          prompt?: string | null
+          sort_order?: number
+          status?: string
+          steps?: string | null
+          title?: string
+          why?: string | null
+        }
+        Relationships: []
+      }
       fortnox_account_balances: {
         Row: {
           account: string
@@ -23467,6 +23605,30 @@ export type Database = {
         Args: { _from?: string; _to?: string }
         Returns: number
       }
+      flow_claim_prompt: {
+        Args: never
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string
+          id: string
+          prompt: string
+          ran_at: string | null
+          result: string | null
+          risk: string
+          status: string
+          target: string
+          title: string
+          why: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "flow_prompts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       fortnox_auto_match_customers: {
         Args: { p_entity: string }
         Returns: number
@@ -23604,6 +23766,7 @@ export type Database = {
       }
       inventering_paminnelse: { Args: never; Returns: number }
       is_auction_user: { Args: never; Returns: boolean }
+      is_flow_owner: { Args: never; Returns: boolean }
       is_investor: { Args: never; Returns: boolean }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
@@ -24295,6 +24458,7 @@ export type Database = {
         | "group_admin"
         | "platform_admin"
         | "multi_store_manager"
+        | "owner"
       ledger_obligation: "ja" | "nej" | "utred"
       location_type:
         | "inkopslager"
@@ -24455,6 +24619,7 @@ export const Constants = {
         "group_admin",
         "platform_admin",
         "multi_store_manager",
+        "owner",
       ],
       ledger_obligation: ["ja", "nej", "utred"],
       location_type: [

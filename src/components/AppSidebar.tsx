@@ -80,6 +80,7 @@ import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
 import { canOpenStaffPage, staffLevelOf } from "@/lib/staffModuleAccess";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useNyaTelefonMeddelanden } from "@/hooks/useNyaTelefonMeddelanden";
+import { useIsFlowOwner } from "@/hooks/useFlow";
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: BarChart3 },
@@ -147,6 +148,7 @@ const financeNav = [
   { title: "Datakvalitet", url: "/coverage", icon: Shield },
   { title: "Systemstatus", url: "/system-status", icon: Activity },
   { title: "VD-översikt", url: "/vd", icon: TrendingUp },
+  { title: "CaballaFlow", url: "/flow", icon: Activity },
   { title: "Kunder för utskick", url: "/kunder", icon: Globe },
   { title: "Attestera", url: "/attestera", icon: ShieldCheck },
   { title: "Tavlan", url: "/tavlan", icon: ListTodo },
@@ -210,6 +212,7 @@ export function AppSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "o
   const { data: nyaSamtal = 0 } = useNyaTelefonMeddelanden();
   const { staff } = useStaffAuth();
   const staffLevel = staffLevelOf(staff);
+  const { data: isFlowOwner = false } = useIsFlowOwner();
 
   // Varje sektion kan fällas ihop så att alla kategorier syns i korta fönster.
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
@@ -246,7 +249,7 @@ export function AppSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "o
 
   const renderSection = (section: NavSection) => {
     const visibleItems = section.items.filter(
-      (item) => !STAFF_MODULE_PATHS.includes(item.url) || canOpenStaffPage(staffLevel, item.url),
+      (item) => (item.url !== "/flow" || isFlowOwner) && (!STAFF_MODULE_PATHS.includes(item.url) || canOpenStaffPage(staffLevel, item.url)),
     );
     if (!visibleItems.length) return null;
     if (section.collapsible) {
