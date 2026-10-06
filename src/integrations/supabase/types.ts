@@ -20071,6 +20071,123 @@ export type Database = {
         }
         Relationships: []
       }
+      telefon_installningar: {
+        Row: {
+          id: boolean
+          sms_vid_koppling: boolean
+          uppdaterad: string
+          vd_sms_nummer: string | null
+        }
+        Insert: {
+          id?: boolean
+          sms_vid_koppling?: boolean
+          uppdaterad?: string
+          vd_sms_nummer?: string | null
+        }
+        Update: {
+          id?: boolean
+          sms_vid_koppling?: boolean
+          uppdaterad?: string
+          vd_sms_nummer?: string | null
+        }
+        Relationships: []
+      }
+      telefon_logg: {
+        Row: {
+          id: number
+          orsak: string | null
+          tid: string
+          utfall: string
+        }
+        Insert: {
+          id?: never
+          orsak?: string | null
+          tid?: string
+          utfall: string
+        }
+        Update: {
+          id?: never
+          orsak?: string | null
+          tid?: string
+          utfall?: string
+        }
+        Relationships: []
+      }
+      telefon_nycklar: {
+        Row: {
+          aktiv: boolean
+          id: number
+          nyckel_hash: string
+          senast_anvand: string | null
+          skapad: string
+        }
+        Insert: {
+          aktiv?: boolean
+          id?: never
+          nyckel_hash: string
+          senast_anvand?: string | null
+          skapad?: string
+        }
+        Update: {
+          aktiv?: boolean
+          id?: never
+          nyckel_hash?: string
+          senast_anvand?: string | null
+          skapad?: string
+        }
+        Relationships: []
+      }
+      telefonsamtal: {
+        Row: {
+          arende: string
+          atgard: string
+          basta_tid: string | null
+          bradskande: boolean
+          foretag: string | null
+          id: number
+          kategori: string
+          namn: string
+          skapad: string
+          sms_status: string | null
+          status: string
+          telefon: string | null
+          uppdaterad: string
+          vd_anteckning: string | null
+        }
+        Insert: {
+          arende: string
+          atgard: string
+          basta_tid?: string | null
+          bradskande?: boolean
+          foretag?: string | null
+          id?: never
+          kategori?: string
+          namn: string
+          skapad?: string
+          sms_status?: string | null
+          status?: string
+          telefon?: string | null
+          uppdaterad?: string
+          vd_anteckning?: string | null
+        }
+        Update: {
+          arende?: string
+          atgard?: string
+          basta_tid?: string | null
+          bradskande?: boolean
+          foretag?: string | null
+          id?: never
+          kategori?: string
+          namn?: string
+          skapad?: string
+          sms_status?: string | null
+          status?: string
+          telefon?: string | null
+          uppdaterad?: string
+          vd_anteckning?: string | null
+        }
+        Relationships: []
+      }
       tenants: {
         Row: {
           active: boolean
@@ -23443,6 +23560,7 @@ export type Database = {
         Returns: number
       }
       fx_to_sek: { Args: { _currency: string; _on: string }; Returns: number }
+      gallra_telefonsamtal: { Args: never; Returns: number }
       get_employee_pnr: { Args: { _employee_id: string }; Returns: string }
       get_lineage: {
         Args: { p_entity_id: string; p_entity_type: string }
@@ -24024,6 +24142,7 @@ export type Database = {
       }
       shopify_match_key: { Args: { v: string }; Returns: string }
       sick_karens_count_12m: { Args: { _employee_id: string }; Returns: number }
+      skapa_telefonnyckel: { Args: never; Returns: string }
       species_key: { Args: { v: string }; Returns: string }
       staff_has_store: { Args: { _store: string }; Returns: boolean }
       staff_shifts_rebuild_from_clock: {
@@ -24070,6 +24189,7 @@ export type Database = {
       sumup_name_key: { Args: { _name: string }; Returns: string }
       svensk_dag: { Args: { _grans?: string; _ts: string }; Returns: string }
       te_effective_leaf: { Args: { _id: string }; Returns: string }
+      telefon_status: { Args: never; Returns: Json }
       trace_lot_to_invoices: {
         Args: { _lot_id: string }
         Returns: {
