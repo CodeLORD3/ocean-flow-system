@@ -40,7 +40,7 @@ export default function Stores() {
   const [form, setForm] = useState({
     name: "", address: "", city: "", phone: "", manager: "", hours: "", sqm: 0,
     inventory_location_id: "",
-    region: "", week_last_open_dow: 7, weekly_report_enabled: true,
+    region: "", week_last_open_dow: 7, weekly_report_enabled: true, voice_report_enabled: false,
   });
 
 
@@ -58,6 +58,7 @@ export default function Stores() {
       region: store.region || "",
       week_last_open_dow: store.week_last_open_dow ?? 7,
       weekly_report_enabled: store.weekly_report_enabled ?? true,
+      voice_report_enabled: store.voice_report_enabled ?? false,
     });
 
   };
@@ -112,6 +113,7 @@ export default function Stores() {
         region: form.region || null,
         week_last_open_dow: form.week_last_open_dow,
         weekly_report_enabled: form.weekly_report_enabled,
+        voice_report_enabled: form.voice_report_enabled,
       } as any,
 
       {
@@ -340,6 +342,13 @@ export default function Stores() {
                 onCheckedChange={(checked) => setForm(f => ({ ...f, weekly_report_enabled: checked === true }))}
               />
               <span>Ingår i veckorapporter</span>
+            </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Checkbox
+                checked={form.voice_report_enabled}
+                onCheckedChange={(checked) => setForm(f => ({ ...f, voice_report_enabled: checked === true }))}
+              />
+              <span>Röstrapport (Telegram och mikrofon på räknesidan)</span>
             </label>
           </div>
 

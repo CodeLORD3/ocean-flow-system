@@ -139,6 +139,7 @@ const financeNav = [
   { title: "Ny butik", url: "/ny-butik", icon: Building2 },
   { title: "Försvunnet ur lagret", url: "/stock-disappearance", icon: Package },
   { title: "Negativa saldon", url: "/negativa-saldon", icon: Package },
+  { title: "Röstrapporter", url: "/rostrapporter", icon: Package },
   { title: "Kassa live", url: "/pos-live", icon: Radio },
   { title: "POS-fundament", url: "/pos-fundament", icon: Radio },
   { title: "POS-priser", url: "/pos-priser", icon: Radio },
