@@ -1,4 +1,5 @@
 import { useState } from "react";
+import KopplaTelegramButton from "@/components/telegram/KopplaTelegramButton";
 import { Plus, Pencil, Trash2, ShieldCheck, AlertTriangle, Link2 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
@@ -183,6 +184,7 @@ export function EmployeeDialog({ open, employee, onOpenChange }: Props) {
           <DialogDescription>
             Personalregistret är master. Personnummer lagras aldrig i klartext.
           </DialogDescription>
+          {employeeId && <div className="pt-1"><KopplaTelegramButton employeeId={employeeId} /></div>}
         </DialogHeader>
 
         <Tabs defaultValue="person">

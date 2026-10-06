@@ -21133,6 +21133,243 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_business_connections: {
+        Row: {
+          business_connection_id: string
+          can_reply: boolean | null
+          is_enabled: boolean
+          label: string | null
+          telegram_user_id: number | null
+          updated_at: string
+          user_chat_id: number | null
+        }
+        Insert: {
+          business_connection_id: string
+          can_reply?: boolean | null
+          is_enabled?: boolean
+          label?: string | null
+          telegram_user_id?: number | null
+          updated_at?: string
+          user_chat_id?: number | null
+        }
+        Update: {
+          business_connection_id?: string
+          can_reply?: boolean | null
+          is_enabled?: boolean
+          label?: string | null
+          telegram_user_id?: number | null
+          updated_at?: string
+          user_chat_id?: number | null
+        }
+        Relationships: []
+      }
+      telegram_link_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          expires_at: string
+          used_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          expires_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          expires_at?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_link_codes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_messages: {
+        Row: {
+          ai_generated: boolean
+          assigned_to: string | null
+          body: string | null
+          business_connection_id: string | null
+          category: string | null
+          chat_id: number
+          chat_type: string | null
+          conv_key: string | null
+          conversation_status: string
+          created_at: string
+          direction: string
+          employee_id: string | null
+          error: string | null
+          file_id: string | null
+          id: string
+          kind: string
+          legal_entity_id: string | null
+          sent_by: string | null
+          status: string
+          store_id: string | null
+          telegram_user_id: number | null
+          thread_id: number | null
+          update_id: number | null
+        }
+        Insert: {
+          ai_generated?: boolean
+          assigned_to?: string | null
+          body?: string | null
+          business_connection_id?: string | null
+          category?: string | null
+          chat_id: number
+          chat_type?: string | null
+          conv_key?: string | null
+          conversation_status?: string
+          created_at?: string
+          direction: string
+          employee_id?: string | null
+          error?: string | null
+          file_id?: string | null
+          id?: string
+          kind?: string
+          legal_entity_id?: string | null
+          sent_by?: string | null
+          status?: string
+          store_id?: string | null
+          telegram_user_id?: number | null
+          thread_id?: number | null
+          update_id?: number | null
+        }
+        Update: {
+          ai_generated?: boolean
+          assigned_to?: string | null
+          body?: string | null
+          business_connection_id?: string | null
+          category?: string | null
+          chat_id?: number
+          chat_type?: string | null
+          conv_key?: string | null
+          conversation_status?: string
+          created_at?: string
+          direction?: string
+          employee_id?: string | null
+          error?: string | null
+          file_id?: string | null
+          id?: string
+          kind?: string
+          legal_entity_id?: string | null
+          sent_by?: string | null
+          status?: string
+          store_id?: string | null
+          telegram_user_id?: number | null
+          thread_id?: number | null
+          update_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_messages_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_messages_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "telegram_messages_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_messages_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "v_negative_flags_review"
+            referencedColumns: ["store_id"]
+          },
+        ]
+      }
+      telegram_settings: {
+        Row: {
+          bot_username: string
+          id: boolean
+          sick_reply: string
+          staff_group_chat_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          bot_username?: string
+          id?: boolean
+          sick_reply?: string
+          staff_group_chat_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bot_username?: string
+          id?: boolean
+          sick_reply?: string
+          staff_group_chat_id?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      telegram_users: {
+        Row: {
+          active: boolean
+          consent_at: string | null
+          employee_id: string | null
+          first_name: string | null
+          id: string
+          linked_at: string
+          telegram_user_id: number
+          username: string | null
+        }
+        Insert: {
+          active?: boolean
+          consent_at?: string | null
+          employee_id?: string | null
+          first_name?: string | null
+          id?: string
+          linked_at?: string
+          telegram_user_id: number
+          username?: string | null
+        }
+        Update: {
+          active?: boolean
+          consent_at?: string | null
+          employee_id?: string | null
+          first_name?: string | null
+          id?: string
+          linked_at?: string
+          telegram_user_id?: number
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_users_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           active: boolean
@@ -24745,6 +24982,7 @@ export type Database = {
       is_staff: { Args: never; Returns: boolean }
       is_staff_manager: { Args: never; Returns: boolean }
       is_store_scoped: { Args: { _user_id: string }; Returns: boolean }
+      is_telegram_admin: { Args: never; Returns: boolean }
       last_name_key: { Args: { v: string }; Returns: string }
       latin_norm: { Args: { v: string }; Returns: string }
       ledger_zero_empty_costs: { Args: never; Returns: number }
@@ -25326,6 +25564,27 @@ export type Database = {
       svensk_dag: { Args: { _grans?: string; _ts: string }; Returns: string }
       te_effective_leaf: { Args: { _id: string }; Returns: string }
       telefon_status: { Args: never; Returns: Json }
+      telegram_assign: {
+        Args: { _conv_key: string; _user_id: string }
+        Returns: undefined
+      }
+      telegram_assignees: {
+        Args: never
+        Returns: {
+          full_name: string
+          label: string
+          user_id: string
+        }[]
+      }
+      telegram_create_link_code: {
+        Args: { _employee_id: string }
+        Returns: Json
+      }
+      telegram_purge_old: { Args: never; Returns: number }
+      telegram_set_conversation: {
+        Args: { _category?: string; _conv_key: string; _status?: string }
+        Returns: undefined
+      }
       trace_lot_to_invoices: {
         Args: { _lot_id: string }
         Returns: {
@@ -25433,6 +25692,7 @@ export type Database = {
         | "multi_store_manager"
         | "owner"
         | "contributor"
+        | "kommunikation"
       ledger_obligation: "ja" | "nej" | "utred"
       location_type:
         | "inkopslager"
@@ -25595,6 +25855,7 @@ export const Constants = {
         "multi_store_manager",
         "owner",
         "contributor",
+        "kommunikation",
       ],
       ledger_obligation: ["ja", "nej", "utred"],
       location_type: [

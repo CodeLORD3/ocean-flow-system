@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { fmtDateTime } from "@/hooks/useAiTeam";
 import { edgeErrorMessage } from "@/lib/edgeError";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TelegramInbox from "@/components/telegram/TelegramInbox";
+import { useSite } from "@/contexts/SiteContext";
 
 const db = supabase as unknown as { from: (t: string) => any };
 const CATS: Record<string, string> = { makrill_erp: "Makrill ERP", klagomal: "Klagomål", kvalitet: "Kvalitet", arbetsmiljo: "Arbetsmiljö", ide: "Idé" };
@@ -16,7 +19,7 @@ const NONE = "__ingen";
 type Feedback = { id: string; store_id: string | null; sender_phone: string; message: string | null; received_at: string; category: string | null; handled: boolean; recipient: { name: string } | null };
 type Recipient = { id: string; store_id: string | null; name: string; phone_e164: string; channel: string; active: boolean; consent_at: string | null };
 
-export default function Meddelanden() {
+function WhatsAppFeedback() {
   const qc = useQueryClient();
   const stores = useQuery({ queryKey: ["stores-names"], queryFn: async () => (await db.from("stores").select("id, name").order("name")).data as { id: string; name: string }[] });
   const storeName = (id: string | null) => stores.data?.find((s) => s.id === id)?.name ?? "–";
@@ -137,6 +140,24 @@ export default function Meddelanden() {
           </table>
         </div>
       </section>
+    </div>
+  );
+}
+
+export default function Meddelanden() {
+  const { site } = useSite();
+  const admin = site === "wholesale";
+  return (
+    <div className="space-y-4 p-4">
+      <h1 className="text-xl font-semibold">Personalinkorg</h1>
+      <Tabs defaultValue="telegram">
+        <TabsList>
+          <TabsTrigger value="telegram">Telegram</TabsTrigger>
+          {admin && <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>}
+        </TabsList>
+        <TabsContent value="telegram"><TelegramInbox /></TabsContent>
+        {admin && <TabsContent value="whatsapp"><WhatsAppFeedback /></TabsContent>}
+      </Tabs>
     </div>
   );
 }
