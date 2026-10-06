@@ -88,6 +88,7 @@ import Samtal from "@/pages/Samtal";
 import Meddelanden from "@/pages/Meddelanden";
 import Systemkontroll from "@/pages/Systemkontroll";
 import VdOversikt from "@/pages/VdOversikt";
+import Flow from "@/pages/Flow";
 import Kunder from "@/pages/Kunder";
 import Resultat from "@/pages/Resultat";
 import Likviditet from "@/pages/Likviditet";
@@ -223,6 +224,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/meddelanden": { component: <Meddelanden /> },
   "/systemkontroll": { component: <Systemkontroll /> },
   "/vd": { component: <VdOversikt /> },
+  "/flow": { component: <Flow /> },
   "/kunder": { component: <Kunder /> },
   "/resultat": { component: <Resultat /> },
   "/likviditet": { component: <Likviditet /> },
