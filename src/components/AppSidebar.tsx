@@ -79,6 +79,7 @@ import { canAccessRoute } from "@/lib/pageAccess";
 import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
 import { canOpenStaffPage, staffLevelOf } from "@/lib/staffModuleAccess";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import { useNyaTelefonMeddelanden } from "@/hooks/useNyaTelefonMeddelanden";
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: BarChart3 },
@@ -206,7 +207,7 @@ export function AppSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "o
   const chatUnread = useChatUnread();
   const incomingTransfers = useIncomingTransferCount(null);
   const { data: attestCount = 0 } = useAttestCount();
-  const { data: nyaSamtal = 0 } = useNyaTelefonMeddelanden(staffLevelOf(useStaffAuth().staff) === "admin");
+  const { data: nyaSamtal = 0 } = useNyaTelefonMeddelanden();
   const { staff } = useStaffAuth();
   const staffLevel = staffLevelOf(staff);
 
