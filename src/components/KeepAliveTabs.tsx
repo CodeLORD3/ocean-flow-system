@@ -41,6 +41,7 @@ import LiveStaff from "@/pages/LiveStaff";
 import Personalkollen from "@/pages/Integrations/Personalkollen";
 import IntegrationLog from "@/pages/IntegrationLog";
 import NegativeFlags from "@/pages/NegativeFlags";
+import Rostrapporter from "@/pages/Rostrapporter";
 import LotPage from "@/pages/LotPage";
 import ClockStations from "@/pages/ClockStations";
 import TimeEntriesPage from "@/pages/TimeEntriesPage";
@@ -196,6 +197,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/fortnox": { component: <FortnoxSettings /> },
   "/integration-log": { component: <IntegrationLog /> },
   "/negativa-saldon": { component: <NegativeFlags /> },
+  "/rostrapporter": { component: <Rostrapporter /> },
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
   "/trade-offers": { component: <TradeOffers /> },
   "/trade-history": { component: <TradeHistory /> },

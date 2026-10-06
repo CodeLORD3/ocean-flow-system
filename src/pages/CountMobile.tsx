@@ -62,6 +62,7 @@ import { useStoreCountry } from "@/hooks/useStoreCountry";
 import { useProductNotes, useSaveProductNote } from "@/hooks/useProductNotes";
 import { jarsText, jarsToKg, kgToJars, packLabel, packMode } from "@/lib/countPack";
 import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
+import { VoiceRecordButton } from "@/components/voice/voiceReport";
 
 type Step = "plats" | "grupp" | "rakna" | "extra" | "klarplats" | "sammanfattning" | "klar";
 
@@ -626,6 +627,7 @@ export default function CountMobile() {
         </span>
       )}
       <div className="flex items-center gap-1">
+        {storeId && <VoiceRecordButton storeId={storeId} />}
         {step === "rakna" && lastKey && (
           <button
             type="button"

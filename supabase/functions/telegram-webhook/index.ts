@@ -48,7 +48,26 @@ Deno.serve(async (req) => {
     return ok();
   }
   if (u.callback_query) {
-    EdgeRuntime.waitUntil(tg("answerCallbackQuery", { callback_query_id: u.callback_query.id }));
+    const cq = u.callback_query;
+    const vr = typeof cq.data === "string" ? cq.data.match(/^vr:([se]):([0-9a-f-]{36})$/) : null;
+    if (!vr) {
+      EdgeRuntime.waitUntil(tg("answerCallbackQuery", { callback_query_id: cq.id }));
+      return ok();
+    }
+    // Röstrapport: Spara eller Ändra. Bara den som skickade rapporten får trycka.
+    EdgeRuntime.waitUntil((async () => {
+      const { data: rep } = await db.from("voice_reports").select("id, telegram_user_id, chat_id, status").eq("id", vr[2]).maybeSingle();
+      if (!rep || Number(rep.telegram_user_id) !== cq.from?.id) { await tg("answerCallbackQuery", { callback_query_id: cq.id, text: "Inte din rapport" }); return; }
+      if (cq.message?.message_id) await tg("editMessageReplyMarkup", { chat_id: cq.message.chat.id, message_id: cq.message.message_id, reply_markup: { inline_keyboard: [] } });
+      let text: string;
+      if (vr[1] === "e") text = "Okej, inget sparades. Spela in ett nytt röstmeddelande med rättelsen.";
+      else {
+        const { data, error } = await db.rpc("voice_report_save", { _id: rep.id });
+        text = error ? `Kunde inte spara: ${error.message}` : (data as any)?.already ? "Den här rapporten är redan sparad." : `Sparat i lagret (${(data as any)?.count ?? 0} rader). Tack!`;
+      }
+      await tg("answerCallbackQuery", { callback_query_id: cq.id });
+      await reply(Number(rep.chat_id), text, {});
+    })());
     return ok();
   }
 

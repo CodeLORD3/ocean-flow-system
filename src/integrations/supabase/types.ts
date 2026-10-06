@@ -19678,6 +19678,7 @@ export type Database = {
           sqm: number | null
           store_code: string | null
           unit_type: string
+          voice_report_enabled: boolean
           weather_timezone: string | null
           week_last_open_dow: number
           weekly_report_enabled: boolean
@@ -19718,6 +19719,7 @@ export type Database = {
           sqm?: number | null
           store_code?: string | null
           unit_type?: string
+          voice_report_enabled?: boolean
           weather_timezone?: string | null
           week_last_open_dow?: number
           weekly_report_enabled?: boolean
@@ -19758,6 +19760,7 @@ export type Database = {
           sqm?: number | null
           store_code?: string | null
           unit_type?: string
+          voice_report_enabled?: boolean
           weather_timezone?: string | null
           week_last_open_dow?: number
           weekly_report_enabled?: boolean
@@ -22593,6 +22596,118 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      voice_reports: {
+        Row: {
+          audio_path: string | null
+          chat_id: number | null
+          created_at: string
+          employee_id: string | null
+          error: string | null
+          id: string
+          lines: Json
+          location_id: string | null
+          movement_count: number | null
+          questions: Json
+          saved_at: string | null
+          saved_by: string | null
+          source: string
+          status: string
+          store_id: string | null
+          telegram_message_id: string | null
+          telegram_user_id: number | null
+          transcript: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          audio_path?: string | null
+          chat_id?: number | null
+          created_at?: string
+          employee_id?: string | null
+          error?: string | null
+          id?: string
+          lines?: Json
+          location_id?: string | null
+          movement_count?: number | null
+          questions?: Json
+          saved_at?: string | null
+          saved_by?: string | null
+          source: string
+          status?: string
+          store_id?: string | null
+          telegram_message_id?: string | null
+          telegram_user_id?: number | null
+          transcript?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          audio_path?: string | null
+          chat_id?: number | null
+          created_at?: string
+          employee_id?: string | null
+          error?: string | null
+          id?: string
+          lines?: Json
+          location_id?: string | null
+          movement_count?: number | null
+          questions?: Json
+          saved_at?: string | null
+          saved_by?: string | null
+          source?: string
+          status?: string
+          store_id?: string | null
+          telegram_message_id?: string | null
+          telegram_user_id?: number | null
+          transcript?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_reports_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "voice_reports_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "voice_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "v_negative_flags_review"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "voice_reports_telegram_message_id_fkey"
+            columns: ["telegram_message_id"]
+            isOneToOne: true
+            referencedRelation: "telegram_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wage_codes: {
         Row: {
@@ -25679,6 +25794,7 @@ export type Database = {
       }
       vacation_year_of: { Args: { _d: string }; Returns: number }
       vacation_year_rollover: { Args: { _from_year?: number }; Returns: Json }
+      voice_report_save: { Args: { _id: string }; Returns: Json }
       weekly_open_days_count: {
         Args: { _from: string; _to: string }
         Returns: {
