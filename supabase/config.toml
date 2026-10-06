@@ -121,3 +121,6 @@ verify_jwt = false
 
 [functions.flow-runner]
 verify_jwt = false
+
+[functions.integration-intake]
+verify_jwt = false
