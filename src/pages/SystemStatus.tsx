@@ -14,6 +14,7 @@ import SupplierDocumentsCard from "@/components/admin/SupplierDocumentsCard";
 import { PosHealthCard } from "@/components/poslive/PosHealthCard";
 import { SumupHealthCard } from "@/components/poslive/SumupHealthCard";
 import { PosLineReview } from "@/components/poslive/PosLineReview";
+import TelefonistStatusCard from "@/components/admin/TelefonistStatusCard";
 
 interface ReconRun {
   id: string;
@@ -166,6 +167,7 @@ export default function SystemStatus() {
       </div>
 
       <div className="flex-1 space-y-4 overflow-auto p-4">
+        <TelefonistStatusCard />
         <PosHealthCard />
         <SumupHealthCard />
 

@@ -36,6 +36,20 @@
       "when": 1791281046910,
       "tag": "0004_skip_sales_reports_for_nonsales_units",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791294950362,
+      "tag": "0005_telefonist_samtalslogg",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791295323547,
+      "tag": "0006_telefonist_revoke_anon",
+      "breakpoints": true
     }
   ]
 }

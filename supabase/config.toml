@@ -115,3 +115,6 @@ verify_jwt = false
 
 [functions.send_whatsapp]
 verify_jwt = false
+
+[functions.telefon-mcp]
+verify_jwt = false

@@ -79,6 +79,7 @@ import { canAccessRoute } from "@/lib/pageAccess";
 import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
 import { canOpenStaffPage, staffLevelOf } from "@/lib/staffModuleAccess";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import { useNyaTelefonMeddelanden } from "@/hooks/useNyaTelefonMeddelanden";
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: BarChart3 },
@@ -149,6 +150,7 @@ const financeNav = [
   { title: "Kunder för utskick", url: "/kunder", icon: Globe },
   { title: "Attestera", url: "/attestera", icon: ShieldCheck },
   { title: "Tavlan", url: "/tavlan", icon: ListTodo },
+  { title: "Samtal", url: "/samtal", icon: ListTodo },
   { title: "Meddelanden", url: "/meddelanden", icon: ListTodo },
   { title: "Systemkontroll", url: "/systemkontroll", icon: Activity },
   { title: "Lagerblueprint", url: "/lager-blueprint", icon: FileText },
@@ -205,6 +207,7 @@ export function AppSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "o
   const chatUnread = useChatUnread();
   const incomingTransfers = useIncomingTransferCount(null);
   const { data: attestCount = 0 } = useAttestCount();
+  const { data: nyaSamtal = 0 } = useNyaTelefonMeddelanden();
   const { staff } = useStaffAuth();
   const staffLevel = staffLevelOf(staff);
 
@@ -267,7 +270,7 @@ export function AppSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "o
                         <NavLink to={item.url} end onClick={closeMobileSidebar}>
                           <item.icon className="h-4 w-4" />
                           {!collapsed && <span>{item.title}</span>}
-                          {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" || item.url === "/inventory" ? incomingTransfers : 0) + (item.url === "/attestera" ? attestCount : 0)} />}
+                          {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" || item.url === "/inventory" ? incomingTransfers : 0) + (item.url === "/attestera" ? attestCount : 0) + (item.url === "/samtal" ? nyaSamtal : 0)} />}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -291,7 +294,7 @@ export function AppSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "o
                   <NavLink to={item.url} end onClick={closeMobileSidebar}>
                     <item.icon className="h-4 w-4" />
                     {!collapsed && <span>{item.title}</span>}
-                    {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" || item.url === "/inventory" ? incomingTransfers : 0) + (item.url === "/attestera" ? attestCount : 0)} />}
+                    {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" || item.url === "/inventory" ? incomingTransfers : 0) + (item.url === "/attestera" ? attestCount : 0) + (item.url === "/samtal" ? nyaSamtal : 0)} />}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

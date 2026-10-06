@@ -7,7 +7,7 @@
  */
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-export type SmsType = "otp" | "bekraftelse" | "paminnelse" | "paminnelse_tidig";
+export type SmsType = "otp" | "bekraftelse" | "paminnelse" | "paminnelse_tidig" | "telefonist";
 
 /** Alfanumerisk avsändare hos 46elks — max 11 tecken. */
 function sender(): string {
@@ -36,7 +36,7 @@ export function normalizePhoneSe(raw: unknown): string | null {
 
 export async function sendSms(
   db: SupabaseClient,
-  args: { phone: string; type: SmsType; text: string; orderId?: string | null },
+  args: { phone: string; type: SmsType; text: string; orderId?: string | null; forceTestMode?: boolean },
 ): Promise<{ ok: boolean; testMode: boolean; error?: string }> {
   const base = {
     phone_normalized: args.phone,
@@ -44,7 +44,7 @@ export async function sendSms(
     customer_order_id: args.orderId ?? null,
   };
 
-  if (smsTestMode()) {
+  if (args.forceTestMode || smsTestMode()) {
     console.log(`[SMS TESTLÄGE] ${args.type} → ${args.phone}: ${args.text}`);
     await db.from("sms_log").insert({ ...base, status: "testlage" });
     return { ok: true, testMode: true };
