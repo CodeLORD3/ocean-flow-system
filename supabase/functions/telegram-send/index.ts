@@ -163,5 +163,21 @@ Deno.serve(async (req) => {
   if (body.preview) return json({ recipients: dests.length });
   if (!text || text.length > 4000) return json({ error: "Text saknas eller är för lång (max 4000 tecken)" }, 400);
   if (!hasBotToken()) return json({ error: "TELEGRAM_BOT_TOKEN saknas i Cloud › Secrets – inget skickades" }, 503);
+  // AI-förslag från Personalinkorgen: skickas av den som tryckte och utfallet sparas.
+  if (body.ai_draft_id != null) {
+    if (t.type !== "conversation") return json({ error: "AI-förslag kan bara skickas i sin konversation" }, 400);
+    const { data: d } = await db.from("ai_utkast").select("id, kanal, ai_generated, conv_key, innehall, utfall").eq("id", Number(body.ai_draft_id)).maybeSingle();
+    if (!d || d.kanal !== "telegram" || !d.ai_generated || d.conv_key !== (t as any).id) return json({ error: "Okänt AI-förslag" }, 400);
+    if (d.utfall) return json({ error: "Förslaget är redan hanterat" }, 409);
+    const res = await sendAll(dests, text, uid, true);
+    if (res.sent > 0 && res.failed === 0) {
+      const same = (d.innehall ?? "").trim() === text;
+      await db.from("ai_utkast").update({
+        status: "skickat", skickad: new Date().toISOString(), utfall: same ? "skickat_oforandrat" : "andrat",
+        utfall_av: uid, utfall_tid: new Date().toISOString(), slutlig_text: same ? null : text,
+      }).eq("id", d.id);
+    }
+    return json(res);
+  }
   return json(await sendAll(dests, text, uid, false));
 });

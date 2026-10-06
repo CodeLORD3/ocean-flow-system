@@ -99,7 +99,6 @@ Deno.serve(async (req) => {
       skapad_av: "telegram-ai-forslag", typ: "telegram_svar", titel: `AI-förslag till ${name}`.slice(0, 200),
       mottagare: `konversation:${m.conv_key}`, kanal: "telegram", innehall: f.svar, status: "utkast",
       ai_generated: true, telegram_message_id: m.id, conv_key: m.conv_key, foreslagen_kategori: f.kategori,
-      segment: m.legal_entity_id,
     }).select("id").single();
     if (error) {
       if (error.code === "23505") { await logCall(start, "dubblett", null, m.id); return json({ skipped: "dubblett" }); }

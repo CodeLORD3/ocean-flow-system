@@ -130,3 +130,6 @@ verify_jwt = false
 
 [functions.telegram-send]
 verify_jwt = false
+
+[functions.telegram-ai-suggest]
+verify_jwt = false
