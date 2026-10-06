@@ -168,3 +168,64 @@ export const listaTelefonsamtal = makeTool({
     return q;
   },
 });
+
+export const listaLeverantorsfakturor = makeTool({
+  name: "lista_leverantorsfakturor", title: "Lista leverantörsfakturor",
+  description: "Listar leverantörsfakturor från Fortnox med bolag, leverantör, fakturanummer, datum, belopp, restbelopp, valuta och betald/makulerad. Saknar butikskoppling. Datum filtreras på fakturadatum. Kan filtreras på legal_entity_code." + note,
+  table: "fortnox_supplier_invoices", key: "leverantorsfakturor", dateCol: "invoice_date", orderCol: "invoice_date", hasStore: false,
+  columns: "legal_entity_code, supplier_name, supplier_number, invoice_number, given_number, invoice_date, due_date, total, balance, currency, paid, cancelled",
+  extra: { legal_entity_code: z.string().trim().min(1).optional().describe("Bolagskod, t.ex. fsab-se eller de-no1.") },
+  applyExtra: (q, a) => (a.legal_entity_code ? q.eq("legal_entity_code", a.legal_entity_code) : q),
+});
+
+export const listaInleveranser = defineTool({
+  name: "lista_inleveranser", title: "Lista inleveranser",
+  description: "Listar inleveransrader från inköpsdokument med leverantör, dokument, leveransdatum, ankomst, vara, mängd, enhet, radbelopp och butik. Datum filtreras på leveransdatum, annars dokumentdatum. Filter: from_date, to_date, limit. Nyast först.",
+  inputSchema: { from_date: common.from_date, to_date: common.to_date, limit: common.limit },
+  annotations: read,
+  handler: async ({ from_date, to_date, limit }, ctx) => {
+    if (!(ctx as Ctx).isAuthenticated()) return deny;
+    const db = supabaseForUser(ctx);
+    let q: Q = db.from("purchase_report_lines").select(
+      "supplier_name, product_name, quantity, unit, line_total, store_id, created_at, purchase_reports!inner(supplier_name_raw, document_number, document_type, delivery_date, document_date, arrived_at)",
+    ).order("created_at", { ascending: false }).limit(limit ?? 100);
+    if (from_date || to_date) {
+      const r = (c: string) => [from_date && `${c}.gte.${from_date}`, to_date && `${c}.lte.${to_date}`].filter(Boolean).join(",");
+      q = q.or(`and(${r("delivery_date")}),and(delivery_date.is.null,${r("document_date")})`, { referencedTable: "purchase_reports" });
+    }
+    const { data, error } = await q;
+    if (error) return fail(error.message);
+    const rows = (data ?? []).map((l: Q) => ({
+      leverantor: l.supplier_name ?? l.purchase_reports?.supplier_name_raw ?? null,
+      document_number: l.purchase_reports?.document_number ?? null,
+      document_type: l.purchase_reports?.document_type ?? null,
+      delivery_date: l.purchase_reports?.delivery_date ?? l.purchase_reports?.document_date ?? null,
+      arrived_at: l.purchase_reports?.arrived_at ?? null,
+      product_name: l.product_name, quantity: l.quantity, unit: l.unit, line_total: l.line_total, store_id: l.store_id,
+    }));
+    return ok("inleveranser", rows);
+  },
+});
+
+export const listaNegativtLager = defineTool({
+  name: "lista_negativt_lager", title: "Lista negativt lager",
+  description: "Listar ej kvitterade flaggor för negativt lager med vara, plats, resulterande saldo, rörelsens mängd och typ. Datum filtreras på skapad. Filter: from_date, to_date, limit. Nyast först.",
+  inputSchema: { from_date: common.from_date, to_date: common.to_date, limit: common.limit },
+  annotations: read,
+  handler: async ({ from_date, to_date, limit }, ctx) => {
+    if (!(ctx as Ctx).isAuthenticated()) return deny;
+    const db = supabaseForUser(ctx);
+    let q: Q = db.from("stock_negative_flags")
+      .select("resulting_qty, movement_qty, movement_type, created_at, products(name), storage_locations(name)")
+      .is("acknowledged_at", null).order("created_at", { ascending: false }).limit(limit ?? 100);
+    if (from_date) q = q.gte("created_at", from_date);
+    if (to_date) q = q.lte("created_at", `${to_date}T23:59:59.999`);
+    const { data, error } = await q;
+    if (error) return fail(error.message);
+    const rows = (data ?? []).map((f: Q) => ({
+      vara: f.products?.name ?? null, plats: f.storage_locations?.name ?? null,
+      resulting_qty: f.resulting_qty, movement_qty: f.movement_qty, movement_type: f.movement_type, created_at: f.created_at,
+    }));
+    return ok("negativt_lager", rows);
+  },
+});

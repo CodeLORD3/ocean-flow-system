@@ -924,6 +924,120 @@
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
+      },
+      {
+        "name": "lista_leverantorsfakturor",
+        "title": "Lista leverantörsfakturor",
+        "description": "Listar leverantörsfakturor från Fortnox med bolag, leverantör, fakturanummer, datum, belopp, restbelopp, valuta och betald/makulerad. Saknar butikskoppling. Datum filtreras på fakturadatum. Kan filtreras på legal_entity_code. Filter: from_date, to_date, store_id eller store_code, limit. Nyast först.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Från och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "to_date": {
+              "$ref": "#/properties/from_date",
+              "description": "Till och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "store_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Butikens id."
+            },
+            "store_code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Butikskod, alternativ till store_id."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Antal rader, standard 100."
+            },
+            "legal_entity_code": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Bolagskod, t.ex. fsab-se eller de-no1."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lista_inleveranser",
+        "title": "Lista inleveranser",
+        "description": "Listar inleveransrader från inköpsdokument med leverantör, dokument, leveransdatum, ankomst, vara, mängd, enhet, radbelopp och butik. Datum filtreras på leveransdatum, annars dokumentdatum. Filter: from_date, to_date, limit. Nyast först.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Från och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "to_date": {
+              "$ref": "#/properties/from_date",
+              "description": "Till och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Antal rader, standard 100."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lista_negativt_lager",
+        "title": "Lista negativt lager",
+        "description": "Listar ej kvitterade flaggor för negativt lager med vara, plats, resulterande saldo, rörelsens mängd och typ. Datum filtreras på skapad. Filter: from_date, to_date, limit. Nyast först.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Från och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "to_date": {
+              "$ref": "#/properties/from_date",
+              "description": "Till och med datum, ÅÅÅÅ-MM-DD."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "Antal rader, standard 100."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
       }
     ]
   }
