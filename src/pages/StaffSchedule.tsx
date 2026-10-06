@@ -1,3 +1,4 @@
+import { unitHasSales } from "@/lib/unitTypes";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarRange, ChevronLeft, ChevronRight, Plus, Table2, CalendarDays, Upload, Copy, FilePlus2, AlertTriangle } from "lucide-react";
