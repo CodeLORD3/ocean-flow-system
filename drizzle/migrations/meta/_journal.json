@@ -99,6 +99,13 @@
       "when": 1791317292324,
       "tag": "0013_negative_flags_review",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791318355293,
+      "tag": "0014_add_role_kommunikation",
+      "breakpoints": true
     }
   ]
 }

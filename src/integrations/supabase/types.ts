@@ -25433,6 +25433,7 @@ export type Database = {
         | "multi_store_manager"
         | "owner"
         | "contributor"
+        | "kommunikation"
       ledger_obligation: "ja" | "nej" | "utred"
       location_type:
         | "inkopslager"
@@ -25595,6 +25596,7 @@ export const Constants = {
         "multi_store_manager",
         "owner",
         "contributor",
+        "kommunikation",
       ],
       ledger_obligation: ["ja", "nej", "utred"],
       location_type: [
