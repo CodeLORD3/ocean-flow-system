@@ -637,7 +637,10 @@ export type Database = {
       }
       ai_utkast: {
         Row: {
+          ai_generated: boolean
           bilaga_url: string | null
+          conv_key: string | null
+          foreslagen_kategori: string | null
           id: number
           innehall: string | null
           kanal: string | null
@@ -646,15 +649,23 @@ export type Database = {
           skapad: string | null
           skapad_av: string | null
           skickad: string | null
+          slutlig_text: string | null
           status: string | null
+          telegram_message_id: string | null
           titel: string
           typ: string | null
           uppdaterad: string | null
           uppdaterad_av: string | null
+          utfall: string | null
+          utfall_av: string | null
+          utfall_tid: string | null
           vd_kommentar: string | null
         }
         Insert: {
+          ai_generated?: boolean
           bilaga_url?: string | null
+          conv_key?: string | null
+          foreslagen_kategori?: string | null
           id?: never
           innehall?: string | null
           kanal?: string | null
@@ -663,15 +674,23 @@ export type Database = {
           skapad?: string | null
           skapad_av?: string | null
           skickad?: string | null
+          slutlig_text?: string | null
           status?: string | null
+          telegram_message_id?: string | null
           titel: string
           typ?: string | null
           uppdaterad?: string | null
           uppdaterad_av?: string | null
+          utfall?: string | null
+          utfall_av?: string | null
+          utfall_tid?: string | null
           vd_kommentar?: string | null
         }
         Update: {
+          ai_generated?: boolean
           bilaga_url?: string | null
+          conv_key?: string | null
+          foreslagen_kategori?: string | null
           id?: never
           innehall?: string | null
           kanal?: string | null
@@ -680,11 +699,16 @@ export type Database = {
           skapad?: string | null
           skapad_av?: string | null
           skickad?: string | null
+          slutlig_text?: string | null
           status?: string | null
+          telegram_message_id?: string | null
           titel?: string
           typ?: string | null
           uppdaterad?: string | null
           uppdaterad_av?: string | null
+          utfall?: string | null
+          utfall_av?: string | null
+          utfall_tid?: string | null
           vd_kommentar?: string | null
         }
         Relationships: []
@@ -25564,6 +25588,7 @@ export type Database = {
       svensk_dag: { Args: { _grans?: string; _ts: string }; Returns: string }
       te_effective_leaf: { Args: { _id: string }; Returns: string }
       telefon_status: { Args: never; Returns: Json }
+      telegram_ai_discard: { Args: { _id: number }; Returns: undefined }
       telegram_assign: {
         Args: { _conv_key: string; _user_id: string }
         Returns: undefined

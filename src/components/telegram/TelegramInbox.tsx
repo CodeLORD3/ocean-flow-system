@@ -67,6 +67,7 @@ export default function TelegramInbox() {
   const [bcId, setBcId] = useState("");
   const [bcText, setBcText] = useState("");
   const [bcCount, setBcCount] = useState<number | null>(null);
+  const [draftId, setDraftId] = useState<number | null>(null);
 
   const msgs = useQuery({
     queryKey: ["telegram_messages"],
@@ -77,6 +78,23 @@ export default function TelegramInbox() {
     },
     refetchInterval: 30000,
   });
+  const drafts = useQuery({
+    queryKey: ["telegram_ai_drafts"],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 30 * 864e5).toISOString();
+      const { data, error } = await db.from("ai_utkast").select("id, skapad, conv_key, innehall, foreslagen_kategori, utfall, telegram_message_id")
+        .eq("kanal", "telegram").eq("ai_generated", true).gte("skapad", since).order("skapad", { ascending: false }).limit(2000);
+      if (error) throw error;
+      return (data ?? []) as { id: number; skapad: string; conv_key: string; innehall: string; foreslagen_kategori: string | null; utfall: string | null; telegram_message_id: string }[];
+    },
+    refetchInterval: 30000,
+  });
+  const aiStats = useMemo(() => {
+    const d = drafts.data ?? [];
+    const handled = d.filter((x) => x.utfall).length;
+    const same = d.filter((x) => x.utfall === "skickat_oforandrat").length;
+    return { total: d.length, handled, same, pct: handled ? Math.round((same / handled) * 100) : null };
+  }, [drafts.data]);
   const lookups = useQuery({
     queryKey: ["telegram_lookups"],
     queryFn: async () => {
@@ -121,7 +139,15 @@ export default function TelegramInbox() {
   }, [msgs.data, L, company, store, cat, status]);
 
   const cur = convs.find((c) => c.key === open) ?? null;
-  const refresh = () => qc.invalidateQueries({ queryKey: ["telegram_messages"] });
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["telegram_messages"] }); qc.invalidateQueries({ queryKey: ["telegram_ai_drafts"] }); };
+  const lastIn = cur?.rows.find((r) => r.direction === "in") ?? null;
+  const openDraft = cur && lastIn ? (drafts.data ?? []).find((d) => d.conv_key === cur.key && d.telegram_message_id === lastIn.id && !d.utfall) ?? null : null;
+  const discard = async (id: number) => {
+    const { error } = await db.rpc("telegram_ai_discard", { _id: id });
+    if (error) { toast.error(error.message); return; }
+    if (draftId === id) { setDraftId(null); setText(""); }
+    refresh();
+  };
 
   const setConv = async (patch: { _status?: string; _category?: string }) => {
     if (!cur) return;
@@ -136,11 +162,20 @@ export default function TelegramInbox() {
   const send = async () => {
     if (!cur || !text.trim()) return;
     setBusy(true);
-    const { data, error } = await supabase.functions.invoke("telegram-send", { body: { target: { type: "conversation", id: cur.key }, text } });
+    const { data, error } = await supabase.functions.invoke("telegram-send", { body: { target: { type: "conversation", id: cur.key }, text, ...(draftId ? { ai_draft_id: draftId } : {}) } });
     setBusy(false);
     if (error) { toast.error(await edgeErrorMessage(error)); return; }
     if ((data as any)?.failed) toast.error("Meddelandet kunde inte skickas"); else toast.success("Skickat");
-    setText(""); refresh();
+    setText(""); setDraftId(null); refresh();
+  };
+  const sendDraft = async (d: { id: number; innehall: string }) => {
+    if (!cur) return;
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("telegram-send", { body: { target: { type: "conversation", id: cur.key }, text: d.innehall.trim(), ai_draft_id: d.id } });
+    setBusy(false);
+    if (error) { toast.error(await edgeErrorMessage(error)); return; }
+    if ((data as any)?.failed) toast.error("Meddelandet kunde inte skickas"); else toast.success("AI-förslaget skickat");
+    refresh();
   };
   const bcTarget = () => (bcType === "all" ? { type: "all" } : bcType === "group" ? { type: "group", thread_id: bcId ? Number(bcId) : null } : { type: bcType, id: bcId });
   const preview = async () => {
@@ -175,7 +210,7 @@ export default function TelegramInbox() {
     const rows = [...cur.rows].reverse();
     return (
       <div className="space-y-3">
-        <Button variant="ghost" size="sm" onClick={() => setOpen(null)}>← Inkorgen</Button>
+        <Button variant="ghost" size="sm" onClick={() => { setOpen(null); setDraftId(null); setText(""); }}>← Inkorgen</Button>
         <div className="space-y-1">
           <h2 className="text-lg font-semibold break-words">{cur.name}</h2>
           <p className="text-sm text-muted-foreground">{storeName(cur.store_id)} · {companyName(cur.legal_entity_id)}</p>
@@ -196,7 +231,7 @@ export default function TelegramInbox() {
             <div key={r.id} className={`rounded p-2 ${r.direction === "ut" ? "ml-6 bg-muted" : "mr-6 border border-border"}`}>
               <div className="flex flex-wrap gap-x-2 text-xs text-muted-foreground">
                 <span className="font-mono tabular-nums">{fmt(r.created_at)}</span>
-                <span>{r.direction === "in" ? (r.employee_id ? L?.emp.get(r.employee_id) : "Avsändare") : r.ai_generated ? "AI-utkast (godkänt)" : r.sent_by ? L?.users.get(r.sent_by) ?? "Personal" : r.business_connection_id ? "Kontoret" : "Automatsvar"}</span>
+                <span>{r.direction === "in" ? (r.employee_id ? L?.emp.get(r.employee_id) : "Avsändare") : r.ai_generated ? `AI-förslag${r.sent_by ? `, skickat av ${L?.users.get(r.sent_by) ?? "personal"}` : " (godkänt)"}` : r.sent_by ? L?.users.get(r.sent_by) ?? "Personal" : r.business_connection_id ? "Kontoret" : "Automatsvar"}</span>
                 {r.status === "fel" && <Badge variant="destructive">Fel: {r.error}</Badge>}
               </div>
               {r.body && <p className="whitespace-pre-wrap break-words text-sm">{r.body}</p>}
@@ -204,7 +239,26 @@ export default function TelegramInbox() {
             </div>
           ))}
         </CardContent></Card>
+        {openDraft && (
+          <div className="space-y-2 rounded border-2 border-primary p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>AI-förslag</Badge>
+              {openDraft.foreslagen_kategori && <span className="text-xs text-muted-foreground">Föreslagen kategori: {TG_CATEGORIES[openDraft.foreslagen_kategori] ?? openDraft.foreslagen_kategori}</span>}
+              {openDraft.foreslagen_kategori && cur.last.category !== openDraft.foreslagen_kategori && (
+                <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setConv({ _category: openDraft.foreslagen_kategori! })}>Sätt kategori</Button>
+              )}
+            </div>
+            <p className="whitespace-pre-wrap break-words text-sm">{openDraft.innehall}</p>
+            <p className="text-xs text-muted-foreground">Skickas inte förrän du trycker Skicka.</p>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" disabled={busy} onClick={() => sendDraft(openDraft)}>Skicka</Button>
+              <Button size="sm" variant="outline" onClick={() => { setText(openDraft.innehall); setDraftId(openDraft.id); }}>Ändra</Button>
+              <Button size="sm" variant="ghost" onClick={() => discard(openDraft.id)}>Kasta</Button>
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap gap-1">{QUICK.map((q) => <Button key={q} size="sm" variant="outline" className="h-auto whitespace-normal text-left" onClick={() => setText(q)}>{q}</Button>)}</div>
+        {draftId && <p className="text-xs text-muted-foreground">Du redigerar AI-förslaget. <button className="underline" onClick={() => { setDraftId(null); setText(""); }}>Avbryt</button></p>}
         <Textarea rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder="Skriv svar…" />
         <Button disabled={busy || !text.trim()} onClick={send}>Skicka svar</Button>
       </div>
@@ -213,6 +267,12 @@ export default function TelegramInbox() {
 
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 rounded border border-border px-3 py-2 text-sm">
+        <span className="font-medium">AI-förslag 30 dagar:</span>
+        <span className="font-mono tabular-nums">{aiStats.total} st</span>
+        <span>Skickade oförändrat: <span className="font-mono tabular-nums">{aiStats.pct === null ? "–" : `${aiStats.pct} %`}</span>
+          <span className="text-muted-foreground"> ({aiStats.same} av {aiStats.handled} hanterade)</span></span>
+      </div>
       {filters}
       {msgs.isLoading && <p className="text-sm text-muted-foreground">Laddar…</p>}
       {!msgs.isLoading && !convs.length && <p className="text-sm text-muted-foreground">Inga Telegram-meddelanden ännu.</p>}
