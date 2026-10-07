@@ -70,7 +70,13 @@ import {
   useDecideShiftRequest,
   useShiftHistory,
 } from "@/hooks/useSchedule";
-import { useAbsenceRequests, useAbsenceTypes, useDecideAbsenceRequest } from "@/hooks/useAbsence";
+import {
+  useAbsenceRequestsInRange,
+  usePendingAbsenceRequests,
+  useAbsenceTypes,
+  useDecideAbsenceRequest,
+  type AbsenceRequest,
+} from "@/hooks/useAbsence";
 import { useAttestations, DEVIATION_LABEL } from "@/hooks/useAttest";
 import {
   DAY_NAMES,
@@ -82,10 +88,27 @@ import {
   shiftMinutes,
   suggestCandidates,
   weekDates,
+  weekdayOf,
   worstSeverity,
+  type Availability,
   type Shift,
   type RuleCheck,
 } from "@/lib/schedule";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import { staffLevelOf } from "@/lib/staffModuleAccess";
+import { RegisterAbsenceDialog } from "@/components/schedule/RegisterAbsenceDialog";
+import { UnavailableDialog, isWholeDay } from "@/components/schedule/UnavailableDialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { buildAiPrompt, downloadTemplate, exportWeek } from "@/lib/scheduleImport";
 import { effectiveHourlyRate, formatMoney } from "@/lib/staffKpi";
 import { usePayrollOverhead } from "@/hooks/useStaffKpi";
@@ -138,14 +161,38 @@ export default function SchedulePlanner() {
   const { data: attestations = [] } = useAttestations(storeId || null, week[0], week[6]);
   const { data: requests = [] } = useShiftRequests(shifts.map((s) => s.id));
   /* Frånvaron hämtas för alla enheter: personal kan schemaläggas överallt, så en
-     semester registrerad på hemmabutiken måste spärra passet även i en annan butik. */
-  const { data: absenceRequests = [] } = useAbsenceRequests(undefined, null);
+     semester registrerad på hemmabutiken måste spärra passet även i en annan butik.
+     All frånvaro som överlappar veckan hämtas, utan radgräns. */
+  const { data: absenceRequests = [] } = useAbsenceRequestsInRange(week[0], week[6]);
+  const { data: pendingAll = [] } = usePendingAbsenceRequests();
   const { data: absenceTypes = [] } = useAbsenceTypes();
   const { data: overheadPct = 0 } = usePayrollOverhead();
   const { data: weekdayRevenue } = useWeekdayRevenue(storeId || null, week[0]);
   const { margins } = useMarginSettings(storeId || null);
+  const recentFrom = useMemo(() => {
+    const d = mondayOf(anchor);
+    d.setDate(d.getDate() - 28);
+    return dateKey(d);
+  }, [anchor]);
+  const recentTo = useMemo(() => {
+    const d = mondayOf(anchor);
+    d.setDate(d.getDate() - 1);
+    return dateKey(d);
+  }, [anchor]);
+  const { data: recentShifts = [] } = useShifts(storeId || null, recentFrom, recentTo);
   
   const { data: frequentStaff = [] } = useFrequentStaff(storeId || null);
+
+  const { staff: me } = useStaffAuth();
+  const isHrAdmin = staffLevelOf(me) === "admin";
+  const [absenceDialog, setAbsenceDialog] = useState<{
+    employeeId: string | null;
+    date: string;
+    request?: AbsenceRequest | null;
+  } | null>(null);
+  const [unavailDialog, setUnavailDialog] = useState<{ employeeId: string; date: string; row?: Availability | null } | null>(
+    null,
+  );
 
 
   const saveShift = useSaveShift();
@@ -161,23 +208,30 @@ export default function SchedulePlanner() {
     () => new Map(employees.map((employee) => [employee.id, `${employee.first_name} ${employee.last_name}`])),
     [employees],
   );
-  const pendingAbsenceRequests = absenceRequests.filter(
-    (request) => request.status === "pending" && (!storeId || request.store_id === storeId),
+  const pendingAbsenceRequests = pendingAll.filter((request) => !storeId || request.store_id === storeId);
+
+  const absenceFrom = (r: AbsenceRequest) => r.date_from ?? r.start_date;
+  /** Sjukfrånvaro utan slutdatum är pågående; annars betyder tomt slut en dag. */
+  const absenceTo = (r: AbsenceRequest) =>
+    r.date_to ?? r.end_date ?? (absenceTypeById.get(r.absence_type_id)?.is_sick ? "9999-12-31" : absenceFrom(r));
+  const activeAbsences = useMemo(
+    () => absenceRequests.filter((r) => ["pending", "approved", "auto_approved"].includes(r.status)),
+    [absenceRequests],
   );
 
   /** Frånvaroblock per anställd — både beslutade och väntande spärrar passet. */
   const absencesByEmployee = useMemo(() => {
     const map = new Map<string, { from: string; to: string; label: string }[]>();
-    absenceRequests
-      .filter((request) => ["pending", "approved", "auto_approved"].includes(request.status))
-      .forEach((request) => {
-        const from = request.date_from ?? request.start_date;
-        const to = request.date_to ?? request.end_date ?? from;
-        const label = absenceTypeById.get(request.absence_type_id)?.name ?? "Frånvaro";
-        map.set(request.employee_id, [...(map.get(request.employee_id) ?? []), { from, to, label }]);
-      });
+    activeAbsences.forEach((request) => {
+      const from = absenceFrom(request);
+      const to = absenceTo(request);
+      const name = absenceTypeById.get(request.absence_type_id)?.name ?? "Frånvaro";
+      const label = Number(request.extent_pct) < 100 ? `${name} ${Number(request.extent_pct)} %` : name;
+      map.set(request.employee_id, [...(map.get(request.employee_id) ?? []), { from, to, label }]);
+    });
     return map;
-  }, [absenceRequests, absenceTypeById]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeAbsences, absenceTypeById]);
 
   const storeEmployments = useMemo(
     () => employments.filter((e) => e.store_id === storeId && e.is_active),
@@ -244,12 +298,35 @@ export default function SchedulePlanner() {
   const blockersFor = (shift: Shift): RuleCheck[] =>
     checksFor(shift).filter((c) => c.severity === "block");
 
-  const blockedBySchedule = (shift: Shift) => {
+  const [overrideAsk, setOverrideAsk] = useState<{ text: string; resolve: (ok: boolean) => void } | null>(null);
+  const answerOverride = (ok: boolean) => {
+    overrideAsk?.resolve(ok);
+    setOverrideAsk(null);
+  };
+
+  /**
+   * Returnerar true om passet får sparas. Adminnivå får lägga pass trots
+   * frånvaro efter bekräftelse; alla andra spärrar gäller som tidigare.
+   */
+  const guardShift = async (shift: Shift): Promise<boolean> => {
     const blockers = blockersFor(shift);
-    if (blockers.length === 0) return false;
-    const who = shift.employee_id ? nameById.get(shift.employee_id) ?? "Personen" : "Personen";
-    toast.error(`${who}: ${blockers[0].label}`, { description: blockers[0].detail });
-    return true;
+    if (blockers.length === 0) return true;
+    const who = shift.employee_id ? nameById.get(shift.employee_id) ?? nameByEmployeeId.get(shift.employee_id) ?? "Personen" : "Personen";
+    const other = blockers.filter((c) => c.code !== "franvaro");
+    if (other.length > 0 || !isHrAdmin) {
+      const first = other[0] ?? blockers[0];
+      toast.error(`${who}: ${first.label}`, { description: first.detail });
+      return false;
+    }
+    const a = (absencesByEmployee.get(shift.employee_id as string) ?? []).find(
+      (x) => x.from <= shift.date && x.to >= shift.date,
+    );
+    const day = new Intl.DateTimeFormat("sv-SE", { weekday: "long", day: "numeric", month: "long" }).format(
+      new Date(`${shift.date}T12:00:00`),
+    );
+    return new Promise<boolean>((resolve) =>
+      setOverrideAsk({ text: `${who} har ${a?.label ?? "frånvaro"} ${day}. Lägg passet ändå?`, resolve }),
+    );
   };
 
   const draftCount = shifts.filter((s) => s.status === "draft").length;
@@ -269,10 +346,33 @@ export default function SchedulePlanner() {
         (employeeKey === OPEN_ROW ? !s.employee_id : s.employee_id === employeeKey),
     );
 
+  const absencesAt = (employeeId: string, date: string) =>
+    activeAbsences.filter((r) => r.employee_id === employeeId && absenceFrom(r) <= date && absenceTo(r) >= date);
+
+  const unavailableAt = (employeeId: string, date: string) =>
+    availability.filter(
+      (a) =>
+        a.employee_id === employeeId &&
+        a.type === "otillganglig" &&
+        (a.date ? a.date === date : a.weekday === weekdayOf(date)),
+    );
+
+  const newShiftAt = (employeeKey: string, date: string): Partial<Shift> => ({
+    store_id: storeId,
+    legal_entity_id: store?.legal_entity_id ?? null,
+    employee_id: employeeKey === OPEN_ROW ? null : employeeKey,
+    date,
+    start_time: "08:00",
+    end_time: "17:00",
+    break_minutes: 30,
+    status: "draft",
+    shift_type_id: shiftTypes[0]?.id ?? null,
+  });
+
   const moveShift = async (shift: Shift, employeeKey: string, date: string) => {
     const employeeId = employeeKey === OPEN_ROW ? null : employeeKey;
     if (shift.status === "published" && !confirm("Passet är publicerat. Flytta ändå?")) return;
-    if (blockedBySchedule({ ...shift, employee_id: employeeId, date })) return;
+    if (!(await guardShift({ ...shift, employee_id: employeeId, date }))) return;
     try {
       await saveShift.mutateAsync({ ...shift, employee_id: employeeId, date, status: "draft", published_at: null });
       toast.success("Passet flyttat och sparat som utkast");
@@ -496,7 +596,15 @@ export default function SchedulePlanner() {
     const withShifts = new Set(
       shifts.filter((s) => s.status !== "cancelled" && s.employee_id).map((s) => s.employee_id as string),
     );
-    const keys = Array.from(new Set([...withShifts, ...extraRows]));
+    /* Personer som hör till enheten och är frånvarande i veckan får en rad även utan pass. */
+    const belongs = new Set<string>([
+      ...storeEmployments.map((e) => e.employee_id),
+      ...recentShifts.filter((s) => s.employee_id && s.status !== "cancelled").map((s) => s.employee_id as string),
+    ]);
+    const absent = activeAbsences
+      .filter((r) => belongs.has(r.employee_id) && absenceFrom(r) <= week[6] && absenceTo(r) >= week[0])
+      .map((r) => r.employee_id);
+    const keys = Array.from(new Set([...withShifts, ...absent, ...extraRows]));
     const people = keys
       .map((key) => {
         const r = roster.find((p) => p.employee_id === key);
@@ -504,7 +612,7 @@ export default function SchedulePlanner() {
       })
       .sort((a, b) => a.name.localeCompare(b.name, "sv"));
     return [{ key: OPEN_ROW, name: "Öppna pass", rate: null as number | null }, ...people];
-  }, [shifts, extraRows, roster, nameByEmployeeId]);
+  }, [shifts, extraRows, roster, nameByEmployeeId, storeEmployments, recentShifts, activeAbsences, week]);
 
   /** Personer som ännu inte har en rad i veckan. */
   const addablePeople = useMemo(
@@ -740,6 +848,11 @@ export default function SchedulePlanner() {
               >
                 Kopiera vecka
               </IndustryButton>
+              {isHrAdmin && (
+                <IndustryButton className="h-9" onClick={() => setAbsenceDialog({ employeeId: null, date: week[0] })}>
+                  Registrera frånvaro
+                </IndustryButton>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-1">
               <IndustryButton variant="ghost" className="h-9 px-2.5 text-xs" onClick={copyAiPrompt}>
@@ -938,25 +1051,64 @@ export default function SchedulePlanner() {
                                   </div>
                                 );
                               })}
-                              <button
-                                type="button"
-                                 className="ind-btn ind-btn--ghost h-7 w-full justify-center p-0 text-xs"
-                                onClick={() =>
-                                  setEditing({
-                                    store_id: storeId,
-                                    legal_entity_id: store?.legal_entity_id ?? null,
-                                    employee_id: row.key === OPEN_ROW ? null : row.key,
-                                    date: d,
-                                    start_time: "08:00",
-                                    end_time: "17:00",
-                                    break_minutes: 30,
-                                    status: "draft",
-                                    shift_type_id: shiftTypes[0]?.id ?? null,
-                                  })
-                                }
-                              >
-                                <Plus className="h-3 w-3" />
-                              </button>
+                              {row.key !== OPEN_ROW &&
+                                absencesAt(row.key, d).map((a) => (
+                                  <button
+                                    key={a.id}
+                                    type="button"
+                                    disabled={!isHrAdmin || a.status !== "approved"}
+                                    onClick={() => setAbsenceDialog({ employeeId: row.key, date: d, request: a })}
+                                    className="block w-full rounded-sm border-l-2 border-destructive bg-destructive/10 px-1.5 py-1 text-left text-[10px] leading-tight text-foreground lg:text-[11px]"
+                                    title={a.status === "pending" ? "Väntar på beslut" : undefined}
+                                  >
+                                    {absenceTypeById.get(a.absence_type_id)?.name ?? "Frånvaro"}
+                                    {Number(a.extent_pct) < 100 ? ` ${Number(a.extent_pct)} %` : ""}
+                                    {a.status === "pending" ? " · väntar" : ""}
+                                  </button>
+                                ))}
+                              {row.key !== OPEN_ROW &&
+                                unavailableAt(row.key, d).map((u) => (
+                                  <button
+                                    key={u.id}
+                                    type="button"
+                                    disabled={!isHrAdmin}
+                                    onClick={() => setUnavailDialog({ employeeId: row.key, date: d, row: u })}
+                                    className="block w-full rounded-sm bg-muted px-1.5 py-1 text-left font-mono text-[10px] leading-tight text-muted-foreground lg:text-[11px]"
+                                    title={u.note ?? undefined}
+                                  >
+                                    {isWholeDay(u) ? "Hela dagen" : `${u.from_time.slice(0, 5)}–${u.to_time.slice(0, 5)}`}
+                                  </button>
+                                ))}
+                              {isHrAdmin && row.key !== OPEN_ROW ? (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button
+                                      type="button"
+                                      aria-label="Lägg till"
+                                      className="ind-btn ind-btn--ghost h-7 w-full justify-center p-0 text-xs"
+                                    >
+                                      <Plus className="h-3 w-3" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="start">
+                                    <DropdownMenuItem onSelect={() => setEditing(newShiftAt(row.key, d))}>Pass</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => setAbsenceDialog({ employeeId: row.key, date: d })}>
+                                      Frånvaro
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => setUnavailDialog({ employeeId: row.key, date: d })}>
+                                      Ej tillgänglig
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="ind-btn ind-btn--ghost h-7 w-full justify-center p-0 text-xs"
+                                  onClick={() => setEditing(newShiftAt(row.key, d))}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         ))}
@@ -1398,6 +1550,39 @@ export default function SchedulePlanner() {
       )}
       </div>
 
+      {isHrAdmin && (
+        <>
+          <RegisterAbsenceDialog
+            open={Boolean(absenceDialog)}
+            onOpenChange={(o) => !o && setAbsenceDialog(null)}
+            employeeId={absenceDialog?.employeeId}
+            date={absenceDialog?.date}
+            request={absenceDialog?.request}
+          />
+          <UnavailableDialog
+            open={Boolean(unavailDialog)}
+            onOpenChange={(o) => !o && setUnavailDialog(null)}
+            employeeId={unavailDialog?.employeeId ?? ""}
+            employeeName={unavailDialog ? nameByEmployeeId.get(unavailDialog.employeeId) ?? "" : ""}
+            date={unavailDialog?.date ?? week[0]}
+            row={unavailDialog?.row}
+          />
+        </>
+      )}
+
+      <AlertDialog open={Boolean(overrideAsk)} onOpenChange={(o) => !o && answerOverride(false)}>
+        <AlertDialogContent className="ind">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="ind-h2">Frånvaro registrerad</AlertDialogTitle>
+            <AlertDialogDescription>{overrideAsk?.text}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => answerOverride(false)}>Avbryt</AlertDialogCancel>
+            <AlertDialogAction onClick={() => answerOverride(true)}>Lägg ändå</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Passdialog */}
       <Dialog open={Boolean(editing)} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="ind max-w-lg">
@@ -1520,7 +1705,7 @@ export default function SchedulePlanner() {
                   toast.error("Datum och tider krävs");
                   return;
                 }
-                if (blockedBySchedule(editing as Shift)) return;
+                if (!(await guardShift(editing as Shift))) return;
                 try {
                   await saveShift.mutateAsync({
                     ...editing,
@@ -1570,9 +1755,18 @@ export default function SchedulePlanner() {
                       {s.blocked ? "Blockerad" : `Poäng ${s.score}`}
                     </StatusLabel>
                     <IndustryButton
-                      disabled={s.blocked || !suggestFor}
+                      disabled={
+                        !suggestFor ||
+                        (s.blocked &&
+                          !(
+                            isHrAdmin &&
+                            blockersFor({ ...(suggestFor as Shift), employee_id: s.employee_id }).every(
+                              (c) => c.code === "franvaro",
+                            )
+                          ))
+                      }
                       onClick={async () => {
-                        if (blockedBySchedule({ ...(suggestFor as Shift), employee_id: s.employee_id })) return;
+                        if (!(await guardShift({ ...(suggestFor as Shift), employee_id: s.employee_id }))) return;
                         await saveShift.mutateAsync({ ...(suggestFor as Shift), employee_id: s.employee_id });
                         setSuggestFor(null);
                         setEditing(null);
