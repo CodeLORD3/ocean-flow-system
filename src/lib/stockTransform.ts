@@ -83,113 +83,32 @@ export async function performTransformation(input: TransformInput): Promise<Tran
   if (amount <= 0) throw new Error("Ange mängd att omvandla.");
   if (output <= 0) throw new Error("Ange hur mycket som skapas.");
 
-  // Kontrollera att partiet räcker till mängd + svinn.
-  const balances = await lotBalancesAtLocation(input.sourceProductId, input.locationId);
-  const available = input.sourceLotId
-    ? balances.find((b) => b.lotId === input.sourceLotId)?.quantityKg ?? 0
-    : balances.reduce((s, b) => s + b.quantityKg, 0);
-  if (available + 0.001 < amount + waste) {
-    throw new Error(
-      `Otillräckligt saldo: ${available.toLocaleString("sv-SE")} tillgängligt, ${(amount + waste).toLocaleString("sv-SE")} behövs.`,
-    );
-  }
-
-  const sourceCost = Number(input.sourceUnitCost) || 0;
-  const targetCost = output > 0 ? round3(((amount + waste) * sourceCost) / output) : 0;
   const kindLabel = transformKindLabel(input.kind);
   const label = `${kindLabel}: ${input.sourceProductName || "källa"} → ${input.targetProductName || "mål"}`;
 
-  // 1. Råvaran ut.
-  await recordMovement({
-    productId: input.sourceProductId,
-    locationId: input.locationId,
-    quantityKg: amount,
-    movementType: "tillverkning_ut",
-    lotId: input.sourceLotId,
-    unitCost: sourceCost || null,
-    referenceType: "omvandling",
-    note: label,
-  });
-
-  // 2. Eventuellt spill som svinn — separat från utbytet.
-  if (waste > 0) {
-    await recordMovement({
-      productId: input.sourceProductId,
-      locationId: input.locationId,
-      quantityKg: waste,
-      movementType: "svinn",
-      lotId: input.sourceLotId,
-      unitCost: sourceCost || null,
-      referenceType: "omvandling",
-      note: `Svinn vid omvandling${input.wasteReason ? `: ${input.wasteReason}` : ""}`,
-    });
-  }
-
-  // 3. Nytt parti för målprodukten — ärver härkomsten från källpartiet.
-  const targetLotId = await createOutputLot(
-    input.sourceLotId,
-    {
-      productId: input.targetProductId,
-      quantityKg: output,
-      unitCost: targetCost || null,
-      detailName: input.targetProductName || null,
-      bestBefore: input.targetBestBefore ?? null,
-      lotCode: "OMV",
-    },
-    "omvandling",
-  );
-
-  // 4. Färdigvaran in.
-  await recordMovement({
-    productId: input.targetProductId,
-    locationId: input.locationId,
-    quantityKg: output,
-    movementType: "tillverkning_in",
-    lotId: targetLotId,
-    unitCost: targetCost || null,
-    referenceType: "omvandling",
-    note: label,
-  });
-
-  // 5. Spårbarhetslänken källparti → nytt parti.
-  if (input.sourceLotId && targetLotId) {
-    await recordLotTransformation({
-      fromLotId: input.sourceLotId,
-      toLotId: targetLotId,
-      quantityInKg: amount,
-      quantityOutKg: output,
-    });
-  }
-
-  const yieldPct = amount > 0 ? Math.round((output / amount) * 1000) / 10 : 0;
-
-  const staffId = await currentStaffId();
-  const { data, error } = await supabase
-    .from("stock_transformations")
-    .insert({
-      store_id: input.storeId ?? null,
-      location_id: input.locationId,
-      transform_kind: input.kind,
-      source_product_id: input.sourceProductId,
-      source_lot_id: input.sourceLotId,
-      source_quantity: amount,
-      target_product_id: input.targetProductId,
-      target_lot_id: targetLotId,
-      target_quantity: output,
-      target_packages: input.targetPackages ?? null,
-      yield_pct: yieldPct,
-      waste_quantity: waste,
-      waste_reason: input.wasteReason?.trim() || null,
-      note: input.note?.trim() || null,
-      performed_at: input.performedAt || new Date().toISOString(),
-      performed_by: staffId,
-      performed_by_name: input.performedByName?.trim() || null,
-    } as any)
-    .select("id")
-    .maybeSingle();
-  if (error) throw error;
-
-  return { yieldPct, targetLotId, historyId: (data as any)?.id ?? null };
+  // Allt (saldokontroll, rörelser, nytt parti, spårbarhet, historik) i en transaktion i databasen.
+  const { data, error } = await supabase.rpc("perform_lot_transformation" as any, {
+    _store_id: input.storeId ?? null,
+    _location_id: input.locationId,
+    _source_product_id: input.sourceProductId,
+    _source_lot_id: input.sourceLotId,
+    _source_quantity: amount,
+    _source_unit_cost: Number(input.sourceUnitCost) || null,
+    _target_product_id: input.targetProductId,
+    _target_quantity: output,
+    _target_packages: input.targetPackages ?? null,
+    _target_best_before: input.targetBestBefore ?? null,
+    _kind: input.kind,
+    _waste_quantity: waste,
+    _waste_reason: input.wasteReason ?? null,
+    _performed_at: input.performedAt || null,
+    _performed_by_name: input.performedByName ?? null,
+    _note: input.note ?? null,
+    _label: label,
+  } as any);
+  if (error) throw new Error(error.message);
+  const r = (data || {}) as any;
+  return { yieldPct: Number(r.yield_pct) || 0, targetLotId: r.target_lot_id ?? null, historyId: r.history_id ?? null };
 }
 
 /** Ett utfall i en omvandling: en målprodukt med mängd och ev. antal förpackningar. */
