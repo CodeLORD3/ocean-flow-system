@@ -406,6 +406,7 @@ export default function Products() {
     retail_suggested: "",
     origin: "",
     producer: "",
+    is_production_item: false,
     shelf_life_days: "", // NEW
     shelf_life_open_days: "",
     image_url: "",
@@ -487,6 +488,7 @@ export default function Products() {
       retail_suggested: "",
       origin: "",
       producer: "",
+    is_production_item: false,
       shelf_life_days: "",
       shelf_life_open_days: "",
       image_url: "",
@@ -516,6 +518,7 @@ export default function Products() {
       retail_suggested: String(p.retail_suggested || ""),
       origin: p.origin || "",
       producer: (p as any).producer || "",
+      is_production_item: !!(p as any).is_production_item,
       shelf_life_days: String((p as any).shelf_life_days || ""), // NEW
       shelf_life_open_days: String((p as any).shelf_life_open_days || ""),
       image_url: (p as any).image_url || "",
@@ -576,6 +579,7 @@ export default function Products() {
       family_id: form.family_id || null,
       origin: form.origin || null,
       producer: form.producer || null,
+      is_production_item: !!form.is_production_item,
       shelf_life_days: form.shelf_life_days ? Number(form.shelf_life_days) : null, // NEW
       shelf_life_open_days: form.shelf_life_open_days ? Number(form.shelf_life_open_days) : null,
       image_url: form.image_url.trim() || null,
@@ -1807,6 +1811,10 @@ export default function Products() {
                     ))}
                   </SelectContent>
                 </Select>
+                <label className="flex items-center gap-2 pt-1 text-xs">
+                  <Checkbox checked={!!form.is_production_item} onCheckedChange={(v) => setField("is_production_item" as any, !!v as any)} />
+                  Produktionens vara
+                </label>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Ursprung</Label>
