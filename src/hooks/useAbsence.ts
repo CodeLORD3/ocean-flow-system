@@ -10,6 +10,7 @@ export interface AbsenceType {
   requires_approval: boolean;
   is_active: boolean;
   sort_order: number;
+  color_token?: string | null;
 }
 
 export interface AbsenceRequest {
@@ -31,6 +32,7 @@ export interface AbsenceRequest {
   created_at: string;
   decided_at: string | null;
   decision_note: string | null;
+  created_by?: string | null;
 }
 
 export interface VacationBalance {
@@ -59,7 +61,7 @@ export function useAbsenceTypes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("absence_types")
-        .select("id, code, name, is_sick, affects_vacation_balance, requires_approval, is_active, sort_order")
+        .select("id, code, name, is_sick, affects_vacation_balance, requires_approval, is_active, sort_order, color_token")
         .eq("is_active", true)
         .order("sort_order");
       if (error) throw error;
@@ -74,7 +76,7 @@ export function useAbsenceRequests(employeeId?: string | null, storeId?: string 
     queryFn: async () => {
       let query = supabase
         .from("absence_requests")
-        .select("id, employee_id, absence_type_id, start_date, end_date, date_from, date_to, extent_pct, basis, note, reason, status, store_id, legal_entity_id, days_count, created_at, decided_at, decision_note")
+        .select("id, employee_id, absence_type_id, start_date, end_date, date_from, date_to, extent_pct, basis, note, reason, status, store_id, legal_entity_id, days_count, created_at, decided_at, decision_note, created_by")
         .order("start_date", { ascending: false })
         .limit(200);
       if (employeeId) query = query.eq("employee_id", employeeId);
@@ -235,7 +237,7 @@ export function useEndSickPeriod() {
 }
 
 const REQUEST_COLS =
-  "id, employee_id, absence_type_id, start_date, end_date, date_from, date_to, extent_pct, basis, note, reason, status, store_id, legal_entity_id, days_count, created_at, decided_at, decision_note";
+  "id, employee_id, absence_type_id, start_date, end_date, date_from, date_to, extent_pct, basis, note, reason, status, store_id, legal_entity_id, days_count, created_at, decided_at, decision_note, created_by";
 
 /** All frånvaro som överlappar perioden — ingen radgräns som kan tappa poster. */
 export function useAbsenceRequestsInRange(from: string, to: string) {

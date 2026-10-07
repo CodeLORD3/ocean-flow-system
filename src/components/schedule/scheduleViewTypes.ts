@@ -18,6 +18,8 @@ export interface ShiftCellItem {
 }
 
 export interface AbsenceMark {
+  /** Fylls för chefsnivå: samma markering som i schemaplaneringen. */
+  mark?: import("@/components/schedule/ScheduleMark").ScheduleMarkData;
   label: string;
   status: string;
 }

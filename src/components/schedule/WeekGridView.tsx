@@ -1,6 +1,7 @@
 import type { WeekRow } from "@/components/schedule/scheduleViewTypes";
 import { formatDecimalHours, formatHm, formatKrPrel, storeMonocode } from "@/lib/scheduleFormat";
 import { Clock3, Plus, Wallet } from "lucide-react";
+import { ScheduleMark } from "@/components/schedule/ScheduleMark";
 
 const DAYS = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
 const COLS = "grid-cols-[196px_repeat(7,minmax(112px,1fr))_136px]";
@@ -49,12 +50,16 @@ export function WeekGridView({ rows, days, today, coverage, selectedShiftId, onS
 
             {row.cells.map((cell, index) => (
               <div key={cell.day} className={`sl-grid-cell space-y-1 px-1.5 py-1.5 ${cell.day === today ? "sl-grid-today" : ""} ${index >= 5 ? "bg-[#fafbfb]" : ""}`}>
-                {cell.absences.map((absence, absenceIndex) => (
-                  <div className="sl-pill sl-pill--warn w-full justify-start" key={`${absence.label}-${absenceIndex}`}>
-                    {absence.label}
-                    {absence.status === "pending" ? " · väntar" : ""}
-                  </div>
-                ))}
+                {cell.absences.map((absence, absenceIndex) =>
+                  absence.mark ? (
+                    <ScheduleMark key={`${absence.label}-${absenceIndex}`} mark={absence.mark} />
+                  ) : (
+                    <div className="sl-pill sl-pill--warn w-full justify-start" key={`${absence.label}-${absenceIndex}`}>
+                      {absence.label}
+                      {absence.status === "pending" ? " · väntar" : ""}
+                    </div>
+                  ),
+                )}
                 {cell.shifts.map((item) => (
                   <button
                     type="button"
