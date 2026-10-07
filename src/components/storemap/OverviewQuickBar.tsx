@@ -1,4 +1,18 @@
-import { Check, ClipboardCheck, ClipboardList, Clock, FileText } from "lucide-react";
+import { Check, ClipboardCheck, ClipboardList, Clock, FileText, Sparkles } from "lucide-react";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
+import { useStoreCleaning, useCleaningActions, klockslag } from "@/hooks/useStoreCleaning";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +47,34 @@ export function OverviewQuickBar({
     ? punch.last_type === "rast_start" ? "På rast" : punch.suggested_action === "in" ? "Inte instämplad" : "Instämplad"
     : "";
   const date = day || svenskDatum();
+  const isToday = date === svenskDatum();
+
+  /** Städning: bara för butiker. Signaturen sätts på servern från inloggat konto. */
+  const { data: store } = useQuery({
+    queryKey: ["overview-store-unit", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("stores").select("id, name, unit_type").eq("id", storeId!).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const isButik = store?.unit_type === "butik";
+  const { data: cleaning } = useStoreCleaning(isButik ? storeId : null, date);
+  const { sign, undo } = useCleaningActions();
+  const { data: me } = useCurrentStaff();
+  const myName = staffFullName(me);
+  const { data: authUserId } = useQuery({
+    queryKey: ["auth-user-id"],
+    queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null,
+  });
+  const { data: isAdmin = false } = useQuery({
+    queryKey: ["is-hr-admin"],
+    queryFn: async () => !!(await (supabase as any).rpc("is_hr_admin")).data,
+  });
+  const canUndo = !!cleaning && (cleaning.signed_by_user === authUserId || isAdmin);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const { toast } = useToast();
 
   /** Är dagsrapporten skriven för dagen? Då lyser knappen grön. */
   const { data: dailyDone = false } = useQuery({
@@ -91,8 +133,8 @@ export function OverviewQuickBar({
     <div className="space-y-3">
       {/* Personlig mobilstämpling överst för den som har rätt */}
       <SelfPunchCard />
-      {/* Dagsrapport och inventeringsrapport ligger allra högst upp i Översikt */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {/* Dagsrapport, inventeringsrapport och städning ligger allra högst upp i Översikt */}
+      <div className={cn("grid grid-cols-1 gap-3", isButik ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
         <button type="button" onClick={() => navigate("/dagsrapport")} className={boxClass(dailyDone)}>
           {dailyDone ? (
             <Check className="h-7 w-7 shrink-0 text-emerald-600" />
@@ -143,7 +185,82 @@ export function OverviewQuickBar({
             </span>
           </span>
         </button>
+        {isButik && (
+          <button
+            type="button"
+            onClick={() => (cleaning || isToday ? setConfirmOpen(true) : undefined)}
+            disabled={!cleaning && !isToday}
+            className={cn(boxClass(!!cleaning), !cleaning && !isToday && "cursor-default opacity-70")}
+          >
+            {cleaning ? (
+              <Check className="h-7 w-7 shrink-0 text-emerald-600" />
+            ) : (
+              <Sparkles className="h-7 w-7 shrink-0 text-primary" />
+            )}
+            <span className="min-w-0">
+              <span
+                className={cn(
+                  "block font-heading text-lg font-semibold leading-tight",
+                  cleaning && "text-emerald-700 dark:text-emerald-300",
+                )}
+              >
+                {cleaning ? "Städning klar" : "Städning"}
+              </span>
+              <span
+                className={cn(
+                  "block text-sm sm:text-xs",
+                  cleaning ? "text-emerald-700/80 dark:text-emerald-300/80" : "text-muted-foreground",
+                )}
+              >
+                {cleaning
+                  ? `${cleaning.staff_name} kl ${klockslag(cleaning.signed_at)}`
+                  : isToday
+                    ? "Signera att städningen är gjord"
+                    : "Inte signerad"}
+              </span>
+            </span>
+          </button>
+        )}
       </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{cleaning ? "Städning klar" : "Signera städning"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {cleaning
+                ? `Signerad av ${cleaning.staff_name} kl ${klockslag(cleaning.signed_at)}.`
+                : `Signera att städningen i ${store?.name ?? "butiken"} är gjord i dag? Du signerar som ${myName ?? "ditt konto"}.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{cleaning ? "Stäng" : "Avbryt"}</AlertDialogCancel>
+            {!cleaning && (
+              <AlertDialogAction
+                onClick={() =>
+                  storeId &&
+                  sign.mutate(storeId, {
+                    onError: (e: any) => toast({ title: "Kunde inte signera", description: e.message, variant: "destructive" }),
+                  })
+                }
+              >
+                Signera
+              </AlertDialogAction>
+            )}
+            {cleaning && isToday && canUndo && (
+              <AlertDialogAction
+                onClick={() =>
+                  undo.mutate(cleaning.id, {
+                    onError: (e: any) => toast({ title: "Kunde inte ångra", description: e.message, variant: "destructive" }),
+                  })
+                }
+              >
+                Ångra signering
+              </AlertDialogAction>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button
