@@ -154,7 +154,7 @@ export function CustomerOrderWizard({
       ...(staff?.allowed_store_ids ?? []),
       ...(staff?.allowed_store_id ? [staff.allowed_store_id] : []),
     ]);
-    const list = ids.size === 0 ? shops : shops.filter((s) => ids.has(s.id));
+    const list = ids.size === 0 || staff?.is_platform_admin ? shops : shops.filter((s) => ids.has(s.id));
     // Den butik flödet startade i ska alltid gå att välja
     return list.some((s) => s.id === storeId)
       ? list
