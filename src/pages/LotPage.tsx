@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { Printer, MoveRight, Shuffle, Trash2, ClipboardCheck } from "lucide-react";
 import { printLotLabelById } from "@/lib/lotQrLabelPdf";
+import { ToastAction } from "@/components/ui/toast";
 import { recordMovement, transferStock, lotUnitCost } from "@/lib/stockLedger";
 import { performTransformation, suggestTransformKind } from "@/lib/stockTransform";
 
@@ -195,8 +196,18 @@ export default function LotPage({ lotId }: { lotId: string }) {
     });
     toast({ title: `Utbyte ${res.yieldPct.toLocaleString("sv-SE")} %` });
     if (res.targetLotId) {
-      await printLotLabelById(res.targetLotId, qout).catch(() => undefined);
-      navigate(`/lot/${res.targetLotId}`);
+      const newLotId = res.targetLotId;
+      const tryPrint = (): Promise<void> => printLotLabelById(newLotId, qout).catch((e: any) => {
+        toast({
+          title: "Etiketten kunde inte skrivas ut",
+          description: `Omvandlingen är sparad. ${e?.message ?? String(e)}`,
+          variant: "destructive",
+          duration: 60000,
+          action: <ToastAction altText="Försök igen" onClick={() => { void tryPrint(); }}>Försök igen</ToastAction>,
+        });
+      });
+      await tryPrint();
+      navigate(`/lot/${newLotId}`);
     }
   }, "Omvandlat");
 
