@@ -6,7 +6,7 @@
  * All presentation använder Industry-primitiverna och tokens ur industry.css.
  */
 import { unitHasSales } from "@/lib/unitTypes";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -98,7 +98,7 @@ import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { staffLevelOf } from "@/lib/staffModuleAccess";
 import { RegisterAbsenceDialog } from "@/components/schedule/RegisterAbsenceDialog";
 import { UnavailableDialog, isWholeDay } from "@/components/schedule/UnavailableDialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ShiftAbsenceForm, SHIFT_ABSENCE_OPTIONS, type ShiftAbsenceMode } from "@/components/schedule/ShiftAbsenceForm";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -128,6 +128,8 @@ export default function SchedulePlanner() {
   const [storeId, setStoreId] = useState<string>("");
   const [anchor, setAnchor] = useState<string>(today());
   const [editing, setEditing] = useState<Partial<Shift> | null>(null);
+  const [absMode, setAbsMode] = useState<ShiftAbsenceMode | null>(null);
+  useEffect(() => { setAbsMode(null); }, [editing?.id, editing === null]);
   const [suggestFor, setSuggestFor] = useState<Shift | null>(null);
   const [historyFor, setHistoryFor] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -1079,28 +1081,6 @@ export default function SchedulePlanner() {
                                     {isWholeDay(u) ? "Hela dagen" : `${u.from_time.slice(0, 5)}–${u.to_time.slice(0, 5)}`}
                                   </button>
                                 ))}
-                              {isHrAdmin && row.key !== OPEN_ROW ? (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <button
-                                      type="button"
-                                      aria-label="Lägg till"
-                                      className="ind-btn ind-btn--ghost h-7 w-full justify-center p-0 text-xs"
-                                    >
-                                      <Plus className="h-3 w-3" />
-                                    </button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="start">
-                                    <DropdownMenuItem onSelect={() => setEditing(newShiftAt(row.key, d))}>Pass</DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => setAbsenceDialog({ employeeId: row.key, date: d })}>
-                                      Frånvaro
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => setUnavailDialog({ employeeId: row.key, date: d })}>
-                                      Ej tillgänglig
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              ) : (
                                 <button
                                   type="button"
                                   className="ind-btn ind-btn--ghost h-7 w-full justify-center p-0 text-xs"
@@ -1108,7 +1088,6 @@ export default function SchedulePlanner() {
                                 >
                                   <Plus className="h-3 w-3" />
                                 </button>
-                              )}
                             </div>
                           </td>
                         ))}
@@ -1591,7 +1570,7 @@ export default function SchedulePlanner() {
           </DialogHeader>
           {editing && (
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              {!absMode && <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="ind-label">Datum</Label>
                   <IndustryInput
@@ -1625,12 +1604,20 @@ export default function SchedulePlanner() {
                     onChange={(e) => setEditing({ ...editing, end_time: e.target.value })}
                   />
                 </div>
-              </div>
+              </div>}
               <div>
                 <Label className="ind-label">Skifttyp</Label>
                 <Select
-                  value={editing.shift_type_id ?? ""}
-                  onValueChange={(v) => setEditing({ ...editing, shift_type_id: v })}
+                  value={absMode ? `__${absMode}` : (editing.shift_type_id ?? "")}
+                  onValueChange={(v) => {
+                    const opt = SHIFT_ABSENCE_OPTIONS.find((o) => o.value === v);
+                    if (opt) {
+                      setAbsMode(opt.mode);
+                    } else {
+                      setAbsMode(null);
+                      setEditing({ ...editing, shift_type_id: v });
+                    }
+                  }}
                 >
                   <SelectTrigger className="ind-input">
                     <SelectValue placeholder="Välj typ" />
@@ -1641,20 +1628,27 @@ export default function SchedulePlanner() {
                         {t.name}
                       </SelectItem>
                     ))}
+                    {isHrAdmin && !(editing.id && !editing.employee_id) &&
+                      SHIFT_ABSENCE_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label className="ind-label">Person</Label>
                 <Select
-                  value={editing.employee_id ?? OPEN_ROW}
+                  value={editing.employee_id ?? (absMode ? "" : OPEN_ROW)}
+                  disabled={Boolean(absMode && editing.id)}
                   onValueChange={(v) => setEditing({ ...editing, employee_id: v === OPEN_ROW ? null : v })}
                 >
                   <SelectTrigger className="ind-input">
-                    <SelectValue />
+                    <SelectValue placeholder="Välj person" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={OPEN_ROW}>Öppet pass</SelectItem>
+                    {!absMode && <SelectItem value={OPEN_ROW}>Öppet pass</SelectItem>}
                     {roster.map((r) => (
                       <SelectItem key={r.employee_id} value={r.employee_id}>
                         {r.name}
@@ -1663,6 +1657,17 @@ export default function SchedulePlanner() {
                   </SelectContent>
                 </Select>
               </div>
+              {absMode && (
+                <ShiftAbsenceForm
+                  mode={absMode}
+                  employeeId={editing.employee_id ?? null}
+                  date={editing.date ?? week[0]}
+                  shiftId={editing.id ?? null}
+                  onCancel={() => setEditing(null)}
+                  onSaved={() => setEditing(null)}
+                />
+              )}
+              {!absMode && <>
               <div>
                 <Label className="ind-label">Notering</Label>
                 <IndustryInput
@@ -1690,9 +1695,10 @@ export default function SchedulePlanner() {
                   </IndustryButton>
                 </div>
               )}
+              </>}
             </div>
           )}
-          <DialogFooter>
+          {!absMode && <DialogFooter>
             <IndustryButton variant="ghost" onClick={() => setEditing(null)}>
               Avbryt
             </IndustryButton>
@@ -1726,7 +1732,7 @@ export default function SchedulePlanner() {
             >
               Spara
             </IndustryButton>
-          </DialogFooter>
+          </DialogFooter>}
         </DialogContent>
       </Dialog>
 

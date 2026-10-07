@@ -24745,6 +24745,23 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_schedule_absence: {
+        Args: {
+          _absence_type_id?: string
+          _conflict_action?: string
+          _employee_id: string
+          _end_date?: string
+          _extent_pct?: number
+          _from_time?: string
+          _kind: string
+          _note?: string
+          _shift_action?: string
+          _shift_id?: string
+          _start_date: string
+          _to_time?: string
+        }
+        Returns: Json
+      }
       admin_update_absence: {
         Args: {
           _end_date: string
