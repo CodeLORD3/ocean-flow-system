@@ -34,7 +34,7 @@ export default function LotScanButton({ className }: { className?: string }) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Skanna parti</DialogTitle></DialogHeader>
-          {open && <BarcodeScanner onScan={onScan} />}
+          {open && <BarcodeScanner onScan={onScan} helpText="Rikta kameran mot QR-koden på lådan" />}
         </DialogContent>
       </Dialog>
     </>

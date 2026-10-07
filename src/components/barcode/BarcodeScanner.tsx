@@ -7,9 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 interface BarcodeScannerProps {
   onScan: (code: string) => void;
   onClose?: () => void;
+  /** Valfri hjälptext under kameran. */
+  helpText?: string;
 }
 
-export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
+export default function BarcodeScanner({ onScan, onClose, helpText }: BarcodeScannerProps) {
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -101,7 +103,7 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
         )}
 
         <p className="text-[10px] text-muted-foreground">
-          Rikta kameran mot en EAN-13 streckkod. Koden läses automatiskt.
+          {helpText ?? "Rikta kameran mot en EAN-13 streckkod. Koden läses automatiskt."}
         </p>
       </CardContent>
     </Card>
