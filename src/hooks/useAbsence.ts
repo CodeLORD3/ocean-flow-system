@@ -233,3 +233,109 @@ export function useEndSickPeriod() {
     onSuccess: () => client.invalidateQueries({ queryKey: absenceKeys.all }),
   });
 }
+
+const REQUEST_COLS =
+  "id, employee_id, absence_type_id, start_date, end_date, date_from, date_to, extent_pct, basis, note, reason, status, store_id, legal_entity_id, days_count, created_at, decided_at, decision_note";
+
+/** All frånvaro som överlappar perioden — ingen radgräns som kan tappa poster. */
+export function useAbsenceRequestsInRange(from: string, to: string) {
+  return useQuery({
+    queryKey: [...absenceKeys.all, "range", from, to],
+    enabled: Boolean(from && to),
+    queryFn: async () => {
+      const rows: AbsenceRequest[] = [];
+      for (let page = 0; page < 50; page++) {
+        const { data, error } = await supabase
+          .from("absence_requests")
+          .select(REQUEST_COLS)
+          .lte("start_date", to)
+          .or(`end_date.gte.${from},end_date.is.null`)
+          .order("start_date")
+          .range(page * 1000, page * 1000 + 999);
+        if (error) throw error;
+        rows.push(...((data ?? []) as AbsenceRequest[]));
+        if (!data || data.length < 1000) break;
+      }
+      return rows;
+    },
+  });
+}
+
+/** Alla väntande ansökningar (sidokön), oberoende av vald vecka. */
+export function usePendingAbsenceRequests() {
+  return useQuery({
+    queryKey: [...absenceKeys.all, "pending"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("absence_requests")
+        .select(REQUEST_COLS)
+        .eq("status", "pending")
+        .order("start_date");
+      if (error) throw error;
+      return (data ?? []) as AbsenceRequest[];
+    },
+  });
+}
+
+type RpcFn = (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>;
+const callRpc = (name: string, args: Record<string, unknown>) =>
+  (supabase.rpc as unknown as RpcFn)(name, args).then(({ data, error }) => {
+    if (error) throw error;
+    return data as Record<string, unknown>;
+  });
+
+function useAdminAbsenceMutation<T>(fn: (input: T) => Promise<Record<string, unknown>>) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: absenceKeys.all });
+      client.invalidateQueries({ queryKey: ["shifts"] });
+      client.invalidateQueries({ queryKey: ["attestations"] });
+    },
+  });
+}
+
+/** Adminnivå: registrera frånvaro åt en anställd, godkänd direkt. */
+export const useAdminRegisterAbsence = () =>
+  useAdminAbsenceMutation(
+    (i: {
+      employeeId: string;
+      typeId: string;
+      startDate: string;
+      endDate: string | null;
+      extentPct: number;
+      note?: string;
+      conflictAction: "keep" | "open_shift" | "cancel_shift";
+    }) =>
+      callRpc("admin_register_absence", {
+        _employee_id: i.employeeId,
+        _absence_type_id: i.typeId,
+        _start_date: i.startDate,
+        _end_date: i.endDate,
+        _extent_pct: i.extentPct,
+        _note: i.note ?? null,
+        _conflict_action: i.conflictAction,
+      }),
+  );
+
+export const useAdminUpdateAbsence = () =>
+  useAdminAbsenceMutation((i: { id: string; startDate: string; endDate: string | null; extentPct: number; note?: string }) =>
+    callRpc("admin_update_absence", {
+      _request_id: i.id,
+      _start_date: i.startDate,
+      _end_date: i.endDate,
+      _extent_pct: i.extentPct,
+      _note: i.note ?? null,
+    }),
+  );
+
+export const useAdminCancelAbsence = () =>
+  useAdminAbsenceMutation((i: { id: string; reason?: string }) =>
+    callRpc("admin_cancel_absence", { _request_id: i.id, _reason: i.reason ?? null }),
+  );
+
+export const useAdminEndSickAbsence = () =>
+  useAdminAbsenceMutation((i: { id: string; lastDay?: string | null }) =>
+    callRpc("admin_end_sick_absence", { _request_id: i.id, _last_day: i.lastDay ?? null }),
+  );
