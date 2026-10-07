@@ -25394,6 +25394,28 @@ export type Database = {
       payroll_period_end: { Args: { _period: string }; Returns: string }
       payroll_period_source: { Args: { _period: string }; Returns: string }
       payroll_period_start: { Args: { _period: string }; Returns: string }
+      perform_lot_transformation: {
+        Args: {
+          _kind: string
+          _label: string
+          _location_id: string
+          _note: string
+          _performed_at: string
+          _performed_by_name: string
+          _source_lot_id: string
+          _source_product_id: string
+          _source_quantity: number
+          _source_unit_cost: number
+          _store_id: string
+          _target_best_before: string
+          _target_packages: number
+          _target_product_id: string
+          _target_quantity: number
+          _waste_quantity: number
+          _waste_reason: string
+        }
+        Returns: Json
+      }
       period_is_locked: {
         Args: { _date: string; _store_id: string }
         Returns: boolean
