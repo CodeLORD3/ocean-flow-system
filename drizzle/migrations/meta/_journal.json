@@ -148,6 +148,13 @@
       "when": 1791364963290,
       "tag": "0020_admin_schedule_absence",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791368540816,
+      "tag": "0021_store_cleaning_and_dagslage",
+      "breakpoints": true
     }
   ]
 }

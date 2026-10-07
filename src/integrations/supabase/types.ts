@@ -18729,6 +18729,81 @@ export type Database = {
           },
         ]
       }
+      store_cleaning_signatures: {
+        Row: {
+          dag: string
+          id: string
+          signed_at: string
+          signed_by_user: string
+          staff_id: string | null
+          staff_name: string
+          store_id: string
+          undone_at: string | null
+          undone_by_name: string | null
+          undone_by_user: string | null
+        }
+        Insert: {
+          dag: string
+          id?: string
+          signed_at?: string
+          signed_by_user: string
+          staff_id?: string | null
+          staff_name: string
+          store_id: string
+          undone_at?: string | null
+          undone_by_name?: string | null
+          undone_by_user?: string | null
+        }
+        Update: {
+          dag?: string
+          id?: string
+          signed_at?: string
+          signed_by_user?: string
+          staff_id?: string | null
+          staff_name?: string
+          store_id?: string
+          undone_at?: string | null
+          undone_by_name?: string | null
+          undone_by_user?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_cleaning_signatures_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_cleaning_signatures_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_cleaning_signatures_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_store_reports"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_cleaning_signatures_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_cleaning_signatures_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "v_negative_flags_review"
+            referencedColumns: ["store_id"]
+          },
+        ]
+      }
       store_closed_days: {
         Row: {
           created_at: string
@@ -24683,6 +24758,7 @@ export type Database = {
     }
     Functions: {
       _actor_name: { Args: never; Returns: string }
+      _dagslage: { Args: { _day: string }; Returns: Json }
       absence_conflicts: {
         Args: { _request_id: string }
         Returns: {
@@ -24962,6 +25038,11 @@ export type Database = {
       }
       dagsavslut_status: {
         Args: { _day?: string; _store_id: string }
+        Returns: Json
+      }
+      dagslage: { Args: { _day?: string }; Returns: Json }
+      dagslage_notify: {
+        Args: { _day?: string; _dry_run?: boolean; _ignore_hours?: boolean }
         Returns: Json
       }
       dagsrapport_paminnelse_butikschef: { Args: never; Returns: number }
@@ -25736,6 +25817,7 @@ export type Database = {
       }
       shopify_match_key: { Args: { v: string }; Returns: string }
       sick_karens_count_12m: { Args: { _employee_id: string }; Returns: number }
+      sign_store_cleaning: { Args: { _store_id: string }; Returns: Json }
       skapa_telefonnyckel: { Args: never; Returns: string }
       species_key: { Args: { v: string }; Returns: string }
       staff_has_store: { Args: { _store: string }; Returns: boolean }
@@ -25833,6 +25915,7 @@ export type Database = {
         Args: { _employee_id: string; _first_day: string }
         Returns: Json
       }
+      undo_store_cleaning: { Args: { _id: string }; Returns: Json }
       unit_has_sales: { Args: { _store_id: string }; Returns: boolean }
       unpost_purchase_report: { Args: { _report_id: string }; Returns: Json }
       user_company_ids: { Args: { _user_id: string }; Returns: string[] }
