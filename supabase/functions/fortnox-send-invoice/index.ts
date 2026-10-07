@@ -60,6 +60,8 @@ Deno.serve(async (req) => {
         DeliveredQuantity: Number(r.quantity).toFixed(3),
         Price: Number(r.price),
         VAT: r.vat_rate ?? 25,
+      // Livsmedel (6 % moms) bokas alltid på 3003; övriga momssatser väljer Fortnox konto för.
+      ...(Number(r.vat_rate) === 6 ? { AccountNumber: 3003 } : {}),
       })),
     },
   };
@@ -177,6 +179,8 @@ Deno.serve(async (req) => {
       DeliveredQuantity: Number(r.quantity).toFixed(3),
       Price: Number(r.price),
       VAT: r.vat_rate ?? 25,
+      // Livsmedel (6 % moms) bokas alltid på 3003; övriga momssatser väljer Fortnox konto för.
+      ...(Number(r.vat_rate) === 6 ? { AccountNumber: 3003 } : {}),
     }));
 
     // 4) Skapa faktura – kolla först om nyckeln redan finns hos Fortnox
