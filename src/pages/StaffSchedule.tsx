@@ -9,6 +9,12 @@ import { useStaff } from "@/hooks/useStaff";
 import { usePlannedShiftsRange, useImportedShiftsRange } from "@/hooks/usePlannedShifts";
 import { useShiftsRange } from "@/hooks/useStaffShifts";
 import { useAbsenceRequests, useAbsenceTypes } from "@/hooks/useAbsence";
+import { useAvailability } from "@/hooks/useSchedule";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useActorNames } from "@/hooks/useActorNames";
+import { weekdayOf } from "@/lib/schedule";
+import { absenceMarkData, unavailableMarkData } from "@/components/schedule/ScheduleMark";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { staffLevelOf } from "@/lib/staffModuleAccess";
 import { PlannedShiftDialog } from "@/components/livestaff/PlannedShiftDialog";
@@ -98,6 +104,17 @@ export default function StaffSchedule() {
   const { data: actualShifts = [] } = useShiftsRange(days[0], days[6], storeFilter === "all" ? null : storeFilter);
   const { data: absenceRequests = [] } = useAbsenceRequests(undefined, storeFilter === "all" ? null : storeFilter);
   const { data: absenceTypes = [] } = useAbsenceTypes();
+  const { data: availability = [] } = useAvailability();
+  const { nameOf } = useActorNames();
+  // Frånvaro lagras per anställd (employees.id); schemat visar personal (staff.id).
+  const { data: empToStaff = new Map<string, string>() } = useQuery({
+    queryKey: ["employee-staff-map"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("employees").select("id, staff_id").not("staff_id", "is", null);
+      if (error) throw error;
+      return new Map((data ?? []).map((r: any) => [r.id as string, r.staff_id as string]));
+    },
+  });
   const now = useMinuteTick();
   const actualMap = useMemo(() => buildActualMap(actualShifts, now.getTime()), [actualShifts, now]);
   const rates = useEffectiveRates(days[0]);
@@ -131,26 +148,45 @@ export default function StaffSchedule() {
   const absenceMap = useMemo(() => {
     const map = new Map<string, AbsenceMark[]>();
     const names = new Map(absenceTypes.map((type) => [type.id, type.name]));
+    const typeById = new Map(absenceTypes.map((type) => [type.id, type]));
+    const push = (key: string, mark: AbsenceMark) => map.set(key, [...(map.get(key) ?? []), mark]);
+    // Chefsnivå kopplar anställd → personal; övrig personal ser som tidigare.
+    const sid = (employeeId: string) => (readOnly ? employeeId : empToStaff.get(employeeId) ?? employeeId);
+    // Chefsnivå: Ej tillgänglig överst, samma markering som i schemaplaneringen.
+    if (!readOnly) {
+      availability
+        .filter((a) => a.type === "otillganglig" && visibleStaffIds.has(sid(a.employee_id)))
+        .forEach((a) => {
+          days.forEach((day) => {
+            if (a.date ? a.date === day : a.weekday === weekdayOf(day)) {
+              push(`${sid(a.employee_id)}|${day}`, { label: "Ej tillgänglig", status: "approved", mark: unavailableMarkData(a as never, nameOf) });
+            }
+          });
+        });
+    }
     absenceRequests
       .filter((request) => ["pending", "approved", "auto_approved"].includes(request.status))
-      .filter((request) => visibleStaffIds.has(request.employee_id))
+      .filter((request) => visibleStaffIds.has(sid(request.employee_id)))
       .forEach((request) => {
+        const type = typeById.get(request.absence_type_id);
         const from = request.date_from ?? request.start_date;
-        const to = request.date_to ?? request.end_date ?? from;
+        const end0 = request.date_to ?? request.end_date;
+        // Chefsnivå visar pågående sjukfrånvaro varje dag; övrig personal ser som tidigare.
+        const to = end0 ?? (!readOnly && type?.is_sick ? days[6] : from);
         const cursor = new Date(`${from}T12:00:00`);
         const end = new Date(`${to}T12:00:00`);
         while (cursor <= end) {
           const day = dateKey(cursor);
           if (days.includes(day)) {
-            const key = `${request.employee_id}|${day}`;
-            const mark = { label: names.get(request.absence_type_id) ?? "Frånvaro", status: request.status };
-            map.set(key, [...(map.get(key) ?? []), mark]);
+            const mark: AbsenceMark = { label: names.get(request.absence_type_id) ?? "Frånvaro", status: request.status };
+            if (!readOnly) mark.mark = absenceMarkData(request, type, nameOf);
+            push(`${sid(request.employee_id)}|${day}`, mark);
           }
           cursor.setDate(cursor.getDate() + 1);
         }
       });
     return map;
-  }, [absenceRequests, absenceTypes, visibleStaffIds, days]);
+  }, [absenceRequests, absenceTypes, visibleStaffIds, days, readOnly, availability, nameOf, empToStaff]);
 
   /** Dygnsvila per pass — nyckeln är passets id. */
   const restMap = useMemo(() => dailyRestViolations(visibleShifts), [visibleShifts]);

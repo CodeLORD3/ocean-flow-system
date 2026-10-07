@@ -97,7 +97,9 @@ import {
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { staffLevelOf } from "@/lib/staffModuleAccess";
 import { RegisterAbsenceDialog } from "@/components/schedule/RegisterAbsenceDialog";
-import { UnavailableDialog, isWholeDay } from "@/components/schedule/UnavailableDialog";
+import { UnavailableDialog } from "@/components/schedule/UnavailableDialog";
+import { ScheduleMark, ScheduleMarkLegend, absenceMarkData, unavailableMarkData } from "@/components/schedule/ScheduleMark";
+import { useActorNames } from "@/hooks/useActorNames";
 import { ShiftAbsenceForm, SHIFT_ABSENCE_OPTIONS, type ShiftAbsenceMode } from "@/components/schedule/ShiftAbsenceForm";
 import {
   AlertDialog,
@@ -187,6 +189,7 @@ export default function SchedulePlanner() {
 
   const { staff: me } = useStaffAuth();
   const isHrAdmin = staffLevelOf(me) === "admin";
+  const { nameOf } = useActorNames();
   const [absenceDialog, setAbsenceDialog] = useState<{
     employeeId: string | null;
     date: string;
@@ -784,6 +787,8 @@ export default function SchedulePlanner() {
               <span className="inline-flex items-center gap-1.5">
                 <span className="h-1.5 w-2.5 border border-dashed border-muted-foreground/70" /> Öppet pass
               </span>
+              <ScheduleMarkLegend kind="absence" />
+              <ScheduleMarkLegend kind="unavailable" />
             </div>
           </section>
           )}
@@ -1015,6 +1020,24 @@ export default function SchedulePlanner() {
                             }}
                           >
                              <div className="min-h-14 space-y-1 border-l border-border/60 p-1">
+                              {row.key !== OPEN_ROW &&
+                                unavailableAt(row.key, d).map((u) => (
+                                  <ScheduleMark
+                                    key={u.id}
+                                    mark={unavailableMarkData(u as never, nameOf)}
+                                    disabled={!isHrAdmin}
+                                    onClick={() => setUnavailDialog({ employeeId: row.key, date: d, row: u })}
+                                  />
+                                ))}
+                              {row.key !== OPEN_ROW &&
+                                absencesAt(row.key, d).map((a) => (
+                                  <ScheduleMark
+                                    key={a.id}
+                                    mark={absenceMarkData(a, absenceTypeById.get(a.absence_type_id), nameOf)}
+                                    disabled={!isHrAdmin || a.status !== "approved"}
+                                    onClick={() => setAbsenceDialog({ employeeId: row.key, date: d, request: a })}
+                                  />
+                                ))}
                               {shiftsAt(row.key, d).map((s) => {
                                 const type = s.shift_type_id ? typeById.get(s.shift_type_id) : null;
                                 const checks = checksFor(s);
@@ -1053,34 +1076,6 @@ export default function SchedulePlanner() {
                                   </div>
                                 );
                               })}
-                              {row.key !== OPEN_ROW &&
-                                absencesAt(row.key, d).map((a) => (
-                                  <button
-                                    key={a.id}
-                                    type="button"
-                                    disabled={!isHrAdmin || a.status !== "approved"}
-                                    onClick={() => setAbsenceDialog({ employeeId: row.key, date: d, request: a })}
-                                    className="block w-full rounded-sm border-l-2 border-destructive bg-destructive/10 px-1.5 py-1 text-left text-[10px] leading-tight text-foreground lg:text-[11px]"
-                                    title={a.status === "pending" ? "Väntar på beslut" : undefined}
-                                  >
-                                    {absenceTypeById.get(a.absence_type_id)?.name ?? "Frånvaro"}
-                                    {Number(a.extent_pct) < 100 ? ` ${Number(a.extent_pct)} %` : ""}
-                                    {a.status === "pending" ? " · väntar" : ""}
-                                  </button>
-                                ))}
-                              {row.key !== OPEN_ROW &&
-                                unavailableAt(row.key, d).map((u) => (
-                                  <button
-                                    key={u.id}
-                                    type="button"
-                                    disabled={!isHrAdmin}
-                                    onClick={() => setUnavailDialog({ employeeId: row.key, date: d, row: u })}
-                                    className="block w-full rounded-sm bg-muted px-1.5 py-1 text-left font-mono text-[10px] leading-tight text-muted-foreground lg:text-[11px]"
-                                    title={u.note ?? undefined}
-                                  >
-                                    {isWholeDay(u) ? "Hela dagen" : `${u.from_time.slice(0, 5)}–${u.to_time.slice(0, 5)}`}
-                                  </button>
-                                ))}
                                 <button
                                   type="button"
                                   className="ind-btn ind-btn--ghost h-7 w-full justify-center p-0 text-xs"
