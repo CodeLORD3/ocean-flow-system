@@ -1570,7 +1570,7 @@ export default function SchedulePlanner() {
           </DialogHeader>
           {editing && (
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              {!absMode && <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="ind-label">Datum</Label>
                   <IndustryInput
@@ -1604,7 +1604,7 @@ export default function SchedulePlanner() {
                     onChange={(e) => setEditing({ ...editing, end_time: e.target.value })}
                   />
                 </div>
-              </div>
+              </div>}
               <div>
                 <Label className="ind-label">Skifttyp</Label>
                 <Select
@@ -1640,14 +1640,15 @@ export default function SchedulePlanner() {
               <div>
                 <Label className="ind-label">Person</Label>
                 <Select
-                  value={editing.employee_id ?? OPEN_ROW}
+                  value={editing.employee_id ?? (absMode ? "" : OPEN_ROW)}
+                  disabled={Boolean(absMode && editing.id)}
                   onValueChange={(v) => setEditing({ ...editing, employee_id: v === OPEN_ROW ? null : v })}
                 >
                   <SelectTrigger className="ind-input">
-                    <SelectValue />
+                    <SelectValue placeholder="Välj person" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={OPEN_ROW}>Öppet pass</SelectItem>
+                    {!absMode && <SelectItem value={OPEN_ROW}>Öppet pass</SelectItem>}
                     {roster.map((r) => (
                       <SelectItem key={r.employee_id} value={r.employee_id}>
                         {r.name}
@@ -1656,6 +1657,17 @@ export default function SchedulePlanner() {
                   </SelectContent>
                 </Select>
               </div>
+              {absMode && (
+                <ShiftAbsenceForm
+                  mode={absMode}
+                  employeeId={editing.employee_id ?? null}
+                  date={editing.date ?? week[0]}
+                  shiftId={editing.id ?? null}
+                  onCancel={() => setEditing(null)}
+                  onSaved={() => setEditing(null)}
+                />
+              )}
+              {!absMode && <>
               <div>
                 <Label className="ind-label">Notering</Label>
                 <IndustryInput
@@ -1683,9 +1695,10 @@ export default function SchedulePlanner() {
                   </IndustryButton>
                 </div>
               )}
+              </>}
             </div>
           )}
-          <DialogFooter>
+          {!absMode && <DialogFooter>
             <IndustryButton variant="ghost" onClick={() => setEditing(null)}>
               Avbryt
             </IndustryButton>
@@ -1719,7 +1732,7 @@ export default function SchedulePlanner() {
             >
               Spara
             </IndustryButton>
-          </DialogFooter>
+          </DialogFooter>}
         </DialogContent>
       </Dialog>
 
