@@ -98,7 +98,7 @@ import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { staffLevelOf } from "@/lib/staffModuleAccess";
 import { RegisterAbsenceDialog } from "@/components/schedule/RegisterAbsenceDialog";
 import { UnavailableDialog, isWholeDay } from "@/components/schedule/UnavailableDialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ShiftAbsenceForm, SHIFT_ABSENCE_OPTIONS, type ShiftAbsenceMode } from "@/components/schedule/ShiftAbsenceForm";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -128,6 +128,8 @@ export default function SchedulePlanner() {
   const [storeId, setStoreId] = useState<string>("");
   const [anchor, setAnchor] = useState<string>(today());
   const [editing, setEditing] = useState<Partial<Shift> | null>(null);
+  const [absMode, setAbsMode] = useState<ShiftAbsenceMode | null>(null);
+  useEffect(() => { setAbsMode(null); }, [editing?.id, editing === null]);
   const [suggestFor, setSuggestFor] = useState<Shift | null>(null);
   const [historyFor, setHistoryFor] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -1079,28 +1081,6 @@ export default function SchedulePlanner() {
                                     {isWholeDay(u) ? "Hela dagen" : `${u.from_time.slice(0, 5)}–${u.to_time.slice(0, 5)}`}
                                   </button>
                                 ))}
-                              {isHrAdmin && row.key !== OPEN_ROW ? (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <button
-                                      type="button"
-                                      aria-label="Lägg till"
-                                      className="ind-btn ind-btn--ghost h-7 w-full justify-center p-0 text-xs"
-                                    >
-                                      <Plus className="h-3 w-3" />
-                                    </button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="start">
-                                    <DropdownMenuItem onSelect={() => setEditing(newShiftAt(row.key, d))}>Pass</DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => setAbsenceDialog({ employeeId: row.key, date: d })}>
-                                      Frånvaro
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => setUnavailDialog({ employeeId: row.key, date: d })}>
-                                      Ej tillgänglig
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              ) : (
                                 <button
                                   type="button"
                                   className="ind-btn ind-btn--ghost h-7 w-full justify-center p-0 text-xs"
@@ -1108,7 +1088,6 @@ export default function SchedulePlanner() {
                                 >
                                   <Plus className="h-3 w-3" />
                                 </button>
-                              )}
                             </div>
                           </td>
                         ))}
@@ -1629,8 +1608,16 @@ export default function SchedulePlanner() {
               <div>
                 <Label className="ind-label">Skifttyp</Label>
                 <Select
-                  value={editing.shift_type_id ?? ""}
-                  onValueChange={(v) => setEditing({ ...editing, shift_type_id: v })}
+                  value={absMode ? `__${absMode}` : (editing.shift_type_id ?? "")}
+                  onValueChange={(v) => {
+                    const opt = SHIFT_ABSENCE_OPTIONS.find((o) => o.value === v);
+                    if (opt) {
+                      setAbsMode(opt.mode);
+                    } else {
+                      setAbsMode(null);
+                      setEditing({ ...editing, shift_type_id: v });
+                    }
+                  }}
                 >
                   <SelectTrigger className="ind-input">
                     <SelectValue placeholder="Välj typ" />
@@ -1641,6 +1628,12 @@ export default function SchedulePlanner() {
                         {t.name}
                       </SelectItem>
                     ))}
+                    {isHrAdmin && !(editing.id && !editing.employee_id) &&
+                      SHIFT_ABSENCE_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>

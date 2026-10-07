@@ -46,7 +46,7 @@ export interface VacationBalance {
   expires_at: string | null;
 }
 
-const absenceKeys = {
+export const absenceKeys = {
   all: ["absence"] as const,
   requests: (employeeId?: string, storeId?: string | null) => ["absence", "requests", employeeId ?? "all", storeId ?? "all"] as const,
   balances: (employeeId?: string) => ["absence", "balances", employeeId ?? "all"] as const,
