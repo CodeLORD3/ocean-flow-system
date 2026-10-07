@@ -67,7 +67,7 @@ export function ProductionDoneControls({ order, size = "sm" }: { order: any; siz
       await mark.mutateAsync({ order, lines, byName });
       setOpen(false);
       toast({ title: missing ? `Färdigpackad, ${missing} saknas` : "Färdigpackad, inget saknas" });
-      const extra = otherLines.filter((l: any) => checked[l.id]).map((l: any) => ({ id: l.product_id, name: l.products?.name || "Okänd vara" }));
+      const extra: { id: string; name: string }[] = otherLines.filter((l: any) => checked[l.id]).map((l: any) => ({ id: l.product_id, name: l.products?.name || "Okänd vara" }));
       const uniq = Array.from(new Map(extra.map((e) => [e.id, e])).values());
       if (uniq.length) setAskProducts(uniq);
     } catch (e: any) {
