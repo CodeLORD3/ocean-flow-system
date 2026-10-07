@@ -78,8 +78,6 @@ export function ProductionDoneControls({ order, size = "sm" }: { order: any; siz
     setConfirmUndo(false);
   };
 
-  const { data: authUser } = { data: null as null };
-  void authUser;
   const canUndo = isProductionDone(order) && !["Skickad", "Levererad", "Klar / Levererad"].includes(order.status)
     && (isAdmin || order.production_done_by === staff?.user_id);
 
