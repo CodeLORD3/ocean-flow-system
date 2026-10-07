@@ -6,7 +6,7 @@
  * All presentation använder Industry-primitiverna och tokens ur industry.css.
  */
 import { unitHasSales } from "@/lib/unitTypes";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
