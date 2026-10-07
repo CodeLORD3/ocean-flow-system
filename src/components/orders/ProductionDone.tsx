@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
 import { useIsHrAdmin, useMarkProductionDone, useMarkProductsAsProduction, useUndoProductionDone } from "@/hooks/useProductionDone";
@@ -39,6 +40,8 @@ export function ProductionDoneControls({ order, size = "sm" }: { order: any; siz
   const [qty, setQty] = useState<Record<string, string>>({});
   const [askProducts, setAskProducts] = useState<{ id: string; name: string }[]>([]);
   const [confirmUndo, setConfirmUndo] = useState(false);
+  const [uid, setUid] = useState<string | null>(null);
+  React.useEffect(() => { supabase.auth.getUser().then(({ data }) => setUid(data?.user?.id ?? null)); }, []);
 
   const openLines = useMemo(() => (order.shop_order_lines || []).filter(isOpenLine), [order]);
   const prodLines = openLines.filter(isProductionLine);
@@ -79,7 +82,7 @@ export function ProductionDoneControls({ order, size = "sm" }: { order: any; siz
   };
 
   const canUndo = isProductionDone(order) && !["Skickad", "Levererad", "Klar / Levererad"].includes(order.status)
-    && (isAdmin || order.production_done_by === staff?.user_id);
+    && (isAdmin || order.production_done_by === uid);
 
   const lineRow = (l: any) => (
     <div key={l.id} className="flex flex-wrap items-center gap-2 border-b border-grid-line py-2 last:border-b-0">
