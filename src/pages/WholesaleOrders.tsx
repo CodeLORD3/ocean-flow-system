@@ -56,6 +56,9 @@ import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLin
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
 import { useEntityImageCounts } from "@/hooks/useEntityImages";
 import { logActivity } from "@/hooks/useActivityLog";
+import { ProductionBadge, ProductionDoneControls, BuyRemainingSection } from "@/components/orders/ProductionDone";
+import { ProductionListView, BuyRemainingView } from "@/components/orders/ProductionListView";
+import { isProductionDone } from "@/lib/productionDone";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { WholesaleTotalOrderedView } from "@/components/orders/WholesaleTotalOrderedView";
 
@@ -241,7 +244,7 @@ function WholesaleOrderAccordionRow({
         >
           <div className="hidden min-h-5 w-full min-w-0 items-center text-xs sm:flex">
             <span className="w-36 shrink-0 border-r border-grid-line/70 pr-3 font-mono text-[11px] font-semibold tabular-nums">{day}<span className="block text-[10px] font-normal text-muted-foreground">{displayOrderWeek(order)}</span></span>
-            <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "text-[13px] font-bold tracking-tight" : "font-semibold"}`}><span className="flex min-w-0 items-center gap-2"><span className="truncate">{order.stores?.name || "Okänd butik"}</span><OrderNoteMarker order={order} className="shrink-0" /></span><span className="flex min-w-0 items-center gap-1.5 text-[10px] font-normal text-muted-foreground"><OrdererName name={order.created_by} className="truncate" />{placedAt && <span className="shrink-0 font-mono tabular-nums">· Lagd {placedAt}</span>}</span></span>
+            <span className={`min-w-[11rem] flex-1 truncate border-r border-grid-line/70 px-3 ${open ? "text-[13px] font-bold tracking-tight" : "font-semibold"}`}><span className="flex min-w-0 items-center gap-2"><span className="truncate">{order.stores?.name || "Okänd butik"}</span><OrderNoteMarker order={order} className="shrink-0" /><ProductionBadge order={order} className="shrink-0" /></span><span className="flex min-w-0 items-center gap-1.5 text-[10px] font-normal text-muted-foreground"><OrdererName name={order.created_by} className="truncate" />{placedAt && <span className="shrink-0 font-mono tabular-nums">· Lagd {placedAt}</span>}</span></span>
             <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 text-center font-mono text-[10px] tabular-nums text-muted-foreground">{orderLines} rader</span>
              <span className="flex w-32 shrink-0 items-center overflow-hidden border-r border-grid-line/70 px-2">{statusChip}</span>
              <span className="flex w-12 shrink-0 items-center justify-center border-r border-grid-line/70 px-2">
@@ -256,6 +259,7 @@ function WholesaleOrderAccordionRow({
               <ChevronDown className={`mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
             </div>
             <OrderNoteMarker order={order} className="text-[13px]" />
+            <ProductionBadge order={order} />
             <div className="flex flex-wrap items-center gap-1.5">{statusChip}<span className="font-mono text-[11px] text-muted-foreground">{day} · {orderLines} rader</span><OrdererName name={order.created_by} className="text-[11px] text-muted-foreground" /></div>
             {placedAt && <div className="font-mono text-[11px] tabular-nums text-muted-foreground">Lagd {placedAt}</div>}
             <div className="font-mono text-[11px] font-semibold tabular-nums">{formatOrderValue(order).toFixed(0)} kr</div>
@@ -283,6 +287,8 @@ function WholesaleOrderAccordionRow({
               <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => onClose(order.id)}><X className="mr-1 h-3.5 w-3.5" /> Stäng</Button>
             </div>
           </div>
+          <ProductionDoneControls order={order} />
+          <BuyRemainingSection order={order} />
           <WholesaleOrderDetail order={order} onClose={() => onClose(order.id)} stores={stores} />
         </div>
       )}
@@ -335,6 +341,7 @@ export default function WholesaleOrders() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
   const [storeFilter, setStoreFilter] = useState("alla");
+  const [productionFilter, setProductionFilter] = useState("alla");
   const [showHistory, setShowHistory] = useState(false);
 
   const [marked, setMarked] = useState<string[]>([]);
@@ -581,7 +588,8 @@ export default function WholesaleOrders() {
     const matchSearch = !needle || displayOrderWeek(o).toLowerCase().includes(needle) || (o.stores?.name || "").toLowerCase().includes(needle) || productsText.includes(needle);
     const matchStatus = statusFilter === "Alla" || o.status === statusFilter;
     const matchStore = storeFilter === "alla" || o.store_id === storeFilter;
-    return matchSearch && matchStatus && matchStore;
+    const matchProduction = productionFilter === "alla" || (productionFilter === "klar" ? isProductionDone(o) : !isProductionDone(o));
+    return matchSearch && matchStatus && matchStore && matchProduction;
   });
 
    const todayIso = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Stockholm" });
@@ -935,6 +943,8 @@ export default function WholesaleOrders() {
             <Eye className="h-3.5 w-3.5" /> Per order
             <span className="rounded-sm bg-muted px-1 font-mono text-[10px] tabular-nums text-muted-foreground data-[state=active]:bg-background/20">{activeOrders.length}</span>
           </TabsTrigger>
+          <TabsTrigger value="production" className="flex min-h-8 items-center gap-1.5 rounded-sm px-3 py-1 text-xs font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><ListChecks className="h-3.5 w-3.5" /> Produktionslista</TabsTrigger>
+          <TabsTrigger value="buy-remaining" className="flex min-h-8 items-center gap-1.5 rounded-sm px-3 py-1 text-xs font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><Truck className="h-3.5 w-3.5" /> Kvar att köpa in</TabsTrigger>
           <TabsTrigger value="total" className="flex min-h-8 items-center gap-1.5 rounded-sm px-3 py-1 text-xs font-semibold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><ListChecks className="h-3.5 w-3.5" /> Totalvy</TabsTrigger>
           <TabsTrigger value="delivered" className="flex min-h-8 items-center gap-1.5 rounded-sm px-3 py-1 text-xs text-muted-foreground transition-all data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><Truck className="h-3.5 w-3.5" /> Levererade <span className="rounded-sm bg-muted px-1 font-mono text-[10px] tabular-nums">{deliveredOrders.length}</span></TabsTrigger>
           <TabsTrigger value="archived" className="flex min-h-8 items-center gap-1.5 rounded-sm px-3 py-1 text-xs text-muted-foreground transition-all data-[state=active]:bg-primary data-[state=active]:font-semibold data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><Archive className="h-3.5 w-3.5" /> Arkiverade <span className="rounded-sm bg-muted px-1 font-mono text-[10px] tabular-nums">{archivedOrders.length}</span></TabsTrigger>
@@ -943,6 +953,8 @@ export default function WholesaleOrders() {
 
 
         {/* TOTAL VIEW — samma produktrolldown som Kundbeställningar */}
+        <TabsContent value="production"><ProductionListView orders={activeOrders} /></TabsContent>
+        <TabsContent value="buy-remaining"><BuyRemainingView orders={activeOrders} /></TabsContent>
         <TabsContent value="total">
           <WholesaleTotalOrderedView
             orders={orders}
@@ -970,6 +982,7 @@ export default function WholesaleOrders() {
               </div>
               <Select value={storeFilter} onValueChange={setStoreFilter}><SelectTrigger className="h-11 w-full text-sm sm:w-[200px]"><SelectValue placeholder="Alla butiker" /></SelectTrigger><SelectContent><SelectItem value="alla">Alla butiker</SelectItem>{retailStores.map((store: any) => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}</SelectContent></Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="h-11 w-full text-sm sm:w-[170px]"><SelectValue /></SelectTrigger><SelectContent>{["Alla", "Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map((status) => <SelectItem key={status} value={status}>{status === "Alla" ? "Alla statusar" : status}</SelectItem>)}</SelectContent></Select>
+              <Select value={productionFilter} onValueChange={setProductionFilter}><SelectTrigger className="h-11 w-full text-sm sm:w-[190px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="alla">Produktion: alla</SelectItem><SelectItem value="klar">Produktion klar</SelectItem><SelectItem value="ej">Produktion ej klar</SelectItem></SelectContent></Select>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2 border border-grid-line bg-card px-3 py-2.5 shadow-sm">
               <div className="flex items-center gap-2 text-xs text-muted-foreground"><Checkbox checked={allFilteredMarked} onCheckedChange={markAllFiltered} aria-label="Markera alla synliga ordrar" /><span>{filteredOrders.length} synliga ordrar</span>{marked.length > 0 && <Badge variant="secondary" className="rounded-sm">{marked.length} markerade</Badge>}</div>
