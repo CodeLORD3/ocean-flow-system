@@ -141,6 +141,13 @@
       "when": 1791364126233,
       "tag": "0019_production_done_marking",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791364963290,
+      "tag": "0020_admin_schedule_absence",
+      "breakpoints": true
     }
   ]
 }
