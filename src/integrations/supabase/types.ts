@@ -305,6 +305,8 @@ export type Database = {
         Row: {
           absence_type_id: string
           basis: string
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string
           created_by: string | null
           date_from: string | null
@@ -328,6 +330,8 @@ export type Database = {
         Insert: {
           absence_type_id: string
           basis?: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           created_by?: string | null
           date_from?: string | null
@@ -351,6 +355,8 @@ export type Database = {
         Update: {
           absence_type_id?: string
           basis?: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           created_by?: string | null
           date_from?: string | null
@@ -1173,6 +1179,7 @@ export type Database = {
       availability: {
         Row: {
           created_at: string
+          created_by: string | null
           date: string | null
           employee_id: string
           from_time: string
@@ -1185,6 +1192,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           date?: string | null
           employee_id: string
           from_time: string
@@ -1197,6 +1205,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           date?: string | null
           employee_id?: string
           from_time?: string
@@ -24692,6 +24701,36 @@ export type Database = {
         Args: { _dry_run?: boolean }
         Returns: Json
       }
+      admin_cancel_absence: {
+        Args: { _reason?: string; _request_id: string }
+        Returns: Json
+      }
+      admin_end_sick_absence: {
+        Args: { _last_day?: string; _request_id: string }
+        Returns: Json
+      }
+      admin_register_absence: {
+        Args: {
+          _absence_type_id: string
+          _conflict_action?: string
+          _employee_id: string
+          _end_date?: string
+          _extent_pct?: number
+          _note?: string
+          _start_date: string
+        }
+        Returns: Json
+      }
+      admin_update_absence: {
+        Args: {
+          _end_date: string
+          _extent_pct: number
+          _note?: string
+          _request_id: string
+          _start_date: string
+        }
+        Returns: Json
+      }
       ai_trigger_fire: {
         Args: { _event: string; _id: string; _table: string }
         Returns: undefined
@@ -25116,6 +25155,7 @@ export type Database = {
       is_auction_user: { Args: never; Returns: boolean }
       is_flow_member: { Args: never; Returns: boolean }
       is_flow_owner: { Args: never; Returns: boolean }
+      is_hr_admin: { Args: never; Returns: boolean }
       is_investor: { Args: never; Returns: boolean }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }

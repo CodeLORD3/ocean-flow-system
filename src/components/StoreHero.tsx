@@ -59,7 +59,7 @@ export function StoreHero() {
   const url = cover?.url || store?.logo_url || null;
 
   const access = staff?.portal_access ?? [];
-  const isAdmin = access.includes("admin");
+  const isAdmin = access.includes("admin") || Boolean(staff?.is_platform_admin);
   const allowedIds = new Set<string>([
     ...(staff?.allowed_store_ids ?? []),
     ...(staff?.allowed_store_id ? [staff.allowed_store_id] : []),

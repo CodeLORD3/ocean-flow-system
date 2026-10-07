@@ -57,7 +57,7 @@ export default function StaffProfile() {
   const [tab, setTab] = useState<TabKey>("uppgifter");
 
   const portalAccess = (staff?.portal_access ?? []) as string[];
-  const isAdmin = portalAccess.includes("admin");
+  const isAdmin = portalAccess.includes("admin") || Boolean(staff?.is_platform_admin);
 
   /** Arbetsplatser användaren har behörighet att stämpla in på. */
   const allowedStores = useMemo(() => {

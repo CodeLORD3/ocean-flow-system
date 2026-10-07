@@ -14,6 +14,9 @@ import { useEmployees, useAllEmployments } from "@/hooks/useEmployees";
 import { useAbsenceRequests, useAbsenceTypes, useAbsenceConflicts, useDecideAbsenceRequest } from "@/hooks/useAbsence";
 import { VacationYearView } from "@/components/hr/VacationYearView";
 import { dateKey, DAY_NAMES, weekDates } from "@/lib/schedule";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import { staffLevelOf } from "@/lib/staffModuleAccess";
+import { RegisterAbsenceDialog } from "@/components/schedule/RegisterAbsenceDialog";
 
 const swedishDate = (value: string) => new Intl.DateTimeFormat("sv-SE", { day: "numeric", month: "short" }).format(new Date(`${value}T12:00:00`));
 const monthKey = (value: string) => value.slice(0, 7);
@@ -35,6 +38,9 @@ export default function HRControlCenter() {
   const [rejectReason, setRejectReason] = useState("");
   const [activeTab, setActiveTab] = useState("absence");
   const [conflictAction, setConflictAction] = useState<"open_shift" | "cancel_shift">("open_shift");
+  const { staff: me } = useStaffAuth();
+  const isHrAdmin = staffLevelOf(me) === "admin";
+  const [registerOpen, setRegisterOpen] = useState(false);
 
   const absenceRequests = useAbsenceRequests(undefined, activeStoreId || null);
   const absenceTypes = useAbsenceTypes();
@@ -197,7 +203,8 @@ export default function HRControlCenter() {
         <TabsContent value="absence" className="mt-5">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
             <section className="space-y-2">
-              <div className="flex items-center justify-between"><SectionLabel>Äldst först · idag och imorgon överst</SectionLabel><StatusLabel tone={pending.length ? "progress" : "ok"}>{pending.length} väntar</StatusLabel></div>
+              <div className="flex flex-wrap items-center justify-between gap-2"><SectionLabel>Äldst först · idag och imorgon överst</SectionLabel><div className="flex flex-wrap items-center gap-2">{isHrAdmin && <IndustryButton variant="secondary" size="touch" onClick={() => setRegisterOpen(true)}>Registrera frånvaro</IndustryButton>}<StatusLabel tone={pending.length ? "progress" : "ok"}>{pending.length} väntar</StatusLabel></div></div>
+              {isHrAdmin && <RegisterAbsenceDialog open={registerOpen} onOpenChange={setRegisterOpen} />}
                {absenceRequests.isLoading ? <p className="ind-muted text-sm">Läser frånvaro…</p> : pending.length === 0 ? <IndustryRow edge="neutral"><p className="ind-muted text-sm">Inga ansökningar att behandla.</p></IndustryRow> : [...pending].sort((a, b) => { const today = dateKey(new Date()); const aSoon = a.start_date <= today ? 0 : a.start_date === dateKey(new Date(Date.now() + 86_400_000)) ? 1 : 2; const bSoon = b.start_date <= today ? 0 : b.start_date === dateKey(new Date(Date.now() + 86_400_000)) ? 1 : 2; return aSoon - bSoon || a.created_at.localeCompare(b.created_at); }).map((request) => <IndustryRow key={request.id} edge="accent-2" className="flex-wrap gap-3"><div className="min-w-[220px] flex-1"><p className="font-medium">{employeeName.get(request.employee_id) ?? "Okänd medarbetare"}</p><p className="ind-muted text-sm">{typeName.get(request.absence_type_id) ?? "Frånvaro"} · {swedishDate(request.start_date)}{request.end_date ? ` – ${swedishDate(request.end_date)}` : ""} · {request.extent_pct}%</p>{request.note && <p className="ind-muted mt-1 text-xs">{request.note}</p>}</div><div className="flex flex-wrap gap-2"><IndustryButton variant="primary" size="touch" onClick={() => { setRejectReason(""); setConflictAction("open_shift"); setAbsenceReviewId(request.id); }} disabled={decideAbsence.isPending}><Check className="h-4 w-4" /> Granska & besluta</IndustryButton></div></IndustryRow>)}
             </section>
             <SideQueue label="Beslutsstöd" empty="Välj en ansökan för att se krockar och konsekvenser.">

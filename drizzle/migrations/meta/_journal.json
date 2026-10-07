@@ -127,6 +127,13 @@
       "when": 1791319811073,
       "tag": "0017_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791363195953,
+      "tag": "0018_hr_admin_absence_availability",
+      "breakpoints": true
     }
   ]
 }

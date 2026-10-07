@@ -47,9 +47,10 @@ export default function PortalChooser() {
       ...(staff?.allowed_store_ids ?? []),
       ...(staff?.allowed_store_id ? [staff.allowed_store_id] : []),
     ]);
-    // No explicit restriction = access to all stores
+    // Plattformsadmin är aldrig butikslåst. Inget explicit urval = alla butiker.
+    if (staff?.is_platform_admin) return shopsOnly;
     return ids.size === 0 ? shopsOnly : shopsOnly.filter((s) => ids.has(s.id));
-  }, [staff?.allowed_store_ids, staff?.allowed_store_id, stores]);
+  }, [staff?.allowed_store_ids, staff?.allowed_store_id, staff?.is_platform_admin, stores]);
 
   // If only one portal, jump straight in
   useEffect(() => {

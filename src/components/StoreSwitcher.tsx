@@ -23,13 +23,13 @@ export function useAllowedStores() {
   return useMemo(() => {
     const access = (staff?.portal_access as string[] | undefined) ?? [];
     // Admin har full åtkomst. Saknas butiksbehörighet finns inga butiker att byta till.
-    if (!access.includes("admin") && !access.includes("shop")) return [];
+    if (!access.includes("admin") && !access.includes("shop") && !(staff as any)?.is_platform_admin) return [];
     const shopsOnly = stores.filter((s: any) => !s.is_wholesale);
     const ids = new Set<string>([
       ...((staff?.allowed_store_ids as string[] | undefined) ?? []),
       ...((staff as any)?.allowed_store_id ? [(staff as any).allowed_store_id as string] : []),
     ]);
-    if (access.includes("admin")) return shopsOnly;
+    if (access.includes("admin") || (staff as any)?.is_platform_admin) return shopsOnly;
     return ids.size === 0 ? shopsOnly : shopsOnly.filter((s: any) => ids.has(s.id));
   }, [staff, stores]);
 }
