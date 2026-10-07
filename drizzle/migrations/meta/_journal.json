@@ -134,6 +134,13 @@
       "when": 1791363195953,
       "tag": "0018_hr_admin_absence_availability",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791364126233,
+      "tag": "0019_production_done_marking",
+      "breakpoints": true
     }
   ]
 }

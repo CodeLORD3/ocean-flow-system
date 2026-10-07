@@ -14936,6 +14936,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_bivalve: boolean
+          is_production_item: boolean
           latin_name: string | null
           may_contain: string[]
           name: string
@@ -14989,6 +14990,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_bivalve?: boolean
+          is_production_item?: boolean
           latin_name?: string | null
           may_contain?: string[]
           name: string
@@ -15042,6 +15044,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_bivalve?: boolean
+          is_production_item?: boolean
           latin_name?: string | null
           may_contain?: string[]
           name?: string
@@ -16499,6 +16502,7 @@ export type Database = {
           priority_set_at: string | null
           priority_set_by: string | null
           product_id: string
+          production_missing: boolean
           quantity_delivered: number | null
           quantity_ordered: number
           shop_order_id: string
@@ -16520,6 +16524,7 @@ export type Database = {
           priority_set_at?: string | null
           priority_set_by?: string | null
           product_id: string
+          production_missing?: boolean
           quantity_delivered?: number | null
           quantity_ordered?: number
           shop_order_id: string
@@ -16541,6 +16546,7 @@ export type Database = {
           priority_set_at?: string | null
           priority_set_by?: string | null
           product_id?: string
+          production_missing?: boolean
           quantity_delivered?: number | null
           quantity_ordered?: number
           shop_order_id?: string
@@ -16578,6 +16584,12 @@ export type Database = {
           order_week: string
           packer_name: string | null
           priority: number | null
+          production_changed_after_done: boolean
+          production_done_at: string | null
+          production_done_by: string | null
+          production_done_by_name: string | null
+          production_done_snapshot: Json | null
+          production_missing_count: number
           status: string
           store_id: string
           updated_at: string
@@ -16596,6 +16608,12 @@ export type Database = {
           order_week: string
           packer_name?: string | null
           priority?: number | null
+          production_changed_after_done?: boolean
+          production_done_at?: string | null
+          production_done_by?: string | null
+          production_done_by_name?: string | null
+          production_done_snapshot?: Json | null
+          production_missing_count?: number
           status?: string
           store_id: string
           updated_at?: string
@@ -16614,6 +16632,12 @@ export type Database = {
           order_week?: string
           packer_name?: string | null
           priority?: number | null
+          production_changed_after_done?: boolean
+          production_done_at?: string | null
+          production_done_by?: string | null
+          production_done_by_name?: string | null
+          production_done_snapshot?: Json | null
+          production_missing_count?: number
           status?: string
           store_id?: string
           updated_at?: string
