@@ -25,16 +25,23 @@ const INVOICE_STATUSES = [
 
 export default function Invoices() {
   const { data: orders = [], isLoading } = useShopOrders();
+  const { data: allStores = [] } = useStores();
   const { toast } = useToast();
   const qc = useQueryClient();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [printOrder, setPrintOrder] = useState<any>(null);
 
+  // Endast Stockholm (de-no1) och Schweiz (fsab-ch) — Göteborgsbutikerna visas inte.
+  const invoiceStoreIds = useMemo(
+    () => new Set(allStores.filter((s: any) => ["de-no1", "fsab-ch"].includes(s.legal_entity_id)).map((s: any) => s.id)),
+    [allStores],
+  );
+
   const invoiceOrders = useMemo(() => {
     const packedStatuses = ["Packad", "Skickad", "Levererad", "Klar / Levererad"];
-    return orders.filter((o: any) => packedStatuses.includes(o.status));
-  }, [orders]);
+    return orders.filter((o: any) => packedStatuses.includes(o.status) && invoiceStoreIds.has(o.store_id));
+  }, [orders, invoiceStoreIds]);
 
   const handleInvoiceStatusChange = async (orderId: string, newStatus: string) => {
     setUpdatingId(orderId);
