@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useShopOrders } from "@/hooks/useShopOrders";
+import { useStores } from "@/hooks/useStores";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import DeliveryNote from "@/components/DeliveryNote";
