@@ -169,6 +169,13 @@
       "when": 1791382289583,
       "tag": "0023_perform_lot_transformation",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791663866493,
+      "tag": "0024_fortnox_vat_category_fallback",
+      "breakpoints": true
     }
   ]
 }
