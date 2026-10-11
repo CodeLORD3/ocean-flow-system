@@ -38,7 +38,12 @@ export function useCreateIncomingDelivery() {
       lines: {
         product_id: string;
         quantity: number;
-        unit_cost: number;
+        /** Tomt = preliminärt pris saknas än; slutpris sätts senare. */
+        unit_cost: number | null;
+        /** Antal kolli enligt mottagningsjournalen. */
+        colli_count?: number | null;
+        /** Radnummer i mottagningsjournalen. */
+        journal_row?: string | null;
         batch_number?: string;
         best_before?: string;
         redskapskategori?: string | null;
@@ -63,9 +68,10 @@ export function useCreateIncomingDelivery() {
         throw new Error(`Växelkurs ${sourceCurrency}→${bookCurrency} saknas för inleveransen.`);
       }
       const toBook = (amount: number) => Number((amount * fxRate).toFixed(4));
+      const toBookOrNull = (amount: number | null) => (amount == null ? null : toBook(amount));
 
       const totalWeight = params.lines.reduce((s, l) => s + l.quantity, 0);
-      const totalCostSource = params.lines.reduce((s, l) => s + l.quantity * l.unit_cost, 0);
+      const totalCostSource = params.lines.reduce((s, l) => s + l.quantity * (l.unit_cost ?? 0), 0);
       const totalCost = toBook(totalCostSource);
 
       const { data: del, error } = await supabase.from("incoming_deliveries").insert({
@@ -94,6 +100,7 @@ export function useCreateIncomingDelivery() {
       // Ett parti per inleveransrad — grunden för spårbarhet
       const staffId = await currentStaffId();
       const movements: StockMovementInput[] = [];
+      const createdLots: { lotId: string; quantity: number; colli: number }[] = [];
 
       for (let i = 0; i < params.lines.length; i++) {
         const l = params.lines[i];
@@ -118,7 +125,10 @@ export function useCreateIncomingDelivery() {
             is_thawed: l.upptinad ?? false,
             best_before: l.best_before || null,
             quantity_kg: l.quantity,
-            unit_cost: toBook(l.unit_cost),
+            unit_cost: toBookOrNull(l.unit_cost),
+            preliminary_unit_cost: toBookOrNull(l.unit_cost),
+            price_status: "preliminar",
+            colli_count: l.colli_count ?? null,
             unit_cost_source: crossCurrency ? l.unit_cost : null,
             source_currency: crossCurrency ? sourceCurrency : null,
             fx_rate: crossCurrency ? fxRate : null,
@@ -133,7 +143,9 @@ export function useCreateIncomingDelivery() {
           delivery_id: del.id,
           product_id: l.product_id,
           quantity: l.quantity,
-          unit_cost: toBook(l.unit_cost),
+          unit_cost: toBookOrNull(l.unit_cost),
+          colli_count: l.colli_count ?? null,
+          journal_row: l.journal_row || null,
           unit_cost_source: crossCurrency ? l.unit_cost : null,
           source_currency: crossCurrency ? sourceCurrency : null,
           fx_rate: crossCurrency ? fxRate : null,
@@ -146,6 +158,7 @@ export function useCreateIncomingDelivery() {
           location_id: targetLocationId,
         });
         if (lineErr) throw lineErr;
+        createdLots.push({ lotId: lot!.id, quantity: l.quantity, colli: Math.max(1, Number(l.colli_count) || 1) });
 
         if (targetLocationId && l.quantity > 0) {
           movements.push({
@@ -154,7 +167,7 @@ export function useCreateIncomingDelivery() {
             lotId: lot!.id,
             quantityKg: l.quantity,
             movementType: "inleverans",
-            unitCost: toBook(l.unit_cost),
+            unitCost: toBookOrNull(l.unit_cost),
             unitCostSource: crossCurrency ? l.unit_cost : null,
             sourceCurrency: crossCurrency ? sourceCurrency : null,
             fxRate: crossCurrency ? fxRate : null,
@@ -179,7 +192,7 @@ export function useCreateIncomingDelivery() {
         entity_type: "incoming_delivery",
         entity_id: del.id,
       });
-      return del;
+      return { ...del, createdLots };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["incoming_deliveries"] });

@@ -8223,11 +8223,13 @@ export type Database = {
         Row: {
           batch_number: string | null
           best_before: string | null
+          colli_count: number | null
           delivery_id: string
           faktiskt_fangstomrade: string | null
           final_price_per_kg: number | null
           fx_rate: number | null
           id: string
+          journal_row: string | null
           location_id: string | null
           lot_id: string | null
           notes: string | null
@@ -8245,11 +8247,13 @@ export type Database = {
         Insert: {
           batch_number?: string | null
           best_before?: string | null
+          colli_count?: number | null
           delivery_id: string
           faktiskt_fangstomrade?: string | null
           final_price_per_kg?: number | null
           fx_rate?: number | null
           id?: string
+          journal_row?: string | null
           location_id?: string | null
           lot_id?: string | null
           notes?: string | null
@@ -8267,11 +8271,13 @@ export type Database = {
         Update: {
           batch_number?: string | null
           best_before?: string | null
+          colli_count?: number | null
           delivery_id?: string
           faktiskt_fangstomrade?: string | null
           final_price_per_kg?: number | null
           fx_rate?: number | null
           id?: string
+          journal_row?: string | null
           location_id?: string | null
           lot_id?: string | null
           notes?: string | null
@@ -9203,6 +9209,7 @@ export type Database = {
           price_finalized_at: string | null
           price_finalized_by: string | null
           price_status: string
+          produced_on: string | null
           product_id: string | null
           production_area_classification: string | null
           production_method: string | null
@@ -9283,6 +9290,7 @@ export type Database = {
           price_finalized_at?: string | null
           price_finalized_by?: string | null
           price_status?: string
+          produced_on?: string | null
           product_id?: string | null
           production_area_classification?: string | null
           production_method?: string | null
@@ -9363,6 +9371,7 @@ export type Database = {
           price_finalized_at?: string | null
           price_finalized_by?: string | null
           price_status?: string
+          produced_on?: string | null
           product_id?: string | null
           production_area_classification?: string | null
           production_method?: string | null
