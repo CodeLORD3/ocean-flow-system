@@ -483,7 +483,7 @@ export default function CustomerOrders() {
             size="lg"
             className="h-12 px-5 text-base"
             disabled={archiveOrders.isPending}
-            onClick={() => {
+            onClick={async () => {
               const n = marked.length;
               if (!await confirmDialog(isArchiveView ? `Återställa ${n} beställning${n === 1 ? "" : "ar"}?` : `Arkivera ${n} beställning${n === 1 ? "" : "ar"}? De försvinner från dagens lista.`)) return;
               archiveOrders.mutate(
@@ -513,7 +513,7 @@ export default function CustomerOrders() {
               type="date"
               className="h-10 w-[9.5rem] text-sm"
               disabled={moveOrders.isPending}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const v = e.target.value;
                 if (!v) return;
                 if (await confirmDialog(`Flytta ${marked.length} beställning${marked.length === 1 ? "" : "ar"} till ${dayLabel(v)} (${v})?`)) moveTo(v, marked);
@@ -533,7 +533,7 @@ export default function CustomerOrders() {
               type="date"
               className="h-10 w-[9.5rem] text-sm"
               disabled={duplicateOrders.isPending}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const v = e.target.value;
                 if (!v) return;
                 if (await confirmDialog(`Kopiera ${marked.length} beställning${marked.length === 1 ? "" : "ar"} till ${dayLabel(v)} (${v})? Originalen ligger kvar.`)) copyTo(v);

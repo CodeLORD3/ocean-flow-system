@@ -104,7 +104,7 @@ function GradeRow({ grade }: { grade: SizeGrade }) {
             variant="ghost"
             className="h-7 w-7"
             title="Ta bort klassen"
-            onClick={() => {
+            onClick={async () => {
               if (!await confirmDialog(`Ta bort klass ${draft.grade_no}?`)) return;
               del.mutate(grade.id, {
                 onError: (e: any) => toast({ title: "Fel", description: e.message, variant: "destructive" }),

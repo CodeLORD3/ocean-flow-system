@@ -492,7 +492,7 @@ export default function InvestorList() {
               <Pencil className="h-3 w-3" />
             </Button>
             <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-              onClick={() => { if (await confirmDialog("Delete this investor?")) deleteMutation.mutate(inv.id); }}>
+              onClick={async () => { if (await confirmDialog("Delete this investor?")) deleteMutation.mutate(inv.id); }}>
               <Trash2 className="h-3 w-3" />
             </Button>
           </TableCell>

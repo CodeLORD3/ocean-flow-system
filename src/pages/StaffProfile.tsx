@@ -590,7 +590,7 @@ function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string
   const { data: items = [], isLoading } = useMyWork(staffId);
   const removeTask = useDeleteTask();
 
-  const deleteRow = (it: MyWorkItem) => {
+  const deleteRow = async (it: MyWorkItem) => {
     if (!await confirmDialog(`Ta bort uppgiften "${it.task}"?`)) return;
     removeTask.mutate(it.id);
   };

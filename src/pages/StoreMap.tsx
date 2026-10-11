@@ -880,7 +880,7 @@ export default function StoreMap({
                       <Button
                         variant="outline"
                         className="h-11 gap-1 text-xs text-destructive"
-                        onClick={() => {
+                        onClick={async () => {
                           if (!await confirmDialog(`Ta bort ${selectedZone.name}?`)) return;
                           deleteZone.mutate(selectedZone.id, {
                             onSuccess: () => {
@@ -922,7 +922,7 @@ export default function StoreMap({
                     <Button
                       variant="outline"
                       className="h-12 text-sm"
-                      onClick={() => {
+                      onClick={async () => {
                         if (!await confirmDialog("Ta bort det nya området?")) return;
                         deleteZone.mutate(draftZoneId, {
                           onSuccess: () => {
@@ -1245,7 +1245,7 @@ export default function StoreMap({
                             variant="ghost"
                             className="h-6 px-1.5 text-[10px] text-destructive"
                             title="Ta bort området"
-                            onClick={() => {
+                            onClick={async () => {
                               if (
                                 !await confirmDialog(
                                   `Ta bort ${z.name}? Uppgifter och bilder som hör till ytan tappar sin plats i kartan.`,

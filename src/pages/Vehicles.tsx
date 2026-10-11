@@ -467,7 +467,7 @@ function AssetSection({
                         size="sm"
                         variant="ghost"
                         className="opacity-0 group-hover:opacity-100"
-                        onClick={() => {
+                        onClick={async () => {
                           if (await confirmDialog(deleteConfirmLabel(v.reg_number))) deleteItem.mutate(v.id);
                         }}
                       >

@@ -1524,7 +1524,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                             size="icon"
                             variant="ghost"
                             className="h-6 w-6 shrink-0 text-destructive"
-                            onClick={() => {
+                            onClick={async () => {
                               if (await confirmDialog("Ta bort pappret?")) del.mutate(p.id);
                             }}
                           >
@@ -1559,7 +1559,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   setCompareKey(null);
                   openEdit(p);
                 }}
-                onDelete={() => {
+                onDelete={async () => {
                   if (!await confirmDialog("Ta bort det här pappret?")) return;
                   del.mutate(p.id);
                   if (compareGroup.length <= 2) setCompareKey(null);

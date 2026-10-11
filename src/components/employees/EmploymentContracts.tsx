@@ -185,14 +185,14 @@ function ContractEditor({ contract, templateSections, onClose }: { contract: Emp
           <Button size="sm" variant="outline" onClick={() => run("preview")} disabled={action.isPending}><Eye className="mr-1 h-4 w-4" /> Förhandsvisa PDF</Button>
           {!locked && <Button size="sm" variant="outline" onClick={save} disabled={!dirty || update.isPending}>Spara</Button>}
           {!locked && (
-            <Button size="sm" onClick={() => { if (await confirmDialog("Skicka avtalet för underskrift? Det går inte att ändra efteråt.")) run("send"); }} disabled={action.isPending}>
+            <Button size="sm" onClick={async () => { if (await confirmDialog("Skicka avtalet för underskrift? Det går inte att ändra efteråt.")) run("send"); }} disabled={action.isPending}>
               <Send className="mr-1 h-4 w-4" /> Skicka för underskrift
             </Button>
           )}
           {(contract.status === "skickat" || contract.status === "delvis_signerat") && (
             <>
               <Button size="sm" variant="outline" onClick={() => run("refresh")} disabled={action.isPending}><RefreshCw className="mr-1 h-4 w-4" /> Uppdatera status</Button>
-              <Button size="sm" variant="destructive" onClick={() => { if (await confirmDialog("Avbryta avtalet?")) run("cancel"); }} disabled={action.isPending}>Avbryt avtalet</Button>
+              <Button size="sm" variant="destructive" onClick={async () => { if (await confirmDialog("Avbryta avtalet?")) run("cancel"); }} disabled={action.isPending}>Avbryt avtalet</Button>
             </>
           )}
           {!locked && (

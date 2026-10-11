@@ -165,7 +165,7 @@ export default function SavedPriceLists({ allStores = false }: Props) {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-destructive"
-                            onClick={() => {
+                            onClick={async () => {
                               if (await confirmDialog("Ta bort prislistan?")) deleteList.mutate(l.id);
                             }}
                           >

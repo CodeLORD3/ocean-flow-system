@@ -2163,7 +2163,7 @@ export default function PurchaseReporting() {
                                 : "Radera följesedeln"
                             }
                             disabled={Boolean((r as any).posted_at)}
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
                               if ((r as any).posted_at) {
                                 toast({

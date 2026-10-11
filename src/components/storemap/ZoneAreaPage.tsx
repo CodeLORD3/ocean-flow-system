@@ -220,7 +220,7 @@ export function ZoneAreaPage({
               size="sm"
               variant="outline"
               className="h-9 gap-1.5 text-destructive"
-              onClick={() => {
+              onClick={async () => {
                 if (!await confirmDialog(`Ta bort ${zone.name}?`)) return;
                 onDeleteZone(zone.id);
               }}
