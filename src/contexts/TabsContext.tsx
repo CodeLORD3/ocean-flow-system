@@ -44,7 +44,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/settings": "Inställningar",
   "/shop-reports": "Butiksrapporter",
   "/schedule": "Kalender",
-  "/map-settings": "Map Settings",
+  "/map-settings": "Kartinställningar",
   "/meetings": "Mötesprotokoll",
   "/landing-settings": "Inloggningssida",
   "/chat": "Chatt",
