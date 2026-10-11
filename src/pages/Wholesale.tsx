@@ -21,6 +21,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+import { printLotLabelsByIds } from "@/lib/lotQrLabelPdf";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useProducts, useUpdateProduct } from "@/hooks/useProducts";
