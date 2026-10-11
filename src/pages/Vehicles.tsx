@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -467,7 +468,7 @@ function AssetSection({
                         variant="ghost"
                         className="opacity-0 group-hover:opacity-100"
                         onClick={() => {
-                          if (confirm(deleteConfirmLabel(v.reg_number))) deleteItem.mutate(v.id);
+                          if (await confirmDialog(deleteConfirmLabel(v.reg_number))) deleteItem.mutate(v.id);
                         }}
                       >
                         <Trash2 className="h-3.5 w-3.5 text-destructive" />

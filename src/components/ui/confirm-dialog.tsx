@@ -28,7 +28,10 @@ let push: ((p: Pending) => void) | null = null;
  * Ersätter webbläsarens confirm(): `if (!(await confirmDialog({ title: "Ta bort?" }))) return;`
  */
 export function confirmDialog(opts: ConfirmOptions | string): Promise<boolean> {
-  const o = typeof opts === "string" ? { title: opts } : opts;
+  const o: ConfirmOptions =
+    typeof opts === "string"
+      ? { title: opts, destructive: /^(Ta bort|Kassera|Radera|Avbryt)/i.test(opts) }
+      : opts;
   return new Promise((resolve) => {
     if (!push) return resolve(window.confirm(o.title));
     push({ ...o, resolve });

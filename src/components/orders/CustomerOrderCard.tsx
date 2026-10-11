@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { SendToStoreButton, useInternalStore } from "@/components/orders/SendToStoreButton";
 import { sortLinesByCategory } from "@/lib/productCategories";
 import { OrdererName } from "@/components/orders/OrdererName";
@@ -133,7 +134,7 @@ export function CustomerOrderCard({
     const qty = Number(String(weights[line.id] ?? "").replace(",", "."));
     if (!qty) return toast.error("Ange vägd vikt.");
     if (weightDeviates(Number(line.quantity_ordered), qty)) {
-      const ok = window.confirm(
+      const ok = await confirmDialog(
         `Vägd vikt ${nf(qty, 3)} avviker mer än 20 % från beställda ${nf(line.quantity_ordered, 3)}. Bekräfta att det är rätt.`,
       );
       if (!ok) return;
@@ -485,7 +486,7 @@ export function CustomerOrderCard({
                       variant="destructive"
                       className="h-12"
                       onClick={async () => {
-                        if (!window.confirm("Kassera varorna som svinn med orsak ohämtad order?")) return;
+                        if (!await confirmDialog("Kassera varorna som svinn med orsak ohämtad order?")) return;
                         await cancelOrder.mutateAsync({
                           order,
                           reason: "Ohämtad order",

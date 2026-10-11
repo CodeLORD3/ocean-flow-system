@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTabs } from "@/contexts/TabsContext";
@@ -880,7 +881,7 @@ export default function StoreMap({
                         variant="outline"
                         className="h-11 gap-1 text-xs text-destructive"
                         onClick={() => {
-                          if (!confirm(`Ta bort ${selectedZone.name}?`)) return;
+                          if (!await confirmDialog(`Ta bort ${selectedZone.name}?`)) return;
                           deleteZone.mutate(selectedZone.id, {
                             onSuccess: () => {
                               setSelected(null);
@@ -922,7 +923,7 @@ export default function StoreMap({
                       variant="outline"
                       className="h-12 text-sm"
                       onClick={() => {
-                        if (!confirm("Ta bort det nya området?")) return;
+                        if (!await confirmDialog("Ta bort det nya området?")) return;
                         deleteZone.mutate(draftZoneId, {
                           onSuccess: () => {
                             setDraftZoneId(null);
@@ -1246,7 +1247,7 @@ export default function StoreMap({
                             title="Ta bort området"
                             onClick={() => {
                               if (
-                                !window.confirm(
+                                !await confirmDialog(
                                   `Ta bort ${z.name}? Uppgifter och bilder som hör till ytan tappar sin plats i kartan.`,
                                 )
                               )

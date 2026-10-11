@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { markOrderLinesBehandlas } from "@/lib/orderStatusSync";
 import { recordMovement } from "@/lib/stockLedger";
@@ -1559,7 +1560,7 @@ export default function PurchaseReporting() {
           .limit(1)
           .maybeSingle();
         if (sameFile) {
-          const proceed = window.confirm(
+          const proceed = await confirmDialog(
             `Filen är redan inläst som "${(sameFile as any).file_name}" (${(sameFile as any).report_date}). Läsa in igen?`,
           );
           if (!proceed) return;
@@ -2174,7 +2175,7 @@ export default function PurchaseReporting() {
                                 return;
                               }
                               if (
-                                window.confirm(
+                                await confirmDialog(
                                   `Radera ${r.display_name || r.file_name}? Raderna försvinner. Åtgärden kan inte ångras.`,
                                 )
                               ) {

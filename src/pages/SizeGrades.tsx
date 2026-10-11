@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -104,7 +105,7 @@ function GradeRow({ grade }: { grade: SizeGrade }) {
             className="h-7 w-7"
             title="Ta bort klassen"
             onClick={() => {
-              if (!confirm(`Ta bort klass ${draft.grade_no}?`)) return;
+              if (!await confirmDialog(`Ta bort klass ${draft.grade_no}?`)) return;
               del.mutate(grade.id, {
                 onError: (e: any) => toast({ title: "Fel", description: e.message, variant: "destructive" }),
               });

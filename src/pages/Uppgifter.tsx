@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { Crosshair, Plus, Trash2 } from "lucide-react";
@@ -258,7 +259,7 @@ export default function Uppgifter() {
 
 
   const deleteTask = async (task: Task) => {
-    if (!window.confirm(`Ta bort uppgiften "${task.task}" från ${day}?`)) return;
+    if (!await confirmDialog(`Ta bort uppgiften "${task.task}" från ${day}?`)) return;
     try {
       await removeTask.mutateAsync(task.id);
       toast({ title: "Uppgiften togs bort" });
@@ -268,7 +269,7 @@ export default function Uppgifter() {
   };
 
   const deleteStandard = async (id: string, name: string) => {
-    if (!window.confirm(`Ta bort standarduppgiften "${name}"? Den slutar då skapas nya dagar.`)) return;
+    if (!await confirmDialog(`Ta bort standarduppgiften "${name}"? Den slutar då skapas nya dagar.`)) return;
     try {
       await updateStandard.mutateAsync({ id, active: false });
       toast({ title: "Standarduppgiften togs bort" });
@@ -367,7 +368,7 @@ export default function Uppgifter() {
   const deleteSelected = async () => {
     if (selected.length === 0) return;
     const many = selected.length === 1 ? "uppgiften" : `${selected.length} uppgifter`;
-    if (!window.confirm(`Ta bort ${many}? Det du inte har markerat behålls precis som det är.`)) return;
+    if (!await confirmDialog(`Ta bort ${many}? Det du inte har markerat behålls precis som det är.`)) return;
     let ok = 0;
     for (const id of selected) {
       try {

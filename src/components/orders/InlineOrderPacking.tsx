@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { SendToStoreButton, useInternalStore } from "@/components/orders/SendToStoreButton";
 import { sortLinesByCategory } from "@/lib/productCategories";
 import { useEffect, useMemo, useState } from "react";
@@ -137,7 +138,7 @@ export function InlineOrderPacking({
     const qty = Number(String(weights[line.id] ?? "").replace(",", "."));
     if (!qty) return toast.error("Ange vägd vikt.");
     if (weightDeviates(Number(line.quantity_ordered), qty)) {
-      const ok = window.confirm(
+      const ok = await confirmDialog(
         `Vägd vikt ${nf(qty, 3)} avviker mer än 20 % från beställda ${nf(line.quantity_ordered, 3)}. Bekräfta att det är rätt.`,
       );
       if (!ok) return;

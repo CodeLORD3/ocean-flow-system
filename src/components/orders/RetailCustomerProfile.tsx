@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useMemo, useRef, useState } from "react";
 import { prepareUpload, COMPRESS_PHOTO, COMPRESS_AVATAR } from "@/lib/imageCompress";
 import { toast } from "sonner";
@@ -432,7 +433,7 @@ export function RetailCustomerProfile({
                     className="h-10 text-destructive"
                     onClick={async () => {
                       if (
-                        !window.confirm(
+                        !await confirmDialog(
                           "Radera kundens personuppgifter? Ordrarna behålls anonymiserade för bokföringen.",
                         )
                       )

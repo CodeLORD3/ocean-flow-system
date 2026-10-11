@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import {
@@ -1524,7 +1525,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                             variant="ghost"
                             className="h-6 w-6 shrink-0 text-destructive"
                             onClick={() => {
-                              if (confirm("Ta bort pappret?")) del.mutate(p.id);
+                              if (await confirmDialog("Ta bort pappret?")) del.mutate(p.id);
                             }}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -1559,7 +1560,7 @@ export function ImportantPapers({ storeId }: { storeId?: string | null }) {
                   openEdit(p);
                 }}
                 onDelete={() => {
-                  if (!confirm("Ta bort det här pappret?")) return;
+                  if (!await confirmDialog("Ta bort det här pappret?")) return;
                   del.mutate(p.id);
                   if (compareGroup.length <= 2) setCompareKey(null);
                 }}

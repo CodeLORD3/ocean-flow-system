@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { markOrderLinesBehandlas } from "@/lib/orderStatusSync";
 import { supabase } from "@/integrations/supabase/client";
@@ -228,7 +229,7 @@ function EditableRow({
         />
       </TableCell>
       <TableCell className="py-0.5 px-0 w-6">
-        <Button variant="ghost" size="icon" className="h-5 w-5" aria-label="Ta bort rad" onClick={() => { if (window.confirm(`Ta bort raden "${line.product_name ?? ""}"?`)) onDelete(); }}>
+        <Button variant="ghost" size="icon" className="h-5 w-5" aria-label="Ta bort rad" onClick={() => { if (await confirmDialog(`Ta bort raden "${line.product_name ?? ""}"?`)) onDelete(); }}>
           <Trash2 className="h-2.5 w-2.5 text-destructive" />
         </Button>
       </TableCell>

@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { svenskDatum, laggTillSvenskaDagar } from "@/lib/swedishTime";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -484,7 +485,7 @@ export default function CustomerOrders() {
             disabled={archiveOrders.isPending}
             onClick={() => {
               const n = marked.length;
-              if (!window.confirm(isArchiveView ? `Återställa ${n} beställning${n === 1 ? "" : "ar"}?` : `Arkivera ${n} beställning${n === 1 ? "" : "ar"}? De försvinner från dagens lista.`)) return;
+              if (!await confirmDialog(isArchiveView ? `Återställa ${n} beställning${n === 1 ? "" : "ar"}?` : `Arkivera ${n} beställning${n === 1 ? "" : "ar"}? De försvinner från dagens lista.`)) return;
               archiveOrders.mutate(
                 { ids: marked, archive: !isArchiveView },
                 { onSuccess: () => setMarked([]) },
@@ -515,7 +516,7 @@ export default function CustomerOrders() {
               onChange={(e) => {
                 const v = e.target.value;
                 if (!v) return;
-                if (window.confirm(`Flytta ${marked.length} beställning${marked.length === 1 ? "" : "ar"} till ${dayLabel(v)} (${v})?`)) moveTo(v, marked);
+                if (await confirmDialog(`Flytta ${marked.length} beställning${marked.length === 1 ? "" : "ar"} till ${dayLabel(v)} (${v})?`)) moveTo(v, marked);
                 else e.target.value = "";
               }}
             />
@@ -535,7 +536,7 @@ export default function CustomerOrders() {
               onChange={(e) => {
                 const v = e.target.value;
                 if (!v) return;
-                if (window.confirm(`Kopiera ${marked.length} beställning${marked.length === 1 ? "" : "ar"} till ${dayLabel(v)} (${v})? Originalen ligger kvar.`)) copyTo(v);
+                if (await confirmDialog(`Kopiera ${marked.length} beställning${marked.length === 1 ? "" : "ar"} till ${dayLabel(v)} (${v})? Originalen ligger kvar.`)) copyTo(v);
                 else e.target.value = "";
               }}
             />

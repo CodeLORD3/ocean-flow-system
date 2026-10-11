@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,7 +43,7 @@ export default function ImageBulkBar({
 
   async function removeSelected() {
     const n = selectedIds.length;
-    if (!window.confirm(`Ta bort ${n} bilder helt? Det går inte att ångra.`)) return;
+    if (!await confirmDialog(`Ta bort ${n} bilder helt? Det går inte att ångra.`)) return;
     try {
       await del.mutateAsync({ mediaIds: selectedIds });
       toast.success(`${n} bilder borttagna`);

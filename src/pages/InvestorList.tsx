@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -491,7 +492,7 @@ export default function InvestorList() {
               <Pencil className="h-3 w-3" />
             </Button>
             <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-              onClick={() => { if (confirm("Delete this investor?")) deleteMutation.mutate(inv.id); }}>
+              onClick={() => { if (await confirmDialog("Delete this investor?")) deleteMutation.mutate(inv.id); }}>
               <Trash2 className="h-3 w-3" />
             </Button>
           </TableCell>
