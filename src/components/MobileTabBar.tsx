@@ -38,6 +38,9 @@ const ADMIN: Item[] = [
   { title: "Kundorder", url: "/customer-orders", icon: ClipboardList },
 ];
 
+/** Sidor som ligger direkt i bottenmenyn — där visas ingen tillbaka-knapp. */
+export const TAB_ROOT_PATHS = new Set<string>(["/", "/store-map", ...[SHOP, PRODUCTION, ADMIN].flat().map((i) => i.url)]);
+
 /**
  * Bottenmeny för mobil — app-känsla med tummen nåbara genvägar.
  * Dold från och med sm-brytpunkten där sidomenyn tar över.
