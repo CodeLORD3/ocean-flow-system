@@ -1,3 +1,5 @@
+import { useDraft } from "@/hooks/useDraft";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useState } from "react";
 import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,7 +42,11 @@ export function TaskIssueDialog({
 }) {
   const [kind, setKind] = useState<string>("trasigt");
   const [thing, setThing] = useState(presetName ?? materials[0] ?? "");
-  const [comment, setComment] = useState("");
+  const { staff } = useStaffAuth();
+  const [comment, setComment, clearDraft] = useDraft<string>(`task-issue:${taskId}`, "", {
+    userId: staff?.id,
+    storeId,
+  });
   const [image, setImage] = useState<string | null>(null);
   const upload = useUploadGuideImage();
   const save = useSaveDeviation();
@@ -66,7 +72,7 @@ export function TaskIssueDialog({
       } as any);
       toast({ title: "Rapporterat", description: "Ligger nu som avvikelse på butiken." });
       onOpenChange(false);
-      setComment("");
+      clearDraft();
       setImage(null);
     } catch (e: any) {
       toast({ title: "Kunde inte rapportera", description: e.message, variant: "destructive" });
