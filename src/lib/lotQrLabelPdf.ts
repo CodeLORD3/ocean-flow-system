@@ -81,10 +81,12 @@ export async function buildLotLabelPdf(labels: LotLabel[], copies = 1): Promise<
       y = qrY + qrSize + 3.2;
 
       doc.setFont("courier", "bold");
-      doc.setFontSize(7.5);
-      const ln = doc.splitTextToSize(l.lotNumber || "", tw).slice(0, 2);
-      doc.text(ln, LABEL_W / 2, y, { align: "center" });
-      y += ln.length * 3 - 1.5;
+      // Partinumret på en rad: krymp tills det får plats.
+      let fs = 8;
+      doc.setFontSize(fs);
+      while (fs > 5 && doc.getTextWidth(l.lotNumber || "") > tw) { fs -= 0.25; doc.setFontSize(fs); }
+      doc.text(l.lotNumber || "", LABEL_W / 2, y, { align: "center" });
+      y += 1.5;
 
       if (bc) {
         doc.addImage(bc, "PNG", x, y, tw, 6);
