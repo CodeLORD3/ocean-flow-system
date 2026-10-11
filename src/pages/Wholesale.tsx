@@ -52,7 +52,7 @@ const statusColor: Record<string, string> = {
 };
 
 interface FSLineInput { product_id: string; qty: string; }
-interface ILLineInput { product_id: string; qty: string; unit_cost: string; batch_number: string; best_before: string; redskapskategori: string; upptinad: boolean; faktiskt_fangstomrade: string; }
+interface ILLineInput { product_id: string; qty: string; unit_cost: string; colli: string; journal_row: string; batch_number: string; best_before: string; redskapskategori: string; upptinad: boolean; faktiskt_fangstomrade: string; }
 
 export default function Wholesale() {
   const [search, setSearch] = useState("");
@@ -83,7 +83,7 @@ export default function Wholesale() {
   const [ilDate, setIlDate] = useState(new Date().toISOString().slice(0, 10));
   const [ilReceivedBy, setIlReceivedBy] = useState("");
   const [ilNote, setIlNote] = useState("");
-  const [ilLines, setIlLines] = useState<ILLineInput[]>([{ product_id: "", qty: "", unit_cost: "", batch_number: "", best_before: "", redskapskategori: "", upptinad: false, faktiskt_fangstomrade: "" }]);
+  const [ilLines, setIlLines] = useState<ILLineInput[]>([{ product_id: "", qty: "", unit_cost: "", colli: "", journal_row: "", batch_number: "", best_before: "", redskapskategori: "", upptinad: false, faktiskt_fangstomrade: "" }]);
 
   // Batch form
   const [batchProductId, setBatchProductId] = useState("");
@@ -124,8 +124,8 @@ export default function Wholesale() {
   });
 
   // IL helpers
-  const resetIlForm = () => { setIlSupplier(""); setIlDate(new Date().toISOString().slice(0, 10)); setIlReceivedBy(""); setIlNote(""); setIlLines([{ product_id: "", qty: "", unit_cost: "", batch_number: "", best_before: "", redskapskategori: "", upptinad: false, faktiskt_fangstomrade: "" }]); };
-  const addIlLine = () => setIlLines([...ilLines, { product_id: "", qty: "", unit_cost: "", batch_number: "", best_before: "", redskapskategori: "", upptinad: false, faktiskt_fangstomrade: "" }]);
+  const resetIlForm = () => { setIlSupplier(""); setIlDate(new Date().toISOString().slice(0, 10)); setIlReceivedBy(""); setIlNote(""); setIlLines([{ product_id: "", qty: "", unit_cost: "", colli: "", journal_row: "", batch_number: "", best_before: "", redskapskategori: "", upptinad: false, faktiskt_fangstomrade: "" }]); };
+  const addIlLine = () => setIlLines([...ilLines, { product_id: "", qty: "", unit_cost: "", colli: "", journal_row: "", batch_number: "", best_before: "", redskapskategori: "", upptinad: false, faktiskt_fangstomrade: "" }]);
   const removeIlLine = (i: number) => setIlLines(ilLines.filter((_, idx) => idx !== i));
   const updateIlLine = (i: number, field: keyof ILLineInput, value: string | boolean) => { const u = [...ilLines]; u[i] = { ...u[i], [field]: value } as ILLineInput; setIlLines(u); };
 
@@ -183,8 +183,11 @@ export default function Wholesale() {
   };
 
   const handleCreateIl = () => {
-    const validLines = ilLines.filter(l => l.product_id && l.qty && l.unit_cost).map(l => ({
-      product_id: l.product_id, quantity: Number(l.qty), unit_cost: Number(l.unit_cost),
+    const validLines = ilLines.filter(l => l.product_id && l.qty).map(l => ({
+      product_id: l.product_id, quantity: Math.round(Number(String(l.qty).replace(",", ".")) * 10) / 10,
+      unit_cost: l.unit_cost === "" ? null : Number(String(l.unit_cost).replace(",", ".")),
+      colli_count: l.colli ? Math.max(1, parseInt(l.colli, 10) || 1) : null,
+      journal_row: l.journal_row.trim() || null,
       batch_number: l.batch_number || undefined, best_before: l.best_before || undefined,
       redskapskategori: l.redskapskategori || null,
       upptinad: l.upptinad,
@@ -199,7 +202,17 @@ export default function Wholesale() {
       lines: validLines,
     }, {
       onSuccess: (d) => {
-        toast({ title: "Inleverans registrerad", description: `${d.delivery_number} — lagersaldo uppdaterat` });
+        toast({ title: "Inleverans registrerad", description: `${d.delivery_number} — lagersaldo uppdaterat. Priset är preliminärt tills fakturan stämts av.` });
+        const printLabels = () => printLotLabelsByIds(
+          (d.createdLots ?? []).map((c: any) => ({ lotId: c.lotId, copies: c.colli, weightKg: Math.round((c.quantity / c.colli) * 10) / 10 })),
+        ).catch((e: any) => toast({
+          title: "Etiketterna kunde inte skrivas ut",
+          description: `Inleveransen är sparad. ${e?.message ?? String(e)}`,
+          variant: "destructive",
+          duration: 60000,
+          action: <ToastAction altText="Försök igen" onClick={() => { void printLabels(); }}>Försök igen</ToastAction>,
+        }));
+        void printLabels();
         setIlDialogOpen(false);
         resetIlForm();
       },
@@ -789,7 +802,7 @@ export default function Wholesale() {
  inputMode="decimal" />
                   </div>
                   <div className="col-span-2 space-y-1">
-                    <Label className="text-[10px]">Inköpspris/kg *</Label>
+                    <Label className="text-[10px]">Prel. pris/kg</Label>
                     <Input value={line.unit_cost} onChange={e => updateIlLine(i, "unit_cost", e.target.value)} className="h-7 text-[11px]" type="number"
  inputMode="decimal" />
                   </div>
@@ -800,6 +813,16 @@ export default function Wholesale() {
                   <div className="col-span-2 space-y-1">
                     <Label className="text-[10px]">Bäst före</Label>
                     <Input type="date" value={line.best_before} onChange={e => updateIlLine(i, "best_before", e.target.value)} className="h-7 text-[11px]" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-12 gap-2 items-end">
+                  <div className="col-span-4 space-y-1">
+                    <Label className="text-[10px]">Antal kolli</Label>
+                    <Input value={line.colli} onChange={e => updateIlLine(i, "colli", e.target.value.replace(/[^0-9]/g, ""))} className="h-7 text-[11px]" inputMode="numeric" placeholder="1" />
+                  </div>
+                  <div className="col-span-4 space-y-1">
+                    <Label className="text-[10px]">Rad i mottagningsjournal</Label>
+                    <Input value={line.journal_row} onChange={e => updateIlLine(i, "journal_row", e.target.value)} className="h-7 text-[11px]" />
                   </div>
                 </div>
                 {/* Partiuppgifter enligt EU 1379/2013 */}
@@ -839,7 +862,7 @@ export default function Wholesale() {
             <Button variant="outline" size="sm" className="w-full text-xs h-7 gap-1" onClick={addIlLine}><Plus className="h-3 w-3" /> Lägg till rad</Button>
           </div>
           <DialogFooter>
-            <Button size="sm" onClick={handleCreateIl} disabled={!ilSupplier || ilLines.every(l => !l.product_id || !l.qty || !l.unit_cost) || createIncomingDelivery.isPending}>
+            <Button size="sm" onClick={handleCreateIl} disabled={!ilSupplier || ilLines.every(l => !l.product_id || !l.qty) || createIncomingDelivery.isPending}>
               {createIncomingDelivery.isPending ? "Sparar..." : "Registrera inleverans"}
             </Button>
           </DialogFooter>

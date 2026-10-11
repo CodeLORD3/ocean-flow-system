@@ -104,6 +104,7 @@ export async function recordMovements(movements: StockMovementInput[]) {
   if (rows.length === 0) return [];
 
   const { data, error } = await supabase.from("stock_movements").insert(rows as any).select("id");
+  if (!error) void import("@/lib/ownProductLotWarning").then((m) => m.warnOwnProductLots(rows));
   if (error) throw error;
   return data ?? [];
 }
