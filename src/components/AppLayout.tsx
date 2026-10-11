@@ -155,6 +155,7 @@ function AccountMenu({ portalItems }: { portalItems?: React.ReactNode }) {
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { site, setSite, activeStoreName, setActiveStore } = useSite();
   const { tabs, activeTab, closeTab, switchTab } = useTabs();
   const fallbackTitle =

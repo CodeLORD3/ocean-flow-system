@@ -23,7 +23,7 @@ export function ChatBubble() {
         <div
           className={cn(
             "fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl",
-            "inset-x-2 top-[calc(env(safe-area-inset-top)+4rem)] bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+0.5rem)] sm:inset-x-auto sm:top-auto sm:right-4 sm:bottom-20 sm:h-[560px] sm:w-[380px]"
+            "inset-x-2 top-[calc(env(safe-area-inset-top)+4rem)] bottom-[calc(var(--bottom-nav-h)+0.5rem)] sm:inset-x-auto sm:top-auto sm:right-4 sm:bottom-20 sm:h-[560px] sm:w-[380px]"
           )}
           role="dialog"
           aria-label="Chatt"
@@ -52,7 +52,7 @@ export function ChatBubble() {
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Stäng chatten" : "Öppna chatten"}
         className={cn(
-          "fixed bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+1rem)] right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full",
+          "fixed bottom-[calc(var(--bottom-nav-h)+1rem)] right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full",
           "bg-primary text-primary-foreground shadow-lg transition hover:brightness-110 sm:bottom-8"
         )}
       >

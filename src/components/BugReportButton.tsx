@@ -71,7 +71,7 @@ export function BugReportButton() {
         <Button
           variant="outline"
           size="sm"
-          className="fixed bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+0.5rem)] right-3 sm:bottom-4 sm:right-4 z-50 h-9 gap-1.5 px-3 text-[11px] shadow-lg bg-card tap-compact"
+          className="fixed bottom-[calc(var(--bottom-nav-h)+0.5rem)] right-3 sm:bottom-4 sm:right-4 z-50 h-9 gap-1.5 px-3 text-[11px] shadow-lg bg-card tap-compact"
         >
           <Bug className="h-3.5 w-3.5" />
           Rapportera fel

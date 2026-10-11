@@ -143,7 +143,7 @@
   }
 
   @media (max-width: 639px) {
-    :root { --bottom-nav-h: 4rem; }
+    :root { --bottom-nav-h: calc(4rem + env(safe-area-inset-bottom)); }
   }
 
   /* Fasta toppytor (menyer, rubriker) ska aldrig ligga under statusraden */
