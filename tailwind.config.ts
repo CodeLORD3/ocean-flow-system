@@ -164,5 +164,11 @@ export default {
 
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    // mob: pekskärm eller smal skärm. Datorn med mus påverkas inte.
+    ({ addVariant }: { addVariant: (n: string, v: string) => void }) => {
+      addVariant("mob", "@media (pointer: coarse), (max-width: 767px)");
+    },
+  ],
 } satisfies Config;

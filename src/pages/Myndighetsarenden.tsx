@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import jsPDF from "jspdf";
@@ -214,7 +215,7 @@ function CaseDetail({ c, stores, onBack }: { c: Case; stores: any[]; onBack: () 
     await db.from("authority_case_links").delete().eq("case_id", c.id).eq("link_type", l.link_type).eq("link_id", l.link_id); refresh();
   };
   const remove = async () => {
-    if (!confirm("Ta bort ärendet?")) return;
+    if (!await confirmDialog("Ta bort ärendet?")) return;
     const { error } = await db.from("authority_cases").delete().eq("id", c.id);
     if (error) return toast.error(error.message);
     refresh(); onBack();

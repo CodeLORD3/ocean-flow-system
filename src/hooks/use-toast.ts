@@ -1,4 +1,5 @@
 import * as React from "react";
+import { toast as sonnerToast } from "sonner";
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
@@ -134,15 +135,29 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">;
 
+function nodeText(n: unknown): string | undefined {
+  if (n == null || n === false) return undefined;
+  if (typeof n === "string" || typeof n === "number") return String(n);
+  return undefined;
+}
+
 function toast({ ...props }: Toast) {
   const id = genId();
+  // Alla aviseringar visas via Sonner (en enda toaster i appen).
+  const title = nodeText(props.title) ?? (props.title as React.ReactNode);
+  const opts = { id, description: props.description as React.ReactNode };
+  if (props.variant === "destructive") sonnerToast.error(title ?? "Något gick fel", opts);
+  else sonnerToast(title ?? "", opts);
 
   const update = (props: ToasterToast) =>
     dispatch({
       type: "UPDATE_TOAST",
       toast: { ...props, id },
     });
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
+  const dismiss = () => {
+    sonnerToast.dismiss(id);
+    dispatch({ type: "DISMISS_TOAST", toastId: id });
+  };
 
   dispatch({
     type: "ADD_TOAST",

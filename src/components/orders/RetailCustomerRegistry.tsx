@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -236,7 +237,7 @@ export function RetailCustomerRegistry({
                                   className="h-6 gap-1 px-1.5 text-[10px] text-destructive hover:text-destructive"
                                   onClick={async () => {
                                     if (
-                                      !window.confirm(
+                                      !await confirmDialog(
                                         "Radera kundens personuppgifter? Ordrarna behålls anonymiserade för bokföringen.",
                                       )
                                     )

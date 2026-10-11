@@ -10,6 +10,8 @@
 
 @layer base {
   :root {
+    /* Bottenmenyns höjd på mobil; fasta element nedtill lägger sig ovanför. */
+    --bottom-nav-h: 0px;
     /* Verktygstema v1: sju färgroller. Grund, yta, sänkt, linje, marin,
        tegel, bärnsten, gran. Funktionsfärgerna används på kanter, text och
        små plattor — inte som fyllning på hela rader. */
@@ -140,15 +142,19 @@
     touch-action: pan-y pinch-zoom;
   }
 
+  @media (max-width: 639px) {
+    :root { --bottom-nav-h: calc(4rem + env(safe-area-inset-bottom)); }
+  }
+
   /* Fasta toppytor (menyer, rubriker) ska aldrig ligga under statusraden */
   .safe-top {
     padding-top: env(safe-area-inset-top);
   }
 
 
-  /* On mobile, prevent iOS zoom-on-focus by ensuring inputs are at least 16px.
-     !important is required because Tailwind text-sm/text-xs utilities would win. */
-  @media (max-width: 767px) {
+  /* Pekskärm eller smal skärm: fält minst 16 px så att iPhone inte zoomar,
+     även när fältet har text-xs/text-sm. */
+  @media (pointer: coarse), (max-width: 767px) {
     input:not([type="checkbox"]):not([type="radio"]),
     select,
     textarea,
@@ -158,25 +164,14 @@
     }
   }
 
-  /* Mobil: tillräckligt stora tryckytor för personal som jobbar med händerna.
-     Lägg klassen .tap-compact på element som medvetet ska vara små. */
-  @media (max-width: 767px) {
-    button:not(.tap-compact),
-    [role="button"]:not(.tap-compact),
-    [role="combobox"]:not(.tap-compact),
-    input:not([type="checkbox"]):not([type="radio"]):not(.tap-compact),
-    select:not(.tap-compact),
-    textarea:not(.tap-compact) {
-      min-height: 2.5rem;
-    }
-
-    /* Ikonknappar behöver även bredd */
-    button:not(.tap-compact) > svg:only-child {
-      min-width: 1.15rem;
-      min-height: 1.15rem;
+  /* Pekskärm: minst 44 px tryckyta i hela appen, även i portaler.
+     .tap-compact undantar sådant som medvetet ska vara litet
+     (kryssrutor och reglage får i stället en osynlig större träffyta). */
+  @media (pointer: coarse), (max-width: 767px) {
+    :is(button, [role="button"], [role="menuitem"], [role="option"], [role="tab"], a[href]):not(.tap-compact):not([role="checkbox"]):not([role="switch"]) {
+      min-height: 44px;
     }
   }
-
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
@@ -326,12 +321,6 @@
     max-width: 100%;
   }
 
-  /* Alla knappar, flikar och länkade rader blir tumvänliga */
-  main :is(button, [role="tab"], [role="menuitem"], [role="option"], a[href]):not(
-      .no-mobile-touch
-    ):not([data-slot="icon-only"]) {
-    min-height: 44px;
-  }
   main :is(button, [role="tab"]):not(.no-mobile-touch) {
     font-size: 15px;
   }
@@ -343,7 +332,10 @@
   }
 
   /* Dialoger och sheets tar hela bredden med luft för tummen */
-  [role="dialog"] {
-    max-height: 92vh;
+  [role="dialog"],
+  [role="alertdialog"] {
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 }

@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useMemo, useState } from "react";
 import { ArrowUpRight, Check, ChevronDown, Pencil, Repeat, Search, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -108,7 +109,7 @@ export function TaskRegister({
 
   /** Tar bort uppgiften helt efter bekräftelse. */
   const deleteRow = async (row: RegisterTask) => {
-    if (!window.confirm(`Ta bort "${row.task}" ur uppgifterna?`)) return;
+    if (!await confirmDialog(`Ta bort "${row.task}" ur uppgifterna?`)) return;
     try {
       await removeTask.mutateAsync({ task: row.task, templateItemId: row.templateItemId });
       toast({ title: "Uppgiften togs bort", description: row.task });

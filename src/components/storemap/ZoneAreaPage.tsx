@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -219,8 +220,8 @@ export function ZoneAreaPage({
               size="sm"
               variant="outline"
               className="h-9 gap-1.5 text-destructive"
-              onClick={() => {
-                if (!confirm(`Ta bort ${zone.name}?`)) return;
+              onClick={async () => {
+                if (!await confirmDialog(`Ta bort ${zone.name}?`)) return;
                 onDeleteZone(zone.id);
               }}
             >

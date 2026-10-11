@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import React, { useState, useMemo } from "react";
 import { fetchPurchaseLeadDays, purchaseDateFor } from "@/lib/purchaseLead";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -1483,7 +1484,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
   const [altSearch, setAltSearch] = useState("");
 
   const handleMarkUnavailable = async (line: any) => {
-    if (!window.confirm(`Markera "${line.products?.name ?? "varan"}" som ej tillgänglig? Butiken får en förfrågan.`)) return;
+    if (!await confirmDialog(`Markera "${line.products?.name ?? "varan"}" som ej tillgänglig? Butiken får en förfrågan.`)) return;
     try {
       await doMarkUnavailable(line);
     } catch (e: any) {

@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -128,7 +129,7 @@ function KopplaPanel() {
 
   const skapa = async () => {
     if (status.data && (status.data as unknown as { aktiv_nyckel?: boolean }).aktiv_nyckel &&
-      !window.confirm("Den gamla adressen slutar gälla direkt. Fortsätta?")) return;
+      !await confirmDialog("Den gamla adressen slutar gälla direkt. Fortsätta?")) return;
     setBusy(true);
     const { data, error } = await db.rpc("skapa_telefonnyckel");
     setBusy(false);

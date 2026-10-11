@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useState, useMemo } from "react";
 import { Plus, Search, Edit, Trash2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -86,7 +87,7 @@ export default function ProductBankTab() {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Ta bort "${name}"? Produkten markeras som inaktiv.`)) return;
+    if (!await confirmDialog(`Ta bort "${name}"? Produkten markeras som inaktiv.`)) return;
     const { error } = await supabase.from("products").update({ active: false }).eq("id", id);
     if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Produkt borttagen", description: name });

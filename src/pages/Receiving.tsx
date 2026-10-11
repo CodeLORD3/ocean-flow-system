@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useState, useMemo } from "react";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import { motion } from "framer-motion";
@@ -238,7 +239,7 @@ export default function Receiving() {
       return differenceInDays(parseISO(r.expiry_date), new Date()) <= 2;
     });
     if (criticalLines.length > 0) {
-      const confirmed = window.confirm(
+      const confirmed = await confirmDialog(
         `⚠️ ${criticalLines.length} produkt(er) har kritiskt kort hållbarhet (≤2 dagar). Vill du ändå godkänna leveransen?`,
       );
       if (!confirmed) return;

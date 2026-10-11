@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -589,8 +590,8 @@ function MyWorkCard({ staffId, stores }: { staffId: string; stores: { id: string
   const { data: items = [], isLoading } = useMyWork(staffId);
   const removeTask = useDeleteTask();
 
-  const deleteRow = (it: MyWorkItem) => {
-    if (!window.confirm(`Ta bort uppgiften "${it.task}"?`)) return;
+  const deleteRow = async (it: MyWorkItem) => {
+    if (!await confirmDialog(`Ta bort uppgiften "${it.task}"?`)) return;
     removeTask.mutate(it.id);
   };
 

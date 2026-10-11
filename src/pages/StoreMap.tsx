@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTabs } from "@/contexts/TabsContext";
@@ -879,8 +880,8 @@ export default function StoreMap({
                       <Button
                         variant="outline"
                         className="h-11 gap-1 text-xs text-destructive"
-                        onClick={() => {
-                          if (!confirm(`Ta bort ${selectedZone.name}?`)) return;
+                        onClick={async () => {
+                          if (!await confirmDialog(`Ta bort ${selectedZone.name}?`)) return;
                           deleteZone.mutate(selectedZone.id, {
                             onSuccess: () => {
                               setSelected(null);
@@ -906,7 +907,7 @@ export default function StoreMap({
 
             {/* Nytt område: dra det på plats, spara sedan i den fasta raden längst ned */}
             {draftZoneId && zones.some((z) => z.id === draftZoneId) && (
-              <div className="fixed inset-x-0 bottom-0 z-50 border-t border-emerald-500/50 bg-emerald-50/95 px-3 py-3 shadow-[0_-8px_24px_hsl(var(--foreground)/0.12)] backdrop-blur pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+              <div className="fixed inset-x-0 bottom-[var(--bottom-nav-h)] z-50 border-t border-emerald-500/50 bg-emerald-50/95 px-3 py-3 shadow-[0_-8px_24px_hsl(var(--foreground)/0.12)] backdrop-blur pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
                 <div className="mx-auto flex max-w-3xl flex-col gap-2">
                   <p className="text-xs text-emerald-900">
                     Dra området på plats i kartan och dra i hörnen till rätt storlek. Tryck sedan på Spara området.
@@ -921,8 +922,8 @@ export default function StoreMap({
                     <Button
                       variant="outline"
                       className="h-12 text-sm"
-                      onClick={() => {
-                        if (!confirm("Ta bort det nya området?")) return;
+                      onClick={async () => {
+                        if (!await confirmDialog("Ta bort det nya området?")) return;
                         deleteZone.mutate(draftZoneId, {
                           onSuccess: () => {
                             setDraftZoneId(null);
@@ -940,7 +941,7 @@ export default function StoreMap({
 
             {/* Ändra ett befintligt område: dra i kartan, spara sedan eller öppna informationen */}
             {shapeZoneId && shapeZoneId !== draftZoneId && zones.some((z) => z.id === shapeZoneId) && (
-              <div className="fixed inset-x-0 bottom-0 z-50 border-t border-primary/40 bg-card/95 px-3 py-3 shadow-[0_-8px_24px_hsl(var(--foreground)/0.12)] backdrop-blur pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+              <div className="fixed inset-x-0 bottom-[var(--bottom-nav-h)] z-50 border-t border-primary/40 bg-card/95 px-3 py-3 shadow-[0_-8px_24px_hsl(var(--foreground)/0.12)] backdrop-blur pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
                 <div className="mx-auto flex max-w-3xl flex-col gap-2">
                   <p className="text-xs">
                     Dra området till rätt plats och dra i hörnen till rätt storlek. Tryck på Spara ändringen när du är klar.
@@ -1244,9 +1245,9 @@ export default function StoreMap({
                             variant="ghost"
                             className="h-6 px-1.5 text-[10px] text-destructive"
                             title="Ta bort området"
-                            onClick={() => {
+                            onClick={async () => {
                               if (
-                                !window.confirm(
+                                !await confirmDialog(
                                   `Ta bort ${z.name}? Uppgifter och bilder som hör till ytan tappar sin plats i kartan.`,
                                 )
                               )

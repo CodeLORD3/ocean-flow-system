@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
@@ -1018,7 +1019,7 @@ export default function TaskDetail({ taskId }: { taskId: string }) {
               variant="outline"
               className="text-destructive hover:text-destructive"
               onClick={async () => {
-                if (!window.confirm(`Ta bort uppgiften "${task.task}"?`)) return;
+                if (!await confirmDialog(`Ta bort uppgiften "${task.task}"?`)) return;
                 try {
                   await removeTask.mutateAsync(task.id);
                   toast({ title: "Uppgiften togs bort" });

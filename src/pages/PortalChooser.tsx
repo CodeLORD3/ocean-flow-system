@@ -1,6 +1,7 @@
 import { Navigate, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
+import { PageState } from "@/components/PageState";
 import { Button } from "@/components/ui/button";
 import { Store, Factory, Boxes, LogOut, Loader2, Shield } from "lucide-react";
 import { useStaffAuth, type PortalKey } from "@/contexts/StaffAuthContext";
@@ -64,11 +65,7 @@ export default function PortalChooser() {
 
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <PageState state="loading" fullscreen />;
   }
 
   if (!session) return <Navigate to="/" replace />;

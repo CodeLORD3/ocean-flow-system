@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -164,8 +165,8 @@ export default function SavedPriceLists({ allStores = false }: Props) {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-destructive"
-                            onClick={() => {
-                              if (confirm("Ta bort prislistan?")) deleteList.mutate(l.id);
+                            onClick={async () => {
+                              if (await confirmDialog("Ta bort prislistan?")) deleteList.mutate(l.id);
                             }}
                           >
                             <Trash2 className="h-3.5 w-3.5" />

@@ -1,7 +1,8 @@
 // App entry point
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import React from "react";
-import { Toaster } from "@/components/ui/toaster";
+import { ConfirmDialogHost } from "@/components/ui/confirm-dialog";
+import { PageState } from "@/components/PageState";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -56,11 +57,7 @@ const ERPGate = () => {
   const location = useLocation();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <PageState state="loading" fullscreen />;
   }
   if (!session) return <Navigate to="/" replace />;
   if (!staff || (staff.portal_access ?? []).length === 0) {
@@ -157,8 +154,8 @@ const App = () => {
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <Toaster />
           <Sonner />
+          <ConfirmDialogHost />
           <AppContent />
         </TooltipProvider>
       </QueryClientProvider>

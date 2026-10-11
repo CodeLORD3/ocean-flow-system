@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Undo2, Trash2, Clock } from "lucide-react";
@@ -27,7 +28,7 @@ export function TransportResidualPanel({ storeId }: { storeId?: string | null })
 
   const act = async (r: TransportResidual, action: ResidualAction) => {
     const label = action === "tillbaka" ? "tillbaka till grossistlagret" : "som svinn";
-    if (!window.confirm(`Bokför ${fmtKg(r.totalKg)} ${r.unit} ${r.productName} ${label}?`)) return;
+    if (!await confirmDialog(`Bokför ${fmtKg(r.totalKg)} ${r.unit} ${r.productName} ${label}?`)) return;
     const key = `${r.orderId}:${r.productId}`;
     setBusy(key);
     try {

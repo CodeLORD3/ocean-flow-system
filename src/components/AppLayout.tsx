@@ -8,7 +8,7 @@ import { ProductionSidebar } from "@/components/ProductionSidebar";
 import { StoreHero } from "@/components/StoreHero";
 import { STAFF_MODULE_PATHS } from "@/lib/staffModuleNav";
 
-import { MobileTabBar } from "@/components/MobileTabBar";
+import { MobileTabBar, TAB_ROOT_PATHS } from "@/components/MobileTabBar";
 import { TaskAlertBanner } from "@/components/TaskAlertBanner";
 import { DayCloseBanner } from "@/components/DayCloseBanner";
 import { versionLabel } from "@/lib/appVersion";
@@ -17,7 +17,7 @@ import { ChatBubble } from "@/components/chat/ChatBubble";
 
 
 import { useLocation, useNavigate } from "react-router-dom";
-import { ChevronRight, Search, UserRound, ArrowLeftRight, Factory, Store, ChevronDown, X, LogOut, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, UserRound, ArrowLeftRight, Factory, Store, ChevronDown, X, LogOut, Shield } from "lucide-react";
 import { HrNotificationCenter } from "@/components/HrNotificationCenter";
 import { MyNoticeCenter } from "@/components/MyNoticeCenter";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
@@ -155,6 +155,7 @@ function AccountMenu({ portalItems }: { portalItems?: React.ReactNode }) {
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { site, setSite, activeStoreName, setActiveStore } = useSite();
   const { tabs, activeTab, closeTab, switchTab } = useTabs();
   const fallbackTitle =
@@ -311,6 +312,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   </span>
                 ))}
               </nav>
+              {!TAB_ROOT_PATHS.has(location.pathname) && (
+                <button
+                  type="button"
+                  aria-label="Tillbaka"
+                  onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/organisation"))}
+                  className="md:hidden tap-compact -ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-foreground hover:bg-muted"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+              )}
               {/* On mobile show only the current page title */}
               <span className="md:hidden text-base sm:text-sm font-semibold text-foreground truncate">
                 {page.title}

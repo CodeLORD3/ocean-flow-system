@@ -1,3 +1,4 @@
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 /**
  * Schemavyn (etapp 3 B/C) — veckogrid per enhet med utkast → publicera,
  * öppna pass, drag-and-drop, regelmotor-varningar, förslagsmotor och sidokö
@@ -376,7 +377,7 @@ export default function SchedulePlanner() {
 
   const moveShift = async (shift: Shift, employeeKey: string, date: string) => {
     const employeeId = employeeKey === OPEN_ROW ? null : employeeKey;
-    if (shift.status === "published" && !confirm("Passet är publicerat. Flytta ändå?")) return;
+    if (shift.status === "published" && !await confirmDialog("Passet är publicerat. Flytta ändå?")) return;
     if (!(await guardShift({ ...shift, employee_id: employeeId, date }))) return;
     try {
       await saveShift.mutateAsync({ ...shift, employee_id: employeeId, date, status: "draft", published_at: null });
