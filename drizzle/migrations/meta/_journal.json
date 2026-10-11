@@ -176,6 +176,13 @@
       "when": 1791663866493,
       "tag": "0024_fortnox_vat_category_fallback",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791721299286,
+      "tag": "0025_lot_production_date_and_receiving_colli",
+      "breakpoints": true
     }
   ]
 }
