@@ -47,7 +47,7 @@ export default function CountEntryButton({ variant }: { variant: "card" | "stick
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-3 py-3 backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-[var(--bottom-nav-h)] z-40 border-t border-border bg-background/95 px-3 py-3 backdrop-blur md:hidden"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
     >
       <button

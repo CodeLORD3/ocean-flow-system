@@ -906,7 +906,7 @@ export default function StoreMap({
 
             {/* Nytt område: dra det på plats, spara sedan i den fasta raden längst ned */}
             {draftZoneId && zones.some((z) => z.id === draftZoneId) && (
-              <div className="fixed inset-x-0 bottom-0 z-50 border-t border-emerald-500/50 bg-emerald-50/95 px-3 py-3 shadow-[0_-8px_24px_hsl(var(--foreground)/0.12)] backdrop-blur pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+              <div className="fixed inset-x-0 bottom-[var(--bottom-nav-h)] z-50 border-t border-emerald-500/50 bg-emerald-50/95 px-3 py-3 shadow-[0_-8px_24px_hsl(var(--foreground)/0.12)] backdrop-blur pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
                 <div className="mx-auto flex max-w-3xl flex-col gap-2">
                   <p className="text-xs text-emerald-900">
                     Dra området på plats i kartan och dra i hörnen till rätt storlek. Tryck sedan på Spara området.
@@ -940,7 +940,7 @@ export default function StoreMap({
 
             {/* Ändra ett befintligt område: dra i kartan, spara sedan eller öppna informationen */}
             {shapeZoneId && shapeZoneId !== draftZoneId && zones.some((z) => z.id === shapeZoneId) && (
-              <div className="fixed inset-x-0 bottom-0 z-50 border-t border-primary/40 bg-card/95 px-3 py-3 shadow-[0_-8px_24px_hsl(var(--foreground)/0.12)] backdrop-blur pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+              <div className="fixed inset-x-0 bottom-[var(--bottom-nav-h)] z-50 border-t border-primary/40 bg-card/95 px-3 py-3 shadow-[0_-8px_24px_hsl(var(--foreground)/0.12)] backdrop-blur pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
                 <div className="mx-auto flex max-w-3xl flex-col gap-2">
                   <p className="text-xs">
                     Dra området till rätt plats och dra i hörnen till rätt storlek. Tryck på Spara ändringen när du är klar.

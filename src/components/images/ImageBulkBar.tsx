@@ -81,7 +81,7 @@ export default function ImageBulkBar({
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 max-h-[70dvh] overflow-y-auto border-t bg-background px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(0,0,0,0.12)] sm:pb-3">
+    <div className="fixed inset-x-0 bottom-[var(--bottom-nav-h)] z-50 max-h-[70dvh] overflow-y-auto border-t bg-background px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(0,0,0,0.12)] sm:pb-3">
       <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-2">
         <span className="text-sm font-medium">{selectedIds.length} markerade</span>
         <Button size="sm" onClick={() => setOpen((v) => !v)}>

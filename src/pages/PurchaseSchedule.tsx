@@ -1328,7 +1328,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
 
         {/* ── Floating bulk move bar ── */}
         {selectedKeys.size > 0 && tab === "daily" && (
-          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-card border shadow-lg rounded-lg px-4 py-3 flex items-center gap-3 max-w-[95vw]">
+          <div className="fixed bottom-[calc(var(--bottom-nav-h)+1rem)] left-1/2 -translate-x-1/2 z-50 bg-card border shadow-lg rounded-lg px-4 py-3 flex items-center gap-3 max-w-[95vw]">
             <span className="text-sm font-medium text-foreground whitespace-nowrap">
               {selectedKeys.size} markerade
             </span>
