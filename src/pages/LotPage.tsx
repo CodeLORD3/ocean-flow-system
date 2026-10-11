@@ -27,7 +27,7 @@ const MOVE_LABEL: Record<string, string> = {
 };
 const WASTE_REASONS = ["Bäst före passerat", "Skadad", "Kvalitet", "Temperatur", "Spill", "Övrigt"];
 
-type Action = null | "flytta" | "omvandla" | "svinn" | "rakna";
+type Action = null | "flytta" | "omvandla" | "svinn" | "rakna" | "etikett";
 
 interface ChainLot { id: string; lot_number: string; name: string; kind: string; }
 
@@ -81,12 +81,15 @@ export default function LotPage({ lotId }: { lotId: string }) {
   const [reason, setReason] = useState("");
   const [prodSearch, setProdSearch] = useState("");
   const [targetProd, setTargetProd] = useState<{ id: string; name: string } | null>(null);
+  const todayStr = () => new Date().toLocaleDateString("sv-SE");
+  const [madeOn, setMadeOn] = useState(todayStr());
+  const [copies, setCopies] = useState("1");
 
   const lotQ = useQuery({
     queryKey: ["lot_page", lotId],
     queryFn: async () => {
       const { data, error } = await supabase.from("lots")
-        .select("*, suppliers(name), products(id, name, category)").eq("id", lotId).maybeSingle();
+        .select("*, suppliers(name), products(id, name, category, allergens)").eq("id", lotId).maybeSingle();
       if (error) throw error;
       return data as any;
     },
@@ -145,7 +148,7 @@ export default function LotPage({ lotId }: { lotId: string }) {
   const locBal = balances.find((b) => b.id === locId)?.qty ?? 0;
 
   const open = (a: Action) => {
-    setAction(a); setQty(""); setQtyOut(""); setReason(""); setToLocId(""); setTargetProd(null); setProdSearch("");
+    setAction(a); setQty(""); setQtyOut(""); setReason(""); setToLocId(""); setTargetProd(null); setProdSearch(""); setMadeOn(todayStr()); setCopies("1");
     setLocId(balances.length === 1 ? balances[0].id : "");
   };
   const refresh = () => {
@@ -186,8 +189,12 @@ export default function LotPage({ lotId }: { lotId: string }) {
     need(!!locId, "Välj plats."); need(!!targetProd, "Välj ny produkt.");
     need(qin > 0 && qin <= locBal + 0.05, "Ange vikt in som finns på platsen.");
     need(qout > 0, "Ange vikt ut.");
+    need(!!madeOn && madeOn <= todayStr(), "Ange tillverkningsdatum, i dag eller tidigare.");
+    // Tillverkat i dag: aktuell tid. Tidigare dag: mitt på dagen svensk tid, så att datumet aldrig glider.
+    const performedAt = madeOn === todayStr() ? new Date().toISOString() : new Date(`${madeOn}T12:00:00`).toISOString();
     const { data: loc } = await supabase.from("storage_locations").select("store_id").eq("id", locId).maybeSingle();
     const res = await performTransformation({
+      performedAt,
       storeId: (loc as any)?.store_id ?? null, locationId: locId,
       sourceProductId: lot.product_id, sourceProductName: lot.products?.name, sourceLotId: lotId,
       sourceQuantity: qin, sourceUnitCost: await lotUnitCost(lotId),
@@ -240,15 +247,22 @@ export default function LotPage({ lotId }: { lotId: string }) {
         <Button className="h-12" onClick={() => open("omvandla")}><Shuffle className="h-4 w-4 mr-1" />Omvandla</Button>
         <Button className="h-12" variant="secondary" onClick={() => open("svinn")}><Trash2 className="h-4 w-4 mr-1" />Svinn</Button>
         <Button className="h-12" variant="secondary" onClick={() => open("rakna")}><ClipboardCheck className="h-4 w-4 mr-1" />Räkna</Button>
-        <Button className="h-12 col-span-2 sm:col-span-1" variant="outline" onClick={() => printLotLabelById(lotId, total || lot.quantity_kg).catch((e) => toast({ title: e.message, variant: "destructive" }))}>
-          <Printer className="h-4 w-4 mr-1" />Skriv ut etikett
+        <Button className="h-12 col-span-2 sm:col-span-1" variant="outline" onClick={() => open("etikett")}>
+          <Printer className="h-4 w-4 mr-1" />Skriv ut etikett igen
         </Button>
       </div>
 
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-base">Uppgifter</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
+          <div>Produkt: {lot.products?.name || "–"}</div>
+          <div>Art: {lot.commercial_name || "–"}</div>
           <div>Latinskt namn: <i>{lot.latin_name || "–"}</i></div>
+          <div>Produktionsmetod: {lot.production_method || "–"}</div>
+          <div>Fångstdatum: {lot.catch_date_from ? svD(lot.catch_date_from) + (lot.catch_date_to && lot.catch_date_to !== lot.catch_date_from ? ` – ${svD(lot.catch_date_to)}` : "") : "–"}</div>
+          <div>Tillverkat: {lot.produced_on ? svD(lot.produced_on) : "–"}</div>
+          <div>Vikt vid start: <span className="font-mono tabular-nums">{kg1(lot.quantity_kg)} kg</span></div>
+          <div className="sm:col-span-2 break-words">Allergener: {Array.isArray(lot.products?.allergens) ? (lot.products.allergens.length ? lot.products.allergens.join(", ") : "Inga angivna") : (lot.products?.allergens || "Inga angivna")}</div>
           <div>Fångstområde: {lot.catch_area || "–"}</div>
           <div>Leverantör: {lot.suppliers?.name || "–"}</div>
           <div>Bäst före: {lot.best_before ? svD(lot.best_before) : "–"}</div>
@@ -301,10 +315,22 @@ export default function LotPage({ lotId }: { lotId: string }) {
       <Dialog open={!!action} onOpenChange={(o) => !o && setAction(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{action === "flytta" ? "Flytta" : action === "omvandla" ? "Omvandla" : action === "svinn" ? "Svinn" : "Räkna"} – {lot.lot_number}</DialogTitle>
+            <DialogTitle>{action === "flytta" ? "Flytta" : action === "omvandla" ? "Omvandla" : action === "svinn" ? "Svinn" : action === "etikett" ? "Skriv ut etikett" : "Räkna"} – {lot.lot_number}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            {locSelect}
+            {action !== "etikett" && locSelect}
+            {action === "etikett" && (
+              <>
+                <label className="text-sm">Antal etiketter</label>
+                <Input inputMode="numeric" value={copies} onChange={(e) => setCopies(e.target.value.replace(/[^0-9]/g, ""))} />
+                <Button className="w-full" disabled={busy} onClick={() => {
+                  const n = Math.min(50, Math.max(1, Number(copies) || 1));
+                  printLotLabelById(lotId, total || lot.quantity_kg, n)
+                    .then(() => setAction(null))
+                    .catch((e) => toast({ title: "Etiketten kunde inte skrivas ut", description: e?.message ?? String(e), variant: "destructive" }));
+                }}>Skriv ut</Button>
+              </>
+            )}
             {action === "flytta" && (
               <>
                 <Select value={toLocId} onValueChange={setToLocId}>
@@ -334,6 +360,8 @@ export default function LotPage({ lotId }: { lotId: string }) {
             )}
             {action === "omvandla" && (
               <>
+                <label className="text-sm">Tillverkat</label>
+                <Input type="date" max={todayStr()} value={madeOn} onChange={(e) => setMadeOn(e.target.value)} />
                 <Input inputMode="decimal" placeholder="Vikt in kg" value={qty} onChange={(e) => setQty(e.target.value)} />
                 <Input inputMode="decimal" placeholder="Vikt ut kg" value={qtyOut} onChange={(e) => setQtyOut(e.target.value)} />
                 {yieldPreview != null && <p className="text-sm font-mono tabular-nums">Utbyte {yieldPreview.toLocaleString("sv-SE")} %</p>}
