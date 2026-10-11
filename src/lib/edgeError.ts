@@ -27,3 +27,22 @@ export async function edgeErrorMessage(
   if (typeof fallbackOrData === "string" && fallbackOrData) return fallbackOrData;
   return "Något gick fel";
 }
+
+/**
+ * Visar ett begripligt fel för personalen. Den råa texten göms bakom
+ * knappen "Visa detaljer" så att den kan visas för support vid behov.
+ */
+export async function showEdgeError(
+  error: unknown,
+  title = "Det gick inte att spara. Försök igen.",
+  fallbackOrData?: unknown,
+) {
+  const { toast } = await import("sonner");
+  const detail = await edgeErrorMessage(error, fallbackOrData ?? "");
+  toast.error(title, {
+    duration: 8000,
+    action: detail
+      ? { label: "Visa detaljer", onClick: () => toast(detail, { duration: 15000 }) }
+      : undefined,
+  });
+}
