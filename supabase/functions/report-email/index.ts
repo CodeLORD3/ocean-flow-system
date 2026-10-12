@@ -3,6 +3,7 @@
 // preview (admin, skickar inget), test (admin, testmejl), send (admin, kör om
 // en misslyckad riktig rapport). Alla siffror räknas här i koden; AI skriver
 // bara analystexten utifrån färdiga siffror och får misslyckas.
+import { sendSmtp, SmtpError } from "./smtp.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { buildBlocks, mondayOf } from "./blocks.ts";
