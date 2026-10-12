@@ -50,31 +50,64 @@ export async function buildBlocks(db: any, from: string, to: string, highlight: 
   const ids = sales.map((s: any) => s.id);
 
   const vFrom = addDays(from, -21), vTo = addDays(to, 21);
-  const [rep, vouch, mt, web] = await Promise.all([
-    db.from("daily_reports").select("store_id,report_date,net_sales,receipt_count").in("store_id", ids).gte("report_date", from).lte("report_date", to),
-    db.from("fortnox_vouchers").select("legal_entity_code,voucher_series,transaction_date,description,rows").in("legal_entity_code", ["fsab-se", "de-no1"]).gte("transaction_date", vFrom).lte("transaction_date", vTo).limit(5000),
+  const [rep, vouch, mt, web, sinv, prs] = await Promise.all([
+    db.from("daily_reports").select("id,store_id,report_date,net_sales,receipt_count").in("store_id", ids).gte("report_date", from).lte("report_date", to),
+    db.from("fortnox_vouchers").select("id,legal_entity_code,voucher_series,voucher_number,transaction_date,description,rows").in("legal_entity_code", ["fsab-se", "de-no1"]).gte("transaction_date", vFrom).lte("transaction_date", vTo).limit(5000),
     db.from("margin_targets").select("target_pct").eq("applies_to", "grossist").limit(1).maybeSingle(),
     db.from("customer_orders").select("store_id,wanted_date,total_incl_vat,status").eq("source", "shopify").in("store_id", sth.map((s: any) => s.id)).gte("wanted_date", from).lte("wanted_date", to),
+    db.from("fortnox_supplier_invoices").select("given_number,invoice_number,invoice_date,supplier_name").eq("legal_entity_code", "fsab-se").gte("invoice_date", vFrom).lte("invoice_date", vTo).limit(5000),
+    db.from("purchase_reports").select("document_type,document_number,document_date,delivery_date,report_date,supplier_name_raw,total_ex_vat").gte("report_date", addDays(vFrom, -14)).lte("report_date", vTo).limit(5000),
   ]);
-  for (const r of [rep, vouch, web]) if (r.error) throw r.error;
+  for (const r of [rep, vouch, web, sinv, prs]) if (r.error) throw r.error;
 
   const net = new Map<string, number>(), rec = new Map<string, number>();
+  const checks: string[] = [];
+  const repSeen = new Set<string>();
   for (const r of rep.data ?? []) {
-    if (r.net_sales != null) net.set(`${r.store_id}|${r.report_date}`, Number(r.net_sales));
-    if (r.receipt_count != null) rec.set(`${r.store_id}|${r.report_date}`, Number(r.receipt_count));
+    const k = `${r.store_id}|${r.report_date}`;
+    if (repSeen.has(k)) checks.push(`Dagsrapport räknad två gånger: butik ${r.store_id} ${r.report_date}`);
+    repSeen.add(k);
+    if (r.report_date < from || r.report_date > to) checks.push(`Dagsrapport utanför perioden: ${r.report_date}`);
+    if (r.net_sales != null) net.set(k, Number(r.net_sales));
+    if (r.receipt_count != null) rec.set(k, Number(r.receipt_count));
   }
   const rowsOf = (v: any) => (Array.isArray(v.rows) ? v.rows : []).filter((x: any) => !x.Removed);
 
-  // Inköp Göteborg: fsab-se konto 4010 + 4011 (debet − kredit) per transaktionsdag
+  // Inköp Göteborg: fsab-se konto 4010 + 4011 (debet − kredit) per LEVERANSDAG.
+  // Leveransdag: 1) inköpsrapport (faktura) med samma nummer och leveransdatum,
+  // 2) följesedel från samma leverantör med samma belopp (±1 kr) inom 10 dagar före fakturadatum,
+  // 3) annars fakturadatum, markerat "leveransdag saknas – fakturadatum används".
+  // (Fortnox-inkorgens "leveransdatum" är förfallodagen och används inte.)
+  const norm = (s: string) => String(s ?? "").toLowerCase().replace(/[^a-zåäö0-9]/g, "").replace(/(ekfor|ekför|ab|kb|kommanditbolag|forening|förening)$/g, "").slice(0, 10);
+  const inv = new Map<string, any>();
+  for (const f of sinv.data ?? []) inv.set(String(f.given_number), f);
+  const prRows = prs.data ?? [];
+  const usedFs = new Set<number>();
   const buyG = new Map<string, number>();
-  const voucherDays = new Set<string>();
+  const noDelivery: string[] = [];
+  const voucherSeen = new Set<string>();
   for (const v of vouch.data ?? []) {
     if (v.legal_entity_code !== "fsab-se") continue;
-    if (v.transaction_date >= from && v.transaction_date <= to) voucherDays.add(v.transaction_date);
-    for (const x of rowsOf(v)) {
-      if (![4010, 4011].includes(Number(x.Account))) continue;
-      buyG.set(v.transaction_date, (buyG.get(v.transaction_date) ?? 0) + Number(x.Debit ?? 0) - Number(x.Credit ?? 0));
+    const amt = r2(rowsOf(v).filter((x: any) => [4010, 4011].includes(Number(x.Account))).reduce((s: number, x: any) => s + Number(x.Debit ?? 0) - Number(x.Credit ?? 0), 0));
+    if (!amt) continue;
+    const gn = /\((\d+)\)\s*$/.exec(String(v.description ?? ""))?.[1] ?? null;
+    const f = gn ? inv.get(gn) : null;
+    const invDate: string = f?.invoice_date ?? v.transaction_date;
+    let day: string | null = null;
+    const pr = prRows.find((p: any) => p.document_type === "faktura" && p.delivery_date && [gn, f?.invoice_number].filter(Boolean).map(String).includes(String(p.document_number)));
+    if (pr) day = pr.delivery_date;
+    if (!day && f) {
+      const sup = norm(f.supplier_name);
+      const idx = prRows.findIndex((p: any, i: number) => !usedFs.has(i) && p.document_type === "foljesedel" && p.total_ex_vat != null && Math.abs(Number(p.total_ex_vat) - amt) <= 1 && norm(p.supplier_name_raw) === sup && (p.delivery_date ?? p.document_date ?? p.report_date) <= invDate && (p.delivery_date ?? p.document_date ?? p.report_date) >= addDays(invDate, -10));
+      if (idx >= 0) { usedFs.add(idx); const p = prRows[idx]; day = p.delivery_date ?? p.document_date ?? p.report_date; }
     }
+    if (!day) day = invDate;
+    if (day < from || day > to) continue;
+    const key = gn ?? `${v.voucher_series}${v.voucher_number}`;
+    if (voucherSeen.has(key)) { checks.push(`Leverantörsfaktura ${key} räknad två gånger`); continue; }
+    voucherSeen.add(key);
+    if (!pr && !usedFs.size || (!pr && day === invDate)) noDelivery.push(`${f?.supplier_name ?? v.description} (${gn ?? key}, ${kr(amt)}, fakturadatum ${invDate})`);
+    buyG.set(day, (buyG.get(day) ?? 0) + amt);
   }
 
   // Grossistens fakturering: fsab-se kundfakturor till Componia AG / DE No.1 AB,
