@@ -320,7 +320,7 @@ async function run(date: string, type: RType, isTest: boolean) {
   let rep;
   try { rep = await build(date, type); }
   catch (e) { await upd({ status: "misslyckad", error_stage: "hämtning/beräkning", error: String((e as Error)?.message ?? e) }); return { status: "misslyckad" }; }
-  const base = { html: rep.html, stores_expected: rep.expected, stores_reported: rep.reported, missing_stores: rep.missing };
+  const base = { html: rep.html, facts: rep.facts, stores_expected: rep.expected, stores_reported: rep.reported, missing_stores: rep.missing };
   // Utskick via Loopia SMTP (port 465, implicit TLS). From = inloggat konto.
   const password = Deno.env.get("LOOPIA_SMTP_PASSWORD");
   const host = settings?.smtp_host; const port = Number(settings?.smtp_port ?? 465); const user = settings?.smtp_user;

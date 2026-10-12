@@ -15548,6 +15548,7 @@ export type Database = {
         Row: {
           error: string | null
           error_stage: string | null
+          facts: Json | null
           finished_at: string | null
           html: string | null
           id: string
@@ -15565,6 +15566,7 @@ export type Database = {
         Insert: {
           error?: string | null
           error_stage?: string | null
+          facts?: Json | null
           finished_at?: string | null
           html?: string | null
           id?: string
@@ -15582,6 +15584,7 @@ export type Database = {
         Update: {
           error?: string | null
           error_stage?: string | null
+          facts?: Json | null
           finished_at?: string | null
           html?: string | null
           id?: string
