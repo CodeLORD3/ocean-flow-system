@@ -30,6 +30,8 @@ export default function ReportEmails() {
   const [busy, setBusy] = useState<string | null>(null);
   const [recipients, setRecipients] = useState("");
   const [sender, setSender] = useState("");
+  const [smtpHost, setSmtpHost] = useState("");
+  const [smtpPort, setSmtpPort] = useState("465");
 
   const settings = useQuery({
     queryKey: ["report_email_settings"],
@@ -40,7 +42,12 @@ export default function ReportEmails() {
     },
   });
   useEffect(() => {
-    if (settings.data) { setRecipients(settings.data.recipients.join(", ")); setSender(settings.data.sender); }
+    if (settings.data) {
+      setRecipients(settings.data.recipients.join(", "));
+      setSender(settings.data.smtp_user ?? settings.data.sender);
+      setSmtpHost(settings.data.smtp_host ?? "mailcluster.loopia.se");
+      setSmtpPort(String(settings.data.smtp_port ?? 465));
+    }
   }, [settings.data]);
 
   const runs = useQuery({
@@ -92,13 +99,27 @@ export default function ReportEmails() {
             <div className="text-sm">Mottagare (kommaseparerade)</div>
             <Input value={recipients} onChange={(e) => setRecipients(e.target.value)} />
           </div>
-          <div className="space-y-1">
-            <div className="text-sm">Avsändare (måste vara det kopplade Gmail-kontot)</div>
-            <Input value={sender} onChange={(e) => setSender(e.target.value)} />
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="space-y-1">
+              <div className="text-sm">Utgående server (Loopia)</div>
+              <Input value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <div className="text-sm">Port (SSL/TLS)</div>
+              <Input inputMode="numeric" value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <div className="text-sm">Användare och avsändare</div>
+              <Input value={sender} onChange={(e) => setSender(e.target.value)} />
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground">Lösenordet ligger säkert som hemligheten LOOPIA_SMTP_PASSWORD och visas aldrig här.</p>
           <Button onClick={() => save({
             recipients: recipients.split(/[,;\s]+/).map((s) => s.trim()).filter((s) => /.+@.+\..+/.test(s)),
             sender: sender.trim(),
+            smtp_user: sender.trim(),
+            smtp_host: smtpHost.trim(),
+            smtp_port: Number(smtpPort) || 465,
           })}>Spara</Button>
         </CardContent>
       </Card>
