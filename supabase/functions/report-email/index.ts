@@ -319,14 +319,25 @@ async function run(date: string, type: RType, isTest: boolean) {
   const { data: runRow, error: insErr } = await db.from("report_email_runs").insert({ report_type: type, report_date: date, is_test: isTest, recipients }).select("id").single();
   if (insErr) throw insErr;
   const upd = (p: Record<string, unknown>) => db.from("report_email_runs").update({ ...p, finished_at: new Date().toISOString() }).eq("id", runRow.id);
-  let rep;
-  try { rep = await build(date, type); }
-  catch (e) { await upd({ status: "misslyckad", error_stage: "hämtning/beräkning", error: String((e as Error)?.message ?? e) }); return { status: "misslyckad" }; }
-  const base = { html: rep.html, facts: rep.facts, stores_expected: rep.expected, stores_reported: rep.reported, missing_stores: rep.missing };
-  if (rep.checks.length) {
-    await upd({ ...base, status: "misslyckad", error_stage: "kontroll", error: `misslyckad – kontroll: ${rep.checks.join(" | ")}`.slice(0, 2000) });
-    return { status: "misslyckad", checks: rep.checks };
+  // Mejlet stoppas aldrig: vid fel räknas allt om från källdata en gång till; kvarstår felet
+  // skickas rapporten ändå med en gul kontrollruta överst och felet loggas.
+  let rep: any;
+  let buildErr: string | null = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try { rep = await build(date, type); buildErr = null; } catch (e) { buildErr = String((e as Error)?.message ?? e); continue; }
+    if (!rep.checks.length) break;
   }
+  if (!rep) {
+    const subject = type === "daglig" ? `Dagsrapport Makrill Trade – ${date}` : `Dagsrapport och veckosammanfattning Makrill Trade – ${date}`;
+    rep = { subject, html: `<!doctype html><html lang="sv"><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif"><h1 style="font-size:20px">${esc(subject)}</h1></body></html>`, facts: null, expected: null, reported: null, missing: null, checks: [`rapporten kunde inte räknas fram (${buildErr})`] };
+  }
+  const checkList: string[] = rep.checks ?? [];
+  if (checkList.length) {
+    const box = `<div style="background:#fff4c2;border:1px solid #e0b400;color:#5a4500;padding:10px 12px;margin:0 0 12px;font-size:13px"><strong>Kontroll: ${checkList.length === 1 ? "1 sak" : `${checkList.length} saker`} stämmer inte – siffran är preliminär.</strong><ul style="margin:6px 0 0 18px;padding:0">${checkList.map((c) => `<li>${esc(c)}</li>`).join("")}</ul><div style="margin-top:6px">Rättade siffror visas med markeringen "rättad" i nästa mejl.</div></div>`;
+    rep.html = rep.html.replace("<h1", box + "<h1");
+  }
+  const checkNote = checkList.length ? `kontroll: ${checkList.join(" | ")}`.slice(0, 2000) : null;
+  const base = { html: rep.html, facts: rep.facts, stores_expected: rep.expected, stores_reported: rep.reported, missing_stores: rep.missing, ...(checkNote ? { error: checkNote, error_stage: "kontroll (skickad ändå)" } : {}) };
   // Utskick via Loopia SMTP (port 465, implicit TLS). From = inloggat konto.
   const password = Deno.env.get("LOOPIA_SMTP_PASSWORD");
   const host = settings?.smtp_host; const port = Number(settings?.smtp_port ?? 465); const user = settings?.smtp_user;
