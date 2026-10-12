@@ -320,40 +320,37 @@ async function run(date: string, type: RType, isTest: boolean) {
   try { rep = await build(date, type); }
   catch (e) { await upd({ status: "misslyckad", error_stage: "hämtning/beräkning", error: String((e as Error)?.message ?? e) }); return { status: "misslyckad" }; }
   const base = { html: rep.html, stores_expected: rep.expected, stores_reported: rep.reported, missing_stores: rep.missing };
-  // Utskick via Gmail-kopplingen (caisa@fiskskaldjur.se). Avsändaren är alltid
-  // det inloggade Gmail-kontot; inställningen styr bara visningsnamnet.
-  const lovKey = Deno.env.get("LOVABLE_API_KEY");
-  const gmailKey = Deno.env.get("GOOGLE_MAIL_API_KEY");
-  if (!lovKey || !gmailKey) { await upd({ ...base, status: "ej_skickad", error: "ej skickad – e-post ej konfigurerad" }); return { status: "ej_skickad" }; }
+  // Utskick via Loopia SMTP (port 465, implicit TLS). From = inloggat konto.
+  const password = Deno.env.get("LOOPIA_SMTP_PASSWORD");
+  const host = settings?.smtp_host; const port = Number(settings?.smtp_port ?? 465); const user = settings?.smtp_user;
+  if (!password || !host || !user) { await upd({ ...base, status: "ej_skickad", error: "ej skickad – e-post ej konfigurerad" }); return { status: "ej_skickad" }; }
   if (!recipients.length) { await upd({ ...base, status: "ej_skickad", error: "Inga mottagare" }); return { status: "ej_skickad" }; }
   try {
     const b64 = (s: string) => { const by = new TextEncoder().encode(s); let o = ""; for (let i = 0; i < by.length; i += 8192) o += String.fromCharCode(...by.subarray(i, i + 8192)); return btoa(o); };
     const hdr = (v: string) => (/^[\x00-\x7F]*$/.test(v) ? v : `=?UTF-8?B?${b64(v)}?=`);
     const subject = (isTest ? "TEST – " : "") + rep.subject;
+    const msgId = `<${crypto.randomUUID()}@fiskskaldjur.se>`;
     const mime = [
-      `From: ${hdr(settings?.sender_name ?? "Makrill Trade")} <${settings?.sender ?? "caisa@fiskskaldjur.se"}>`,
+      `From: ${hdr(settings?.sender_name ?? "Makrill Trade")} <${user}>`,
       `To: ${recipients.join(", ")}`,
       `Subject: ${hdr(subject)}`,
+      `Date: ${new Date().toUTCString().replace("GMT", "+0000")}`,
+      `Message-ID: ${msgId}`,
       "MIME-Version: 1.0",
       'Content-Type: text/html; charset="UTF-8"',
       "Content-Transfer-Encoding: base64",
       "",
       b64(rep.html).replace(/.{76}/g, "$&\r\n"),
     ].join("\r\n");
-    const raw = b64(mime).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-    const r = await fetch("https://connector-gateway.lovable.dev/google_mail/gmail/v1/users/me/messages/send", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${lovKey}`, "X-Connection-Api-Key": gmailKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ raw }),
-    });
-    const t = await r.text();
-    if (!r.ok) { console.error(`Gmail ${r.status}: ${t}`); await upd({ ...base, status: "misslyckad", error_stage: "utskick", error: `Gmail ${r.status}: ${t.slice(0, 500)}` }); return { status: "misslyckad" }; }
-    const id = (() => { try { return JSON.parse(t).id; } catch { return null; } })();
-    const { error } = await upd({ ...base, status: "lyckad", resend_message_id: id });
-    if (error) await upd({ ...base, status: "hoppad", error: "Redan skickad (dubblettskydd)", resend_message_id: id });
+    await sendSmtp({ host, port, user, password, from: user, to: recipients, data: mime });
+    const { error } = await upd({ ...base, status: "lyckad", resend_message_id: msgId });
+    if (error) await upd({ ...base, status: "hoppad", error: "Redan skickad (dubblettskydd)", resend_message_id: msgId });
     return { status: "lyckad" };
   } catch (e) {
-    await upd({ ...base, status: "misslyckad", error_stage: "utskick", error: String((e as Error)?.message ?? e) });
+    const stage = e instanceof SmtpError ? `utskick (${e.stage})` : "utskick";
+    const msg = String((e as Error)?.message ?? e).split(password).join("***");
+    console.error(`SMTP ${stage}: ${msg}`);
+    await upd({ ...base, status: "misslyckad", error_stage: stage, error: msg.slice(0, 800) });
     return { status: "misslyckad" };
   }
 }
