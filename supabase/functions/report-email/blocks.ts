@@ -135,6 +135,25 @@ export async function buildBlocks(db: any, from: string, to: string, highlight: 
   void voucherDays;
   const prelim = missingDays.length ? [`Preliminärt: inga varuinköp (konto 4010/4011) bokförda i Fortnox ännu för ${missingDays.map(dayLabel).join(", ")}. Inköp och bruttomarginal ändras när bokföringen är klar.`] : [];
 
+  // Rättelser: jämför med senast skickade mejl samma vecka. Visas bara, räknas aldrig två gånger.
+  const buyDaysG: Record<string, number | null> = {}, buyDaysS: Record<string, number | null> = {};
+  for (const d of days) { buyDaysG[d] = buyG.has(d) ? r2(buyG.get(d)!) : null; buyDaysS[d] = factSTH.has(d) ? r2(factSTH.get(d)!) : null; }
+  const corrG: string[] = [], corrS: string[] = [];
+  if (highlight === null || from !== to) {
+    const { data: prev } = await db.from("report_email_runs").select("report_date,facts").eq("status", "lyckad").eq("is_test", false)
+      .gte("report_date", mondayOf(to)).lt("report_date", to).not("facts", "is", null).order("report_date", { ascending: false }).limit(1).maybeSingle();
+    const pf: any = prev?.facts ?? null;
+    const cmp = (cur: Record<string, number | null>, old: Record<string, number | null> | undefined, out: string[]) => {
+      if (!old) return;
+      for (const d of Object.keys(old)) {
+        if (!(d in cur) || d > String(prev!.report_date)) continue;
+        const diff = r2((cur[d] ?? 0) - (old[d] ?? 0));
+        if (Math.abs(diff) >= 0.01) out.push(`${WD_LONG[dow(d)]} ${Number(d.slice(8))}/${Number(d.slice(5, 7))} rättad ${diff > 0 ? "+" : "−"}${kr(Math.abs(diff))} (inköp som kommit in i efterhand, tidigare ${kr(old[d])})`);
+      }
+    };
+    if (pf) { cmp(buyDaysG, pf.goteborg?.inkop_per_dag, corrG); cmp(buyDaysS, pf.stockholm?.inkop_per_dag, corrS); }
+  }
+
   // ---------- GÖTEBORG ----------
   const gDayTotal = (d: string) => sumN(gbg.map((s: any) => net.get(`${s.id}|${d}`)));
   const gBuy = sumN(days.map((d) => (buyG.has(d) ? r2(buyG.get(d)!) : null)));
