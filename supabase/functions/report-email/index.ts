@@ -401,6 +401,18 @@ Deno.serve(async (req) => {
     if (!DATE_RE.test(date)) return json({ error: "Ogiltigt datum" }, 400);
     const type = typeFor(date);
     if (mode === "preview") { const r = await build(date, type); return json({ ...r, report_type: type }); }
+    if (mode === "smtp-probe") {
+      // Anslutning + EHLO + AUTH mot Loopia, skickar inget.
+      const { data: st } = await db.from("report_email_settings").select("smtp_host,smtp_port,smtp_user").eq("id", true).maybeSingle();
+      const pw = Deno.env.get("LOOPIA_SMTP_PASSWORD") ?? "";
+      if (!pw) return json({ ok: false, error: "LOOPIA_SMTP_PASSWORD saknas" });
+      try {
+        const r = await sendSmtp({ host: st?.smtp_host, port: Number(st?.smtp_port ?? 465), user: st?.smtp_user, password: pw, from: st?.smtp_user, to: [], data: "", probeOnly: true });
+        return json({ ok: true, steps: r.steps });
+      } catch (e) {
+        return json({ ok: false, stage: e instanceof SmtpError ? e.stage : null, error: String((e as Error)?.message ?? e) });
+      }
+    }
     if (mode === "test") return json(await run(date, type, true));
     if (mode === "send") return json(await run(date, type, false));
     return json({ error: "Okänt läge" }, 400);
