@@ -306,9 +306,9 @@ async function build(date: string, type: RType) {
   return { subject, html, expected: A.expected, reported: A.reported, missing: A.missing, facts, checks: [...new Set(checks)] };
 }
 
-async function run(date: string, type: RType, isTest: boolean) {
+async function run(date: string, type: RType, isTest: boolean, onlyTo?: string[]) {
   const { data: settings } = await db.from("report_email_settings").select("*").eq("id", true).maybeSingle();
-  const recipients: string[] = settings?.recipients ?? [];
+  const recipients: string[] = isTest && onlyTo?.length ? onlyTo : (settings?.recipients ?? []);
   if (!isTest) {
     const { data: done } = await db.from("report_email_runs").select("id").eq("report_type", type).eq("report_date", date).eq("status", "lyckad").eq("is_test", false).maybeSingle();
     if (done) {
@@ -387,6 +387,7 @@ Deno.serve(async (req) => {
       if (!due) return json({ ok: true, skipped: "inte dags" });
       return json(await run(now.date, typeFor(now.date), false));
     }
+    if (mode === "test-caisa-tmp") return json(await run("2026-10-11", typeFor("2026-10-11"), true, ["caisa@fiskskaldjur.se"])); // TILLFÄLLIG
     // Admin-lägen
     const auth = req.headers.get("Authorization") ?? "";
     if (!auth.startsWith("Bearer ")) return json({ error: "Inte inloggad" }, 401);
