@@ -331,7 +331,7 @@ async function run(date: string, type: RType, isTest: boolean) {
     const hdr = (v: string) => (/^[\x00-\x7F]*$/.test(v) ? v : `=?UTF-8?B?${b64(v)}?=`);
     const subject = (isTest ? "TEST – " : "") + rep.subject;
     const mime = [
-      `From: ${hdr(settings?.sender_name ?? "Makrill Trade")} <me>`.replace(" <me>", ""),
+      `From: ${hdr(settings?.sender_name ?? "Makrill Trade")} <${settings?.sender ?? "caisacarning@gmail.com"}>`,
       `To: ${recipients.join(", ")}`,
       `Subject: ${hdr(subject)}`,
       "MIME-Version: 1.0",
