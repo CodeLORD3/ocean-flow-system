@@ -4,6 +4,7 @@
 // deno-lint-ignore-file no-explicit-any
 
 const WD = ["Sön", "Mån", "Tis", "Ons", "Tor", "Fre", "Lör"];
+const WD_LONG = ["Söndag", "Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag"];
 const dow = (d: string) => new Date(`${d}T12:00:00Z`).getUTCDay();
 const addDays = (d: string, n: number) => { const x = new Date(`${d}T12:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
 const range = (a: string, b: string) => { const o: string[] = []; for (let d = a; d <= b; d = addDays(d, 1)) o.push(d); return o; };
