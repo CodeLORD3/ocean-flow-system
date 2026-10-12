@@ -135,7 +135,10 @@ export async function buildBlocks(db: any, from: string, to: string, highlight: 
   }
   const factCH = new Map<string, number>(), factSTH = new Map<string, number>();
   const unlinked: string[] = [];
+  const factSeen = new Set<string>();
   for (const i of invoices) {
+    if (factSeen.has(i.nr)) { checks.push(`Kundfaktura ${i.nr} räknad två gånger`); continue; }
+    factSeen.add(i.nr);
     const d = delivery.get(i.nr);
     if (!d) { if (i.booked >= from && i.booked <= to) unlinked.push(`faktura ${i.nr} (${i.kund === "ch" ? "Componia" : "DE No.1"}, ${kr(i.amount)}, bokförd ${i.booked})`); continue; }
     if (d < from || d > to) continue;
@@ -167,8 +170,8 @@ export async function buildBlocks(db: any, from: string, to: string, highlight: 
   const storeNet = (s: any) => sumN(days.map((d) => net.get(`${s.id}|${d}`)));
   const storeRec = (s: any) => sumN(days.map((d) => rec.get(`${s.id}|${d}`)));
   const missingDays = days.filter((d) => !buyG.has(d) && dow(d) !== 0 && dow(d) !== 6);
-  void voucherDays;
-  const prelim = missingDays.length ? [`Preliminärt: inga varuinköp (konto 4010/4011) bokförda i Fortnox ännu för ${missingDays.map(dayLabel).join(", ")}. Inköp och bruttomarginal ändras när bokföringen är klar.`] : [];
+  const prelim = missingDays.length ? [`Underlag saknas: inga varuinköp (konto 4010/4011) i Fortnox med leveransdag ${missingDays.map(dayLabel).join(", ")}. Inköp och bruttomarginal ändras när fakturorna kommer.`] : [];
+  if (noDelivery.length) prelim.push(`Leveransdag saknas – fakturadatum används: ${noDelivery.join("; ")}.`);
 
   // Rättelser: jämför med senast skickade mejl samma vecka. Visas bara, räknas aldrig två gånger.
   const buyDaysG: Record<string, number | null> = {}, buyDaysS: Record<string, number | null> = {};
@@ -265,11 +268,23 @@ export async function buildBlocks(db: any, from: string, to: string, highlight: 
     "Lager: inget lagervärde registrerat i systemet, källa saknas. Lagerförändring räknas som 0.",
   ]);
 
+  // Kontroller före utskick
+  const eq = (a: number | null, b: number | null, what: string) => { if (Math.abs((a ?? 0) - (b ?? 0)) > 0.01) checks.push(`${what}: ${kr(a)} ≠ ${kr(b)}`); };
+  const sumDays = (f: (d: string) => number | null | undefined) => sumN(days.map((d) => f(d) ?? null));
+  eq(sumDays((d) => (buyG.has(d) ? r2(buyG.get(d)!) : null)), gBuy, "Göteborg inköp: dagarnas summa ≠ veckans total");
+  eq(sumDays(gDayTotal), gSales, "Göteborg: dagarnas försäljning ≠ Total försäljning");
+  eq(sumN(gbg.map(storeNet)), gSales, "Göteborg: butikernas summa ≠ Total försäljning");
+  eq(sumDays(sDayTotal), sSales, "Stockholm: dagarnas försäljning ≠ Total försäljning");
+  eq(sumN([sStoreSales, sWeb, sFact]), sSales, "Stockholm: butiker + webb + faktura ≠ Total försäljning");
+  eq(sumDays((d) => sumN([factCH.get(d), factSTH.get(d)])), wSales, "Grossisten: dagarnas fakturering ≠ veckans total");
+  for (const m of [buyG, factCH, factSTH, factDE, webDay]) for (const d of m.keys()) if (m === webDay ? (d < from || d > to) : !days.includes(d)) checks.push(`Datum ${d} ligger utanför perioden ${from}–${to}`);
+  for (const d of days) if (mondayOf(d) !== mondayOf(to)) checks.push(`Datum ${d} ligger inte i rapportveckan`);
+
   const facts = {
     goteborg: { inkop_brutto: gBuy, avgar: wCost, inkop_netto: gNetBuy, forsaljning: gSales, resultat: gResult, kortkop: gRec },
     grossisten: { fakturerat_schweiz: chTot, fakturerat_stockholm: sthTot, varukostnad: wCost, resultat: wResult },
     stockholm: { inkop: sthBuy, butiker: sStoreSales, webb: sWeb, faktura: sFact, forsaljning: sSales, resultat: sResult, kortkop: sRec },
     preliminar: missingDays,
   };
-  return { html: g + w + s, facts };
+  return { html: g + w + s, facts, checks };
 }
