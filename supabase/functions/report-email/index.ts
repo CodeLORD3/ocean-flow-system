@@ -387,7 +387,6 @@ Deno.serve(async (req) => {
       if (!due) return json({ ok: true, skipped: "inte dags" });
       return json(await run(now.date, typeFor(now.date), false));
     }
-    if (mode === "test-caisa-tmp") return json(await run("2026-10-11", typeFor("2026-10-11"), true, ["caisa@fiskskaldjur.se"])); // TILLFÄLLIG
     // Admin-lägen
     const auth = req.headers.get("Authorization") ?? "";
     if (!auth.startsWith("Bearer ")) return json({ error: "Inte inloggad" }, 401);
