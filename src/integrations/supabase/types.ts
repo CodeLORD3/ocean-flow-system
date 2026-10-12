@@ -15605,6 +15605,9 @@ export type Database = {
           recipients: string[]
           sender: string
           sender_name: string
+          smtp_host: string
+          smtp_port: number
+          smtp_user: string
           updated_at: string
         }
         Insert: {
@@ -15613,6 +15616,9 @@ export type Database = {
           recipients?: string[]
           sender?: string
           sender_name?: string
+          smtp_host?: string
+          smtp_port?: number
+          smtp_user?: string
           updated_at?: string
         }
         Update: {
@@ -15621,6 +15627,9 @@ export type Database = {
           recipients?: string[]
           sender?: string
           sender_name?: string
+          smtp_host?: string
+          smtp_port?: number
+          smtp_user?: string
           updated_at?: string
         }
         Relationships: []
