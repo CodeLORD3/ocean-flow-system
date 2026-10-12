@@ -101,12 +101,13 @@ export async function buildBlocks(db: any, from: string, to: string, highlight: 
       const idx = prRows.findIndex((p: any, i: number) => !usedFs.has(i) && p.document_type === "foljesedel" && p.total_ex_vat != null && Math.abs(Number(p.total_ex_vat) - amt) <= 1 && norm(p.supplier_name_raw) === sup && (p.delivery_date ?? p.document_date ?? p.report_date) <= invDate && (p.delivery_date ?? p.document_date ?? p.report_date) >= addDays(invDate, -10));
       if (idx >= 0) { usedFs.add(idx); const p = prRows[idx]; day = p.delivery_date ?? p.document_date ?? p.report_date; }
     }
-    if (!day) day = invDate;
+    let viaInvoice = false;
+    if (!day) { day = invDate; viaInvoice = true; }
     if (day < from || day > to) continue;
     const key = gn ?? `${v.voucher_series}${v.voucher_number}`;
     if (voucherSeen.has(key)) { checks.push(`Leverantörsfaktura ${key} räknad två gånger`); continue; }
     voucherSeen.add(key);
-    if (!pr && !usedFs.size || (!pr && day === invDate)) noDelivery.push(`${f?.supplier_name ?? v.description} (${gn ?? key}, ${kr(amt)}, fakturadatum ${invDate})`);
+    if (viaInvoice) noDelivery.push(`${f?.supplier_name ?? v.description} (${gn ?? key}, ${kr(amt)}, fakturadatum ${invDate})`);
     buyG.set(day, (buyG.get(day) ?? 0) + amt);
   }
 
