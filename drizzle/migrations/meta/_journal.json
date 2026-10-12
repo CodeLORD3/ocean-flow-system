@@ -183,6 +183,13 @@
       "when": 1791721299286,
       "tag": "0025_lot_production_date_and_receiving_colli",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791816602137,
+      "tag": "0026_report_email",
+      "breakpoints": true
     }
   ]
 }

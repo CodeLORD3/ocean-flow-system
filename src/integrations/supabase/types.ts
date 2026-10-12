@@ -15544,6 +15544,87 @@ export type Database = {
           },
         ]
       }
+      report_email_runs: {
+        Row: {
+          error: string | null
+          error_stage: string | null
+          finished_at: string | null
+          html: string | null
+          id: string
+          is_test: boolean
+          missing_stores: string[] | null
+          recipients: string[] | null
+          report_date: string
+          report_type: string
+          resend_message_id: string | null
+          started_at: string
+          status: string
+          stores_expected: number | null
+          stores_reported: number | null
+        }
+        Insert: {
+          error?: string | null
+          error_stage?: string | null
+          finished_at?: string | null
+          html?: string | null
+          id?: string
+          is_test?: boolean
+          missing_stores?: string[] | null
+          recipients?: string[] | null
+          report_date: string
+          report_type: string
+          resend_message_id?: string | null
+          started_at?: string
+          status?: string
+          stores_expected?: number | null
+          stores_reported?: number | null
+        }
+        Update: {
+          error?: string | null
+          error_stage?: string | null
+          finished_at?: string | null
+          html?: string | null
+          id?: string
+          is_test?: boolean
+          missing_stores?: string[] | null
+          recipients?: string[] | null
+          report_date?: string
+          report_type?: string
+          resend_message_id?: string | null
+          started_at?: string
+          status?: string
+          stores_expected?: number | null
+          stores_reported?: number | null
+        }
+        Relationships: []
+      }
+      report_email_settings: {
+        Row: {
+          enabled: boolean
+          id: boolean
+          recipients: string[]
+          sender: string
+          sender_name: string
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          id?: boolean
+          recipients?: string[]
+          sender?: string
+          sender_name?: string
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: boolean
+          recipients?: string[]
+          sender?: string
+          sender_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       resource_items: {
         Row: {
           active: boolean

@@ -165,6 +165,7 @@ const financeNav = [
   { title: "Omvandlingsrecept", url: "/transformation-recipes", icon: CookingPot },
   { title: "Fortnox", url: "/fortnox", icon: Plug },
   { title: "Integrationslogg", url: "/integration-log", icon: Plug },
+  { title: "E-postrapporter", url: "/report-emails", icon: FileText },
   { title: "Ekonomi", url: "/finance", icon: CreditCard },
   { title: "Prognoser", url: "/forecasts", icon: TrendingUp },
 ];
