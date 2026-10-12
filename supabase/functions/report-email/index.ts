@@ -169,7 +169,7 @@ function dailyPart(date: string, days: Day[], prev: Day[], blocks: string, block
   if (closed.length) html += `<p style="font-size:13px;color:${C.muted}">Stängt: ${closed.map((d) => esc(d.store.name)).join(", ")}</p>`;
   html += h3("Överblick");
   html += kpi([
-    ["Netto", kr(tNet)], ["Brutto", kr(tGross)], ["Kvitton", num(tRec)], ["Snittkvitto (brutto)", kr(div(tGross, tRec))],
+    ["Netto", kr(tNet)], ["Brutto", kr(tGross)], ["Kvitton", num(tRec)], ["Snittkvitto (netto)", kr(div(tNet, tRec))],
     ["Personaltimmar", num(tHours, 1)], ["Netto / timme", kr(div(tNet, tHours))],
     [`Mot ${prevDate} (samma butiker)`, pct(change(tNet, pNet))],
   ]);
@@ -320,7 +320,7 @@ async function run(date: string, type: RType, isTest: boolean) {
   try { rep = await build(date, type); }
   catch (e) { await upd({ status: "misslyckad", error_stage: "hämtning/beräkning", error: String((e as Error)?.message ?? e) }); return { status: "misslyckad" }; }
   const base = { html: rep.html, stores_expected: rep.expected, stores_reported: rep.reported, missing_stores: rep.missing };
-  // Utskick via Gmail-kopplingen (caisacarning@gmail.com). Avsändaren är alltid
+  // Utskick via Gmail-kopplingen (caisa@fiskskaldjur.se). Avsändaren är alltid
   // det inloggade Gmail-kontot; inställningen styr bara visningsnamnet.
   const lovKey = Deno.env.get("LOVABLE_API_KEY");
   const gmailKey = Deno.env.get("GOOGLE_MAIL_API_KEY");
@@ -331,7 +331,7 @@ async function run(date: string, type: RType, isTest: boolean) {
     const hdr = (v: string) => (/^[\x00-\x7F]*$/.test(v) ? v : `=?UTF-8?B?${b64(v)}?=`);
     const subject = (isTest ? "TEST – " : "") + rep.subject;
     const mime = [
-      `From: ${hdr(settings?.sender_name ?? "Makrill Trade")} <${settings?.sender ?? "caisacarning@gmail.com"}>`,
+      `From: ${hdr(settings?.sender_name ?? "Makrill Trade")} <${settings?.sender ?? "caisa@fiskskaldjur.se"}>`,
       `To: ${recipients.join(", ")}`,
       `Subject: ${hdr(subject)}`,
       "MIME-Version: 1.0",
