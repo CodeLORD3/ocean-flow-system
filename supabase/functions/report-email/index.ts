@@ -387,7 +387,6 @@ Deno.serve(async (req) => {
       if (!due) return json({ ok: true, skipped: "inte dags" });
       return json(await run(now.date, typeFor(now.date), false));
     }
-    if (mode === "smtp-probe-tmp") { const { data: st } = await db.from("report_email_settings").select("smtp_host,smtp_port,smtp_user").eq("id", true).maybeSingle(); try { const r = await sendSmtp({ host: st?.smtp_host, port: Number(st?.smtp_port ?? 465), user: st?.smtp_user, password: Deno.env.get("LOOPIA_SMTP_PASSWORD") ?? "", from: st?.smtp_user, to: [], data: "", probeOnly: true }); return json({ ok: true, steps: r.steps }); } catch (e) { return json({ ok: false, stage: (e as any)?.stage, error: String((e as Error)?.message ?? e) }); } } // TILLFÄLLIG
     // Admin-lägen
     const auth = req.headers.get("Authorization") ?? "";
     if (!auth.startsWith("Bearer ")) return json({ error: "Inte inloggad" }, 401);
