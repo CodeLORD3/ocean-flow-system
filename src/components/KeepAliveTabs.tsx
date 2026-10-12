@@ -42,6 +42,7 @@ const BugReports = lazy(() => import("@/pages/BugReports"));
 const LiveStaff = lazy(() => import("@/pages/LiveStaff"));
 const Personalkollen = lazy(() => import("@/pages/Integrations/Personalkollen"));
 const IntegrationLog = lazy(() => import("@/pages/IntegrationLog"));
+const ReportEmails = lazy(() => import("@/pages/ReportEmails"));
 const NegativeFlags = lazy(() => import("@/pages/NegativeFlags"));
 const Rostrapporter = lazy(() => import("@/pages/Rostrapporter"));
 const LotPage = lazy(() => import("@/pages/LotPage"));
@@ -198,6 +199,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
 
   "/fortnox": { component: <FortnoxSettings /> },
   "/integration-log": { component: <IntegrationLog /> },
+  "/report-emails": { component: <ReportEmails /> },
   "/negativa-saldon": { component: <NegativeFlags /> },
   "/rostrapporter": { component: <Rostrapporter /> },
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
