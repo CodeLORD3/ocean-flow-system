@@ -93,7 +93,7 @@ export default function ReportEmails() {
             <Input value={recipients} onChange={(e) => setRecipients(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <div className="text-sm">Avsändare</div>
+            <div className="text-sm">Avsändare (måste vara det kopplade Gmail-kontot)</div>
             <Input value={sender} onChange={(e) => setSender(e.target.value)} />
           </div>
           <Button onClick={() => save({
