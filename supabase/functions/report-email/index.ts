@@ -5,6 +5,7 @@
 // bara analystexten utifrån färdiga siffror och får misslyckas.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { buildBlocks, mondayOf } from "./blocks.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const json = (b: unknown, s = 200) =>
@@ -149,7 +150,7 @@ const kpi = (items: [string, string][]) =>
 const box = (inner: string, color = C.warn) =>
   `<div style="border-left:4px solid ${color};background:#fbf3ef;padding:10px 12px;margin:8px 0;font-size:13px">${inner}</div>`;
 
-function dailyPart(date: string, days: Day[], prev: Day[]) {
+function dailyPart(date: string, days: Day[], prev: Day[], blocks: string, blocksTitle: string) {
   const today = days.filter((d) => d.date === date);
   const open = today.filter((d) => d.open);
   const missing = open.filter((d) => !d.report);
@@ -173,7 +174,8 @@ function dailyPart(date: string, days: Day[], prev: Day[]) {
     [`Mot ${prevDate} (samma butiker)`, pct(change(tNet, pNet))],
   ]);
   if (missing.length) html += `<p style="font-size:12px;color:${C.warn}">Summan är ofullständig – ${missing.length} butik(er) saknar rapport och har inte uppskattats.</p>`;
-  html += h3("Per butik");
+  html += h3(blocksTitle) + blocks;
+  const comments: string[] = [];
   const rows = today.map((d) => {
     const r = d.report; const p = pFor(d.store.id); const ch = change(d.net, p?.net ?? null);
     if (r) {
@@ -185,12 +187,13 @@ function dailyPart(date: string, days: Day[], prev: Day[]) {
     const status = !d.open ? "Stängt" : !r ? `<b style="color:${C.warn}">Saknar rapport</b>` : "";
     if (!r) return `<tr><td ${td}><b>${esc(d.store.name)}</b></td><td ${td} colspan="10">${status}</td></tr>`;
     const comment = [r.comment, r.staff_notes].filter(Boolean).map(esc).join("<br>") || "—";
+    if (comment !== "—") comments.push(`<b>${esc(d.store.name)}:</b> ${comment}`);
     return `<tr><td ${td}><b>${esc(d.store.name)}</b></td><td ${tdr}>${kr(d.net)}</td><td ${tdr}>${kr(d.gross)}</td><td ${tdr}>${num(d.receipts)}</td><td ${tdr}>${kr(div(d.gross, d.receipts))}</td><td ${tdr}>${kr(r.largest_sale != null ? Number(r.largest_sale) : null)}</td><td ${td}>${payments(r)}</td><td ${tdr}>${num(d.hours, 1)}${d.hoursSource === "dagsrapport" ? "*" : ""}</td><td ${tdr}>${kr(div(d.net, d.hours))}</td><td ${tdr}>${pct(ch)}</td><td ${td}>${waste(r)}</td></tr>${comment !== "—" ? `<tr><td ${td}></td><td ${td} colspan="10" style="padding:4px 8px 10px;font-size:12px;color:${C.muted};border-bottom:1px solid ${C.line}">Kommentar: ${comment}</td></tr>` : ""}`;
   }).join("");
-  html += table(`<tr><th ${th}>Butik</th><th ${thr}>Netto</th><th ${thr}>Brutto</th><th ${thr}>Kvitton</th><th ${thr}>Snitt</th><th ${thr}>Största köp</th><th ${th}>Betalsätt</th><th ${thr}>Timmar</th><th ${thr}>Netto/tim</th><th ${thr}>Mot förra v.</th><th ${th}>Svinn</th></tr>`, rows);
-  html += `<p style="font-size:11px;color:${C.muted}">Timmar från Personalkollen; * = från dagsrapportens personalrader.</p>`;
+  void rows;
   html += h3("Avvikelser");
   html += devs.length ? `<ul style="font-size:13px;margin:4px 0 0 18px;padding:0">${devs.map((x) => `<li>${x}</li>`).join("")}</ul>` : `<p style="font-size:13px">Inga avvikelser.</p>`;
+  if (comments.length) html += h3("Kommentarer från dagsrapporterna") + `<ul style="font-size:13px;margin:4px 0 0 18px;padding:0">${comments.map((x) => `<li>${x}</li>`).join("")}</ul>`;
   return { html, expected: open.length, reported: reported.length, missing: missing.map((d) => d.store.name) };
 }
 
@@ -208,13 +211,12 @@ function agg(stores: Store[], days: Day[], prev: Day[]): StoreAgg[] {
   });
 }
 
-function weeklyPart(from: string, to: string, a: StoreAgg[], analysis: string | null) {
+function weeklyPart(from: string, to: string, a: StoreAgg[], analysis: string | null, blocks: string) {
   const T = { net: sum(a.map((x) => x.net)), gross: sum(a.map((x) => x.gross)), rec: sum(a.map((x) => x.rec)), hours: sum(a.map((x) => x.hours)), pNet: sum(a.map((x) => x.pNet)), rep: a.reduce((s, x) => s + x.rep, 0), exp: a.reduce((s, x) => s + x.exp, 0) };
   let html = h2(`Del B – Veckosammanfattning ${from} – ${to}`);
-  html += h3("Veckans totalresultat");
-  html += kpi([["Netto", kr(T.net)], ["Brutto", kr(T.gross)], ["Kvitton", num(T.rec)], ["Timmar", num(T.hours, 1)], ["Netto / timme", kr(div(T.net, T.hours))], ["Mot förra veckan", pct(change(T.net, T.pNet))], ["Rapporterade dagar", `${T.rep} / ${T.exp}`]]);
+  html += blocks;
   if (T.rep < T.exp) html += `<p style="font-size:12px;color:${C.warn}">Summan är ofullständig – ${T.exp - T.rep} öppna butiksdag(ar) saknar rapport. Inget har uppskattats.</p>`;
-  html += h3("Per butik");
+  html += h3("Jämförelse mot förra veckan");
   html += table(`<tr><th ${th}>Butik</th><th ${thr}>Netto</th><th ${thr}>Brutto</th><th ${thr}>Kvitton</th><th ${thr}>Timmar</th><th ${thr}>Netto/tim</th><th ${thr}>Dagar</th><th ${thr}>Förra v. netto</th><th ${thr}>Förändring</th></tr>`,
     a.map((x) => `<tr><td ${td}><b>${esc(x.name)}</b></td><td ${tdr}>${kr(x.net)}</td><td ${tdr}>${kr(x.gross)}</td><td ${tdr}>${num(x.rec)}</td><td ${tdr}>${num(x.hours, 1)}</td><td ${tdr}>${kr(div(x.net, x.hours))}</td><td ${tdr}${x.rep < x.exp ? ` style="color:${C.warn}"` : ""}>${x.rep} / ${x.exp}</td><td ${tdr}>${kr(x.pNet)}</td><td ${tdr}>${pct(change(x.net, x.pNet))}</td></tr>`).join("")
     + `<tr><td ${td}><b>Totalt</b></td><td ${tdr}><b>${kr(T.net)}</b></td><td ${tdr}><b>${kr(T.gross)}</b></td><td ${tdr}><b>${num(T.rec)}</b></td><td ${tdr}><b>${num(T.hours, 1)}</b></td><td ${tdr}><b>${kr(div(T.net, T.hours))}</b></td><td ${tdr}><b>${T.rep} / ${T.exp}</b></td><td ${tdr}><b>${kr(T.pNet)}</b></td><td ${tdr}><b>${pct(change(T.net, T.pNet))}</b></td></tr>`);
@@ -275,20 +277,30 @@ async function aiAnalysis(input: unknown): Promise<string | null> {
 
 async function build(date: string, type: RType) {
   const stores = await loadStores();
-  const weekFrom = type === "lordag" ? addDays(date, -4) : type === "sondag" ? addDays(date, -5) : date;
-  const from = weekFrom < date ? weekFrom : date;
+  const from = mondayOf(date);
   const days = await loadDays(stores, from, date);
   const prev = await loadDays(stores, addDays(from, -7), addDays(date, -7));
-  const A = dailyPart(date, days, prev);
-  let body = A.html;
-  if (type !== "daglig") {
+  let facts: unknown = null;
+  let body: string;
+  let A;
+  if (type === "daglig") {
+    const bl = await buildBlocks(db, from, date, date);
+    facts = bl.facts;
+    A = dailyPart(date, days, prev, bl.html, `Veckan hittills ${from} – ${date} (dagens rad markerad)`);
+    body = A.html;
+  } else {
+    const day = await buildBlocks(db, date, date, date);
+    A = dailyPart(date, days, prev, day.html, `${WD[dow(date)][0].toUpperCase()}${WD[dow(date)].slice(1)}ens rad`);
+    body = A.html;
+    const wk = await buildBlocks(db, from, date, null);
+    facts = wk.facts;
     const a = agg(stores, days, prev);
-    const analysis = await aiAnalysis({ period: `${from}–${date}`, jamforelse: "samma veckodagar förra veckan", butiker: a.map((x) => ({ butik: x.name, netto: x.net, brutto: x.gross, kvitton: x.rec, timmar: x.hours, rapporterade_dagar: x.rep, forvantade_dagar: x.exp, ofullstandiga: x.incomplete, netto_forra_veckan: x.pNet })) });
-    body += weeklyPart(from, date, a, analysis).html;
+    const analysis = await aiAnalysis({ period: `${from}–${date}`, jamforelse: "samma veckodagar förra veckan", block: wk.facts, butiker: a.map((x) => ({ butik: x.name, netto: x.net, brutto: x.gross, kvitton: x.rec, timmar: x.hours, rapporterade_dagar: x.rep, forvantade_dagar: x.exp, ofullstandiga: x.incomplete, netto_forra_veckan: x.pNet })) });
+    body += weeklyPart(from, date, a, analysis, wk.html).html;
   }
   const subject = type === "daglig" ? `Dagsrapport Makrill Trade – ${date}` : `Dagsrapport och veckosammanfattning Makrill Trade – ${date}`;
   const html = `<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(subject)}</title></head><body style="margin:0;padding:0;background:#ffffff;color:${C.ink};font-family:Arial,Helvetica,sans-serif"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:16px"><table role="presentation" width="760" cellpadding="0" cellspacing="0" border="0" style="max-width:760px;width:100%"><tr><td><h1 style="font-size:20px;margin:0 0 4px;color:${C.head}">${esc(subject)}</h1><p style="margin:0;font-size:12px;color:${C.muted}">Svenska butiker (${stores.length} st). Belopp i SEK.</p>${body}<p style="font-size:11px;color:${C.muted};margin-top:28px">Automatiskt utskick från Makrill.</p></td></tr></table></td></tr></table></body></html>`;
-  return { subject, html, expected: A.expected, reported: A.reported, missing: A.missing };
+  return { subject, html, expected: A.expected, reported: A.reported, missing: A.missing, facts };
 }
 
 async function run(date: string, type: RType, isTest: boolean) {
