@@ -136,3 +136,6 @@ verify_jwt = false
 
 [functions.voice-report]
 verify_jwt = false
+
+[functions.report-email]
+verify_jwt = false
