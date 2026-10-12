@@ -282,26 +282,28 @@ async function build(date: string, type: RType) {
   const days = await loadDays(stores, from, date);
   const prev = await loadDays(stores, addDays(from, -7), addDays(date, -7));
   let facts: unknown = null;
+  const checks: string[] = [];
   let body: string;
   let A;
   if (type === "daglig") {
     const bl = await buildBlocks(db, from, date, date);
-    facts = bl.facts;
+    facts = bl.facts; checks.push(...bl.checks);
     A = dailyPart(date, days, prev, bl.html, `Veckan hittills ${from} – ${date} (dagens rad markerad)`);
     body = A.html;
   } else {
     const day = await buildBlocks(db, date, date, date);
+    checks.push(...day.checks);
     A = dailyPart(date, days, prev, day.html, `${WD[dow(date)][0].toUpperCase()}${WD[dow(date)].slice(1)}ens rad`);
     body = A.html;
     const wk = await buildBlocks(db, from, date, null);
-    facts = wk.facts;
+    facts = wk.facts; checks.push(...wk.checks);
     const a = agg(stores, days, prev);
     const analysis = await aiAnalysis({ period: `${from}–${date}`, jamforelse: "samma veckodagar förra veckan", block: wk.facts, butiker: a.map((x) => ({ butik: x.name, netto: x.net, brutto: x.gross, kvitton: x.rec, timmar: x.hours, rapporterade_dagar: x.rep, forvantade_dagar: x.exp, ofullstandiga: x.incomplete, netto_forra_veckan: x.pNet })) });
     body += weeklyPart(from, date, a, analysis, wk.html).html;
   }
   const subject = type === "daglig" ? `Dagsrapport Makrill Trade – ${date}` : `Dagsrapport och veckosammanfattning Makrill Trade – ${date}`;
   const html = `<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(subject)}</title></head><body style="margin:0;padding:0;background:#ffffff;color:${C.ink};font-family:Arial,Helvetica,sans-serif"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:16px"><table role="presentation" width="760" cellpadding="0" cellspacing="0" border="0" style="max-width:760px;width:100%"><tr><td><h1 style="font-size:20px;margin:0 0 4px;color:${C.head}">${esc(subject)}</h1><p style="margin:0;font-size:12px;color:${C.muted}">Svenska butiker (${stores.length} st). Belopp i SEK.</p>${body}<p style="font-size:11px;color:${C.muted};margin-top:28px">Automatiskt utskick från Makrill.</p></td></tr></table></td></tr></table></body></html>`;
-  return { subject, html, expected: A.expected, reported: A.reported, missing: A.missing, facts };
+  return { subject, html, expected: A.expected, reported: A.reported, missing: A.missing, facts, checks: [...new Set(checks)] };
 }
 
 async function run(date: string, type: RType, isTest: boolean) {
@@ -321,6 +323,10 @@ async function run(date: string, type: RType, isTest: boolean) {
   try { rep = await build(date, type); }
   catch (e) { await upd({ status: "misslyckad", error_stage: "hämtning/beräkning", error: String((e as Error)?.message ?? e) }); return { status: "misslyckad" }; }
   const base = { html: rep.html, facts: rep.facts, stores_expected: rep.expected, stores_reported: rep.reported, missing_stores: rep.missing };
+  if (rep.checks.length) {
+    await upd({ ...base, status: "misslyckad", error_stage: "kontroll", error: `misslyckad – kontroll: ${rep.checks.join(" | ")}`.slice(0, 2000) });
+    return { status: "misslyckad", checks: rep.checks };
+  }
   // Utskick via Loopia SMTP (port 465, implicit TLS). From = inloggat konto.
   const password = Deno.env.get("LOOPIA_SMTP_PASSWORD");
   const host = settings?.smtp_host; const port = Number(settings?.smtp_port ?? 465); const user = settings?.smtp_user;
