@@ -1,0 +1,1 @@
+ALTER TABLE public.report_email_runs ADD COLUMN IF NOT EXISTS facts jsonb;

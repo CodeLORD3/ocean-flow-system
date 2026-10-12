@@ -107,8 +107,9 @@ export async function buildBlocks(db: any, from: string, to: string, highlight: 
     const m = i.kund === "ch" ? factCH : factSTH;
     m.set(d, r2((m.get(d) ?? 0) + i.amount));
   }
-  const marginPct = mt.data?.target_pct != null ? Number(mt.data.target_pct) : null;
-  const costOf = (n: number | null) => (n == null || marginPct == null ? null : r2(n * (1 - marginPct / 100)));
+  void mt;
+  // Grossistens varukostnad = fakturerat ÷ 1,282 (22 % påslag), som i arket.
+  const costOf = (n: number | null) => (n == null ? null : r2(n / 1.282));
 
   // Webb (hämtdag): Shopify-ordrar per hämtdag i Stockholmsbutikerna, exkl. moms 6 %
   const webDay = new Map<string, number>();
@@ -176,7 +177,7 @@ export async function buildBlocks(db: any, from: string, to: string, highlight: 
   w += summary([["Total försäljning", kr(wSales), true], ["Resultat", kr(wResult), true], ["Bruttomarginal", pc(wResult == null ? null : (div(wResult, wSales) ?? 0) * 100), true]]);
   w += noteList([
     "Fakturerat = FSAB:s kundfakturor till Componia AG och DE No.1 AB i Fortnox, placerade på beställningens leveransdag.",
-    marginPct == null ? "Varukostnad: källa saknas." : `Varukostnad: ingen faktisk kostnad finns i systemet. Beräknad som fakturerat × (1 − marginalmål ${grp(marginPct, 0)} %).`,
+    "Varukostnad: ingen faktisk kostnad finns i systemet. Beräknad som fakturerat ÷ 1,282 (22 % påslag).",
     ...(unlinked.length ? [`Ej medräknade, saknar kopplad beställning: ${unlinked.join("; ")}.`] : []),
   ]);
 
