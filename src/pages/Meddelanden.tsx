@@ -70,8 +70,11 @@ function WhatsAppFeedback() {
   return (
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="text-xl font-semibold mr-auto">Meddelanden (WhatsApp)</h1>
-        <Button onClick={sendNow} disabled={sending}>{sending ? "Skickar…" : "Skicka godkända utkast nu"}</Button>
+        <div className="mr-auto">
+          <h1 className="text-xl font-semibold">Meddelanden (WhatsApp) – vilande</h1>
+          <p className="text-sm text-muted-foreground">WhatsApp används inte längre. Personalen nås via Telegram.</p>
+        </div>
+        <Button onClick={sendNow} disabled>{sending ? "Skickar…" : "Skicka godkända utkast nu"}</Button>
       </div>
 
       <section className="space-y-2">
