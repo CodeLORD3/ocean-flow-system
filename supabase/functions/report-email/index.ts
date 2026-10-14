@@ -383,8 +383,8 @@ Deno.serve(async (req) => {
       const { data: s } = await db.from("report_email_settings").select("enabled").eq("id", true).maybeSingle();
       if (!s?.enabled) return json({ ok: true, skipped: "schemat avstängt" });
       const now = stockholmNow(); const d = dow(now.date);
-      // Tis–fre 19.45 (reserv 19.55), lör–sön 18.00 (reserv 18.10). Dubblettskyddet stoppar dubbla mejl.
-      const due = (d >= 2 && d <= 5 && now.hour === 19 && now.minute >= 45) || ((d === 6 || d === 0) && now.hour === 18 && now.minute < 15);
+      // Tis–fre 20.00 (reserv 20.10), lör–sön 18.00 (reserv 18.10). Dubblettskyddet stoppar dubbla mejl.
+      const due = (d >= 2 && d <= 5 && now.hour === 20 && now.minute < 15) || ((d === 6 || d === 0) && now.hour === 18 && now.minute < 15);
       if (!due) return json({ ok: true, skipped: "inte dags" });
       return json(await run(now.date, typeFor(now.date), false));
     }
