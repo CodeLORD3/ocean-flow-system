@@ -85,7 +85,7 @@ export default function ReportEmails() {
     <div className="space-y-4 p-4">
       <div>
         <h1 className="text-xl font-semibold">E-postrapporter</h1>
-        <p className="text-sm text-muted-foreground">Dagsrapport tis–fre 19.00, lördag och söndag 17.00 med veckosammanfattning. Inget mejl på måndagar.</p>
+        <p className="text-sm text-muted-foreground">Dagsrapport tis–fre 19.45, lördag och söndag 17.00 med veckosammanfattning. Inget mejl på måndagar.</p>
       </div>
 
       <Card>
