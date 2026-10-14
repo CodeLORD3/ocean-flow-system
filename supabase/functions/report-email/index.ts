@@ -18,10 +18,10 @@ type RType = "daglig" | "lordag" | "sondag";
 // ---------- tid ----------
 function stockholmNow() {
   const p = Object.fromEntries(
-    new Intl.DateTimeFormat("en-GB", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hour12: false, weekday: "short" })
+    new Intl.DateTimeFormat("en-GB", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false, weekday: "short" })
       .formatToParts(new Date()).map((x) => [x.type, x.value]),
   );
-  return { date: `${p.year}-${p.month}-${p.day}`, hour: Number(p.hour) % 24 };
+  return { date: `${p.year}-${p.month}-${p.day}`, hour: Number(p.hour) % 24, minute: Number(p.minute) };
 }
 const dow = (d: string) => new Date(`${d}T12:00:00Z`).getUTCDay(); // 0 = söndag
 const addDays = (d: string, n: number) => {
@@ -383,7 +383,8 @@ Deno.serve(async (req) => {
       const { data: s } = await db.from("report_email_settings").select("enabled").eq("id", true).maybeSingle();
       if (!s?.enabled) return json({ ok: true, skipped: "schemat avstängt" });
       const now = stockholmNow(); const d = dow(now.date);
-      const due = (d >= 2 && d <= 5 && now.hour === 19) || ((d === 6 || d === 0) && now.hour === 17);
+      // Tis–fre 19.45 (reserv 19.55), lör–sön 17.00 (reserv 17.10). Dubblettskyddet stoppar dubbla mejl.
+      const due = (d >= 2 && d <= 5 && now.hour === 19 && now.minute >= 45) || ((d === 6 || d === 0) && now.hour === 17 && now.minute < 15);
       if (!due) return json({ ok: true, skipped: "inte dags" });
       return json(await run(now.date, typeFor(now.date), false));
     }
