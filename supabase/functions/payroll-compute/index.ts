@@ -566,9 +566,10 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Personer utan Fortnox-koppling hamnar i felkön
+  // Personer utan Fortnox-koppling hamnar i felkön — bara om de har löneposter i perioden
+  const withLines = new Set(lines.map((l) => l.employee_id));
   employmentByEmployee.forEach((emp, employeeId) => {
-    if (!emp.fortnox_employee_id) {
+    if (!emp.fortnox_employee_id && withLines.has(employeeId)) {
       issues.push({ kind: "missing_fortnox_employee_id", detail: "Anställningsnummer/Fortnox-id saknas", employee_id: employeeId });
     }
   });
