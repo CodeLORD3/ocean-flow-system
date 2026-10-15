@@ -262,8 +262,8 @@ Deno.serve(async (req) => {
   }
 
   // Skäliga avvikelser godkänns automatiskt på stämplad tid: pass utan stämpling = 0 min,
-  // komplett in/ut-stämpling upp till 11 h. Saknad utstämpling eller längre pass lämnas för granskning.
-  const MAX_REASONABLE = 11 * 60;
+  // komplett in/ut-stämpling upp till 13 h. Saknad utstämpling eller längre pass lämnas för granskning.
+  const MAX_REASONABLE = 13 * 60;
   for (const row of rows) {
     if (row.status !== "flagged") continue;
     const c = row.computed as { clocked_minutes?: number; first_in?: string | null; last_out?: string | null };
