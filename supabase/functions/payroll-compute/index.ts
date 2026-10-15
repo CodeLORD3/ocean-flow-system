@@ -271,7 +271,14 @@ Deno.serve(async (req) => {
     .gte("end_date", from)
     .in("employee_id", employeeIds);
   const { data: absenceTypes = [] } = await db.from("absence_types").select("id, code, is_sick");
-  const absenceCode = new Map((absenceTypes as { id: string; code: string }[]).map((t) => [t.id, t.code]));
+  // Frånvarotypernas koder (semester, sjuk …) översätts till lönearterna i Fortnox (SEM, SJK …).
+  const ABSENCE_TO_WAGE: Record<string, string> = {
+    semester: "SEM", sjuk: "SJK", vab: "VAB", komp: "KOM", tjanstledig: "TJL", foraldraledig: "FPE",
+    permission: "PEM", arbetsskada: "ASK", havandeskapspenning: "HAV", narstaendevard: "NAR", utbildning: "UTB",
+  };
+  const absenceCode = new Map(
+    (absenceTypes as { id: string; code: string }[]).map((t) => [t.id, ABSENCE_TO_WAGE[t.code] ?? t.code.toUpperCase()]),
+  );
   const { data: sickPeriods = [] } = await db
     .from("sick_periods")
     .select("id, employee_id, first_day, last_day, karens_applied")
