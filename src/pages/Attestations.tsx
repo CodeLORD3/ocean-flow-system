@@ -53,13 +53,24 @@ export default function Attestations() {
   const [adjustHours, setAdjustHours] = useState<number>(0);
   const [adjustNote, setAdjustNote] = useState("");
 
+  const [view, setView] = useState<"period" | "vecka">("period");
   const week = useMemo(() => weekDates(anchor), [anchor]);
-  const period = anchor.slice(0, 7);
+  // Svensk löneperiod: den 16:e i föregående månad till den 15:e. Perioden heter efter slutmånaden.
+  const payPeriod = useMemo(() => {
+    const [y, m, d] = anchor.split("-").map(Number);
+    const end = new Date(Date.UTC(y, m - 1 + (d >= 16 ? 1 : 0), 15));
+    const start = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth() - 1, 16));
+    const k = (x: Date) => x.toISOString().slice(0, 10);
+    return { from: k(start), to: k(end), key: k(end).slice(0, 7) };
+  }, [anchor]);
+  const period = payPeriod.key;
+  const rangeFrom = view === "period" ? payPeriod.from : week[0];
+  const rangeTo = view === "period" ? payPeriod.to : week[6];
 
   const { data: stores = [] } = useStores();
   const store = stores.find((s) => s.id === storeId);
   const { data: employees = [] } = useEmployees(true);
-  const { data: attestations = [], isLoading } = useAttestations(storeId || null, week[0], week[6]);
+  const { data: attestations = [], isLoading } = useAttestations(storeId || null, rangeFrom, rangeTo);
   const { data: locks = [] } = usePeriodLocks(storeId || null);
 
   const compute = useComputeAttest();
@@ -305,12 +316,21 @@ export default function Attestations() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <SectionLabel>Attest</SectionLabel>
-          <h1 className="ind-h1">Vecka {isoWeek(anchor)}</h1>
+          <h1 className="ind-h1">{view === "period" ? `Löneperiod ${period}` : `Vecka ${isoWeek(anchor)}`}</h1>
           <p className="ind-muted text-sm">
-            {week[0]} – {week[6]} · period {period}
+            {rangeFrom} – {rangeTo} · period {period}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Select value={view} onValueChange={(v) => setView(v as "period" | "vecka")}>
+            <SelectTrigger className="ind-input w-40" aria-label="Visa">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="period">Löneperiod</SelectItem>
+              <SelectItem value="vecka">Vecka</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={storeId} onValueChange={setStoreId}>
             <SelectTrigger className="ind-input w-56">
               <SelectValue placeholder="Välj enhet" />
@@ -332,23 +352,27 @@ export default function Attestations() {
           <IndustryButton
             variant="ghost"
             onClick={() => {
+              if (view === "period") {
+                setAnchor(dateKey(new Date(`${payPeriod.from}T12:00:00`).getTime() - 86400000 > 0 ? new Date(new Date(`${payPeriod.from}T12:00:00`).getTime() - 86400000) : new Date()));
+                return;
+              }
               const d = mondayOf(anchor);
               d.setDate(d.getDate() - 7);
               setAnchor(dateKey(d));
             }}
           >
-            Förra veckan
+            {view === "period" ? "Förra perioden" : "Förra veckan"}
           </IndustryButton>
         </div>
       </div>
 
       {!storeId ? (
         <section className="space-y-2">
-          <SectionLabel>Veckans oattesterade pass per butik</SectionLabel>
+          <SectionLabel>{view === "period" ? "Periodens" : "Veckans"} oattesterade pass per butik</SectionLabel>
           {perStore.length === 0 ? (
             <IndustryRow edge="accent">
               <p className="ind-muted text-sm">
-                {isLoading ? "Läser attestunderlaget…" : "Inga oattesterade pass i veckan."}
+                {isLoading ? "Läser attestunderlaget…" : view === "period" ? "Inga oattesterade pass i perioden." : "Inga oattesterade pass i veckan."}
               </p>
             </IndustryRow>
           ) : (
@@ -382,7 +406,7 @@ export default function Attestations() {
               disabled={compute.isPending}
               onClick={async () => {
                 try {
-                  await compute.mutateAsync({ storeId, from: week[0], to: week[6] });
+                  await compute.mutateAsync({ storeId, from: rangeFrom, to: rangeTo });
                   toast.success("Attestunderlaget beräknat");
                 } catch (e) {
                   toast.error(e instanceof Error ? e.message : "Beräkningen misslyckades");
@@ -394,7 +418,7 @@ export default function Attestations() {
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
-              Beräkna veckan
+              {view === "period" ? "Beräkna perioden" : "Beräkna veckan"}
             </IndustryButton>
           </DecisionBar>
 
@@ -526,7 +550,7 @@ export default function Attestations() {
                     ? `Perioden ${period} är låst.`
                     : flagged.length
                       ? `${flagged.length} flaggade rader återstår i veckan — attestera dem innan låsning.`
-                      : `Alla veckans rader är hanterade. Perioden ${period} kan låsas.`}
+                      : `Alla ${view === "period" ? "periodens" : "veckans"} rader är hanterade. Perioden ${period} kan låsas.`}
                 </p>
                 {!activeLock && (
                   <IndustryButton
