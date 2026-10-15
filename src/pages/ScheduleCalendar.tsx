@@ -25,6 +25,7 @@ import {
   useDeleteProtocolItem,
 } from "@/hooks/useMeetingProtocols";
 import { useStaff } from "@/hooks/useStaff";
+import { useCalendarStaffMarks } from "@/hooks/useCalendarStaffMarks";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
@@ -111,6 +112,7 @@ export default function ScheduleCalendar() {
 
   const isShop = site === "shop";
   const { events, isLoading, addEvent, updateEvent, deleteEvent } = useScheduleEvents(site, year, isShop ? activeStoreId : null);
+  const { data: staffMarks } = useCalendarStaffMarks(year, isShop ? activeStoreId ?? null : null);
   const createProtocol = useCreateMeetingProtocol();
   const updateProtocol = useUpdateMeetingProtocol();
   const addProtocolItem = useAddProtocolItem();
@@ -493,6 +495,8 @@ export default function ScheduleCalendar() {
                   dotColor = getEventDisplayColor(dayEvents[0]);
                 } else if (isHoliday) {
                   dotColor = "bg-pink-500";
+                } else if ((staffMarks?.get(dateStr) ?? []).length > 0) {
+                  dotColor = "bg-orange-400";
                 }
 
                 return (
@@ -670,6 +674,21 @@ export default function ScheduleCalendar() {
                           {holiday && (
                             <div className="text-[8px] text-pink-500 truncate mt-0.5">{holiday}</div>
                           )}
+                          {(staffMarks?.get(cell.dateStr) ?? []).slice(0, 3).map((m) => (
+                            <div
+                              key={m.key}
+                              title={`${m.name}: ${m.label}${m.note ? ` – ${m.note}` : ""}`}
+                              className={cn(
+                                "text-[8px] mt-0.5 px-1 rounded-sm border border-dashed truncate",
+                                m.kind === "absence" ? "border-orange-500 text-orange-700 bg-orange-500/10" : "border-muted-foreground text-muted-foreground bg-muted/40",
+                              )}
+                            >
+                              {m.name.split(" ")[0]} · {m.label}
+                            </div>
+                          ))}
+                          {(staffMarks?.get(cell.dateStr) ?? []).length > 3 && (
+                            <div className="text-[7px] text-muted-foreground mt-0.5">+{(staffMarks?.get(cell.dateStr) ?? []).length - 3} borta</div>
+                          )}
                           {dayEvents.slice(0, 3).map(evt => (
                             <div
                               key={evt.id}
@@ -741,8 +760,24 @@ export default function ScheduleCalendar() {
           </div>
         </div>
 
+        {(staffMarks?.get(selectedDate) ?? []).length > 0 && (
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Frånvaro & ej tillgänglig</p>
+            {(staffMarks?.get(selectedDate) ?? []).map((m) => (
+              <div key={m.key} className="flex flex-wrap items-baseline gap-x-2 rounded-sm border border-dashed border-border px-2 py-1.5 text-xs">
+                <span className="font-medium">{m.name}</span>
+                <span className="text-muted-foreground">
+                  {m.label}
+                  {m.pending ? " · väntar på beslut" : ""}
+                  {m.note ? ` · ${m.note}` : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Events & Tasks */}
-        {dayEvents.length === 0 && dayMeetings.length === 0 && (
+        {dayEvents.length === 0 && dayMeetings.length === 0 && !(staffMarks?.get(selectedDate) ?? []).length && (
           <p className="text-xs text-muted-foreground py-2 text-center">Inga händelser eller möten denna dag</p>
         )}
 
