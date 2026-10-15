@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
       .order("occurred_at", { ascending: true })
       .order("id", { ascending: true })
       .range(offset, offset + PAGE - 1);
-    if (storeId) entryQuery = entryQuery.eq("store_id", storeId);
+    // Inget butiksfilter: dagens tid räknas per person, oavsett vilken station som användes.
     const { data: page, error: entryErr } = await entryQuery;
     if (entryErr) return json({ error: entryErr.message }, 500);
     rawEntries.push(...(page ?? []));
@@ -234,7 +234,7 @@ Deno.serve(async (req) => {
 
   // Stämplingar utan pass = oplanerad tid
   for (const [key, dayEntries] of byKey) {
-    if (handled.has(key)) continue;
+    if (handled.has(key) || shiftDays.has(key)) continue;
     const [employeeId, date] = key.split("|");
     const ins = dayEntries.filter((e) => e.type === "in");
     const outs = dayEntries.filter((e) => e.type === "ut");
