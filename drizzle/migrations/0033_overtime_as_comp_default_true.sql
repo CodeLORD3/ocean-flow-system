@@ -1,0 +1,1 @@
+ALTER TABLE public.employments ALTER COLUMN overtime_as_comp SET DEFAULT true;
