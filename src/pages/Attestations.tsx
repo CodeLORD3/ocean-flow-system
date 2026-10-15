@@ -73,7 +73,15 @@ export default function Attestations() {
   const { data: stores = [] } = useStores();
   const store = stores.find((s) => s.id === storeId);
   const { data: employees = [] } = useEmployees(true);
-  const { data: attestations = [], isLoading } = useAttestations(sid, rangeFrom, rangeTo);
+  const { data: rawAttestations = [], isLoading } = useAttestations(sid, rangeFrom, rangeTo);
+  // Alla butiker = svensk attest: schweiziska enheter (fsab-ch) blandas aldrig in.
+  const attestations = useMemo(() => {
+    if (!isAll) return rawAttestations;
+    const swiss = new Set(
+      stores.filter((s) => (s as { legal_entity_id?: string | null }).legal_entity_id === "fsab-ch").map((s) => s.id),
+    );
+    return rawAttestations.filter((a) => !a.store_id || !swiss.has(a.store_id));
+  }, [rawAttestations, stores, isAll]);
   const { data: locks = [] } = usePeriodLocks(sid);
 
   const compute = useComputeAttest();
