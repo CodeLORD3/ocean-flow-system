@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
   // Anställningar i bolaget
   const { data: employments = [] } = await db
     .from("employments")
-    .select("id, employee_id, legal_entity_id, store_id, pay_type, monthly_salary, hourly_rate, employment_rate, agreement_area, cost_center, start_date, end_date, fortnox_employee_id, is_active, ob_50, ob_70, ob_100")
+    .select("id, employee_id, legal_entity_id, store_id, pay_type, monthly_salary, hourly_rate, employment_rate, agreement_area, cost_center, start_date, end_date, fortnox_employee_id, is_active, ob_50, ob_70, ob_100, overtime_as_comp")
     .eq("legal_entity_id", legalEntityId);
   const employmentByEmployee = new Map<string, Employment>();
   (employments as Employment[]).forEach((e) => {
@@ -448,7 +448,17 @@ Deno.serve(async (req) => {
 
     // Övertid — veckotröskeln avgörs av databasmotorn.
     const overtime = Number(day?.overtime_minutes ?? 0);
-    if (overtime > 0) {
+    if (overtime > 0 && emp.overtime_as_comp) {
+      // Övertid tjänas in som komp timme för timme — betalas inte ut.
+      compMinutesByEmployee.set(att.employee_id, (compMinutesByEmployee.get(att.employee_id) ?? 0) + overtime);
+      push({
+        store_id: att.store_id, employee_id: att.employee_id, employment_id: emp.id,
+        line_type: "KOMP_IN", line_date: att.date, quantity: round2(overtime / 60),
+        cost_center: costCenter, source_ref: att.id, source_type: "attestation",
+        note: "Övertid intjänad som komp",
+        preliminary_cost: 0,
+      });
+    } else if (overtime > 0) {
       const pct = Number((policy?.overtime_rules as { ot_first_pct?: number })?.ot_first_pct ?? 50);
       if (mapped.size && !mapped.has("OT1")) issues.push({ kind: "missing_wage_code", detail: "OT1", employee_id: att.employee_id });
       push({
