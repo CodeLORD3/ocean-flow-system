@@ -87,6 +87,7 @@ interface Employment {
   ob_50: boolean | null;
   ob_70: boolean | null;
   ob_100: boolean | null;
+  overtime_as_comp?: boolean | null;
 }
 
 interface Holiday {
