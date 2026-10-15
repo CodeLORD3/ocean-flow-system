@@ -251,9 +251,45 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Skäliga avvikelser godkänns automatiskt på stämplad tid: pass utan stämpling = 0 min,
+  // komplett in/ut-stämpling upp till 11 h. Saknad utstämpling eller längre pass lämnas för granskning.
+  const MAX_REASONABLE = 11 * 60;
+  for (const row of rows) {
+    if (row.status !== "flagged") continue;
+    const c = row.computed as { clocked_minutes?: number; first_in?: string | null; last_out?: string | null };
+    const clocked = Number(c.clocked_minutes ?? 0);
+    const reasonable =
+      (row.deviation_type === "missat_pass" && clocked === 0) ||
+      (c.first_in && c.last_out && clocked > 0 && clocked <= MAX_REASONABLE);
+    if (!reasonable) continue;
+    row.status = "auto_approved";
+    row.basis = "stamplad";
+    row.approved_minutes = clocked;
+    row.decided_at = new Date().toISOString();
+  }
+
+  // Dagens pass är inte klara — räknas inte. Redan godkända/avslagna beslut skrivs aldrig över.
+  const { data: existing } = await db
+    .from("attestations")
+    .select("store_id, date, employee_id, shift_id, status")
+    .gte("date", from)
+    .lte("date", to)
+    .in("status", ["approved", "rejected"]);
+  const decidedKeys = new Set(
+    ((existing ?? []) as { store_id: string; date: string; employee_id: string; shift_id: string | null }[]).map(
+      (r) => `${r.store_id}|${r.date}|${r.employee_id}|${r.shift_id ?? ""}`,
+    ),
+  );
+
   let written = 0;
+  let preserved = 0;
   const skipped: string[] = [];
   for (const row of rows) {
+    if (!cron && (row.date as string) >= today) continue;
+    if (decidedKeys.has(`${row.store_id}|${row.date}|${row.employee_id}|${row.shift_id ?? ""}`)) {
+      preserved += 1;
+      continue;
+    }
     // Unika villkoret matchar inte NULL i shift_id — rensa gammal oplanerad rad först.
     if (row.shift_id === null) {
       await db
@@ -262,7 +298,8 @@ Deno.serve(async (req) => {
         .eq("store_id", row.store_id as string)
         .eq("date", row.date as string)
         .eq("employee_id", row.employee_id as string)
-        .is("shift_id", null);
+        .is("shift_id", null)
+        .in("status", ["flagged", "auto_approved"]);
     }
     const { error } = await db
       .from("attestations")
@@ -273,6 +310,7 @@ Deno.serve(async (req) => {
 
   return json({
     written,
+    preserved,
     flagged: rows.filter((r) => r.status === "flagged").length,
     auto_approved: rows.filter((r) => r.status === "auto_approved").length,
     skipped,
