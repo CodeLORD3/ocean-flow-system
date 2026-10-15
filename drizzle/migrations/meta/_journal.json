@@ -211,6 +211,13 @@
       "when": 1792052458002,
       "tag": "0029_pk_import_auto_stop_at_close",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792053042905,
+      "tag": "0030_fixed_start_rules",
+      "breakpoints": true
     }
   ]
 }
