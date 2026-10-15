@@ -8,7 +8,7 @@ import { useStores } from "@/hooks/useStores";
 import { useStaff } from "@/hooks/useStaff";
 import { usePlannedShiftsRange, useImportedShiftsRange } from "@/hooks/usePlannedShifts";
 import { useShiftsRange } from "@/hooks/useStaffShifts";
-import { useAbsenceRequests, useAbsenceTypes } from "@/hooks/useAbsence";
+import { useAbsenceRequestsInRange, useAbsenceTypes } from "@/hooks/useAbsence";
 import { useAvailability } from "@/hooks/useSchedule";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,7 +102,8 @@ export default function StaffSchedule() {
   const { staff: me } = useStaffAuth();
   const readOnly = staffLevelOf(me) === "employee";
   const { data: actualShifts = [] } = useShiftsRange(days[0], days[6], storeFilter === "all" ? null : storeFilter);
-  const { data: absenceRequests = [] } = useAbsenceRequests(undefined, storeFilter === "all" ? null : storeFilter);
+  // Hela veckan, alla butiker: frånvaron gäller personen oavsett var den registrerades.
+  const { data: absenceRequests = [] } = useAbsenceRequestsInRange(days[0], days[6]);
   const { data: absenceTypes = [] } = useAbsenceTypes();
   const { data: availability = [] } = useAvailability();
   const { nameOf } = useActorNames();
