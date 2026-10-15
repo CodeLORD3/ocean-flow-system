@@ -89,15 +89,25 @@ Deno.serve(async (req) => {
 
   const fromIso = svenskDagStart(from).toISOString();
   const toIso = svenskDagSista(to).toISOString();
-  let entryQuery = db
-    .from("time_entries")
-    .select("id, employee_id, store_id, legal_entity_id, station_id, type, occurred_at, corrects_entry_id, correction_kind")
-    .gte("occurred_at", fromIso)
-    .lte("occurred_at", toIso)
-    .order("occurred_at", { ascending: true });
-  if (storeId) entryQuery = entryQuery.eq("store_id", storeId);
-  const { data: rawEntries, error: entryErr } = await entryQuery;
-  if (entryErr) return json({ error: entryErr.message }, 500);
+  // Hämta ALLA stämplingar sida för sida — databasen ger högst 1 000 rader per anrop,
+  // och en avklippt lista gör att riktiga pass blir "missat pass" med 0 minuter.
+  const rawEntries: Record<string, unknown>[] = [];
+  const PAGE = 1000;
+  for (let offset = 0; ; offset += PAGE) {
+    let entryQuery = db
+      .from("time_entries")
+      .select("id, employee_id, store_id, legal_entity_id, station_id, type, occurred_at, corrects_entry_id, correction_kind")
+      .gte("occurred_at", fromIso)
+      .lte("occurred_at", toIso)
+      .order("occurred_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(offset, offset + PAGE - 1);
+    if (storeId) entryQuery = entryQuery.eq("store_id", storeId);
+    const { data: page, error: entryErr } = await entryQuery;
+    if (entryErr) return json({ error: entryErr.message }, 500);
+    rawEntries.push(...(page ?? []));
+    if (!page || page.length < PAGE) break;
+  }
 
   // Append-only-journalen: korrigerade poster och makuleringar räknas bort. Testpersoner attesteras aldrig.
   const corrected = new Set(
