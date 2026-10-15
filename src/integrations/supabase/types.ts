@@ -5832,6 +5832,50 @@ export type Database = {
           },
         ]
       }
+      employee_fixed_start_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          employee_id: string
+          id: string
+          note: string | null
+          start_time: string
+          valid_from: string
+          valid_to: string | null
+          weekdays: number[]
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          employee_id: string
+          id?: string
+          note?: string | null
+          start_time: string
+          valid_from: string
+          valid_to?: string | null
+          weekdays: number[]
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          employee_id?: string
+          id?: string
+          note?: string | null
+          start_time?: string
+          valid_from?: string
+          valid_to?: string | null
+          weekdays?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_fixed_start_rules_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           address_street: string | null
