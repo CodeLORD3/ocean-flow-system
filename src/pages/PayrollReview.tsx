@@ -386,41 +386,34 @@ export default function PayrollReview() {
                   </div>
                 )}
                 {open && employeeLines.length > 0 && (
-                  <div className="mb-4 overflow-x-auto">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Datum</th>
-                          <th>Rad</th>
-                          <th>Antal</th>
-                          <th>Omfattning</th>
-                          <th>Belopp</th>
-                          <th>Kostnadsställe</th>
-                          <th>Enhet</th>
-                          <th>Anteckning</th>
-                          <th>Export</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {employeeLines
-                          .slice()
-                          .sort((a, b) => a.line_date.localeCompare(b.line_date) || a.line_type.localeCompare(b.line_type))
-                          .map((line) => (
-                            <tr key={line.id}>
-                              <td className="ind-mono">{line.line_date}</td>
-                              <td>{line.line_type}</td>
-                              <td className="ind-mono">{dec.format(Number(line.quantity ?? 0))}</td>
-                              <td className="ind-mono">{line.extent_pct !== null ? `${line.extent_pct} %` : "–"}</td>
-                              <td className="ind-mono">{line.unit_amount !== null ? `${money.format(Number(line.unit_amount))} kr` : "–"}</td>
-                              <td className="ind-mono">{line.cost_center ?? "–"}</td>
-                              <td>{line.store_id ? storeName.get(line.store_id) ?? "–" : "–"}</td>
-                              <td>{line.note ?? ""}</td>
-                              <td>{line.export_status}</td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <ul className="mb-4 divide-y divide-border rounded-md border border-border">
+                    {employeeLines
+                      .slice()
+                      .sort((a, b) => a.line_date.localeCompare(b.line_date) || a.line_type.localeCompare(b.line_type))
+                      .map((line) => {
+                        const label =
+                          line.line_type === "ARB"
+                            ? "Arbetad tid"
+                            : line.line_type.startsWith("OB")
+                              ? (line.note?.match(/OB \d+ %/)?.[0] ?? "OB-tillägg")
+                              : line.line_type;
+                        const amount = line.preliminary_cost ?? (line.unit_amount !== null ? Number(line.unit_amount) * Number(line.quantity ?? 0) : null);
+                        return (
+                          <li key={line.id} className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 px-3 py-1.5 text-sm">
+                            <span className="ind-mono w-24 shrink-0">
+                              {new Date(line.line_date + "T12:00:00").toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })}
+                            </span>
+                            <span className="min-w-[7rem] flex-1">{label}</span>
+                            <span className="ind-mono w-16 text-right">{dec.format(Number(line.quantity ?? 0))} h</span>
+                            {line.extent_pct !== null && <span className="ind-mono text-muted-foreground">{line.extent_pct} %</span>}
+                            <span className="ind-mono w-24 text-right">{amount !== null ? `${money.format(Number(amount))} kr` : "–"}</span>
+                            <span className="w-full text-xs text-muted-foreground sm:w-40 sm:text-sm">
+                              {line.store_id ? storeName.get(line.store_id) ?? "" : ""}
+                            </span>
+                          </li>
+                        );
+                      })}
+                  </ul>
                 )}
               </div>
             );
