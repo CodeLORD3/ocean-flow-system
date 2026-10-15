@@ -320,6 +320,7 @@ Deno.serve(async (req) => {
   return json({
     written,
     preserved,
+    reopened,
     flagged: rows.filter((r) => r.status === "flagged").length,
     auto_approved: rows.filter((r) => r.status === "auto_approved").length,
     skipped,
