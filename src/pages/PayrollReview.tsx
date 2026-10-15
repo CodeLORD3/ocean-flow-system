@@ -353,6 +353,9 @@ export default function PayrollReview() {
                   <span className="min-w-[200px]">{employeeName.get(employeeId) ?? employeeId}</span>
                   <span className="ind-mono">{dec.format(hours)} h</span>
                   <span className="ind-muted ind-mono text-sm">{employeeLines.length} rader</span>
+                  <IndustryButton variant="ghost" className="h-9" onClick={() => setEditDay({ employeeId, date: periodRange.from })}>
+                    Lägg in sjuk, VAB m.m.
+                  </IndustryButton>
                   {fixedSalary.has(employeeId) && (
                     <span className="ind-mono text-sm">
                       Instämplat {dec.format((clockedByEmployee.get(employeeId) ?? []).reduce((t, d) => t + d.minutes, 0) / 60)} h ·{" "}
@@ -459,6 +462,8 @@ export default function PayrollReview() {
           employeeId={editDay.employeeId}
           employeeName={employeeName.get(editDay.employeeId) ?? ""}
           date={editDay.date}
+          minDate={periodRange.from}
+          maxDate={periodRange.to}
           onSaved={() => undefined}
         />
       )}
