@@ -6176,6 +6176,7 @@ export type Database = {
           ob_50: boolean
           ob_70: boolean
           ob_source: string | null
+          overtime_as_comp: boolean
           pay_type: string
           pension_lf: boolean
           probation_end_date: string | null
@@ -6214,6 +6215,7 @@ export type Database = {
           ob_50?: boolean
           ob_70?: boolean
           ob_source?: string | null
+          overtime_as_comp?: boolean
           pay_type?: string
           pension_lf?: boolean
           probation_end_date?: string | null
@@ -6252,6 +6254,7 @@ export type Database = {
           ob_50?: boolean
           ob_70?: boolean
           ob_source?: string | null
+          overtime_as_comp?: boolean
           pay_type?: string
           pension_lf?: boolean
           probation_end_date?: string | null

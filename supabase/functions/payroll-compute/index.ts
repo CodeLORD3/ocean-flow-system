@@ -87,6 +87,7 @@ interface Employment {
   ob_50: boolean | null;
   ob_70: boolean | null;
   ob_100: boolean | null;
+  overtime_as_comp?: boolean | null;
 }
 
 interface Holiday {
@@ -185,7 +186,7 @@ Deno.serve(async (req) => {
   // Anställningar i bolaget
   const { data: employments = [] } = await db
     .from("employments")
-    .select("id, employee_id, legal_entity_id, store_id, pay_type, monthly_salary, hourly_rate, employment_rate, agreement_area, cost_center, start_date, end_date, fortnox_employee_id, is_active, ob_50, ob_70, ob_100")
+    .select("id, employee_id, legal_entity_id, store_id, pay_type, monthly_salary, hourly_rate, employment_rate, agreement_area, cost_center, start_date, end_date, fortnox_employee_id, is_active, ob_50, ob_70, ob_100, overtime_as_comp")
     .eq("legal_entity_id", legalEntityId);
   const employmentByEmployee = new Map<string, Employment>();
   (employments as Employment[]).forEach((e) => {
@@ -198,6 +199,7 @@ Deno.serve(async (req) => {
     .select("id")
     .eq("is_test", true);
   (testRows as { id: string }[]).forEach((row) => employmentByEmployee.delete(row.id));
+  const compMinutesByEmployee = new Map<string, number>();
   if (employmentByEmployee.size === 0) {
     return json({ error: "Inga aktiva anställningar i bolaget för perioden" }, 400);
   }
@@ -447,7 +449,17 @@ Deno.serve(async (req) => {
 
     // Övertid — veckotröskeln avgörs av databasmotorn.
     const overtime = Number(day?.overtime_minutes ?? 0);
-    if (overtime > 0) {
+    if (overtime > 0 && emp.overtime_as_comp) {
+      // Övertid tjänas in som komp timme för timme — betalas inte ut.
+      compMinutesByEmployee.set(att.employee_id, (compMinutesByEmployee.get(att.employee_id) ?? 0) + overtime);
+      push({
+        store_id: att.store_id, employee_id: att.employee_id, employment_id: emp.id,
+        line_type: "KOMP_IN", line_date: att.date, quantity: round2(overtime / 60),
+        cost_center: costCenter, source_ref: att.id, source_type: "attestation",
+        note: "Övertid intjänad som komp",
+        preliminary_cost: 0,
+      });
+    } else if (overtime > 0) {
       const pct = Number((policy?.overtime_rules as { ot_first_pct?: number })?.ot_first_pct ?? 50);
       if (mapped.size && !mapped.has("OT1")) issues.push({ kind: "missing_wage_code", detail: "OT1", employee_id: att.employee_id });
       push({
@@ -592,6 +604,27 @@ Deno.serve(async (req) => {
   if (lines.length > 0) {
     for (let i = 0; i < lines.length; i += 500) {
       const { error } = await db.from("payroll_lines").insert(lines.slice(i, i + 500));
+      if (error) return json({ error: error.message }, 500);
+    }
+  }
+
+  // Kompsaldo: stäm av mot tidigare beräkningar av samma period så omräkning aldrig dubblerar.
+  for (const emp of employmentByEmployee.values()) {
+    if (!emp.overtime_as_comp) continue;
+    const wanted = Math.round(compMinutesByEmployee.get(emp.employee_id) ?? 0);
+    const { data: prev = [] } = await db
+      .from("comp_balance_txns")
+      .select("delta_minutes")
+      .eq("employee_id", emp.employee_id)
+      .eq("source", "payroll_overtime")
+      .eq("reference_id", periodRow.id);
+    const booked = (prev as { delta_minutes: number }[]).reduce((s, r) => s + Number(r.delta_minutes), 0);
+    const delta = wanted - booked;
+    if (delta !== 0) {
+      const { error } = await db.from("comp_balance_txns").insert({
+        employee_id: emp.employee_id, delta_minutes: delta, source: "payroll_overtime",
+        reference_id: periodRow.id, reason: `Övertid intjänad som komp, löneperiod ${period}`,
+      });
       if (error) return json({ error: error.message }, 500);
     }
   }
