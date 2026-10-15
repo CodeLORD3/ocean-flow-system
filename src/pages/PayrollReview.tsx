@@ -253,7 +253,7 @@ export default function PayrollReview() {
         <DecisionMetric label="Frånvarodagar" value={dec.format(summary.absenceDays)} />
         <DecisionMetric label="Förmåner/avdrag" value={`${money.format(summary.benefitAmount)} kr`} />
         <DecisionMetric label="Fasta månadslöner" value={`${money.format(fixedTotal)} kr`} />
-        <DecisionMetric label="Preliminär kostnad" value={`${money.format(summary.cost)} kr`} tone="progress" />
+        <DecisionMetric label="Preliminär kostnad inkl. fasta löner" value={`${money.format(summary.cost + fixedTotal * 1.3142)} kr`} tone="progress" />
       </div>
 
       {summary.obPerLevel.size > 0 && (
