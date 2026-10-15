@@ -309,10 +309,14 @@ export default function PayrollReview() {
                   <span className="min-w-[200px]">{employeeName.get(employeeId) ?? employeeId}</span>
                   <span className="ind-mono">{dec.format(hours)} h</span>
                   <span className="ind-muted ind-mono text-sm">{employeeLines.length} rader</span>
-                  {fixedSalary.has(employeeId) && (
-                    <span className="ind-mono text-sm">Fast månadslön {money.format(fixedSalary.get(employeeId) ?? 0)} kr</span>
+                  {fixedSalary.has(employeeId) ? (
+                    <span className="ml-auto ind-mono">
+                      Fast månadslön {money.format(fixedSalary.get(employeeId) ?? 0)} kr
+                      {cost ? ` + ${money.format(cost)} kr` : ""}
+                    </span>
+                  ) : (
+                    <span className="ml-auto ind-mono">{money.format(cost)} kr preliminärt</span>
                   )}
-                  <span className="ml-auto ind-mono">{money.format(cost)} kr preliminärt</span>
                 </IndustryRow>
                 {open && (
                   <div className="mb-4 overflow-x-auto">
