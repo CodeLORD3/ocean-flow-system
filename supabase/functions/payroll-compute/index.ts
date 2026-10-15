@@ -608,6 +608,27 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Kompsaldo: stäm av mot tidigare beräkningar av samma period så omräkning aldrig dubblerar.
+  for (const emp of employmentByEmployee.values()) {
+    if (!emp.overtime_as_comp) continue;
+    const wanted = Math.round(compMinutesByEmployee.get(emp.employee_id) ?? 0);
+    const { data: prev = [] } = await db
+      .from("comp_balance_txns")
+      .select("delta_minutes")
+      .eq("employee_id", emp.employee_id)
+      .eq("source", "payroll_overtime")
+      .eq("reference_id", periodRow.id);
+    const booked = (prev as { delta_minutes: number }[]).reduce((s, r) => s + Number(r.delta_minutes), 0);
+    const delta = wanted - booked;
+    if (delta !== 0) {
+      const { error } = await db.from("comp_balance_txns").insert({
+        employee_id: emp.employee_id, delta_minutes: delta, source: "payroll_overtime",
+        reference_id: periodRow.id, reason: `Övertid intjänad som komp, löneperiod ${period}`,
+      });
+      if (error) return json({ error: error.message }, 500);
+    }
+  }
+
   const blocking = issues.filter((i) => i.kind !== "wellness_over_limit").length;
   await db
     .from("payroll_periods")
