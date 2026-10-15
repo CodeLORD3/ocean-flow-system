@@ -128,6 +128,42 @@ export default function PayrollReview() {
     [fixedQuery.data],
   );
   const fixedTotal = [...fixedSalary.values()].reduce((s, v) => s + v, 0);
+  // Stämplad tid för månadsavlönade i löneperioden (16:e–15:e) — för att se avvikelser.
+  const periodRange = useMemo(() => {
+    const [y, m] = period.split("-").map(Number);
+    const start = new Date(Date.UTC(y, m - 2, 16)).toISOString().slice(0, 10);
+    return { from: start, to: `${period}-15` };
+  }, [period]);
+  const fixedIds = useMemo(() => [...fixedSalary.keys()], [fixedSalary]);
+  const clockedQuery = useQuery({
+    queryKey: ["payroll-fixed-clocked", fixedIds.join(","), periodRange.from, periodRange.to],
+    enabled: fixedIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("attestations")
+        .select("employee_id, date, store_id, approved_minutes, computed")
+        .in("employee_id", fixedIds)
+        .gte("date", periodRange.from)
+        .lte("date", periodRange.to)
+        .order("date");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const clockedByEmployee = useMemo(() => {
+    const map = new Map<string, { date: string; minutes: number; first_in?: string | null; last_out?: string | null; store_id: string | null }[]>();
+    for (const r of clockedQuery.data ?? []) {
+      const c = (r.computed ?? {}) as { clocked_minutes?: number; first_in?: string | null; last_out?: string | null };
+      const minutes = Number(r.approved_minutes ?? c.clocked_minutes ?? 0);
+      if (minutes <= 0 && !c.first_in) continue;
+      const list = map.get(r.employee_id) ?? [];
+      list.push({ date: r.date, minutes, first_in: c.first_in, last_out: c.last_out, store_id: r.store_id });
+      map.set(r.employee_id, list);
+    }
+    return map;
+  }, [clockedQuery.data]);
+  const clockTime = (iso?: string | null) =>
+    iso ? new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Stockholm" }) : "–";
   // Månadsavlönade utan avvikelser har inga rader men ska ändå synas i listan.
   const people = useMemo(() => {
     const ids = new Set(byEmployee.map(([id]) => id));
@@ -311,6 +347,12 @@ export default function PayrollReview() {
                   <span className="min-w-[200px]">{employeeName.get(employeeId) ?? employeeId}</span>
                   <span className="ind-mono">{dec.format(hours)} h</span>
                   <span className="ind-muted ind-mono text-sm">{employeeLines.length} rader</span>
+                  {fixedSalary.has(employeeId) && (
+                    <span className="ind-mono text-sm">
+                      Instämplat {dec.format((clockedByEmployee.get(employeeId) ?? []).reduce((t, d) => t + d.minutes, 0) / 60)} h ·{" "}
+                      {(clockedByEmployee.get(employeeId) ?? []).length} dagar
+                    </span>
+                  )}
                   {fixedSalary.has(employeeId) ? (
                     <span className="ml-auto ind-mono">
                       Fast månadslön {money.format(fixedSalary.get(employeeId) ?? 0)} kr
@@ -320,7 +362,26 @@ export default function PayrollReview() {
                     <span className="ml-auto ind-mono">{money.format(cost)} kr preliminärt</span>
                   )}
                 </IndustryRow>
-                {open && (
+                {open && fixedSalary.has(employeeId) && (
+                  <div className="mb-3 space-y-1">
+                    <SectionLabel>Instämplad tid {periodRange.from} – {periodRange.to}</SectionLabel>
+                    {(clockedByEmployee.get(employeeId) ?? []).length === 0 ? (
+                      <p className="ind-muted text-sm">Inga stämplingar i perioden.</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-x-6 gap-y-1">
+                        {(clockedByEmployee.get(employeeId) ?? []).map((d) => (
+                          <span key={`${d.date}-${d.store_id}`} className="ind-mono text-sm">
+                            {new Date(`${d.date}T12:00:00`).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "numeric" })}{" "}
+                            {clockTime(d.first_in)}–{clockTime(d.last_out)} · {dec.format(d.minutes / 60)} h
+                            {d.minutes > 11 * 60 ? " ⚠" : ""}
+                            <span className="ind-muted"> {storeName.get(d.store_id ?? "") ?? ""}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {open && employeeLines.length > 0 && (
                   <div className="mb-4 overflow-x-auto">
                     <table>
                       <thead>
