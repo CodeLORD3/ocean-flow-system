@@ -353,7 +353,9 @@ export default function Attestations() {
             variant="ghost"
             onClick={() => {
               if (view === "period") {
-                setAnchor(dateKey(new Date(`${payPeriod.from}T12:00:00`).getTime() - 86400000 > 0 ? new Date(new Date(`${payPeriod.from}T12:00:00`).getTime() - 86400000) : new Date()));
+                const prev = new Date(`${payPeriod.from}T12:00:00`);
+                prev.setDate(prev.getDate() - 1);
+                setAnchor(dateKey(prev));
                 return;
               }
               const d = mondayOf(anchor);
