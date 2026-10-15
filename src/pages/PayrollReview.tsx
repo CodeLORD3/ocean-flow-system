@@ -127,7 +127,15 @@ export default function PayrollReview() {
     () => new Map((fixedQuery.data ?? []).filter((r) => r.monthly_salary).map((r) => [r.employee_id, Number(r.monthly_salary)])),
     [fixedQuery.data],
   );
-  const fixedTotal = byEmployee.reduce((s, [id]) => s + (fixedSalary.get(id) ?? 0), 0);
+  const fixedTotal = [...fixedSalary.values()].reduce((s, v) => s + v, 0);
+  // Månadsavlönade utan avvikelser har inga rader men ska ändå synas i listan.
+  const people = useMemo(() => {
+    const ids = new Set(byEmployee.map(([id]) => id));
+    const extra = [...fixedSalary.keys()].filter((id) => !ids.has(id)).map((id) => [id, [] as PayrollLine[]] as [string, PayrollLine[]]);
+    return [...byEmployee, ...extra].sort((a, b) =>
+      (employeeName.get(a[0]) ?? a[0]).localeCompare(employeeName.get(b[0]) ?? b[0], "sv"),
+    );
+  }, [byEmployee, fixedSalary, employeeName]);
 
   const blockingIssues = issues.filter((i) => i.kind !== "wellness_over_limit");
   const canReview = periodRow && rows.length > 0 && blockingIssues.length === 0 && unlockedStores.length === 0;
@@ -239,7 +247,7 @@ export default function PayrollReview() {
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <DecisionMetric label="Personer" value={byEmployee.length} />
+        <DecisionMetric label="Personer" value={people.length} />
         <DecisionMetric label="Arbetad tid" value={`${dec.format(summary.workHours)} h`} />
         <DecisionMetric label="Mer-/övertid" value={`${dec.format(summary.extraHours)} h`} />
         <DecisionMetric label="Frånvarodagar" value={dec.format(summary.absenceDays)} />
@@ -280,13 +288,13 @@ export default function PayrollReview() {
       )}
 
       <section className="mt-8">
-        <SectionLabel className="mb-2">Per person ({byEmployee.length})</SectionLabel>
+        <SectionLabel className="mb-2">Per person ({people.length})</SectionLabel>
         {lines.isLoading ? (
           <Loader2 className="h-5 w-5 animate-spin ind-muted" />
-        ) : byEmployee.length === 0 ? (
+        ) : people.length === 0 ? (
           <p className="ind-muted text-sm">Inget löneunderlag för perioden ännu. Beräkna perioden när enheterna är låsta.</p>
         ) : (
-          byEmployee.map(([employeeId, employeeLines]) => {
+          people.map(([employeeId, employeeLines]) => {
             const open = openEmployee === employeeId;
             const hours = employeeLines
               .filter((l) => l.line_type === "ARB" || l.line_type === "TID" || isObCode(l.line_type) || l.line_type === "MER" || l.line_type.startsWith("OT"))
