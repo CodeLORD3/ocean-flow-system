@@ -7,6 +7,8 @@
  */
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, ChevronDown, ChevronRight, Download, Loader2, RefreshCw, Send, ShieldAlert } from "lucide-react";
 import {
   DecisionBar,
@@ -105,6 +107,35 @@ export default function PayrollReview() {
       (employeeName.get(a[0]) ?? a[0]).localeCompare(employeeName.get(b[0]) ?? b[0], "sv"),
     );
   }, [rows, employeeName]);
+
+  // Fast månadslön ligger på anställningen och betalas av Fortnox Lön — visas här som kontroll.
+  const fixedQuery = useQuery({
+    queryKey: ["payroll-fixed-salaries", activeEntity],
+    enabled: !!activeEntity,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employments")
+        .select("employee_id, monthly_salary")
+        .eq("legal_entity_id", activeEntity)
+        .eq("pay_type", "monthly")
+        .eq("is_active", true);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const fixedSalary = useMemo(
+    () => new Map((fixedQuery.data ?? []).filter((r) => r.monthly_salary).map((r) => [r.employee_id, Number(r.monthly_salary)])),
+    [fixedQuery.data],
+  );
+  const fixedTotal = [...fixedSalary.values()].reduce((s, v) => s + v, 0);
+  // Månadsavlönade utan avvikelser har inga rader men ska ändå synas i listan.
+  const people = useMemo(() => {
+    const ids = new Set(byEmployee.map(([id]) => id));
+    const extra = [...fixedSalary.keys()].filter((id) => !ids.has(id)).map((id) => [id, [] as PayrollLine[]] as [string, PayrollLine[]]);
+    return [...byEmployee, ...extra].sort((a, b) =>
+      (employeeName.get(a[0]) ?? a[0]).localeCompare(employeeName.get(b[0]) ?? b[0], "sv"),
+    );
+  }, [byEmployee, fixedSalary, employeeName]);
 
   const blockingIssues = issues.filter((i) => i.kind !== "wellness_over_limit");
   const canReview = periodRow && rows.length > 0 && blockingIssues.length === 0 && unlockedStores.length === 0;
@@ -216,11 +247,12 @@ export default function PayrollReview() {
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <DecisionMetric label="Personer" value={byEmployee.length} />
+        <DecisionMetric label="Personer" value={people.length} />
         <DecisionMetric label="Arbetad tid" value={`${dec.format(summary.workHours)} h`} />
         <DecisionMetric label="Mer-/övertid" value={`${dec.format(summary.extraHours)} h`} />
         <DecisionMetric label="Frånvarodagar" value={dec.format(summary.absenceDays)} />
         <DecisionMetric label="Förmåner/avdrag" value={`${money.format(summary.benefitAmount)} kr`} />
+        <DecisionMetric label="Fasta månadslöner" value={`${money.format(fixedTotal)} kr`} />
         <DecisionMetric label="Preliminär kostnad" value={`${money.format(summary.cost)} kr`} tone="progress" />
       </div>
 
@@ -256,13 +288,13 @@ export default function PayrollReview() {
       )}
 
       <section className="mt-8">
-        <SectionLabel className="mb-2">Per person ({byEmployee.length})</SectionLabel>
+        <SectionLabel className="mb-2">Per person ({people.length})</SectionLabel>
         {lines.isLoading ? (
           <Loader2 className="h-5 w-5 animate-spin ind-muted" />
-        ) : byEmployee.length === 0 ? (
+        ) : people.length === 0 ? (
           <p className="ind-muted text-sm">Inget löneunderlag för perioden ännu. Beräkna perioden när enheterna är låsta.</p>
         ) : (
-          byEmployee.map(([employeeId, employeeLines]) => {
+          people.map(([employeeId, employeeLines]) => {
             const open = openEmployee === employeeId;
             const hours = employeeLines
               .filter((l) => l.line_type === "ARB" || l.line_type === "TID" || isObCode(l.line_type) || l.line_type === "MER" || l.line_type.startsWith("OT"))
@@ -277,6 +309,9 @@ export default function PayrollReview() {
                   <span className="min-w-[200px]">{employeeName.get(employeeId) ?? employeeId}</span>
                   <span className="ind-mono">{dec.format(hours)} h</span>
                   <span className="ind-muted ind-mono text-sm">{employeeLines.length} rader</span>
+                  {fixedSalary.has(employeeId) && (
+                    <span className="ind-mono text-sm">Fast månadslön {money.format(fixedSalary.get(employeeId) ?? 0)} kr</span>
+                  )}
                   <span className="ml-auto ind-mono">{money.format(cost)} kr preliminärt</span>
                 </IndustryRow>
                 {open && (
