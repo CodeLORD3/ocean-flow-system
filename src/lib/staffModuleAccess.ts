@@ -14,6 +14,7 @@ const EMPLOYEE_PATHS = ["/staff-schedule", "/my-shifts", "/my-time", "/profile"]
 
 /** Sidor som är stängda för butikschef (lön, regler, integrationer, register). */
 const MANAGER_BLOCKED = [
+  "/schedule",
   "/payroll-review",
   "/payroll-exports",
   "/payroll-basis",
