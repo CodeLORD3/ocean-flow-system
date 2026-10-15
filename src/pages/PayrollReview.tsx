@@ -354,7 +354,7 @@ export default function PayrollReview() {
                   <span className="ind-mono">{dec.format(hours)} h</span>
                   <span className="ind-muted ind-mono text-sm">{employeeLines.length} rader</span>
                   <IndustryButton variant="ghost" className="h-9" onClick={() => setEditDay({ employeeId, date: periodRange.from })}>
-                    Lägg in sjuk, VAB m.m.
+                    Redigera period
                   </IndustryButton>
                   {fixedSalary.has(employeeId) && (
                     <span className="ind-mono text-sm">
