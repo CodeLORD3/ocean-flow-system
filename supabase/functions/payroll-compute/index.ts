@@ -469,10 +469,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Övertid — veckotröskeln avgörs av databasmotorn.
+    // Övertid — veckotröskeln avgörs av databasmotorn. Övertidsersättning (OT1/OT2) är inte
+    // förhandlad i våra avtal: all övertid tjänas in som komp timme för timme och betalas aldrig ut.
     const overtime = Number(day?.overtime_minutes ?? 0);
-    if (overtime > 0 && emp.overtime_as_comp) {
-      // Övertid tjänas in som komp timme för timme — betalas inte ut.
+    if (overtime > 0) {
       compMinutesByEmployee.set(att.employee_id, (compMinutesByEmployee.get(att.employee_id) ?? 0) + overtime);
       push({
         store_id: att.store_id, employee_id: att.employee_id, employment_id: emp.id,
@@ -480,16 +480,6 @@ Deno.serve(async (req) => {
         cost_center: costCenter, source_ref: att.id, source_type: "attestation",
         note: "Övertid intjänad som komp",
         preliminary_cost: 0,
-      });
-    } else if (overtime > 0) {
-      const pct = Number((policy?.overtime_rules as { ot_first_pct?: number })?.ot_first_pct ?? 50);
-      if (mapped.size && !mapped.has("OT1")) issues.push({ kind: "missing_wage_code", detail: "OT1", employee_id: att.employee_id });
-      push({
-        store_id: att.store_id, employee_id: att.employee_id, employment_id: emp.id,
-        line_type: "OT1", line_date: att.date, quantity: round2(overtime / 60),
-        cost_center: costCenter, source_ref: att.id, source_type: "attestation",
-        note: `Övertid ${pct} % enligt databasmotorn`,
-        preliminary_cost: costOf(emp, overtime / 60, pct, policy),
       });
     }
   }
@@ -632,7 +622,6 @@ Deno.serve(async (req) => {
 
   // Kompsaldo: stäm av mot tidigare beräkningar av samma period så omräkning aldrig dubblerar.
   for (const emp of employmentByEmployee.values()) {
-    if (!emp.overtime_as_comp) continue;
     const wanted = Math.round(compMinutesByEmployee.get(emp.employee_id) ?? 0);
     const { data: prev = [] } = await db
       .from("comp_balance_txns")
