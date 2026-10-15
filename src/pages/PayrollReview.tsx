@@ -40,6 +40,7 @@ import {
   type ComputeIssue,
   type PayrollLine,
 } from "@/hooks/usePayroll";
+import { PayrollDayEditDialog } from "@/components/payroll/PayrollDayEditDialog";
 
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const money = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
@@ -58,6 +59,7 @@ export default function PayrollReview() {
   const [issues, setIssues] = useState<ComputeIssue[]>([]);
   const [unlockedStores, setUnlockedStores] = useState<string[]>([]);
   const [openEmployee, setOpenEmployee] = useState<string | null>(null);
+  const [editDay, setEditDay] = useState<{ employeeId: string; date: string } | null>(null);
 
   const swedishEntities = entities.filter((e) => e.country === "SE");
   const activeEntity = entityId || swedishEntities[0]?.legal_entity_id || "";
@@ -385,6 +387,7 @@ export default function PayrollReview() {
                               {dec.format(d.minutes / 60)} h{d.minutes > 11 * 60 ? " ⚠" : ""}
                             </span>
                             <span className="flex-1 text-muted-foreground">{storeName.get(d.store_id ?? "") ?? ""}</span>
+                            <IndustryButton variant="ghost" className="h-9" onClick={() => setEditDay({ employeeId, date: d.date })}>Ändra</IndustryButton>
                           </li>
                         ))}
                       </ul>
@@ -416,6 +419,7 @@ export default function PayrollReview() {
                             <span className="w-full text-xs text-muted-foreground sm:w-40 sm:text-sm">
                               {line.store_id ? storeName.get(line.store_id) ?? "" : ""}
                             </span>
+                            <IndustryButton variant="ghost" className="h-9" onClick={() => setEditDay({ employeeId, date: line.line_date })}>Ändra</IndustryButton>
                           </li>
                         );
                       })}
@@ -448,6 +452,16 @@ export default function PayrollReview() {
         Preliminära kronor beräknas med timlön/månadslön, semesterlönereserv och arbetsgivaravgift enligt aktuella regler.
         De är underlag för granskning och KPI, aldrig för utbetalning.
       </p>
+      {editDay && (
+        <PayrollDayEditDialog
+          open
+          onOpenChange={(o) => !o && setEditDay(null)}
+          employeeId={editDay.employeeId}
+          employeeName={employeeName.get(editDay.employeeId) ?? ""}
+          date={editDay.date}
+          onSaved={() => undefined}
+        />
+      )}
     </IndustryFrame>
   );
 }
