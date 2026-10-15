@@ -372,16 +372,22 @@ export default function PayrollReview() {
                     {(clockedByEmployee.get(employeeId) ?? []).length === 0 ? (
                       <p className="ind-muted text-sm">Inga stämplingar i perioden.</p>
                     ) : (
-                      <div className="flex flex-wrap gap-x-6 gap-y-1">
+                      <ul className="mt-1 divide-y divide-border rounded-md border border-border">
                         {(clockedByEmployee.get(employeeId) ?? []).map((d) => (
-                          <span key={`${d.date}-${d.store_id}`} className="ind-mono text-sm">
-                            {new Date(`${d.date}T12:00:00`).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "numeric" })}{" "}
-                            {clockTime(d.first_in)}–{clockTime(d.last_out)} · {dec.format(d.minutes / 60)} h
-                            {d.minutes > 11 * 60 ? " ⚠" : ""}
-                            <span className="ind-muted"> {storeName.get(d.store_id ?? "") ?? ""}</span>
-                          </span>
+                          <li key={`${d.date}-${d.store_id}`} className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 px-3 py-1.5 text-sm">
+                            <span className="ind-mono w-24 shrink-0">
+                              {new Date(`${d.date}T12:00:00`).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })}
+                            </span>
+                            <span className="ind-mono w-28">
+                              {clockTime(d.first_in)}–{d.last_out ? clockTime(d.last_out) : "ej utstämplad"}
+                            </span>
+                            <span className="ind-mono w-16 text-right">
+                              {dec.format(d.minutes / 60)} h{d.minutes > 11 * 60 ? " ⚠" : ""}
+                            </span>
+                            <span className="flex-1 text-muted-foreground">{storeName.get(d.store_id ?? "") ?? ""}</span>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     )}
                   </div>
                 )}
