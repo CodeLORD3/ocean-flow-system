@@ -199,6 +199,7 @@ Deno.serve(async (req) => {
     .select("id")
     .eq("is_test", true);
   (testRows as { id: string }[]).forEach((row) => employmentByEmployee.delete(row.id));
+  const compMinutesByEmployee = new Map<string, number>();
   if (employmentByEmployee.size === 0) {
     return json({ error: "Inga aktiva anställningar i bolaget för perioden" }, 400);
   }
