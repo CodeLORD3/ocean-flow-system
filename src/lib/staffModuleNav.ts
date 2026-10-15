@@ -52,6 +52,7 @@ export const STAFF_MODULE_GROUPS: StaffNavGroup[] = [
     items: [
       { title: "Schema", url: "/staff-schedule", icon: CalendarRange, desc: "Publicerat schema per butik och vecka" },
       { title: "Schemaplanering", url: "/schedule-planner", icon: CalendarRange, desc: "Planera pass, mallar och bemanningsbehov" },
+      { title: "Månadskalender", url: "/schedule", icon: CalendarCheck, desc: "Månadsvy med pass, frånvaro och Ej tillgänglig" },
       { title: "Mina pass", url: "/my-shifts", icon: CalendarRange, desc: "Egna pass, byten och tillgänglighet" },
     ],
   },
@@ -124,7 +125,7 @@ export type StaffSection = {
  */
 const SECTION_LAYOUT: { key: string; label: string; icon: any; urls: string[] }[] = [
   { key: "start", label: "Start", icon: LayoutGrid, urls: [] },
-  { key: "schema", label: "Schema", icon: CalendarRange, urls: ["/staff-schedule", "/schedule-planner", "/my-shifts"] },
+  { key: "schema", label: "Schema", icon: CalendarRange, urls: ["/staff-schedule", "/schedule-planner", "/schedule", "/my-shifts"] },
   { key: "tider", label: "Tider", icon: Clock, urls: ["/time-entries", "/my-time", "/live-staff", "/clock-stations", "/attestations", "/clock-vs-pk"] },
   { key: "analys", label: "Analys & Lön", icon: BarChart3, urls: ["/payroll-basis", "/payroll-review", "/payroll-exports", "/staff-rules"] },
   { key: "personal", label: "Personal", icon: UserCheck, urls: ["/staff", "/employees", "/hr-control", "/profile", "/personalkollen"] },
