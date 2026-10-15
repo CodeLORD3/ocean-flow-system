@@ -268,27 +268,36 @@ Deno.serve(async (req) => {
     row.decided_at = new Date().toISOString();
   }
 
-  // Dagens pass är inte klara — räknas inte. Redan godkända/avslagna beslut skrivs aldrig över.
+  // Dagens pass är inte klara — räknas inte. Redan godkända/avslagna beslut skrivs aldrig över,
+  // UTOM när beslutet var 0 minuter och det nu finns riktig stämplad tid (stämplingar kom in sent).
   const { data: existing } = await db
     .from("attestations")
-    .select("store_id, date, employee_id, shift_id, status")
+    .select("store_id, date, employee_id, shift_id, status, approved_minutes")
     .gte("date", from)
     .lte("date", to)
     .in("status", ["approved", "rejected"]);
-  const decidedKeys = new Set(
-    ((existing ?? []) as { store_id: string; date: string; employee_id: string; shift_id: string | null }[]).map(
-      (r) => `${r.store_id}|${r.date}|${r.employee_id}|${r.shift_id ?? ""}`,
-    ),
-  );
+  const decided = new Map<string, { status: string; approved_minutes: number | null }>();
+  for (const r of (existing ?? []) as {
+    store_id: string; date: string; employee_id: string; shift_id: string | null; status: string; approved_minutes: number | null;
+  }[]) {
+    decided.set(`${r.store_id}|${r.date}|${r.employee_id}|${r.shift_id ?? ""}`, r);
+  }
 
   let written = 0;
   let preserved = 0;
+  let reopened = 0;
   const skipped: string[] = [];
   for (const row of rows) {
     if (!cron && (row.date as string) >= today) continue;
-    if (decidedKeys.has(`${row.store_id}|${row.date}|${row.employee_id}|${row.shift_id ?? ""}`)) {
-      preserved += 1;
-      continue;
+    const prev = decided.get(`${row.store_id}|${row.date}|${row.employee_id}|${row.shift_id ?? ""}`);
+    if (prev) {
+      const nowClocked = Number((row.computed as { clocked_minutes?: number }).clocked_minutes ?? 0);
+      const zeroDecision = prev.status === "approved" && Number(prev.approved_minutes ?? 0) === 0;
+      if (!(zeroDecision && nowClocked > 0)) {
+        preserved += 1;
+        continue;
+      }
+      reopened += 1;
     }
     // Unika villkoret matchar inte NULL i shift_id — rensa gammal oplanerad rad först.
     if (row.shift_id === null) {
