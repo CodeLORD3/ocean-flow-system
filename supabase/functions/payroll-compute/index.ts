@@ -469,19 +469,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Övertid — veckotröskeln avgörs av databasmotorn. Övertidsersättning (OT1/OT2) är inte
-    // förhandlad i våra avtal: all övertid tjänas in som komp timme för timme och betalas aldrig ut.
-    const overtime = Number(day?.overtime_minutes ?? 0);
-    if (overtime > 0) {
-      compMinutesByEmployee.set(att.employee_id, (compMinutesByEmployee.get(att.employee_id) ?? 0) + overtime);
-      push({
-        store_id: att.store_id, employee_id: att.employee_id, employment_id: emp.id,
-        line_type: "KOMP_IN", line_date: att.date, quantity: round2(overtime / 60),
-        cost_center: costCenter, source_ref: att.id, source_type: "attestation",
-        note: "Övertid intjänad som komp",
-        preliminary_cost: 0,
-      });
-    }
+    // Övertid: varken övertidsersättning (OT1/OT2) eller komp är förhandlat i våra avtal.
+    // Alla timmar betalas redan som vanliga timmar ovan — inget tillägg, inget kompsaldo.
+    // compMinutesByEmployee lämnas tom så att avstämningen nedan nollar tidigare intjänad komp för perioden.
   }
 
   // Frånvaro per dag
