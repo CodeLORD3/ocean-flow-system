@@ -23,6 +23,8 @@ export function PayrollDayEditDialog({
   employeeId,
   employeeName,
   date,
+  minDate,
+  maxDate,
   onSaved,
 }: {
   open: boolean;
@@ -30,6 +32,8 @@ export function PayrollDayEditDialog({
   employeeId: string;
   employeeName: string;
   date: string;
+  minDate?: string;
+  maxDate?: string;
   onSaved: () => void;
 }) {
   const qc = useQueryClient();
@@ -40,16 +44,21 @@ export function PayrollDayEditDialog({
   const [extent, setExtent] = useState("100");
   const [hours, setHours] = useState("");
   const [note, setNote] = useState("");
+  const [from, setFrom] = useState(date);
+  const [to, setTo] = useState(date);
+  const isRange = to !== from;
 
   const att = useQuery({
-    queryKey: ["payroll-day-attest", employeeId, date],
-    enabled: open,
+    queryKey: ["payroll-day-attest", employeeId, from, to],
+    enabled: open && !!from && !!to && to >= from,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("attestations")
-        .select("id, approved_minutes, computed, status")
+        .select("id, date, approved_minutes, computed, status")
         .eq("employee_id", employeeId)
-        .eq("date", date);
+        .gte("date", from)
+        .lte("date", to)
+        .order("date");
       if (error) throw error;
       return data ?? [];
     },
@@ -69,10 +78,15 @@ export function PayrollDayEditDialog({
     setKind(WORK);
     setExtent("100");
     setNote("");
+    setFrom(date);
+    setTo(date);
   }, [open, date, employeeId]);
   useEffect(() => {
-    if (open) setHours(String(Math.round((current / 60) * 100) / 100).replace(".", ","));
-  }, [open, current]);
+    if (isRange && kind === WORK && types[0]) setKind(types[0].id);
+  }, [isRange, kind, types]);
+  useEffect(() => {
+    if (open && !isRange) setHours(String(Math.round((current / 60) * 100) / 100).replace(".", ","));
+  }, [open, current, isRange]);
   useEffect(() => {
     if (kind !== WORK && extent.trim() === "100") setHours("0");
   }, [kind, extent]);
@@ -81,6 +95,8 @@ export function PayrollDayEditDialog({
   const extentNum = Number(extent.replace(",", "."));
   const hoursNum = Number(hours.replace(",", "."));
   const valid =
+    !!from && !!to && to >= from &&
+    (!minDate || from >= minDate) && (!maxDate || to <= maxDate) &&
     Number.isFinite(hoursNum) && hoursNum >= 0 && hoursNum <= 24 &&
     (kind === WORK || (extentNum > 0 && extentNum <= 100)) &&
     (kind !== WORK || (att.data?.length ?? 0) > 0);
@@ -93,33 +109,39 @@ export function PayrollDayEditDialog({
         await register.mutateAsync({
           employeeId,
           typeId: type.id,
-          startDate: date,
-          endDate: date,
+          startDate: from,
+          endDate: to,
           extentPct: extentNum,
           note: note || `Ändrad i Granska lön`,
           conflictAction: "keep",
         });
       }
-      const ids = (att.data ?? []).map((r) => r.id);
-      if (ids.length) {
-        const minutes = Math.round(hoursNum * 60);
-        const why = note.trim() || (type ? `Ändrad till ${type.name} i Granska lön` : "Tid justerad i Granska lön");
-        // Hela tiden läggs på första raden, övriga rader samma dag sätts till 0.
+      // Gruppera per dag: hela tiden på dagens första rad, övriga rader samma dag sätts till 0.
+      const byDay = new Map<string, { id: string; min: number }[]>();
+      for (const r of att.data ?? []) {
+        const c = (r.computed ?? {}) as { clocked_minutes?: number };
+        const list = byDay.get(r.date) ?? [];
+        list.push({ id: r.id, min: r.status === "rejected" ? 0 : Number(r.approved_minutes ?? c.clocked_minutes ?? 0) });
+        byDay.set(r.date, list);
+      }
+      const minutes = Math.round(hoursNum * 60);
+      const why = note.trim() || (type ? `Ändrad till ${type.name} i Granska lön` : "Tid justerad i Granska lön");
+      for (const list of byDay.values()) {
         await decide.mutateAsync({
-          ids: [ids[0]],
+          ids: [list[0].id],
           approve: minutes > 0,
           basis: minutes > 0 ? "justerad" : null,
           minutes: minutes > 0 ? minutes : null,
-          minutesBefore: current,
+          minutesBefore: list.reduce((t, x) => t + x.min, 0),
           note: why,
         });
-        if (ids.length > 1) {
-          await decide.mutateAsync({ ids: ids.slice(1), approve: false, basis: null, note: why });
+        if (list.length > 1) {
+          await decide.mutateAsync({ ids: list.slice(1).map((x) => x.id), approve: false, basis: null, note: why });
         }
       }
       qc.invalidateQueries({ queryKey: ["payroll-fixed-clocked"] });
       qc.invalidateQueries({ queryKey: ["payroll-day-attest"] });
-      toast.success("Dagen är ändrad. Tryck Beräkna för att uppdatera löneunderlaget.");
+      toast.success((isRange ? "Perioden" : "Dagen") + " är ändrad. Tryck Beräkna för att uppdatera löneunderlaget.");
       onSaved();
       onOpenChange(false);
     } catch (e) {
@@ -127,26 +149,40 @@ export function PayrollDayEditDialog({
     }
   };
 
-  const svDate = new Date(`${date}T12:00:00`).toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" });
+  const sv = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" });
+  const svDate = isRange ? `${sv(from)} – ${sv(to)}` : sv(from);
+  const days = new Set((att.data ?? []).map((r) => r.date)).size;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="ind max-w-md">
         <DialogHeader>
-          <DialogTitle className="ind-h2">Ändra dag</DialogTitle>
+          <DialogTitle className="ind-h2">{isRange ? "Ändra period" : "Ändra dag"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <p className="text-sm">
             <span className="ind-strong">{employeeName}</span> · {svDate}
             <br />
-            <span className="ind-muted">Godkänd tid nu: {(current / 60).toLocaleString("sv-SE", { maximumFractionDigits: 2 })} h</span>
+            <span className="ind-muted">
+              Godkänd tid nu: {(current / 60).toLocaleString("sv-SE", { maximumFractionDigits: 2 })} h{isRange ? ` på ${days} stämplade dagar` : ""}
+            </span>
           </p>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label>Från</Label>
+              <IndustryInput type="date" min={minDate} max={maxDate} value={from} onChange={(e) => { setFrom(e.target.value); if (e.target.value > to) setTo(e.target.value); }} />
+            </div>
+            <div className="space-y-1">
+              <Label>Till och med</Label>
+              <IndustryInput type="date" min={from} max={maxDate} value={to} onChange={(e) => setTo(e.target.value)} />
+            </div>
+          </div>
           <div className="space-y-1">
-            <Label>Vad var dagen?</Label>
+            <Label>{isRange ? "Vad gäller perioden?" : "Vad var dagen?"}</Label>
             <Select value={kind} onValueChange={setKind}>
               <SelectTrigger className="ind-input"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={WORK}>Arbete (ändra tiden)</SelectItem>
+                {!isRange && <SelectItem value={WORK}>Arbete (ändra tiden)</SelectItem>}
                 {types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -158,7 +194,7 @@ export function PayrollDayEditDialog({
             </div>
           )}
           <div className="space-y-1">
-            <Label>Arbetad tid som ska räknas (timmar)</Label>
+            <Label>{isRange ? "Arbetad tid som ska räknas per stämplad dag (timmar)" : "Arbetad tid som ska räknas (timmar)"}</Label>
             <IndustryInput inputMode="decimal" value={hours} onChange={(e) => setHours(e.target.value)} />
             {kind === WORK && (att.data?.length ?? 0) === 0 && (
               <p className="text-xs text-destructive">Det finns ingen stämplad tid den här dagen att ändra.</p>
@@ -168,7 +204,7 @@ export function PayrollDayEditDialog({
             <Label>Kommentar</Label>
             <IndustryInput value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
-          <p className="ind-muted text-xs">Stämplingarna ligger kvar i historiken. Ändringen sparas med ditt namn och tid.</p>
+          <p className="ind-muted text-xs">Gäller även dagar som redan är attesterade. Stämplingarna ligger kvar i historiken. Ändringen sparas med ditt namn och tid.</p>
         </div>
         <DialogFooter className="flex-wrap gap-2">
           <IndustryButton variant="ghost" onClick={() => onOpenChange(false)}>Avbryt</IndustryButton>
