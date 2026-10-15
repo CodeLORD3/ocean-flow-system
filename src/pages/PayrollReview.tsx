@@ -7,6 +7,8 @@
  */
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, ChevronDown, ChevronRight, Download, Loader2, RefreshCw, Send, ShieldAlert } from "lucide-react";
 import {
   DecisionBar,
@@ -105,6 +107,27 @@ export default function PayrollReview() {
       (employeeName.get(a[0]) ?? a[0]).localeCompare(employeeName.get(b[0]) ?? b[0], "sv"),
     );
   }, [rows, employeeName]);
+
+  // Fast månadslön ligger på anställningen och betalas av Fortnox Lön — visas här som kontroll.
+  const fixedQuery = useQuery({
+    queryKey: ["payroll-fixed-salaries", activeEntity],
+    enabled: !!activeEntity,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employments")
+        .select("employee_id, monthly_salary")
+        .eq("legal_entity_id", activeEntity)
+        .eq("pay_type", "monthly")
+        .eq("is_active", true);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const fixedSalary = useMemo(
+    () => new Map((fixedQuery.data ?? []).filter((r) => r.monthly_salary).map((r) => [r.employee_id, Number(r.monthly_salary)])),
+    [fixedQuery.data],
+  );
+  const fixedTotal = byEmployee.reduce((s, [id]) => s + (fixedSalary.get(id) ?? 0), 0);
 
   const blockingIssues = issues.filter((i) => i.kind !== "wellness_over_limit");
   const canReview = periodRow && rows.length > 0 && blockingIssues.length === 0 && unlockedStores.length === 0;
@@ -221,6 +244,7 @@ export default function PayrollReview() {
         <DecisionMetric label="Mer-/övertid" value={`${dec.format(summary.extraHours)} h`} />
         <DecisionMetric label="Frånvarodagar" value={dec.format(summary.absenceDays)} />
         <DecisionMetric label="Förmåner/avdrag" value={`${money.format(summary.benefitAmount)} kr`} />
+        <DecisionMetric label="Fasta månadslöner" value={`${money.format(fixedTotal)} kr`} />
         <DecisionMetric label="Preliminär kostnad" value={`${money.format(summary.cost)} kr`} tone="progress" />
       </div>
 
@@ -277,6 +301,9 @@ export default function PayrollReview() {
                   <span className="min-w-[200px]">{employeeName.get(employeeId) ?? employeeId}</span>
                   <span className="ind-mono">{dec.format(hours)} h</span>
                   <span className="ind-muted ind-mono text-sm">{employeeLines.length} rader</span>
+                  {fixedSalary.has(employeeId) && (
+                    <span className="ind-mono text-sm">Fast månadslön {money.format(fixedSalary.get(employeeId) ?? 0)} kr</span>
+                  )}
                   <span className="ml-auto ind-mono">{money.format(cost)} kr preliminärt</span>
                 </IndustryRow>
                 {open && (
