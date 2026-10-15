@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     .order("line_date", { ascending: true });
   if (lineErr) return json({ error: lineErr.message }, 500);
   // KOMP_IN = övertid som tjänas in som komp; saldot hålls i Makrilltrade och betalas inte ut.
-  const lines = ((lineRows ?? []) as PayrollLineRow[]).filter((l) => l.line_type !== "KOMP_IN");
+  const lines = ((lineRows ?? []) as PayrollLineRow[]).filter((l) => !["KOMP_IN", "OT1", "OT2"].includes(l.line_type)); // OT1/OT2 är inte avtalat — skickas aldrig.
 
   const { data: mapRows } = await sb
     .from("fortnox_wage_code_map")
