@@ -218,6 +218,13 @@
       "when": 1792053042905,
       "tag": "0030_fixed_start_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792057852070,
+      "tag": "0031_migration",
+      "breakpoints": true
     }
   ]
 }
