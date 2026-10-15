@@ -77,15 +77,24 @@ Deno.serve(async (req) => {
     }
   }
 
-  let shiftQuery = db
-    .from("shifts")
-    .select("*")
-    .eq("status", "published")
-    .gte("date", from)
-    .lte("date", to);
-  if (storeId) shiftQuery = shiftQuery.eq("store_id", storeId);
-  const { data: shifts, error: shiftErr } = await shiftQuery;
-  if (shiftErr) return json({ error: shiftErr.message }, 500);
+  // Hämta alla bolags pass — en person med pass i en annan enhet samma dag får aldrig
+  // en extra "oplanerad" rad här, annars betalas samma stämplade tid två gånger.
+  const allShifts: Record<string, any>[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data: page, error: shiftErr } = await db
+      .from("shifts")
+      .select("*")
+      .eq("status", "published")
+      .gte("date", from)
+      .lte("date", to)
+      .order("id", { ascending: true })
+      .range(offset, offset + 999);
+    if (shiftErr) return json({ error: shiftErr.message }, 500);
+    allShifts.push(...(page ?? []));
+    if (!page || page.length < 1000) break;
+  }
+  const shiftDays = new Set(allShifts.filter((s) => s.employee_id).map((s) => `${s.employee_id}|${s.date}`));
+  const shifts = storeId ? allShifts.filter((s) => s.store_id === storeId) : allShifts;
 
   const fromIso = svenskDagStart(from).toISOString();
   const toIso = svenskDagSista(to).toISOString();
@@ -102,7 +111,7 @@ Deno.serve(async (req) => {
       .order("occurred_at", { ascending: true })
       .order("id", { ascending: true })
       .range(offset, offset + PAGE - 1);
-    if (storeId) entryQuery = entryQuery.eq("store_id", storeId);
+    // Inget butiksfilter: dagens tid räknas per person, oavsett vilken station som användes.
     const { data: page, error: entryErr } = await entryQuery;
     if (entryErr) return json({ error: entryErr.message }, 500);
     rawEntries.push(...(page ?? []));
@@ -225,7 +234,7 @@ Deno.serve(async (req) => {
 
   // Stämplingar utan pass = oplanerad tid
   for (const [key, dayEntries] of byKey) {
-    if (handled.has(key)) continue;
+    if (handled.has(key) || shiftDays.has(key)) continue;
     const [employeeId, date] = key.split("|");
     const ins = dayEntries.filter((e) => e.type === "in");
     const outs = dayEntries.filter((e) => e.type === "ut");

@@ -243,13 +243,35 @@ Deno.serve(async (req) => {
 
   // Attesterad tid
   const employeeIds = [...employmentByEmployee.keys()];
-  const { data: attestations = [] } = await db
-    .from("attestations")
-    .select("id, employee_id, store_id, date, status, basis, approved_minutes, computed")
-    .gte("date", from)
-    .lte("date", to)
-    .in("employee_id", employeeIds)
-    .in("status", ["approved", "auto_approved"]);
+  const rawAttestations: Record<string, any>[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data: page, error: attErr } = await db
+      .from("attestations")
+      .select("id, employee_id, store_id, date, status, basis, approved_minutes, computed, shift_id")
+      .gte("date", from)
+      .lte("date", to)
+      .in("employee_id", employeeIds)
+      .in("status", ["approved", "auto_approved"])
+      .order("id", { ascending: true })
+      .range(offset, offset + 999);
+    if (attErr) throw attErr;
+    rawAttestations.push(...(page ?? []));
+    if (!page || page.length < 1000) break;
+  }
+  // En person kan bara få lön en gång per dag: stämplad tid är per person och dag,
+  // så två attestrader samma dag (t.ex. Produktionen + Amhult) är samma tid två gånger.
+  // Behåll manuellt godkänd före auto, passbaserad före oplanerad, sedan flest minuter.
+  const rank = (a: Record<string, any>) =>
+    (a.status === "approved" ? 4 : 0) + (a.shift_id ? 2 : 0);
+  const bestByDay = new Map<string, Record<string, any>>();
+  for (const a of rawAttestations) {
+    const k = `${a.employee_id}|${a.date}`;
+    const cur = bestByDay.get(k);
+    if (!cur || rank(a) > rank(cur) || (rank(a) === rank(cur) && Number(a.approved_minutes ?? 0) > Number(cur.approved_minutes ?? 0))) {
+      bestByDay.set(k, a);
+    }
+  }
+  const attestations = [...bestByDay.values()];
 
   // Schemalagd tid för mertidsjämförelse
   const { data: shifts = [] } = await db
