@@ -42,6 +42,9 @@ type Basis = "schema" | "stamplad" | "justerad";
 
 export default function Attestations() {
   const [storeId, setStoreId] = useState("");
+  const ALL = "__alla";
+  const isAll = storeId === ALL;
+  const sid = isAll ? null : storeId || null;
   const [anchor, setAnchor] = useState(dateKey(new Date()));
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [basis, setBasis] = useState<Basis>("schema");
@@ -70,8 +73,8 @@ export default function Attestations() {
   const { data: stores = [] } = useStores();
   const store = stores.find((s) => s.id === storeId);
   const { data: employees = [] } = useEmployees(true);
-  const { data: attestations = [], isLoading } = useAttestations(storeId || null, rangeFrom, rangeTo);
-  const { data: locks = [] } = usePeriodLocks(storeId || null);
+  const { data: attestations = [], isLoading } = useAttestations(sid, rangeFrom, rangeTo);
+  const { data: locks = [] } = usePeriodLocks(sid);
 
   const compute = useComputeAttest();
   const decide = useDecideAttestations();
@@ -107,7 +110,7 @@ export default function Attestations() {
   }, [attestations]);
   const decided = attestations.filter((a) => a.status === "approved" || a.status === "rejected");
 
-  const activeLock = locks.find((l) => l.period === period && !l.unlocked_at);
+  const activeLock = isAll ? undefined : locks.find((l) => l.period === period && !l.unlocked_at);
   const totalDiff = flagged.reduce((s, a) => s + Math.abs(a.computed?.diff_minutes ?? 0), 0);
 
   const toggle = (id: string) =>
@@ -161,6 +164,7 @@ export default function Attestations() {
         <div className="min-w-0 flex-1">
           <p className="ind-strong text-sm">
             {a.date} · {nameOf(a.employee_id)}
+            {isAll && a.store_id ? ` · ${storeName.get(a.store_id) ?? ""}` : ""}
           </p>
           <p className="ind-muted ind-mono text-xs">
             Schema {formatMinutes(a.computed?.scheduled_minutes ?? 0)} · Stämplat{" "}
@@ -336,6 +340,7 @@ export default function Attestations() {
               <SelectValue placeholder="Välj enhet" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value={ALL}>Alla butiker</SelectItem>
               {stores.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
                   {s.name}
@@ -370,7 +375,12 @@ export default function Attestations() {
 
       {!storeId ? (
         <section className="space-y-2">
-          <SectionLabel>{view === "period" ? "Periodens" : "Veckans"} oattesterade pass per butik</SectionLabel>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <SectionLabel>{view === "period" ? "Periodens" : "Veckans"} oattesterade pass per butik</SectionLabel>
+            <IndustryButton variant="primary" corners onClick={() => setStoreId(ALL)}>
+              Attestera alla butiker
+            </IndustryButton>
+          </div>
           {perStore.length === 0 ? (
             <IndustryRow edge="accent">
               <p className="ind-muted text-sm">
@@ -408,7 +418,7 @@ export default function Attestations() {
               disabled={compute.isPending}
               onClick={async () => {
                 try {
-                  await compute.mutateAsync({ storeId, from: rangeFrom, to: rangeTo });
+                  await compute.mutateAsync({ storeId: sid, from: rangeFrom, to: rangeTo });
                   toast.success("Attestunderlaget beräknat");
                 } catch (e) {
                   toast.error(e instanceof Error ? e.message : "Beräkningen misslyckades");
@@ -543,7 +553,7 @@ export default function Attestations() {
             </section>
           )}
 
-          <section className="space-y-2">
+          {!isAll && <section className="space-y-2">
             <SectionLabel>Periodlåsning</SectionLabel>
             <IndustryRow edge={activeLock ? "strong" : flagged.length ? "alert" : "accent"}>
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -551,7 +561,7 @@ export default function Attestations() {
                   {activeLock
                     ? `Perioden ${period} är låst.`
                     : flagged.length
-                      ? `${flagged.length} flaggade rader återstår i veckan — attestera dem innan låsning.`
+                      ? `${flagged.length} flaggade rader återstår — attestera dem innan låsning.`
                       : `Alla ${view === "period" ? "periodens" : "veckans"} rader är hanterade. Perioden ${period} kan låsas.`}
                 </p>
                 {!activeLock && (
@@ -577,7 +587,10 @@ export default function Attestations() {
                 )}
               </div>
             </IndustryRow>
-          </section>
+          </section>}
+          {isAll && (
+            <p className="ind-muted text-sm">Periodlåsning görs per butik. Välj en butik för att låsa perioden.</p>
+          )}
         </>
       )}
     </IndustryFrame>
