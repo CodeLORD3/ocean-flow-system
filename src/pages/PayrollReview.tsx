@@ -289,10 +289,14 @@ export default function PayrollReview() {
         <DecisionMetric label="Frånvarodagar" value={dec.format(summary.absenceDays)} />
         <DecisionMetric label="Förmåner/avdrag" value={`${money.format(summary.benefitAmount)} kr`} />
         <DecisionMetric label="Fasta månadslöner" value={`${money.format(fixedTotal)} kr`} />
-        <DecisionMetric label="Bruttolön (lön + semester)" value={`${money.format(summary.cost / 1.3142 + fixedTotal)} kr`} />
-        <DecisionMetric label="Arbetsgivaravgift 31,42 %" value={`${money.format(summary.cost - summary.cost / 1.3142 + fixedTotal * 0.3142)} kr`} />
-        <DecisionMetric label="Total kostnad" value={`${money.format(summary.cost + fixedTotal * 1.3142)} kr`} tone="progress" />
+        <DecisionMetric label="Lön att betala ut 25:e (brutto, före skatt)" value={`${money.format(summary.cost / 1.3142 / 1.008 + fixedTotal)} kr`} tone="progress" />
+        <DecisionMetric label="Semesteravsättning 0,8 % (separat, betalas inte ut nu)" value={`${money.format(summary.cost / 1.3142 - summary.cost / 1.3142 / 1.008)} kr`} />
+        <DecisionMetric label="Arbetsgivaravgift 31,42 % (separat)" value={`${money.format(summary.cost - summary.cost / 1.3142 + fixedTotal * 0.3142)} kr`} />
+        <DecisionMetric label="Total kostnad" value={`${money.format(summary.cost + fixedTotal * 1.3142)} kr`} />
       </div>
+      <p className="ind-muted mt-2 text-sm">
+        Från kontot den 25:e går nettolönen till de anställda. Skatteavdraget och arbetsgivaravgiften betalas till Skatteverket den 12:e månaden efter. Den exakta nettolönen räknas i Fortnox Lön.
+      </p>
 
       {summary.obPerLevel.size > 0 && (
         <div className="mt-3 flex flex-wrap gap-4">
