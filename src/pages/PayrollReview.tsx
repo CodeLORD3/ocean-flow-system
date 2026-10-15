@@ -351,17 +351,21 @@ export default function PayrollReview() {
                     {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </IndustryButton>
                   <span className="min-w-[200px]">{employeeName.get(employeeId) ?? employeeId}</span>
-                  <span className="ind-mono">{dec.format(hours)} h</span>
-                  <span className="ind-muted ind-mono text-sm">{employeeLines.length} rader</span>
+                  {(() => {
+                    const clocked = clockedByEmployee.get(employeeId) ?? [];
+                    const useClocked = fixedSalary.has(employeeId) && employeeLines.length === 0;
+                    const h = useClocked ? clocked.reduce((t, d) => t + d.minutes, 0) / 60 : hours;
+                    const n = useClocked ? clocked.length : employeeLines.length;
+                    return (
+                      <>
+                        <span className="ind-mono">{dec.format(h)} h</span>
+                        <span className="ind-muted ind-mono text-sm">{n} rader</span>
+                      </>
+                    );
+                  })()}
                   <IndustryButton variant="ghost" className="h-9" onClick={() => setEditDay({ employeeId, date: periodRange.from })}>
                     Redigera period
                   </IndustryButton>
-                  {fixedSalary.has(employeeId) && (
-                    <span className="ind-mono text-sm">
-                      Instämplat {dec.format((clockedByEmployee.get(employeeId) ?? []).reduce((t, d) => t + d.minutes, 0) / 60)} h ·{" "}
-                      {(clockedByEmployee.get(employeeId) ?? []).length} dagar
-                    </span>
-                  )}
                   {fixedSalary.has(employeeId) ? (
                     <span className="ml-auto ind-mono">
                       Fast månadslön {money.format(fixedSalary.get(employeeId) ?? 0)} kr
