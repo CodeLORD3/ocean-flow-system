@@ -239,6 +239,13 @@
       "when": 1792087783537,
       "tag": "0033_overtime_as_comp_default_true",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1792149214389,
+      "tag": "0034_period_lock_payroll_period",
+      "breakpoints": true
     }
   ]
 }
