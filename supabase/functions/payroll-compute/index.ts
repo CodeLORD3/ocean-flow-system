@@ -182,6 +182,17 @@ Deno.serve(async (req) => {
   if (periodRow.status === "exported" && !force) {
     return json({ error: "Perioden är exporterad. Öppna den för rättelse innan omkörning." }, 409);
   }
+  // Rader som redan skickats till Fortnox får aldrig räknas fram en gång till bredvid sig själva.
+  if (!force) {
+    const { count: sentCount } = await db
+      .from("payroll_lines")
+      .select("id", { count: "exact", head: true })
+      .eq("period_id", periodRow.id)
+      .eq("export_status", "sent");
+    if ((sentCount ?? 0) > 0) {
+      return json({ error: `Perioden har redan ${sentCount} rader skickade till Fortnox. Öppna den för rättelse innan omkörning.` }, 409);
+    }
+  }
 
   // Anställningar i bolaget
   const { data: employments = [] } = await db
