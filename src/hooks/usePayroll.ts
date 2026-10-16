@@ -121,7 +121,16 @@ export function useComputePayroll() {
       const { data, error } = await supabase.functions.invoke("payroll-compute", {
         body: { legal_entity_id: legalEntityId, period, force: force ?? false },
       });
-      if (error) throw error;
+      if (error) {
+        // Förväntade nekanden (t.ex. exporterad period) ska visas som text, inte som krasch.
+        const ctx = (error as { context?: Response }).context;
+        let msg = "Kunde inte beräkna perioden. Försök igen.";
+        try {
+          const body = ctx ? await ctx.clone().json() : null;
+          if (body?.error) msg = String(body.error);
+        } catch { /* behåll standardtext */ }
+        throw new Error(msg);
+      }
       const result = data as { error?: string; issues?: ComputeIssue[]; lines?: number; period_id?: string; unlocked_stores?: string[]; status?: string };
       if (result?.error) throw new Error(result.error);
       return result;
