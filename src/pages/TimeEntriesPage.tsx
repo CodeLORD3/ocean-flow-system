@@ -93,12 +93,12 @@ export default function TimeEntriesPage() {
   );
   const storeName = useMemo(() => new Map(stores.map((s) => [s.id, s.name])), [stores]);
 
-  const summaries = useMemo(() => summarizeDays(entries), [entries]);
+  const effective = useMemo(() => effectiveEntries(entries), [entries]);
+  const summaries = useMemo(() => summarizeDays(effective), [effective]);
   const journal = useMemo(
     () => [...entries].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at)),
     [entries],
   );
-  const effective = useMemo(() => effectiveEntries(entries), [entries]);
 
   const submitManual = async () => {
     if (!form.employee_id) return;
