@@ -369,7 +369,9 @@ Deno.serve(async (req) => {
   const costOf = (emp: Employment, hours: number, pct: number, policy?: Policy) => {
     const base = hourlyBase(emp);
     if (!base || !hours) return 0;
-    const gross = base * hours * (1 + pct / 100);
+    // OB/mertid är tillägg ovanpå timmar som redan finns som ARB-rad:
+    // bara tilläggsdelen (pct) får räknas, annars betalas timmen dubbelt.
+    const gross = base * hours * (pct > 0 ? pct / 100 : 1);
     const vacation = gross * (Number(policy?.vacation_reserve_pct ?? 0) / 100);
     const rate = contributionRate(emp.employee_id, Number(emp.monthly_salary ?? base * 165));
     return round2((gross + vacation) * (1 + rate / 100));
