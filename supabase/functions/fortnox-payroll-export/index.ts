@@ -182,7 +182,10 @@ ${rows}
   let skipped = 0;
   const failures: { line_id: string; message: string }[] = [];
 
+  // Tidsbudget: plattformen avbryter efter 150 s. Stanna i tid och låt appen fortsätta i nästa omgång.
+  const deadline = Date.now() + 100_000;
   for (const line of lines) {
+    if (Date.now() > deadline) break;
     const requestKey = `${periodRow.id}:${line.id}`;
     if (alreadySent.has(requestKey)) {
       skipped += 1;

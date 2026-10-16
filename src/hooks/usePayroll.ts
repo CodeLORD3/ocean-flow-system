@@ -236,17 +236,28 @@ export function useExportPayroll() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ legalEntityId, period, mode }: { legalEntityId: string; period: string; mode: "fortnox" | "paxml" }) => {
-      const { data, error } = await supabase.functions.invoke("fortnox-payroll-export", {
-        body: { legal_entity_id: legalEntityId, period, mode },
-      });
-      if (error) throw error;
-      const result = data as PayrollExportResult;
-      if (result?.error) {
-        const err = new Error(result.error) as Error & { issues?: ComputeIssue[] };
-        err.issues = result.issues;
-        throw err;
+      // Fortnox-exporten skickas i omgångar (tidsgräns per anrop); fortsätt tills allt är skickat.
+      const total: PayrollExportResult = { mode, sent: 0, skipped: 0, failures: [], remaining: 0 };
+      for (let round = 0; round < 20; round++) {
+        const { data, error } = await supabase.functions.invoke("fortnox-payroll-export", {
+          body: { legal_entity_id: legalEntityId, period, mode },
+        });
+        if (error) throw error;
+        const result = data as PayrollExportResult;
+        if (result?.error) {
+          const err = new Error(result.error) as Error & { issues?: ComputeIssue[] };
+          err.issues = result.issues;
+          throw err;
+        }
+        if (mode === "paxml") return result;
+        total.sent = (total.sent ?? 0) + (result.sent ?? 0);
+        total.skipped = result.skipped;
+        total.failures = [...(total.failures ?? []), ...(result.failures ?? [])];
+        total.remaining = result.remaining;
+        total.status = result.status;
+        if (!result.remaining || !result.sent) break;
       }
-      return result;
+      return total;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["payroll-periods"] });
