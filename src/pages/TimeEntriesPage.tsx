@@ -93,11 +93,17 @@ export default function TimeEntriesPage() {
   );
   const storeName = useMemo(() => new Map(stores.map((s) => [s.id, s.name])), [stores]);
 
+  const [showVoided, setShowVoided] = useState(false);
+  const summaries = useMemo(() => summarizeDays(entries), [entries]);
   const effective = useMemo(() => effectiveEntries(entries), [entries]);
-  const summaries = useMemo(() => summarizeDays(effective), [effective]);
+  const effectiveIds = useMemo(() => new Set(effective.map((e) => e.id)), [effective]);
+  const hiddenCount = entries.length - effective.length;
   const journal = useMemo(
-    () => [...entries].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at)),
-    [entries],
+    () =>
+      [...entries]
+        .filter((e) => showVoided || effectiveIds.has(e.id))
+        .sort((a, b) => b.occurred_at.localeCompare(a.occurred_at)),
+    [entries, showVoided, effectiveIds],
   );
 
   const submitManual = async () => {
@@ -436,9 +442,16 @@ export default function TimeEntriesPage() {
       </section>
 
       <section className="sl-card overflow-hidden" aria-label="Journal">
-        <div className="border-b border-[var(--sl-line)] px-4 py-3"><h2 className="sl-h3">Journal ({entries.length})</h2></div>
+        <div className="flex flex-wrap items-center gap-3 border-b border-[var(--sl-line)] px-4 py-3">
+          <h2 className="sl-h3">Journal ({effective.length})</h2>
+          {hiddenCount > 0 && (
+            <button type="button" className="sl-btn ml-auto" onClick={() => setShowVoided((v) => !v)}>
+              {showVoided ? "Dölj makulerade" : `Visa makulerade (${hiddenCount})`}
+            </button>
+          )}
+        </div>
         {journal.map((e) => {
-          const isEffective = effective.some((x) => x.id === e.id);
+          const isEffective = effectiveIds.has(e.id);
           return (
             <div key={e.id} className={`sl-row flex-wrap ${isEffective ? "" : "line-through opacity-60"}`}>
               <span className="sl-num min-w-[130px] text-[13px]">{`${svenskDatum(e.occurred_at)} ${svenskTid(e.occurred_at)}`}</span>
