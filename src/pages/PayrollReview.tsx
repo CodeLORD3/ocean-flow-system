@@ -181,6 +181,10 @@ export default function PayrollReview() {
 
   const runCompute = async (force = false) => {
     if (!activeEntity) return;
+    if (periodRow && ["exported", "reexported"].includes(periodRow.status)) {
+      toast.error("Perioden är redan skickad till Fortnox. Öppna den för rättelse innan du beräknar igen.");
+      return;
+    }
     try {
       const result = await compute.mutateAsync({ legalEntityId: activeEntity, period, force });
       setIssues(result.issues ?? []);
