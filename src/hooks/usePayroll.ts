@@ -118,10 +118,26 @@ export function useComputePayroll() {
           "Perioden har Personalkollen som källa (till och med 2026-09-15) och beräknas aldrig här.",
         );
       }
-      const { data, error } = await supabase.functions.invoke("payroll-compute", {
-        body: { legal_entity_id: legalEntityId, period, force: force ?? false },
-      });
-      if (error) throw error;
+      // Direkt fetch: förväntade nekanden (t.ex. exporterad period, 409) ska visas
+      // som text på sidan, inte rapporteras som krasch av functions.invoke.
+      const { data: s } = await supabase.auth.getSession();
+      const token = s.session?.access_token;
+      let res: Response;
+      try {
+        res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payroll-compute`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ legal_entity_id: legalEntityId, period, force: force ?? false }),
+        });
+      } catch {
+        throw new Error("Kunde inte nå löneberäkningen. Försök igen.");
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((data as { error?: string })?.error ?? "Kunde inte beräkna perioden. Försök igen.");
       const result = data as { error?: string; issues?: ComputeIssue[]; lines?: number; period_id?: string; unlocked_stores?: string[]; status?: string };
       if (result?.error) throw new Error(result.error);
       return result;
