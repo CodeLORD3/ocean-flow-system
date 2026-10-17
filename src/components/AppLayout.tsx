@@ -1,4 +1,5 @@
 import LotScanButton from "@/components/lots/LotScanButton";
+import { StaffPageTranslator } from "@/components/StaffPageTranslator";
 import { useState, useEffect } from "react";
 import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -259,6 +260,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider key={isStaffModule ? "staff" : "standard"} defaultOpen={!isStaffModule}>
+      <StaffPageTranslator />
       <div className="h-[100dvh] max-h-[100dvh] overflow-hidden flex w-full">
         {site === "shop" ? (
           <ShopSidebar collapsible={sidebarMode} />
