@@ -17562,6 +17562,7 @@ export type Database = {
           monthly_salary: number | null
           must_change_password: boolean
           phone: string | null
+          preferred_lang: string
           profile_image_url: string | null
           store_id: string | null
           user_id: string | null
@@ -17580,6 +17581,7 @@ export type Database = {
           monthly_salary?: number | null
           must_change_password?: boolean
           phone?: string | null
+          preferred_lang?: string
           profile_image_url?: string | null
           store_id?: string | null
           user_id?: string | null
@@ -17598,6 +17600,7 @@ export type Database = {
           monthly_salary?: number | null
           must_change_password?: boolean
           phone?: string | null
+          preferred_lang?: string
           profile_image_url?: string | null
           store_id?: string | null
           user_id?: string | null
@@ -25173,6 +25176,7 @@ export type Database = {
           monthly_salary: number | null
           must_change_password: boolean
           phone: string | null
+          preferred_lang: string
           profile_image_url: string | null
           store_id: string | null
           user_id: string | null
@@ -25964,6 +25968,10 @@ export type Database = {
       sessions_valid_from: { Args: never; Returns: string }
       set_employee_pnr: {
         Args: { _employee_id: string; _pnr: string }
+        Returns: undefined
+      }
+      set_staff_lang: {
+        Args: { _lang: string; _staff_id: string }
         Returns: undefined
       }
       set_store_membership: {

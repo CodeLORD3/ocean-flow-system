@@ -7,6 +7,8 @@ import { IndustryButton, IndustryFrame, IndustryRow, SectionLabel, StatusLabel }
 import { periodBounds, periodForDate, periodLabel, shiftPeriod } from "@/lib/payrollPeriod";
 import { effectiveEntries, hhmm } from "@/lib/timeEntries";
 import type { TimeEntry } from "@/hooks/useClock";
+import { STAFF_LANGS, useStaffT } from "@/lib/staffI18n";
+import { toast } from "sonner";
 
 const callWorktimeRpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>;
 
@@ -19,15 +21,23 @@ interface Attest { id: string; date: string; employee_id: string; store_id: stri
 interface AbsenceDay { date: string; extent_pct: number | null; hours: number | null; absence_requests: { status: string | null; absence_types: { name: string | null } | null } | null }
 interface Workday { arbetsdag: string; ob50_minutes: number; ob70_minutes: number; ob100_minutes: number; mertid_minutes: number }
 
-const STATUS: Record<string, { label: string; tone: "ok" | "alert" | "neutral" }> = {
-  approved: { label: "Attesterad", tone: "ok" },
-  auto_approved: { label: "Attesterad", tone: "ok" },
-  flagged: { label: "Granskas", tone: "alert" },
-  rejected: { label: "Avslagen", tone: "alert" },
+const STATUS_KEY: Record<string, { label: string; tone: "ok" | "alert" | "neutral" }> = {
+  approved: { label: "attested", tone: "ok" },
+  auto_approved: { label: "attested", tone: "ok" },
+  flagged: { label: "in_review", tone: "alert" },
+  rejected: { label: "rejected", tone: "alert" },
 };
 
 export default function MyTime() {
-  const { staff } = useStaffAuth();
+  const { staff, refresh } = useStaffAuth();
+  const { t, lang, dir } = useStaffT();
+  const changeLang = async (v: string) => {
+    if (!staff) return;
+    const { error } = await supabase.rpc("set_staff_lang" as never, { _staff_id: staff.id, _lang: v } as never);
+    if (error) { toast.error(t("lang_error")); return; }
+    await refresh?.();
+    toast.success(t("lang_saved"));
+  };
   const [period, setPeriod] = useState(() => periodForDate(todayIso()));
   const { from, to } = periodBounds(period);
 
@@ -103,34 +113,38 @@ export default function MyTime() {
 
   const loading = ids.isLoading || details.isLoading;
 
-  return <IndustryFrame className="ind-page space-y-6 p-4 md:p-6">
+  return <IndustryFrame className="ind-page space-y-6 p-4 md:p-6" dir={dir} lang={lang}>
     <div>
-      <SectionLabel>Personal · Min tid</SectionLabel>
-      <h1 className="ind-h1">Min tid</h1>
-      <p className="ind-muted mt-1 text-sm">Samma timmar och frånvaro som ligger till grund för din lön.</p>
+      <SectionLabel>{t("my_time")}</SectionLabel>
+      <h1 className="ind-h1">{t("my_time")}</h1>
+      <p className="ind-muted mt-1 text-sm">{t("my_time_intro")}</p>
+      <label className="mt-3 flex items-center gap-2 text-sm"><span className="ind-muted">{t("language")}</span>
+        <select className="min-h-11 rounded border bg-background px-2 text-base" value={lang} onChange={(e) => changeLang(e.target.value)}>
+          {STAFF_LANGS.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
+        </select></label>
     </div>
 
     <div className="flex flex-wrap items-center gap-2">
-      <IndustryButton variant="secondary" aria-label="Föregående löneperiod" onClick={() => setPeriod((p) => shiftPeriod(p, -1))}><ChevronLeft className="h-4 w-4" /></IndustryButton>
+      <IndustryButton variant="secondary" aria-label={t("prev_period")} onClick={() => setPeriod((p) => shiftPeriod(p, -1))}><ChevronLeft className="h-4 w-4" /></IndustryButton>
       <div className="min-w-0 flex-1 text-center sm:flex-none sm:px-3">
-        <div className="font-medium">Löneperiod {periodLabel(period)}</div>
-        <div className="ind-muted text-xs">Lön utbetalas 25:e</div>
+        <div className="font-medium">{t("pay_period")} {periodLabel(period)}</div>
+        <div className="ind-muted text-xs">{t("paid_25")}</div>
       </div>
-      <IndustryButton variant="secondary" aria-label="Nästa löneperiod" onClick={() => setPeriod((p) => shiftPeriod(p, 1))}><ChevronRight className="h-4 w-4" /></IndustryButton>
+      <IndustryButton variant="secondary" aria-label={t("next_period")} onClick={() => setPeriod((p) => shiftPeriod(p, 1))}><ChevronRight className="h-4 w-4" /></IndustryButton>
     </div>
 
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <IndustryRow edge="accent" className="flex-col items-start"><span className="ind-muted text-xs">Arbetad tid</span><strong className="ind-mono text-lg">{formatMinutes(totals.worked)}</strong></IndustryRow>
-      <IndustryRow edge="neutral" className="flex-col items-start"><span className="ind-muted text-xs">Varav OB</span><strong className="ind-mono text-lg">{formatMinutes(totals.ob)}</strong></IndustryRow>
-      <IndustryRow edge="neutral" className="flex-col items-start"><span className="ind-muted text-xs">Frånvarodagar</span><strong className="ind-mono text-lg">{totals.absenceDays}</strong></IndustryRow>
-      <IndustryRow edge={totals.pending ? "alert" : "neutral"} className="flex-col items-start"><span className="ind-muted text-xs">Ej klara dagar</span><strong className="ind-mono text-lg">{totals.pending}</strong></IndustryRow>
+      <IndustryRow edge="accent" className="flex-col items-start"><span className="ind-muted text-xs">{t("worked")}</span><strong className="ind-mono text-lg">{formatMinutes(totals.worked)}</strong></IndustryRow>
+      <IndustryRow edge="neutral" className="flex-col items-start"><span className="ind-muted text-xs">{t("of_which_ob")}</span><strong className="ind-mono text-lg">{formatMinutes(totals.ob)}</strong></IndustryRow>
+      <IndustryRow edge="neutral" className="flex-col items-start"><span className="ind-muted text-xs">{t("absence_days")}</span><strong className="ind-mono text-lg">{totals.absenceDays}</strong></IndustryRow>
+      <IndustryRow edge={totals.pending ? "alert" : "neutral"} className="flex-col items-start"><span className="ind-muted text-xs">{t("not_done_days")}</span><strong className="ind-mono text-lg">{totals.pending}</strong></IndustryRow>
     </div>
 
     <section className="space-y-1">
-      <SectionLabel>Dag för dag</SectionLabel>
+      <SectionLabel>{t("day_by_day")}</SectionLabel>
       {loading ? <Loader2 className="h-5 w-5 animate-spin ind-muted" /> : null}
-      {details.error ? <IndustryRow edge="alert"><span className="text-sm">Kunde inte hämta dina tider. Försök igen.</span></IndustryRow> : null}
-      {!loading && !details.error && !days.length ? <IndustryRow edge="neutral"><CalendarDays className="h-4 w-4 ind-muted" /><span className="ind-muted text-sm">Ingen registrerad tid i perioden.</span></IndustryRow> : null}
+      {details.error ? <IndustryRow edge="alert"><span className="text-sm">{t("load_error")}</span></IndustryRow> : null}
+      {!loading && !details.error && !days.length ? <IndustryRow edge="neutral"><CalendarDays className="h-4 w-4 ind-muted" /><span className="ind-muted text-sm">{t("no_time")}</span></IndustryRow> : null}
       {days.map((r) => {
         const ins = r.entries.filter((e) => e.type === "in");
         const outs = r.entries.filter((e) => e.type === "ut");
@@ -138,17 +152,18 @@ export default function MyTime() {
         const lastOut = (r.attest?.computed?.last_out as string | undefined) ?? outs[outs.length - 1]?.occurred_at ?? null;
         const breakMin = Number(r.attest?.computed?.break_minutes ?? 0);
         const storeId = r.attest?.store_id ?? r.entries[0]?.store_id ?? null;
-        const status = r.attest ? STATUS[r.attest.status] : null;
-        const absenceName = r.absence.map((a) => `${a.absence_requests?.absence_types?.name ?? "Frånvaro"}${a.extent_pct && a.extent_pct < 100 ? ` ${a.extent_pct} %` : ""}`).join(", ");
+        const sk = r.attest ? STATUS_KEY[r.attest.status] : null;
+        const status = sk ? { ...sk, label: t(sk.label) } : null;
+        const absenceName = r.absence.map((a) => `${a.absence_requests?.absence_types?.name ?? t("absence")}${a.extent_pct && a.extent_pct < 100 ? ` ${a.extent_pct} %` : ""}`).join(", ");
         return <IndustryRow key={r.date} edge={r.attest?.status === "flagged" ? "alert" : r.absence.length ? "neutral" : "accent"} className="flex-wrap gap-x-4 gap-y-1">
           <span className="w-28 font-medium capitalize">{dayLabel(r.date)}</span>
-          {firstIn || lastOut ? <span className="ind-mono">{hhmm(firstIn)}–{lastOut ? hhmm(lastOut) : "saknas"}</span> : null}
-          {breakMin > 0 ? <span className="ind-mono ind-muted text-sm">Rast {formatMinutes(breakMin)}</span> : null}
+          {firstIn || lastOut ? <span className="ind-mono">{hhmm(firstIn)}–{lastOut ? hhmm(lastOut) : t("missing")}</span> : null}
+          {breakMin > 0 ? <span className="ind-mono ind-muted text-sm">{t("break")} {formatMinutes(breakMin)}</span> : null}
           {r.attest ? <span className="ind-mono font-medium">{formatMinutes(r.attest.approved_minutes ?? 0)} h</span> : null}
           {r.ob > 0 ? <span className="ind-mono text-sm">OB {formatMinutes(r.ob)}</span> : null}
           {storeId ? <span className="ind-muted text-sm">{details.data?.stores.get(storeId) ?? ""}</span> : null}
           {absenceName ? <StatusLabel tone="neutral">{absenceName}</StatusLabel> : null}
-          {status ? <StatusLabel tone={status.tone}>{status.label}</StatusLabel> : r.entries.length && !r.absence.length ? <StatusLabel tone="neutral">Ej attesterad</StatusLabel> : null}
+          {status ? <StatusLabel tone={status.tone}>{status.label}</StatusLabel> : r.entries.length && !r.absence.length ? <StatusLabel tone="neutral">{t("not_attested")}</StatusLabel> : null}
         </IndustryRow>;
       })}
     </section>
