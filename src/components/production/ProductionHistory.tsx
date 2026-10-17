@@ -106,7 +106,7 @@ export function ProductionHistory() {
               bare
               icon={<Scissors className="h-4 w-4" />}
               title={t("tillverkning.text_132")}
-              description=t("tillverkning.text_133")
+              description={t("tillverkning.text_133")}
             />
           )}
           <div className="divide-y">
@@ -219,7 +219,7 @@ export function ProductionHistory() {
               bare
               icon={<Scissors className="h-4 w-4" />}
               title={t("tillverkning.text_154")}
-              description=t("tillverkning.text_155")
+              description={t("tillverkning.text_155")}
             />
           ) : (
             <Table>

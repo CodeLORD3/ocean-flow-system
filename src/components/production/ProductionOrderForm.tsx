@@ -936,7 +936,7 @@ export function ProductionOrderForm() {
                 quantityKg={rawQtyNum}
                 loading={loadingFefo}
                 onChange={setFefoAlloc}
-                emptyHint=tt("tillverkning.text_206")
+                emptyHint={tt("tillverkning.text_206")}
               />
             </div>
           )}
