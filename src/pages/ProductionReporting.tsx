@@ -122,7 +122,7 @@ function EditableRow({
         <TableCell className="py-0.5 px-1.5 text-[11px] min-w-[160px]">{line.product_name}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] text-right w-[60px]">{line.quantity}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] w-[42px]">{line.unit || "kg"}</TableCell>
-        <TableCell className="py-0.5 px-1 text-[11px] w-[62px]">{line.status}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] w-[62px]">{line.status === "Producerad" ? t("reporting.produced") : line.status === "Planerad" ? t("reporting.planned") : line.status}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] w-[86px]">{line.production_date || "—"}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] w-[80px]">{line.operator || "—"}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] w-[100px] truncate">{line.notes || "—"}</TableCell>
@@ -198,7 +198,7 @@ function EditableRow({
         </Select>
       </TableCell>
       <TableCell className="py-0.5 px-1 w-[62px]">
-        <Select defaultValue={line.status} onValueChange={(v) => onSave({ status: v })}>
+        <Select defaultValue={line.status === "Producerad" ? t("reporting.produced") : line.status === "Planerad" ? t("reporting.planned") : line.status} onValueChange={(v) => onSave({ status: v })}>
           <SelectTrigger className="h-6 w-[58px] text-[11px] border-transparent bg-transparent hover:border-input"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="Producerad">{t("reporting.produced")}</SelectItem>
@@ -231,7 +231,7 @@ function EditableRow({
         />
       </TableCell>
       <TableCell className="py-0.5 px-0 w-6">
-        <Button variant="ghost" size="icon" className="h-5 w-5" aria-label={t("reporting.deleteLine")} onClick={async () => { if (await confirmDialog(`Ta bort raden "${line.product_name ?? ""}"?`)) onDelete(); }}>
+        <Button variant="ghost" size="icon" className="h-5 w-5" aria-label={t("reporting.deleteLine")} onClick={async () => { if (await confirmDialog(t("reporting.deleteLinePrompt").replace("{name}", String(line.product_name ?? "")))) onDelete(); }}>
           <Trash2 className="h-2.5 w-2.5 text-destructive" />
         </Button>
       </TableCell>
@@ -311,7 +311,7 @@ function ReportSection({
           </button>
         )}
         <span className="text-xs text-muted-foreground shrink-0">
-          {lines.length} rader · {sectionTotal.toLocaleString("sv-SE")} total
+          {t("reporting.rowTotal").replace("{n}", String(lines.length)).replace("{total}", sectionTotal.toLocaleString("sv-SE"))}
         </span>
         {isLocked ? (
           <Badge className="text-[10px] shrink-0 bg-primary/10 text-primary border-primary/20" variant="outline">
@@ -366,8 +366,8 @@ function ReportSection({
                   <AlertDialogHeader>
                     <AlertDialogTitle>{t("reporting.confirmProduction")}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Du är på väg att låsa <strong>{displayName}</strong> med {lines.length} rader
-                      och totalt <strong>{sectionTotal.toLocaleString("sv-SE")}</strong> enheter.
+                      {t("reporting.lockIntro")}<strong>{displayName}</strong>{t("reporting.lockRows").replace("{n}", String(lines.length))}
+                      {t("reporting.lockTotal")}<strong>{sectionTotal.toLocaleString("sv-SE")}</strong>{t("reporting.lockUnits")}
                       <br /><br />
                       {t("reporting.lockedNotice")}
                     </AlertDialogDescription>
@@ -501,7 +501,7 @@ export default function ProductionReporting() {
       queryClient.invalidateQueries({ queryKey: ["production-reports"] });
       toast({
         title: t("reporting.confirmError"),
-        description: `${e?.message ?? "Okänt fel"}. Inget har bokats i lagret — försök igen.`,
+        description: t("reporting.stockError").replace("{error}", String(e?.message ?? t("reporting.unknownError"))),
         variant: "destructive",
       });
     },
@@ -544,7 +544,7 @@ export default function ProductionReporting() {
       setSearchQuery("");
       setSearchOpen(false);
       setFocusLineId(newLineId);
-      toast({ title: `${product.name} tillagd` });
+      toast({ title: t("reporting.productAdded").replace("{name}", String(product.name)) });
     },
   });
 
@@ -583,9 +583,9 @@ export default function ProductionReporting() {
         <div>
           <h1 className="text-xl font-bold">{t("reporting.heading")}</h1>
           <p className="text-muted-foreground text-xs">
-            {t("reporting.total")} <span className="font-semibold text-foreground">{grandTotal.toLocaleString("sv-SE")} enheter</span>
-            {" · "}{allLines.length} rader
-            {" · "}{confirmedReports.length} bekräftade
+            {t("reporting.total")} <span className="font-semibold text-foreground">{t("reporting.unitsCount").replace("{n}", grandTotal.toLocaleString("sv-SE"))}</span>
+            {" · "}{t("reporting.rowsCount").replace("{n}", String(allLines.length))}
+            {" · "}{t("reporting.confirmedCount").replace("{n}", String(confirmedReports.length))}
           </p>
         </div>
       </div>
@@ -624,7 +624,7 @@ export default function ProductionReporting() {
               <div className="max-h-[300px] overflow-y-auto py-1">
                 {searchedProducts.length === 0 ? (
                   <div className="py-3 text-center">
-                    <p className="text-sm text-muted-foreground mb-2">Ingen produkt hittad för "{searchQuery}"</p>
+                    <p className="text-sm text-muted-foreground mb-2">{t("reporting.noProduct").replace("{n}", String(searchQuery))}</p>
                     <Button
                       size="sm"
                       variant="outline"
@@ -699,7 +699,7 @@ export default function ProductionReporting() {
               <DialogClose asChild><Button variant="outline">{t("reporting.cancel")}</Button></DialogClose>
               <Button onClick={() => createProductAndAdd.mutate()} disabled={!newProduct.name.trim() || createProductAndAdd.isPending}>
                 {createProductAndAdd.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-                Skapa & lägg till
+                {t("reporting.createAdd")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -720,7 +720,7 @@ export default function ProductionReporting() {
           {filterCategory !== "all" && (
             <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setFilterCategory("all")}>{t("reporting.clearFilter")}</Button>
           )}
-          <span className="text-xs text-muted-foreground ml-auto">{filteredLines.length} av {allLines.length} rader</span>
+          <span className="text-xs text-muted-foreground ml-auto">{filteredLines.length} av {t("reporting.rowsCount").replace("{n}", String(allLines.length))}</span>
         </div>
       )}
 

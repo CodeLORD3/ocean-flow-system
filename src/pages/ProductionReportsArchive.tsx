@@ -310,7 +310,7 @@ export default function ProductionReportsArchive() {
         <div>
           <h2 className="text-lg font-semibold">{t("reporting.archiveHeading")}</h2>
           <p className="text-xs text-muted-foreground">
-            Rapporter arkiveras automatiskt varje natt. Totalt {archivedReports.length} rapporter.
+            {t("reporting.archiveSummary").replace("{n}", String(archivedReports.length))}
           </p>
         </div>
       </div>
@@ -339,7 +339,7 @@ export default function ProductionReportsArchive() {
                     <div>
                       <p className="text-sm font-medium capitalize">{displayDate}</p>
                       <p className="text-xs text-muted-foreground">
-                        {reports.length} rapport{reports.length !== 1 ? "er" : ""} · {totalLines} rader
+                        {(reports.length === 1 ? t("reporting.reportSingle") : t("reporting.reportPlural")).replace("{n}", String(reports.length))} · {t("reporting.rowsCount").replace("{n}", String(totalLines))}
                       </p>
                     </div>
                   </div>
@@ -395,7 +395,7 @@ export default function ProductionReportsArchive() {
                                     {displayName}
                                   </span>
                                   <span className="text-[10px] text-muted-foreground">
-                                    {lines.length} rader
+                                    {t("reporting.rowsCount").replace("{n}", String(lines.length))}
                                   </span>
                                 </>
                               )}
@@ -410,7 +410,7 @@ export default function ProductionReportsArchive() {
                                 </Badge>
                               ) : (
                                 <Badge variant="secondary" className="text-[9px] h-4">
-                                  {report.status}
+                                  {report.status === "Aktiv" ? t("reporting.active") : report.status}
                                 </Badge>
                               )}
                               {!isEditingName && (
@@ -434,7 +434,7 @@ export default function ProductionReportsArchive() {
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>{t("reporting.deleteReportTitle")}</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Hela rapporten "{displayName}" och alla {lines.length} rader tas bort permanent.
+                                      Hela rapporten "{displayName}" och alla {t("reporting.rowsCount").replace("{n}", String(lines.length))} tas bort permanent.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>

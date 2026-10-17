@@ -1,3 +1,4 @@
+import { useStaffT } from "@/lib/staffI18n";
 import { SidebarProfile } from "@/components/SidebarProfile";
 import { versionLabel } from "@/lib/appVersion";
 import {
@@ -86,6 +87,8 @@ const bottomNav = [
   { title: "Administration", url: "/settings", icon: Settings },
 ];
 
+const MENU_KEYS: Record<string, string> = {"Översikt": "overview", "Bildflöde": "images", "Kalender": "calendar", "Chatt": "chat", "Lager": "inventory", "Inköpsschema": "purchase_schedule", "Inköpsrapportering": "purchase_reporting", "Produktion": "production", "Leverantörer": "suppliers", "Ordrar": "orders", "Kundbeställningar": "customer_orders", "Önskemål": "wishes", "Personal & Schema": "staff_schedule", "Rapporter": "reports", "Administration": "administration", "Inköp & Produktion": "purchase_production", "Försäljning": "sales", "Organisation": "organisation"};
+
 type NavSection = { label: string; items: typeof overviewNav };
 
 const sections: NavSection[] = [
@@ -96,6 +99,8 @@ const sections: NavSection[] = [
 ];
 
 export function ProductionSidebar({ collapsible = "icon" }: { collapsible?: "icon" | "offcanvas" } = {}) {
+  const { t, lang, dir } = useStaffT();
+  const menuTitle = (title: string) => MENU_KEYS[title] ? t(`meny.${MENU_KEYS[title]}`) : title;
   const { state, isMobile, setOpenMobile } = useSidebar();
   const closeMobileSidebar = () => { if (isMobile) setOpenMobile(false); };
   const collapsed = state === "collapsed";
@@ -118,7 +123,7 @@ export function ProductionSidebar({ collapsible = "icon" }: { collapsible?: "ico
   }, [location.pathname]);
 
   return (
-    <Sidebar collapsible={collapsible} className="border-r-2 border-r-amber-700/30 bg-gradient-to-b from-sidebar-background to-amber-950/10">
+    <Sidebar lang={lang} dir={dir} collapsible={collapsible} className="border-r-2 border-r-amber-700/30 bg-gradient-to-b from-sidebar-background to-amber-950/10">
       <SidebarHeader className="p-4 space-y-2">
         <SidebarProfile collapsed={collapsed} />
         <PortalLogo
@@ -127,7 +132,7 @@ export function ProductionSidebar({ collapsible = "icon" }: { collapsible?: "ico
           iconColorClass="text-amber-400"
           iconBgClass="bg-amber-500/20"
           title="FiskHandel"
-          subtitle="Grossist"
+          subtitle={t("meny.wholesale")}
           collapsed={collapsed}
         />
       </SidebarHeader>
@@ -153,7 +158,7 @@ export function ProductionSidebar({ collapsible = "icon" }: { collapsible?: "ico
           .filter((section) => section.items.length > 0)
           .map((section) => (
           <SidebarGroup key={section.label}>
-            <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
+            <SidebarGroupLabel>{menuTitle(section.label)}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {section.items.map((item) => (
@@ -161,7 +166,7 @@ export function ProductionSidebar({ collapsible = "icon" }: { collapsible?: "ico
                     <SidebarMenuButton asChild isActive={isActive(item.url)}>
                       <NavLink to={item.url} end onClick={closeMobileSidebar}>
                         <item.icon className="h-4 w-4" />
-                        {!collapsed && <span>{item.title}</span>}
+                        {!collapsed && <span>{menuTitle(item.title)}</span>}
                         {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" || item.url === "/inventory" ? incomingTransfers : 0)} />}
                       </NavLink>
                     </SidebarMenuButton>
@@ -178,7 +183,7 @@ export function ProductionSidebar({ collapsible = "icon" }: { collapsible?: "ico
           <SidebarMenuItem>
             <SidebarMenuButton onClick={() => setCustomizeOpen(true)}>
               <SlidersHorizontal className="h-4 w-4" />
-              {!collapsed && <span>Anpassa meny</span>}
+              {!collapsed && <span>{t("meny.customize")}</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
           {bottomNav.map((item) => (
@@ -186,7 +191,7 @@ export function ProductionSidebar({ collapsible = "icon" }: { collapsible?: "ico
               <SidebarMenuButton asChild isActive={isActive(item.url)}>
                 <NavLink to={item.url} end onClick={closeMobileSidebar}>
                   <item.icon className="h-4 w-4" />
-                  {!collapsed && <span>{item.title}</span>}
+                  {!collapsed && <span>{menuTitle(item.title)}</span>}
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -203,7 +208,7 @@ export function ProductionSidebar({ collapsible = "icon" }: { collapsible?: "ico
         localScope="production"
         sections={sections.map((s) => ({
           label: s.label,
-          items: s.items.map((i) => ({ title: i.title, url: i.url })),
+          items: s.items.map((i) => ({ title: menuTitle(i.title), url: i.url })),
         }))}
         lockedUrls={LOCKED_URLS}
       />
