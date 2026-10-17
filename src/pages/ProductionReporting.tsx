@@ -1,3 +1,4 @@
+import { useStaffT } from "@/lib/staffI18n";
 import { confirmDialog } from "@/components/ui/confirm-dialog";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { markOrderLinesBehandlas } from "@/lib/orderStatusSync";
@@ -64,6 +65,7 @@ function EditableRow({
   onQtyFocused?: () => void;
   locked?: boolean;
 }) {
+  const { t, lang, dir } = useStaffT();
   const [productSearch, setProductSearch] = useState("");
   const [productOpen, setProductOpen] = useState(false);
   const [productIdx, setProductIdx] = useState(0);
@@ -148,11 +150,11 @@ function EditableRow({
                 onFocus={(e) => { e.target.select(); setProductSearch(e.target.value); if (e.target.value.length > 0) setProductOpen(true); }}
                 onKeyDown={handleProductKeyDown}
                 className="h-6 text-[11px] border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 min-w-[140px]"
-                placeholder="Sök produkt..."
+                placeholder={t("reporting.searchProduct")}
               />
               {!line.product_id && (
                 <span className="absolute right-1 top-1/2 -translate-y-1/2">
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 text-amber-600 border-amber-300">Ej kopplad</Badge>
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 text-amber-600 border-amber-300">{t("reporting.unlinked")}</Badge>
                 </span>
               )}
             </div>
@@ -199,8 +201,8 @@ function EditableRow({
         <Select defaultValue={line.status} onValueChange={(v) => onSave({ status: v })}>
           <SelectTrigger className="h-6 w-[58px] text-[11px] border-transparent bg-transparent hover:border-input"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="Producerad">Producerad</SelectItem>
-            <SelectItem value="Planerad">Planerad</SelectItem>
+            <SelectItem value="Producerad">{t("reporting.produced")}</SelectItem>
+            <SelectItem value="Planerad">{t("reporting.planned")}</SelectItem>
           </SelectContent>
         </Select>
       </TableCell>
@@ -217,7 +219,7 @@ function EditableRow({
           defaultValue={line.operator || ""}
           onChange={(e) => commitField("operator", e.target.value || null)}
           className="h-6 text-[11px] border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 w-[72px]"
-          placeholder="Operatör"
+          placeholder={t("reporting.operator")}
         />
       </TableCell>
       <TableCell className="py-0.5 px-1 w-[100px]">
@@ -225,11 +227,11 @@ function EditableRow({
           defaultValue={line.notes || ""}
           onChange={(e) => commitField("notes", e.target.value || null)}
           className="h-6 text-[11px] border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 w-[90px]"
-          placeholder="Anteckning"
+          placeholder={t("reporting.note")}
         />
       </TableCell>
       <TableCell className="py-0.5 px-0 w-6">
-        <Button variant="ghost" size="icon" className="h-5 w-5" aria-label="Ta bort rad" onClick={async () => { if (await confirmDialog(`Ta bort raden "${line.product_name ?? ""}"?`)) onDelete(); }}>
+        <Button variant="ghost" size="icon" className="h-5 w-5" aria-label={t("reporting.deleteLine")} onClick={async () => { if (await confirmDialog(`Ta bort raden "${line.product_name ?? ""}"?`)) onDelete(); }}>
           <Trash2 className="h-2.5 w-2.5 text-destructive" />
         </Button>
       </TableCell>
@@ -259,6 +261,7 @@ function ReportSection({
   focusLineId: string | null;
   onQtyFocused: () => void;
 }) {
+  const { t, lang, dir } = useStaffT();
   const isLocked = report.status === "Bekräftad";
   const [expanded, setExpanded] = useState(!isLocked);
   const [editing, setEditing] = useState(false);
@@ -312,10 +315,10 @@ function ReportSection({
         </span>
         {isLocked ? (
           <Badge className="text-[10px] shrink-0 bg-primary/10 text-primary border-primary/20" variant="outline">
-            <CheckCircle2 className="h-3 w-3 mr-0.5" /> Bekräftad
+            <CheckCircle2 className="h-3 w-3 mr-0.5" /> {t("reporting.confirmed")}
           </Badge>
         ) : (
-          <Badge variant="secondary" className="text-[10px] shrink-0">Aktiv</Badge>
+          <Badge variant="secondary" className="text-[10px] shrink-0">{t("reporting.active")}</Badge>
         )}
       </div>
 
@@ -324,13 +327,13 @@ function ReportSection({
           <Table>
             <TableHeader>
               <TableRow className="h-7">
-                <TableHead className="py-0.5 px-1.5 text-[11px] min-w-[160px]">Produkt</TableHead>
-                <TableHead className="py-0.5 px-1 text-[11px] text-right w-[60px]">Antal</TableHead>
-                <TableHead className="py-0.5 px-1 text-[11px] w-[42px]">Enhet</TableHead>
-                <TableHead className="py-0.5 px-1 text-[11px] w-[62px]">Status</TableHead>
-                <TableHead className="py-0.5 px-1 text-[11px] w-[86px]">Datum</TableHead>
-                <TableHead className="py-0.5 px-1 text-[11px] w-[80px]">Operatör</TableHead>
-                <TableHead className="py-0.5 px-1 text-[11px] w-[100px]">Anteckning</TableHead>
+                <TableHead className="py-0.5 px-1.5 text-[11px] min-w-[160px]">{t("reporting.product")}</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] text-right w-[60px]">{t("reporting.quantity")}</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] w-[42px]">{t("reporting.unit")}</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] w-[62px]">{t("reporting.status")}</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] w-[86px]">{t("reporting.date")}</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] w-[80px]">{t("reporting.operator")}</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] w-[100px]">{t("reporting.note")}</TableHead>
                 <TableHead className="py-0.5 px-0 w-6"></TableHead>
               </TableRow>
             </TableHeader>
@@ -356,23 +359,23 @@ function ReportSection({
                 <AlertDialogTrigger asChild>
                   <Button size="sm" className="h-8">
                     <Lock className="h-3.5 w-3.5 mr-1.5" />
-                    Bekräfta produktion
+                    {t("reporting.confirmProduction")}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Bekräfta produktion</AlertDialogTitle>
+                    <AlertDialogTitle>{t("reporting.confirmProduction")}</AlertDialogTitle>
                     <AlertDialogDescription>
                       Du är på väg att låsa <strong>{displayName}</strong> med {lines.length} rader
                       och totalt <strong>{sectionTotal.toLocaleString("sv-SE")}</strong> enheter.
                       <br /><br />
-                      När produktionen är bekräftad kan raderna inte längre redigeras.
+                      {t("reporting.lockedNotice")}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                    <AlertDialogCancel>{t("reporting.cancel")}</AlertDialogCancel>
                     <AlertDialogAction onClick={() => onConfirm(report.id)}>
-                      <CheckCircle2 className="h-4 w-4 mr-1" /> Bekräfta
+                      <CheckCircle2 className="h-4 w-4 mr-1" /> {t("reporting.confirm")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -386,6 +389,7 @@ function ReportSection({
 }
 
 export default function ProductionReporting() {
+  const { t, lang, dir } = useStaffT();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -470,7 +474,7 @@ export default function ProductionReporting() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["production-reports"] });
-      toast({ title: "Namn uppdaterat" });
+      toast({ title: t("reporting.nameUpdated") });
     },
   });
 
@@ -490,13 +494,13 @@ export default function ProductionReporting() {
       queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast(res?.status === "redan_bekraftad"
-        ? { title: "Redan bekräftad", description: "Rapporten var redan bokad. Inget lades till två gånger." }
-        : { title: "Produktion bekräftad", description: "Producerade varor har lagts till i Grossist Flytande." });
+        ? { title: t("reporting.alreadyConfirmed"), description: t("reporting.alreadyBooked") }
+        : { title: t("reporting.productionConfirmed"), description: t("reporting.stockAdded") });
     },
     onError: (e: any) => {
       queryClient.invalidateQueries({ queryKey: ["production-reports"] });
       toast({
-        title: "Kunde inte bekräfta produktionen",
+        title: t("reporting.confirmError"),
         description: `${e?.message ?? "Okänt fel"}. Inget har bokats i lagret — försök igen.`,
         variant: "destructive",
       });
@@ -566,7 +570,7 @@ export default function ProductionReporting() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setNewProductOpen(false);
       setNewProduct({ name: "", sku: "", category: "Fisk", unit: "kg", cost_price: "", wholesale_price: "" });
-      toast({ title: "Ny produkt skapad och tillagd" });
+      toast({ title: t("reporting.productCreated") });
     },
   });
 
@@ -574,12 +578,12 @@ export default function ProductionReporting() {
   const searchedProducts = products.filter((p) => searchQuery.length > 0 && p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div dir={dir} lang={lang} className="flex flex-col h-[calc(100vh-4rem)]">
       <div className="flex items-center justify-between p-4 border-b">
         <div>
-          <h1 className="text-xl font-bold">Produktionsrapportering</h1>
+          <h1 className="text-xl font-bold">{t("reporting.heading")}</h1>
           <p className="text-muted-foreground text-xs">
-            Totalt: <span className="font-semibold text-foreground">{grandTotal.toLocaleString("sv-SE")} enheter</span>
+            {t("reporting.total")} <span className="font-semibold text-foreground">{grandTotal.toLocaleString("sv-SE")} enheter</span>
             {" · "}{allLines.length} rader
             {" · "}{confirmedReports.length} bekräftade
           </p>
@@ -612,7 +616,7 @@ export default function ProductionReporting() {
                 setSearchOpen(false);
               }
             }}
-            placeholder="Sök och lägg till producerad produkt..."
+            placeholder={t("reporting.searchAdd")}
             className="pl-9 h-9 text-sm"
           />
           {searchOpen && searchQuery.length > 0 && (
@@ -632,12 +636,12 @@ export default function ProductionReporting() {
                         setSearchQuery("");
                       }}
                     >
-                      <PackagePlus className="h-4 w-4 mr-1" /> Skapa ny produkt
+                      <PackagePlus className="h-4 w-4 mr-1" /> {t("reporting.createProduct")}
                     </Button>
                   </div>
                 ) : (
                   <>
-                    <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Produkter i systemet</p>
+                    <p className="px-2 py-1 text-xs font-medium text-muted-foreground">{t("reporting.systemProducts")}</p>
                     {searchedProducts.slice(0, 20).map((p, i) => (
                       <div
                         key={p.id}
@@ -663,20 +667,20 @@ export default function ProductionReporting() {
         <Dialog open={newProductOpen} onOpenChange={setNewProductOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant="outline" className="shrink-0">
-              <PackagePlus className="h-4 w-4 mr-1" /> Ny produkt
+              <PackagePlus className="h-4 w-4 mr-1" /> {t("reporting.newProduct")}
             </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Skapa ny produkt</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{t("reporting.createProduct")}</DialogTitle></DialogHeader>
             <div className="grid gap-3 py-2">
-              <div><Label>Produktnamn *</Label><Input value={newProduct.name} onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))} /></div>
+              <div><Label>{t("reporting.productName")}</Label><Input value={newProduct.name} onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))} /></div>
               <div className="grid grid-cols-2 gap-2">
-                <div><Label>SKU</Label><Input value={newProduct.sku} onChange={(e) => setNewProduct((p) => ({ ...p, sku: e.target.value }))} placeholder="AUTO" /></div>
-                <div><Label>Kategori</Label><Input value={newProduct.category} onChange={(e) => setNewProduct((p) => ({ ...p, category: e.target.value }))} /></div>
+                <div><Label>{t("reporting.sku")}</Label><Input value={newProduct.sku} onChange={(e) => setNewProduct((p) => ({ ...p, sku: e.target.value }))} placeholder={t("reporting.auto")} /></div>
+                <div><Label>{t("reporting.category")}</Label><Input value={newProduct.category} onChange={(e) => setNewProduct((p) => ({ ...p, category: e.target.value }))} /></div>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label>Enhet</Label>
+                  <Label>{t("reporting.unit")}</Label>
                   <Select value={newProduct.unit} onValueChange={(v) => setNewProduct((p) => ({ ...p, unit: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -687,12 +691,12 @@ export default function ProductionReporting() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Inköpspris</Label><NumberField className="h-10 text-left font-sans" value={newProduct.cost_price} onValueChange={(raw) => setNewProduct((p) => ({ ...p, cost_price: raw.replace(",", ".") }))} /></div>
-                <div><Label>Grossistpris</Label><NumberField className="h-10 text-left font-sans" value={newProduct.wholesale_price} onValueChange={(raw) => setNewProduct((p) => ({ ...p, wholesale_price: raw.replace(",", ".") }))} /></div>
+                <div><Label>{t("reporting.purchasePrice")}</Label><NumberField className="h-10 text-left font-sans" value={newProduct.cost_price} onValueChange={(raw) => setNewProduct((p) => ({ ...p, cost_price: raw.replace(",", ".") }))} /></div>
+                <div><Label>{t("reporting.wholesalePrice")}</Label><NumberField className="h-10 text-left font-sans" value={newProduct.wholesale_price} onValueChange={(raw) => setNewProduct((p) => ({ ...p, wholesale_price: raw.replace(",", ".") }))} /></div>
               </div>
             </div>
             <DialogFooter>
-              <DialogClose asChild><Button variant="outline">Avbryt</Button></DialogClose>
+              <DialogClose asChild><Button variant="outline">{t("reporting.cancel")}</Button></DialogClose>
               <Button onClick={() => createProductAndAdd.mutate()} disabled={!newProduct.name.trim() || createProductAndAdd.isPending}>
                 {createProductAndAdd.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
                 Skapa & lägg till
@@ -705,16 +709,16 @@ export default function ProductionReporting() {
       {/* Filter row */}
       {allLines.length > 0 && (
         <div className="flex items-center gap-2 px-3 py-2 border-b">
-          <span className="text-xs text-muted-foreground shrink-0">Filtrera:</span>
+          <span className="text-xs text-muted-foreground shrink-0">{t("reporting.filter")}</span>
           <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="h-7 text-xs w-[160px]"><SelectValue placeholder="Kategori" /></SelectTrigger>
+            <SelectTrigger className="h-7 text-xs w-[160px]"><SelectValue placeholder={t("reporting.category")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Alla kategorier</SelectItem>
+              <SelectItem value="all">{t("reporting.allCategories")}</SelectItem>
               {uniqueCategories.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
             </SelectContent>
           </Select>
           {filterCategory !== "all" && (
-            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setFilterCategory("all")}>Rensa filter</Button>
+            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setFilterCategory("all")}>{t("reporting.clearFilter")}</Button>
           )}
           <span className="text-xs text-muted-foreground ml-auto">{filteredLines.length} av {allLines.length} rader</span>
         </div>
@@ -723,7 +727,7 @@ export default function ProductionReporting() {
       <ScrollArea className="flex-1">
         {allLines.length === 0 && emptyActiveReports.length === 0 ? (
           <p className="text-muted-foreground text-sm text-center py-16">
-            Inga produkter ännu. Sök efter produkter ovan för att börja rapportera produktion.
+            {t("reporting.empty")}
           </p>
         ) : (
           <div>
@@ -744,7 +748,7 @@ export default function ProductionReporting() {
 
             {confirmedReports.length > 0 && activeReports.length > 0 && (
               <div className="px-3 py-1.5 bg-muted/30 border-y">
-                <span className="text-xs font-medium text-muted-foreground">Bekräftad produktion</span>
+                <span className="text-xs font-medium text-muted-foreground">{t("reporting.confirmedProduction")}</span>
               </div>
             )}
             {confirmedReports.map((report) => (

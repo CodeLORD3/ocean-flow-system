@@ -1,5 +1,35 @@
 import type { Row } from "@/lib/staffI18n";
 
 /** Texter för produktionslista. Nycklar börjar med "produktionslista." */
-const DICT: Record<string, Row> = {};
+const DICT: Record<string, Row> = {
+  "produktionslista.changed": {"sv": "Ändrad efter klarmarkering", "ti": "ድሕሪ ምዝዛም ተቐይሩ", "en": "Changed after completion", "ar": "تم التعديل بعد تأكيد الاكتمال"},
+  "produktionslista.done": {"sv": "Produktion klar", "ti": "ምፍራይ ተዛዚሙ", "en": "Production complete", "ar": "اكتمل الإنتاج"},
+  "produktionslista.done_missing": {"sv": "Produktion klar, {n} saknas", "ti": "ምፍራይ ተዛዚሙ፣ {n} ይጎድል", "en": "Production complete, {n} missing", "ar": "اكتمل الإنتاج، {n} مفقود"},
+  "produktionslista.packed_missing": {"sv": "Färdigpackad, {n} saknas", "ti": "ምዕሻግ ተዛዚሙ፣ {n} ይጎድል", "en": "Packed, {n} missing", "ar": "تم التعبئة، {n} مفقود"},
+  "produktionslista.packed_complete": {"sv": "Färdigpackad, inget saknas", "ti": "ምዕሻግ ተዛዚሙ፣ ዝጎድል የለን", "en": "Packed, nothing missing", "ar": "تم التعبئة، لا شيء مفقود"},
+  "produktionslista.unknown_item": {"sv": "Okänd vara", "ti": "ዘይተፈልጠ ኣቕሓ", "en": "Unknown item", "ar": "صنف غير معروف"},
+  "produktionslista.mark_error": {"sv": "Kunde inte klarmarkera", "ti": "ከም ዝተዛዘመ ምምልካት ኣይተኻእለን", "en": "Could not mark as complete", "ar": "تعذر تأكيد الاكتمال"},
+  "produktionslista.undone": {"sv": "Klarmarkeringen är ångrad", "ti": "ምልክት ምዝዛም ተሰሪዙ", "en": "Completion mark undone", "ar": "تم التراجع عن تأكيد الاكتمال"},
+  "produktionslista.undo_error": {"sv": "Kunde inte ångra", "ti": "ምምላስ ኣይተኻእለን", "en": "Could not undo", "ar": "تعذر التراجع"},
+  "produktionslista.check_item": {"sv": "Bocka {n}", "ti": "ን{n} ምልክት ግበር", "en": "Check {n}", "ar": "حدد {n}"},
+  "produktionslista.ordered": {"sv": "Beställt", "ti": "ዝተኣዘዘ", "en": "Ordered", "ar": "الكمية المطلوبة"},
+  "produktionslista.packed_quantity": {"sv": "Packad mängd", "ti": "ዝተዓሸገ መጠን", "en": "Packed quantity", "ar": "الكمية المعبأة"},
+  "produktionslista.packed_title": {"sv": "Produktionen färdigpackad", "ti": "ፍርያት ተዓሺጉ ተዛዚሙ", "en": "Production packed", "ar": "اكتملت تعبئة الإنتاج"},
+  "produktionslista.undo_completion": {"sv": "Ångra klarmarkering", "ti": "ምልክት ምዝዛም ሰርዝ", "en": "Undo completion mark", "ar": "التراجع عن تأكيد الاكتمال"},
+  "produktionslista.unpacked_lines": {"sv": "rader som ännu inte är packade.", "ti": "ገና ዘይተዓሸጉ መስርዓት።", "en": "lines not yet packed.", "ar": "بنود لم تُعبأ بعد."},
+  "produktionslista.production_items": {"sv": "Produktionens varor", "ti": "ናይ ምፍራይ ኣቑሑ", "en": "Production items", "ar": "أصناف الإنتاج"},
+  "produktionslista.no_open_lines": {"sv": "Inga öppna rader.", "ti": "ክፉታት መስርዓት የለዉን።", "en": "No open lines.", "ar": "لا توجد بنود مفتوحة."},
+  "produktionslista.other_items": {"sv": "Övriga varor", "ti": "ካልኦት ኣቑሑ", "en": "Other items", "ar": "أصناف أخرى"},
+  "produktionslista.cancel": {"sv": "Avbryt", "ti": "ሰርዝ", "en": "Cancel", "ar": "إلغاء"},
+  "produktionslista.future_title": {"sv": "Produktionens varor framöver?", "ti": "ንመጻኢ ናይ ምፍራይ ኣቑሑ?", "en": "Production items going forward?", "ar": "أصناف الإنتاج مستقبلاً؟"},
+  "produktionslista.future_description": {"sv": "Ska {n} räknas som produktionens varor framöver?", "ti": "{n} ንመጻኢ ከም ናይ ምፍራይ ኣቑሑ ይቑጸሩ?", "en": "Should {n} count as production items going forward?", "ar": "هل تُعتبر {n} من أصناف الإنتاج مستقبلاً؟"},
+  "produktionslista.no": {"sv": "Nej", "ti": "ኣይፋል", "en": "No", "ar": "لا"},
+  "produktionslista.yes": {"sv": "Ja", "ti": "እወ", "en": "Yes", "ar": "نعم"},
+  "produktionslista.undo_title": {"sv": "Ångra klarmarkering?", "ti": "ምልክት ምዝዛም ይሰረዝ?", "en": "Undo completion mark?", "ar": "التراجع عن تأكيد الاكتمال؟"},
+  "produktionslista.undo_description": {"sv": "Stämpeln tas bort och raderna som klarmarkeringen packade går tillbaka till sin tidigare status och mängd.", "ti": "እቲ ማሕተም ይእለ፣ ብምልክት ምዝዛም ዝተዓሸጉ መስርዓት ድማ ናብ ቀደም ዝነበሮም ኩነታትን መጠንን ይምለሱ።", "en": "The stamp is removed and the lines packed by the completion mark return to their previous status and quantity.", "ar": "تُزال العلامة وتعود البنود التي عُبئت عند تأكيد الاكتمال إلى حالتها وكميتها السابقتين."},
+  "produktionslista.undo": {"sv": "Ångra", "ti": "መልስ", "en": "Undo", "ar": "تراجع"},
+  "produktionslista.remaining_title": {"sv": "Kvar att köpa in (Fiskhamnen)", "ti": "ክግዛእ ዝተረፈ (Fiskhamnen)", "en": "Remaining to purchase (Fiskhamnen)", "ar": "المتبقي للشراء (Fiskhamnen)"},
+  "produktionslista.nothing_remaining": {"sv": "Inget kvar att köpa in.", "ti": "ክግዛእ ዝተረፈ የለን።", "en": "Nothing left to purchase.", "ar": "لا شيء متبقٍ للشراء."},
+  "produktionslista.missing_production": {"sv": "Saknas från produktionen", "ti": "ካብ ምፍራይ ዝጎደለ", "en": "Missing from production", "ar": "ناقص من الإنتاج"},
+};
 export default DICT;
