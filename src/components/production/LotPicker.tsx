@@ -1,3 +1,4 @@
+import { useStaffT } from "@/lib/staffI18n";
 import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -40,6 +41,7 @@ export interface LotPickerProps {
 }
 
 export function LotPicker({ lots, quantityKg, loading, onChange, emptyHint }: LotPickerProps) {
+  const { t, lang, dir } = useStaffT();
   const [startLotId, setStartLotId] = useState<string | null>(null);
   const [justification, setJustification] = useState("");
 
@@ -75,13 +77,13 @@ export function LotPicker({ lots, quantityKg, loading, onChange, emptyHint }: Lo
 
   const allocFor = (lotId: string) => result.allocations.find((a) => a.lotId === lotId)?.quantityKg ?? 0;
 
-  if (loading) return <p className="text-[11px] text-muted-foreground">Hämtar partier…</p>;
+  if (loading) return <p className="text-[11px] text-muted-foreground">{t("tillverkning.text_98")}</p>;
 
   if (lots.length === 0)
     return (
       <div className="flex items-start gap-2 rounded-md border border-dashed p-3 text-[11px] text-muted-foreground">
         <PackageSearch className="mt-0.5 h-3.5 w-3.5" />
-        <span>{emptyHint ?? "Inga partier med saldo på lagerplatsen — bokför en inleverans eller flytta in råvaran först."}</span>
+        <span>{emptyHint ?? t("tillverkning.text_99")}</span>
       </div>
     );
 
@@ -92,13 +94,13 @@ export function LotPicker({ lots, quantityKg, loading, onChange, emptyHint }: Lo
           <TableHeader>
             <TableRow>
               <TableHead className="w-8" />
-              <TableHead className="text-[11px]">Parti</TableHead>
-              <TableHead className="text-[11px]">Ankomst</TableHead>
-              <TableHead className="text-[11px]">Leverantör</TableHead>
-              <TableHead className="text-right text-[11px]">Kvar (kg)</TableHead>
-              <TableHead className="text-[11px]">Bäst före</TableHead>
-              <TableHead className="text-[11px]">Fångstzon</TableHead>
-              <TableHead className="text-right text-[11px]">Uttag (kg)</TableHead>
+              <TableHead className="text-[11px]">{t("tillverkning.text_100")}</TableHead>
+              <TableHead className="text-[11px]">{t("tillverkning.text_101")}</TableHead>
+              <TableHead className="text-[11px]">{t("tillverkning.text_102")}</TableHead>
+              <TableHead className="text-right text-[11px]">{t("tillverkning.text_103")}</TableHead>
+              <TableHead className="text-[11px]">{t("tillverkning.text_104")}</TableHead>
+              <TableHead className="text-[11px]">{t("tillverkning.text_105")}</TableHead>
+              <TableHead className="text-right text-[11px]">{t("tillverkning.text_106")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -133,13 +135,11 @@ export function LotPicker({ lots, quantityKg, loading, onChange, emptyHint }: Lo
                     )}
                     {expired && (
                       <Badge variant="outline" className="ml-1.5 border-destructive text-[9px] text-destructive">
-                        Utgånget
-                      </Badge>
+                        {t("tillverkning.text_112")} </Badge>
                     )}
                     {soon && (
                       <Badge variant="outline" className="ml-1.5 border-amber-400 text-[9px] text-amber-600">
-                        Går ut inom 24 h
-                      </Badge>
+                        {t("tillverkning.text_113")} </Badge>
                     )}
                   </TableCell>
                   <TableCell className="py-1.5 text-[11px]">{l.arrivedAt?.slice(0, 10) ?? "—"}</TableCell>
@@ -161,36 +161,32 @@ export function LotPicker({ lots, quantityKg, loading, onChange, emptyHint }: Lo
 
       {result.allocations.length > 1 && (
         <p className="text-[11px] text-muted-foreground">
-          Uttaget delas över {result.allocations.length} partier:{" "}
+          {t("tillverkning.text_114")} {result.allocations.length} {t("tillverkning.text_115")}{" "}
           {result.allocations.map((a) => `${a.lotNumber} ${fmt(a.quantityKg, 1)} kg`).join(" · ")}
         </p>
       )}
       {result.usesExpired && (
         <div className="space-y-1 rounded-md border border-destructive/50 bg-destructive/5 p-2">
           <p className="flex items-center gap-1 text-[11px] font-medium text-destructive">
-            <AlertTriangle className="h-3 w-3" /> Utgånget parti valt — ange motivering (loggas)
-          </p>
+            <AlertTriangle className="h-3 w-3" /> {t("tillverkning.text_116")} </p>
           <Textarea
             value={justification}
             onChange={(e) => setJustification(e.target.value)}
-            placeholder="Varför används ett parti med passerat bäst före?"
+            placeholder={t("tillverkning.text_117")}
             className="min-h-[52px] text-[11px]"
           />
           {blockedByExpiry && (
-            <p className="text-[10px] text-destructive">Motivering krävs innan uttaget kan bokföras.</p>
+            <p className="text-[10px] text-destructive">{t("tillverkning.text_118")}</p>
           )}
         </div>
       )}
       {result.manualDeviation && !result.usesExpired && (
         <Badge variant="outline" className="gap-1 border-amber-400 text-[10px] text-amber-600">
-          <AlertTriangle className="h-3 w-3" /> Manuellt avsteg från FEFO — partiet {fresh[0]?.lotNumber} har kortare
-          hållbarhet ({fresh[0]?.bestBefore ?? "okänt"}) och borde plockas först
-        </Badge>
+          <AlertTriangle className="h-3 w-3" /> {t("tillverkning.text_119")} {fresh[0]?.lotNumber} {t("tillverkning.text_120")}{fresh[0]?.bestBefore ?? t("tillverkning.text_121")}{t("tillverkning.text_122")} </Badge>
       )}
       {!result.fullyAllocated && (
         <Badge variant="outline" className="gap-1 border-destructive text-[10px] text-destructive">
-          <AlertTriangle className="h-3 w-3" /> Partierna räcker inte — {fmt(result.shortBy, 1)} kg saknas
-          {ordered.some((l) => isExpiredLot(l) && l.quantityKg > 0) && " (utgångna partier räknas inte in)"}
+          <AlertTriangle className="h-3 w-3" /> {t("tillverkning.text_123")} {fmt(result.shortBy, 1)} {t("tillverkning.text_124")} {ordered.some((l) => isExpiredLot(l) && l.quantityKg > 0) && t("tillverkning.text_125")}
         </Badge>
       )}
     </div>

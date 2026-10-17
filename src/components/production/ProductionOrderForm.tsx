@@ -1,3 +1,4 @@
+import { useStaffT } from "@/lib/staffI18n";
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -99,6 +100,7 @@ interface DetailRow {
 }
 
 export function ProductionOrderForm() {
+  const { t: tt, lang, dir } = useStaffT();
   const { data: yields = [] } = useYields();
   const { data: actuals = [] } = useYieldActuals();
   const { data: surcharges = [] } = useProcessingSurcharges();
@@ -266,7 +268,7 @@ export function ProductionOrderForm() {
         setPrice(String(avg));
         setAvgCostInfo(`Viktat snittkostpris i Grossist Flytande: ${fmt(avg)} kr/kg`);
       } else {
-        setAvgCostInfo("Lagret saknar snittkostpris för råvaran — kontrollera inleveransen");
+        setAvgCostInfo(tt("tillverkning.text_165"));
       }
     })();
     return () => {
@@ -309,7 +311,7 @@ export function ProductionOrderForm() {
     const filletRow = pickYieldRow(yields as any, species, rawForm, grade, isFilletRow);
     if (!filletRow) {
       toast({
-        title: "Ingen utbytesrad",
+        title: tt("tillverkning.text_167"),
         description: `Saknar utbyte för ${species} från "${rawForm}"${grade ? ` (sortering ${grade})` : ""}.`,
         variant: "destructive",
       });
@@ -495,7 +497,7 @@ export function ProductionOrderForm() {
       {
         onSuccess: () =>
           toast({
-            title: "Referenspris flyttat",
+            title: tt("tillverkning.text_170"),
             description: `${d.name}: ${fmt(value, 2)} kr vid ${fmt(priceNum, 2)} kr/kg råvara`,
           }),
       },
@@ -548,13 +550,13 @@ export function ProductionOrderForm() {
    */
   const register = async () => {
     if (!rawName || rawQtyNum <= 0 || included.length === 0) {
-      toast({ title: "Ofullständigt", description: "Ange råvara, kvantitet och minst en detalj.", variant: "destructive" });
+      toast({ title: tt("tillverkning.text_58"), description: tt("tillverkning.text_173"), variant: "destructive" });
       return;
     }
     if (fefoAlloc?.blockedByExpiry) {
       toast({
-        title: "Motivering krävs",
-        description: "Ett utgånget parti är valt. Ange motivering i partivalet.",
+        title: tt("tillverkning.text_62"),
+        description: tt("tillverkning.text_63"),
         variant: "destructive",
       });
       return;
@@ -586,7 +588,7 @@ export function ProductionOrderForm() {
       }
       await runRegister(picks);
     } catch (e: any) {
-      toast({ title: "Fel", description: e.message, variant: "destructive" });
+      toast({ title: tt("tillverkning.error"), description: e.message, variant: "destructive" });
     }
   };
 
@@ -686,7 +688,7 @@ export function ProductionOrderForm() {
       qc.invalidateQueries({ queryKey: ["lots"] });
 
       toast({
-        title: "Tillverkningsorder registrerad",
+        title: tt("tillverkning.text_178"),
         description: `${rawName}: ${included.length} detaljer, ${lotCount} detaljpartier, ${fmt(Math.max(0, wastePct), 1)} % svinn.`,
       });
       setSplitWarning(null);
@@ -698,7 +700,7 @@ export function ProductionOrderForm() {
       setLineId(null);
       setRawProductId(null);
     } catch (e: any) {
-      toast({ title: "Fel", description: e.message, variant: "destructive" });
+      toast({ title: tt("tillverkning.error"), description: e.message, variant: "destructive" });
     }
   };
 
@@ -770,14 +772,14 @@ export function ProductionOrderForm() {
       setConfirmChange(null);
       setPreviewOpen(false);
       toast({
-        title: rows.length > 1 ? "Priser applicerade" : "Pris applicerat",
+        title: rows.length > 1 ? tt("tillverkning.text_180") : tt("tillverkning.text_181"),
         description:
           rows.length > 1
             ? `${rows.length} produkter fick nytt pris i butiken.`
             : `${rows[0].detail.name}: ${fmt(rows[0].price, 2)} kr`,
       });
     } catch (e: any) {
-      toast({ title: "Fel", description: e.message, variant: "destructive" });
+      toast({ title: tt("tillverkning.error"), description: e.message, variant: "destructive" });
     }
   };
 
@@ -828,21 +830,21 @@ export function ProductionOrderForm() {
     <div className="space-y-4">
       <Card>
         <CardHeader className="py-3">
-          <CardTitle className="text-sm">Råvara in</CardTitle>
+          <CardTitle className="text-sm">{tt("tillverkning.text_187")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1">
-              <Label className="text-[11px]">Råvara</Label>
-              <Input value={rawName} onChange={(e) => setRawName(e.target.value)} className="h-10 text-xs" placeholder="t.ex. Torsk hel" />
+              <Label className="text-[11px]">{tt("tillverkning.text_188")}</Label>
+              <Input value={rawName} onChange={(e) => setRawName(e.target.value)} className="h-10 text-xs" placeholder={tt("tillverkning.text_189")} />
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Koppla produkt (för lageruttag)</Label>
+              <Label className="text-[11px]">{tt("tillverkning.text_190")}</Label>
               <Input
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
                 className="h-10 text-xs"
-                placeholder="Sök sku eller namn…"
+                placeholder={tt("tillverkning.text_191")}
               />
               {filteredProducts.length > 0 && (
                 <div className="rounded-md border bg-popover">
@@ -862,12 +864,12 @@ export function ProductionOrderForm() {
                   ))}
                 </div>
               )}
-              {rawProductId && <p className="text-[10px] text-muted-foreground">Kopplad: {rawSku}</p>}
+              {rawProductId && <p className="text-[10px] text-muted-foreground">{tt("tillverkning.text_192")} {rawSku}</p>}
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Art</Label>
+              <Label className="text-[11px]">{tt("tillverkning.text_19")}</Label>
               <Select value={species} onValueChange={setSpecies}>
-                <SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Välj art" /></SelectTrigger>
+                <SelectTrigger className="h-10 text-xs"><SelectValue placeholder={tt("tillverkning.text_20")} /></SelectTrigger>
                 <SelectContent className="max-h-72">
                   {speciesOptions.map((s) => <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>)}
                 </SelectContent>
@@ -877,11 +879,11 @@ export function ProductionOrderForm() {
               )}
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Sortering</Label>
+              <Label className="text-[11px]">{tt("tillverkning.text_21")}</Label>
               <Select value={grade || "okand"} onValueChange={(v) => setGrade(v === "okand" ? "" : v)}>
                 <SelectTrigger className="h-10 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="okand" className="text-xs">Okänd</SelectItem>
+                  <SelectItem value="okand" className="text-xs">{tt("tillverkning.text_22")}</SelectItem>
                   {["1", "2", "3", "4", "5"].map((g) => (
                     <SelectItem key={g} value={g} className="text-xs">{g}</SelectItem>
                   ))}
@@ -889,12 +891,11 @@ export function ProductionOrderForm() {
               </Select>
               {gradeForcedSingle && (
                 <p className="text-[10px] text-muted-foreground">
-                  Sortering {grade} styckas som hel filé
-                </p>
+                  {tt("tillverkning.text_21")} {grade} {tt("tillverkning.text_198")} </p>
               )}
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Form in</Label>
+              <Label className="text-[11px]">{tt("tillverkning.text_199")}</Label>
               <Select value={rawForm} onValueChange={setRawForm}>
                 <SelectTrigger className="h-10 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent className="max-h-72">
@@ -903,47 +904,46 @@ export function ProductionOrderForm() {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Kvantitet (kg)</Label>
+              <Label className="text-[11px]">{tt("tillverkning.text_200")}</Label>
               <Input type="number"
  inputMode="decimal" step="0.1" value={rawQty} onChange={(e) => setRawQty(e.target.value)} className="h-10 text-xs text-right font-mono tabular-nums" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Styckvikt (kg/fisk)</Label>
+              <Label className="text-[11px]">{tt("tillverkning.text_201")}</Label>
               <Input type="number"
  inputMode="decimal" step="0.1" value={pieceWeight} onChange={(e) => setPieceWeight(e.target.value)} className="h-10 text-xs text-right font-mono tabular-nums" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Råvarukostnad (kr/kg, från lagret)</Label>
+              <Label className="text-[11px]">{tt("tillverkning.text_202")}</Label>
               <Input type="number"
  inputMode="decimal" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} className="h-10 text-xs text-right font-mono tabular-nums" />
               {avgCostInfo && <p className="text-[10px] text-muted-foreground">{avgCostInfo}</p>}
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Leverantör</Label>
+              <Label className="text-[11px]">{tt("tillverkning.text_102")}</Label>
               <Input value={supplier} onChange={(e) => setSupplier(e.target.value)} className="h-10 text-xs" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Parti</Label>
+              <Label className="text-[11px]">{tt("tillverkning.text_100")}</Label>
               <Input value={batch} onChange={(e) => setBatch(e.target.value)} className="h-10 text-xs" />
             </div>
           </div>
           {rawProductId && (
             <div className="space-y-1">
-              <Label className="text-[11px]">Partival (FEFO — kortast hållbarhet först)</Label>
+              <Label className="text-[11px]">{tt("tillverkning.text_205")}</Label>
               <LotPicker
                 lots={fefoLots}
                 quantityKg={rawQtyNum}
                 loading={loadingFefo}
                 onChange={setFefoAlloc}
-                emptyHint="Inga partier av råvaran med saldo i grossistlagret — plocket bokförs utan parti (okänd härkomst)."
+                emptyHint=tt("tillverkning.text_206")
               />
             </div>
           )}
 
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" variant="outline" className="h-10 gap-1.5 text-xs" onClick={suggest} disabled={!species}>
-              <Plus className="h-3.5 w-3.5" /> Föreslå styckdetaljer
-            </Button>
+              <Plus className="h-3.5 w-3.5" /> {tt("tillverkning.text_207")} </Button>
             {details.length > 0 &&
               scaleByList.map((s) => (
                 <Button
@@ -953,22 +953,19 @@ export function ProductionOrderForm() {
                   className="h-10 text-xs"
                   onClick={() => fillAllSuggestions(s.key)}
                   disabled={!(s.res.scaleFactor > 0)}
-                  title="Referenspriser × skalfaktor"
+                  title={tt("tillverkning.text_208")}
                 >
-                  Fyll förslag · {s.label}
+                  {tt("tillverkning.text_209")} {s.label}
                 </Button>
               ))}
 
             {pieceWeightWarning && (
               <Badge variant="outline" className="gap-1 border-amber-400 text-[10px] text-amber-600">
-                <AlertTriangle className="h-3 w-3" /> Styckvikten under {fmt(minPieceWeight ?? 0, 1)} kg — fyrdelning
-                är svår, överväg endast hel filé
-              </Badge>
+                <AlertTriangle className="h-3 w-3" /> {tt("tillverkning.text_210")} {fmt(minPieceWeight ?? 0, 1)} {tt("tillverkning.text_211")} </Badge>
             )}
             {yieldWarning.length > 0 && (
               <Badge variant="outline" className="gap-1 border-amber-400 text-[10px] text-amber-600">
-                <AlertTriangle className="h-3 w-3" /> {yieldWarning.length} utbytesrad(er) är branschvärden, ej kalibrerade mot 3 partier
-              </Badge>
+                <AlertTriangle className="h-3 w-3" /> {yieldWarning.length} {tt("tillverkning.text_212")} </Badge>
             )}
           </div>
         </CardContent>
@@ -977,18 +974,16 @@ export function ProductionOrderForm() {
       {details.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between py-3">
-            <CardTitle className="text-sm">Styckdetaljer ut · NRV-prissättning</CardTitle>
+            <CardTitle className="text-sm">{tt("tillverkning.text_213")}</CardTitle>
             <div className="flex items-center gap-2 text-[11px]">
-              <span className="font-mono tabular-nums">Summa detaljer: {fmt(pctSum, 1)} %</span>
-              <span className="font-mono tabular-nums">Svinn: {fmt(Math.max(0, wastePct), 1)} %</span>
+              <span className="font-mono tabular-nums">{tt("tillverkning.text_214")} {fmt(pctSum, 1)} %</span>
+              <span className="font-mono tabular-nums">{tt("tillverkning.text_143")} {fmt(Math.max(0, wastePct), 1)} %</span>
               {deviates ? (
                 <Badge variant="outline" className="gap-1 border-destructive text-[10px] text-destructive">
-                  <AlertTriangle className="h-3 w-3" /> Summan överstiger 100 % av råvaran
-                </Badge>
+                  <AlertTriangle className="h-3 w-3" /> {tt("tillverkning.text_216")} </Badge>
               ) : (
                 <Badge variant="outline" className="gap-1 border-emerald-500 text-[10px] text-emerald-600">
-                  <Check className="h-3 w-3" /> Summa + svinn = 100 %
-                </Badge>
+                  <Check className="h-3 w-3" /> {tt("tillverkning.text_217")} </Badge>
               )}
             </div>
           </CardHeader>
@@ -1007,11 +1002,11 @@ export function ProductionOrderForm() {
                 <TableHeader>
                   <TableRow className="h-8">
                     <TableHead className="w-[36px]" />
-                    <TableHead className="text-[11px] min-w-[150px]">Detalj</TableHead>
-                    <TableHead className="text-[11px] w-[150px]">Produkt (lager/pris)</TableHead>
-                    <TableHead className="text-[11px] w-[86px] text-right">% av råvara</TableHead>
+                    <TableHead className="text-[11px] min-w-[150px]">{tt("tillverkning.text_144")}</TableHead>
+                    <TableHead className="text-[11px] w-[150px]">{tt("tillverkning.text_219")}</TableHead>
+                    <TableHead className="text-[11px] w-[86px] text-right">{tt("tillverkning.text_220")}</TableHead>
                     <TableHead className="text-[11px] w-[64px] text-right">kg</TableHead>
-                    <TableHead className="text-[11px] w-[60px] text-right">Påslag</TableHead>
+                    <TableHead className="text-[11px] w-[60px] text-right">{tt("tillverkning.text_29")}</TableHead>
                     {priceLists.map((pl) => (
                       <TableHead key={pl.key} className="text-[11px] text-right w-[260px] leading-tight">
                         {pl.label.split(" (")[0]} ({fmt(pl.target, 0)} % {t("target").toLowerCase()})
@@ -1040,7 +1035,7 @@ export function ProductionOrderForm() {
                           <Select value={d.productId ?? "none"} onValueChange={(v) => setDetail(d.key, { productId: v === "none" ? null : v })}>
                             <SelectTrigger className="h-9 text-[11px]"><SelectValue /></SelectTrigger>
                             <SelectContent className="max-h-72">
-                              <SelectItem value="none" className="text-xs">Ej kopplad</SelectItem>
+                              <SelectItem value="none" className="text-xs">{tt("tillverkning.text_224")}</SelectItem>
                               {products.map((pr) => (
                                 <SelectItem key={pr.id} value={pr.id} className="text-xs">{pr.sku} · {pr.name}</SelectItem>
                               ))}
@@ -1077,13 +1072,13 @@ export function ProductionOrderForm() {
                                   type="number"
                                   inputMode="decimal"
                                   step="0.01"
-                                  placeholder={pl.inclVat ? "kr ink moms" : "kr ex moms"}
+                                  placeholder={pl.inclVat ? tt("tillverkning.text_28") : tt("tillverkning.text_226")}
                                   value={value}
                                   onChange={(e) => setDetailPriceField(d.key, pl.key, e.target.value)}
                                   className="h-9 w-24 px-1 text-[11px] text-right font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                                 <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
-                                  {reference > 0 ? `ref ${fmt(reference, 2)}` : "ref —"}
+                                  {reference > 0 ? `ref ${fmt(reference, 2)}` : tt("tillverkning.text_227")}
                                   {suggested > 0 ? ` · förslag ${fmt(suggested, 2)}` : ""}
                                 </span>
                                 {hasPrice && suggested > 0 && Math.abs(delta) > 0.009 && (
@@ -1091,7 +1086,7 @@ export function ProductionOrderForm() {
                                     className={`font-mono text-[10px] tabular-nums ${
                                       delta > 0 ? "text-emerald-600" : "text-amber-600"
                                     }`}
-                                    title="Avvikelse mot förslaget"
+                                    title={tt("tillverkning.text_231")}
                                   >
                                     {delta > 0 ? "+" : ""}
                                     {fmt(delta, 2)}
@@ -1131,10 +1126,9 @@ export function ProductionOrderForm() {
                                     variant="ghost"
                                     className="h-8 px-1 text-[10px] text-muted-foreground"
                                     onClick={() => saveAsReference({ ...d, prices: { ...d.prices } }, pl.key)}
-                                    title="Flyttar den relativa värderingen i prislistan"
+                                    title={tt("tillverkning.text_236")}
                                   >
-                                    Sätt som referens
-                                  </Button>
+                                    {tt("tillverkning.text_237")} </Button>
                                 )}
                                 {hasPrice && d.productId && (
                                   <Button
@@ -1143,8 +1137,7 @@ export function ProductionOrderForm() {
                                     className="h-8 px-1 text-[10px]"
                                     onClick={() => applyPriceToProduct(d, pl.key, parseFloat(value))}
                                   >
-                                    Fastställ
-                                  </Button>
+                                    {tt("tillverkning.text_238")} </Button>
                                 )}
                               </div>
                             </TableCell>
@@ -1181,7 +1174,7 @@ export function ProductionOrderForm() {
                   return (
                     <div key={pl.key} className="rounded-md border px-2 py-1 leading-tight">
                       <div className="text-muted-foreground">
-                        Partiet {pl.label.split(" (")[0]} · {t("target").toLowerCase()} {fmt(pl.target, 0)} %
+                        {tt("tillverkning.text_242")} {pl.label.split(" (")[0]} · {t("target").toLowerCase()} {fmt(pl.target, 0)} %
                       </div>
                       <div>
                         <span className="text-muted-foreground">{t("margin")}: </span>
@@ -1190,20 +1183,19 @@ export function ProductionOrderForm() {
                         </span>
                       </div>
                       <div className="text-[10px] text-muted-foreground">
-                        intäkt {fmt(m.revenueExVat, 0)} kr / råvara {fmt(m.rawCost, 0)} kr / arbete {fmt(m.surchargeCost, 0)} kr
+                        {tt("tillverkning.text_38")} {fmt(m.revenueExVat, 0)} {tt("tillverkning.text_244")} {fmt(m.rawCost, 0)} {tt("tillverkning.text_245")} {fmt(m.surchargeCost, 0)} kr
                       </div>
                       <div className="text-[10px] text-muted-foreground">
-                        intäkt per färdigt kilo {fmt(m.revenuePerOutputKg, 2)} kr
+                        {tt("tillverkning.text_247")} {fmt(m.revenuePerOutputKg, 2)} kr
                       </div>
                       {(() => {
                         const a = approvalForList({ target: pl.target, marginInclWorkPct: m.batchMarginPct });
                         return a.approved ? (
                           <div className="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-emerald-600">
-                            <Check className="h-3 w-3" /> Auto-godkänns
-                          </div>
+                            <Check className="h-3 w-3" /> {tt("tillverkning.text_249")} </div>
                         ) : (
                           <div className="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-amber-600">
-                            <AlertTriangle className="h-3 w-3" /> Manuell granskning: {a.reasons[0]}
+                            <AlertTriangle className="h-3 w-3" /> {tt("tillverkning.text_250")} {a.reasons[0]}
                           </div>
                         );
                       })()}
@@ -1220,25 +1212,25 @@ export function ProductionOrderForm() {
                         s.band ? "border-amber-400" : ""
                       }`}
                     >
-                      <div className="text-muted-foreground">Skalfaktor · {s.label}</div>
+                      <div className="text-muted-foreground">{tt("tillverkning.text_252")} {s.label}</div>
                       <div className="font-mono tabular-nums font-semibold">
                         {s.res.scaleFactor > 0 ? fmt(s.res.scaleFactor, 3) : "—"}
                       </div>
                       <div className="text-[10px] text-muted-foreground">
-                        krävd intäkt {fmt(s.res.requiredRevenueExVat, 0)} kr / referensintäkt{" "}
+                        {tt("tillverkning.text_253")} {fmt(s.res.requiredRevenueExVat, 0)} {tt("tillverkning.text_254")}{" "}
                         {fmt(s.res.referenceRevenueExVat, 0)} kr
                       </div>
 
                       <div className="text-[10px] text-muted-foreground">
-                        band {fmt(s.warnLow, 2)}–{fmt(s.warnHigh, 2)}
+                        {tt("tillverkning.text_256")} {fmt(s.warnLow, 2)}–{fmt(s.warnHigh, 2)}
                         {s.referenceCost ? ` · referenskostnad ${fmt(s.referenceCost, 2)} kr/kg` : ""}
                       </div>
                       {s.band && (
                         <div className="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-amber-600">
                           <AlertTriangle className="h-3 w-3" />
                           {s.band === "high"
-                            ? "Inköpspriset ligger långt över referensnivån"
-                            : "Inköpspriset ligger långt under referensnivån"}
+                            ? tt("tillverkning.text_258")
+                            : tt("tillverkning.text_259")}
                         </div>
                       )}
                     </div>
@@ -1260,13 +1252,13 @@ export function ProductionOrderForm() {
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
-                    <DialogHeader><DialogTitle className="text-sm">Förhandsgranskning av nya priser</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle className="text-sm">{tt("tillverkning.text_260")}</DialogTitle></DialogHeader>
                     <Table>
                       <TableHeader>
                         <TableRow className="h-8">
-                          <TableHead className="text-[11px]">Produkt</TableHead>
-                          <TableHead className="text-[11px] text-right">Nuvarande</TableHead>
-                          <TableHead className="text-[11px] text-right">Nytt</TableHead>
+                          <TableHead className="text-[11px]">{tt("tillverkning.text_261")}</TableHead>
+                          <TableHead className="text-[11px] text-right">{tt("tillverkning.text_262")}</TableHead>
+                          <TableHead className="text-[11px] text-right">{tt("tillverkning.text_263")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1280,14 +1272,13 @@ export function ProductionOrderForm() {
                       </TableBody>
                     </Table>
                     <DialogFooter>
-                      <Button variant="outline" onClick={() => setPreviewOpen(false)}>Avbryt</Button>
-                      <Button onClick={applyAll}>Spara priser</Button>
+                      <Button variant="outline" onClick={() => setPreviewOpen(false)}>{tt("tillverkning.text_266")}</Button>
+                      <Button onClick={applyAll}>{tt("tillverkning.text_267")}</Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
                 <Button size="sm" className="h-10 gap-1.5 text-xs" onClick={register} disabled={createOrder.isPending}>
-                  <Factory className="h-3.5 w-3.5" /> Registrera tillverkning
-                </Button>
+                  <Factory className="h-3.5 w-3.5" /> {tt("tillverkning.text_268")} </Button>
               </div>
             </div>
           </CardContent>
@@ -1297,32 +1288,27 @@ export function ProductionOrderForm() {
       <Dialog open={!!splitWarning} onOpenChange={(o) => !o && setSplitWarning(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-sm">Plocket korsar en partigräns</DialogTitle>
+            <DialogTitle className="text-sm">{tt("tillverkning.text_269")}</DialogTitle>
           </DialogHeader>
           {splitWarning && (
             <div className="space-y-3 text-xs">
               <p className="text-muted-foreground">
-                Det här plocket tar från {new Set(splitWarning.picks.map((p) => p.lotId ?? "utan-parti")).size} partier
-                och skapar {splitWarning.picks.length * splitWarning.detailCount} detaljpartier. Varje detaljparti behåller
-                sitt eget fångstområde, fartyg och fångstdatum — inga uppgifter blandas.
-              </p>
+                {tt("tillverkning.text_270")} {new Set(splitWarning.picks.map((p) => p.lotId ?? "utan-parti")).size} {tt("tillverkning.text_271")} {splitWarning.picks.length * splitWarning.detailCount} {tt("tillverkning.text_272")} </p>
               <div className="rounded border border-border">
                 {splitWarning.picks.map((p, i) => (
                   <div key={i} className="flex justify-between border-b border-border/50 px-2 py-1 last:border-0">
-                    <span className="font-mono">{p.lotId ? `Parti ${i + 1}` : "Utan parti"}</span>
+                    <span className="font-mono">{p.lotId ? `Parti ${i + 1}` : tt("tillverkning.text_274")}</span>
                     <span className="font-mono tabular-nums">{fmt(p.quantityKg, 3)} kg</span>
                   </div>
                 ))}
               </div>
               <p className="text-muted-foreground">
-                Ofta räcker det att skära det ena partiet först och registrera en order per parti.
-              </p>
+                {tt("tillverkning.text_276")} </p>
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setSplitWarning(null)}>
-              Dela upp i två ordrar
-            </Button>
+              {tt("tillverkning.text_277")} </Button>
             <Button
               size="sm"
               onClick={() => {
@@ -1331,8 +1317,7 @@ export function ProductionOrderForm() {
                 void runRegister(picks);
               }}
             >
-              Registrera ändå
-            </Button>
+              {tt("tillverkning.text_278")} </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1341,12 +1326,11 @@ export function ProductionOrderForm() {
       <Dialog open={!!confirmChange} onOpenChange={(o) => !o && setConfirmChange(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-sm">Priset har redan ändrats idag</DialogTitle>
+            <DialogTitle className="text-sm">{tt("tillverkning.text_279")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 text-xs">
             <p className="text-muted-foreground">
-              Följande produkter fick ett nytt pris inom det senaste dygnet. Vill du ändra priset igen?
-            </p>
+              {tt("tillverkning.text_280")} </p>
             <div className="space-y-1">
               {(confirmChange?.rows ?? [])
                 .filter((r) => isSameDayApplication(r.previous))
@@ -1362,11 +1346,9 @@ export function ProductionOrderForm() {
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setConfirmChange(null)}>
-              Avbryt
-            </Button>
+              {tt("tillverkning.text_266")} </Button>
             <Button size="sm" onClick={() => confirmChange && void commitApply(confirmChange.rows)}>
-              Ändra priset igen
-            </Button>
+              {tt("tillverkning.text_283")} </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

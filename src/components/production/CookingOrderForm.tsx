@@ -1,3 +1,4 @@
+import { useStaffT } from "@/lib/staffI18n";
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
  * prissättning, därför sätts inget utpris här.
  */
 export function CookingOrderForm() {
+  const { t, lang, dir } = useStaffT();
   const { data: recipes = [] } = useTransformationRecipes();
   const { data: products = [] } = useProducts();
   const createOrder = useCreateProductionOrder();
@@ -92,7 +94,7 @@ export function CookingOrderForm() {
         const rows = await fefoLotsAtLocation(recipe.raw_product_id, GROSSIST_FLYTANDE_ID);
         if (!cancelled) setLots(rows);
       } catch (e: any) {
-        if (!cancelled) toast({ title: "Kunde inte hämta partier", description: e.message, variant: "destructive" });
+        if (!cancelled) toast({ title: t("tillverkning.text_57"), description: e.message, variant: "destructive" });
       } finally {
         if (!cancelled) setLoadingLots(false);
       }
@@ -113,12 +115,12 @@ export function CookingOrderForm() {
 
   const register = async () => {
     if (!recipe || !rawProduct || !outProduct || rawQtyNum <= 0) {
-      toast({ title: "Ofullständigt", description: "Välj färdigvara och ange kvantitet råvara.", variant: "destructive" });
+      toast({ title: t("tillverkning.text_58"), description: t("tillverkning.text_59"), variant: "destructive" });
       return;
     }
     if (!alloc?.fullyAllocated) {
       toast({
-        title: "Partierna räcker inte",
+        title: t("tillverkning.text_60"),
         description: `${fmt(alloc?.shortBy ?? rawQtyNum, 1)} kg saknas i råvarupartierna.`,
         variant: "destructive",
       });
@@ -126,8 +128,8 @@ export function CookingOrderForm() {
     }
     if (alloc.blockedByExpiry) {
       toast({
-        title: "Motivering krävs",
-        description: "Ett utgånget parti är valt. Ange motivering i partivalet.",
+        title: t("tillverkning.text_62"),
+        description: t("tillverkning.text_63"),
         variant: "destructive",
       });
       return;
@@ -236,7 +238,7 @@ export function CookingOrderForm() {
       qc.invalidateQueries({ queryKey: ["lots"] });
 
       toast({
-        title: "Kokning registrerad",
+        title: t("tillverkning.text_69"),
         description: `${fmt(totalIn, 1)} kg ${rawProduct.name} → ${fmt(bookedOut, 1)} kg ${outProduct.name} (${createdLots.join(", ")}). Kostpris ${fmt(cookedCostPerKg, 2)} kr/kg. Utpriset sätts manuellt.`,
       });
       setRawQty("");
@@ -244,7 +246,7 @@ export function CookingOrderForm() {
       const rows = await fefoLotsAtLocation(recipe.raw_product_id, GROSSIST_FLYTANDE_ID);
       setLots(rows);
     } catch (e: any) {
-      toast({ title: "Fel", description: e.message, variant: "destructive" });
+      toast({ title: t("tillverkning.error"), description: e.message, variant: "destructive" });
     } finally {
       setBusy(false);
     }
@@ -255,15 +257,14 @@ export function CookingOrderForm() {
       <Card>
         <CardHeader className="py-3">
           <CardTitle className="flex items-center gap-1.5 text-sm">
-            <CookingPot className="h-4 w-4" /> Omvandling · kokning
-          </CardTitle>
+            <CookingPot className="h-4 w-4" /> {t("tillverkning.text_71")} </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1">
-              <Label className="text-[11px]">Färdigvara</Label>
+              <Label className="text-[11px]">{t("tillverkning.text_72")}</Label>
               <Select value={recipeId} onValueChange={setRecipeId}>
-                <SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Välj kokt produkt" /></SelectTrigger>
+                <SelectTrigger className="h-10 text-xs"><SelectValue placeholder={t("tillverkning.text_73")} /></SelectTrigger>
                 <SelectContent className="max-h-72">
                   {active.map((r) => (
                     <SelectItem key={r.id} value={r.id} className="text-xs">
@@ -274,17 +275,16 @@ export function CookingOrderForm() {
               </Select>
               {active.length === 0 && (
                 <p className="text-[10px] text-muted-foreground">
-                  Inga omvandlingsrecept upplagda — lägg upp dem under Admin · Omvandlingsrecept.
-                </p>
+                  {t("tillverkning.text_74")} </p>
               )}
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Råvara (ur registret)</Label>
+              <Label className="text-[11px]">{t("tillverkning.text_75")}</Label>
               <Input readOnly value={rawProduct ? `${rawProduct.sku} · ${rawProduct.name}` : ""} className="h-10 text-xs" />
-              {recipe && <p className="text-[10px] text-muted-foreground">Utbyte {fmt(yieldPct, 0)} % · påslag {fmt(surcharge, 0)} kr/kg</p>}
+              {recipe && <p className="text-[10px] text-muted-foreground">{t("tillverkning.text_76")} {fmt(yieldPct, 0)} {t("tillverkning.text_77")} {fmt(surcharge, 0)} kr/kg</p>}
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Kvantitet råvara (kg)</Label>
+              <Label className="text-[11px]">{t("tillverkning.text_79")}</Label>
               <Input
                 type="number"
                 inputMode="decimal"
@@ -295,7 +295,7 @@ export function CookingOrderForm() {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Utvikt kokt (kg)</Label>
+              <Label className="text-[11px]">{t("tillverkning.text_80")}</Label>
               <Input
                 type="number"
                 inputMode="decimal"
@@ -307,7 +307,7 @@ export function CookingOrderForm() {
               />
               {rawQtyNum > 0 && (
                 <p className="text-[10px] text-muted-foreground">
-                  Standard {fmt(expectedOut, 1)} kg · utfall {fmt(actualPct, 1)} %
+                  {t("tillverkning.text_81")} {fmt(expectedOut, 1)} {t("tillverkning.text_82")} {fmt(actualPct, 1)} %
                 </p>
               )}
             </div>
@@ -315,7 +315,7 @@ export function CookingOrderForm() {
 
           {outProduct && shelfLifeDays && (
             <p className="text-[10px] text-muted-foreground">
-              Hållbarhet: {shelfLifeDays} dagar sluten förpackning → bäst före {bestBeforeForOutput()}
+              {t("tillverkning.text_83")} {shelfLifeDays} {t("tillverkning.text_84")} {bestBeforeForOutput()}
               {shelfLifeOpenDays ? ` · ${shelfLifeOpenDays} dagar efter öppnad förpackning` : ""}
             </p>
           )}
@@ -326,26 +326,26 @@ export function CookingOrderForm() {
               quantityKg={rawQtyNum}
               loading={loadingLots}
               onChange={setAlloc}
-              emptyHint={`Inga partier av ${rawProduct?.name ?? "råvaran"} med saldo i grossistlagret — bokför inleverans eller flytta in råvaran först.`}
+              emptyHint={`Inga partier av ${rawProduct?.name ?? t("tillverkning.text_87")} med saldo i grossistlagret — bokför inleverans eller flytta in råvaran först.`}
             />
           )}
 
           {recipe && rawQtyNum > 0 && (
             <div className="grid gap-2 rounded-md border p-3 text-[11px] sm:grid-cols-4">
               <div>
-                <p className="text-muted-foreground">Råvarans partipris</p>
+                <p className="text-muted-foreground">{t("tillverkning.text_88")}</p>
                 <p className="font-mono tabular-nums">{fmt(rawCostPerKg, 2)} kr/kg</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Bokförd utvikt</p>
+                <p className="text-muted-foreground">{t("tillverkning.text_90")}</p>
                 <p className="font-mono tabular-nums">{fmt(bookedOut, 1)} kg</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Produktionsutbyte (differens)</p>
+                <p className="text-muted-foreground">{t("tillverkning.text_92")}</p>
                 <p className="font-mono tabular-nums">{fmt(Math.max(0, rawQtyNum - bookedOut), 1)} kg</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Kostpris kokt</p>
+                <p className="text-muted-foreground">{t("tillverkning.text_94")}</p>
                 <p className="font-mono tabular-nums">{fmt(cookedCostPerKg, 2)} kr/kg</p>
               </div>
             </div>
@@ -353,11 +353,9 @@ export function CookingOrderForm() {
 
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" className="h-10 gap-1.5 text-xs" onClick={register} disabled={busy || !recipe || rawQtyNum <= 0}>
-              <CookingPot className="h-3.5 w-3.5" /> Registrera kokning
-            </Button>
+              <CookingPot className="h-3.5 w-3.5" /> {t("tillverkning.text_96")} </Button>
             <Badge variant="outline" className="gap-1 border-amber-400 text-[10px] text-amber-600">
-              <AlertTriangle className="h-3 w-3" /> Kokta skaldjur auto-godkänns aldrig — utpriset sätts manuellt
-            </Badge>
+              <AlertTriangle className="h-3 w-3" /> {t("tillverkning.text_97")} </Badge>
           </div>
         </CardContent>
       </Card>
