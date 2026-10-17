@@ -24315,6 +24315,7 @@ export type Database = {
           must_change_password: boolean | null
           phone: string | null
           portal_access: string[] | null
+          preferred_lang: string | null
           primary_role: string | null
           profile_image_url: string | null
           store_id: string | null
