@@ -1,3 +1,4 @@
+import { useStaffT } from "@/lib/staffI18n";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +55,7 @@ const emptyDraft: LineDraft = {
 };
 
 export default function ProductionReportsArchive() {
+  const { t, lang, dir } = useStaffT();
   const qc = useQueryClient();
   const [expandedDate, setExpandedDate] = useState<string | null>(null);
   const [expandedReport, setExpandedReport] = useState<string | null>(null);
@@ -114,7 +116,7 @@ export default function ProductionReportsArchive() {
       await recalcReportTotal(params.report_id);
     },
     onSuccess: () => {
-      toast.success("Rad uppdaterad");
+      toast.success(t("reporting.rowUpdated"));
       qc.invalidateQueries({ queryKey: ["archived-production-report-lines"] });
       qc.invalidateQueries({ queryKey: ["archived-production-reports"] });
       setEditingLineId(null);
@@ -129,7 +131,7 @@ export default function ProductionReportsArchive() {
       await recalcReportTotal(params.report_id);
     },
     onSuccess: () => {
-      toast.success("Rad borttagen");
+      toast.success(t("reporting.rowDeleted"));
       qc.invalidateQueries({ queryKey: ["archived-production-report-lines"] });
       qc.invalidateQueries({ queryKey: ["archived-production-reports"] });
     },
@@ -150,7 +152,7 @@ export default function ProductionReportsArchive() {
       await recalcReportTotal(params.report_id);
     },
     onSuccess: () => {
-      toast.success("Rad tillagd");
+      toast.success(t("reporting.rowAdded"));
       qc.invalidateQueries({ queryKey: ["archived-production-report-lines"] });
       qc.invalidateQueries({ queryKey: ["archived-production-reports"] });
       setAddingForReport(null);
@@ -167,7 +169,7 @@ export default function ProductionReportsArchive() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Rapportnamn uppdaterat");
+      toast.success(t("reporting.reportNameUpdated"));
       qc.invalidateQueries({ queryKey: ["archived-production-reports"] });
       setEditingNameId(null);
     },
@@ -181,7 +183,7 @@ export default function ProductionReportsArchive() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Rapport borttagen");
+      toast.success(t("reporting.reportDeleted"));
       qc.invalidateQueries({ queryKey: ["archived-production-reports"] });
       qc.invalidateQueries({ queryKey: ["archived-production-report-lines"] });
     },
@@ -224,18 +226,18 @@ export default function ProductionReportsArchive() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
-        Laddar arkiverade rapporter...
+      <div dir={dir} lang={lang} className="flex items-center justify-center h-64 text-muted-foreground text-sm">
+        {t("reporting.loadingArchive")}
       </div>
     );
   }
 
   if (sortedDates.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3 text-muted-foreground">
+      <div dir={dir} lang={lang} className="flex flex-col items-center justify-center h-64 gap-3 text-muted-foreground">
         <Archive className="h-12 w-12 opacity-30" />
-        <p className="text-sm">Inga arkiverade produktionsrapporter ännu</p>
-        <p className="text-xs">Rapporter arkiveras automatiskt varje natt kl 00:00</p>
+        <p className="text-sm">{t("reporting.emptyArchive")}</p>
+        <p className="text-xs">{t("reporting.archiveSchedule")}</p>
       </div>
     );
   }
@@ -274,7 +276,7 @@ export default function ProductionReportsArchive() {
   const renderAddRow = (reportId: string) => (
     <TableRow className="h-9 text-xs bg-primary/5">
       <TableCell className="py-1 px-2">
-        <Input className="h-7 text-xs" placeholder="Produkt" value={draft.product_name} onChange={(e) => setDraft({ ...draft, product_name: e.target.value })} />
+        <Input className="h-7 text-xs" placeholder={t("reporting.product")} value={draft.product_name} onChange={(e) => setDraft({ ...draft, product_name: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1">
         <Input type="number"
@@ -284,7 +286,7 @@ export default function ProductionReportsArchive() {
         <Input className="h-7 text-xs" value={draft.unit} onChange={(e) => setDraft({ ...draft, unit: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1">
-        <Input className="h-7 text-xs" placeholder="Operatör" value={draft.operator} onChange={(e) => setDraft({ ...draft, operator: e.target.value })} />
+        <Input className="h-7 text-xs" placeholder={t("reporting.operator")} value={draft.operator} onChange={(e) => setDraft({ ...draft, operator: e.target.value })} />
       </TableCell>
       <TableCell className="py-1 px-1">
         <Input type="date" className="h-7 text-xs" value={draft.production_date} onChange={(e) => setDraft({ ...draft, production_date: e.target.value })} />
@@ -303,12 +305,12 @@ export default function ProductionReportsArchive() {
   );
 
   return (
-    <div className="space-y-4">
+    <div dir={dir} lang={lang} className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Produktionsrapporter – Arkiv</h2>
+          <h2 className="text-lg font-semibold">{t("reporting.archiveHeading")}</h2>
           <p className="text-xs text-muted-foreground">
-            Rapporter arkiveras automatiskt varje natt. Totalt {archivedReports.length} rapporter.
+            {t("reporting.archiveSummary").replace("{n}", String(archivedReports.length))}
           </p>
         </div>
       </div>
@@ -337,7 +339,7 @@ export default function ProductionReportsArchive() {
                     <div>
                       <p className="text-sm font-medium capitalize">{displayDate}</p>
                       <p className="text-xs text-muted-foreground">
-                        {reports.length} rapport{reports.length !== 1 ? "er" : ""} · {totalLines} rader
+                        {(reports.length === 1 ? t("reporting.reportSingle") : t("reporting.reportPlural")).replace("{n}", String(reports.length))} · {t("reporting.rowsCount").replace("{n}", String(totalLines))}
                       </p>
                     </div>
                   </div>
@@ -345,7 +347,7 @@ export default function ProductionReportsArchive() {
                     <span className="text-sm font-semibold tabular-nums">
                       {dayTotal} st/kg
                     </span>
-                    <Badge variant="outline" className="text-[10px]">Arkiverad</Badge>
+                    <Badge variant="outline" className="text-[10px]">{t("reporting.archived")}</Badge>
                   </div>
                 </div>
 
@@ -393,7 +395,7 @@ export default function ProductionReportsArchive() {
                                     {displayName}
                                   </span>
                                   <span className="text-[10px] text-muted-foreground">
-                                    {lines.length} rader
+                                    {t("reporting.rowsCount").replace("{n}", String(lines.length))}
                                   </span>
                                 </>
                               )}
@@ -404,11 +406,11 @@ export default function ProductionReportsArchive() {
                               </span>
                               {report.status === "Bekräftad" ? (
                                 <Badge className="text-[9px] h-4 bg-primary/10 text-primary border-primary/20" variant="outline">
-                                  Bekräftad
+                                  {t("reporting.confirmed")}
                                 </Badge>
                               ) : (
                                 <Badge variant="secondary" className="text-[9px] h-4">
-                                  {report.status}
+                                  {report.status === "Aktiv" ? t("reporting.active") : report.status}
                                 </Badge>
                               )}
                               {!isEditingName && (
@@ -416,7 +418,7 @@ export default function ProductionReportsArchive() {
                                   size="icon"
                                   variant="ghost"
                                   className="h-6 w-6"
-                                  title="Byt namn"
+                                  title={t("reporting.rename")}
                                   onClick={() => { setEditingNameId(report.id); setNameDraft(displayName); }}
                                 >
                                   <Pencil className="h-3 w-3" />
@@ -424,21 +426,21 @@ export default function ProductionReportsArchive() {
                               )}
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                  <Button size="icon" variant="ghost" className="h-6 w-6" title="Ta bort rapport">
+                                  <Button size="icon" variant="ghost" className="h-6 w-6" title={t("reporting.deleteReport")}>
                                     <Trash2 className="h-3 w-3 text-destructive" />
                                   </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Ta bort rapport?</AlertDialogTitle>
+                                    <AlertDialogTitle>{t("reporting.deleteReportTitle")}</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Hela rapporten "{displayName}" och alla {lines.length} rader tas bort permanent.
+                                      Hela rapporten "{displayName}" och alla {t("reporting.rowsCount").replace("{n}", String(lines.length))} tas bort permanent.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                                    <AlertDialogCancel>{t("reporting.cancel")}</AlertDialogCancel>
                                     <AlertDialogAction onClick={() => deleteReportMut.mutate(report.id)}>
-                                      Ta bort
+                                      {t("reporting.delete")}
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -451,11 +453,11 @@ export default function ProductionReportsArchive() {
                               <Table>
                                 <TableHeader>
                                   <TableRow className="h-7">
-                                    <TableHead className="py-0.5 px-2 text-[11px]">Produkt</TableHead>
-                                    <TableHead className="py-0.5 px-1 text-[11px] text-right w-[80px]">Antal</TableHead>
-                                    <TableHead className="py-0.5 px-1 text-[11px] w-[60px]">Enhet</TableHead>
-                                    <TableHead className="py-0.5 px-1 text-[11px] w-[110px]">Operatör</TableHead>
-                                    <TableHead className="py-0.5 px-1 text-[11px] w-[110px]">Datum</TableHead>
+                                    <TableHead className="py-0.5 px-2 text-[11px]">{t("reporting.product")}</TableHead>
+                                    <TableHead className="py-0.5 px-1 text-[11px] text-right w-[80px]">{t("reporting.quantity")}</TableHead>
+                                    <TableHead className="py-0.5 px-1 text-[11px] w-[60px]">{t("reporting.unit")}</TableHead>
+                                    <TableHead className="py-0.5 px-1 text-[11px] w-[110px]">{t("reporting.operator")}</TableHead>
+                                    <TableHead className="py-0.5 px-1 text-[11px] w-[110px]">{t("reporting.date")}</TableHead>
                                     <TableHead className="py-0.5 px-1 text-[11px] w-[70px]"></TableHead>
                                   </TableRow>
                                 </TableHeader>
@@ -487,7 +489,7 @@ export default function ProductionReportsArchive() {
                               {addingForReport !== report.id && (
                                 <div className="px-2 py-1.5 border-t">
                                   <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => startAdd(report.id)}>
-                                    <Plus className="h-3 w-3 mr-1" /> Lägg till rad
+                                    <Plus className="h-3 w-3 mr-1" /> {t("reporting.addRow")}
                                   </Button>
                                 </div>
                               )}

@@ -1,3 +1,4 @@
+import { useStaffT } from "@/lib/staffI18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import {
 } from "@/hooks/useProductionYields";
 
 export function ProductionSettings() {
+  const { t, lang, dir } = useStaffT();
   const { data: surcharges = [] } = useProcessingSurcharges();
   const { data: margins = [] } = useMarginTargets();
   const { data: vats = [] } = useVatRates();
@@ -23,15 +25,15 @@ export function ProductionSettings() {
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <CardHeader className="py-3">
-          <CardTitle className="text-sm">Förädlingspåslag per kategori (kr/färdigt kg)</CardTitle>
+          <CardTitle className="text-sm">{t("tillverkning.text_284")}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="h-8">
-                <TableHead className="text-[11px]">Kategori</TableHead>
+                <TableHead className="text-[11px]">{t("tillverkning.text_285")}</TableHead>
                 <TableHead className="text-[11px] w-[110px] text-right">kr/kg</TableHead>
-                <TableHead className="text-[11px] w-[90px]">Gäller</TableHead>
+                <TableHead className="text-[11px] w-[90px]">{t("tillverkning.text_287")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -65,15 +67,15 @@ export function ProductionSettings() {
 
       <Card>
         <CardHeader className="py-3">
-          <CardTitle className="text-sm">Marginalmål per region</CardTitle>
+          <CardTitle className="text-sm">{t("tillverkning.text_288")}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="h-8">
-                <TableHead className="text-[11px]">Region</TableHead>
-                <TableHead className="text-[11px]">Butiker</TableHead>
-                <TableHead className="text-[11px] w-[110px] text-right">Mål %</TableHead>
+                <TableHead className="text-[11px]">{t("tillverkning.text_289")}</TableHead>
+                <TableHead className="text-[11px]">{t("tillverkning.text_290")}</TableHead>
+                <TableHead className="text-[11px] w-[110px] text-right">{t("tillverkning.text_291")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -105,23 +107,23 @@ export function ProductionSettings() {
 
       <Card className="lg:col-span-2">
         <CardHeader className="py-3">
-          <CardTitle className="text-sm">Momssatser (per kategori, med giltighetsdatum)</CardTitle>
+          <CardTitle className="text-sm">{t("tillverkning.text_292")}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="h-8">
-                <TableHead className="text-[11px]">Kategori</TableHead>
-                <TableHead className="text-[11px] w-[100px] text-right">Sats %</TableHead>
-                <TableHead className="text-[11px] w-[140px]">Från</TableHead>
-                <TableHead className="text-[11px] w-[140px]">Till</TableHead>
-                <TableHead className="text-[11px]">Anteckning</TableHead>
+                <TableHead className="text-[11px]">{t("tillverkning.text_285")}</TableHead>
+                <TableHead className="text-[11px] w-[100px] text-right">{t("tillverkning.text_294")}</TableHead>
+                <TableHead className="text-[11px] w-[140px]">{t("tillverkning.text_295")}</TableHead>
+                <TableHead className="text-[11px] w-[140px]">{t("tillverkning.text_296")}</TableHead>
+                <TableHead className="text-[11px]">{t("tillverkning.text_297")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {vats.map((v) => (
                 <TableRow key={v.id} className="h-9">
-                  <TableCell className="text-[11px]">{v.category === "*" ? "Livsmedel (standard)" : v.category}</TableCell>
+                  <TableCell className="text-[11px]">{v.category === "*" ? t("tillverkning.text_298") : v.category}</TableCell>
                   <TableCell className="py-0.5">
                     <Input
                       type="number"
@@ -167,9 +169,7 @@ export function ProductionSettings() {
         </CardContent>
       </Card>
       <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
-        Täckningskontrollen ligger numera i Admin-portalen under <span className="font-medium">Rapporter → Datakvalitet</span>.
-        Där kontrolleras utbyten, styckningsmodeller, referenspriser per kanal samt marginalmål och moms i en och samma körning.
-      </div>
+        {t("tillverkning.text_299")} <span className="font-medium">{t("tillverkning.text_300")}</span>{t("tillverkning.text_301")} </div>
 
     </div>
   );

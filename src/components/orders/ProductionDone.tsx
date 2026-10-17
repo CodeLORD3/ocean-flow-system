@@ -1,3 +1,4 @@
+import { useStaffT } from "@/lib/staffI18n";
 import React, { useMemo, useState } from "react";
 import { CheckCheck, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,12 @@ import { useIsHrAdmin, useMarkProductionDone, useMarkProductsAsProduction, useUn
 import { fmtQty, fmtTime, isActiveOrder, isOpenLine, isProductionDone, isProductionLine, productionBadgeState } from "@/lib/productionDone";
 
 export function ProductionBadge({ order, className = "" }: { order: any; className?: string }) {
+  const { t, lang, dir } = useStaffT();
   const state = productionBadgeState(order);
   if (state === "none") return null;
   const who = [fmtTime(order.production_done_at), order.production_done_by_name].filter(Boolean).join(" · ");
   const tone = state === "done" ? "border-row-ok-edge bg-row-ok text-row-ok-text" : "border-row-warn-edge bg-row-warn text-row-warn-text";
-  const label = state === "changed" ? "Ändrad efter klarmarkering" : state === "missing" ? `Produktion klar, ${order.production_missing_count} saknas` : "Produktion klar";
+  const label = state === "changed" ? t("produktionslista.changed") : state === "missing" ? t("produktionslista.done_missing").replace("{n}", String(order.production_missing_count)) : t("produktionslista.done");
   return (
     <span className={`inline-flex flex-wrap items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${tone} ${className}`} title={who}>
       {label}{who && <span className="font-mono font-normal tabular-nums">· {who}</span>}
@@ -28,6 +30,7 @@ export function ProductionBadge({ order, className = "" }: { order: any; classNa
 export const canMarkProduction = (o: any) => isActiveOrder(o) && (!isProductionDone(o) || !!o.production_changed_after_done);
 
 export function ProductionDoneControls({ order, size = "sm" }: { order: any; size?: "sm" | "lg" }) {
+  const { t, lang, dir } = useStaffT();
   const { toast } = useToast();
   const { data: staff } = useCurrentStaff();
   const { data: isAdmin } = useIsHrAdmin();
@@ -66,18 +69,18 @@ export function ProductionDoneControls({ order, size = "sm" }: { order: any; siz
       }));
       await mark.mutateAsync({ order, lines, byName });
       setOpen(false);
-      toast({ title: missing ? `Färdigpackad, ${missing} saknas` : "Färdigpackad, inget saknas" });
-      const extra: { id: string; name: string }[] = otherLines.filter((l: any) => checked[l.id]).map((l: any) => ({ id: l.product_id, name: l.products?.name || "Okänd vara" }));
+      toast({ title: missing ? t("produktionslista.packed_missing").replace("{n}", String(missing)) : t("produktionslista.packed_complete") });
+      const extra: { id: string; name: string }[] = otherLines.filter((l: any) => checked[l.id]).map((l: any) => ({ id: l.product_id, name: l.products?.name || t("produktionslista.unknown_item") }));
       const uniq = Array.from(new Map(extra.map((e) => [e.id, e])).values());
       if (uniq.length) setAskProducts(uniq);
     } catch (e: any) {
-      toast({ title: "Kunde inte klarmarkera", description: e?.message, variant: "destructive" });
+      toast({ title: t("produktionslista.mark_error"), description: e?.message, variant: "destructive" });
     }
   };
 
   const doUndo = async () => {
-    try { await undo.mutateAsync({ order, byName }); toast({ title: "Klarmarkeringen är ångrad" }); }
-    catch (e: any) { toast({ title: "Kunde inte ångra", description: e?.message, variant: "destructive" }); }
+    try { await undo.mutateAsync({ order, byName }); toast({ title: t("produktionslista.undone") }); }
+    catch (e: any) { toast({ title: t("produktionslista.undo_error"), description: e?.message, variant: "destructive" }); }
     setConfirmUndo(false);
   };
 
@@ -86,9 +89,9 @@ export function ProductionDoneControls({ order, size = "sm" }: { order: any; siz
 
   const lineRow = (l: any) => (
     <div key={l.id} className="flex flex-wrap items-center gap-2 border-b border-grid-line py-2 last:border-b-0">
-      <Checkbox checked={!!checked[l.id]} onCheckedChange={(v) => setChecked((c) => ({ ...c, [l.id]: !!v }))} aria-label={`Bocka ${l.products?.name}`} />
-      <span className="min-w-0 flex-1 break-words text-sm">{l.products?.name || "Okänd vara"}<span className="block font-mono text-[11px] tabular-nums text-muted-foreground">Beställt {fmtQty(l.quantity_ordered)} {l.unit || l.products?.unit}</span></span>
-      <Input inputMode="decimal" className="h-9 w-24 text-right font-mono tabular-nums" value={qty[l.id] ?? ""} onChange={(e) => setQty((q) => ({ ...q, [l.id]: e.target.value }))} aria-label="Packad mängd" />
+      <Checkbox checked={!!checked[l.id]} onCheckedChange={(v) => setChecked((c) => ({ ...c, [l.id]: !!v }))} aria-label={t("produktionslista.check_item").replace("{n}", String(l.products?.name))} />
+      <span className="min-w-0 flex-1 break-words text-sm">{l.products?.name || t("produktionslista.unknown_item")}<span className="block font-mono text-[11px] tabular-nums text-muted-foreground">{t("produktionslista.ordered")} {fmtQty(l.quantity_ordered)} {l.unit || l.products?.unit}</span></span>
+      <Input inputMode="decimal" className="h-9 w-24 text-right font-mono tabular-nums" value={qty[l.id] ?? ""} onChange={(e) => setQty((q) => ({ ...q, [l.id]: e.target.value }))} aria-label={t("produktionslista.packed_quantity")} />
     </div>
   );
 
@@ -96,30 +99,30 @@ export function ProductionDoneControls({ order, size = "sm" }: { order: any; siz
     <>
       <div className="flex flex-wrap items-center gap-2">
         {canMarkProduction(order) && (
-          <Button size={size === "lg" ? "default" : "sm"} className="gap-1.5" onClick={start}><CheckCheck className="h-4 w-4" /> Produktionen färdigpackad</Button>
+          <Button size={size === "lg" ? "default" : "sm"} className="gap-1.5" onClick={start}><CheckCheck className="h-4 w-4" /> {t("produktionslista.packed_title")}</Button>
         )}
-        {canUndo && <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setConfirmUndo(true)}><Undo2 className="h-4 w-4" /> Ångra klarmarkering</Button>}
+        {canUndo && <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setConfirmUndo(true)}><Undo2 className="h-4 w-4" /> {t("produktionslista.undo_completion")}</Button>}
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto overflow-x-hidden">
           <DialogHeader>
-            <DialogTitle>Produktionen färdigpackad</DialogTitle>
-            <DialogDescription>{order.stores?.name} · rader som ännu inte är packade.</DialogDescription>
+            <DialogTitle>{t("produktionslista.packed_title")}</DialogTitle>
+            <DialogDescription>{order.stores?.name} · {t("produktionslista.unpacked_lines")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Produktionens varor</p>
-              {prodLines.length ? prodLines.map(lineRow) : <p className="py-2 text-sm text-muted-foreground">Inga öppna rader.</p>}
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{t("produktionslista.production_items")}</p>
+              {prodLines.length ? prodLines.map(lineRow) : <p className="py-2 text-sm text-muted-foreground">{t("produktionslista.no_open_lines")}</p>}
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Övriga varor</p>
-              {otherLines.length ? otherLines.map(lineRow) : <p className="py-2 text-sm text-muted-foreground">Inga öppna rader.</p>}
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{t("produktionslista.other_items")}</p>
+              {otherLines.length ? otherLines.map(lineRow) : <p className="py-2 text-sm text-muted-foreground">{t("produktionslista.no_open_lines")}</p>}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Avbryt</Button>
-            <Button onClick={submit} disabled={mark.isPending}>{missing ? `Färdigpackad, ${missing} saknas` : "Färdigpackad, inget saknas"}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("produktionslista.cancel")}</Button>
+            <Button onClick={submit} disabled={mark.isPending}>{missing ? t("produktionslista.packed_missing").replace("{n}", String(missing)) : t("produktionslista.packed_complete")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -127,12 +130,12 @@ export function ProductionDoneControls({ order, size = "sm" }: { order: any; siz
       <AlertDialog open={askProducts.length > 0} onOpenChange={(o) => !o && setAskProducts([])}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Produktionens varor framöver?</AlertDialogTitle>
-            <AlertDialogDescription>Ska {askProducts.map((p) => p.name).join(", ")} räknas som produktionens varor framöver?</AlertDialogDescription>
+            <AlertDialogTitle>{t("produktionslista.future_title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("produktionslista.future_description").replace("{n}", askProducts.map((p) => p.name).join(", "))}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Nej</AlertDialogCancel>
-            <AlertDialogAction onClick={async () => { await markProducts.mutateAsync(askProducts.map((p) => p.id)); setAskProducts([]); }}>Ja</AlertDialogAction>
+            <AlertDialogCancel>{t("produktionslista.no")}</AlertDialogCancel>
+            <AlertDialogAction onClick={async () => { await markProducts.mutateAsync(askProducts.map((p) => p.id)); setAskProducts([]); }}>{t("produktionslista.yes")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -140,12 +143,12 @@ export function ProductionDoneControls({ order, size = "sm" }: { order: any; siz
       <AlertDialog open={confirmUndo} onOpenChange={setConfirmUndo}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ångra klarmarkering?</AlertDialogTitle>
-            <AlertDialogDescription>Stämpeln tas bort och raderna som klarmarkeringen packade går tillbaka till sin tidigare status och mängd.</AlertDialogDescription>
+            <AlertDialogTitle>{t("produktionslista.undo_title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("produktionslista.undo_description")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction onClick={doUndo}>Ångra</AlertDialogAction>
+            <AlertDialogCancel>{t("produktionslista.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={doUndo}>{t("produktionslista.undo")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -155,18 +158,19 @@ export function ProductionDoneControls({ order, size = "sm" }: { order: any; siz
 
 /** I utfälld order: kvarvarande inköpsrader när produktionen är klar. */
 export function BuyRemainingSection({ order }: { order: any }) {
+  const { t, lang, dir } = useStaffT();
   if (!isProductionDone(order)) return null;
   const lines = (order.shop_order_lines || []).filter((l: any) => isOpenLine(l) && !isProductionLine(l));
   const missingLines = (order.shop_order_lines || []).filter((l: any) => l.production_missing && isOpenLine(l));
   return (
     <div className="space-y-2 rounded-md border border-grid-line bg-card p-3">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground">Kvar att köpa in (Fiskhamnen)</p>
-      {lines.length === 0 ? <p className="text-sm text-muted-foreground">Inget kvar att köpa in.</p> : lines.map((l: any) => (
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground">{t("produktionslista.remaining_title")}</p>
+      {lines.length === 0 ? <p className="text-sm text-muted-foreground">{t("produktionslista.nothing_remaining")}</p> : lines.map((l: any) => (
         <div key={l.id} className="flex flex-wrap justify-between gap-2 text-sm"><span className="min-w-0 break-words">{l.products?.name}</span><span className="font-mono tabular-nums">{fmtQty(Number(l.quantity_ordered || 0) - Number(l.quantity_delivered || 0))} {l.unit || l.products?.unit}</span></div>
       ))}
       {missingLines.length > 0 && (
         <div className="border-t border-grid-line pt-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-row-warn-text">Saknas från produktionen</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-row-warn-text">{t("produktionslista.missing_production")}</p>
           {missingLines.map((l: any) => <div key={l.id} className="text-sm">{l.products?.name} · <span className="font-mono tabular-nums">{fmtQty(l.quantity_ordered)} {l.unit || l.products?.unit}</span></div>)}
         </div>
       )}

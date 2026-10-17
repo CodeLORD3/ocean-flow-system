@@ -1,3 +1,4 @@
+import { useStaffT } from "@/lib/staffI18n";
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProductionReporting from "@/pages/ProductionReporting";
@@ -10,15 +11,16 @@ type SubTab = "rapportering" | "tillverkning";
  * Filé/Tillverkning. Båda hålls monterade så state bevaras vid flikbyte.
  */
 export default function ProductionRouter() {
+  const { t, lang, dir } = useStaffT();
   const [tab, setTab] = useState<SubTab>("rapportering");
 
   const tabs: { value: SubTab; label: string; shortLabel?: string }[] = [
-    { value: "rapportering", label: "Produktionsrapportering", shortLabel: "Rapport" },
-    { value: "tillverkning", label: "Filé/Tillverkning", shortLabel: "Filé" },
+    { value: "rapportering", label: t("reporting.heading"), shortLabel: t("reporting.reportTab") },
+    { value: "tillverkning", label: t("reporting.manufacturingTab"), shortLabel: t("reporting.filletTab") },
   ];
 
   return (
-    <div className="h-full w-full flex flex-col">
+    <div dir={dir} lang={lang} className="h-full w-full flex flex-col">
       <div className="border-b bg-background px-4 pt-3">
         <Tabs value={tab} onValueChange={(v) => setTab(v as SubTab)} className="w-full">
           <TabsList

@@ -1,3 +1,4 @@
+import { useStaffT } from "@/lib/staffI18n";
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +21,7 @@ import {
 type OrderWithLines = ProductionOrder & { production_order_lines: ProductionOrderLine[] };
 
 export function ProductionHistory() {
+  const { t, lang, dir } = useStaffT();
   const { data: orders = [], isLoading } = useProductionOrders();
   const { data: actuals = [] } = useYieldActuals();
   const registerActuals = useRegisterActuals();
@@ -74,8 +76,8 @@ export function ProductionHistory() {
     registerActuals.mutate(
       { order, lines },
       {
-        onSuccess: () => toast({ title: "Faktiskt utfall registrerat", description: "Kostpriser omräknade och avvikelser sparade." }),
-        onError: (e: any) => toast({ title: "Fel", description: e.message, variant: "destructive" }),
+        onSuccess: () => toast({ title: t("tillverkning.text_126"), description: t("tillverkning.text_127") }),
+        onError: (e: any) => toast({ title: t("tillverkning.error"), description: e.message, variant: "destructive" }),
       }
     );
   };
@@ -86,25 +88,25 @@ export function ProductionHistory() {
         <Select value={speciesFilter} onValueChange={setSpeciesFilter}>
           <SelectTrigger className="h-8 w-48 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all" className="text-xs">Alla arter</SelectItem>
+            <SelectItem value="all" className="text-xs">{t("tillverkning.text_128")}</SelectItem>
             {species.map((s) => <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>)}
           </SelectContent>
         </Select>
-        <span className="text-xs text-muted-foreground">{filtered.length} tillverkningsordrar</span>
+        <span className="text-xs text-muted-foreground">{filtered.length} {t("tillverkning.text_129")}</span>
       </div>
 
       <Card>
         <CardHeader className="py-3">
-          <CardTitle className="text-sm">Tillverkningsordrar</CardTitle>
+          <CardTitle className="text-sm">{t("tillverkning.text_130")}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {isLoading && <p className="p-4 text-xs text-muted-foreground">Laddar…</p>}
+          {isLoading && <p className="p-4 text-xs text-muted-foreground">{t("tillverkning.text_131")}</p>}
           {!isLoading && filtered.length === 0 && (
             <EmptyState
               bare
               icon={<Scissors className="h-4 w-4" />}
-              title="Inga tillverkningsordrar ännu"
-              description="Historiken fylls när du kör en tillverkningsorder i fliken Ny tillverkning: råvarupartiet plockas i FIFO-ordning och detaljpartier skapas automatiskt."
+              title={t("tillverkning.text_132")}
+              description={t("tillverkning.text_133")}
             />
           )}
           <div className="divide-y">
@@ -122,33 +124,32 @@ export function ProductionHistory() {
                     <span className="text-xs font-medium">{o.raw_name}</span>
                     <span className="text-[11px] text-muted-foreground">{o.production_date}</span>
                     <span className="text-[11px] font-mono tabular-nums text-muted-foreground">
-                      {fmt(Number(o.raw_quantity), 1)} kg in · {fmt(plannedOut, 1)} kg planerat
-                      {actualOut > 0 && ` · ${fmt(actualOut, 1)} kg vägt`}
+                      {fmt(Number(o.raw_quantity), 1)} {t("tillverkning.text_134")} {fmt(plannedOut, 1)} {t("tillverkning.text_135")} {actualOut > 0 && t("tillverkning.weighed").replace("{n}", fmt(actualOut, 1))}
                     </span>
                     <Badge variant="outline" className="ml-auto text-[10px]">
-                      {o.status === "completed" ? "Utfall registrerat" : "Planerat utfall"}
+                      {o.status === "completed" ? t("tillverkning.text_137") : t("tillverkning.text_138")}
                     </Badge>
                   </button>
                   {isOpen && (
                     <div className="bg-muted/30 p-3">
                       <div className="mb-2 grid gap-2 text-[11px] text-muted-foreground sm:grid-cols-4">
-                        <span>Leverantör: {o.supplier_name || "—"}</span>
-                        <span>Parti: {o.batch_number || "—"}</span>
-                        <span>Inköpspris: {fmt(Number(o.purchase_price_per_kg))} kr/kg</span>
+                        <span>{t("tillverkning.text_139")} {o.supplier_name || "—"}</span>
+                        <span>{t("tillverkning.text_140")} {o.batch_number || "—"}</span>
+                        <span>{t("tillverkning.text_141")} {fmt(Number(o.purchase_price_per_kg))} kr/kg</span>
                         <span>
-                          Svinn: {fmt(Number(o.actual_waste_pct ?? o.waste_pct), 1)} %
+                          {t("tillverkning.text_143")} {fmt(Number(o.actual_waste_pct ?? o.waste_pct), 1)} %
                           {o.actual_waste_pct != null && " (faktiskt)"}
                         </span>
                       </div>
                       <Table>
                         <TableHeader>
                           <TableRow className="h-8">
-                            <TableHead className="text-[11px]">Detalj</TableHead>
-                            <TableHead className="text-[11px] text-right w-[90px]">Utbyte %</TableHead>
-                            <TableHead className="text-[11px] text-right w-[100px]">Planerat kg</TableHead>
-                            <TableHead className="text-[11px] text-right w-[120px]">Verklig vikt kg</TableHead>
-                            <TableHead className="text-[11px] text-right w-[110px]">Kostpris kr/kg</TableHead>
-                            <TableHead className="text-[11px] text-right w-[100px]">Avvikelse</TableHead>
+                            <TableHead className="text-[11px]">{t("tillverkning.text_144")}</TableHead>
+                            <TableHead className="text-[11px] text-right w-[90px]">{t("tillverkning.text_145")}</TableHead>
+                            <TableHead className="text-[11px] text-right w-[100px]">{t("tillverkning.text_146")}</TableHead>
+                            <TableHead className="text-[11px] text-right w-[120px]">{t("tillverkning.text_147")}</TableHead>
+                            <TableHead className="text-[11px] text-right w-[110px]">{t("tillverkning.text_148")}</TableHead>
+                            <TableHead className="text-[11px] text-right w-[100px]">{t("tillverkning.text_149")}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -197,8 +198,7 @@ export function ProductionHistory() {
                       </Table>
                       <div className="mt-2 flex justify-end">
                         <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => saveActuals(o)} disabled={registerActuals.isPending}>
-                          <Scale className="h-3.5 w-3.5" /> Registrera verkligt utfall
-                        </Button>
+                          <Scale className="h-3.5 w-3.5" /> {t("tillverkning.text_152")} </Button>
                       </div>
                     </div>
                   )}
@@ -211,26 +211,26 @@ export function ProductionHistory() {
 
       <Card>
         <CardHeader className="py-3">
-          <CardTitle className="text-sm">Utbyten över tid per art</CardTitle>
+          <CardTitle className="text-sm">{t("tillverkning.text_153")}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {comparison.length === 0 ? (
             <EmptyState
               bare
               icon={<Scissors className="h-4 w-4" />}
-              title="Inga verkliga utfall ännu"
-              description="Jämförelsen mot utbytesregistret visas när du registrerat faktiskt utbyte på en genomförd tillverkningsorder."
+              title={t("tillverkning.text_154")}
+              description={t("tillverkning.text_155")}
             />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="h-8">
-                  <TableHead className="text-[11px]">Art</TableHead>
-                  <TableHead className="text-[11px]">Detalj</TableHead>
-                  <TableHead className="text-[11px] text-right w-[90px]">Snitt %</TableHead>
-                  <TableHead className="text-[11px] text-right w-[90px]">Lägsta</TableHead>
-                  <TableHead className="text-[11px] text-right w-[90px]">Högsta</TableHead>
-                  <TableHead className="text-[11px] text-right w-[80px]">Partier</TableHead>
+                  <TableHead className="text-[11px]">{t("tillverkning.text_19")}</TableHead>
+                  <TableHead className="text-[11px]">{t("tillverkning.text_144")}</TableHead>
+                  <TableHead className="text-[11px] text-right w-[90px]">{t("tillverkning.text_158")}</TableHead>
+                  <TableHead className="text-[11px] text-right w-[90px]">{t("tillverkning.text_159")}</TableHead>
+                  <TableHead className="text-[11px] text-right w-[90px]">{t("tillverkning.text_160")}</TableHead>
+                  <TableHead className="text-[11px] text-right w-[80px]">{t("tillverkning.text_161")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

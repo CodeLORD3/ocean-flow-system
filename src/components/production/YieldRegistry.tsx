@@ -1,3 +1,4 @@
+import { useStaffT } from "@/lib/staffI18n";
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -21,6 +22,7 @@ import {
 } from "@/hooks/useProductionYields";
 
 export function YieldRegistry() {
+  const { t, lang, dir } = useStaffT();
   const { data: yields = [], isLoading } = useYields();
   const { data: actuals = [] } = useYieldActuals();
   const { data: splits = [] } = useCutSplits();
@@ -58,32 +60,31 @@ export function YieldRegistry() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <Input
-          placeholder="Sök art…"
+          placeholder={t("tillverkning.text_302")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="h-8 w-52 text-xs"
         />
-        <span className="text-xs text-muted-foreground">{filtered.length} utbytesrader</span>
+        <span className="text-xs text-muted-foreground">{filtered.length} {t("tillverkning.text_303")}</span>
         <Badge variant="outline" className="text-[10px] gap-1 border-amber-400 text-amber-600">
-          <AlertTriangle className="h-3 w-3" /> = branschvärde, ej kalibrerat
-        </Badge>
+          <AlertTriangle className="h-3 w-3" /> {t("tillverkning.text_304")} </Badge>
       </div>
 
       <Card>
         <CardHeader className="py-3">
-          <CardTitle className="text-sm">Utbytesregister</CardTitle>
+          <CardTitle className="text-sm">{t("tillverkning.text_10")}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="h-8">
-                <TableHead className="text-[11px]">Art</TableHead>
-                <TableHead className="text-[11px]">Från</TableHead>
-                <TableHead className="text-[11px]">Till</TableHead>
-                <TableHead className="text-[11px] w-[90px] text-right">Utbyte %</TableHead>
-                <TableHead className="text-[11px] w-[150px]">Uppmätt snitt (5 senaste)</TableHead>
-                <TableHead className="text-[11px] w-[110px]">Status</TableHead>
-                <TableHead className="text-[11px]">Anteckning</TableHead>
+                <TableHead className="text-[11px]">{t("tillverkning.text_19")}</TableHead>
+                <TableHead className="text-[11px]">{t("tillverkning.text_295")}</TableHead>
+                <TableHead className="text-[11px]">{t("tillverkning.text_296")}</TableHead>
+                <TableHead className="text-[11px] w-[90px] text-right">{t("tillverkning.text_145")}</TableHead>
+                <TableHead className="text-[11px] w-[150px]">{t("tillverkning.text_310")}</TableHead>
+                <TableHead className="text-[11px] w-[110px]">{t("tillverkning.text_311")}</TableHead>
+                <TableHead className="text-[11px]">{t("tillverkning.text_297")}</TableHead>
                 <TableHead className="w-[36px]" />
               </TableRow>
             </TableHeader>
@@ -91,8 +92,7 @@ export function YieldRegistry() {
               {isLoading && (
                 <TableRow>
                   <TableCell colSpan={8} className="text-xs text-muted-foreground py-6 text-center">
-                    Laddar…
-                  </TableCell>
+                    {t("tillverkning.text_131")} </TableCell>
                 </TableRow>
               )}
               {grouped.map(([species, rows]) =>
@@ -133,11 +133,10 @@ export function YieldRegistry() {
                                   is_estimate: false,
                                   calibrated_count: avg.count,
                                 });
-                                toast({ title: "Standardvärde uppdaterat", description: `${species}: ${fmt(avg.avg, 1)} %` });
+                                toast({ title: t("tillverkning.text_314"), description: `${species}: ${fmt(avg.avg, 1)} %` });
                               }}
                             >
-                              Använd snitt
-                            </Button>
+                              {t("tillverkning.text_315")} </Button>
                           </div>
                         ) : (
                           <span className="text-muted-foreground">—</span>
@@ -146,12 +145,10 @@ export function YieldRegistry() {
                       <TableCell>
                         {y.is_estimate && !calibrated ? (
                           <Badge variant="outline" className="text-[10px] gap-1 border-amber-400 text-amber-600">
-                            <AlertTriangle className="h-3 w-3" /> Uppskattat
-                          </Badge>
+                            <AlertTriangle className="h-3 w-3" /> {t("tillverkning.text_316")} </Badge>
                         ) : (
                           <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500 text-emerald-600">
-                            <Check className="h-3 w-3" /> Uppmätt
-                          </Badge>
+                            <Check className="h-3 w-3" /> {t("tillverkning.text_317")} </Badge>
                         )}
                       </TableCell>
                       <TableCell className="py-0.5">
@@ -177,7 +174,7 @@ export function YieldRegistry() {
 
           <div className="flex flex-wrap items-end gap-2 border-t p-3">
             <Input
-              placeholder="art"
+              placeholder={t("tillverkning.text_318")}
               value={newRow.species_group}
               onChange={(e) => setNewRow({ ...newRow, species_group: e.target.value })}
               className="h-8 w-36 text-xs"
@@ -193,7 +190,7 @@ export function YieldRegistry() {
             <Input
               type="number"
               inputMode="decimal"
-              placeholder="utbyte %"
+              placeholder={t("tillverkning.text_319")}
               value={newRow.yield_pct}
               onChange={(e) => setNewRow({ ...newRow, yield_pct: e.target.value })}
               className="h-8 w-28 text-xs"
@@ -214,31 +211,30 @@ export function YieldRegistry() {
                   {
                     onSuccess: () => {
                       setNewRow({ ...newRow, species_group: "", yield_pct: "" });
-                      toast({ title: "Utbytesrad tillagd" });
+                      toast({ title: t("tillverkning.text_320") });
                     },
                   }
                 );
               }}
             >
-              <Plus className="h-3.5 w-3.5" /> Lägg till
-            </Button>
+              <Plus className="h-3.5 w-3.5" /> {t("tillverkning.text_321")} </Button>
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="py-3">
-          <CardTitle className="text-sm">Uppdelning av filén i detaljer (procent av filén)</CardTitle>
+          <CardTitle className="text-sm">{t("tillverkning.text_322")}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="h-8">
-                <TableHead className="text-[11px]">Art / mall</TableHead>
-                <TableHead className="text-[11px]">Detalj</TableHead>
-                <TableHead className="text-[11px] w-[110px] text-right">% av filén</TableHead>
-                <TableHead className="text-[11px] w-[110px] text-right">Marginalvikt</TableHead>
-                <TableHead className="text-[11px] w-[90px]">Valfri</TableHead>
+                <TableHead className="text-[11px]">{t("tillverkning.text_323")}</TableHead>
+                <TableHead className="text-[11px]">{t("tillverkning.text_144")}</TableHead>
+                <TableHead className="text-[11px] w-[110px] text-right">{t("tillverkning.text_325")}</TableHead>
+                <TableHead className="text-[11px] w-[110px] text-right">{t("tillverkning.text_326")}</TableHead>
+                <TableHead className="text-[11px] w-[90px]">{t("tillverkning.text_327")}</TableHead>
                 <TableHead className="w-[36px]" />
               </TableRow>
             </TableHeader>
@@ -275,7 +271,7 @@ export function YieldRegistry() {
                       }}
                     />
                   </TableCell>
-                  <TableCell className="text-[11px]">{s.is_optional ? "Ja" : "Nej"}</TableCell>
+                  <TableCell className="text-[11px]">{s.is_optional ? t("tillverkning.text_328") : t("tillverkning.text_329")}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteSplit.mutate(s.id)}>
                       <Trash2 className="h-3 w-3" />
@@ -287,7 +283,7 @@ export function YieldRegistry() {
           </Table>
           <div className="flex flex-wrap items-end gap-2 border-t p-3">
             <Input
-              placeholder="art eller mall (rundfisk)"
+              placeholder={t("tillverkning.text_330")}
               value={newSplit.species_group}
               onChange={(e) => setNewSplit({ ...newSplit, species_group: e.target.value })}
               className="h-8 w-48 text-xs"
@@ -299,7 +295,7 @@ export function YieldRegistry() {
             <Input
               type="number"
               inputMode="decimal"
-              placeholder="% av filén"
+              placeholder={t("tillverkning.text_325")}
               value={newSplit.pct_of_fillet}
               onChange={(e) => setNewSplit({ ...newSplit, pct_of_fillet: e.target.value })}
               className="h-8 w-28 text-xs"
@@ -308,7 +304,7 @@ export function YieldRegistry() {
               type="number"
               inputMode="decimal"
               step="0.05"
-              placeholder="marginalvikt"
+              placeholder={t("tillverkning.text_332")}
               value={newSplit.margin_weight}
               onChange={(e) => setNewSplit({ ...newSplit, margin_weight: e.target.value })}
               className="h-8 w-28 text-xs"
@@ -329,8 +325,7 @@ export function YieldRegistry() {
                 )
               }
             >
-              <Plus className="h-3.5 w-3.5" /> Lägg till
-            </Button>
+              <Plus className="h-3.5 w-3.5" /> {t("tillverkning.text_321")} </Button>
           </div>
         </CardContent>
       </Card>

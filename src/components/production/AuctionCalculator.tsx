@@ -1,3 +1,4 @@
+import { useStaffT } from "@/lib/staffI18n";
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ interface Row {
 }
 
 export function AuctionCalculator() {
+  const { t, lang, dir } = useStaffT();
   const { data: yields = [] } = useYields();
   const { data: margins = [] } = useMarginTargets();
   const { data: surcharges = [] } = useProcessingSurcharges();
@@ -155,9 +157,9 @@ export function AuctionCalculator() {
         max_price_gbg: gbg?.maxPricePerKg ?? null,
         bid_price: bidNum || null,
       });
-      toast({ title: "Kalkyl sparad", description: `${species} · ${fmt(rawQtyNum, 0)} kg` });
+      toast({ title: t("tillverkning.text_17"), description: `${species} · ${fmt(rawQtyNum, 0)} kg` });
     } catch (e: any) {
-      toast({ title: "Fel", description: e.message, variant: "destructive" });
+      toast({ title: t("tillverkning.error"), description: e.message, variant: "destructive" });
     }
   };
 
@@ -166,15 +168,14 @@ export function AuctionCalculator() {
       <Card>
         <CardHeader className="py-3">
           <CardTitle className="flex items-center gap-1.5 text-sm">
-            <Gavel className="h-4 w-4" /> Auktionskalkyl — högsta försvarbara inköpspris
-          </CardTitle>
+            <Gavel className="h-4 w-4" /> {t("tillverkning.text_18")} </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1 col-span-2 lg:col-span-1">
-              <Label className="text-[11px]">Art</Label>
+              <Label className="text-[11px]">{t("tillverkning.text_19")}</Label>
               <Select value={species} onValueChange={setSpecies}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Välj art" /></SelectTrigger>
+                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder={t("tillverkning.text_20")} /></SelectTrigger>
                 <SelectContent className="max-h-72">
                   {speciesOptions.map((s) => <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>)}
                 </SelectContent>
@@ -182,34 +183,33 @@ export function AuctionCalculator() {
               {species && <p className="text-[10px] text-muted-foreground">{CUT_MODEL_LABELS[cutModel]}</p>}
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Sortering</Label>
+              <Label className="text-[11px]">{t("tillverkning.text_21")}</Label>
               <Select value={grade || "okand"} onValueChange={(v) => setGrade(v === "okand" ? "" : v)}>
                 <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="okand" className="text-xs">Okänd</SelectItem>
+                  <SelectItem value="okand" className="text-xs">{t("tillverkning.text_22")}</SelectItem>
                   {["1", "2", "3", "4", "5"].map((g) => (
                     <SelectItem key={g} value={g} className="text-xs">{g}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {gradeForcedSingle && (
-                <p className="text-[10px] text-muted-foreground">Styckas som hel filé</p>
+                <p className="text-[10px] text-muted-foreground">{t("tillverkning.text_23")}</p>
               )}
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Råvara (kg)</Label>
+              <Label className="text-[11px]">{t("tillverkning.text_24")}</Label>
               <Input type="number"
  inputMode="decimal" step="1" value={rawQty} onChange={(e) => setRawQty(e.target.value)} className="h-9 text-xs text-right font-mono tabular-nums" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Utbyte (%)</Label>
+              <Label className="text-[11px]">{t("tillverkning.text_25")}</Label>
               <Input type="number"
  inputMode="decimal" step="0.1" value={yieldPct} onChange={(e) => setYieldPct(e.target.value)} className="h-9 text-xs text-right font-mono tabular-nums" />
             </div>
             <div className="flex items-end">
               <Button size="sm" variant="outline" className="h-9 w-full text-xs" onClick={build} disabled={!species || yieldNum <= 0}>
-                Hämta detaljer
-              </Button>
+                {t("tillverkning.text_26")} </Button>
             </div>
           </div>
 
@@ -225,7 +225,7 @@ export function AuctionCalculator() {
                     type="number"
                     inputMode="decimal"
                     step="1"
-                    placeholder="kr ink moms"
+                    placeholder={t("tillverkning.text_28")}
                     value={r.priceInclVat}
                     onChange={(e) =>
                       setRows((prev) => prev.map((x, xi) => (xi === i ? { ...x, priceInclVat: e.target.value } : x)))
@@ -235,7 +235,7 @@ export function AuctionCalculator() {
                 </div>
               ))}
               <p className="text-[10px] text-muted-foreground">
-                Påslag {fmt(surcharge, 0)} kr/kg · moms {fmt(vatPct, 0)} %
+                {t("tillverkning.text_29")} {fmt(surcharge, 0)} {t("tillverkning.text_30")} {fmt(vatPct, 0)} %
               </p>
             </div>
           )}
@@ -249,15 +249,15 @@ export function AuctionCalculator() {
               <Card key={r.region}>
                 <CardContent className="space-y-1 p-3">
                   <p className="text-[11px] text-muted-foreground">
-                    {r.label.split(" (")[0]} · mål {fmt(r.target, 0)} %
+                    {r.label.split(" (")[0]} {t("tillverkning.text_31")} {fmt(r.target, 0)} %
                   </p>
                   <div className="flex flex-wrap items-end gap-4">
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Partiet håller</p>
+                      <p className="text-[10px] text-muted-foreground">{t("tillverkning.text_32")}</p>
                       <p className="font-mono text-2xl font-semibold tabular-nums">{fmt(r.maxPricePerKg, 2)} kr/kg</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Alla detaljer håller</p>
+                      <p className="text-[10px] text-muted-foreground">{t("tillverkning.text_34")}</p>
                       <p className="font-mono text-2xl font-semibold tabular-nums">
                         {fmt(r.maxPricePerKgAllDetails, 2)} kr/kg
                       </p>
@@ -265,12 +265,10 @@ export function AuctionCalculator() {
                   </div>
                   {r.maxPricePerKgAllDetails < r.maxPricePerKg && (
                     <p className="text-[10px] text-amber-600">
-                      Den billigaste detaljen är styrande — över {fmt(r.maxPricePerKgAllDetails, 2)} kr/kg hamnar minst en
-                      detalj under målet även om partiet håller.
-                    </p>
+                      {t("tillverkning.text_36")} {fmt(r.maxPricePerKgAllDetails, 2)} {t("tillverkning.text_37")} </p>
                   )}
                   <p className="text-[10px] text-muted-foreground">
-                    intäkt {fmt(r.revenueExVat, 0)} kr · tillåten kostnad {fmt(r.allowedTotalCost, 0)} kr · arbete{" "}
+                    {t("tillverkning.text_38")} {fmt(r.revenueExVat, 0)} {t("tillverkning.text_39")} {fmt(r.allowedTotalCost, 0)} {t("tillverkning.text_40")}{" "}
                     {fmt(r.surchargeCost, 0)} kr
                   </p>
                 </CardContent>
@@ -281,7 +279,7 @@ export function AuctionCalculator() {
 
           <Card>
             <CardContent className="space-y-2 p-3">
-              <Label className="text-[11px]">Budpris (kr/kg)</Label>
+              <Label className="text-[11px]">{t("tillverkning.text_42")}</Label>
               <Input
                 type="number"
                 inputMode="decimal"
@@ -293,10 +291,10 @@ export function AuctionCalculator() {
               {bidNum > 0 && (
                 <div className="flex flex-wrap items-center gap-2 text-[11px]">
                   <Badge variant="outline" className="font-mono tabular-nums">
-                    På råvara {fmt(bidMargin.marginOnRawPct, 1)} %
+                    {t("tillverkning.text_43")} {fmt(bidMargin.marginOnRawPct, 1)} %
                   </Badge>
                   <Badge variant="outline" className="font-mono tabular-nums">
-                    Ink. arbete {fmt(bidMargin.marginInclWorkPct, 1)} %
+                    {t("tillverkning.text_44")} {fmt(bidMargin.marginInclWorkPct, 1)} %
                   </Badge>
                   {regions.map((r) => (
                     <Badge
@@ -308,14 +306,13 @@ export function AuctionCalculator() {
                           : "border-destructive text-destructive"
                       }
                     >
-                      {r.label.split(" (")[0]}: {bidNum <= r.maxPricePerKg ? "inom målet" : "över maxpris"}
+                      {r.label.split(" (")[0]}: {bidNum <= r.maxPricePerKg ? t("tillverkning.text_47") : t("tillverkning.text_48")}
                     </Badge>
                   ))}
                 </div>
               )}
               <Button size="sm" className="h-9 gap-1.5 text-xs" onClick={save} disabled={saveCalc.isPending}>
-                <Save className="h-3.5 w-3.5" /> Spara kalkyl
-              </Button>
+                <Save className="h-3.5 w-3.5" /> {t("tillverkning.text_49")} </Button>
             </CardContent>
           </Card>
         </>
@@ -324,7 +321,7 @@ export function AuctionCalculator() {
       {saved.length > 0 && (
         <Card>
           <CardHeader className="py-3">
-            <CardTitle className="text-sm">Sparade kalkyler</CardTitle>
+            <CardTitle className="text-sm">{t("tillverkning.text_50")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 p-3 pt-0">
             {saved.map((c) => (
@@ -333,17 +330,17 @@ export function AuctionCalculator() {
                 <span className="font-medium">{c.species_group}</span>
                 <span className="font-mono tabular-nums">{fmt(Number(c.raw_quantity), 0)} kg</span>
                 <span className="font-mono tabular-nums text-muted-foreground">
-                  max {fmt(Number(c.max_price_sthlm ?? 0), 0)} / {fmt(Number(c.max_price_gbg ?? 0), 0)} kr
+                  {t("tillverkning.text_52")} {fmt(Number(c.max_price_sthlm ?? 0), 0)} / {fmt(Number(c.max_price_gbg ?? 0), 0)} kr
                 </span>
                 {c.bid_price != null && (
-                  <span className="font-mono tabular-nums">bud {fmt(Number(c.bid_price), 0)} kr</span>
+                  <span className="font-mono tabular-nums">{t("tillverkning.text_54")} {fmt(Number(c.bid_price), 0)} kr</span>
                 )}
                 <div className="ml-auto flex items-center gap-1">
                   <Input
                     type="number"
                     inputMode="decimal"
                     step="0.5"
-                    placeholder="klubbslag"
+                    placeholder={t("tillverkning.text_56")}
                     defaultValue={c.actual_price != null ? String(Number(c.actual_price)) : ""}
                     onBlur={(e) => {
                       const v = parseFloat(e.target.value);

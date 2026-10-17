@@ -3,6 +3,10 @@
  * (staff.preferred_lang); saknas en text visas svenska.
  */
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import reporting from "@/lib/staffDicts/reporting";
+import tillverkning from "@/lib/staffDicts/tillverkning";
+import produktionslista from "@/lib/staffDicts/produktionslista";
+import meny from "@/lib/staffDicts/meny";
 
 export type StaffLang = "sv" | "ti" | "en" | "ar";
 export const STAFF_LANGS: { value: StaffLang; label: string }[] = [
@@ -12,7 +16,7 @@ export const STAFF_LANGS: { value: StaffLang; label: string }[] = [
   { value: "ar", label: "العربية" },
 ];
 
-type Row = Partial<Record<StaffLang, string>> & { sv: string };
+export type Row = Partial<Record<StaffLang, string>> & { sv: string };
 
 const DICT: Record<string, Row> = {
   my_time: { sv: "Min tid", ti: "ናተይ ሰዓት", en: "My time", ar: "وقتي" },
@@ -45,7 +49,7 @@ export function normalizeLang(v: string | null | undefined): StaffLang {
 }
 
 export function staffT(key: string, lang: StaffLang): string {
-  const row = DICT[key];
+  const row = DICT[key] ?? reporting[key] ?? tillverkning[key] ?? produktionslista[key] ?? meny[key];
   if (!row) return key;
   return row[lang] ?? row.sv;
 }

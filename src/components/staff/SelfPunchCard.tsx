@@ -1,3 +1,4 @@
+import { useStaffT } from "@/lib/staffI18n";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,20 @@ type Status = {
   requires_location?: boolean;
 };
 
-const LABEL: Record<string, string> = { in: "Stämpla in", ut: "Stämpla ut", rast_start: "Börja rast", rast_slut: "Avsluta rast" };
+const ERROR_KEYS: Record<string, string> = {
+  "Logga in för att stämpla.": "login",
+  "Du saknar personalkonto för stämpling.": "account",
+  "Mobilstämpling är inte öppen för dig.": "mobile_closed",
+  "Mobilstämpling är inte öppen för din butik.": "store_closed",
+  "Platsåtkomst krävs för mobil stämpling.": "location_required",
+  "Arbetsplatsen saknar giltig position för mobilstämpling. Kontakta kontoret.": "site_position",
+  "Kunde inte spara stämplingen.": "save_error",
+  "Du måste vara instämplad för att börja rast.": "break_requires_in",
+  "Ingen pågående rast att avsluta.": "no_break",
+  "Du är redan instämplad och på rast. Tryck Rast slut i stället.": "already_break",
+  "Du är redan instämplad. Tryck Ut när du slutar — eller säg till chefen om något blivit fel.": "already_in",
+"Kunde inte nå stämplingen. Försök igen.": "connection_error", "Telefonen saknar platstjänst.": "no_location", "Platstjänsten är avstängd eller nekad.": "location_denied", "Kunde inte läsa din position. Gå utomhus eller närmare butiken och försök igen.": "position_error"};
+
 const time = (iso: string) => new Date(iso).toLocaleTimeString("sv-SE", { timeZone: "Europe/Stockholm", hour: "2-digit", minute: "2-digit" });
 
 // Direkt fetch i stället för functions.invoke: nekade stämplingar (t.ex. utanför geofence)
@@ -72,6 +86,13 @@ export const SELF_PUNCH_ANCHOR = "self-punch-card";
 
 /** Personlig mobilstämpling på startsidan. Visas bara för den som har rätt. */
 export function SelfPunchCard() {
+  const { t, lang, dir } = useStaffT();
+  const translateError = (text: string) => {
+    const key = ERROR_KEYS[text];
+    if (key) return t(`meny.${key}`);
+    const distance = /^Du är (\d+) meter från driftstället\. Stämpling nekad\.$/.exec(text);
+    return distance ? t("meny.distance_error").replace("{n}", distance[1]) : text;
+  };
   const qc = useQueryClient();
   const { data: status } = useSelfPunchStatus();
   const [busy, setBusy] = useState(false);
@@ -95,13 +116,13 @@ export function SelfPunchCard() {
       });
       if (r.error) {
         const outside = /meter från/.test(r.error);
-        setMessage({ tone: "error", text: outside ? `Du är utanför butiken. ${r.error}` : r.error });
+        setMessage({ tone: "error", text: outside ? t("meny.outside").replace("{n}", translateError(r.error)) : translateError(r.error) });
       } else {
-        setMessage({ tone: "ok", text: `${LABEL[action]} kl. ${time(r.data?.entry?.occurred_at ?? new Date().toISOString())}` });
+        setMessage({ tone: "ok", text: t("meny.punch_success").replace("{n}", t(`meny.${action}`)).replace("{time}", time(r.data?.entry?.occurred_at ?? new Date().toISOString())) });
         await load();
       }
     } catch (e) {
-      setMessage({ tone: "error", text: (e as Error).message });
+      setMessage({ tone: "error", text: translateError((e as Error).message) });
       if ((e as { denied?: boolean }).denied) setLocationDenied(true);
     } finally {
       setBusy(false);
@@ -112,28 +133,28 @@ export function SelfPunchCard() {
   const primary = status.suggested_action;
 
   return (
-    <Card id={SELF_PUNCH_ANCHOR} className="scroll-mt-20">
+    <Card lang={lang} dir={dir} id={SELF_PUNCH_ANCHOR} className="scroll-mt-20">
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center gap-3">
           <Clock className="h-7 w-7 shrink-0 text-primary" />
           <div className="min-w-0">
-            <p className="text-lg font-semibold leading-tight text-foreground">Stämpla</p>
+            <p className="text-lg font-semibold leading-tight text-foreground">{t("meny.punch")}</p>
             <p className="text-base font-medium text-foreground">
               {status.last_type === "rast_start"
-                ? "På rast"
+                ? t("meny.on_break")
                 : inShift && status.punched_in_since
-                  ? `Instämplad sedan kl. ${time(status.punched_in_since)}`
-                  : "Inte instämplad"}
+                  ? t("meny.since").replace("{n}", time(status.punched_in_since))
+                  : t("meny.not_in")}
             </p>
           </div>
         </div>
         <div className="flex flex-col gap-3">
           <Button className="h-16 w-full text-xl font-semibold" disabled={busy} onClick={() => punch(primary)}>
             {busy ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : <MapPin className="h-6 w-6 mr-2" />}
-            {LABEL[primary]}
+            {t(`meny.${primary}`)}
           </Button>
           {(status.last_type === "in" || status.last_type === "rast_slut") && (
-            <Button variant="outline" className="h-14 w-full text-lg" disabled={busy} onClick={() => punch("rast_start")}>Börja rast</Button>
+            <Button variant="outline" className="h-14 w-full text-lg" disabled={busy} onClick={() => punch("rast_start")}>{t("meny.rast_start")}</Button>
           )}
         </div>
         {message && (
@@ -141,12 +162,12 @@ export function SelfPunchCard() {
         )}
         {locationDenied && (
           <div className="rounded-md border border-border bg-muted/40 p-3 text-base space-y-2">
-            <p className="font-semibold">Så slår du på platstjänsten</p>
-            <p><span className="font-medium">iPhone:</span> Inställningar → Integritet och säkerhet → Platstjänster → Safari-webbplatser → Vid användning. Öppna sedan appen igen.</p>
-            <p><span className="font-medium">Android:</span> Chrome → ⋮ → Inställningar → Webbplatsinställningar → Plats → tillåt den här webbplatsen.</p>
+            <p className="font-semibold">{t("meny.enable_location")}</p>
+            <p><span className="font-medium">iPhone:</span> {t("meny.iphone_help")}</p>
+            <p><span className="font-medium">Android:</span> {t("meny.android_help")}</p>
           </div>
         )}
-        {status.requires_location !== false && <p className="text-sm text-muted-foreground">Din position kontrolleras mot butiken vid varje stämpling.</p>}
+        {status.requires_location !== false && <p className="text-sm text-muted-foreground">{t("meny.location_notice")}</p>}
       </CardContent>
     </Card>
   );
