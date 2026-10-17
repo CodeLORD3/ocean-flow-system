@@ -122,7 +122,7 @@ export function LotPicker({ lots, quantityKg, loading, onChange, emptyHint }: Lo
                   <TableCell className="py-1.5">
                     <input
                       type="radio"
-                      aria-label={`Välj parti ${l.lotNumber}`}
+                      aria-label={t("tillverkning.select_batch").replace("{n}", l.lotNumber)}
                       checked={startLotId === l.lotId}
                       onChange={() => setStartLotId(l.lotId)}
                       className="h-3.5 w-3.5 accent-primary"

@@ -121,7 +121,7 @@ export function CookingOrderForm() {
     if (!alloc?.fullyAllocated) {
       toast({
         title: t("tillverkning.text_60"),
-        description: `${fmt(alloc?.shortBy ?? rawQtyNum, 1)} kg saknas i råvarupartierna.`,
+        description: t("tillverkning.shortage").replace("{n}", fmt(alloc?.shortBy ?? rawQtyNum, 1)),
         variant: "destructive",
       });
       return;
@@ -316,7 +316,7 @@ export function CookingOrderForm() {
           {outProduct && shelfLifeDays && (
             <p className="text-[10px] text-muted-foreground">
               {t("tillverkning.text_83")} {shelfLifeDays} {t("tillverkning.text_84")} {bestBeforeForOutput()}
-              {shelfLifeOpenDays ? ` · ${shelfLifeOpenDays} dagar efter öppnad förpackning` : ""}
+              {shelfLifeOpenDays ? t("tillverkning.opened_days").replace("{n}", String(shelfLifeOpenDays)) : ""}
             </p>
           )}
 
@@ -326,7 +326,7 @@ export function CookingOrderForm() {
               quantityKg={rawQtyNum}
               loading={loadingLots}
               onChange={setAlloc}
-              emptyHint={`Inga partier av ${rawProduct?.name ?? t("tillverkning.text_87")} med saldo i grossistlagret — bokför inleverans eller flytta in råvaran först.`}
+              emptyHint={t("tillverkning.empty_batches").replace("{n}", rawProduct?.name ?? t("tillverkning.text_87"))}
             />
           )}
 

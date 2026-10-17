@@ -124,7 +124,7 @@ export function ProductionHistory() {
                     <span className="text-xs font-medium">{o.raw_name}</span>
                     <span className="text-[11px] text-muted-foreground">{o.production_date}</span>
                     <span className="text-[11px] font-mono tabular-nums text-muted-foreground">
-                      {fmt(Number(o.raw_quantity), 1)} {t("tillverkning.text_134")} {fmt(plannedOut, 1)} {t("tillverkning.text_135")} {actualOut > 0 && ` · ${fmt(actualOut, 1)} kg vägt`}
+                      {fmt(Number(o.raw_quantity), 1)} {t("tillverkning.text_134")} {fmt(plannedOut, 1)} {t("tillverkning.text_135")} {actualOut > 0 && t("tillverkning.weighed").replace("{n}", fmt(actualOut, 1))}
                     </span>
                     <Badge variant="outline" className="ml-auto text-[10px]">
                       {o.status === "completed" ? t("tillverkning.text_137") : t("tillverkning.text_138")}
