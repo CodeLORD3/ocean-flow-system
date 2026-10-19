@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Printer } from "lucide-react";
+import { Download, Printer } from "lucide-react";
+import { downloadOrderDocument } from "@/lib/orderDocumentPdf";
+import { toast } from "sonner";
 import { displayOrderWeek } from "@/lib/orderWeek";
 
 interface PackingSlipProps {
@@ -32,7 +34,10 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
     if (!content) return;
 
     const printWindow = window.open("", "_blank", "width=800,height=600");
-    if (!printWindow) return;
+    if (!printWindow) {
+      toast.error("Utskriftsfönstret blockerades. Tillåt popup-fönster eller välj Ladda ner PDF.");
+      return;
+    }
 
     printWindow.document.write(`
       <html>
@@ -49,11 +54,13 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
         </head>
         <body>
           ${content.innerHTML}
-          <script>window.onload = function() { window.print(); window.close(); }<\/script>
         </body>
       </html>
     `);
     printWindow.document.close();
+    const startPrint = () => { printWindow.focus(); printWindow.print(); };
+    if (printWindow.document.readyState === "complete") startPrint();
+    else printWindow.addEventListener("load", startPrint, { once: true });
   };
 
   const totalOrderedWeight = lines.reduce((sum: number, l: any) => {
@@ -241,6 +248,11 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
           </Button>
           <Button size="sm" onClick={handlePrint} className="text-xs gap-1.5">
             <Printer className="h-3.5 w-3.5" /> Skriv ut
+          </Button>
+          <Button size="sm" className="text-xs gap-1.5" onClick={() => {
+            void downloadOrderDocument(order, "packing").catch(() => toast.error("PDF-filen kunde inte skapas. Försök igen."));
+          }}>
+            <Download className="h-3.5 w-3.5" /> Ladda ner PDF
           </Button>
         </DialogFooter>
       </DialogContent>

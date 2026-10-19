@@ -17,3 +17,7 @@
 - E-postrapporter: pg_cron väcker `report-email` varje hel timme och funktionen avgör själv svensk tid/veckodag och om schemat är på (`report_email_settings.enabled`); alla siffror räknas i funktionen, AI skriver bara analys, och ett unikt index på lyckade körningar i `report_email_runs` hindrar dubbelutskick.
 - Personalkollen-pass utan utstämpling får sluttid butikens stängning + 30 min i `pk_import_run` (från `store_opening_hours`); stängd dag eller okänd tid lämnas som `saknar_utstampling`, och klockans 12-timmarsavslut på passet ogiltigförklaras — så att samma pass aldrig får två sluttider.
 - Edge functions read period data page by page with range() — the DB caps at 1000 rows and truncation corrupts payroll.
+
+<!-- LOVABLE:BEGIN -->
+- Order document downloads use `src/lib/orderDocumentPdf.ts` to generate paginated PDFs from data without popups; printing preserves the existing preview.
+<!-- LOVABLE:END -->
