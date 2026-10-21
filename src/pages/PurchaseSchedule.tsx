@@ -30,7 +30,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useManualScheduleEntries } from "@/hooks/useManualScheduleEntries";
 import { useProducts } from "@/hooks/useProducts";
 import { purchaseDateFor, purchaseLeadDays, purchaseLeadLabel } from "@/lib/purchaseLead";
-import { isScheduleOrderEligible } from "@/lib/purchaseOrderEligibility";
+import { isScheduleOrderEligible, isPurchaseDeliveryEligible, stockholmDateKey } from "@/lib/purchaseOrderEligibility";
 
 const WEEKDAYS = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 const WEEKDAY_OPTIONS = WEEKDAYS.map((name, i) => ({ value: i + 1, label: name }));
@@ -120,6 +120,7 @@ function TransportZoneBadge({
 }
 
 export default function PurchaseSchedule({ title = "Inköpsschema", production = false }: { title?: string; production?: boolean } = {}) {
+  const today = stockholmDateKey(new Date());
   const { data: orders, isLoading: ordersLoading } = useShopOrders();
   const { data: stores, isLoading: storesLoading } = useStores();
   const { data: transportSchedules, isLoading: schedulesLoading } = useTransportSchedules();
@@ -514,6 +515,8 @@ export default function PurchaseSchedule({ title = "Inköpsschema", production =
         const deliveryDateStr = line.delivery_date || order.desired_delivery_date;
         if (!deliveryDateStr) continue;
 
+        if (!isPurchaseDeliveryEligible(deliveryDateStr, production, today)) continue;
+
         const deliveryDate = parseISO(deliveryDateStr);
         const departureDate = deliveryDate;
         const isoWeekday = deliveryDate.getDay() === 0 ? 7 : deliveryDate.getDay();
@@ -631,7 +634,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema", production =
 
     // Filter out items that have no pending lines (only packed shops)
     return Array.from(grouped.values()).filter(item => item.totalQuantity > 0 || item.isManual);
-  }, [orders, stores, transportSchedules, storeMap, zoneSchedules, manualEntries, allProducts, production]);
+  }, [orders, stores, transportSchedules, storeMap, zoneSchedules, manualEntries, allProducts, production, today]);
 
   // ── Bought items for "Köpt vecka" tab ──
   const boughtItems = useMemo(() => {
