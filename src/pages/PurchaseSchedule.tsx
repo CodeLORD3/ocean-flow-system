@@ -30,6 +30,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useManualScheduleEntries } from "@/hooks/useManualScheduleEntries";
 import { useProducts } from "@/hooks/useProducts";
 import { purchaseDateFor, purchaseLeadDays, purchaseLeadLabel } from "@/lib/purchaseLead";
+import { isScheduleOrderEligible } from "@/lib/purchaseOrderEligibility";
 
 const WEEKDAYS = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 const WEEKDAY_OPTIONS = WEEKDAYS.map((name, i) => ({ value: i + 1, label: name }));
@@ -118,7 +119,7 @@ function TransportZoneBadge({
   );
 }
 
-export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: string } = {}) {
+export default function PurchaseSchedule({ title = "Inköpsschema", production = false }: { title?: string; production?: boolean } = {}) {
   const { data: orders, isLoading: ordersLoading } = useShopOrders();
   const { data: stores, isLoading: storesLoading } = useStores();
   const { data: transportSchedules, isLoading: schedulesLoading } = useTransportSchedules();
@@ -493,7 +494,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
     const rawItems: RawItem[] = [];
 
     for (const order of orders) {
-      if (order.status === "Arkiverad") continue;
+      if (!isScheduleOrderEligible(order.status, production)) continue;
       const store = storeMap.get(order.store_id);
       if (!store) continue;
 
@@ -630,7 +631,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
 
     // Filter out items that have no pending lines (only packed shops)
     return Array.from(grouped.values()).filter(item => item.totalQuantity > 0 || item.isManual);
-  }, [orders, stores, transportSchedules, storeMap, zoneSchedules, manualEntries, allProducts]);
+  }, [orders, stores, transportSchedules, storeMap, zoneSchedules, manualEntries, allProducts, production]);
 
   // ── Bought items for "Köpt vecka" tab ──
   const boughtItems = useMemo(() => {
@@ -650,7 +651,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
     const grouped = new Map<string, typeof items[number]>();
 
     for (const order of orders) {
-      if (order.status === "Arkiverad") continue;
+      if (!isScheduleOrderEligible(order.status, production)) continue;
       const store = storeMap.get(order.store_id);
       if (!store) continue;
 
@@ -691,7 +692,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
     }
 
     return Array.from(grouped.values()).sort((a, b) => a.category.localeCompare(b.category) || a.productName.localeCompare(b.productName));
-  }, [orders, stores, transportSchedules, storeMap, weekDates]);
+  }, [orders, stores, transportSchedules, storeMap, weekDates, production]);
 
   // All unique categories
   const allCategories = useMemo(() => {

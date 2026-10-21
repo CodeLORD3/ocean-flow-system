@@ -1,5 +1,5 @@
 import PurchaseSchedule from "@/pages/PurchaseSchedule";
 
 export default function ProductionSchedule() {
-  return <PurchaseSchedule title="Produktionsschema" />;
+  return <PurchaseSchedule title="Produktionsschema" production />;
 }
