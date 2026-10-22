@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { isScheduleOrderEligible, isPurchaseDeliveryEligible, stockholmDateKey } from "@/lib/purchaseOrderEligibility";
 
 describe("purchase schedule order selection", () => {
-  it("includes only Ny orders and excludes an order as soon as its status changes", () => {
+  it("includes Ny and Pågående orders and excludes finished ones", () => {
     expect(isScheduleOrderEligible("Ny", false)).toBe(true);
-    for (const status of ["Pågående", "Packad", "Skickad", "Levererad", "Avbruten", "Arkiverad", "Öppen", "", null, undefined]) {
+    expect(isScheduleOrderEligible("Pågående", false)).toBe(true);
+    for (const status of ["Packad", "Skickad", "Levererad", "Avbruten", "Arkiverad", "Öppen", "", null, undefined]) {
       expect(isScheduleOrderEligible(status, false)).toBe(false);
     }
   });

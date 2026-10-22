@@ -1,6 +1,9 @@
-/** Production retains its existing order selection; purchasing only uses new orders. */
+const PURCHASE_DONE_STATUSES = new Set(["Packad", "Skickad", "Levererad", "Avbruten", "Arkiverad", "Öppen"]);
+
+/** Production retains its existing order selection; purchasing shows every order that is not finished. */
 export function isScheduleOrderEligible(status: string | null | undefined, production: boolean): boolean {
-  return production ? status !== "Arkiverad" : status === "Ny";
+  if (production) return status !== "Arkiverad";
+  return !!status && !PURCHASE_DONE_STATUSES.has(status);
 }
 
 export function stockholmDateKey(now: Date): string {
