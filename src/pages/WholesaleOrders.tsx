@@ -1586,9 +1586,9 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
            <thead>
              <tr className="border-b border-border bg-muted/30">
                <th className="px-2 py-1 text-left font-medium text-muted-foreground">Produkt</th>
-               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Enhet</th>
-               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Beställt</th>
-               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Lager</th>
+               <th className="px-2 py-1 text-left font-medium text-muted-foreground whitespace-nowrap"><span className="sm:hidden">Enh</span><span className="hidden sm:inline">Enhet</span></th>
+               <th className="px-2 py-1 text-right font-medium text-muted-foreground whitespace-nowrap"><span className="sm:hidden">Best.</span><span className="hidden sm:inline">Beställt</span></th>
+               <th className="px-2 py-1 text-right font-medium text-muted-foreground whitespace-nowrap">Lager</th>
                <th className="px-2 py-1 text-right font-medium text-muted-foreground">Packat</th>
                <th className="px-2 py-1 text-left font-medium text-muted-foreground">Avvikelse</th>
                <th className="px-2 py-1 text-left font-medium text-muted-foreground">Status</th>
@@ -1669,7 +1669,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                    <td className="min-w-0 px-2 py-0.5 font-medium text-foreground">
                      <div className="flex min-w-0 items-center gap-2">
                        <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="h-5 w-7 shrink-0" />
-                       <span className="truncate" title={line.products?.name || undefined}>{line.products?.name || "–"}</span>
+                       <span className="min-w-0 break-words sm:truncate" title={line.products?.name || undefined}>{line.products?.name || "–"}</span>
                        <LinePriorityBadge
                          priority={line.priority}
                          qty={line.priority_qty}
@@ -1678,6 +1678,11 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                          className="shrink-0"
                        />
                      </div>
+                     {!infiniteStock && availableStock < qtyOrdered && (elsewhereByProduct.get(line.product_id) || []).length > 0 && (
+                       <div className="mt-0.5 text-[10px] font-normal leading-tight text-muted-foreground sm:hidden">
+                         Finns i {(elsewhereByProduct.get(line.product_id) || []).map((o) => `${o.place} ${Number(o.qty.toFixed(1))}`).join(" · ")}
+                       </div>
+                     )}
                      <LineNoteText note={line.priority_note} className="sticky left-2 max-w-[calc(100vw-4rem)] sm:max-w-none" />
                      {matchAlt && (
                        <button
@@ -1693,9 +1698,9 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                        </button>
                      )}
                    </td>
-                  <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
-                  <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
-                  <td className={`px-2 py-0.5 text-right font-mono ${infiniteStock ? "text-success" : availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
+                  <td className="px-2 py-0.5 text-muted-foreground whitespace-nowrap">{line.unit || line.products?.unit || "–"}</td>
+                  <td className="px-2 py-0.5 text-right font-mono text-foreground whitespace-nowrap">{qtyOrdered}</td>
+                  <td className={`px-2 py-0.5 text-right font-mono whitespace-nowrap ${infiniteStock ? "text-success" : availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
                     {infiniteStock ? <span title="Obegränsat lager (uppstartsläge)">∞</span> : availableStock > 0 ? Number(availableStock.toFixed(1)) : "0"}
                      {!infiniteStock && matchAlt && (
                        <div
@@ -1714,7 +1719,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                         .join(" · ");
                       return (
                         <div
-                          className="mt-0.5 text-[10px] font-sans font-normal leading-tight text-muted-foreground"
+                          className="mt-0.5 hidden sm:block whitespace-normal text-[10px] font-sans font-normal leading-tight text-muted-foreground"
                           title={other.map((o) => `${o.place}: ${Number(o.qty.toFixed(1))}`).join("\n")}
                         >
                           Finns i {label}
