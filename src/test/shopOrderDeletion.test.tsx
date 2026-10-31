@@ -13,7 +13,7 @@ describe("shop order deletion", () => {
     const invalidate = vi.spyOn(client, "invalidateQueries");
     render(<QueryClientProvider client={client}><DeleteShopOrderButton order={{ id: "order-a", status: "Ny", store_id: "store-a" }} /></QueryClientProvider>);
     fireEvent.click(screen.getByRole("button", { name: "Ta bort order" }));
-    fireEvent.click(screen.getByRole("button", { name: "Ta bort", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: /^Ta bort$/ }));
     await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ["shop-orders-shop"] }));
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ["shop_orders"] });
     expect(db.eq).toHaveBeenCalledWith("id", "order-a");
