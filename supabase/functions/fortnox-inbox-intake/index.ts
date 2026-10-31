@@ -412,6 +412,9 @@ Deno.serve(async (req) => {
           .eq("id", doc.id);
         results.push({ file: file.name, action: "tolkningsfel", error: String(e) });
       }
+      } catch (e) {
+        retry = true;
+        throw e;
       } finally {
         if (!retry) state.files = state.files.filter((f) => f.base !== file.base || f.id !== file.id);
         await checkpoint();
