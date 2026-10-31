@@ -7171,6 +7171,30 @@ export type Database = {
           },
         ]
       }
+      fortnox_inbox_scan_state: {
+        Row: {
+          lease_token: string | null
+          lease_until: string | null
+          legal_entity_code: string
+          state: Json
+          updated_at: string
+        }
+        Insert: {
+          lease_token?: string | null
+          lease_until?: string | null
+          legal_entity_code: string
+          state?: Json
+          updated_at?: string
+        }
+        Update: {
+          lease_token?: string | null
+          lease_until?: string | null
+          legal_entity_code?: string
+          state?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fortnox_invoice_jobs: {
         Row: {
           attempts: number
@@ -25070,6 +25094,19 @@ export type Database = {
       }
       check_station_heartbeats: {
         Args: { _threshold_minutes?: number }
+        Returns: Json
+      }
+      checkpoint_fortnox_inbox_scan: {
+        Args: {
+          _entity: string
+          _release?: boolean
+          _state: Json
+          _token: string
+        }
+        Returns: boolean
+      }
+      claim_fortnox_inbox_scan: {
+        Args: { _entity: string; _token: string }
         Returns: Json
       }
       clock_code_hash: { Args: { _code: string }; Returns: string }

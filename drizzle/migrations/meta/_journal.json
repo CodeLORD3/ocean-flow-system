@@ -267,6 +267,13 @@
       "when": 1793454274897,
       "tag": "0037_monitoring_actor_contract_dayclose_transfer_fixes",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1793454616322,
+      "tag": "0038_fortnox_inbox_resumable_queue",
+      "breakpoints": true
     }
   ]
 }
