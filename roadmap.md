@@ -3,7 +3,7 @@
 ## Project monitoring — 13 fynd
 - [x] 1 AI-triggerbehörighet (kontrollerad mot livefunktion)
 - [x] 2 Transportlagrets leveransdatum (testat)
-- [ ] 3 Fortnox-undermappar — bekräftat; väntar på godkännande av separat plan för beständig arbetskö
+- [x] 3 Fortnox-undermappar — beständig mapp-/filkö och bolagslås; fyra återupptagningstester passerade, ingen verklig import startad
 - [ ] 4 Historiska kassafrågetimeouter — saknar identifierad långsam fråga; befintligt index och 128 rader ger inte stöd för angiven orsak
 - [x] 5 Avtalets chefsuppgifter (livefunktion rättad, ingen signering startad)
 - [x] 6 Butiksavgränsa uppgiftsändringar och bevara historik (testat utan dataskrivning)
