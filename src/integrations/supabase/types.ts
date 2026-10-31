@@ -25548,6 +25548,7 @@ export type Database = {
       payroll_period_end: { Args: { _period: string }; Returns: string }
       payroll_period_source: { Args: { _period: string }; Returns: string }
       payroll_period_start: { Args: { _period: string }; Returns: string }
+      pending_customer_order_transfer_summaries: { Args: never; Returns: Json }
       perform_lot_transformation: {
         Args: {
           _kind: string

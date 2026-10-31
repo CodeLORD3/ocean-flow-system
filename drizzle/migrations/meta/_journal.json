@@ -260,6 +260,13 @@
       "when": 1792238588456,
       "tag": "0036_staff_access_preferred_lang",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1793454274897,
+      "tag": "0037_monitoring_actor_contract_dayclose_transfer_fixes",
+      "breakpoints": true
     }
   ]
 }
