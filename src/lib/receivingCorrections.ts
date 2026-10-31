@@ -76,9 +76,9 @@ export interface TransportResidual {
 export async function fetchTransportResiduals(storeId?: string | null): Promise<TransportResidual[]> {
   let oq = supabase
     .from("shop_orders")
-    .select("id, store_id, delivery_date, stores(name)")
+    .select("id, store_id, desired_delivery_date, stores(name)")
     .eq("status", "Levererad")
-    .order("delivery_date", { ascending: false })
+    .order("desired_delivery_date", { ascending: false })
     .limit(200);
   if (storeId) oq = oq.eq("store_id", storeId);
   const { data: orders, error } = await oq;
@@ -106,7 +106,7 @@ export async function fetchTransportResiduals(storeId?: string | null): Promise<
         orderId: o.id,
         storeId: o.store_id,
         storeName: o.stores?.name ?? "Butik",
-        orderLabel: o.delivery_date ?? "",
+        orderLabel: o.desired_delivery_date ?? "",
         locationId: locId,
         productId: r.productId,
         productName: "",

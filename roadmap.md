@@ -1,5 +1,20 @@
 # Mobilanpassning — sida för sida
 
+## Project monitoring — 13 fynd
+- [ ] 1 AI-triggerbehörighet
+- [ ] 2 Transportlagrets leveransdatum
+- [ ] 3 Fortnox-undermappar
+- [ ] 4 Verifiera orsaken till historiska kassafrågetimeouter
+- [ ] 5 Avtalets chefsuppgifter
+- [ ] 6 Butiksavgränsa uppgiftsändringar och bevara historik
+- [ ] 7 Återställ svenska vid språkbyte
+- [ ] 8 Tillverkningens prisöversättningar
+- [ ] 9 Rättelsemarkering i rapportmejl
+- [ ] 10 Utskriftens återförsök och visningstid
+- [ ] 11 Uteslut oskickade utkast från dagsavslut
+- [ ] 12 Uppdatera orderlistan efter borttagning
+- [ ] 13 Visa begränsade uppgifter för inkommande orderflytt
+
 Stil: som inventeringen. Tryckytor ≥56 px, primärknappar 64 px, brödtext ≥18 px
 på mobil, kort i stället för tabeller, inget sidoscroll vid 360–390 px.
 Dator lämnas oförändrad (allt görs med `sm:`-brytpunkten eller separata mobilvyer).

@@ -266,7 +266,7 @@ export function ProductionOrderForm() {
       const avg = Number((data as any)?.avg_cost) || 0;
       if (avg > 0) {
         setPrice(String(avg));
-        setAvgCostInfo(t("tillverkning.average_cost").replace("{n}", fmt(avg)));
+        setAvgCostInfo(tt("tillverkning.average_cost").replace("{n}", fmt(avg)));
       } else {
         setAvgCostInfo(tt("tillverkning.text_165"));
       }
@@ -274,7 +274,7 @@ export function ProductionOrderForm() {
     return () => {
       cancelled = true;
     };
-  }, [rawProductId]);
+  }, [rawProductId, lang]);
 
   /** Partier av råvaran med saldo, FEFO-sorterade. */
   useEffect(() => {
@@ -1079,7 +1079,7 @@ export function ProductionOrderForm() {
                                 />
                                 <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
                                   {reference > 0 ? `ref ${fmt(reference, 2)}` : tt("tillverkning.text_227")}
-                                  {suggested > 0 ? t("tillverkning.suggestion").replace("{n}", fmt(suggested, 2)) : ""}
+                                  {suggested > 0 ? tt("tillverkning.suggestion").replace("{n}", fmt(suggested, 2)) : ""}
                                 </span>
                                 {hasPrice && suggested > 0 && Math.abs(delta) > 0.009 && (
                                   <span
