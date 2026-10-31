@@ -274,6 +274,13 @@
       "when": 1793454616322,
       "tag": "0038_fortnox_inbox_resumable_queue",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1793454724711,
+      "tag": "0039_fortnox_scan_service_only_grants",
+      "breakpoints": true
     }
   ]
 }
