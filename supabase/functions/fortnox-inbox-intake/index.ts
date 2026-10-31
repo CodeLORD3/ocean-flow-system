@@ -14,6 +14,7 @@
  */
 import { adminClient, corsHeaders, fortnoxRequest as baseRequest, getAccessToken, json, FORTNOX_API, FortnoxError } from "../_shared/fortnox.ts";
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { startScan, discoverFolders, type ScanState, type ScanFolder, type ScanFile } from "./scanQueue.ts";
 
 const BUCKET = "leverantorsdokument";
 const INBOX_PATHS = ["inbox", "inbox_s", "inbox_v", "inbox_d"];
@@ -102,7 +103,7 @@ async function downloadFile(
   return new Uint8Array(await res.arrayBuffer());
 }
 
-type ArchiveFile = { id: string; name: string; path: string; date: string | null; base: "inbox" | "archive" };
+type ArchiveFile = ScanFile;
 
 /** Läser en mapp i inbox eller arkiv och returnerar filer + undermappar. */
 async function readFolder(
@@ -224,46 +225,44 @@ Deno.serve(async (req) => {
   let stored = 0;
   let skipped = 0;
   const results: Json[] = [];
+  const leaseToken = crypto.randomUUID();
+  let scanState: ScanState | null = null;
+  const checkpoint = async (release = false) => {
+    if (!scanState) return;
+    const { data, error } = await sb.rpc("checkpoint_fortnox_inbox_scan", {
+      _entity: entity, _token: leaseToken, _state: scanState, _release: release,
+    });
+    if (error || data !== true) throw new Error(error?.message ?? "Importens körningslås har löpt ut.");
+  };
 
   try {
     // ---------- 1 + 2: Inbox och arkiv ----------
-    const candidates: ArchiveFile[] = [];
-
-    /**
-     * Mappkö: inkorgsmapparna och arkivets rot roterar mellan körningarna
-     * (halvtimmesplats), högst MAX_FOLDERS_PER_RUN mappar läses per körning.
-     * Undermappar som hittas läggs sist i kön och läses bara om taket inte nåtts.
-     */
-    type QueueItem = { base: "inbox" | "archive"; query: string; label: string; depth: number; source: string };
-    const roots: QueueItem[] = INBOX_PATHS.map((p) => ({ base: "inbox" as const, query: `?path=${p}`, label: p, depth: 0, source: `inbox:${p}` }));
+    const { data: claimed, error: claimError } = await sb.rpc("claim_fortnox_inbox_scan", { _entity: entity, _token: leaseToken });
+    if (claimError) throw claimError;
+    if (claimed === null) return await finish({ ok: true, skipped: 0, stored: 0, fetched: 0, partial: true, error: "Import körs redan för bolaget." });
+    scanState = claimed as ScanState;
+    const state = scanState;
+    const roots: ScanFolder[] = INBOX_PATHS.map((p) => ({ base: "inbox" as const, query: `?path=${p}`, label: p, depth: 0, source: `inbox:${p}` }));
     if (includeArchive) roots.push({ base: "archive", query: "", label: "arkiv", depth: 0, source: "arkiv" });
     const slot = Math.floor(Date.now() / 1_800_000);
-    const offset = typeof body.folder_offset === "number" ? body.folder_offset : (slot * MAX_FOLDERS_PER_RUN) % roots.length;
-    const queue: QueueItem[] = [...roots.slice(offset), ...roots.slice(0, offset)];
-    let foldersRead = 0;
-    while (queue.length && foldersRead < MAX_FOLDERS_PER_RUN && !outOfTime()) {
-      const item = queue.shift()!;
-      foldersRead++;
-      try {
-        const { files, folders } = await readFolder(sb, entity, item.base, item.query, item.label);
-        candidates.push(...files);
-        if (item.depth < MAX_DEPTH) {
-          for (const f of folders) {
-            queue.push({ base: item.base, query: `?folderid=${f.id}`, label: `${item.label}/${f.name}`, depth: item.depth + 1, source: item.source });
-          }
-        }
-      } catch (e) {
+    const offset = typeof body.folder_offset === "number" ? Math.abs(Math.trunc(body.folder_offset)) % roots.length : (slot * MAX_FOLDERS_PER_RUN) % roots.length;
+    startScan(state, [...roots.slice(offset), ...roots.slice(0, offset)]);
+    await checkpoint();
+    const foldersRead = await discoverFolders(state,
+      (item) => readFolder(sb, entity, item.base, item.query, item.label),
+      () => checkpoint(), outOfTime, (item, e) => {
         const msg = String(e instanceof Error ? e.message : e);
         if (item.base === "inbox" && isScopeError(msg)) inboxScopeMissing = true;
         results.push({ source: item.source, folder: item.label, action: "kunde_inte_lasas", error: msg });
-      }
-    }
-    results.push({ folders_read: foldersRead, folders_left: queue.length, next_offset: (offset + MAX_FOLDERS_PER_RUN) % roots.length });
+      }, MAX_FOLDERS_PER_RUN, MAX_DEPTH);
+    results.push({ folders_read: foldersRead, folders_left: state.folders.length, files_left: state.files.length });
 
-    for (const file of candidates) {
+    for (const file of [...state.files]) {
 
       if (outOfTime()) { partial = true; break; }
-      if (stored >= limit) break;
+      if (stored >= limit) { partial = true; break; }
+      let retry = false;
+      try {
       if (!isDoc(file.name)) { skipped++; continue; }
       if (tooOld(file.date)) { skipped++; continue; }
 
@@ -282,6 +281,7 @@ Deno.serve(async (req) => {
       try {
         bytes = await downloadFile(sb, entity, file.id, file.base);
       } catch (e) {
+        retry = true;
         results.push({ file: file.name, action: "nedladdning_misslyckades", error: String(e instanceof Error ? e.message : e) });
         continue;
       }
@@ -298,7 +298,8 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      await sb.storage.from(BUCKET).upload(path, bytes, { contentType: mimeFor(file.name), upsert: true });
+      const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, bytes, { contentType: mimeFor(file.name), upsert: true });
+      if (uploadError) { retry = true; results.push({ file: file.name, action: "kunde_inte_sparas", error: uploadError.message }); continue; }
 
       const { data: doc, error: docErr } = await sb
         .from("supplier_documents")
@@ -315,6 +316,7 @@ Deno.serve(async (req) => {
         .select("id")
         .single();
       if (docErr || !doc) {
+        retry = true;
         results.push({ file: file.name, action: "kunde_inte_sparas", error: docErr?.message });
         continue;
       }
@@ -409,6 +411,10 @@ Deno.serve(async (req) => {
           .update({ parse_status: "fel", parse_error: e instanceof Error ? e.message : "okänt fel" })
           .eq("id", doc.id);
         results.push({ file: file.name, action: "tolkningsfel", error: String(e) });
+      }
+      } finally {
+        if (!retry) state.files = state.files.filter((f) => f.base !== file.base || f.id !== file.id);
+        await checkpoint();
       }
     }
 
@@ -517,6 +523,9 @@ Deno.serve(async (req) => {
         .eq("legal_entity_code", entity);
     }
 
+    partial = partial || state.folders.length > 0 || state.files.length > 0;
+    await checkpoint(true);
+    scanState = null;
     return await finish({
       ok: true,
       fetched, stored, skipped, invoices, partial,
@@ -533,5 +542,9 @@ Deno.serve(async (req) => {
       fetched, stored, skipped, partial,
       unread_without_attachment: 0,
     }, 500);
+  } finally {
+    if (scanState) {
+      try { await checkpoint(true); } catch (e) { console.error("fortnox-inbox-intake checkpoint:", String(e)); }
+    }
   }
 });
