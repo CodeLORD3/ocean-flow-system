@@ -4,6 +4,7 @@ import { notifyTaskAssigned } from "@/lib/personNotify";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { staffInitials, todayIso, DEFAULT_CHECKLIST_TEMPLATE_ID } from "@/hooks/useChecklist";
 import type { EntityImage } from "@/hooks/useEntityImages";
+import { registerTaskDayIds, assertLocalTemplate } from "@/lib/registerTaskScope";
 
 /**
  * Uppgifter = samma rader som checklistorna (checklist_items för dagens
@@ -959,7 +960,7 @@ export function useTaskRegister(storeId?: string | null, days = 180) {
   });
 }
 
-/** Byter namn på uppgiften överallt: standarduppgiften och alla dagens rader. */
+/** Renames only this store's template and unfinished current/future occurrences. */
 export function useRenameRegisterTask() {
   const qc = useQueryClient();
   return useMutation({
@@ -967,13 +968,18 @@ export function useRenameRegisterTask() {
       oldName,
       newName,
       templateItemId,
+      storeId,
     }: {
       oldName: string;
       newName: string;
       templateItemId?: string | null;
+      storeId?: string | null;
     }) => {
       const name = newName.trim();
       if (!name) throw new Error("Uppgiften måste ha ett namn");
+      const dayIds = await registerTaskDayIds(storeId);
+      if (!storeId) throw new Error("Välj en butik.");
+      await assertLocalTemplate(templateItemId, storeId);
       if (templateItemId) {
         const { error } = await supabase
           .from("checklist_template_items")
@@ -981,8 +987,14 @@ export function useRenameRegisterTask() {
           .eq("id", templateItemId);
         if (error) throw error;
       }
-      const { error: iErr } = await supabase.from("checklist_items").update({ task: name }).eq("task", oldName);
-      if (iErr) throw iErr;
+      for (let i = 0; i < dayIds.length; i += 100) {
+        let q = supabase.from("checklist_items").update({ task: name }).eq("task", oldName)
+          .eq("done", false).is("started_at", null).in("day_id", dayIds.slice(i, i + 100));
+        if (templateItemId) q = q.eq("template_item_id", templateItemId);
+        else q = q.is("template_item_id", null);
+        const { error: iErr } = await q;
+        if (iErr) throw iErr;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["task-register"] });
@@ -996,12 +1008,15 @@ export function useRenameRegisterTask() {
 
 /**
  * Tar bort uppgiften ur registret: standarduppgiften stängs av så den inte
- * återkommer, och alla dagens rader med samma namn tas bort.
+ * återkommer. Endast ej påbörjade rader i vald butik från idag tas bort; historik bevaras.
  */
 export function useDeleteRegisterTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ task, templateItemId }: { task: string; templateItemId?: string | null }) => {
+    mutationFn: async ({ task, templateItemId, storeId }: { task: string; templateItemId?: string | null; storeId?: string | null }) => {
+      const dayIds = await registerTaskDayIds(storeId);
+      if (!storeId) throw new Error("Välj en butik.");
+      await assertLocalTemplate(templateItemId, storeId);
       if (templateItemId) {
         const { error } = await supabase
           .from("checklist_template_items")
@@ -1009,8 +1024,14 @@ export function useDeleteRegisterTask() {
           .eq("id", templateItemId);
         if (error) throw error;
       }
-      const { error } = await supabase.from("checklist_items").delete().eq("task", task);
-      if (error) throw error;
+      for (let i = 0; i < dayIds.length; i += 100) {
+        let q = supabase.from("checklist_items").delete().eq("task", task)
+          .eq("done", false).is("started_at", null).in("day_id", dayIds.slice(i, i + 100));
+        if (templateItemId) q = q.eq("template_item_id", templateItemId);
+        else q = q.is("template_item_id", null);
+        const { error } = await q;
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["task-register"] });

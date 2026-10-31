@@ -145,7 +145,12 @@ function toast({ ...props }: Toast) {
   const id = genId();
   // Alla aviseringar visas via Sonner (en enda toaster i appen).
   const title = nodeText(props.title) ?? (props.title as React.ReactNode);
-  const opts = { id, description: props.description as React.ReactNode };
+  // Radix ToastAction requires a Radix root; use its label/handler as a native Sonner action instead.
+  const action = props.action ? {
+    label: props.action.props.children,
+    onClick: props.action.props.onClick ?? (() => {}),
+  } : undefined;
+  const opts = { id, description: props.description as React.ReactNode, duration: props.duration, action };
   if (props.variant === "destructive") sonnerToast.error(title ?? "Något gick fel", opts);
   else sonnerToast(title ?? "", opts);
 

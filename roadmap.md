@@ -1,5 +1,21 @@
 # Mobilanpassning — sida för sida
 
+## Project monitoring — 13 fynd
+- [x] 1 AI-triggerbehörighet (kontrollerad mot livefunktion)
+- [x] 2 Transportlagrets leveransdatum (testat)
+- [ ] 3 Fortnox-undermappar — bekräftat; väntar på godkännande av separat plan för beständig arbetskö
+- [ ] 4 Historiska kassafrågetimeouter — saknar identifierad långsam fråga; befintligt index och 128 rader ger inte stöd för angiven orsak
+- [x] 5 Avtalets chefsuppgifter (livefunktion rättad, ingen signering startad)
+- [x] 6 Butiksavgränsa uppgiftsändringar och bevara historik (testat utan dataskrivning)
+- [x] 7 Återställ svenska vid språkbyte (testat)
+- [x] 8 Tillverkningens prisöversättningar
+- [x] 9 Rättelsemarkering i rapportmejl (testat utan utskick)
+- [x] 10 Utskriftens återförsök och visningstid (testat)
+- [x] 11 Uteslut oskickade utkast från dagsavslut (båda livefunktioner rättade)
+- [x] 12 Uppdatera orderlistan efter borttagning (testat utan dataskrivning)
+- [x] 13 Visa begränsade uppgifter för inkommande orderflytt (RPC och åtkomst kontrollerad)
+- [ ] Inloggad slutkontroll — användaren behöver logga in i preview; egen testsession kunde inte skapas
+
 Stil: som inventeringen. Tryckytor ≥56 px, primärknappar 64 px, brödtext ≥18 px
 på mobil, kort i stället för tabeller, inget sidoscroll vid 360–390 px.
 Dator lämnas oförändrad (allt görs med `sm:`-brytpunkten eller separata mobilvyer).

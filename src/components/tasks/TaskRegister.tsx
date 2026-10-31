@@ -99,7 +99,7 @@ export function TaskRegister({
       return;
     }
     try {
-      await rename.mutateAsync({ oldName: row.task, newName: name, templateItemId: row.templateItemId });
+      await rename.mutateAsync({ oldName: row.task, newName: name, templateItemId: row.templateItemId, storeId });
       setEditKey(null);
       toast({ title: "Uppgiften bytte namn", description: name });
     } catch (e: any) {
@@ -109,9 +109,9 @@ export function TaskRegister({
 
   /** Tar bort uppgiften helt efter bekräftelse. */
   const deleteRow = async (row: RegisterTask) => {
-    if (!await confirmDialog(`Ta bort "${row.task}" ur uppgifterna?`)) return;
+    if (!await confirmDialog(`Ta bort ej påbörjade "${row.task}" från idag och framåt i denna butik? Historiken behålls.`)) return;
     try {
-      await removeTask.mutateAsync({ task: row.task, templateItemId: row.templateItemId });
+      await removeTask.mutateAsync({ task: row.task, templateItemId: row.templateItemId, storeId });
       toast({ title: "Uppgiften togs bort", description: row.task });
     } catch (e: any) {
       toast({ title: "Kunde inte ta bort", description: e.message, variant: "destructive" });

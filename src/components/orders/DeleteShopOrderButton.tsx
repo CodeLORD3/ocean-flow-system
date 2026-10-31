@@ -34,6 +34,7 @@ export function DeleteShopOrderButton({ order, large = false }: { order: any; la
     toast.success("Ordern togs bort");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["shop_orders"] });
+    qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
   };
 
   return (
