@@ -33,13 +33,9 @@ export function usePendingTransfers() {
   return useQuery({
     queryKey: ["customer_order_transfers", "pending"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("customer_order_transfers")
-        .select("*, customer_orders(order_number, customer_name_snapshot, wanted_date, wanted_time, customer_order_lines(id))")
-        .eq("status", "vantar")
-        .order("requested_at", { ascending: true });
+      const { data, error } = await supabase.rpc("pending_customer_order_transfer_summaries");
       if (error) throw error;
-      return (data ?? []) as OrderTransfer[];
+      return (data ?? []) as unknown as OrderTransfer[];
     },
     refetchInterval: 60_000,
   });

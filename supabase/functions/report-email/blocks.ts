@@ -2,6 +2,7 @@
 // Grossisten, Stockholm), en rad per dag. Alla belopp räknas här ur
 // databasen; saknas en källa visas "–" med en not, inget uppskattas.
 // deno-lint-ignore-file no-explicit-any
+import { purchaseCorrections } from "./purchaseCorrections.ts";
 
 const WD = ["Sön", "Mån", "Tis", "Ons", "Tor", "Fre", "Lör"];
 const WD_LONG = ["Söndag", "Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag"];
@@ -182,11 +183,9 @@ export async function buildBlocks(db: any, from: string, to: string, highlight: 
       .gte("report_date", mondayOf(to)).lt("report_date", to).not("facts", "is", null).order("report_date", { ascending: false }).limit(1).maybeSingle();
     const pf: any = prev?.facts ?? null;
     const cmp = (cur: Record<string, number | null>, old: Record<string, number | null> | undefined, out: string[]) => {
-      if (!old) return;
-      for (const d of Object.keys(old)) {
-        if (!(d in cur) || d > String(prev!.report_date)) continue;
-        const diff = r2((cur[d] ?? 0) - (old[d] ?? 0));
-        if (Math.abs(diff) >= 0.01) out.push(`${WD_LONG[dow(d)]} ${Number(d.slice(8))}/${Number(d.slice(5, 7))} rättad ${diff > 0 ? "+" : "−"}${kr(Math.abs(diff))} (inköp som kommit in i efterhand, tidigare ${kr(old[d])})`);
+      for (const correction of purchaseCorrections(cur, old, String(prev?.report_date ?? ""))) {
+        const d = correction.date;
+        out.push(`${WD_LONG[dow(d)]} ${Number(d.slice(8))}/${Number(d.slice(5, 7))} rättad: ${kr(correction.current)} (tidigare ${kr(correction.previous)}${correction.difference === null ? "" : `, ändring ${correction.difference > 0 ? "+" : "−"}${kr(Math.abs(correction.difference))}`}).`);
       }
     };
     if (pf) { cmp(buyDaysG, pf.goteborg?.inkop_per_dag, corrG); cmp(buyDaysS, pf.stockholm?.inkop_per_dag, corrS); }
@@ -221,7 +220,7 @@ export async function buildBlocks(db: any, from: string, to: string, highlight: 
     ["Snittkvitto totalt", kr0(div(gSales, gRec)), true],
     ["Bruttomarginal", pc(gResult == null ? null : (div(gResult, gSales) ?? 0) * 100), true],
   ]);
-  g += noteList([...prelim, "Lagerförändring: inget lagervärde registrerat i systemet, räknas som 0."]);
+  g += noteList([...corrG, ...prelim, "Lagerförändring: inget lagervärde registrerat i systemet, räknas som 0."]);
 
   // ---------- GROSSISTEN ----------
   const wResult = wSales == null ? null : r2(wSales - (wCost ?? 0));
@@ -262,6 +261,7 @@ export async function buildBlocks(db: any, from: string, to: string, highlight: 
     ["Bruttomarginal", pc(sResult == null ? null : (div(sResult, sSales) ?? 0) * 100), true],
   ]);
   s += noteList([
+    ...corrS,
     "Inköp = grossistens faktura till DE No.1 AB på leveransdagen.",
     "Webb = webbshopsordrar (Shopify) per hämtdag, exklusive 6 % moms.",
     sFact == null ? "Faktura: inga kundfakturor i DE No.1 under perioden." : "Faktura = kundfakturor i DE No.1 (Fortnox).",
@@ -281,9 +281,9 @@ export async function buildBlocks(db: any, from: string, to: string, highlight: 
   for (const d of days) if (mondayOf(d) !== mondayOf(to)) checks.push(`Datum ${d} ligger inte i rapportveckan`);
 
   const facts = {
-    goteborg: { inkop_brutto: gBuy, avgar: wCost, inkop_netto: gNetBuy, forsaljning: gSales, resultat: gResult, kortkop: gRec },
+    goteborg: { inkop_per_dag: buyDaysG, inkop_brutto: gBuy, avgar: wCost, inkop_netto: gNetBuy, forsaljning: gSales, resultat: gResult, kortkop: gRec },
     grossisten: { fakturerat_schweiz: chTot, fakturerat_stockholm: sthTot, varukostnad: wCost, resultat: wResult },
-    stockholm: { inkop: sthBuy, butiker: sStoreSales, webb: sWeb, faktura: sFact, forsaljning: sSales, resultat: sResult, kortkop: sRec },
+    stockholm: { inkop_per_dag: buyDaysS, inkop: sthBuy, butiker: sStoreSales, webb: sWeb, faktura: sFact, forsaljning: sSales, resultat: sResult, kortkop: sRec },
     preliminar: missingDays,
   };
   return { html: g + w + s, facts, checks };
