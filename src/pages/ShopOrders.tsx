@@ -211,6 +211,8 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
   isDateDisabled: (date: Date) => boolean;
 }) {
   const { flashClass } = useNotificationFlash("shop_order");
+  // Match sm:hidden/sm:block: never mount two live editors for the same order.
+  const isMobileOrderView = useIsMobile(640);
   const [FolljesedelOrder, setFolljesedelOrder] = useState<any>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -328,7 +330,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                 </div>
               )}
 
-              {isExpanded && (
+              {isExpanded && isMobileOrderView && (
                 <div className="border-t border-border bg-card px-3 py-3">
                   {o.status === "Öppen" && !readOnly ? (
                     <OpenOrderEditor
@@ -454,7 +456,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                           </span>
                         </td>
                       </tr>
-                      {isExpanded && (
+                      {isExpanded && !isMobileOrderView && (
                         <tr>
                           <td colSpan={9} className="p-0">
                             <div className="border-l-2 border-l-primary bg-card px-3 py-2 space-y-2">
