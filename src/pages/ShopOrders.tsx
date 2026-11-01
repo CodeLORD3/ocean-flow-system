@@ -200,7 +200,7 @@ const DONE_STATUSES = ["Levererad", "Klar / Levererad", "Arkiverad", "Avbruten"]
 
 const FOLLJESEDEL_STATUSES = ["Skickad", "Levererad", "Klar / Levererad", "Arkiverad"];
 
-function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDateDisabled, onCopy, readOnly }: {
+export function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDateDisabled, onCopy, readOnly }: {
   onCopy?: (order: any) => void;
   readOnly?: boolean;
   orders: any[];
