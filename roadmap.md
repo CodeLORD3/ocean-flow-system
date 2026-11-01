@@ -1,5 +1,10 @@
 # Mobilanpassning — sida för sida
 
+## Zollikons öppna order
+- [x] Rätta dubbla live-editorer i mobil-/datorlayout utan att ändra orderdata.
+- [x] Testa öppna, läsa innehåll, stänga och återöppna vid 390, 640, 813 och 1280 px (8 fokuserade tester godkända).
+- [ ] Inloggad kontroll av verklig order — preview-sessionen stoppas av behörighetsladdningen; inget orderinnehåll har ändrats.
+
 ## Project monitoring — 13 fynd
 - [x] 1 AI-triggerbehörighet (kontrollerad mot livefunktion)
 - [x] 2 Transportlagrets leveransdatum (testat)

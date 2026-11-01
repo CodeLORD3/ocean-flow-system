@@ -63,7 +63,7 @@ describe("opening a shared order", () => {
     expect(realtime.channel).toHaveBeenCalledTimes(1);
     expect(screen.getAllByText("Live · delad beställning")).toHaveLength(1);
     expect(screen.getByDisplayValue("20")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Stäng", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: /^Stäng$/ }));
     expect(realtime.removeChannel).toHaveBeenCalledTimes(1);
     open();
     expect(realtime.channel).toHaveBeenCalledTimes(2);
