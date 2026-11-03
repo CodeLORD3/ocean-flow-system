@@ -244,10 +244,10 @@ Deno.serve(async (req) => {
     {
       await client.select(targetFolder);
       // Mejl som granskats men lämnats olästa (utan bilaga/för stora) bär en egen
-      // markering, så de aldrig blockerar kön. Äldst först så inget blir liggande.
+      // markering, så de aldrig blockerar kön. Nyast först: gamla 2025-mejl ska inte läsas in.
       const uids = await client.searchUnseenUids(REVIEWED);
       console.log("mail-intake: olästa ogranskade", uids.length);
-      const batch = uids.slice(0, limit);
+      const batch = uids.slice(-limit).reverse();
 
       for (const uid of batch) {
         if (Date.now() - startedAt > BUDGET_MS) {
