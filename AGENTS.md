@@ -22,4 +22,4 @@
 - Order document downloads use `src/lib/orderDocumentPdf.ts` to generate paginated PDFs from data without popups; printing preserves the existing preview.
 <!-- LOVABLE:END -->
 - Order access rules (shop_orders/shop_order_lines) check company access once per request via my_company_access_all()/my_company_ids(), never per row — per-row checks timed out for company-scoped staff and emptied the list.
-- Inköpsmailkorgen (`mail-intake`) läses av pg_cron var 10:e minut dagtid, nyast först, en körning i taget per mapp; mejl som lämnas olästa markeras med IMAP-nyckelordet `MakrillGranskad` innan tung tolkning — så ett mejl utan bilaga eller ett för tungt mejl aldrig blockerar kön.
+- Mail intake uses PostalMime for MIME-only decoding and bounded IMAP response framing, avoiding HTML conversion and repeated full-message scans so large attachments fit the edge CPU budget; scheduled reads remain newest-first and reviewed-message recovery requires service credentials.

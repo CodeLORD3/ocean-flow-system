@@ -11,8 +11,7 @@
  */
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { SimpleImap, parseAddress } from "./imap.ts";
-import { simpleParser } from "npm:mailparser@3.7.1";
-import { Buffer } from "node:buffer";
+import { parseMailAttachments } from "./attachments.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -127,6 +126,13 @@ Deno.serve(async (req) => {
   // körning, filtrerar på headers först och avbryter innan CPU-budgeten tar slut.
   const limit = typeof body.limit === "number" ? Math.min(body.limit, 10) : 3;
   const moveMail = body.move !== false;
+  const retrySubject = typeof body.retry_subject === "string" ? body.retry_subject.trim() : "";
+  if (retrySubject && (retrySubject.length > 200 || /[\r\n]/.test(retrySubject) ||
+      req.headers.get("authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`)) {
+    return new Response(JSON.stringify({ error: "Återhämtning kräver intern behörighet och giltigt ämne" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
   const startedAt = Date.now();
   const BUDGET_MS = 40_000;
   const MAX_SOURCE_BYTES = 8 * 1024 * 1024;
@@ -245,7 +251,9 @@ Deno.serve(async (req) => {
       await client.select(targetFolder);
       // Mejl som granskats men lämnats olästa (utan bilaga/för stora) bär en egen
       // markering, så de aldrig blockerar kön. Nyast först: gamla 2025-mejl ska inte läsas in.
-      const uids = await client.searchUnseenUids(REVIEWED);
+      const uids = retrySubject
+        ? await client.searchSubjectUids(retrySubject)
+        : await client.searchUnseenUids(REVIEWED);
       console.log("mail-intake: olästa ogranskade", uids.length);
       const batch = uids.slice(-limit).reverse();
 
@@ -370,7 +378,7 @@ Deno.serve(async (req) => {
         }
         console.log("mail-intake: hämtad", uid, source?.length ?? 0);
         if (!source) continue;
-        const parsedMail = await simpleParser(Buffer.from(source));
+        const parsedMail = await parseMailAttachments(source);
         console.log("mail-intake: tolkad", uid, parsedMail.subject || "");
         const attachments = (parsedMail.attachments || []).filter(isDoc);
 
@@ -424,10 +432,11 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          await supabase.storage.from(BUCKET).upload(path, bytes, {
+          const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, bytes, {
             contentType: att.contentType || "application/pdf",
             upsert: true,
           });
+          if (uploadError) throw new Error(`Bilagan kunde inte sparas: ${uploadError.message}`);
 
           const { data: doc, error: docErr } = await supabase
             .from("supplier_documents")
