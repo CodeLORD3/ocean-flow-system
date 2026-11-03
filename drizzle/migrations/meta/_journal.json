@@ -288,6 +288,13 @@
       "when": 1793691419454,
       "tag": "0040_fast_company_access_for_shop_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793700915331,
+      "tag": "0041_mail_intake_failures",
+      "breakpoints": true
     }
   ]
 }
