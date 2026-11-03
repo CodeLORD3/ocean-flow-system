@@ -139,3 +139,6 @@ verify_jwt = false
 
 [functions.report-email]
 verify_jwt = false
+
+[functions.mail-intake-manual]
+verify_jwt = false
