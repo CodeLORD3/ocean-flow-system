@@ -22,6 +22,8 @@ const corsHeaders = {
 const BUCKET = "leverantorsdokument";
 const PROCESSED = "Behandlade";
 const PARKED = "Parkerade";
+/** IMAP-markering för olästa mejl som redan granskats och medvetet lämnats kvar. */
+const REVIEWED = "MakrillGranskad";
 
 type Json = Record<string, unknown>;
 
