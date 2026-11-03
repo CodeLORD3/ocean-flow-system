@@ -50,8 +50,9 @@ export class SimpleImap {
     await this.command(`CREATE ${quote(mailbox)}`);
   }
 
-  async searchUnseenUids(): Promise<number[]> {
-    const res = await this.command("UID SEARCH UNSEEN");
+  /** Olästa mejl som inte redan granskats och lämnats kvar (t.ex. utan bilaga). */
+  async searchUnseenUids(skipKeyword?: string): Promise<number[]> {
+    const res = await this.command(skipKeyword ? `UID SEARCH UNSEEN UNKEYWORD ${skipKeyword}` : "UID SEARCH UNSEEN");
     const line = res.lines.find((l) => l.startsWith("* SEARCH")) || "";
     return line
       .replace("* SEARCH", "")
@@ -81,6 +82,11 @@ export class SimpleImap {
     return { headers: parseHeaders(new TextDecoder().decode(res.literal)), size };
   }
 
+
+  /** Sätter en egen markering utan att mejlet blir läst. */
+  async addKeyword(uid: number, keyword: string) {
+    await this.command(`UID STORE ${uid} +FLAGS (${keyword})`);
+  }
 
   async markSeen(uid: number) {
     await this.command(`UID STORE ${uid} +FLAGS (\\Seen)`);
