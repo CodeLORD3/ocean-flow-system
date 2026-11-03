@@ -68,3 +68,4 @@ Dator lämnas oförändrad (allt görs med `sm:`-brytpunkten eller separata mobi
 ## Fortnox-inkorg DE No.1
 - [x] Jobb fortnox-inbox-de-no1 (15,45) + manuell körning
 - [x] integration-intake + integration_log + /integration-log
+- [x] Skyddsnät för mailkorgen (Behöver åtgärd, omförsök, manuell uppladdning, varning)
