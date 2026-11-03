@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
   const folder = typeof body.folder === "string" && body.folder ? body.folder : "INBOX";
   // Varje fullt tolkat mejl kostar mycket CPU (mailparser), så vi tar få per
   // körning, filtrerar på headers först och avbryter innan CPU-budgeten tar slut.
-  const limit = typeof body.limit === "number" ? Math.min(body.limit, 10) : 2;
+  const limit = typeof body.limit === "number" ? Math.min(body.limit, 10) : 6;
   const moveMail = body.move !== false;
   const startedAt = Date.now();
   const BUDGET_MS = 40_000;
@@ -137,11 +137,23 @@ Deno.serve(async (req) => {
     .is("finished_at", null)
     .lt("started_at", new Date(Date.now() - 5 * 60_000).toISOString());
 
+  // Spärr: kör aldrig två läsningar av samma mapp samtidigt.
+  const { data: running } = await supabase
+    .from("mail_intake_runs")
+    .select("id")
+    .eq("folder", folder)
+    .is("finished_at", null)
+    .limit(1);
+  if (running && running.length > 0) {
+    return new Response(JSON.stringify({ folder, ok: true, skipped_run: "pågår redan" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const { data: run } = await supabase
     .from("mail_intake_runs")
     .insert({ folder })
     .select("id")
-
     .single();
   const runId = run?.id as string | undefined;
 
@@ -229,9 +241,11 @@ Deno.serve(async (req) => {
 
     {
       await client.select(targetFolder);
-      const uids = await client.searchUnseenUids();
-      console.log("mail-intake: olästa", uids.length);
-      const batch = uids.slice(-limit);
+      // Mejl som granskats men lämnats olästa (utan bilaga/för stora) bär en egen
+      // markering, så de aldrig blockerar kön. Äldst först så inget blir liggande.
+      const uids = await client.searchUnseenUids(REVIEWED);
+      console.log("mail-intake: olästa ogranskade", uids.length);
+      const batch = uids.slice(0, limit);
 
       for (const uid of batch) {
         if (Date.now() - startedAt > BUDGET_MS) {
@@ -331,6 +345,7 @@ Deno.serve(async (req) => {
         if (head.size > MAX_SOURCE_BYTES) {
           await logMessage("for_stort", 0, sender.supplier_id ?? null);
           skipped++;
+          if (moveMail) await client.addKeyword(uid, REVIEWED);
           results.push({ messageId, fromEmail, subject, action: "for_stort", bytes: head.size });
           continue;
         }
@@ -353,10 +368,12 @@ Deno.serve(async (req) => {
         console.log("mail-intake: tolkad", uid, parsedMail.subject || "");
         const attachments = (parsedMail.attachments || []).filter(isDoc);
 
-        // Mejl utan bilaga rörs aldrig — de lämnas olästa så att en människa ser dem.
+        // Mejl utan bilaga lämnas olästa så att en människa ser dem, men markeras
+        // som granskade så nästa körning går vidare till nästa mejl.
         if (attachments.length === 0) {
           noAttachment++;
           skipped++;
+          if (moveMail) await client.addKeyword(uid, REVIEWED);
           results.push({ messageId, fromEmail, subject, action: "lamnad_olast_utan_bilaga" });
           continue;
         }
