@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
   const folder = typeof body.folder === "string" && body.folder ? body.folder : "INBOX";
   // Varje fullt tolkat mejl kostar mycket CPU (mailparser), så vi tar få per
   // körning, filtrerar på headers först och avbryter innan CPU-budgeten tar slut.
-  const limit = typeof body.limit === "number" ? Math.min(body.limit, 10) : 6;
+  const limit = typeof body.limit === "number" ? Math.min(body.limit, 10) : 3;
   const moveMail = body.move !== false;
   const startedAt = Date.now();
   const BUDGET_MS = 40_000;
