@@ -31,6 +31,7 @@ import {
   useSupplierDocuments,
 } from "@/hooks/useSupplierDocuments";
 import { SupplierCandidatesPanel } from "@/components/purchase/SupplierCandidatesPanel";
+import { MailFailuresList, useMailFailures } from "@/components/purchase/MailFailuresList";
 
 import {
   approveDeliveryNote,
@@ -58,6 +59,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
   const { data: messages = [] } = useMailMessages();
   const { data: senders = [] } = useMailSenders();
   const { data: runs = [] } = useMailRuns();
+  const { data: failures = [] } = useMailFailures();
   const { data: products = [] } = useProducts();
   const { data: suppliers = [] } = useSuppliers();
   const { data: sizeGrades = [] } = useSizeGrades();
@@ -233,6 +235,10 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
             Väntar på attest
             {drafts.length > 0 && <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">{drafts.length}</Badge>}
           </TabsTrigger>
+          <TabsTrigger value="failures" className="text-xs">
+            Behöver åtgärd
+            {failures.length > 0 && <Badge variant="destructive" className="ml-1.5 h-4 px-1 text-[10px]">{failures.length}</Badge>}
+          </TabsTrigger>
           <TabsTrigger value="unknown" className="text-xs">
             Okända avsändare
             {unknownSenders.length > 0 && <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">{unknownSenders.length}</Badge>}
@@ -252,6 +258,10 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
           <TabsTrigger value="candidates" className="text-xs">Leverantörsförslag</TabsTrigger>
           <TabsTrigger value="senders" className="text-xs">Vitlista</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="failures" className="flex-1 min-h-0 m-0">
+          <MailFailuresList failures={failures} />
+        </TabsContent>
 
         <TabsContent value="candidates" className="flex-1 min-h-0 m-0">
           <SupplierCandidatesPanel />
