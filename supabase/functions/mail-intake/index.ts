@@ -122,14 +122,28 @@ Deno.serve(async (req) => {
   }
   // Inkorgen är standard; en testmapp kan pekas ut explicit.
   const folder = typeof body.folder === "string" && body.folder ? body.folder : "INBOX";
-  // Varje fullt tolkat mejl kostar mycket CPU (mailparser), så vi tar få per
+  // Vi tar få mejl per
   // körning, filtrerar på headers först och avbryter innan CPU-budgeten tar slut.
   const limit = typeof body.limit === "number" ? Math.min(body.limit, 10) : 3;
   const moveMail = body.move !== false;
   const retrySubject = typeof body.retry_subject === "string" ? body.retry_subject.trim() : "";
-  if (retrySubject && (retrySubject.length > 200 || /[\r\n]/.test(retrySubject) ||
-      req.headers.get("authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`)) {
-    return new Response(JSON.stringify({ error: "Återhämtning kräver intern behörighet och giltigt ämne" }), {
+  let canRecover = false;
+  if (retrySubject && retrySubject.length <= 200 && !/[\r\n]/.test(retrySubject)) {
+    const auth = req.headers.get("authorization") || "";
+    canRecover = auth === `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
+    if (!canRecover && auth.startsWith("Bearer ")) {
+      const { data } = await supabase.auth.getUser(auth.slice(7));
+      if (data.user) {
+        const [{ data: admin }, { data: platform }] = await Promise.all([
+          supabase.rpc("has_role", { _user_id: data.user.id, _role: "admin" }),
+          supabase.rpc("is_platform_admin", { _user_id: data.user.id }),
+        ]);
+        canRecover = admin === true || platform === true;
+      }
+    }
+  }
+  if (retrySubject && !canRecover) {
+    return new Response(JSON.stringify({ error: "Återhämtning kräver administratör och giltigt ämne" }), {
       status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
