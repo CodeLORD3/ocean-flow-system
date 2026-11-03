@@ -297,9 +297,10 @@ Deno.serve(async (req) => {
         console.log("mail-intake: header", uid, head.size, subject.slice(0, 60));
 
         const logMessage = async (status: string, attachmentCount = 0, supplierId: string | null = null) => {
+          // Upsert: ett mejl som försöks igen har redan en rad sedan förra försöket.
           const { data } = await supabase
             .from("mail_intake_messages")
-            .insert({
+            .upsert({
               message_id: messageId,
               from_email: fromEmail,
               from_name: from.name,
@@ -309,7 +310,7 @@ Deno.serve(async (req) => {
               attachment_count: attachmentCount,
               supplier_id: supplierId,
               status,
-            })
+            }, { onConflict: "message_id" })
             .select("id")
             .single();
           return data?.id as string | undefined;
@@ -321,12 +322,13 @@ Deno.serve(async (req) => {
           }
         };
 
-        const { data: existing } = await supabase
-          .from("mail_intake_messages")
-          .select("id")
-          .eq("message_id", messageId)
-          .maybeSingle();
-        if (existing) {
+        const [{ data: existing }, { data: pendingRetry }] = await Promise.all([
+          supabase.from("mail_intake_messages").select("id").eq("message_id", messageId).maybeSingle(),
+          supabase.from("mail_intake_failures").select("id").eq("message_id", messageId)
+            .eq("status", "forsok_igen").maybeSingle(),
+        ]);
+        // Ett mejl vars förra försök avbröts ska läsas om, inte flyttas som klart.
+        if (existing && !pendingRetry) {
           skipped++;
           results.push({ messageId, action: "redan_hamtat" });
           if (moveMail) {
