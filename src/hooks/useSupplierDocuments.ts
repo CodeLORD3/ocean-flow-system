@@ -91,6 +91,8 @@ export function useMailRuns() {
       const { data, error } = await supabase
         .from("mail_intake_runs")
         .select("*")
+        // Fortnox-inkorgens körningar loggas i samma tabell men är inte mailkorgen.
+        .not("folder", "like", "fortnox:%")
         .order("started_at", { ascending: false })
         .limit(20);
       if (error) throw error;
