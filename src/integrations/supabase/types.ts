@@ -25509,6 +25509,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      my_company_access_all: { Args: never; Returns: boolean }
+      my_company_ids: { Args: never; Returns: string[] }
       my_employee_ids: { Args: never; Returns: string[] }
       my_employee_store_ids: { Args: never; Returns: string[] }
       next_customer_order_number: {

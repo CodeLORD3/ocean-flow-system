@@ -21,3 +21,4 @@
 <!-- LOVABLE:BEGIN -->
 - Order document downloads use `src/lib/orderDocumentPdf.ts` to generate paginated PDFs from data without popups; printing preserves the existing preview.
 <!-- LOVABLE:END -->
+- Order access rules (shop_orders/shop_order_lines) check company access once per request via my_company_access_all()/my_company_ids(), never per row — per-row checks timed out for company-scoped staff and emptied the list.
