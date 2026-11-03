@@ -9,16 +9,26 @@ export function useShopOrders(storeId?: string) {
   return useQuery({
     queryKey: ["shop_orders", storeId],
     queryFn: async () => {
-      let q = supabase
-        .from("shop_orders")
-        .select("*, desired_delivery_date, packer_name, invoice_status, stores(name, address, phone, city), shop_order_lines(*, products(name, unit, category, image_url, hs_code, weight_per_piece, wholesale_price, purchase_lead_days, requires_processing, is_production_item))")
-        // Öppna beställningar är butikens interna arbetsyta och visas aldrig för grossisten.
-        .neq("status", "Öppen")
-        .order("created_at", { ascending: false });
-      if (storeId) q = q.eq("store_id", storeId);
-      const { data, error } = await q;
-      if (error) throw error;
-      return data;
+      // Läses sida för sida: för konton med bolagsavgränsning tar behörighetskontrollen
+      // per rad så lång tid att en enda stor fråga avbryts (statement timeout) och listan blir tom.
+      const PAGE = 40;
+      const all: any[] = [];
+      for (let from = 0; ; from += PAGE) {
+        let q = supabase
+          .from("shop_orders")
+          .select("*, desired_delivery_date, packer_name, invoice_status, stores(name, address, phone, city), shop_order_lines(*, products(name, unit, category, image_url, hs_code, weight_per_piece, wholesale_price, purchase_lead_days, requires_processing, is_production_item))")
+          // Öppna beställningar är butikens interna arbetsyta och visas aldrig för grossisten.
+          .neq("status", "Öppen")
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .range(from, from + PAGE - 1);
+        if (storeId) q = q.eq("store_id", storeId);
+        const { data, error } = await q;
+        if (error) throw error;
+        all.push(...(data ?? []));
+        if (!data || data.length < PAGE) break;
+      }
+      return all as any;
     },
   });
 }
