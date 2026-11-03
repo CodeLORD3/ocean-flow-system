@@ -23,3 +23,4 @@
 <!-- LOVABLE:END -->
 - Order access rules (shop_orders/shop_order_lines) check company access once per request via my_company_access_all()/my_company_ids(), never per row — per-row checks timed out for company-scoped staff and emptied the list.
 - Mail intake uses PostalMime for MIME-only decoding and bounded IMAP response framing, avoiding HTML conversion and repeated full-message scans so large attachments fit the edge CPU budget; scheduled reads remain newest-first and reviewed-message recovery requires service credentials or server-verified admin roles.
+- Mail intake records every known-sender message it cannot finish in `mail_intake_failures` (attempt counted before heavy work, retried up to 3 times, then left to a human via `mail-intake-manual`); `mail_intake_watch` (pg_cron) warns the office once per day — so no email disappears silently.

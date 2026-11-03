@@ -150,6 +150,7 @@ Deno.serve(async (req) => {
   const startedAt = Date.now();
   const BUDGET_MS = 40_000;
   const MAX_SOURCE_BYTES = 8 * 1024 * 1024;
+  const MAX_ATTEMPTS = 3;
 
   // Körningar som dött mitt i (t.ex. CPU-budget) städas så historiken inte
   // visar rader som hänger utan förklaring.
@@ -296,9 +297,10 @@ Deno.serve(async (req) => {
         console.log("mail-intake: header", uid, head.size, subject.slice(0, 60));
 
         const logMessage = async (status: string, attachmentCount = 0, supplierId: string | null = null) => {
+          // Upsert: ett mejl som försöks igen har redan en rad sedan förra försöket.
           const { data } = await supabase
             .from("mail_intake_messages")
-            .insert({
+            .upsert({
               message_id: messageId,
               from_email: fromEmail,
               from_name: from.name,
@@ -308,7 +310,7 @@ Deno.serve(async (req) => {
               attachment_count: attachmentCount,
               supplier_id: supplierId,
               status,
-            })
+            }, { onConflict: "message_id" })
             .select("id")
             .single();
           return data?.id as string | undefined;
@@ -320,12 +322,13 @@ Deno.serve(async (req) => {
           }
         };
 
-        const { data: existing } = await supabase
-          .from("mail_intake_messages")
-          .select("id")
-          .eq("message_id", messageId)
-          .maybeSingle();
-        if (existing) {
+        const [{ data: existing }, { data: pendingRetry }] = await Promise.all([
+          supabase.from("mail_intake_messages").select("id").eq("message_id", messageId).maybeSingle(),
+          supabase.from("mail_intake_failures").select("id").eq("message_id", messageId)
+            .eq("status", "forsok_igen").maybeSingle(),
+        ]);
+        // Ett mejl vars förra försök avbröts ska läsas om, inte flyttas som klart.
+        if (existing && !pendingRetry) {
           skipped++;
           results.push({ messageId, action: "redan_hamtat" });
           if (moveMail) {
@@ -365,9 +368,39 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        // Skyddsnät: varje mejl från en känd avsändare som inte blir inläst
+        // hamnar i mail_intake_failures, så att inget försvinner tyst.
+        const track = async (status: string, reason: string, detail: string | null = null, bump = false) => {
+          const { data: prev } = await supabase
+            .from("mail_intake_failures")
+            .select("attempts")
+            .eq("message_id", messageId)
+            .maybeSingle();
+          if (!prev && status === "lyckad") return 0;
+          const attempts = (prev?.attempts ?? 0) + (bump ? 1 : 0);
+          await supabase.from("mail_intake_failures").upsert({
+            message_id: messageId,
+            from_email: fromEmail,
+            from_name: from.name,
+            subject,
+            sent_at: sentAt ? new Date(sentAt).toISOString() : null,
+            size_bytes: head!.size,
+            supplier_id: sender?.supplier_id ?? null,
+            legal_entity_id: sender?.legal_entity_id ?? null,
+            status,
+            reason,
+            detail: detail ? detail.slice(0, 500) : null,
+            attempts,
+            last_attempt_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "message_id" });
+          return attempts;
+        };
+
         // Storleksspärr: ett enda jättemejl får inte blockera hela kön.
         if (head.size > MAX_SOURCE_BYTES) {
           await logMessage("for_stort", 0, sender.supplier_id ?? null);
+          await track("behover_atgard", "for_stort", `${Math.round(head.size / 1024 / 1024 * 10) / 10} MB`, true);
           skipped++;
           if (moveMail) await client.addKeyword(uid, REVIEWED);
           results.push({ messageId, fromEmail, subject, action: "for_stort", bytes: head.size });
@@ -379,20 +412,35 @@ Deno.serve(async (req) => {
           console.log("mail-intake: avbryter före nedladdning, tidsbudget slut");
           break;
         }
-        // Markeras som granskad innan den tunga tolkningen: om körningen dör på
-        // ett för tungt mejl blir det kvar oläst i inkorgen för en människa, i
-        // stället för att blockera alla nya mejl varje körning.
-        if (moveMail) await client.addKeyword(uid, REVIEWED);
-        console.log("mail-intake: hämtar uid", uid);
+        // Försöket räknas INNAN den tunga delen. Dör körningen står raden kvar
+        // som "avbruten" och mejlet försöks igen, högst MAX_ATTEMPTS gånger;
+        // därefter markeras det granskat och lämnas till en människa.
+        const attempt = await track("forsok_igen", "avbruten", "Körningen avbröts under inläsningen", true);
+        if (attempt >= MAX_ATTEMPTS) {
+          await track("behover_atgard", "avbruten", `Avbröts ${attempt} gånger`);
+          if (moveMail) await client.addKeyword(uid, REVIEWED);
+        }
+        console.log("mail-intake: hämtar uid", uid, "försök", attempt);
         let source: Uint8Array | null = null;
+        let fetchError = "";
         try {
           source = await client.fetchSource(uid);
         } catch (e) {
-          console.log("mail-intake: kunde inte hämta uid", uid, String(e));
+          fetchError = String(e);
+          console.log("mail-intake: kunde inte hämta uid", uid, fetchError);
         }
         console.log("mail-intake: hämtad", uid, source?.length ?? 0);
-        if (!source) continue;
-        const parsedMail = await parseMailAttachments(source);
+        if (!source) {
+          await track(attempt >= MAX_ATTEMPTS ? "behover_atgard" : "forsok_igen", "server_svarade_inte", fetchError || "tomt svar");
+          continue;
+        }
+        let parsedMail: Awaited<ReturnType<typeof parseMailAttachments>>;
+        try {
+          parsedMail = await parseMailAttachments(source);
+        } catch (e) {
+          await track(attempt >= MAX_ATTEMPTS ? "behover_atgard" : "forsok_igen", "okant_format", String(e));
+          continue;
+        }
         console.log("mail-intake: tolkad", uid, parsedMail.subject || "");
         const attachments = (parsedMail.attachments || []).filter(isDoc);
 
@@ -402,6 +450,8 @@ Deno.serve(async (req) => {
           noAttachment++;
           skipped++;
           if (moveMail) await client.addKeyword(uid, REVIEWED);
+          const other = (parsedMail.attachments || []).map((a) => a.filename || a.contentType || "").filter(Boolean);
+          await track("behover_atgard", other.length ? "okant_format" : "utan_bilaga", other.length ? `Bilagor: ${other.join(", ")}` : null);
           results.push({ messageId, fromEmail, subject, action: "lamnad_olast_utan_bilaga" });
           continue;
         }
@@ -426,6 +476,7 @@ Deno.serve(async (req) => {
 
         const msgRowId = await logMessage("behandlad", attachments.length, sender.supplier_id ?? null);
         const msgRow = { id: msgRowId };
+        let parseFailed: string | null = null;
 
 
         for (const att of attachments) {
@@ -581,7 +632,14 @@ Deno.serve(async (req) => {
               .update({ parse_status: "fel", parse_error: e instanceof Error ? e.message : "okänt fel" })
               .eq("id", doc.id);
             results.push({ messageId, fileName, action: "tolkningsfel", error: String(e) });
+            parseFailed = `${fileName}: ${e instanceof Error ? e.message : String(e)}`;
           }
+        }
+
+        if (parseFailed) {
+          await track("behover_atgard", "tolkning_misslyckades", parseFailed);
+        } else {
+          await track("lyckad", "ok");
         }
 
         if (moveMail) {

@@ -9621,6 +9621,72 @@ export type Database = {
         }
         Relationships: []
       }
+      mail_intake_failures: {
+        Row: {
+          attempts: number
+          created_at: string
+          detail: string | null
+          from_email: string | null
+          from_name: string | null
+          id: string
+          last_attempt_at: string
+          legal_entity_id: string | null
+          message_id: string
+          reason: string
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_document_id: string | null
+          sent_at: string | null
+          size_bytes: number | null
+          status: string
+          subject: string | null
+          supplier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          detail?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          last_attempt_at?: string
+          legal_entity_id?: string | null
+          message_id: string
+          reason?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_document_id?: string | null
+          sent_at?: string | null
+          size_bytes?: number | null
+          status?: string
+          subject?: string | null
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          detail?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          last_attempt_at?: string
+          legal_entity_id?: string | null
+          message_id?: string
+          reason?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_document_id?: string | null
+          sent_at?: string | null
+          size_bytes?: number | null
+          status?: string
+          subject?: string | null
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mail_intake_messages: {
         Row: {
           attachment_count: number
@@ -25500,6 +25566,7 @@ export type Database = {
         }[]
       }
       lot_parasite_block_reason: { Args: { _lot_id: string }; Returns: string }
+      mail_intake_watch: { Args: never; Returns: Json }
       mark_image_feature_day: {
         Args: {
           _count: number
