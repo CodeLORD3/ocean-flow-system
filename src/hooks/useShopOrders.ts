@@ -9,36 +9,26 @@ export function useShopOrders(storeId?: string) {
   return useQuery({
     queryKey: ["shop_orders", storeId],
     queryFn: async () => {
-      // Läses sida för sida: för konton med bolagsavgränsning tar behörighetskontrollen
-      // per rad så lång tid att en enda stor fråga avbryts (statement timeout) och listan blir tom.
-      const PAGE = 40;
-      const build = () => {
+      // Läses sida för sida (en i taget) så att stora orderlistor aldrig slår i
+      // databasens tidsgräns eller radtak.
+      const PAGE = 100;
+      const all: any[] = [];
+      for (let from = 0; ; from += PAGE) {
         let q = supabase
           .from("shop_orders")
           .select("*, desired_delivery_date, packer_name, invoice_status, stores(name, address, phone, city), shop_order_lines(*, products(name, unit, category, image_url, hs_code, weight_per_piece, wholesale_price, purchase_lead_days, requires_processing, is_production_item))")
           // Öppna beställningar är butikens interna arbetsyta och visas aldrig för grossisten.
           .neq("status", "Öppen")
           .order("created_at", { ascending: false })
-          .order("id", { ascending: false });
+          .order("id", { ascending: false })
+          .range(from, from + PAGE - 1);
         if (storeId) q = q.eq("store_id", storeId);
-        return q;
-      };
-      let countQ = supabase.from("shop_orders").select("id", { count: "exact", head: true }).neq("status", "Öppen");
-      if (storeId) countQ = countQ.eq("store_id", storeId);
-      const { count, error: countErr } = await countQ;
-      if (countErr) throw countErr;
-      const pages = Math.max(1, Math.ceil((count ?? 0) / PAGE));
-      const results = await Promise.all(
-        Array.from({ length: pages }, (_, i) => build().range(i * PAGE, i * PAGE + PAGE - 1)),
-      );
-      const all: any[] = [];
-      for (const { data, error } of results) {
+        const { data, error } = await q;
         if (error) throw error;
         all.push(...(data ?? []));
+        if (!data || data.length < PAGE) break;
       }
-      // Ta bort ev. dubbletter om en order skapats mellan sidorna.
-      const seen = new Set<string>();
-      return all.filter((o) => (seen.has(o.id) ? false : (seen.add(o.id), true))) as any;
+      return all as any;
     },
   });
 }
