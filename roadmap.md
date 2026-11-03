@@ -1,5 +1,9 @@
 # Mobilanpassning — sida för sida
 
+## Tunga bilagor i inköpsmailkorgen
+- [ ] Rätta CPU-felet vid inläsning av stora mejl utan bokföring.
+- [ ] Testa stora bilagor och återhämtning; läs in Gamvik order 121258 och verifiera dokumentet.
+
 ## Zollikons öppna order
 - [x] Rätta dubbla live-editorer i mobil-/datorlayout utan att ändra orderdata.
 - [x] Testa öppna, läsa innehåll, stänga och återöppna vid 390, 640, 813 och 1280 px (8 fokuserade tester godkända).

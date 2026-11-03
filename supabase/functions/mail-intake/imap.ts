@@ -63,6 +63,14 @@ export class SimpleImap {
       .filter((n) => Number.isFinite(n));
   }
 
+  /** Avgränsad återhämtning av ett tidigare överhoppat mejl. */
+  async searchSubjectUids(subject: string): Promise<number[]> {
+    const res = await this.command(`UID SEARCH UNSEEN SUBJECT ${quote(subject)}`);
+    return (res.lines.find((line) => line.startsWith("* SEARCH")) || "")
+      .replace("* SEARCH", "").trim().split(/\s+/).map(Number)
+      .filter((uid) => Number.isInteger(uid) && uid > 0);
+  }
+
   /** Hämtar hela råmeddelandet utan att sätta \Seen. */
   async fetchSource(uid: number): Promise<Uint8Array | null> {
     const res = await this.command(`UID FETCH ${uid} BODY.PEEK[]`, true);
@@ -108,7 +116,13 @@ export class SimpleImap {
     const tag = `A${++this.tag}`;
     await this.conn.write(this.encoder.encode(`${tag} ${cmd}\r\n`));
     const raw = await this.readUntilTag(tag);
-    const text = this.decoder.decode(raw);
+    // A FETCH literal can contain megabytes of MIME data. Only decode the
+    // response framing, never the entire attachment to look for tagged OK.
+    const literalRange = findLiteralRange(raw);
+    const text = literalRange
+      ? this.decoder.decode(raw.subarray(0, literalRange.start)) +
+        this.decoder.decode(raw.subarray(literalRange.end))
+      : this.decoder.decode(raw);
     const lines = text.split(/\r?\n/);
     const finalLine = lines.find((l) => l.startsWith(`${tag} `)) || "";
     const ok = /^\S+ OK/.test(finalLine);
@@ -118,7 +132,8 @@ export class SimpleImap {
   }
 
   private async readUntilTag(tag: string) {
-    return await this.readUntil((t) => new RegExp(`^${tag} (OK|NO|BAD)`, "m").test(t));
+    const complete = new RegExp(`(?:^|\r?\n)${tag} (OK|NO|BAD)[^\r\n]*\r?\n$`);
+    return await this.readUntil((t) => complete.test(t));
   }
 
   private async readUntil(done: (text: string) => boolean, timeoutMs = 30000) {
@@ -133,7 +148,9 @@ export class SimpleImap {
       if (n === null) throw new Error("IMAP-anslutningen stängdes");
       const chunk = tmp.subarray(0, n);
       chunks.push(new Uint8Array(chunk));
-      acc += this.decoder.decode(chunk, { stream: true });
+      // Keep completion detection bounded instead of rescanning/copying an
+      // ever-growing multi-megabyte string after every network read.
+      acc = (acc + this.decoder.decode(chunk, { stream: true })).slice(-2048);
       if (done(acc)) break;
     }
     const total = chunks.reduce((s, c) => s + c.length, 0);
@@ -153,14 +170,20 @@ function quote(v: string) {
 }
 
 /** Plockar ut {n} -literalen ur ett FETCH-svar. */
-function extractLiteral(raw: Uint8Array): Uint8Array | undefined {
+export function findLiteralRange(raw: Uint8Array): { start: number; end: number } | undefined {
   const head = new TextDecoder().decode(raw.subarray(0, Math.min(raw.length, 2048)));
   const m = head.match(/\{(\d+)\}\r\n/);
   if (!m) return undefined;
   const size = Number(m[1]);
   const startText = head.indexOf(m[0]) + m[0].length;
   // Byte-offset = teckenoffset eftersom huvudet är ren ASCII.
-  return raw.subarray(startText, startText + size);
+  if (startText + size > raw.length) throw new Error("Ofullständig IMAP-bilaga");
+  return { start: startText, end: startText + size };
+}
+
+function extractLiteral(raw: Uint8Array): Uint8Array | undefined {
+  const range = findLiteralRange(raw);
+  return range ? raw.subarray(range.start, range.end) : undefined;
 }
 
 
