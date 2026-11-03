@@ -357,6 +357,10 @@ Deno.serve(async (req) => {
           console.log("mail-intake: avbryter före nedladdning, tidsbudget slut");
           break;
         }
+        // Markeras som granskad innan den tunga tolkningen: om körningen dör på
+        // ett för tungt mejl blir det kvar oläst i inkorgen för en människa, i
+        // stället för att blockera alla nya mejl varje körning.
+        if (moveMail) await client.addKeyword(uid, REVIEWED);
         console.log("mail-intake: hämtar uid", uid);
         let source: Uint8Array | null = null;
         try {
