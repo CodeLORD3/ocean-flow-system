@@ -1570,8 +1570,8 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
         />
       </div>
        <div className="overflow-x-auto">
-         <table className="w-full min-w-[1040px] table-fixed text-xs">
-           <colgroup>
+         <table className="block w-full text-xs sm:table sm:min-w-[1040px] sm:table-fixed">
+           <colgroup className="hidden sm:table-column-group">
              <col className="w-[240px]" />
              <col className="w-14" />
              <col className="w-16" />
@@ -1583,7 +1583,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
              <col className="w-36" />
              <col className="w-20" />
            </colgroup>
-           <thead>
+           <thead className="hidden sm:table-header-group">
              <tr className="border-b border-border bg-muted/30">
                <th className="px-2 py-1 text-left font-medium text-muted-foreground">Produkt</th>
                <th className="px-2 py-1 text-left font-medium text-muted-foreground whitespace-nowrap"><span className="sm:hidden">Enh</span><span className="hidden sm:inline">Enhet</span></th>
@@ -1597,7 +1597,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                <th className="px-2 py-1 text-right font-medium text-muted-foreground">Värde (kr)</th>
              </tr>
            </thead>
-          <tbody>
+          <tbody className="block sm:table-row-group">
             {(() => {
               const allLines = order.shop_order_lines || [];
               const groups = new Map<string, any[]>();
@@ -1650,15 +1650,15 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               return (
                 <React.Fragment key={line.id}>
                  {catHeader && (
-                   <tr className="bg-muted/40">
-                     <td colSpan={10} className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                   <tr className="block bg-muted/40 sm:table-row">
+                     <td colSpan={10} className="block sm:table-cell px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                        ▸ {catHeader}
                      </td>
                    </tr>
                  )}
                 <tr
                   id={`order-line-${order.id}-${line.product_id}`}
-                  className={`border-b border-border/30 h-7 transition-colors ${
+                  className={`flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/30 py-1.5 sm:table-row sm:py-0 sm:h-7 transition-colors ${
                   isUnavailable ? "opacity-50 bg-destructive/5" :
                   currentStatus === "Skickad" ? "bg-primary/10" :
                   currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/10" :
@@ -1666,7 +1666,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   currentStatus === "Pågående" ? "bg-warning/10" :
                   ""
                 } ${highlightProductId === line.product_id ? "!bg-warning/30 ring-2 ring-inset ring-warning font-semibold" : ""}`}>
-                   <td className="min-w-0 px-2 py-0.5 font-medium text-foreground">
+                   <td className="block w-full min-w-0 sm:table-cell sm:w-auto px-2 py-0.5 font-medium text-foreground">
                      <div className="flex min-w-0 items-center gap-2">
                        <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="h-5 w-7 shrink-0" />
                        <span className="min-w-0 break-words sm:truncate" title={line.products?.name || undefined}>{line.products?.name || "–"}</span>
@@ -1698,8 +1698,8 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                        </button>
                      )}
                    </td>
-                  <td className="px-2 py-0.5 text-muted-foreground whitespace-nowrap">{line.unit || line.products?.unit || "–"}</td>
-                  <td className="px-2 py-0.5 text-right font-mono text-foreground whitespace-nowrap">{qtyOrdered}</td>
+                  <td className="sm:table-cell px-2 py-0.5 text-muted-foreground whitespace-nowrap">{line.unit || line.products?.unit || "–"}</td>
+                  <td className="sm:table-cell px-2 py-0.5 text-right font-mono text-foreground whitespace-nowrap">{qtyOrdered}</td>
                   <td className={`px-2 py-0.5 text-right font-mono whitespace-nowrap ${infiniteStock ? "text-success" : availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
                     {infiniteStock ? <span title="Obegränsat lager (uppstartsläge)">∞</span> : availableStock > 0 ? Number(availableStock.toFixed(1)) : "0"}
                      {!infiniteStock && matchAlt && (
@@ -1728,7 +1728,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                       );
                     })()}
                   </td>
-                  <td className="px-2 py-0.5 text-right">
+                  <td className="sm:table-cell px-2 py-0.5 text-right">
                     {(() => {
                       const isLocked = currentStatus === "Packad" || currentStatus === "Skickad" || currentStatus === "Klar / Levererad" || currentStatus === "Levererad";
                       return isLocked ? (
@@ -1769,7 +1769,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                       );
                     })()}
                   </td>
-                  <td className="px-2 py-0.5 text-muted-foreground text-[10px]">
+                  <td className="sm:table-cell px-2 py-0.5 text-muted-foreground text-[10px]">
                     {line.deviation ? (
                       <span className="text-warning">{line.deviation}</span>
                     ) : hasDiff ? (
@@ -1780,7 +1780,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                       </span>
                     ) : "–"}
                   </td>
-                  <td className="px-2 py-0.5">
+                  <td className="sm:table-cell px-2 py-0.5">
                     <Select
                       value={currentStatus}
                       disabled={updateLineStatus.isPending}
@@ -1810,7 +1810,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                       </SelectContent>
                     </Select>
                    </td>
-                   <td className="px-2 py-0.5 text-center">
+                   <td className="sm:table-cell px-2 py-0.5 text-center">
                      <OrderPhotosButton
                        compact
                        entityType={ORDER_LINE_PHOTO_ENTITY}
@@ -1819,7 +1819,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                        title={line.products?.name || "Orderrad"}
                      />
                    </td>
-                   <td className="px-2 py-0.5 text-center">
+                   <td className="sm:table-cell px-2 py-0.5 text-center">
 
                     {!isUnavailable && (
                       <div className="flex items-center justify-center gap-1">
@@ -1844,7 +1844,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                       </div>
                     )}
                   </td>
-                  <td className="px-2 py-0.5 text-right font-mono text-foreground">{lineValue.toFixed(2)}</td>
+                  <td className="sm:table-cell px-2 py-0.5 text-right font-mono text-foreground">{lineValue.toFixed(2)}</td>
                 </tr>
                 </React.Fragment>
               );
