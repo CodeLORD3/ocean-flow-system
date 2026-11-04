@@ -1583,7 +1583,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
              <col className="w-36" />
              <col className="w-20" />
            </colgroup>
-           <thead>
+           <thead className="hidden sm:table-header-group">
              <tr className="border-b border-border bg-muted/30">
                <th className="px-2 py-1 text-left font-medium text-muted-foreground">Produkt</th>
                <th className="px-2 py-1 text-left font-medium text-muted-foreground whitespace-nowrap"><span className="sm:hidden">Enh</span><span className="hidden sm:inline">Enhet</span></th>
