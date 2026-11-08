@@ -1083,6 +1083,7 @@ export default function ShopOrders() {
           renderTable={(list: any[], emptyMsg: string) => (
             <OrderTable
               readOnly
+              onCopy={startCopy}
               orders={list}
               products={products}
               toast={toast}
