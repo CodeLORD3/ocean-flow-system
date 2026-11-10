@@ -5,7 +5,7 @@
 - [ ] Daglig kontroll + återhämtning — väntar på Tims OK av planen
 
 ## Ludvig Wickström kan inte logga in
-- [ ] Utred auth-loggar, rätta orsak, ev. lösenordsåterställning
+- [x] Utred, rätta orsak, lösenordsåterställning skickad 2026-11-10 11:11 UTC (behörigheter oförändrade, likvärdiga Kungsholmen)
 
 ## Tunga bilagor i inköpsmailkorgen
 - [x] Rätta CPU-felet vid inläsning av stora mejl utan bokföring; driftsatt och verkligt 2,58 MB-mejl läst utan CPU-avbrott.
