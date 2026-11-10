@@ -1,5 +1,12 @@
 # Mobilanpassning — sida för sida
 
+## Shopify Sverige — uppehåll i webhooks
+- [x] Läskontroll: prenumerationer intakta, inga missade order (#2707–#2752 alla finns)
+- [ ] Daglig kontroll + återhämtning — väntar på Tims OK av planen
+
+## Ludvig Wickström kan inte logga in
+- [x] Utred, rätta orsak, lösenordsåterställning skickad 2026-11-10 11:11 UTC (behörigheter oförändrade, likvärdiga Kungsholmen)
+
 ## Tunga bilagor i inköpsmailkorgen
 - [x] Rätta CPU-felet vid inläsning av stora mejl utan bokföring; driftsatt och verkligt 2,58 MB-mejl läst utan CPU-avbrott.
 - [x] Fyra tester för stora bilagor/IMAP passerade; Gamvik order 121258 sparad och tolkad som utkast. Inloggad mejlinloppsvy verifierad; kön visar äldre dokument först, inget attesterat.
