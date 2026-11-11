@@ -2,7 +2,7 @@
 
 ## Shopify Sverige — uppehåll i webhooks
 - [x] Läskontroll: prenumerationer intakta, inga missade order (#2707–#2752 alla finns)
-- [ ] Daglig kontroll + återhämtning — plan godkänd, bygger
+- [x] Daglig kontroll + återhämtning byggd, driftsatt, schemalagd 06:00 och körd en gång (3/3 prenumerationer, 0 missade order)
 
 ## Ludvig Wickström kan inte logga in
 - [x] Utred, rätta orsak, lösenordsåterställning skickad 2026-11-10 11:11 UTC (behörigheter oförändrade, likvärdiga Kungsholmen)
