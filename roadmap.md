@@ -79,3 +79,6 @@ Dator lämnas oförändrad (allt görs med `sm:`-brytpunkten eller separata mobi
 
 ## Grossistorder mobil — rader överlappar (Tim, 11 nov)
 - [ ] Rätta överlappande orderrader på mobil i Beställningar
+
+## Inköpslista idag + imorgon (Tim, 11 nov)
+- [ ] Läs beställda varor för 11–12 nov och lista vara/mängd (bara läsning)
