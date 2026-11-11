@@ -76,3 +76,6 @@ Dator lämnas oförändrad (allt görs med `sm:`-brytpunkten eller separata mobi
 - [x] Jobb fortnox-inbox-de-no1 (15,45) + manuell körning
 - [x] integration-intake + integration_log + /integration-log
 - [x] Skyddsnät för mailkorgen (Behöver åtgärd, omförsök, manuell uppladdning, varning)
+
+## Grossistorder mobil — rader överlappar (Tim, 11 nov)
+- [ ] Rätta överlappande orderrader på mobil i Beställningar
