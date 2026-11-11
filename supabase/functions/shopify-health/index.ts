@@ -21,6 +21,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { authenticateCronRequest } from "../_shared/cron-auth.ts";
 import { adminToken, listShops, type ShopifyShop } from "../_shared/shopify-shops.ts";
+import { decideOrder, missingTopics, TOPICS } from "./logic.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -28,10 +29,6 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const TOPICS = ["orders/create", "orders/paid", "orders/cancelled"];
-const DONE = ["skapad", "duplikat", "osorterad", "avbokad", "avbokad_larm"];
-const PENDING = ["koad", "bearbetar", "fel"];
-const PAID = ["paid", "partially_refunded"];
 
 function service(): SupabaseClient {
   return createClient(
@@ -105,11 +102,9 @@ async function checkShop(db: SupabaseClient, shop: ShopifyShop, hours: number, d
   const list = await shopifyFetch(shop, token, "webhooks.json?limit=250");
   if (!list.ok) return { ...r, ok: false, error: `Shopify svarade ${list.status} på prenumerationslistan` };
   const hooks: any[] = Array.isArray(list.body?.webhooks) ? list.body.webhooks : [];
-  for (const topic of TOPICS) {
-    if (hooks.some((w) => String(w.topic) === topic && String(w.address) === address)) {
-      r.subscriptions_ok++;
-      continue;
-    }
+  const missing = missingTopics(hooks, address);
+  r.subscriptions_ok = TOPICS.length - missing.length;
+  for (const topic of missing) {
     if (dryRun) { r.restored.push(`${topic} (saknas, torrkörning)`); continue; }
     const res = await shopifyFetch(shop, token, "webhooks.json", {
       method: "POST",
@@ -154,11 +149,10 @@ async function checkShop(db: SupabaseClient, shop: ShopifyShop, hours: number, d
   for (const order of orders) {
     const id = String(order.id);
     const name = String(order?.name ?? order?.order_number ?? id);
-    if (inOrders.has(id)) continue;
-    const st = evStatus.get(id) || [];
-    if (st.some((s) => DONE.includes(s))) continue;
-    if (st.some((s) => PENDING.includes(s))) { r.pending.push(name); continue; }
-    if (order?.cancelled_at || !PAID.includes(String(order?.financial_status ?? ""))) { r.unpaid_skipped++; continue; }
+    const decision = decideOrder(order, inOrders.has(id), evStatus.get(id) || []);
+    if (decision === "finns") continue;
+    if (decision === "vantar") { r.pending.push(name); continue; }
+    if (decision === "hoppa_over") { r.unpaid_skipped++; continue; }
     if (dryRun) { r.recovered.push(`${name} (saknas, torrkörning)`); continue; }
 
     const { data: queued, error: qErr } = await db

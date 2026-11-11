@@ -142,3 +142,6 @@ verify_jwt = false
 
 [functions.mail-intake-manual]
 verify_jwt = false
+
+[functions.shopify-health]
+verify_jwt = false
