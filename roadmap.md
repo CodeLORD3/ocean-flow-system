@@ -2,7 +2,7 @@
 
 ## Shopify Sverige — uppehåll i webhooks
 - [x] Läskontroll: prenumerationer intakta, inga missade order (#2707–#2752 alla finns)
-- [ ] Daglig kontroll + återhämtning — väntar på Tims OK av planen
+- [x] Daglig kontroll + återhämtning byggd, driftsatt, schemalagd 06:00 och körd en gång (3/3 prenumerationer, 0 missade order)
 
 ## Ludvig Wickström kan inte logga in
 - [x] Utred, rätta orsak, lösenordsåterställning skickad 2026-11-10 11:11 UTC (behörigheter oförändrade, likvärdiga Kungsholmen)
@@ -76,3 +76,9 @@ Dator lämnas oförändrad (allt görs med `sm:`-brytpunkten eller separata mobi
 - [x] Jobb fortnox-inbox-de-no1 (15,45) + manuell körning
 - [x] integration-intake + integration_log + /integration-log
 - [x] Skyddsnät för mailkorgen (Behöver åtgärd, omförsök, manuell uppladdning, varning)
+
+## Grossistorder mobil — rader överlappar (Tim, 11 nov)
+- [x] Rätta överlappande orderrader på mobil i Beställningar (fast radhöjd borttagen, kontrollerad i 390 px WebKit)
+
+## Inköpslista idag + imorgon (Tim, 11 nov)
+- [x] Läs beställda varor för 11–12 nov och lista vara/mängd (bara läsning)

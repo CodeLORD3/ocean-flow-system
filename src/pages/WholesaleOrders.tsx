@@ -1650,7 +1650,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               return (
                 <React.Fragment key={line.id}>
                  {catHeader && (
-                   <tr className="block bg-muted/40 sm:table-row">
+                   <tr className="block bg-muted/40 max-sm:!h-auto sm:table-row">
                      <td colSpan={10} className="block sm:table-cell px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                        ▸ {catHeader}
                      </td>
@@ -1658,7 +1658,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                  )}
                 <tr
                   id={`order-line-${order.id}-${line.product_id}`}
-                  className={`flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/30 py-1.5 sm:table-row sm:py-0 sm:h-7 transition-colors ${
+                  className={`flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/30 py-1.5 max-sm:!h-auto sm:table-row sm:py-0 sm:h-7 transition-colors ${
                   isUnavailable ? "opacity-50 bg-destructive/5" :
                   currentStatus === "Skickad" ? "bg-primary/10" :
                   currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/10" :
