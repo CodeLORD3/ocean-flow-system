@@ -23,6 +23,7 @@ import {
   webhookSecrets,
 } from "../_shared/shopify-shops.ts";
 import { localDate, resolveWantedDate } from "../_shared/webOrderDate.ts";
+import { authenticateCronRequest } from "../_shared/cron-auth.ts";
 
 
 const corsHeaders = {
@@ -1115,9 +1116,12 @@ Deno.serve(async (req) => {
 
   /* Kör om en misslyckad köad rad från Systemstatus (kräver inloggad personal). */
   if (path.endsWith("/reprocess")) {
-    const auth = req.headers.get("Authorization") ?? "";
-    const { data: userData } = await db.auth.getUser(auth.replace(/^Bearer\s+/i, ""));
-    if (!userData?.user) return json({ ok: false, error: "Inloggning krävs" }, 401);
+    // Inloggad personal, eller den schemalagda Shopify-kontrollen (shopify-health).
+    if (authenticateCronRequest(req) !== null) {
+      const auth = req.headers.get("Authorization") ?? "";
+      const { data: userData } = await db.auth.getUser(auth.replace(/^Bearer\s+/i, ""));
+      if (!userData?.user) return json({ ok: false, error: "Inloggning krävs" }, 401);
+    }
     let body: any;
     try {
       body = JSON.parse(raw);

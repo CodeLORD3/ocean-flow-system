@@ -72,7 +72,9 @@ async function isAdmin(db: SupabaseClient, req: Request): Promise<boolean> {
   const uid = data?.user?.id;
   if (!uid) return false;
   const { data: roles } = await db.from("user_roles").select("role").eq("user_id", uid);
-  return (roles || []).some((r: any) => ["admin", "platform_admin"].includes(String(r.role)));
+  if ((roles || []).some((r: any) => String(r.role) === "admin")) return true;
+  const { data: pa } = await db.rpc("is_platform_admin", { _user_id: uid });
+  return pa === true;
 }
 
 type ShopResult = {
