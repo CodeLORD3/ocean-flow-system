@@ -251,16 +251,14 @@ Deno.serve(async (req) => {
       svar: { ...r, dry_run: dryRun, hours },
     });
     if (!dryRun && (!r.ok || acted)) {
-      await db.from("notifications").upsert(
-        {
-          portal: "wholesale",
-          target_page: "/system-status",
-          message: `Shopify-kontroll: ${text}`.slice(0, 500),
-          entity_type: "shopify_health",
-          dedupe_key: `shopify_health:${shop.shop_domain}:${day}`,
-        },
-        { onConflict: "dedupe_key", ignoreDuplicates: true },
-      );
+      // En notis per butik och dag; unikt index på dedupe_key stoppar dubbletter (23505).
+      await db.from("notifications").insert({
+        portal: "wholesale",
+        target_page: "/system-status",
+        message: `Shopify-kontroll: ${text}`.slice(0, 500),
+        entity_type: "shopify_health",
+        dedupe_key: `shopify_health:${shop.shop_domain}:${day}`,
+      });
     }
   }
   return json({ ok: results.every((r) => r.ok), dry_run: dryRun, hours, results });
