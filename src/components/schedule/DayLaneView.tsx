@@ -1,6 +1,8 @@
 import type { ComingGoingEvent, WeekRow } from "@/components/schedule/scheduleViewTypes";
 import { minutesOfTime, storeMonocode, timeOfMinutes } from "@/lib/scheduleFormat";
 import { Plus } from "lucide-react";
+import { MobileDayList } from "@/components/schedule/MobileDayList";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const START = 4 * 60;
 const END = 20 * 60;
@@ -19,6 +21,8 @@ interface Props {
   nowMinutes?: number | null;
   /** Behövda personer under dagen. Null när underlag saknas. */
   need?: number | null;
+  /** False för läsbehörighet: telefonlistan visar då ingen planeringsknapp. */
+  canAdd?: boolean;
 }
 
 const percent = (minutes: number) => `${Math.max(0, Math.min(100, ((minutes - START) / (END - START)) * 100))}%`;
@@ -32,7 +36,7 @@ const initials = (name: string) =>
     .toUpperCase();
 
 /** Dagvyn: timaxel per person, bemanningsrad mot behov och kronologisk kommer-och-går. */
-export function DayLaneView({ day, rows, events, coverage, gap, selectedShiftId, onShiftClick, onAdd, nowMinutes = null, need = null }: Props) {
+export function DayLaneView({ day, rows, events, coverage, gap, selectedShiftId, onShiftClick, onAdd, nowMinutes = null, need = null, canAdd = true }: Props) {
   const cellFor = (row: WeekRow) => row.cells.find((cell) => cell.day === day);
   const dayRows = rows.filter((row) => (cellFor(row)?.shifts.length ?? 0) > 0 || !!cellFor(row)?.actual);
   const shown = dayRows.length > 0 ? dayRows : rows;
@@ -40,6 +44,7 @@ export function DayLaneView({ day, rows, events, coverage, gap, selectedShiftId,
   const onSiteNow = shown.filter((row) => cellFor(row)?.actual?.ongoing).length;
   const loneHours = coverage.filter((entry) => entry.scheduled === 1).length;
   const insideAxis = nowMinutes !== null && nowMinutes >= START && nowMinutes <= END;
+  const isMobile = useIsMobile();
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_336px]">
@@ -58,6 +63,9 @@ export function DayLaneView({ day, rows, events, coverage, gap, selectedShiftId,
           </div>
         </div>
 
+        {isMobile ? (
+          <MobileDayList day={day} rows={rows} selectedShiftId={selectedShiftId} onShiftClick={onShiftClick} onAdd={canAdd ? onAdd : undefined} />
+        ) : (
         <div className="overflow-x-auto">
           <div className="min-w-[680px]">
             <div className="grid grid-cols-[152px_minmax(480px,1fr)] items-end gap-3 border-b border-[var(--sl-line)] pb-2">
@@ -192,6 +200,7 @@ export function DayLaneView({ day, rows, events, coverage, gap, selectedShiftId,
             </div>
           </div>
         </div>
+        )}
       </section>
 
       <aside className="sl-inspector" aria-label="Kommer och går">

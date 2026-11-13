@@ -2,6 +2,9 @@ import type { WeekRow } from "@/components/schedule/scheduleViewTypes";
 import { formatDecimalHours, formatHm, formatKrPrel, storeMonocode } from "@/lib/scheduleFormat";
 import { Clock3, Plus, Wallet } from "lucide-react";
 import { ScheduleMark } from "@/components/schedule/ScheduleMark";
+import { MobileDayList } from "@/components/schedule/MobileDayList";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useState } from "react";
 
 const DAYS = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
 const COLS = "grid-cols-[196px_repeat(7,minmax(112px,1fr))_136px]";
@@ -16,11 +19,45 @@ interface Props {
   onShiftClick: (staffId: string, day: string, shiftId?: string) => void;
   onSalaryClick: (staffId: string) => void;
   storeName: (id: string | null) => string;
+  /** Telefon: planera pass för vald dag. Saknas för läsbehörighet. */
+  onAdd?: (staffId: string, day: string) => void;
 }
 
 /** Veckoschemat enligt ritningen: monokoder för enhet, status som kant på passet. */
-export function WeekGridView({ rows, days, today, coverage, selectedShiftId, onShiftClick, onSalaryClick }: Props) {
+export function WeekGridView({ rows, days, today, coverage, selectedShiftId, onShiftClick, onSalaryClick, onAdd }: Props) {
   const totalMinutes = rows.reduce((total, row) => total + row.weekMinutes, 0);
+  const isMobile = useIsMobile();
+  const [picked, setPicked] = useState<string | null>(null);
+  const activeDay = picked && days.includes(picked) ? picked : days.includes(today) ? today : days[0];
+
+  // Telefon: dagväljare + lista per dag i stället för det breda rutnätet.
+  if (isMobile) {
+    return (
+      <div>
+        <div className="grid grid-cols-7 gap-1 border-b border-[var(--sl-line)] p-2" role="tablist" aria-label="Välj dag">
+          {days.map((day, index) => {
+            const count = coverage.find((entry) => entry.day === day)?.scheduled ?? 0;
+            const active = day === activeDay;
+            return (
+              <button
+                key={day}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setPicked(day)}
+                className={`flex min-h-[56px] min-w-0 flex-col items-center justify-center rounded-md border text-center ${active ? "border-[var(--sl-ink)] bg-[var(--sl-ink)] text-background" : `border-[var(--sl-line)] ${day === today ? "bg-[var(--sl-blue-bg)]" : "bg-white"}`}`}
+              >
+                <span className="text-[12px] font-semibold">{DAYS[index]}</span>
+                <span className={`sl-num text-[11px] ${active ? "" : "sl-muted"}`}>{Number(day.slice(8))}/{Number(day.slice(5, 7))}</span>
+                <span className={`sl-num text-[11px] font-semibold ${active ? "" : "sl-faint"}`}>{count > 0 ? count : "—"}</span>
+              </button>
+            );
+          })}
+        </div>
+        <MobileDayList day={activeDay} rows={rows} selectedShiftId={selectedShiftId} onShiftClick={onShiftClick} onAdd={onAdd} />
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-x-auto">

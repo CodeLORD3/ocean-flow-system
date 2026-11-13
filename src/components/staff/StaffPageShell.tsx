@@ -27,8 +27,10 @@ export function StaffPageShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden p-3 md:p-4">
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+    // Telefon: sidan växer och skrollar som vanligt. Fast höjd med inre skroll
+    // gav schemaytan noll höjd under rubrik och nyckeltal.
+    <div className="flex flex-col p-3 md:h-full md:min-h-0 md:overflow-hidden md:p-4">
+      <div className="flex flex-col rounded-lg border border-border bg-card shadow-sm md:min-h-0 md:flex-1 md:overflow-hidden">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div className="flex min-w-0 items-baseline gap-3">
             <div className="min-w-0">
@@ -53,8 +55,8 @@ export function StaffPageShell({
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2">{toolbar}</div>
         ) : null}
 
-        <div className={cn("grid min-h-0 flex-1", side ? "lg:grid-cols-[minmax(0,1fr)_260px]" : "")}>
-          <div className="min-w-0 overflow-auto">{children}</div>
+        <div className={cn("grid md:min-h-0 md:flex-1", side ? "lg:grid-cols-[minmax(0,1fr)_260px]" : "")}>
+          <div className="min-w-0 md:overflow-auto">{children}</div>
           {side ? (
             <aside className="hidden min-h-0 overflow-y-auto border-l border-border bg-muted/10 p-4 lg:block">{side}</aside>
           ) : null}

@@ -35,6 +35,8 @@ import { SegmentSwitch } from "@/components/staff/ui";
 import { StaffPageShell, StaffMetric } from "@/components/staff/StaffPageShell";
 import type { AbsenceMark, ActualMark, ComingGoingEvent, DayCell, ShiftCellItem, WeekRow } from "@/components/schedule/scheduleViewTypes";
 import { ScheduleImportDialog } from "@/components/schedule/ScheduleImportDialog";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const DAY_NAMES = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
 
@@ -88,6 +90,7 @@ export default function StaffSchedule() {
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const importStoreId = storeFilter !== "all" ? storeFilter : null;
+  const isMobile = useIsMobile();
 
   const { data: stores = [] } = useStores(true);
   const { data: staff = [], isLoading: staffLoading } = useStaff();
@@ -448,6 +451,7 @@ export default function StaffSchedule() {
                 onShiftClick={handleShiftClick}
                 onSalaryClick={readOnly ? () => {} : (id) => setSalaryStaff(staff.find((person: any) => person.id === id) ?? null)}
                 storeName={storeName}
+                onAdd={readOnly ? undefined : (_staffId, day) => openDialog(null, day)}
               />
             ) : (
               <div className="ind p-3">
@@ -460,6 +464,7 @@ export default function StaffSchedule() {
                   selectedShiftId={selectedShiftId}
                   onShiftClick={handleShiftClick}
                   onAdd={(staffId, day) => !readOnly && openDialog(staffId, day)}
+                  canAdd={!readOnly}
                   nowMinutes={selectedDay === dateKey() ? now.getHours() * 60 + now.getMinutes() : null}
                 />
               </div>
@@ -487,6 +492,30 @@ export default function StaffSchedule() {
           anchor={days[0]}
         />
       ) : null}
+      {/* Telefon: sidopanelen visas inte, så valt pass öppnas som ett blad nerifrån. */}
+      <Drawer open={isMobile && !!inspectorData} onOpenChange={(open) => !open && setSelectedShiftId(null)}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerTitle className="sr-only">Valt pass</DrawerTitle>
+          <div className="staff-light overflow-y-auto p-4">
+            {inspectorData ? (
+              <ShiftInspector
+                data={inspectorData}
+                onClose={() => setSelectedShiftId(null)}
+                onEdit={() => {
+                  const shift = visibleShifts.find((item) => item.id === inspectorData.shiftId);
+                  setSelectedShiftId(null);
+                  if (shift) openDialog(shift.staff_id, shift.shift_date, shift.id);
+                }}
+                onDelete={() => {
+                  if (readOnly || inspectorData.shiftId.startsWith("imp:")) return;
+                  deleteShift.mutate(inspectorData.shiftId);
+                  setSelectedShiftId(null);
+                }}
+              />
+            ) : null}
+          </div>
+        </DrawerContent>
+      </Drawer>
       <StaffSalaryDialog open={!!salaryStaff} onOpenChange={(open) => !open && setSalaryStaff(null)} staff={salaryStaff} />
       <StaffAccessDialog open={!!accessStaff} onOpenChange={(open) => !open && setAccessStaff(null)} staff={accessStaff} />
     </motion.main>
