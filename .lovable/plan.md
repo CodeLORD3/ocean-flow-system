@@ -16,17 +16,18 @@ Kontroll vecka 46 (9–15 nov): Amhult 35 rader, 0 levererat, beställt värde c
 
 Det är alltså bara Organisationsöversikten (och Dashboardens försäljningssiffra) som räknar på levererat. Resultatsidan räknar i dag på inköpsrapporter, inte på butiksordrar.
 
-## Frågor att bekräfta innan bygget
+## Beslut
 
-1. Ska resultatsidans inköp **ersättas** av beställt värde, eller visas som en egen kolumn ("Beställt från grossist") bredvid inköpsrapporterna? Förslag: en egen kolumn, och beställt värde räknas som butikens råvaruinköp när det finns. Inköpsrapporter till samma butik från andra leverantörer läggs till. Så räknas grossistleveranser inte två gånger.
-2. Ska rapportmejlets Stockholmsdel fortsätta använda grossistens faktura (regionnivå)? Förslag: ja, men en rad "Ålsten + Kungsholmen" visar beställt värde som kontroll.
+1. Butikens inköp = butiksordrarnas beställda värde. Inköpsrapporter från andra leverantörer läggs till ovanpå. Grossistens egna fakturor och följesedlar (FSAB, Fisk & Skaldjursspecialisten No.1 AB) räknas inte, eftersom de redan ingår i det beställda värdet. Resultatet märks "Inköp = beställt värde".
+2. Ålstens Fisk och Fiskskaldjur Kungsholmen blir resultatenheten "Ålsten + Kungsholmen". Den kan fällas ut per butik.
+3. Rapportmejlet behåller grossistfakturan på regionnivå och får en summarad för Ålsten + Kungsholmen.
+4. Dashboard ändras inte.
 
 ## Ändring 1 – inköp på beställt värde
 
 - Ny databasfunktion `shop_order_purchase_value(_from, _to)`: per butik och leveransdag `sum(quantity_ordered × coalesce(cost_at_order, products.cost_price))`. Leveransdag = `coalesce(shop_order_lines.delivery_date, shop_orders.desired_delivery_date)`. Rader med status "Ej tillgänglig" och makulerade ordrar räknas inte. Antal rader utan kostnad returneras, så att sidan kan visa "X rader saknar inköpspris".
-- `resultat_per_butik`: nytt fält `ordered_purchase_sek` från funktionen ovan, enligt svaret på fråga 1.
+- `resultat_per_butik`: nytt fält `ordered_purchase_sek` från funktionen ovan. `raw_purchase_sek` räknar bara inköpsrapportrader från andra leverantörer än FSAB, och FSAB känns igen på leverantörens namn eller organisationsnummer. Resultatsidan räknar inköp som beställt värde + andra leverantörer + koncerninternt. Kolumnen märks "Inköp = beställt värde" och visar "X rader saknar inköpspris" när det behövs.
 - `OrganisationOverview.tsx`: varukostnaden byter `quantity_delivered` mot `quantity_ordered × coalesce(cost_at_order, cost_price)`, per leveransdag. Försäljningen till butik (grossistens intäkt) behåller levererat, eftersom den motsvarar fakturan.
-- `Dashboard.tsx` ändras bara om du vill. Siffran är grossistens försäljning, inte butikens inköp.
 
 ## Ändring 2 – Ålsten + Kungsholmen som en resultatenhet
 
@@ -40,6 +41,7 @@ Det är alltså bara Organisationsöversikten (och Dashboardens försäljningssi
 - **Lagersaldo**: inga ändringar. Ingen ny `stock_movements` och inga saldon skrivs. Det här är bara rapportberäkning.
 - **Leveransavvikelser** (`usePurchaseReconciliation`, Mottagning): räknar fortfarande beställt mot levererat. Inget ändras.
 - **Fortnox-fakturering** (`fortnox_build_shop_invoice_input`): fortsätter skicka levererad mängd. Fakturor går bara för packade/godkända rader, som i dag.
+- **Dashboard**: oförändrad.
 - **Veckorapporter per butik** (`weekly_store_reports`, låsning/omlåsning): oförändrade, eftersom de inte innehåller inköp.
 - Inköpslistor, packning, produktion och FEFO: oförändrade.
 
@@ -50,6 +52,7 @@ Beställt värde blir högre än verkligt inköp när varor inte levereras ("Ej 
 ## Tekniskt
 
 - En migration: `result_units` (+ GRANT och RLS: läsa för admin/platform_admin, skriva för admin), `stores.result_unit_id`, `shop_order_purchase_value`, ny version av `resultat_per_butik` med nya kolumner längst bak (bakåtkompatibelt).
-- Datasteg (efter ditt OK): skapa enheten och koppla Ålsten och Kungsholmen.
+- Datasteg: skapa enheten "Ålsten + Kungsholmen" och koppla Ålstens Fisk och Fiskskaldjur Kungsholmen.
+- Före bygget kontrolleras vilka leverantörsnamn FSAB har i inköpsrapporterna, så att uteslutningen träffar rätt.
 - Tester: beställt värde använder `cost_at_order` före `cost_price` och leveransdagen före önskat datum. Gruppen summerar båda butikerna.
 - Ingen sidledsskroll: den utfällbara enhetsraden byggs som radbrytning eller kort på mobil.
