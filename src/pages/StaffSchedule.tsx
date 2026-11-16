@@ -37,6 +37,7 @@ import type { AbsenceMark, ActualMark, ComingGoingEvent, DayCell, ShiftCellItem,
 import { ScheduleImportDialog } from "@/components/schedule/ScheduleImportDialog";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileScheduleView } from "@/components/schedule/MobileScheduleView";
 
 const DAY_NAMES = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
 
@@ -343,8 +344,35 @@ export default function StaffSchedule() {
   const emptyState = visibleShifts.length === 0 && !plannedLoading && !staffLoading;
   const violationCount = restMap.size;
 
+  // Telefon: anställda ser bara enheter de hör till eller som har pass i veckan.
+  const mobileStores = useMemo(() => {
+    if (!readOnly) return stores.map((store: any) => ({ id: store.id as string, name: store.name as string }));
+    const ids = new Set<string>([...(me?.store_id ? [me.store_id] : []), ...((me?.allowed_store_ids ?? []) as string[]), ...planned.map((shift) => shift.store_id).filter(Boolean) as string[]]);
+    if (storeFilter !== "all") ids.add(storeFilter);
+    return stores.filter((store: any) => ids.has(store.id)).map((store: any) => ({ id: store.id as string, name: store.name as string }));
+  }, [readOnly, stores, me, planned, storeFilter]);
+
   return (
     <motion.main initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="staff-light h-full min-h-0">
+      {isMobile ? (
+        <MobileScheduleView
+          rows={rows}
+          days={days}
+          today={dateKey()}
+          weekNumber={isoWeek(mondayOf(anchor))}
+          meId={me?.id ?? null}
+          nowMinutes={now.getHours() * 60 + now.getMinutes()}
+          loading={plannedLoading || staffLoading}
+          stores={mobileStores}
+          storeFilter={storeFilter}
+          onStoreFilter={(value) => { setCityFilter("all"); setStoreFilter(value); }}
+          onPrevWeek={() => shiftPeriod(-1)}
+          onNextWeek={() => shiftPeriod(1)}
+          onToday={() => { const today = dateKey(); setAnchor(today); setDayViewDate(today); }}
+          onShiftClick={readOnly ? undefined : (staffId, day, shiftId) => handleShiftClick(staffId, day, shiftId)}
+          onAdd={readOnly ? undefined : (day) => openDialog(null, day)}
+        />
+      ) : (
       <StaffPageShell
         label="Personal & schema"
         title={view === "day" ? "Schema · dagvy" : `Vecka ${isoWeek(mondayOf(anchor))}`}
@@ -480,6 +508,7 @@ export default function StaffSchedule() {
             ) : null}
         </section>
       </StaffPageShell>
+      )}
 
 
       <PlannedShiftDialog open={dialogOpen} onOpenChange={setDialogOpen} storeId={dialogStore ?? stores[0]?.id ?? ""} storeName={storeName(dialogStore)} day={dialogDay} editing={editing} />

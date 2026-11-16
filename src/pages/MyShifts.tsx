@@ -176,7 +176,9 @@ export default function MyShifts() {
     ? currentBalance.earned_days + currentBalance.saved_days + currentBalance.manual_adjustment_days - currentBalance.used_days
     : null;
 
-  const published = myShifts.filter((s) => s.status === "published");
+  const published = myShifts
+    .filter((s) => s.status === "published")
+    .sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time));
   const openShifts = storeShifts.filter((s) => !s.employee_id && s.status === "published");
   const typeById = useMemo(() => new Map(shiftTypes.map((t) => [t.id, t])), [shiftTypes]);
   const colleagues = useMemo(
@@ -248,19 +250,26 @@ export default function MyShifts() {
     const type = s.shift_type_id ? typeById.get(s.shift_type_id) : null;
     const hoursUntil = (new Date(`${s.date}T${s.start_time}`).getTime() - Date.now()) / 3600_000;
     return (
-      <IndustryRow key={s.id} edge={mine ? "accent" : "accent-2"}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="ind-mono text-base">
-              {DAY_NAMES[(new Date(s.date).getDay() + 6) % 7]} {s.date} · {s.start_time.slice(0, 5)}–
-              {s.end_time.slice(0, 5)}
-            </p>
-            <p className="ind-muted text-xs">
-              {type?.name ?? "Pass"} · rast {s.break_minutes} min · {formatMinutes(shiftMinutes(s))}
-              {s.note ? ` · ${s.note}` : ""}
-            </p>
+      <IndustryRow key={s.id} edge={mine ? "accent" : "accent-2"} className={s.date === today ? "ring-1 ring-primary/40" : undefined}>
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className={`flex w-14 shrink-0 flex-col items-center rounded-md border py-1.5 ${s.date === today ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>
+              <span className="text-[11px] font-semibold uppercase leading-none opacity-80">{DAY_NAMES[(new Date(`${s.date}T12:00:00`).getDay() + 6) % 7]}</span>
+              <span className="ind-mono text-xl font-semibold leading-tight">{Number(s.date.slice(8))}</span>
+              <span className="text-[10.5px] leading-none opacity-80">{new Date(`${s.date}T12:00:00`).toLocaleDateString("sv-SE", { month: "short" }).replace(".", "")}</span>
+            </div>
+            <div className="min-w-0">
+              <p className="ind-mono text-lg font-semibold leading-tight">
+                {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
+                {s.date === today ? <span className="ml-2 align-middle text-xs font-semibold text-primary">Idag</span> : null}
+              </p>
+              <p className="ind-muted break-words text-xs">
+                {type?.name ?? "Pass"} · rast {s.break_minutes} min · {formatMinutes(shiftMinutes(s))}
+                {s.note ? ` · ${s.note}` : ""}
+              </p>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className={`grid gap-2 sm:flex sm:items-center ${mine ? "grid-cols-2" : "grid-cols-1"}`}>
             {mine ? (
               <>
                 <IndustryButton
@@ -275,7 +284,8 @@ export default function MyShifts() {
                 </IndustryButton>
                 <IndustryButton
                   size="touch"
-                  variant="ghost"
+                  variant="secondary"
+                  className="whitespace-nowrap"
                   onClick={async () => {
                     try {
                       await createRequest.mutateAsync({
@@ -295,7 +305,7 @@ export default function MyShifts() {
                     }
                   }}
                 >
-                  <HandHelping className="h-4 w-4" /> Lämna över
+                  <HandHelping className="h-4 w-4 shrink-0" /> Lämna över
                 </IndustryButton>
               </>
             ) : (
