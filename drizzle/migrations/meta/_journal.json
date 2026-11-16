@@ -295,6 +295,13 @@
       "when": 1793700915331,
       "tag": "0041_mail_intake_failures",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1794829352699,
+      "tag": "0042_restrict_telegram_settings_read",
+      "breakpoints": true
     }
   ]
 }
