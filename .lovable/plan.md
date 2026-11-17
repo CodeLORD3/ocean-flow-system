@@ -1,58 +1,50 @@
-# Butiksresultat: inköp på beställt värde + Ålsten och Kungsholmen som en enhet
+# Butiksbeställning som nätbutik på mobilen
 
-## Var inköp och butiksresultat räknas idag
+Ja – på telefonen ska butikens beställning kännas som att handla i HM-appen: bläddra bland varor med bild, tryck "+", se kundvagnen växa, och gå till kassan för att skicka. Datorvyn ändras inte.
 
-| Ställe | Inköp räknas från | Använder levererat? |
-|---|---|---|
-| Sidan **Resultat** (`src/pages/Resultat.tsx`), databasfunktionen `resultat_per_butik` | Inköpsrapporter (`purchase_report_lines`, fakturor/följesedlar) per butik + koncerninterna fakturor (`intercompany_invoices`) | Nej |
-| Sidan **Resultat**, flik Bokfört (`resultat_bokfort`) | Fortnox-saldon konto 4xxx | Nej |
-| **Organisationsöversikt** (`src/pages/OrganisationOverview.tsx`) | Butiksordrar: `quantity_delivered × products.cost_price` (varukostnad) och `quantity_delivered × wholesale_price` (försäljning per butik) | **Ja** |
-| **Dashboard** (`src/pages/Dashboard.tsx`) | Försäljning per butik: `quantity_delivered × wholesale_price`; "Totala inköp" från `incoming_deliveries` | **Ja** (försäljningsdelen) |
-| **Veckorapporter** (`weekly_store_reports` via `recompute_weekly_store_report`, vyn `weekly_region_reports`, komponent `WeeklyStoreReports.tsx`) | Inga inköp alls – bara försäljning (dagsrapporter) och timmar | – |
-| **Rapportmejl** (`supabase/functions/report-email/blocks.ts`) | Göteborg: Fortnox konto 4010/4011 per leveransdag. Stockholm: grossistens fakturor till DE No.1 (regionnivå, inte per butik) | Nej (fakturerat) |
-| Inköpslista (`PurchaseWeekCard.tsx`) | `quantity_ordered`, men bara kvantitet, inget värde | – |
+## Så ser det ut för butiken
 
-Kontroll vecka 46 (9–15 nov): Amhult 35 rader, 0 levererat, beställt värde ca 69 200 kr. Ålsten 25 rader, 180 levererat, beställt värde ca 90 300 kr. Kungsholmen 0 rader. Vissa rader saknar både `cost_at_order` och `cost_price` – de blir 0 kr och ska flaggas.
+```text
+[ Sök vara ............ ]
+Mest beställt | Fisk | Skaldjur | Kokt | Delikatess ...   (radbryts, ingen sidledsskroll)
 
-Det är alltså bara Organisationsöversikten (och Dashboardens försäljningssiffra) som räknar på levererat. Resultatsidan räknar i dag på inköpsrapporter, inte på butiksordrar.
+ ┌────────┐ ┌────────┐
+ │ bild   │ │ bild   │     2 kort per rad
+ │ Lax    │ │ Räkor  │
+ │ kg     │ │ kg     │
+ │ [ + ]  │ │ [-2+]  │     stegknapp när varan ligger i vagnen
+ └────────┘ └────────┘
 
-## Beslut
+ ─────────────────────────────────────────
+  Kundvagn · 7 varor · ca 4 820 kr   [ Till kassan ]   (fast längst ner)
+```
 
-1. Butikens inköp = butiksordrarnas beställda värde. Inköpsrapporter från andra leverantörer läggs till ovanpå. Grossistens egna fakturor och följesedlar (FSAB, Fisk & Skaldjursspecialisten No.1 AB) räknas inte, eftersom de redan ingår i det beställda värdet. Resultatet märks "Inköp = beställt värde".
-2. Ålstens Fisk och Fiskskaldjur Kungsholmen blir resultatenheten "Ålsten + Kungsholmen". Den kan fällas ut per butik.
-3. Rapportmejlet behåller grossistfakturan på regionnivå och får en summarad för Ålsten + Kungsholmen.
-4. Dashboard ändras inte.
+1. **Butik (startsida):**
+   - Fliken "Mest beställt" visas först. Den visar butikens egna vanligaste varor de senaste 8 veckorna och vanlig mängd, till exempel "brukar: 6 kg".
+   - Sedan kommer flikar per kategori och en sökruta.
+   - Bara varor som butiken får beställa visas, alltså samma dolda kategorier som idag.
+2. **Produktkort:** bild, namn och enhet. "+" lägger varan i vagnen med butikens vanliga mängd, annars 1. Efter det ändrar man mängden med − och +, eller trycker på siffran och skriver. Kg får en decimal.
+3. **Kundvagn (nerifrån):**
+   - Alla valda varor grupperas per kategori. Man kan ändra mängd, ta bort en vara och märka varor som "Måste med".
+   - Kundbeställda varor ligger redan i vagnen och är låsta. Man kan bara lägga till påfyllning på dem, som idag.
+4. **Kassan:**
+   - Man väljer leveransdag, som måste vara vald, och skriver ett meddelande.
+   - Sedan ser man en sammanfattning med antal varor och ungefärligt värde.
+   - Två knappar: "Skicka beställning" och "Spara som öppen".
+   - Efter att man skickat visas en bekräftelse: "Beställning skickad – leverans tisdag 24 november".
+5. **Snabbval:** knappen "Samma som förra [veckodag]" och "Kopiera" i Historik fyller vagnen som idag.
 
-## Ändring 1 – inköp på beställt värde
+## Vad som inte ändras
 
-- Ny databasfunktion `shop_order_purchase_value(_from, _to)`: per butik och leveransdag `sum(quantity_ordered × coalesce(cost_at_order, products.cost_price))`. Leveransdag = `coalesce(shop_order_lines.delivery_date, shop_orders.desired_delivery_date)`. Rader med status "Ej tillgänglig" och makulerade ordrar räknas inte. Antal rader utan kostnad returneras, så att sidan kan visa "X rader saknar inköpspris".
-- `resultat_per_butik`: nytt fält `ordered_purchase_sek` från funktionen ovan. `raw_purchase_sek` räknar bara inköpsrapportrader från andra leverantörer än FSAB, och FSAB känns igen på leverantörens namn eller organisationsnummer. Resultatsidan räknar inköp som beställt värde + andra leverantörer + koncerninternt. Kolumnen märks "Inköp = beställt värde" och visar "X rader saknar inköpspris" när det behövs.
-- `OrganisationOverview.tsx`: varukostnaden byter `quantity_delivered` mot `quantity_ordered × coalesce(cost_at_order, cost_price)`, per leveransdag. Försäljningen till butik (grossistens intäkt) behåller levererat, eftersom den motsvarar fakturan.
+- Beställningen sparas exakt som idag: samma order, samma rader, samma inköpsdag, samma prioritet och samma loggning. Grossist, packning, inköpslistor, lager och Fortnox påverkas inte.
+- Vagnen sparas på telefonen tills den skickas. Det fungerar redan idag.
+- Datorvyn och listorna "Ordrar" och "Historik" behålls.
 
-## Ändring 2 – Ålsten + Kungsholmen som en resultatenhet
+## Tekniska detaljer
 
-- Ny tabell `result_units` (namn, t.ex. "Ålsten + Kungsholmen") och ny kolumn `stores.result_unit_id`, som är tom för alla andra butiker. Admin ställer in det. Ingen butik slås ihop, så schema, stämpling, dagsrapporter, kassor, Personalkollen-koppling och veckorapporter per butik fortsätter som i dag.
-- `resultat_per_butik` grupperar på `coalesce(result_unit_id, store_id)`. Försäljning, inköp, timmar, personalkostnad, fasta kostnader och budget summeras för de två butikerna. Raden heter "Ålsten + Kungsholmen" och kan fällas ut per butik.
-- Resultatsidan och Organisationsöversikten visar enheten som en rad. Båda butikerna hör till DE No.1, så bolagsskiljningen påverkas inte. Gruppering tillåts bara mellan butiker i samma bolag, och det kontrolleras i databasen.
-- Rapportmejlet: Stockholmsdelen visar redan butikerna. Där läggs en summarad "Ålsten + Kungsholmen" till. Butiksraderna behålls.
-
-## Vad som INTE påverkas
-
-- **Lagersaldo**: inga ändringar. Ingen ny `stock_movements` och inga saldon skrivs. Det här är bara rapportberäkning.
-- **Leveransavvikelser** (`usePurchaseReconciliation`, Mottagning): räknar fortfarande beställt mot levererat. Inget ändras.
-- **Fortnox-fakturering** (`fortnox_build_shop_invoice_input`): fortsätter skicka levererad mängd. Fakturor går bara för packade/godkända rader, som i dag.
-- **Dashboard**: oförändrad.
-- **Veckorapporter per butik** (`weekly_store_reports`, låsning/omlåsning): oförändrade, eftersom de inte innehåller inköp.
-- Inköpslistor, packning, produktion och FEFO: oförändrade.
-
-## Följdeffekt att känna till
-
-Beställt värde blir högre än verkligt inköp när varor inte levereras ("Ej tillgänglig" räknas bort, men minskade leveranser gör det inte). Det kan också skilja sig från Fortnox-fakturan. Resultatet ska därför märkas "Inköp = beställt värde".
-
-## Tekniskt
-
-- En migration: `result_units` (+ GRANT och RLS: läsa för admin/platform_admin, skriva för admin), `stores.result_unit_id`, `shop_order_purchase_value`, ny version av `resultat_per_butik` med nya kolumner längst bak (bakåtkompatibelt).
-- Datasteg: skapa enheten "Ålsten + Kungsholmen" och koppla Ålstens Fisk och Fiskskaldjur Kungsholmen.
-- Före bygget kontrolleras vilka leverantörsnamn FSAB har i inköpsrapporterna, så att uteslutningen träffar rätt.
-- Tester: beställt värde använder `cost_at_order` före `cost_price` och leveransdagen före önskat datum. Gruppen summerar båda butikerna.
-- Ingen sidledsskroll: den utfällbara enhetsraden byggs som radbrytning eller kort på mobil.
+- Ny komponent `src/components/orders/mobile/StoreShopView.tsx` med delar för `ProductCard`, `CartSheet` (bottom sheet) och `CheckoutSheet`. Den renderas i `ShopOrders.tsx` när `creatingOrder && isMobile`. Desktopformuläret behålls bakom `!isMobile`.
+- State, `orderLines`, utkastet, kundbehovet och `handleCreateOrder` blir kvar i `ShopOrders.tsx` och skickas in som props. Ingen ny spar-logik och ingen ny tabell.
+- "Mest beställt" byggs av en klientfråga på `shop_order_lines` för butiken de senaste 56 dagarna. Den räknar antal ordrar per vara och medianen av `quantity_ordered`, visar topp 30 och tar bara med varor som är aktiva och synliga.
+- Värdet i vagnen räknas som mängd × butikens pris från den prislista som redan används. Det märks "ca" och sparas inte.
+- Allt följer pekskärmsreglerna: 44 px tryckytor, 16 px fält och Sonner. Kortrutnätet har två kolumner med radbrytning och ingen horisontell scroll. Tabbarna radbryts.
+- Det kontrolleras i 390 px med testbutiken Testbutik Inventering. Inga riktiga beställningar skickas.
