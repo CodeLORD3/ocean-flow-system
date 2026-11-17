@@ -76,6 +76,7 @@ export default function StoreShopView(p: Props) {
   const visible = useMemo(() => p.products.filter((x: any) => p.isCategoryVisible(x.category)), [p.products, p.isCategoryVisible]);
   const byId = useMemo(() => new Map(visible.map((x: any) => [x.id, x])), [visible]);
   const typical = useMemo(() => new Map(top.map((t) => [t.product_id, Number(t.typical_qty) || 0])), [top]);
+  const timesOrdered = useMemo(() => new Map(top.map((t) => [t.product_id, Number(t.order_count) || 0])), [top]);
   const categories = useMemo(
     () => Array.from(new Set(visible.map((x: any) => x.category || "Övrigt"))).sort((a, b) => a.localeCompare(b, "sv")),
     [visible],
@@ -84,7 +85,7 @@ export default function StoreShopView(p: Props) {
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (s) return visible.filter((x: any) => x.name.toLowerCase().includes(s) || String(x.sku || "").toLowerCase().includes(s)).slice(0, 60);
-    if (tab === MOST) return top.map((t) => byId.get(t.product_id)).filter(Boolean).slice(0, 30) as any[];
+    if (tab === MOST) return top.map((t) => byId.get(t.product_id)).filter(Boolean) as any[];
     return visible.filter((x: any) => (x.category || "Övrigt") === tab);
   }, [q, tab, visible, top, byId]);
 
@@ -181,7 +182,14 @@ export default function StoreShopView(p: Props) {
         </div>
         <div className="space-y-0.5 pt-2">
           <div className="line-clamp-2 break-words text-[15px] font-semibold leading-tight text-foreground">{x.name}</div>
-          <div className="text-[13px] text-muted-foreground">{t ? `brukar: ${fmtQty(t)} ${unit}` : unit}</div>
+          {t ? (
+            <div className="text-[13px] leading-snug text-muted-foreground">
+              Vanlig beställning: <span className="font-mono font-semibold tabular-nums text-foreground">{fmtQty(t)} {unit}</span>
+              {(timesOrdered.get(x.id) ?? 0) > 1 && <span className="block">beställd {timesOrdered.get(x.id)} ggr</span>}
+            </div>
+          ) : (
+            <div className="text-[13px] text-muted-foreground">{unit}</div>
+          )}
         </div>
         {l && <div className="pt-2">{stepper(l)}</div>}
       </div>
@@ -293,13 +301,16 @@ export default function StoreShopView(p: Props) {
           )}
         </div>
 
-        <div className="px-4 py-3">
+        <div className="px-4 pb-6 pt-3">
           {shown.length === 0 ? (
             <p className="py-10 text-center text-[16px] text-muted-foreground">
               {q ? "Ingen vara matchar sökningen." : tab === MOST ? "Inga beställningar de senaste 8 veckorna ännu." : "Inga varor i kategorin."}
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-x-3 gap-y-5">{shown.map(card)}</div>
+          )}
+          {!q && tab === MOST && shown.length > 0 && (
+            <p className="py-6 text-center text-[15px] text-muted-foreground">Hittar du inte varan? Sök eller välj kategori.</p>
           )}
         </div>
       </div>
@@ -405,7 +416,7 @@ export default function StoreShopView(p: Props) {
           </div>
           <div className="rounded-lg border border-border">
             <div className="flex items-center justify-between border-b border-border px-3 py-2 text-[15px]">
-              <span className="font-semibold">{active.length} varor</span>
+              <span className="font-semibold">{active.length} {active.length === 1 ? "vara" : "varor"}</span>
             </div>
             <div className="divide-y divide-border/60">
               {active.map((l) => (
