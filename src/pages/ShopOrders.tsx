@@ -1130,8 +1130,7 @@ export default function ShopOrders() {
             isDateDisabled={isDateDisabled}
             note={orderNote}
             setNote={setOrderNote}
-            sameWeekdayOrder={sameWeekdayOrder}
-            onCopySameWeekday={() => sameWeekdayOrder && applyCopy(sameWeekdayOrder)}
+            history={orders}
             copyDropped={copyDropped}
             onClose={() => setCreatingOrder(false)}
             onSubmit={(asOpen) => handleCreateOrder(asOpen)}

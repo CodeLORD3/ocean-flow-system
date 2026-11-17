@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { sv } from "date-fns/locale";
-import { LayoutGrid, CalendarIcon, Copy, Minus, Plus, Search, ShoppingBag, Trash2, X, CheckCircle2, Lock, Users } from "lucide-react";
+import { LayoutGrid, CalendarIcon, Check, History, Minus, Plus, Search, ShoppingBag, Trash2, X, CheckCircle2, Lock, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import type { LinePriority } from "@/components/orders/linePriority";
+import { buildWeekdaySuggestion } from "@/lib/orderSuggestion";
 
 export type ShopLine = {
   product_id: string;
@@ -41,8 +42,8 @@ type Props = {
   isDateDisabled: (d: Date) => boolean;
   note: string;
   setNote: (v: string) => void;
-  sameWeekdayOrder: any | null;
-  onCopySameWeekday: () => void;
+  /** Butikens tidigare ordrar med rader – underlag för förslaget "detta beställde du förra …". */
+  history: any[];
   copyDropped: string[];
   onClose: () => void;
   onSubmit: (asOpen: boolean) => Promise<void> | void;
@@ -89,6 +90,15 @@ export default function StoreShopView(p: Props) {
     return visible.filter((x: any) => (x.category || "Övrigt") === tab);
   }, [q, tab, visible, top, byId]);
 
+  const suggestion = useMemo(() => buildWeekdaySuggestion(p.history, p.deliveryDate), [p.history, p.deliveryDate]);
+  const [hiddenFor, setHiddenFor] = useState<string | null>(null);
+  const [showAllSug, setShowAllSug] = useState(false);
+  const sugItems = useMemo(
+    () => (suggestion?.lines ?? []).map((s) => ({ s, x: byId.get(s.product_id) as any })).filter((r) => !!r.x),
+    [suggestion, byId],
+  );
+  const sugMissing = (suggestion?.lines.length ?? 0) - sugItems.length;
+
   const lineOf = (id: string) => p.lines.find((l) => l.product_id === id);
   const active = p.lines.filter((l) => num(l.quantity) > 0);
   const [catOpen, setCatOpen] = useState(false);
@@ -106,17 +116,22 @@ export default function StoreShopView(p: Props) {
       }),
     );
   const remove = (id: string) => p.setLines((prev) => prev.filter((l) => l.product_id !== id || l.source === "customer"));
-  const add = (x: any) => {
+  const newLine = (x: any, qty: number): ShopLine => ({
+    product_id: x.id, product_name: x.name, unit: x.unit || "ST", quantity: String(qty), category: x.category || null,
+    image_url: x.image_url ?? null, priority: "nice", priorityQty: "", priorityNote: "",
+  });
+  const add = (x: any, qty?: number) => {
     setBump((b) => b + 1);
-    const start = typical.get(x.id) || 1;
-    p.setLines((prev) =>
-      prev.some((l) => l.product_id === x.id)
-        ? prev
-        : [
-            ...prev,
-            { product_id: x.id, product_name: x.name, unit: x.unit || "ST", quantity: String(start), category: x.category || null, image_url: x.image_url ?? null, priority: "nice", priorityQty: "", priorityNote: "" },
-          ],
-    );
+    const start = qty ?? (typical.get(x.id) || 1);
+    p.setLines((prev) => (prev.some((l) => l.product_id === x.id) ? prev : [...prev, newLine(x, start)]));
+  };
+  /** Lägger till förslagets varor som saknas i vagnen. Det som redan ligger där (även kundbeställt) rörs inte. */
+  const addAllSuggested = () => {
+    setBump((b) => b + 1);
+    p.setLines((prev) => {
+      const have = new Set(prev.map((l) => l.product_id));
+      return [...prev, ...sugItems.filter((r) => !have.has(r.x.id)).map((r) => newLine(r.x, r.s.quantity))];
+    });
   };
   const step = (id: string, d: number) => {
     const l = lineOf(id);
@@ -237,6 +252,70 @@ export default function StoreShopView(p: Props) {
     </div>
   );
 
+  const sugLeft = sugItems.filter((r) => !lineOf(r.x.id));
+  const sugShown = showAllSug ? sugItems : sugItems.slice(0, 4);
+  const suggestionBox =
+    p.deliveryDate && suggestion && sugItems.length > 0 && hiddenFor !== suggestion.date ? (
+      <section aria-label="Förslag" className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+        <div className="flex items-start gap-2">
+          <History className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1">
+            <div className="text-[16px] font-semibold leading-snug text-foreground">
+              Detta beställde du {suggestion.exactLastWeek ? "förra veckan, " : ""}
+              {format(new Date(`${suggestion.date}T12:00:00`), "EEEE d MMMM", { locale: sv })}
+            </div>
+            <div className="text-[14px] text-muted-foreground">
+              {sugItems.length} {sugItems.length === 1 ? "vara" : "varor"} · inget läggs i korgen förrän du trycker
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" className="-mr-1 -mt-1 h-11 w-11 shrink-0" aria-label="Dölj förslaget" onClick={() => setHiddenFor(suggestion.date)}>
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        <ul className="divide-y divide-border/60 rounded-md bg-card">
+          {sugShown.map(({ s, x }) => {
+            const inCart = !!lineOf(x.id);
+            const unit = (x.unit || s.unit || "st").toLowerCase();
+            return (
+              <li key={x.id} className="flex min-h-14 items-center gap-2 px-2 py-1.5">
+                {x.image_url ? (
+                  <img src={x.image_url} alt="" loading="lazy" className="h-10 w-10 shrink-0 rounded object-cover" />
+                ) : (
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground"><ShoppingBag className="h-5 w-5" /></span>
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="line-clamp-2 break-words text-[15px] leading-tight text-foreground">{x.name}</span>
+                  <span className="font-mono text-[14px] font-semibold tabular-nums text-muted-foreground">{fmtQty(s.quantity)} {unit}</span>
+                </span>
+                {inCart ? (
+                  <span className="flex h-11 shrink-0 items-center gap-1 px-2 text-[14px] font-semibold text-primary"><Check className="h-4 w-4" /> I korgen</span>
+                ) : (
+                  <Button variant="outline" size="icon" className="h-11 w-11 shrink-0 rounded-full border-primary/40 text-primary" aria-label={`Lägg ${x.name} i korgen`} onClick={() => add(x, s.quantity)}>
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        {sugItems.length > 4 && (
+          <button type="button" onClick={() => setShowAllSug((v) => !v)} className="min-h-11 w-full text-center text-[15px] font-semibold text-primary">
+            {showAllSug ? "Visa färre" : `Visa alla ${sugItems.length} varor`}
+          </button>
+        )}
+        {sugMissing > 0 && (
+          <p className="text-[13px] text-muted-foreground">{sugMissing} {sugMissing === 1 ? "vara" : "varor"} från den dagen går inte att beställa längre.</p>
+        )}
+        {sugLeft.length > 0 ? (
+          <Button className="h-12 w-full gap-2 text-[16px]" onClick={addAllSuggested}>
+            <ShoppingBag className="h-5 w-5" /> Lägg {sugLeft.length === sugItems.length ? "allt" : `resten (${sugLeft.length})`} i korgen
+          </Button>
+        ) : (
+          <p className="flex min-h-11 items-center justify-center gap-1 text-[15px] font-semibold text-primary"><CheckCircle2 className="h-5 w-5" /> Allt ligger i korgen – ändra antal i kundvagnen</p>
+        )}
+      </section>
+    ) : null;
+
   const recent = p.lines.filter((l) => num(l.quantity) > 0).slice(-3).reverse();
   const catLabel = tab === MOST ? null : tab;
   return (
@@ -266,11 +345,7 @@ export default function StoreShopView(p: Props) {
                 onSelect={(d) => { p.setDeliveryDate(d); setCalOpen(false); }} className="pointer-events-auto p-3" />
             </div>
           )}
-          {p.deliveryDate && p.sameWeekdayOrder && (
-            <Button variant="outline" className="h-11 w-full justify-start gap-2 text-[15px]" onClick={p.onCopySameWeekday}>
-              <Copy className="h-4 w-4" /> Samma som förra {format(p.deliveryDate, "EEEE", { locale: sv })}
-            </Button>
-          )}
+          {suggestionBox}
           {p.copyDropped.length > 0 && (
             <p className="rounded-md border border-warning/40 bg-warning/10 p-2 text-[14px]">Kunde inte tas med: {p.copyDropped.join(", ")}</p>
           )}
