@@ -20,7 +20,7 @@ Mest beställt | Fisk | Skaldjur | Kokt | Delikatess ...   (radbryts, ingen sidl
 ```
 
 1. **Butik (startsida):**
-   - Fliken "Mest beställt" visas först. Den visar butikens egna vanligaste varor de senaste 8 veckorna och vanlig mängd, till exempel "brukar: 6 kg".
+   - Fliken "Mest beställt" visas först. Den visar företagets egna vanligaste varor de senaste 8 veckorna och vanlig mängd, till exempel "brukar: 6 kg".
    - Sedan kommer flikar per kategori och en sökruta.
    - Bara varor som butiken får beställa visas, alltså samma dolda kategorier som idag.
 2. **Produktkort:** bild, namn och enhet. "+" lägger varan i vagnen med butikens vanliga mängd, annars 1. Efter det ändrar man mängden med − och +, eller trycker på siffran och skriver. Kg får en decimal.
