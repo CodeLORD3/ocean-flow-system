@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { sv } from "date-fns/locale";
-import { CalendarIcon, Copy, Minus, Plus, Search, ShoppingBag, Trash2, X, CheckCircle2, Lock, Users } from "lucide-react";
+import { LayoutGrid, CalendarIcon, Copy, Minus, Plus, Search, ShoppingBag, Trash2, X, CheckCircle2, Lock, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,7 +51,6 @@ type Props = {
 const MOST = "__most__";
 const num = (v: unknown) => Number(String(v ?? "").replace(",", ".")) || 0;
 const fmtQty = (n: number) => String(Number(n.toFixed(1))).replace(".", ",");
-const fmtKr = (n: number) => Math.round(n).toLocaleString("sv-SE").replace(/,/g, " ");
 const clean = (v: string) => v.replace(",", ".").replace(/[^\d.]/g, "");
 
 /** Mobilens beställning som nätbutik: varor med bild, kundvagn och kassa. Sparlogiken ligger kvar hos sidan. */
@@ -90,9 +89,9 @@ export default function StoreShopView(p: Props) {
   }, [q, tab, visible, top, byId]);
 
   const lineOf = (id: string) => p.lines.find((l) => l.product_id === id);
-  const price = (id: string) => num(p.tierPrices?.get(id)?.price);
   const active = p.lines.filter((l) => num(l.quantity) > 0);
-  const total = active.reduce((s, l) => s + num(l.quantity) * price(l.product_id), 0);
+  const [catOpen, setCatOpen] = useState(false);
+  const [bump, setBump] = useState(0);
 
   const setQty = (id: string, n: number) =>
     p.setLines((prev) =>
@@ -107,6 +106,7 @@ export default function StoreShopView(p: Props) {
     );
   const remove = (id: string) => p.setLines((prev) => prev.filter((l) => l.product_id !== id || l.source === "customer"));
   const add = (x: any) => {
+    setBump((b) => b + 1);
     const start = typical.get(x.id) || 1;
     p.setLines((prev) =>
       prev.some((l) => l.product_id === x.id)
@@ -157,30 +157,33 @@ export default function StoreShopView(p: Props) {
   const card = (x: any) => {
     const l = lineOf(x.id);
     const t = typical.get(x.id);
-    const pr = price(x.id);
+    const inCart = !!l && num(l.quantity) > 0;
+    const unit = (x.unit || "st").toLowerCase();
     return (
-      <div key={x.id} className={cn("flex min-w-0 flex-col overflow-hidden rounded-lg border bg-card", l && num(l.quantity) > 0 ? "border-primary" : "border-border")}>
-        <div className="aspect-square w-full bg-muted">
+      <div key={x.id} className="flex min-w-0 flex-col">
+        <div className={cn("relative aspect-[4/5] w-full overflow-hidden rounded-lg bg-muted", inCart && "ring-2 ring-primary")}>
           {x.image_url ? (
             <img src={x.image_url} alt={x.name} loading="lazy" className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground"><ShoppingBag className="h-8 w-8" /></div>
+            <div className="flex h-full items-center justify-center text-muted-foreground"><ShoppingBag className="h-10 w-10" /></div>
+          )}
+          {inCart && (
+            <span className="absolute left-2 top-2 rounded-full bg-primary px-2.5 py-1 font-mono text-[14px] font-semibold tabular-nums text-primary-foreground">
+              {fmtQty(num(l!.quantity))} {unit}
+            </span>
+          )}
+          {!l && (
+            <button type="button" aria-label={`Lägg till ${x.name}`} onClick={() => add(x)}
+              className="absolute bottom-2 right-2 flex h-12 w-12 items-center justify-center rounded-full bg-card text-primary shadow-md active:scale-95">
+              <Plus className="h-6 w-6" />
+            </button>
           )}
         </div>
-        <div className="flex flex-1 flex-col gap-1 p-2">
+        <div className="space-y-0.5 pt-2">
           <div className="line-clamp-2 break-words text-[15px] font-semibold leading-tight text-foreground">{x.name}</div>
-          <div className="text-[13px] text-muted-foreground">
-            {pr > 0 ? <span className="font-mono tabular-nums">{fmtKr(pr)} {p.currency}/{(x.unit || "st").toLowerCase()}</span> : (x.unit || "ST")}
-          </div>
-          {t ? <div className="text-[13px] text-muted-foreground">brukar: {fmtQty(t)} {(x.unit || "st").toLowerCase()}</div> : null}
-          <div className="mt-auto pt-1">
-            {l ? stepper(l) : (
-              <Button className="h-11 w-full gap-1 text-[16px]" onClick={() => add(x)}>
-                <Plus className="h-5 w-5" /> Lägg till
-              </Button>
-            )}
-          </div>
+          <div className="text-[13px] text-muted-foreground">{t ? `brukar: ${fmtQty(t)} ${unit}` : unit}</div>
         </div>
+        {l && <div className="pt-2">{stepper(l)}</div>}
       </div>
     );
   };
@@ -226,72 +229,118 @@ export default function StoreShopView(p: Props) {
     </div>
   );
 
+  const recent = p.lines.filter((l) => num(l.quantity) > 0).slice(-3).reverse();
+  const catLabel = tab === MOST ? null : tab;
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="shrink-0 space-y-2 border-b border-border px-4 pb-2 pt-2">
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="font-heading text-lg font-bold text-foreground">Beställ till butiken</h1>
-          <Button variant="ghost" size="icon" className="h-12 w-12" aria-label="Stäng" onClick={p.onClose}><X className="h-6 w-6" /></Button>
-        </div>
-        <button type="button" onClick={() => setCalOpen((v) => !v)} className="flex min-h-11 w-full items-center gap-2 rounded-md bg-muted px-3 text-left text-[15px]">
-          <CalendarIcon className="h-4 w-4 shrink-0 text-primary" />
-          <span className="text-muted-foreground">Leverans:</span>
-          <span className={cn("font-semibold", p.deliveryDate ? "text-foreground" : "text-destructive")}>
-            {p.deliveryDate ? format(p.deliveryDate, "EEEE d MMMM", { locale: sv }) : "välj dag"}
-          </span>
-        </button>
-        {calOpen && !checkoutOpen && (
-          <div className="flex justify-center rounded-md border border-border">
-            <Calendar mode="single" locale={sv} weekStartsOn={1} selected={p.deliveryDate} disabled={p.isDateDisabled}
-              onSelect={(d) => { p.setDeliveryDate(d); setCalOpen(false); }} className="pointer-events-auto p-3" />
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="space-y-2 px-4 pt-2">
+          <div className="flex items-center justify-between gap-2">
+            <h1 className="font-heading text-lg font-bold text-foreground">Beställ till butiken</h1>
+            <Button variant="ghost" size="icon" className="h-12 w-12" aria-label="Stäng" onClick={p.onClose}><X className="h-6 w-6" /></Button>
           </div>
-        )}
-        {p.deliveryDate && p.sameWeekdayOrder && (
-          <Button variant="outline" className="h-11 w-full justify-start gap-2 text-[15px]" onClick={p.onCopySameWeekday}>
-            <Copy className="h-4 w-4" /> Samma som förra {format(p.deliveryDate, "EEEE", { locale: sv })}
-          </Button>
-        )}
-        {p.copyDropped.length > 0 && (
-          <p className="rounded-md border border-warning/40 bg-warning/10 p-2 text-[14px]">Kunde inte tas med: {p.copyDropped.join(", ")}</p>
-        )}
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Sök vara" className="h-12 pl-10 text-[16px]" />
+          {p.deliveryDate ? (
+            <button type="button" onClick={() => setCalOpen((v) => !v)} className="flex min-h-11 w-full items-center gap-2 rounded-md bg-muted px-3 text-left text-[15px]">
+              <CalendarIcon className="h-4 w-4 shrink-0 text-primary" />
+              <span className="text-muted-foreground">Leverans:</span>
+              <span className="font-semibold text-foreground">{format(p.deliveryDate, "EEEE d MMMM", { locale: sv })}</span>
+              <span className="ml-auto text-[14px] text-primary">Ändra</span>
+            </button>
+          ) : (
+            <button type="button" onClick={() => setCalOpen((v) => !v)} className="w-full rounded-lg border-2 border-primary bg-primary/5 p-3 text-left">
+              <span className="flex items-center gap-2 text-[16px] font-semibold text-foreground"><CalendarIcon className="h-5 w-5 text-primary" /> Välj leveransdag först</span>
+              <span className="mt-1 block text-[14px] text-muted-foreground">Då kommer kundernas beställningar med i vagnen.</span>
+            </button>
+          )}
+          {calOpen && !checkoutOpen && (
+            <div className="flex justify-center rounded-md border border-border">
+              <Calendar mode="single" locale={sv} weekStartsOn={1} selected={p.deliveryDate} disabled={p.isDateDisabled}
+                onSelect={(d) => { p.setDeliveryDate(d); setCalOpen(false); }} className="pointer-events-auto p-3" />
+            </div>
+          )}
+          {p.deliveryDate && p.sameWeekdayOrder && (
+            <Button variant="outline" className="h-11 w-full justify-start gap-2 text-[15px]" onClick={p.onCopySameWeekday}>
+              <Copy className="h-4 w-4" /> Samma som förra {format(p.deliveryDate, "EEEE", { locale: sv })}
+            </Button>
+          )}
+          {p.copyDropped.length > 0 && (
+            <p className="rounded-md border border-warning/40 bg-warning/10 p-2 text-[14px]">Kunde inte tas med: {p.copyDropped.join(", ")}</p>
+          )}
         </div>
-        {!q && (
-          <div className="flex flex-wrap gap-1.5" role="tablist">
-            {[MOST, ...categories].map((c) => (
-              <button key={c} type="button" role="tab" aria-selected={tab === c} onClick={() => setTab(c)}
-                className={cn("min-h-11 rounded-full border px-3 text-[15px]", tab === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground")}>
-                {c === MOST ? "Mest beställt" : c}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-3">
-        {shown.length === 0 ? (
-          <p className="py-10 text-center text-[16px] text-muted-foreground">
-            {q ? "Ingen vara matchar sökningen." : tab === MOST ? "Inga beställningar de senaste 8 veckorna ännu." : "Inga varor i kategorin."}
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">{shown.map(card)}</div>
-        )}
+        <div className="sticky top-0 z-10 space-y-2 border-b border-border bg-background px-4 py-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Sök vara" className="h-12 pl-10 text-[16px]" />
+          </div>
+          {!q && (
+            <div className="flex gap-1.5" role="tablist">
+              <button type="button" role="tab" aria-selected={tab === MOST} onClick={() => setTab(MOST)}
+                className={cn("min-h-11 shrink-0 rounded-full border px-3 text-[15px]", tab === MOST ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground")}>
+                Mest beställt
+              </button>
+              {catLabel && (
+                <button type="button" role="tab" aria-selected onClick={() => setCatOpen(true)}
+                  className="min-h-11 min-w-0 truncate rounded-full border border-primary bg-primary px-3 text-[15px] text-primary-foreground">
+                  {catLabel}
+                </button>
+              )}
+              <button type="button" onClick={() => setCatOpen(true)}
+                className="ml-auto flex min-h-11 shrink-0 items-center gap-1 rounded-full border border-border bg-card px-3 text-[15px] text-foreground">
+                <LayoutGrid className="h-4 w-4" /> {catLabel ? "Byt" : "Alla kategorier"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="px-4 py-3">
+          {shown.length === 0 ? (
+            <p className="py-10 text-center text-[16px] text-muted-foreground">
+              {q ? "Ingen vara matchar sökningen." : tab === MOST ? "Inga beställningar de senaste 8 veckorna ännu." : "Inga varor i kategorin."}
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-x-3 gap-y-5">{shown.map(card)}</div>
+          )}
+        </div>
       </div>
 
       <div className="shrink-0 border-t border-border bg-card px-4 py-3 group-data-[kb=true]:hidden">
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => setCartOpen(true)} className="flex min-h-12 min-w-0 flex-1 items-center gap-2 text-left">
-            <ShoppingBag className="h-6 w-6 shrink-0 text-primary" />
-            <span className="min-w-0">
-              <span className="block text-[15px] font-semibold text-foreground">Kundvagn · {active.length} varor</span>
-              {total > 0 && <span className="block font-mono text-[13px] tabular-nums text-muted-foreground">ca {fmtKr(total)} {p.currency}</span>}
+            <span key={bump} className="relative shrink-0 animate-in zoom-in-50 duration-300">
+              <ShoppingBag className="h-7 w-7 text-primary" />
+              {active.length > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 font-mono text-[12px] font-bold text-primary-foreground">{active.length}</span>
+              )}
             </span>
+            <span className="flex min-w-0 -space-x-2 pl-2">
+              {recent.map((l) => l.image_url ? (
+                <img key={l.product_id} src={l.image_url} alt="" className="h-9 w-9 shrink-0 rounded-full border-2 border-card object-cover" />
+              ) : null)}
+            </span>
+            <span className="min-w-0 truncate text-[15px] font-semibold text-foreground">{active.length === 0 ? "Kundvagnen är tom" : "Kundvagn"}</span>
           </button>
           <Button className="h-12 shrink-0 text-[16px]" disabled={active.length === 0} onClick={() => setCheckoutOpen(true)}>Till kassan</Button>
         </div>
       </div>
+
+      {catOpen && (
+        <div className="fixed inset-0 z-[90] flex flex-col justify-end bg-foreground/40" onClick={() => setCatOpen(false)}>
+          <div className="max-h-[80dvh] overflow-y-auto rounded-t-2xl bg-background px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-muted" />
+            <h2 className="mb-2 font-heading text-lg font-bold text-foreground">Kategorier</h2>
+            <div className="divide-y divide-border">
+              {[MOST, ...categories].map((c) => (
+                <button key={c} type="button" onClick={() => { setTab(c); setCatOpen(false); }}
+                  className={cn("flex min-h-12 w-full items-center justify-between text-left text-[16px]", tab === c ? "font-semibold text-primary" : "text-foreground")}>
+                  {c === MOST ? "Mest beställt" : c}
+                  {tab === c && <CheckCircle2 className="h-5 w-5" />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {cartOpen && panel(
         `Kundvagn (${active.length})`,
@@ -338,7 +387,7 @@ export default function StoreShopView(p: Props) {
           </div>
         ),
         <Button className="h-14 w-full text-[17px]" disabled={active.length === 0} onClick={() => { setCartOpen(false); setCheckoutOpen(true); }}>
-          Till kassan{total > 0 ? ` · ca ${fmtKr(total)} ${p.currency}` : ""}
+          Till kassan
         </Button>,
       )}
 
@@ -357,7 +406,6 @@ export default function StoreShopView(p: Props) {
           <div className="rounded-lg border border-border">
             <div className="flex items-center justify-between border-b border-border px-3 py-2 text-[15px]">
               <span className="font-semibold">{active.length} varor</span>
-              {total > 0 && <span className="font-mono tabular-nums">ca {fmtKr(total)} {p.currency}</span>}
             </div>
             <div className="divide-y divide-border/60">
               {active.map((l) => (
@@ -370,7 +418,7 @@ export default function StoreShopView(p: Props) {
               ))}
             </div>
           </div>
-          <p className="text-[14px] text-muted-foreground">Ordern kan inte ändras efter att den skickats. Värdet är ungefärligt.</p>
+          <p className="text-[14px] text-muted-foreground">Ordern kan inte ändras efter att den skickats.</p>
         </div>,
         <div className="space-y-2">
           <Button className="h-14 w-full gap-2 text-[17px]" disabled={!p.deliveryDate || active.length === 0 || sending} onClick={() => submit(false)}>
