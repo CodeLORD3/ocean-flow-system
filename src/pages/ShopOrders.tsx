@@ -105,6 +105,7 @@ import {
 } from "@/components/orders/linePriority";
 import { useCustomerCommitted } from "@/hooks/useCustomerCommitted";
 import { useIsMobile } from "@/hooks/use-mobile";
+import StoreShopView from "@/components/orders/mobile/StoreShopView";
 
 type OrderLine = {
   product_id: string;
@@ -1021,7 +1022,7 @@ export default function ShopOrders() {
     toast(
       asOpen
         ? { title: "Öppen beställning skapad", description: "Alla i butiken kan fylla på den tills du skickar den." }
-        : { title: "Beställning skickad!", description: `${validLines.length} produkter beställda` },
+        : { title: `Beställning skickad – leverans ${format(desiredDeliveryDate, "EEEE d MMMM", { locale: sv })}`, description: `${validLines.length} produkter beställda` },
     );
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
     setCreatingOrder(false);
@@ -1115,6 +1116,27 @@ export default function ShopOrders() {
       {/* Inline order creation view */}
       {creatingOrder && (
         <CreatePanelShell>
+        {isMobile ? (
+          <StoreShopView
+            storeId={activeStoreId}
+            products={products}
+            isCategoryVisible={isCategoryVisible}
+            lines={orderLines}
+            setLines={setOrderLines}
+            tierPrices={tierPrices as any}
+            currency={activeStore?.currency || "SEK"}
+            deliveryDate={desiredDeliveryDate}
+            setDeliveryDate={setDesiredDeliveryDate}
+            isDateDisabled={isDateDisabled}
+            note={orderNote}
+            setNote={setOrderNote}
+            sameWeekdayOrder={sameWeekdayOrder}
+            onCopySameWeekday={() => sameWeekdayOrder && applyCopy(sameWeekdayOrder)}
+            copyDropped={copyDropped}
+            onClose={() => setCreatingOrder(false)}
+            onSubmit={(asOpen) => handleCreateOrder(asOpen)}
+          />
+        ) : (
         <Card className="flex min-h-0 flex-1 flex-col rounded-none border-0 shadow-none sm:block sm:rounded-lg sm:border sm:shadow-card">
           <CardHeader className="shrink-0 border-b border-border pb-3 sm:border-0">
             <div className="flex items-center justify-between gap-3">
@@ -1851,6 +1873,7 @@ export default function ShopOrders() {
             </Dialog>
           </CardContent>
         </Card>
+        )}
         </CreatePanelShell>
       )}
 

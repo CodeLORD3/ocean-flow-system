@@ -25235,6 +25235,14 @@ export type Database = {
         Args: { _on?: string; _store_id: string }
         Returns: string
       }
+      company_top_ordered_products: {
+        Args: { _days?: number; _store_id: string }
+        Returns: {
+          order_count: number
+          product_id: string
+          typical_qty: number
+        }[]
+      }
       compute_vacation_balance: {
         Args: { _employee_id: string; _vacation_year: number }
         Returns: {

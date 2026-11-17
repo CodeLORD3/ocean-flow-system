@@ -302,6 +302,13 @@
       "when": 1794829352699,
       "tag": "0042_restrict_telegram_settings_read",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1794914080346,
+      "tag": "0043_company_top_ordered_products",
+      "breakpoints": true
     }
   ]
 }
