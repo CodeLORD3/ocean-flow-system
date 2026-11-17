@@ -53,8 +53,16 @@ Deno.serve(async (req) => {
   const storeId: string | null = body.store_id ?? null;
   const cron: boolean = Boolean(body.cron);
   const today = svenskDatum();
-  const from: string = body.from ?? today;
-  const to: string = body.to ?? from;
+  // Nattkörningen (04:40) attesterar de senaste sju AVSLUTADE dagarna — aldrig dagen som
+  // just börjat. Annars blir dagens pass "missat pass, 0 min" innan någon hunnit stämpla,
+  // och Min tid/löneunderlaget visar 0 timmar.
+  const dayBefore = (d: string, n: number) => {
+    const t = new Date(`${d}T12:00:00Z`);
+    t.setUTCDate(t.getUTCDate() - n);
+    return t.toISOString().slice(0, 10);
+  };
+  const from: string = body.from ?? (cron ? dayBefore(today, 7) : today);
+  const to: string = body.to ?? (cron && !body.from ? dayBefore(today, 1) : from);
 
   const db = createClient(url, serviceKey, { auth: { persistSession: false } });
 
@@ -307,7 +315,8 @@ Deno.serve(async (req) => {
   let reopened = 0;
   const skipped: string[] = [];
   for (const row of rows) {
-    if (!cron && (row.date as string) >= today) continue;
+    // Dagens (och framtida) pass är inte klara — skrivs aldrig, inte heller av nattkörningen.
+    if ((row.date as string) >= today) continue;
     const prev = decided.get(`${row.store_id}|${row.date}|${row.employee_id}|${row.shift_id ?? ""}`);
     if (prev) {
       const nowClocked = Number((row.computed as { clocked_minutes?: number }).clocked_minutes ?? 0);

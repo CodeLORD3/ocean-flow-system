@@ -38,7 +38,13 @@ export default function MyTime() {
     await refresh?.();
     toast.success(t("lang_saved"));
   };
-  const [period, setPeriod] = useState(() => periodForDate(todayIso()));
+  // 16–25 i månaden visas perioden som betalas ut den 25:e (just avslutad), inte den som precis börjat.
+  const [period, setPeriod] = useState(() => {
+    const today = todayIso();
+    const day = Number(today.slice(8, 10));
+    const current = periodForDate(today);
+    return day >= 16 && day <= 25 ? shiftPeriod(current, -1) : current;
+  });
   const { from, to } = periodBounds(period);
 
   const ids = useQuery({
