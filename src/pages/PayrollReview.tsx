@@ -416,9 +416,11 @@ export default function PayrollReview() {
       row.Mertid = sum((l) => l.line_type === "MER");
       row.Frånvarodagar = sum((l) => isAbsence(l.line_type));
       row["Fast månadslön (kr)"] = fixedSalary.get(employeeId) ?? 0;
-      const net = payOf(employeeId, employeeLines).net;
-      row["Utbetalas till kontot ca (kr)"] = net ?? "Skattetabell saknas";
-      row["Preliminär kostnad (kr)"] = Math.round(employeeLines.reduce((t, l) => t + Number(l.preliminary_cost ?? 0), 0));
+      const { gross, net } = payOf(employeeId, employeeLines);
+      const fixedPay = fixedSalary.get(employeeId) ?? 0;
+      row["Brutto (kr)"] = Math.round(gross);
+      row["Kostnad för bolag (kr)"] = Math.round(employeeLines.reduce((t, l) => t + Number(l.preliminary_cost ?? 0), 0) + fixedPay * 1.3142);
+      row["Utbetalt till konto ca (kr)"] = net ?? "Skattetabell saknas";
       return row;
     });
     const book = XLSX.utils.book_new();
@@ -502,11 +504,11 @@ export default function PayrollReview() {
         <DecisionMetric label="Frånvarodagar" value={dec.format(summary.absenceDays)} />
         <DecisionMetric label="Förmåner/avdrag" value={`${money.format(summary.benefitAmount)} kr`} />
         <DecisionMetric label="Fasta månadslöner" value={`${money.format(fixedTotal)} kr`} />
-        <DecisionMetric label="Lön att betala ut 25:e (brutto, före skatt)" value={`${money.format(summary.cost / 1.3142 / 1.008 + fixedTotal)} kr`} tone="progress" />
-        <DecisionMetric label={`Utbetalas till kontot ca (${netTotal.count} av ${people.length} med skattetabell)`} value={`${money.format(netTotal.sum)} kr`} />
+        <DecisionMetric label="Brutto (lön 25:e, före skatt)" value={`${money.format(summary.cost / 1.3142 / 1.008 + fixedTotal)} kr`} tone="progress" />
+        <DecisionMetric label={`Utbetalt till konto ca (${netTotal.count} av ${people.length} med skattetabell)`} value={`${money.format(netTotal.sum)} kr`} />
         <DecisionMetric label="Semesteravsättning 0,8 % (separat, betalas inte ut nu)" value={`${money.format(summary.cost / 1.3142 - summary.cost / 1.3142 / 1.008)} kr`} />
         <DecisionMetric label="Arbetsgivaravgift 31,42 % (separat)" value={`${money.format(summary.cost - summary.cost / 1.3142 + fixedTotal * 0.3142)} kr`} />
-        <DecisionMetric label="Total kostnad" value={`${money.format(summary.cost + fixedTotal * 1.3142)} kr`} />
+        <DecisionMetric label="Kostnad för bolag" value={`${money.format(summary.cost + fixedTotal * 1.3142)} kr`} />
       </div>
       <p className="ind-muted mt-2 text-sm">
         Från kontot den 25:e går nettolönen till de anställda. Skatteavdraget och arbetsgivaravgiften betalas till Skatteverket den 12:e månaden efter. Den exakta nettolönen räknas i Fortnox Lön.
@@ -594,14 +596,16 @@ export default function PayrollReview() {
                     const { gross, net } = payOf(employeeId, employeeLines);
                     const totalCost = cost + (fixed ? fixed * 1.3142 : 0);
                     return (
-                      <span className="ml-auto flex flex-col items-end text-right">
-                        <span className="ind-mono">Brutto {money.format(gross)} kr</span>
-                        <span className="ind-mono text-sm">
-                          {net !== null ? `Utbetalas till kontot ca ${money.format(net)} kr` : "Skattetabell saknas – nettot kan inte räknas"}
-                        </span>
-                        <span className="ind-mono text-xs text-muted-foreground">
-                          {fixed ? `varav fast månadslön ${money.format(fixed)} kr · ` : ""}Kostnad {money.format(totalCost)} kr
-                        </span>
+                      <span className="ml-auto grid w-full max-w-xs grid-cols-[1fr_auto] gap-x-4 text-sm sm:w-auto">
+                        <span>Brutto</span>
+                        <span className="ind-mono text-right">{money.format(gross)} kr</span>
+                        <span>Kostnad för bolag</span>
+                        <span className="ind-mono text-right">{money.format(totalCost)} kr</span>
+                        <span>Utbetalt till konto</span>
+                        <span className="ind-mono text-right">{net !== null ? `ca ${money.format(net)} kr` : "Skattetabell saknas"}</span>
+                        {fixed ? (
+                          <span className="ind-mono col-span-2 text-right text-xs text-muted-foreground">varav fast månadslön {money.format(fixed)} kr</span>
+                        ) : null}
                       </span>
                     );
                   })()}
