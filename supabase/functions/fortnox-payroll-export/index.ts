@@ -113,6 +113,19 @@ Deno.serve(async (req) => {
   ((employmentRows ?? []) as { employee_id: string; fortnox_employee_id: string | null }[]).forEach((e) => {
     if (!fortnoxEmployee.get(e.employee_id)) fortnoxEmployee.set(e.employee_id, e.fortnox_employee_id);
   });
+  // Fortnox Lön kräver exakt samma anställnings-id ("38" ≠ "038"). Skiljer sig bara inledande nollor
+  // mot Fortnox-listan används Fortnox egen form, så att raderna inte avvisas som "anställd saknas".
+  const { data: fxRows } = await sb.from("fortnox_employees").select("employee_number").eq("legal_entity_code", legalEntityId);
+  const fxNumbers = ((fxRows ?? []) as { employee_number: string | null }[]).map((r) => r.employee_number).filter((n): n is string => !!n);
+  if (fxNumbers.length > 0) {
+    const exact = new Set(fxNumbers);
+    const byStripped = new Map(fxNumbers.map((n) => [n.replace(/^0+(?=\d)/, ""), n]));
+    for (const [empId, id] of fortnoxEmployee) {
+      if (!id || exact.has(id)) continue;
+      const fx = byStripped.get(id.replace(/^0+(?=\d)/, ""));
+      if (fx) fortnoxEmployee.set(empId, fx);
+    }
+  }
 
   // Blockerande brister — samma regler som granskningsvyn visar.
   const blocking: { kind: string; detail: string; employee_id?: string }[] = [];
