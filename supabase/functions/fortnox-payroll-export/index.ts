@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
         const paxml = code?.paxml_code ?? code?.fortnox_code ?? line.line_type;
         const kind = code?.transaction_type ?? "attendance";
         if (kind === "absence") {
-          return `      <frånvarotransaktion anstid="${xmlEscape(employeeId)}" frånvarotyp="${xmlEscape(paxml)}" datum="${line.line_date}" omfattning="${Number(line.extent_pct ?? 100)}" />`;
+          return `      <frånvarotransaktion anstid="${xmlEscape(employeeId)}" frånvarotyp="${xmlEscape(paxml)}" datum="${line.line_date}" omfattning="${Number(line.extent_pct ?? 100)}" timmar="${hours(line.quantity)}" />`;
         }
         if (kind === "salary") {
           return `      <lönetransaktion anstid="${xmlEscape(employeeId)}" löneart="${xmlEscape(paxml)}" datum="${line.line_date}" antal="${hours(line.quantity)}" belopp="${Number(line.unit_amount ?? 0).toFixed(2)}"${line.cost_center ? ` kostnadsställe="${xmlEscape(line.cost_center)}"` : ""} />`;
@@ -201,6 +201,11 @@ ${rows}
     let path = "/attendancetransactions";
     let payload: Record<string, unknown>;
     if (code.transaction_type === "absence") {
+      // Frånvaro på 0 h (vardag utan pass) har inget att rapportera till Fortnox.
+      if (Number(line.quantity ?? 0) <= 0) {
+        skipped += 1;
+        continue;
+      }
       path = "/absencetransactions";
       payload = {
         AbsenceTransaction: {

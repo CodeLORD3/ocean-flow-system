@@ -522,6 +522,36 @@ Deno.serve(async (req) => {
   }
 
   // Frånvaro per dag
+  // Frånvaro räknas i timmar (Fortnox AbsenceTransaction.Hours): sparade timmar på frånvarodagen,
+  // annars dagens schemalagda pass, annars avtalad dagstid för månadsavlönade vardagar.
+  // Vardag utan pass för timavlönade ger 0 h, helgdag utan pass ingen rad.
+  // Samma person, dag och frånvarokod räknas bara en gång (t.ex. sjuk både som ansökan och sjukperiod).
+  const absenceLineKeys = new Set<string>();
+  const shiftHoursOn = (employeeId: string, day: string): number | null => {
+    const s = shiftByKey.get(`${employeeId}|${day}`);
+    if (!s) return null;
+    const [sh, sm] = s.start_time.split(":").map(Number);
+    const [eh, em] = s.end_time.split(":").map(Number);
+    let minutes = eh * 60 + em - (sh * 60 + sm);
+    if (minutes <= 0) minutes += 24 * 60;
+    minutes -= Number(s.break_minutes ?? 0);
+    return minutes > 0 ? minutes / 60 : null;
+  };
+  const absenceHoursFor = (emp: Employment, employeeId: string, requestId: string | null, day: string, extentPct: number) => {
+    const stored = requestId ? absenceHours.get(`${requestId}|${day}`) : undefined;
+    if (stored) return { hours: round2(stored), source: "frånvarodagen" };
+    const scheduled = shiftHoursOn(employeeId, day);
+    if (scheduled) return { hours: round2((scheduled * extentPct) / 100), source: "schemat" };
+    const weekday = new Date(`${day}T12:00:00Z`).getUTCDay();
+    const monthly = wageOn(emp, wagesByEmployment.get(emp.id), day).pay_type === "monthly";
+    if (monthly && weekday >= 1 && weekday <= 5) {
+      return { hours: round2((8 * Number(emp.employment_rate ?? 100) / 100) * extentPct / 100), source: "avtalad dagstid" };
+    }
+    // Vardag utan pass (timavlönad): frånvaron syns men är 0 h — personen skulle inte ha arbetat.
+    if (weekday >= 1 && weekday <= 5) return { hours: 0, source: "inget pass schemalagt" };
+    return null;
+  };
+
   for (const req of absences as { id: string; employee_id: string; store_id: string | null; absence_type_id: string; start_date: string; end_date: string; extent_pct: number | null }[]) {
     const emp = employmentByEmployee.get(req.employee_id);
     if (!emp) continue;
@@ -529,26 +559,25 @@ Deno.serve(async (req) => {
     if (mapped.size && !mapped.has(code)) issues.push({ kind: "missing_wage_code", detail: code, employee_id: req.employee_id });
     const start = req.start_date > from ? req.start_date : from;
     const end = req.end_date < to ? req.end_date : to;
+    const extent = Number(req.extent_pct ?? 100);
     for (const day of svenskaDagar(start, end)) {
-      // Obetald frånvaro (TJL) med angivna timmar: raden räknas i timmar och dras av på
-      // månadslönen med samma timbas som övriga kronor (unit_amount negativt). Fortnox Lön
-      // räknar det slutliga avdraget.
-      const hours = code === "TJL" ? absenceHours.get(`${req.id}|${day}`) : undefined;
+      const key = `${req.employee_id}|${day}|${code}`;
+      if (absenceLineKeys.has(key)) continue;
+      const h = absenceHoursFor(emp, req.employee_id, req.id, day, extent);
+      if (!h) continue;
+      absenceLineKeys.add(key);
+      // Obetald frånvaro (TJL) på månadslön dras av med samma timbas som övriga kronor
+      // (unit_amount negativt). Fortnox Lön räknar det slutliga avdraget.
       const monthlyDay = wageOn(emp, wagesByEmployment.get(emp.id), day).pay_type === "monthly";
-      if (hours && monthlyDay) {
-        push({
-          store_id: req.store_id ?? emp.store_id, employee_id: req.employee_id, employment_id: emp.id,
-          line_type: code, line_date: day, quantity: round2(hours), extent_pct: Number(req.extent_pct ?? 100),
-          unit_amount: -round2(hourlyBase(emp, day)),
-          cost_center: emp.cost_center ?? null, source_ref: req.id, source_type: "absence_request",
-          note: `Obetald frånvaro ${round2(hours)} h – avdrag på månadslönen`,
-        });
-        continue;
-      }
+      const unpaid = code === "TJL" && monthlyDay;
       push({
         store_id: req.store_id ?? emp.store_id, employee_id: req.employee_id, employment_id: emp.id,
-        line_type: code, line_date: day, quantity: 1, extent_pct: Number(req.extent_pct ?? 100),
+        line_type: code, line_date: day, quantity: h.hours, extent_pct: extent,
+        unit_amount: unpaid ? -round2(hourlyBase(emp, day)) : null,
         cost_center: emp.cost_center ?? null, source_ref: req.id, source_type: "absence_request",
+        note: unpaid
+          ? `Obetald frånvaro ${h.hours} h – avdrag på månadslönen`
+          : (h.hours > 0 ? `${h.hours} h enligt ${h.source}` : "Inget pass schemalagt – 0 h"),
       });
     }
   }
@@ -561,11 +590,16 @@ Deno.serve(async (req) => {
     if (end < start) continue;
     if (mapped.size && !mapped.has("SJK")) issues.push({ kind: "missing_wage_code", detail: "SJK", employee_id: sick.employee_id });
     for (const day of svenskaDagar(start, end)) {
+      const key = `${sick.employee_id}|${day}|SJK`;
+      if (absenceLineKeys.has(key)) continue;
+      const h = absenceHoursFor(emp, sick.employee_id, null, day, 100);
+      if (!h) continue;
+      absenceLineKeys.add(key);
       push({
         store_id: emp.store_id, employee_id: sick.employee_id, employment_id: emp.id,
-        line_type: "SJK", line_date: day, quantity: 1, extent_pct: 100,
+        line_type: "SJK", line_date: day, quantity: h.hours, extent_pct: 100,
         cost_center: emp.cost_center ?? null, source_ref: sick.id, source_type: "sick_period",
-        note: sick.karens_applied && day === sick.first_day ? "Karensavdrag hanteras i Fortnox" : null,
+        note: sick.karens_applied && day === sick.first_day ? "Karensavdrag hanteras i Fortnox" : (h.hours > 0 ? `${h.hours} h enligt ${h.source}` : "Inget pass schemalagt – 0 h"),
       });
     }
   }

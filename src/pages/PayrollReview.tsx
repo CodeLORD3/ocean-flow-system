@@ -98,8 +98,8 @@ export default function PayrollReview() {
       if (line.line_type === "ARB" || line.line_type === "TID") workHours += qty;
       else if (isObCode(line.line_type)) obPerLevel.set(line.line_type, (obPerLevel.get(line.line_type) ?? 0) + qty);
       else if (line.line_type === "MER" || line.line_type.startsWith("OT")) extraHours += qty;
-      // En frånvarorad per dag; obetald frånvaro i timmar räknas också som en dag.
-      else if (isAbsence(line.line_type)) absenceDays += Number(line.unit_amount ?? 0) < 0 ? 1 : qty;
+      // Frånvarorader är i timmar, en rad per dag — dagarna räknas som antal rader.
+      else if (isAbsence(line.line_type)) absenceDays += 1;
       else if (isAmountLine(line.line_type)) benefitAmount += Number(line.unit_amount ?? 0) * qty;
       cost += Number(line.preliminary_cost ?? 0);
     });
@@ -460,7 +460,8 @@ export default function PayrollReview() {
       };
       for (const pct of pcts) row[`OB ${pct} %`] = sum((l) => isObCode(l.line_type) && obPct(l) === pct);
       row.Mertid = sum((l) => l.line_type === "MER");
-      row.Frånvarodagar = employeeLines.filter((l) => isAbsence(l.line_type)).reduce((t, l) => t + (Number(l.unit_amount ?? 0) < 0 ? 1 : Number(l.quantity ?? 0)), 0);
+      row.Frånvarodagar = employeeLines.filter((l) => isAbsence(l.line_type)).length;
+      row.Frånvarotimmar = sum((l) => isAbsence(l.line_type));
       row["Fast månadslön (kr)"] = fixedSalary.get(employeeId) ?? 0;
       row["Avdrag obetald frånvaro (kr)"] = Math.round(unpaidAbsenceDeduction(employeeLines));
       const { gross, net } = payOf(employeeId, employeeLines);
