@@ -22,3 +22,15 @@ describe("arbetad tid i Granska lön", () => {
     expect(workedHours(lines)).toBe(9);
   });
 });
+
+describe("stämplad tid för månadsavlönade", () => {
+  it("räknar samma stämpling på två enheter bara en gång", async () => {
+    const { clockedHours } = await import("@/lib/payrollHours");
+    const days = [
+      { date: "2026-11-13", minutes: 600, first_in: "2026-11-13T06:00:00Z", last_out: "2026-11-13T16:00:00Z" },
+      { date: "2026-11-13", minutes: 600, first_in: "2026-11-13T06:00:00Z", last_out: "2026-11-13T16:00:00Z" },
+      { date: "2026-11-14", minutes: 480, first_in: "2026-11-14T07:00:00Z", last_out: "2026-11-14T15:00:00Z" },
+    ];
+    expect(clockedHours(days)).toBe(18);
+  });
+});

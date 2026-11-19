@@ -42,7 +42,7 @@ import {
   type PayrollLine,
 } from "@/hooks/usePayroll";
 import { PayrollDayEditDialog } from "@/components/payroll/PayrollDayEditDialog";
-import { obHours, workedHours } from "@/lib/payrollHours";
+import { clockedHours, obHours, workedHours } from "@/lib/payrollHours";
 
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const money = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
@@ -292,10 +292,8 @@ export default function PayrollReview() {
     const data = people.map(([employeeId, employeeLines]) => {
       const sum = (pick: (l: PayrollLine) => boolean) =>
         Math.round(employeeLines.filter(pick).reduce((t, l) => t + Number(l.quantity ?? 0), 0) * 100) / 100;
-      const clocked = clockedByEmployee.get(employeeId) ?? [];
-      const useClocked = fixedSalary.has(employeeId) && employeeLines.length === 0;
-      const worked = useClocked
-        ? Math.round((clocked.reduce((t, d) => t + d.minutes, 0) / 60) * 100) / 100
+      const worked = fixedSalary.has(employeeId)
+        ? Math.round(clockedHours(clockedByEmployee.get(employeeId) ?? []) * 100) / 100
         : Math.round(workedHours(employeeLines) * 100) / 100;
       const row: Record<string, string | number> = {
         Anställningsnummer: employmentOf.get(employeeId)?.number ?? "",
@@ -450,10 +448,11 @@ export default function PayrollReview() {
                   </IndustryButton>
                   <span className="min-w-[200px]">{employeeName.get(employeeId) ?? employeeId}</span>
                   {(() => {
+                    // Månadsavlönade: stämplad tid (dubbletter räknas en gång). Timavlönade: ARB-raderna.
                     const clocked = clockedByEmployee.get(employeeId) ?? [];
-                    const useClocked = fixedSalary.has(employeeId) && employeeLines.length === 0;
-                    const h = useClocked ? clocked.reduce((t, d) => t + d.minutes, 0) / 60 : hours;
-                    const n = useClocked ? clocked.length : employeeLines.length;
+                    const isMonthly = fixedSalary.has(employeeId);
+                    const h = isMonthly ? clockedHours(clocked) : hours;
+                    const n = isMonthly && employeeLines.length === 0 ? clocked.length : employeeLines.length;
                     return (
                       <>
                         <span className="ind-mono">{dec.format(h)} h arbetad tid</span>
