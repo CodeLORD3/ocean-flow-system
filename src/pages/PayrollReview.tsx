@@ -326,6 +326,22 @@ export default function PayrollReview() {
     );
   }, [byEmployee, fixedSalary, employeeName]);
 
+  /** Kostnad för bolag per person: lönerader (redan inkl. personens arbetsgivaravgift) + fast månadslön med semesteravsättning och samma avgift. */
+  const costOfPerson = (employeeId: string, employeeLines: PayrollLine[]) => {
+    const rate = Number(employeeLines.find((l) => l.contribution_rate != null)?.contribution_rate ?? 31.42) / 100;
+    const wageCost = employeeLines.filter((l) => l.source_type === "attestation").reduce((t, l) => t + Number(l.preliminary_cost ?? 0), 0);
+    const otherCost = employeeLines.filter((l) => l.source_type !== "attestation").reduce((t, l) => t + Number(l.preliminary_cost ?? 0), 0);
+    const payWithVacation = wageCost / (1 + rate) + (fixedSalary.get(employeeId) ?? 0) * 1.008;
+    const contribution = payWithVacation * rate;
+    return { cost: payWithVacation + contribution + otherCost, contribution, vacation: payWithVacation - payWithVacation / 1.008, rate };
+  };
+  const costTotals = people.reduce(
+    (acc, [id, l]) => {
+      const c = costOfPerson(id, l);
+      return { cost: acc.cost + c.cost, contribution: acc.contribution + c.contribution, vacation: acc.vacation + c.vacation, gross: acc.gross + payOf(id, l).gross };
+    },
+    { cost: 0, contribution: 0, vacation: 0, gross: 0 },
+  );
   const netTotal = people.reduce(
     (acc, [id, l]) => {
       const n = payOf(id, l).net;
@@ -417,9 +433,9 @@ export default function PayrollReview() {
       row.Frånvarodagar = sum((l) => isAbsence(l.line_type));
       row["Fast månadslön (kr)"] = fixedSalary.get(employeeId) ?? 0;
       const { gross, net } = payOf(employeeId, employeeLines);
-      const fixedPay = fixedSalary.get(employeeId) ?? 0;
       row["Brutto (kr)"] = Math.round(gross);
-      row["Kostnad för bolag (kr)"] = Math.round(employeeLines.reduce((t, l) => t + Number(l.preliminary_cost ?? 0), 0) + fixedPay * 1.3142);
+      row["Kostnad för bolag (kr)"] = Math.round(costOfPerson(employeeId, employeeLines).cost);
+      row["Arbetsgivaravgift %"] = costOfPerson(employeeId, employeeLines).rate * 100;
       row["Utbetalt till konto ca (kr)"] = net ?? "Skattetabell saknas";
       return row;
     });
@@ -504,11 +520,11 @@ export default function PayrollReview() {
         <DecisionMetric label="Frånvarodagar" value={dec.format(summary.absenceDays)} />
         <DecisionMetric label="Förmåner/avdrag" value={`${money.format(summary.benefitAmount)} kr`} />
         <DecisionMetric label="Fasta månadslöner" value={`${money.format(fixedTotal)} kr`} />
-        <DecisionMetric label="Brutto (lön 25:e, före skatt)" value={`${money.format(summary.cost / 1.3142 / 1.008 + fixedTotal)} kr`} tone="progress" />
+        <DecisionMetric label="Brutto (lön 25:e, före skatt)" value={`${money.format(costTotals.gross)} kr`} tone="progress" />
         <DecisionMetric label={`Utbetalt till konto ca (${netTotal.count} av ${people.length} med skattetabell)`} value={`${money.format(netTotal.sum)} kr`} />
-        <DecisionMetric label="Semesteravsättning 0,8 % (separat, betalas inte ut nu)" value={`${money.format(summary.cost / 1.3142 - summary.cost / 1.3142 / 1.008)} kr`} />
-        <DecisionMetric label="Arbetsgivaravgift 31,42 % (separat)" value={`${money.format(summary.cost - summary.cost / 1.3142 + fixedTotal * 0.3142)} kr`} />
-        <DecisionMetric label="Kostnad för bolag" value={`${money.format(summary.cost + fixedTotal * 1.3142)} kr`} />
+        <DecisionMetric label="Semesteravsättning 0,8 % (separat, betalas inte ut nu)" value={`${money.format(costTotals.vacation)} kr`} />
+        <DecisionMetric label="Arbetsgivaravgift (per person efter ålder)" value={`${money.format(costTotals.contribution)} kr`} />
+        <DecisionMetric label="Kostnad för bolag" value={`${money.format(costTotals.cost)} kr`} />
       </div>
       <p className="ind-muted mt-2 text-sm">
         Från kontot den 25:e går nettolönen till de anställda. Skatteavdraget och arbetsgivaravgiften betalas till Skatteverket den 12:e månaden efter. Den exakta nettolönen räknas i Fortnox Lön.
@@ -563,7 +579,6 @@ export default function PayrollReview() {
             const open = openEmployee === employeeId;
             const hours = workedHours(employeeLines);
             const obTotal = obHours(employeeLines);
-            const cost = employeeLines.reduce((sum, l) => sum + Number(l.preliminary_cost ?? 0), 0);
             return (
               <div key={employeeId}>
                 <IndustryRow edge={open ? "accent" : "neutral"} className="flex-wrap">
@@ -594,7 +609,7 @@ export default function PayrollReview() {
                   {(() => {
                     const fixed = fixedSalary.get(employeeId) ?? 0;
                     const { gross, net } = payOf(employeeId, employeeLines);
-                    const totalCost = cost + (fixed ? fixed * 1.3142 : 0);
+                    const totalCost = costOfPerson(employeeId, employeeLines).cost;
                     return (
                       <span className="ml-auto grid w-full max-w-xs grid-cols-[1fr_auto] gap-x-4 text-sm sm:w-auto">
                         <span>Brutto</span>

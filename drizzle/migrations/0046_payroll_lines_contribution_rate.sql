@@ -1,0 +1,2 @@
+ALTER TABLE public.payroll_lines ADD COLUMN IF NOT EXISTS contribution_rate numeric(7,4);
+COMMENT ON COLUMN public.payroll_lines.contribution_rate IS 'Effektiv arbetsgivaravgift i procent för personen i perioden (inkl. ungdomstak).';

@@ -1,3 +1,4 @@
+import { employerContribution, type ContributionRule } from "../_shared/employerContribution.ts";
 /**
  * payroll-compute — bygger löneunderlag (payroll_lines) för ett bolag och en
  * löneperiod (YYYY-MM).
@@ -113,6 +114,7 @@ type Line = {
   source_type?: string | null;
   note?: string | null;
   preliminary_cost?: number | null;
+  contribution_rate?: number | null;
   line_key?: string | null;
   correction_action?: string;
   export_status: string;
@@ -363,24 +365,6 @@ Deno.serve(async (req) => {
     (employeeRows as { id: string; birth_date: string | null }[]).map((e) => [e.id, e.birth_date ? Number(e.birth_date.slice(0, 4)) : null]),
   );
 
-  const contributionRate = (employeeId: string, monthlyBase: number) => {
-    const year = birthYear.get(employeeId) ?? null;
-    const candidates = (contributionRules as {
-      legal_entity_id: string | null; valid_from: string; valid_to: string | null;
-      birth_year_from: number | null; birth_year_to: number | null; salary_cap: number | null; contribution_rate: number;
-    }[]).filter((rule) => {
-      if (rule.legal_entity_id && rule.legal_entity_id !== legalEntityId) return false;
-      if (rule.valid_from > to) return false;
-      if (rule.valid_to && rule.valid_to < from) return false;
-      if (rule.birth_year_from !== null && (year === null || year < rule.birth_year_from)) return false;
-      if (rule.birth_year_to !== null && (year === null || year > rule.birth_year_to)) return false;
-      if (rule.salary_cap !== null && monthlyBase > Number(rule.salary_cap)) return false;
-      return true;
-    });
-    if (candidates.length === 0) return 31.42;
-    return Number(candidates.sort((a, b) => a.contribution_rate - b.contribution_rate)[0].contribution_rate);
-  };
-
   const lines: Line[] = [];
 
 
@@ -400,8 +384,8 @@ Deno.serve(async (req) => {
     // bara tilläggsdelen (pct) får räknas, annars betalas timmen dubbelt.
     const gross = base * hours * (pct > 0 ? pct / 100 : 1);
     const vacation = gross * (Number(policy?.vacation_reserve_pct ?? 0) / 100);
-    const rate = contributionRate(emp.employee_id, Number(emp.monthly_salary ?? base * 165));
-    return round2((gross + vacation) * (1 + rate / 100));
+    // Avgiften läggs på efteråt per person (ungdomstaket gäller hela månadslönen).
+    return round2(gross + vacation);
   };
 
   /**
@@ -614,6 +598,26 @@ Deno.serve(async (req) => {
       unit_amount: -Math.abs(Number(ded.amount ?? 0)), cost_center: emp.cost_center ?? null,
       source_ref: ded.id, source_type: "deduction", preliminary_cost: -Math.abs(Number(ded.amount ?? 0)),
     });
+  }
+
+  // Arbetsgivaravgift per person: lön (inkl. semesteravsättning) + ev. fast månadslön.
+  const wageGross = new Map<string, number>();
+  for (const l of lines) {
+    if (l.source_type === "attestation") wageGross.set(l.employee_id, (wageGross.get(l.employee_id) ?? 0) + Number(l.preliminary_cost ?? 0));
+  }
+  const rateByEmployee = new Map<string, number>();
+  for (const [employeeId, emp] of employmentByEmployee) {
+    const policy = policyFor(emp.agreement_area);
+    const fixed = emp.pay_type === "monthly" ? Number(emp.monthly_salary ?? 0) * (1 + Number(policy?.vacation_reserve_pct ?? 0) / 100) : 0;
+    const gross = (wageGross.get(employeeId) ?? 0) + fixed;
+    const year = birthYear.get(employeeId) ?? null;
+    if (year === null && gross > 0) issues.push({ kind: "missing_birth_date", detail: "Födelsedatum saknas – 31,42 % används", employee_id: employeeId });
+    rateByEmployee.set(employeeId, employerContribution(gross, year, contributionRules as ContributionRule[], { legalEntityId, from, to }).rate);
+  }
+  for (const l of lines) {
+    const rate = rateByEmployee.get(l.employee_id) ?? 31.42;
+    l.contribution_rate = rate;
+    if (l.source_type === "attestation") l.preliminary_cost = round2(Number(l.preliminary_cost ?? 0) * (1 + rate / 100));
   }
 
   // Personer utan Fortnox-koppling hamnar i felkön — bara om de har löneposter i perioden

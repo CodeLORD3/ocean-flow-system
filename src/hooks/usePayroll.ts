@@ -42,6 +42,7 @@ export interface PayrollLine {
   source_type: string | null;
   note: string | null;
   preliminary_cost: number | null;
+  contribution_rate?: number | null;
   fortnox_transaction_id: string | null;
   export_status: "pending" | "sent" | "error" | "corrected";
 }

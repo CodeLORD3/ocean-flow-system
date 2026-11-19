@@ -323,6 +323,13 @@
       "when": 1795084260835,
       "tag": "0045_attest_deviation_parts",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1795086157959,
+      "tag": "0046_payroll_lines_contribution_rate",
+      "breakpoints": true
     }
   ]
 }

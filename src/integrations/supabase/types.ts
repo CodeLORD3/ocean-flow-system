@@ -11866,6 +11866,7 @@ export type Database = {
       }
       payroll_lines: {
         Row: {
+          contribution_rate: number | null
           correction_action: string
           cost_center: string | null
           created_at: string
@@ -11890,6 +11891,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          contribution_rate?: number | null
           correction_action?: string
           cost_center?: string | null
           created_at?: string
@@ -11914,6 +11916,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          contribution_rate?: number | null
           correction_action?: string
           cost_center?: string | null
           created_at?: string
