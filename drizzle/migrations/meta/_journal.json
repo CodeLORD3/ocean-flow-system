@@ -379,6 +379,20 @@
       "when": 1795099010714,
       "tag": "0053_ob_for_betald_schematid",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1795099277647,
+      "tag": "0054_tolerance_minutes_get_ob",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1795099372297,
+      "tag": "0055_tolerance_minutes_exact_length",
+      "breakpoints": true
     }
   ]
 }
