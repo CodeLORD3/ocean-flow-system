@@ -44,6 +44,7 @@ import {
 import { PayrollDayEditDialog } from "@/components/payroll/PayrollDayEditDialog";
 import { DeviationParts, useDecideAttestationPart } from "@/components/payroll/DeviationParts";
 import { asStampedDecision, partsOf, pendingParts, type PartDecisionRow, type PartsAttestation } from "@/lib/attestParts";
+import { netPay } from "@/lib/netPay";
 import { clockedHours, grossPay, obHours, workedHours } from "@/lib/payrollHours";
 
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -141,22 +142,28 @@ export default function PayrollReview() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employments")
-        .select("employee_id, employment_number, pay_type, is_active, hourly_rate, monthly_salary")
+        .select("employee_id, employment_number, pay_type, is_active, hourly_rate, monthly_salary, tax_table, tax_column, tax_adjustment")
         .eq("legal_entity_id", activeEntity);
       if (error) throw error;
       return data ?? [];
     },
   });
   const employmentOf = useMemo(() => {
-    const map = new Map<string, { number: string; payType: string; hourlyBase: number }>();
+    const map = new Map<string, { number: string; payType: string; hourlyBase: number; taxTable: string | null; taxColumn: number | null; taxAdjustment: number | null }>();
     for (const r of employmentsQuery.data ?? []) {
       if (map.has(r.employee_id) && !r.is_active) continue;
       // Samma timbas som löneberäkningen: timlön, eller månadslön / 165.
       const hourlyBase = r.pay_type === "monthly" ? Number(r.monthly_salary ?? 0) / 165 : Number(r.hourly_rate ?? 0);
-      map.set(r.employee_id, { number: r.employment_number ?? "", payType: r.pay_type ?? "", hourlyBase });
+      map.set(r.employee_id, { number: r.employment_number ?? "", payType: r.pay_type ?? "", hourlyBase, taxTable: r.tax_table != null ? String(r.tax_table) : null, taxColumn: r.tax_column != null ? Number(r.tax_column) : null, taxAdjustment: r.tax_adjustment != null ? Number(r.tax_adjustment) : null });
     }
     return map;
   }, [employmentsQuery.data]);
+  /** Brutto och ungefärligt netto per person — samma brutto som visas på raden. */
+  const payOf = (employeeId: string, employeeLines: PayrollLine[]) => {
+    const emp = employmentOf.get(employeeId);
+    const gross = (fixedSalary.get(employeeId) ?? 0) + grossPay(employeeLines, emp?.hourlyBase ?? 0);
+    return { gross, net: netPay(gross, emp?.taxTable, emp?.taxColumn, emp?.taxAdjustment) };
+  };
   // Stämplad tid för månadsavlönade i löneperioden (16:e–15:e) — för att se avvikelser.
   const periodRange = useMemo(() => {
     const [y, m] = period.split("-").map(Number);
@@ -319,6 +326,13 @@ export default function PayrollReview() {
     );
   }, [byEmployee, fixedSalary, employeeName]);
 
+  const netTotal = people.reduce(
+    (acc, [id, l]) => {
+      const n = payOf(id, l).net;
+      return n === null ? acc : { sum: acc.sum + n, count: acc.count + 1 };
+    },
+    { sum: 0, count: 0 },
+  );
   const blockingIssues = issues.filter((i) => i.kind !== "wellness_over_limit" && i.kind !== "pending_deviation");
   // Väntande avvikelser visas per person — i felkön bara som en summa.
   const listedIssues = issues.filter((i) => i.kind !== "pending_deviation");
@@ -402,6 +416,8 @@ export default function PayrollReview() {
       row.Mertid = sum((l) => l.line_type === "MER");
       row.Frånvarodagar = sum((l) => isAbsence(l.line_type));
       row["Fast månadslön (kr)"] = fixedSalary.get(employeeId) ?? 0;
+      const net = payOf(employeeId, employeeLines).net;
+      row["Utbetalas till kontot ca (kr)"] = net ?? "Skattetabell saknas";
       row["Preliminär kostnad (kr)"] = Math.round(employeeLines.reduce((t, l) => t + Number(l.preliminary_cost ?? 0), 0));
       return row;
     });
@@ -487,6 +503,7 @@ export default function PayrollReview() {
         <DecisionMetric label="Förmåner/avdrag" value={`${money.format(summary.benefitAmount)} kr`} />
         <DecisionMetric label="Fasta månadslöner" value={`${money.format(fixedTotal)} kr`} />
         <DecisionMetric label="Lön att betala ut 25:e (brutto, före skatt)" value={`${money.format(summary.cost / 1.3142 / 1.008 + fixedTotal)} kr`} tone="progress" />
+        <DecisionMetric label={`Utbetalas till kontot ca (${netTotal.count} av ${people.length} med skattetabell)`} value={`${money.format(netTotal.sum)} kr`} />
         <DecisionMetric label="Semesteravsättning 0,8 % (separat, betalas inte ut nu)" value={`${money.format(summary.cost / 1.3142 - summary.cost / 1.3142 / 1.008)} kr`} />
         <DecisionMetric label="Arbetsgivaravgift 31,42 % (separat)" value={`${money.format(summary.cost - summary.cost / 1.3142 + fixedTotal * 0.3142)} kr`} />
         <DecisionMetric label="Total kostnad" value={`${money.format(summary.cost + fixedTotal * 1.3142)} kr`} />
@@ -574,11 +591,14 @@ export default function PayrollReview() {
                   </IndustryButton>
                   {(() => {
                     const fixed = fixedSalary.get(employeeId) ?? 0;
-                    const gross = fixed + grossPay(employeeLines, employmentOf.get(employeeId)?.hourlyBase ?? 0);
+                    const { gross, net } = payOf(employeeId, employeeLines);
                     const totalCost = cost + (fixed ? fixed * 1.3142 : 0);
                     return (
                       <span className="ml-auto flex flex-col items-end text-right">
                         <span className="ind-mono">Brutto {money.format(gross)} kr</span>
+                        <span className="ind-mono text-sm">
+                          {net !== null ? `Utbetalas till kontot ca ${money.format(net)} kr` : "Skattetabell saknas – nettot kan inte räknas"}
+                        </span>
                         <span className="ind-mono text-xs text-muted-foreground">
                           {fixed ? `varav fast månadslön ${money.format(fixed)} kr · ` : ""}Kostnad {money.format(totalCost)} kr
                         </span>
