@@ -348,6 +348,8 @@ export default function PayrollReview() {
   );
   const decidePart = useDecideAttestationPart();
   const [bulkFor, setBulkFor] = useState<string | null>(null);
+  // Attesterade avvikelser döljs som standard — de syns redan som betald tid i raderna nedan.
+  const [showDecidedFor, setShowDecidedFor] = useState<string | null>(null);
   /** Attesterar alla väntande avvikelser för en person som stämplat: extra tid godkänd, kortare tid som stämplad. */
   const attestAllAsStamped = async (employeeId: string) => {
     const days = deviationsByEmployee.get(employeeId) ?? [];
@@ -826,11 +828,29 @@ export default function PayrollReview() {
                         </IndustryButton>
                       )}
                     </div>
-                    <p className="ind-muted text-xs">
+                    {pendingOf(employeeId) > 0 && <p className="ind-muted text-xs">
                       Tid inom schemat är redan godkänd. Extra tid före eller efter schemat betalas bara om du godkänner den. Kom in senare eller gick tidigare: välj stämplad tid eller schematid. Tryck Beräkna period när du är klar.
-                    </p>
+                    </p>}
+                    {(() => {
+                      const all = deviationsByEmployee.get(employeeId) ?? [];
+                      const decidedCount = all.filter((a) => pendingParts(a).length === 0).length;
+                      if (decidedCount === 0) return null;
+                      const showing = showDecidedFor === employeeId;
+                      return (
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                          <span className="text-muted-foreground">
+                            {decidedCount === all.length ? "Alla avvikelser är attesterade" : "Attesterade avvikelser"} ({decidedCount} {decidedCount === 1 ? "dag" : "dagar"})
+                          </span>
+                          <IndustryButton variant="ghost" className="h-9" onClick={() => setShowDecidedFor(showing ? null : employeeId)}>
+                            {showing ? "Dölj attesterade" : "Visa attesterade"}
+                          </IndustryButton>
+                        </div>
+                      );
+                    })()}
                     <ul className="space-y-2">
-                      {(deviationsByEmployee.get(employeeId) ?? []).map((a) => (
+                      {(deviationsByEmployee.get(employeeId) ?? [])
+                        .filter((a) => showDecidedFor === employeeId || pendingParts(a).length > 0)
+                        .map((a) => (
                         <li key={a.id} className="rounded-md border border-border px-3 py-2">
                           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 text-sm">
                             <span className="ind-mono w-24 shrink-0">
