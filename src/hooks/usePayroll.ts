@@ -57,6 +57,7 @@ export const ISSUE_LABEL: Record<string, string> = {
   missing_fortnox_employee_id: "Fortnox-anställningsnummer saknas",
   date_outside_employment: "Datum utanför anställningstiden",
   wellness_over_limit: "Friskvård över skattefri gräns",
+  pending_deviation: "Avvikelse väntar på attest",
 };
 
 export const PERIOD_STATUS_LABEL: Record<PayrollPeriod["status"], string> = {

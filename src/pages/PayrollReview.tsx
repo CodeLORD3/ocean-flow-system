@@ -42,6 +42,8 @@ import {
   type PayrollLine,
 } from "@/hooks/usePayroll";
 import { PayrollDayEditDialog } from "@/components/payroll/PayrollDayEditDialog";
+import { DeviationParts, useDecideAttestationPart } from "@/components/payroll/DeviationParts";
+import { asStampedDecision, partsOf, pendingParts, type PartDecisionRow, type PartsAttestation } from "@/lib/attestParts";
 import { clockedHours, grossPay, obHours, workedHours } from "@/lib/payrollHours";
 
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -170,13 +172,16 @@ export default function PayrollReview() {
     queryKey: ["payroll-clocked", clockIds.join(","), periodRange.from, periodRange.to],
     enabled: clockIds.length > 0,
     queryFn: async () => {
-      type Row = { employee_id: string; date: string; store_id: string | null; approved_minutes: number | null; computed: unknown };
+      type Row = {
+        id: string; employee_id: string; date: string; store_id: string | null; approved_minutes: number | null; computed: unknown;
+        status: string; basis: string | null; part_decisions: unknown;
+      };
       const all: Row[] = [];
       const pageSize = 1000;
       for (let from = 0; ; from += pageSize) {
         const { data, error } = await supabase
           .from("attestations")
-          .select("employee_id, date, store_id, approved_minutes, computed")
+          .select("id, employee_id, date, store_id, approved_minutes, computed, status, basis, part_decisions")
           .in("employee_id", clockIds)
           .gte("date", periodRange.from)
           .lte("date", periodRange.to)
@@ -202,6 +207,53 @@ export default function PayrollReview() {
     }
     return map;
   }, [clockedQuery.data]);
+  // Avvikelser mot schemat per person: dagar som har delar utanför schemat.
+  const deviationsByEmployee = useMemo(() => {
+    const map = new Map<string, (PartsAttestation & { date: string; store_id: string | null; first_in?: string | null; last_out?: string | null })[]>();
+    for (const r of clockedQuery.data ?? []) {
+      const a: PartsAttestation = {
+        id: r.id,
+        status: r.status,
+        basis: r.basis,
+        computed: r.computed as PartsAttestation["computed"],
+        part_decisions: (r.part_decisions ?? {}) as Record<string, PartDecisionRow>,
+      };
+      if (partsOf(a).length === 0) continue;
+      const c = (r.computed ?? {}) as { first_in?: string | null; last_out?: string | null };
+      const list = map.get(r.employee_id) ?? [];
+      list.push({ ...a, date: r.date, store_id: r.store_id, first_in: c.first_in, last_out: c.last_out });
+      map.set(r.employee_id, list);
+    }
+    return map;
+  }, [clockedQuery.data]);
+  const pendingOf = (employeeId: string) =>
+    (deviationsByEmployee.get(employeeId) ?? []).reduce((n, a) => n + pendingParts(a).length, 0);
+  const pendingTotal = useMemo(
+    () => [...deviationsByEmployee.values()].flat().reduce((n, a) => n + pendingParts(a).length, 0),
+    [deviationsByEmployee],
+  );
+  const decidePart = useDecideAttestationPart();
+  const [bulkFor, setBulkFor] = useState<string | null>(null);
+  /** Attesterar alla väntande avvikelser för en person som stämplat: extra tid godkänd, kortare tid som stämplad. */
+  const attestAllAsStamped = async (employeeId: string) => {
+    const days = deviationsByEmployee.get(employeeId) ?? [];
+    setBulkFor(employeeId);
+    let done = 0;
+    try {
+      for (const a of days) {
+        for (const p of pendingParts(a)) {
+          await decidePart.mutateAsync({ id: a.id, part: p.kind, decision: asStampedDecision(p.kind) });
+          done += 1;
+        }
+      }
+      toast.success(`${done} avvikelser attesterade som stämplat. Tryck Beräkna period för att uppdatera lönen.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte attestera alla");
+    } finally {
+      setBulkFor(null);
+    }
+  };
+
   // Stämplingar per person och dag, för att visa in/ut på timavlönades rader.
   const clockedByDay = useMemo(() => {
     const map = new Map<string, { minutes: number; first_in?: string | null; last_out?: string | null; store_id: string | null }[]>();
@@ -267,7 +319,9 @@ export default function PayrollReview() {
     );
   }, [byEmployee, fixedSalary, employeeName]);
 
-  const blockingIssues = issues.filter((i) => i.kind !== "wellness_over_limit");
+  const blockingIssues = issues.filter((i) => i.kind !== "wellness_over_limit" && i.kind !== "pending_deviation");
+  // Väntande avvikelser visas per person — i felkön bara som en summa.
+  const listedIssues = issues.filter((i) => i.kind !== "pending_deviation");
   const canReview = periodRow && rows.length > 0 && blockingIssues.length === 0 && unlockedStores.length === 0;
   const canExport = canReview && periodRow && ["reviewed", "exported", "reexported"].includes(periodRow.status);
 
@@ -426,6 +480,7 @@ export default function PayrollReview() {
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <DecisionMetric label="Personer" value={people.length} />
+        <DecisionMetric label="Avvikelser att attestera" value={pendingTotal} tone={pendingTotal > 0 ? "alert" : "ok"} />
         <DecisionMetric label="Arbetad tid" value={`${dec.format(summary.workHours)} h`} />
         <DecisionMetric label="Mer-/övertid" value={`${dec.format(summary.extraHours)} h`} />
         <DecisionMetric label="Frånvarodagar" value={dec.format(summary.absenceDays)} />
@@ -450,16 +505,23 @@ export default function PayrollReview() {
         </div>
       )}
 
-      {(blockingIssues.length > 0 || unlockedStores.length > 0 || issues.length > 0) && (
-        <SideQueue label={`Felkö (${issues.length + unlockedStores.length})`} className="mt-6">
-          <SectionLabel className="mb-2">Felkö ({issues.length + unlockedStores.length})</SectionLabel>
+      {pendingTotal > 0 && (
+        <p className="mt-3 text-sm">
+          <StatusLabel tone="alert">{pendingTotal} avvikelser väntar på attest</StatusLabel>{" "}
+          Tid utanför schemat betalas först när den är godkänd. Öppna personen för att attestera varje avvikelse.
+        </p>
+      )}
+
+      {(blockingIssues.length > 0 || unlockedStores.length > 0 || listedIssues.length > 0) && (
+        <SideQueue label={`Felkö (${listedIssues.length + unlockedStores.length})`} className="mt-6">
+          <SectionLabel className="mb-2">Felkö ({listedIssues.length + unlockedStores.length})</SectionLabel>
           {unlockedStores.map((storeId) => (
             <QueueItem key={storeId}>
               <ShieldAlert className="h-4 w-4" />
               <span>Perioden är inte låst för {storeName.get(storeId) ?? storeId}</span>
             </QueueItem>
           ))}
-          {issues.map((issue, index) => (
+          {listedIssues.map((issue, index) => (
             <QueueItem key={`${issue.kind}-${index}`}>
               <ShieldAlert className="h-4 w-4" />
               <span>
@@ -504,6 +566,9 @@ export default function PayrollReview() {
                       </>
                     );
                   })()}
+                  {pendingOf(employeeId) > 0 && (
+                    <StatusLabel tone="alert">{pendingOf(employeeId)} att attestera</StatusLabel>
+                  )}
                   <IndustryButton variant="ghost" className="h-9" onClick={() => setEditDay({ employeeId, date: periodRange.from })}>
                     Redigera period
                   </IndustryButton>
@@ -521,6 +586,43 @@ export default function PayrollReview() {
                     );
                   })()}
                 </IndustryRow>
+                {open && (deviationsByEmployee.get(employeeId) ?? []).length > 0 && (
+                  <div className="mb-3 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <SectionLabel>Avvikelser mot schemat</SectionLabel>
+                      {pendingOf(employeeId) > 0 && (
+                        <IndustryButton
+                          variant="secondary"
+                          className="h-11"
+                          disabled={bulkFor !== null || decidePart.isPending}
+                          onClick={() => void attestAllAsStamped(employeeId)}
+                        >
+                          {bulkFor === employeeId ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                          Attestera alla som stämplat ({pendingOf(employeeId)})
+                        </IndustryButton>
+                      )}
+                    </div>
+                    <p className="ind-muted text-xs">
+                      Tid inom schemat är redan godkänd. Extra tid före eller efter schemat betalas bara om du godkänner den. Kom in senare eller gick tidigare: välj stämplad tid eller schematid. Tryck Beräkna period när du är klar.
+                    </p>
+                    <ul className="space-y-2">
+                      {(deviationsByEmployee.get(employeeId) ?? []).map((a) => (
+                        <li key={a.id} className="rounded-md border border-border px-3 py-2">
+                          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 text-sm">
+                            <span className="ind-mono w-24 shrink-0">
+                              {new Date(`${a.date}T12:00:00`).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })}
+                            </span>
+                            <span className="ind-mono order-last w-full text-muted-foreground sm:order-none sm:w-auto sm:min-w-0 sm:flex-1">
+                              Schema {scheduleText(employeeId, a.date)} · In {clockTime(a.first_in)} · Ut {a.last_out ? clockTime(a.last_out) : "ej utstämplad"}
+                            </span>
+                            <span className="text-muted-foreground">{storeName.get(a.store_id ?? "") ?? ""}</span>
+                          </div>
+                          <DeviationParts attestation={a} />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 {open && fixedSalary.has(employeeId) && (
                   <div className="mb-3 space-y-1">
                     <SectionLabel>Schema och stämpling {periodRange.from} – {periodRange.to}</SectionLabel>

@@ -2,13 +2,16 @@
  * attest-compute — matchar stämplingar (time_entries) mot publicerade pass
  * (shifts) och skriver attestrader.
  *
- * Inom stationens tolerans_minuter (klockprofilen, default 7) blir raden
- * auto_approved med schematid som underlag. Utanför tolerans blir den flagged
- * med avvikelsetyp. Stämpling utan pass = oplanerad_tid, pass utan stämpling =
- * missat_pass. Anropas både av cron och på begäran från attestvyn.
+ * Modell "delar": tid inom schemat är godkänd direkt. Varje del utanför schemat
+ * (stämplade in tidigare/senare, ut tidigare/senare, ej schemalagd tid, ingen
+ * stämpling) blir en egen avvikelse som chefen attesterar via
+ * decide_attestation_part. Avvikelser inom stationens tolerans (default 7 min)
+ * räknas som schematid. Godkänd tid och fönster (payroll_in/payroll_out) räknas
+ * alltid i databasen av attestation_apply_parts — aldrig här.
+ * Anropas både av cron och på begäran från attestvyn.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
-import { passGranser, svenskDagSista, svenskDagStart, svenskDatum } from "../_shared/setime.ts";
+import { passGranser, svenskDagSista, svenskDagStart, svenskDatum, svenskVeckodag } from "../_shared/setime.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -31,6 +34,7 @@ interface Entry {
   station_id: string | null;
   type: string;
   occurred_at: string;
+  rounded_at: string | null;
   corrects_entry_id: string | null;
   id: string;
 }
@@ -113,7 +117,7 @@ Deno.serve(async (req) => {
   for (let offset = 0; ; offset += PAGE) {
     let entryQuery = db
       .from("time_entries")
-      .select("id, employee_id, store_id, legal_entity_id, station_id, type, occurred_at, corrects_entry_id, correction_kind")
+      .select("id, employee_id, store_id, legal_entity_id, station_id, type, occurred_at, rounded_at, corrects_entry_id, correction_kind")
       .gte("occurred_at", fromIso)
       .lte("occurred_at", toIso)
       .order("occurred_at", { ascending: true })
@@ -145,6 +149,21 @@ Deno.serve(async (req) => {
     tolerance.set(s.id as string, prof.tolerance_minutes ?? DEFAULT_TOLERANCE);
   }
 
+  // Fast starttid: samma regel som arbetstidsmotorn använder för dagens första instämpling.
+  const { data: fixedRules } = await db
+    .from("employee_fixed_start_rules")
+    .select("employee_id, weekdays, start_time, valid_from, valid_to, active")
+    .eq("active", true);
+  const calcIn = (employeeId: string, date: string, entry: Entry): Date => {
+    const rule = ((fixedRules ?? []) as { employee_id: string; weekdays: number[]; start_time: string; valid_from: string; valid_to: string | null }[])
+      .filter((r) => r.employee_id === employeeId && r.valid_from <= date && (!r.valid_to || r.valid_to >= date) && (r.weekdays ?? []).includes(svenskVeckodag(date)))
+      .sort((a, b) => b.valid_from.localeCompare(a.valid_from))[0];
+    if (rule) return passGranser(date, rule.start_time, rule.start_time).from;
+    return new Date(entry.rounded_at ?? entry.occurred_at);
+  };
+  const calcAt = (entry: Entry) => new Date(entry.rounded_at ?? entry.occurred_at);
+  const mins = (ms: number) => Math.round(ms / 60000);
+
   // Gruppera stämplingar per person + svenskt datum
   const byKey = new Map<string, Entry[]>();
   for (const e of entries) {
@@ -175,44 +194,99 @@ Deno.serve(async (req) => {
     const lastOut = outs[outs.length - 1]?.occurred_at ?? null;
 
     if (!firstIn) {
+      // Pass utan stämpling: hela passet är en avvikelse — stämplad tid (0) eller schematid.
       rows.push({
         store_id: shift.store_id,
         legal_entity_id: shift.legal_entity_id,
         date: shift.date,
         employee_id: shift.employee_id,
         shift_id: shift.id,
-        computed: { scheduled_minutes: scheduled, clocked_minutes: 0, diff_minutes: -scheduled, tolerance_minutes: tol },
+        computed: {
+          model: "delar",
+          scheduled_minutes: scheduled,
+          clocked_minutes: 0,
+          diff_minutes: -scheduled,
+          tolerance_minutes: tol,
+          sched_from: schedFrom.toISOString(),
+          sched_to: schedTo.toISOString(),
+          tol_short_minutes: 0,
+          parts: [{ kind: "missat_pass", minutes: scheduled, sched: schedFrom.toISOString(), sched_end: schedTo.toISOString() }],
+        },
         deviation_type: "missat_pass",
         status: "flagged",
+        basis: null,
+        approved_minutes: null,
+        decided_at: null,
       });
       continue;
     }
 
-    // Samma SQL-motor används av attest, Min tid och löneunderlag. Attestvyn
-    // får bara använda råstämplingarna för avvikelsens start/slut — minuter och
-    // rast kommer från berakna_arbetstid.
-    const { data: calculated, error: calculationError } = await db.rpc("berakna_arbetstid", {
+    // Råminuterna (utan attestklippning) från samma SQL-motor som lönen använder.
+    const { data: calculated, error: calculationError } = await db.rpc("berakna_arbetstid_rad", {
       _employee_id: shift.employee_id,
       _from: shift.date,
       _to: shift.date,
+      _attesterat: false,
     });
     if (calculationError) return json({ error: calculationError.message }, 500);
-    const engineDay = (calculated ?? []).find((day) => day.arbetsdag === shift.date) as {
+    const engineDay = (calculated ?? []).find((day: { arbetsdag: string }) => day.arbetsdag === shift.date) as {
       total_minutes?: number;
       break_minutes?: number;
     } | undefined;
     const breakMinutes = Number(engineDay?.break_minutes ?? 0);
     const clocked = Number(engineDay?.total_minutes ?? 0);
-    const lateIn = Math.round((new Date(firstIn).getTime() - schedFrom.getTime()) / 60000);
-    const earlyOut = lastOut ? Math.round((schedTo.getTime() - new Date(lastOut).getTime()) / 60000) : 0;
-    const diff = clocked - scheduled;
+    const base = {
+      scheduled_minutes: scheduled,
+      clocked_minutes: clocked,
+      diff_minutes: clocked - scheduled,
+      break_minutes: breakMinutes,
+      scheduled_break_minutes: shift.break_minutes ?? 0,
+      tolerance_minutes: tol,
+      first_in: firstIn,
+      last_out: lastOut,
+    };
 
-    let deviation: string = "none";
-    if (lateIn > tol) deviation = "sen_in";
-    else if (earlyOut > tol) deviation = "tidig_ut";
-    else if ((shift.break_minutes ?? 0) > 0 && breakMinutes + tol < (shift.break_minutes ?? 0))
-      deviation = "missad_rast";
-    else if (Math.abs(diff) > tol) deviation = diff > 0 ? "oplanerad_tid" : "tidig_ut";
+    if (!lastOut) {
+      // Saknar utstämpling: kan inte delas upp — hela dagen granskas som förut.
+      rows.push({
+        store_id: shift.store_id,
+        legal_entity_id: shift.legal_entity_id,
+        date: shift.date,
+        employee_id: shift.employee_id,
+        shift_id: shift.id,
+        computed: { ...base, missing_out: true },
+        deviation_type: "tidig_ut",
+        status: "flagged",
+        basis: null,
+        approved_minutes: null,
+        decided_at: null,
+      });
+      continue;
+    }
+
+    const effIn = calcIn(shift.employee_id, shift.date, ins[0]);
+    const effOut = calcAt(outs[outs.length - 1]);
+    const parts: Record<string, unknown>[] = [];
+    let tolShort = 0;
+    const earlyIn = mins(schedFrom.getTime() - effIn.getTime());
+    if (earlyIn > tol) {
+      parts.push({ kind: "tidig_in", minutes: earlyIn, stamp: effIn.toISOString(), sched: schedFrom.toISOString() });
+    } else if (earlyIn < 0) {
+      const late = Math.min(-earlyIn, scheduled);
+      if (late > tol) parts.push({ kind: "sen_in", minutes: late, stamp: effIn.toISOString(), sched: schedFrom.toISOString() });
+      else tolShort += late;
+    }
+    const lateOut = mins(effOut.getTime() - schedTo.getTime());
+    if (lateOut > tol) {
+      parts.push({ kind: "sen_ut", minutes: lateOut, stamp: effOut.toISOString(), sched: schedTo.toISOString() });
+    } else if (lateOut < 0) {
+      const early = Math.min(-lateOut, scheduled);
+      if (early > tol) parts.push({ kind: "tidig_ut", minutes: early, stamp: effOut.toISOString(), sched: schedTo.toISOString() });
+      else tolShort += early;
+    }
+
+    let deviation: string = parts.length ? String(parts[0].kind) : "none";
+    if (!parts.length && (shift.break_minutes ?? 0) > 0 && breakMinutes + tol < (shift.break_minutes ?? 0)) deviation = "missad_rast";
 
     rows.push({
       store_id: shift.store_id,
@@ -221,22 +295,22 @@ Deno.serve(async (req) => {
       employee_id: shift.employee_id,
       shift_id: shift.id,
       computed: {
-        scheduled_minutes: scheduled,
-        clocked_minutes: clocked,
-        diff_minutes: diff,
-        late_in_minutes: lateIn,
-        early_out_minutes: earlyOut,
-        break_minutes: breakMinutes,
-        scheduled_break_minutes: shift.break_minutes ?? 0,
-        tolerance_minutes: tol,
-        first_in: firstIn,
-        last_out: lastOut,
+        ...base,
+        model: "delar",
+        late_in_minutes: -earlyIn,
+        early_out_minutes: -lateOut,
+        sched_from: schedFrom.toISOString(),
+        sched_to: schedTo.toISOString(),
+        eff_in: effIn.toISOString(),
+        eff_out: effOut.toISOString(),
+        tol_short_minutes: tolShort,
+        parts,
       },
       deviation_type: deviation,
-      status: deviation === "none" ? "auto_approved" : "flagged",
-      basis: deviation === "none" ? "schema" : null,
-      approved_minutes: deviation === "none" ? scheduled : null,
-      decided_at: deviation === "none" ? new Date().toISOString() : null,
+      status: "flagged",
+      basis: null,
+      approved_minutes: null,
+      decided_at: null,
     });
   }
 
@@ -249,17 +323,32 @@ Deno.serve(async (req) => {
     if (!ins.length) continue;
     const firstIn = ins[0].occurred_at;
     const lastOut = outs[outs.length - 1]?.occurred_at ?? null;
-    const { data: calculated, error: calculationError } = await db.rpc("berakna_arbetstid", {
+    const { data: calculated, error: calculationError } = await db.rpc("berakna_arbetstid_rad", {
       _employee_id: employeeId,
       _from: date,
       _to: date,
+      _attesterat: false,
     });
     if (calculationError) return json({ error: calculationError.message }, 500);
-    const engineDay = (calculated ?? []).find((day) => day.arbetsdag === date) as { total_minutes?: number } | undefined;
+    const engineDay = (calculated ?? []).find((day: { arbetsdag: string }) => day.arbetsdag === date) as { total_minutes?: number } | undefined;
     const clocked = Number(engineDay?.total_minutes ?? 0);
     const store = dayEntries.find((e) => e.store_id)?.store_id ?? null;
     if (!store) continue;
     if (storeId && store !== storeId) continue;
+    const base = { scheduled_minutes: 0, clocked_minutes: clocked, diff_minutes: clocked, first_in: firstIn, last_out: lastOut };
+    if (!lastOut) {
+      rows.push({
+        store_id: store,
+        legal_entity_id: dayEntries.find((e) => e.legal_entity_id)?.legal_entity_id ?? null,
+        date, employee_id: employeeId, shift_id: null,
+        computed: { ...base, missing_out: true },
+        deviation_type: "oplanerad_tid", status: "flagged", basis: null, approved_minutes: null, decided_at: null,
+      });
+      continue;
+    }
+    const effIn = calcIn(employeeId, date, ins[0]);
+    const effOut = calcAt(outs[outs.length - 1]);
+    // Ingen schemalagd tid: hela dagen ligger utanför schemat och betalas först när den är godkänd.
     rows.push({
       store_id: store,
       legal_entity_id: dayEntries.find((e) => e.legal_entity_id)?.legal_entity_id ?? null,
@@ -267,32 +356,19 @@ Deno.serve(async (req) => {
       employee_id: employeeId,
       shift_id: null,
       computed: {
-        scheduled_minutes: 0,
-        clocked_minutes: clocked,
-        diff_minutes: clocked,
-        first_in: firstIn,
-        last_out: lastOut,
+        ...base,
+        model: "delar",
+        eff_in: effIn.toISOString(),
+        eff_out: effOut.toISOString(),
+        tol_short_minutes: 0,
+        parts: [{ kind: "oplanerad", minutes: clocked, stamp: effIn.toISOString(), stamp_end: effOut.toISOString() }],
       },
       deviation_type: "oplanerad_tid",
       status: "flagged",
+      basis: null,
+      approved_minutes: null,
+      decided_at: null,
     });
-  }
-
-  // Skäliga avvikelser godkänns automatiskt på stämplad tid: pass utan stämpling = 0 min,
-  // komplett in/ut-stämpling upp till 13 h. Saknad utstämpling eller längre pass lämnas för granskning.
-  const MAX_REASONABLE = 13 * 60;
-  for (const row of rows) {
-    if (row.status !== "flagged") continue;
-    const c = row.computed as { clocked_minutes?: number; first_in?: string | null; last_out?: string | null };
-    const clocked = Number(c.clocked_minutes ?? 0);
-    const reasonable =
-      (row.deviation_type === "missat_pass" && clocked === 0) ||
-      (c.first_in && c.last_out && clocked > 0 && clocked <= MAX_REASONABLE);
-    if (!reasonable) continue;
-    row.status = "auto_approved";
-    row.basis = "stamplad";
-    row.approved_minutes = clocked;
-    row.decided_at = new Date().toISOString();
   }
 
   // Dagens pass är inte klara — räknas inte. Redan godkända/avslagna beslut skrivs aldrig över,
@@ -338,19 +414,28 @@ Deno.serve(async (req) => {
         .is("shift_id", null)
         .in("status", ["flagged", "auto_approved"]);
     }
-    const { error } = await db
+    const { data: saved, error } = await db
       .from("attestations")
-      .upsert(row, { onConflict: "store_id,date,employee_id,shift_id", ignoreDuplicates: false });
-    if (error) skipped.push(`${row.date} ${String(row.employee_id).slice(0, 8)}: ${error.message}`);
-    else written += 1;
+      .upsert(row, { onConflict: "store_id,date,employee_id,shift_id", ignoreDuplicates: false })
+      .select("id")
+      .single();
+    if (error) {
+      skipped.push(`${row.date} ${String(row.employee_id).slice(0, 8)}: ${error.message}`);
+      continue;
+    }
+    written += 1;
+    // Godkänd tid, status och fönster räknas i databasen utifrån delarna och tidigare beslut.
+    if ((row.computed as { model?: string }).model === "delar") {
+      const { error: applyError } = await db.rpc("attestation_apply_parts", { _id: saved.id });
+      if (applyError) skipped.push(`${row.date} ${String(row.employee_id).slice(0, 8)}: ${applyError.message}`);
+    }
   }
 
   return json({
     written,
     preserved,
     reopened,
-    flagged: rows.filter((r) => r.status === "flagged").length,
-    auto_approved: rows.filter((r) => r.status === "auto_approved").length,
+    deviation_parts: rows.reduce((n, r) => n + (((r.computed as { parts?: unknown[] }).parts ?? []).length), 0),
     skipped,
   });
 });

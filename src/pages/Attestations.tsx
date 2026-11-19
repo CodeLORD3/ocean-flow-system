@@ -25,6 +25,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useStores } from "@/hooks/useStores";
 import { useEmployees } from "@/hooks/useEmployees";
 import { PkReviewPanel } from "@/components/staff/PkReviewPanel";
+import { DeviationParts } from "@/components/payroll/DeviationParts";
+import { partsOf } from "@/lib/attestParts";
 import {
   DEVIATION_LABEL,
   useAttestations,
@@ -159,10 +161,12 @@ export default function Attestations() {
   };
 
 
+  // Dagar uppdelade i avvikelser attesteras per del — inte som hel dag.
+  const hasParts = (a: Attestation) => partsOf(a).length > 0;
   const row = (a: Attestation, tone: "alert" | "neutral" | "accent") => (
     <IndustryRow key={a.id} edge={tone}>
       <div className="flex flex-wrap items-start gap-3">
-        {a.status === "flagged" && (
+        {a.status === "flagged" && !hasParts(a) && (
           <Checkbox
             checked={selected.has(a.id)}
             onCheckedChange={() => toggle(a.id)}
@@ -210,8 +214,12 @@ export default function Attestations() {
         </div>
       </div>
 
+      {hasParts(a) && <DeviationParts attestation={a} readOnly={!!activeLock} />}
+
       {a.status === "flagged" && !activeLock && (
         <div className="mt-2 flex flex-wrap items-end gap-2">
+          {!hasParts(a) && (
+          <>
           <IndustryButton
             variant="primary"
             corners
@@ -227,6 +235,8 @@ export default function Attestations() {
           >
             Attestera schematid
           </IndustryButton>
+          </>
+          )}
           <IndustryButton
             variant="ghost"
             onClick={() => {

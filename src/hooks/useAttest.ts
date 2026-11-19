@@ -28,10 +28,13 @@ export interface Attestation {
     tolerance_minutes?: number;
     first_in?: string | null;
     last_out?: string | null;
+    model?: string;
+    parts?: import("@/lib/attestParts").AttestPart[];
   };
-  deviation_type: "none" | "sen_in" | "tidig_ut" | "missad_rast" | "oplanerad_tid" | "missat_pass";
+  part_decisions?: Record<string, import("@/lib/attestParts").PartDecisionRow> | null;
+  deviation_type: "none" | "sen_in" | "tidig_in" | "tidig_ut" | "sen_ut" | "missad_rast" | "oplanerad_tid" | "missat_pass";
   status: "auto_approved" | "flagged" | "approved" | "rejected";
-  basis: "schema" | "stamplad" | "justerad" | null;
+  basis: "schema" | "stamplad" | "justerad" | "avvikelse" | null;
   approved_minutes: number | null;
   decided_by: string | null;
   decided_at: string | null;
@@ -52,7 +55,9 @@ export interface PeriodLock {
 export const DEVIATION_LABEL: Record<Attestation["deviation_type"], string> = {
   none: "Inom tolerans",
   sen_in: "Sen instämpling",
+  tidig_in: "Tidig instämpling",
   tidig_ut: "Tidig utstämpling",
+  sen_ut: "Sen utstämpling",
   missad_rast: "Rast saknas",
   oplanerad_tid: "Oplanerad tid",
   missat_pass: "Missat pass",

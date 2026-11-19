@@ -806,6 +806,7 @@ export type Database = {
           employee_id: string
           id: string
           legal_entity_id: string | null
+          part_decisions: Json
           payroll_in: string | null
           payroll_out: string | null
           shift_id: string | null
@@ -825,6 +826,7 @@ export type Database = {
           employee_id: string
           id?: string
           legal_entity_id?: string | null
+          part_decisions?: Json
           payroll_in?: string | null
           payroll_out?: string | null
           shift_id?: string | null
@@ -844,6 +846,7 @@ export type Database = {
           employee_id?: string
           id?: string
           legal_entity_id?: string | null
+          part_decisions?: Json
           payroll_in?: string | null
           payroll_out?: string | null
           shift_id?: string | null
@@ -25100,6 +25103,7 @@ export type Database = {
         Returns: Json
       }
       attest_weekly_reminder: { Args: never; Returns: number }
+      attestation_apply_parts: { Args: { _id: string }; Returns: undefined }
       auto_close_open_time_entries: { Args: never; Returns: number }
       auto_trace_purchase_report: {
         Args: { _report_id: string }
@@ -25111,6 +25115,28 @@ export type Database = {
       }
       berakna_arbetstid: {
         Args: { _employee_id: string; _from: string; _to: string }
+        Returns: {
+          arbetsdag: string
+          break_minutes: number
+          mertid_minutes: number
+          missing_wage_code: boolean
+          ob_minutes: Json
+          ob100_minutes: number
+          ob50_minutes: number
+          ob70_minutes: number
+          overtime_minutes: number
+          regular_minutes: number
+          source: Json
+          total_minutes: number
+        }[]
+      }
+      berakna_arbetstid_rad: {
+        Args: {
+          _attesterat: boolean
+          _employee_id: string
+          _from: string
+          _to: string
+        }
         Returns: {
           arbetsdag: string
           break_minutes: number
@@ -25329,6 +25355,15 @@ export type Database = {
           _decision: string
           _decision_note?: string
           _request_id: string
+        }
+        Returns: Json
+      }
+      decide_attestation_part: {
+        Args: {
+          _attestation_id: string
+          _decision: string
+          _note?: string
+          _part: string
         }
         Returns: Json
       }

@@ -7,7 +7,8 @@
  * granskning — Fortnox Lön avgör bruttolön, skatt och utbetalning.
  *
  * Steg:
- *  a) attesterad tid (status approved/auto_approved) per person och dag
+ *  a) attesterad tid (status approved/auto_approved, samt flaggade dagar med avvikelsedelar
+ *     där bara tiden inom schemat och godkända avvikelser räknas) per person och dag
  *  b) OB-fördelning enligt payroll_policies + holiday_calendar (minutprecision)
  *  c) mertid/övertid mot schemalagd tid och veckotröskel per avtalsområde
  *  d) frånvaro: godkända absence_requests + sjukperioder
@@ -258,15 +259,30 @@ Deno.serve(async (req) => {
   for (let offset = 0; ; offset += 1000) {
     const { data: page, error: attErr } = await db
       .from("attestations")
-      .select("id, employee_id, store_id, date, status, basis, approved_minutes, computed, shift_id")
+      .select("id, employee_id, store_id, date, status, basis, approved_minutes, computed, shift_id, part_decisions")
       .gte("date", from)
       .lte("date", to)
       .in("employee_id", employeeIds)
-      .in("status", ["approved", "auto_approved"])
+      .in("status", ["approved", "auto_approved", "flagged"])
       .order("id", { ascending: true })
       .range(offset, offset + 999);
     if (attErr) throw attErr;
-    rawAttestations.push(...(page ?? []));
+    // Flaggade dagar räknas bara när de är uppdelade i avvikelser: tiden inom schemat är
+    // godkänd, tiden utanför schemat betalas först när den är attesterad.
+    for (const a of page ?? []) {
+      if (a.status !== "flagged") { rawAttestations.push(a); continue; }
+      if (a.computed?.model !== "delar" || a.approved_minutes === null) continue;
+      rawAttestations.push(a);
+      const pendingParts = ((a.computed?.parts ?? []) as { kind: string }[])
+        .filter((part) => !a.part_decisions?.[part.kind]);
+      if (pendingParts.length) {
+        issues.push({
+          kind: "pending_deviation",
+          detail: `${a.date}: ${pendingParts.length} ${pendingParts.length === 1 ? "avvikelse" : "avvikelser"} utanför schemat väntar på attest`,
+          employee_id: a.employee_id,
+        });
+      }
+    }
     if (!page || page.length < 1000) break;
   }
   // En person kan bara få lön en gång per dag: stämplad tid är per person och dag,
@@ -643,7 +659,8 @@ Deno.serve(async (req) => {
     }
   }
 
-  const blocking = issues.filter((i) => i.kind !== "wellness_over_limit").length;
+  // Oattesterade avvikelser stoppar inte perioden — tiden utanför schemat betalas bara inte.
+  const blocking = issues.filter((i) => i.kind !== "wellness_over_limit" && i.kind !== "pending_deviation").length;
   await db
     .from("payroll_periods")
     .update({
