@@ -45,6 +45,7 @@ import { PayrollDayEditDialog } from "@/components/payroll/PayrollDayEditDialog"
 import { DeviationParts, useDecideAttestationPart } from "@/components/payroll/DeviationParts";
 import { asStampedDecision, partsOf, pendingParts, type PartDecisionRow, type PartsAttestation } from "@/lib/attestParts";
 import { netPay } from "@/lib/netPay";
+import { explainAttestation, type ExplainAttestation } from "@/lib/attestExplanation";
 import { clockedHours, grossPay, obHours, unpaidAbsenceDeduction, workedHours } from "@/lib/payrollHours";
 import { fixedSalaryForPeriod, hourlyBaseOn, type DatedWage } from "../../supabase/functions/_shared/employmentWages";
 
@@ -210,14 +211,14 @@ export default function PayrollReview() {
     queryFn: async () => {
       type Row = {
         id: string; employee_id: string; date: string; store_id: string | null; approved_minutes: number | null; computed: unknown;
-        status: string; basis: string | null; part_decisions: unknown;
+        status: string; basis: string | null; part_decisions: unknown; decided_at: string | null; decided_by: string | null;
       };
       const all: Row[] = [];
       const pageSize = 1000;
       for (let from = 0; ; from += pageSize) {
         const { data, error } = await supabase
           .from("attestations")
-          .select("id, employee_id, date, store_id, approved_minutes, computed, status, basis, part_decisions")
+          .select("id, employee_id, date, store_id, approved_minutes, computed, status, basis, part_decisions, decided_at, decided_by")
           .in("employee_id", clockIds)
           .gte("date", periodRange.from)
           .lte("date", periodRange.to)
@@ -243,6 +244,71 @@ export default function PayrollReview() {
     }
     return map;
   }, [clockedQuery.data]);
+  // Attestrader per person och dag, för stämplad tid och förklaringen av beslutet.
+  const attestByDay = useMemo(() => {
+    const map = new Map<string, NonNullable<typeof clockedQuery.data>>();
+    for (const r of clockedQuery.data ?? []) {
+      const key = `${r.employee_id}|${r.date}`;
+      map.set(key, [...(map.get(key) ?? []), r]);
+    }
+    return map;
+  }, [clockedQuery.data]);
+  // Kontona som fattat besluten (dagsbeslut och beslut per avvikelse).
+  const deciderIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const r of clockedQuery.data ?? []) {
+      if (r.decided_by) ids.add(r.decided_by);
+      for (const d of Object.values((r.part_decisions ?? {}) as Record<string, PartDecisionRow>)) if (d?.by) ids.add(d.by);
+    }
+    return [...ids].sort();
+  }, [clockedQuery.data]);
+  const decidersQuery = useQuery({
+    queryKey: ["payroll-deciders", deciderIds.join(",")],
+    enabled: deciderIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("staff").select("user_id, first_name, last_name, email").in("user_id", deciderIds);
+      if (error) throw error;
+      return (data ?? []) as { user_id: string; first_name: string | null; last_name: string | null; email: string | null }[];
+    },
+  });
+  const accountOf = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of decidersQuery.data ?? []) {
+      const name = [s.first_name, s.last_name].filter(Boolean).join(" ").trim();
+      map.set(s.user_id, name && s.email ? `${name} (${s.email})` : name || s.email || "");
+    }
+    return (id: string) => map.get(id) || null;
+  }, [decidersQuery.data]);
+  /** Arbetad (stämplad, efter rast) och betald tid för dagen plus klartext om attesten. */
+  const dayExplanation = (employeeId: string, date: string, storeId: string | null, paidHours: number | null) => {
+    // Samma val som lönen: ej avslagen rad före avslagen, sedan flest godkända minuter.
+    const rank = (x: { status: string; approved_minutes: number | null }) =>
+      (x.status === "rejected" ? 0 : 1) * 100000 + Number(x.approved_minutes ?? 0);
+    const rows = [...(attestByDay.get(`${employeeId}|${date}`) ?? [])].sort((x, y) => rank(y) - rank(x));
+    const r = rows.find((x) => x.status !== "rejected" && (!storeId || x.store_id === storeId)) ?? rows[0];
+    if (!r) return null;
+    const c = (r.computed ?? {}) as { clocked_minutes?: number };
+    const worked = Number(c.clocked_minutes ?? 0) / 60;
+    const paid = paidHours ?? Number(r.approved_minutes ?? 0) / 60;
+    const a: ExplainAttestation = {
+      id: r.id,
+      status: r.status,
+      basis: r.basis,
+      computed: r.computed as ExplainAttestation["computed"],
+      part_decisions: (r.part_decisions ?? {}) as Record<string, PartDecisionRow>,
+      approved_minutes: r.approved_minutes,
+      decided_at: r.decided_at,
+      decided_by: r.decided_by,
+    };
+    return (
+      <span className="mt-1 block w-full text-sm">
+        <span className="ind-mono block">
+          Arbetat totalt {dec.format(worked)} h · Betalt {dec.format(paid)} h
+        </span>
+        <span className="block text-muted-foreground">{explainAttestation(a, accountOf)}</span>
+      </span>
+    );
+  };
   // Avvikelser mot schemat per person: dagar som har delar utanför schemat.
   const deviationsByEmployee = useMemo(() => {
     const map = new Map<string, (PartsAttestation & { date: string; store_id: string | null; first_in?: string | null; last_out?: string | null })[]>();
@@ -693,6 +759,7 @@ export default function PayrollReview() {
                             </span>
                             <span className="text-muted-foreground">{storeName.get(a.store_id ?? "") ?? ""}</span>
                           </div>
+                          {dayExplanation(employeeId, a.date, a.store_id, null)}
                           <DeviationParts attestation={a} onEdit={() => setEditDay({ employeeId, date: a.date })} />
                         </li>
                       ))}
@@ -722,6 +789,7 @@ export default function PayrollReview() {
                             </span>
                             <span className="w-40 text-muted-foreground">{storeName.get(d.store_id ?? "") ?? ""}</span>
                             <IndustryButton variant="ghost" className="h-9" onClick={() => setEditDay({ employeeId, date: d.date })}>Ändra</IndustryButton>
+                            {dayExplanation(employeeId, d.date, d.store_id, d.minutes / 60)}
                           </li>
                         ))}
                       </ul>
@@ -774,6 +842,7 @@ export default function PayrollReview() {
                               {line.store_id ? storeName.get(line.store_id) ?? "" : ""}
                             </span>
                             <IndustryButton variant="ghost" className="h-9" onClick={() => setEditDay({ employeeId, date: line.line_date })}>Ändra</IndustryButton>
+                            {isTimeLine ? dayExplanation(employeeId, line.line_date, line.store_id, Number(line.quantity ?? 0)) : null}
                           </li>
                         );
                       })}
