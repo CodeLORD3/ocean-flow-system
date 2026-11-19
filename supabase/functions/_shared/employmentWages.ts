@@ -75,6 +75,44 @@ export function fixedSalaryForPeriod(emp: WageSource, wages: DatedWage[] | undef
   return Math.round(sum * 100) / 100;
 }
 
+/** En del av löneperioden med samma lön: fast månadslön eller timlön. */
+export interface WagePart {
+  from: string;
+  to: string;
+  pay_type: "monthly" | "hourly";
+  monthly_salary: number;
+  hourly_rate: number;
+  /** Fast lön för delen (0 för timlön) — samma halvor som fixedSalaryForPeriod. */
+  fixed: number;
+}
+
+/**
+ * Periodens delar när lön eller lönetyp byts i perioden, t.ex. fast månadslön 16–31 okt
+ * och timlön från 1 nov. Summan av delarnas fasta lön är alltid fixedSalaryForPeriod.
+ */
+export function wagePartsInPeriod(emp: WageSource, wages: DatedWage[] | undefined, from: string, to: string): WagePart[] {
+  const all = days(from, to);
+  const months = [...new Set(all.map((d) => d.slice(0, 7)))];
+  const halves = months.length === 2;
+  const share = halves ? 0.5 : 1;
+  const daysInPart = (day: string) => (halves ? all.filter((d) => d.slice(0, 7) === day.slice(0, 7)).length : all.length);
+  const parts: WagePart[] = [];
+  for (const day of all) {
+    const w = wageOn(emp, wages, day);
+    const last = parts[parts.length - 1];
+    const perDay = w.pay_type === "monthly" ? (w.monthly_salary * share) / daysInPart(day) : 0;
+    if (last && last.pay_type === w.pay_type && last.monthly_salary === w.monthly_salary && last.hourly_rate === w.hourly_rate) {
+      last.to = day;
+      last.fixed += perDay;
+    } else {
+      parts.push({ from: day, to: day, pay_type: w.pay_type, monthly_salary: w.monthly_salary, hourly_rate: w.hourly_rate, fixed: perDay });
+    }
+  }
+  const inPeriod = (wages ?? []).some((w) => w.first_day > from && w.first_day <= to);
+  if (!inPeriod && parts.length === 1) parts[0].fixed = parts[0].pay_type === "monthly" ? parts[0].monthly_salary : 0;
+  return parts.map((p) => ({ ...p, fixed: Math.round(p.fixed * 100) / 100 }));
+}
+
 /**
  * Timlöner som gäller i perioden, en post per byte: { from, rate }.
  * Dagar med månadslön hoppas över. Används av Excel och PAXml så att filerna visar samma timlön.
