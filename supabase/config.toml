@@ -148,3 +148,6 @@ verify_jwt = false
 
 [functions.fortnox-employee-gaps]
 verify_jwt = false
+
+[functions.fortnox-employee-sync]
+verify_jwt = false

@@ -6156,6 +6156,53 @@ export type Database = {
           },
         ]
       }
+      employment_wages: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          employment_id: string
+          first_day: string
+          hourly_rate: number | null
+          id: string
+          monthly_salary: number | null
+          note: string | null
+          pay_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          employment_id: string
+          first_day: string
+          hourly_rate?: number | null
+          id?: string
+          monthly_salary?: number | null
+          note?: string | null
+          pay_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          employment_id?: string
+          first_day?: string
+          hourly_rate?: number | null
+          id?: string
+          monthly_salary?: number | null
+          note?: string | null
+          pay_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employment_wages_employment_id_fkey"
+            columns: ["employment_id"]
+            isOneToOne: false
+            referencedRelation: "employments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employments: {
         Row: {
           agreement_area: string
@@ -26120,6 +26167,10 @@ export type Database = {
       send_customer_order_to_store: {
         Args: { _order_id: string; _to_store_id: string }
         Returns: Json
+      }
+      service_get_employee_pnr: {
+        Args: { _employee_id: string }
+        Returns: string
       }
       service_set_employee_pnr: {
         Args: { _employee_id: string; _pnr: string }

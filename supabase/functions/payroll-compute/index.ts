@@ -1,4 +1,5 @@
 import { employerContribution, type ContributionRule } from "../_shared/employerContribution.ts";
+import { fixedSalaryForPeriod, hourlyBaseOn, wageOn, type DatedWage } from "../_shared/employmentWages.ts";
 /**
  * payroll-compute — bygger löneunderlag (payroll_lines) för ett bolag och en
  * löneperiod (YYYY-MM).
@@ -213,6 +214,20 @@ Deno.serve(async (req) => {
     .select("id")
     .eq("is_test", true);
   (testRows as { id: string }[]).forEach((row) => employmentByEmployee.delete(row.id));
+  // Lönebyten per datum (t.ex. månadslön → timlön mitt i perioden)
+  const wagesByEmployment = new Map<string, DatedWage[]>();
+  const employmentIds = [...employmentByEmployee.values()].map((e) => e.id);
+  if (employmentIds.length) {
+    const { data: wageRows = [] } = await db
+      .from("employment_wages")
+      .select("employment_id, first_day, pay_type, monthly_salary, hourly_rate")
+      .in("employment_id", employmentIds);
+    for (const w of (wageRows ?? []) as (DatedWage & { employment_id: string })[]) {
+      const list = wagesByEmployment.get(w.employment_id);
+      if (list) list.push(w);
+      else wagesByEmployment.set(w.employment_id, [w]);
+    }
+  }
   const compMinutesByEmployee = new Map<string, number>();
   if (employmentByEmployee.size === 0) {
     return json({ error: "Inga aktiva anställningar i bolaget för perioden" }, 400);
@@ -368,17 +383,14 @@ Deno.serve(async (req) => {
   const lines: Line[] = [];
 
 
-  const hourlyBase = (emp: Employment) =>
-    emp.pay_type === "monthly"
-      ? Number(emp.monthly_salary ?? 0) / 165
-      : Number(emp.hourly_rate ?? 0);
+  const hourlyBase = (emp: Employment, date: string) => hourlyBaseOn(emp, wagesByEmployment.get(emp.id), date);
 
   const push = (line: Omit<Line, "period_id" | "legal_entity_id" | "export_status">) => {
     lines.push({ ...line, period_id: periodRow.id, legal_entity_id: legalEntityId, export_status: "pending" });
   };
 
-  const costOf = (emp: Employment, hours: number, pct: number, policy?: Policy) => {
-    const base = hourlyBase(emp);
+  const costOf = (emp: Employment, hours: number, pct: number, policy: Policy | undefined, date: string) => {
+    const base = hourlyBase(emp, date);
     if (!base || !hours) return 0;
     // OB/mertid är tillägg ovanpå timmar som redan finns som ARB-rad:
     // bara tilläggsdelen (pct) får räknas, annars betalas timmen dubbelt.
@@ -438,14 +450,15 @@ Deno.serve(async (req) => {
     const costCenter = emp.cost_center ?? null;
 
     // Timavlönade får ARB-timmar, månadsavlönade endast avvikelser (TID som referens)
-    const baseType = emp.pay_type === "monthly" ? "TID" : "ARB";
+    const payTypeOnDay = wageOn(emp, wagesByEmployment.get(emp.id), att.date).pay_type;
+    const baseType = payTypeOnDay === "monthly" ? "TID" : "ARB";
     if (mapped.size && !mapped.has(baseType)) issues.push({ kind: "missing_wage_code", detail: baseType, employee_id: att.employee_id });
-    if (emp.pay_type !== "monthly") {
+    if (payTypeOnDay !== "monthly") {
       push({
         store_id: att.store_id, employee_id: att.employee_id, employment_id: emp.id,
         line_type: "ARB", line_date: att.date, quantity: round2(minutes / 60),
         cost_center: costCenter, source_ref: att.id, source_type: "attestation",
-        preliminary_cost: costOf(emp, minutes / 60, 0, policy),
+        preliminary_cost: costOf(emp, minutes / 60, 0, policy, att.date),
       });
     }
 
@@ -464,7 +477,7 @@ Deno.serve(async (req) => {
         line_type: code, line_date: att.date, quantity: round2(obMin / 60),
         cost_center: costCenter, source_ref: att.id, source_type: "attestation",
         note: `OB ${pct} % enligt databasmotorn`,
-        preliminary_cost: costOf(emp, obMin / 60, pct, policy),
+        preliminary_cost: costOf(emp, obMin / 60, pct, policy, att.date),
       });
     }
 
@@ -478,7 +491,7 @@ Deno.serve(async (req) => {
         line_type: "MER", line_date: att.date, quantity: round2(mertid / 60),
         cost_center: costCenter, source_ref: att.id, source_type: "attestation",
         note: `Mertid ${extraRules?.first_pct ?? 35} %`,
-        preliminary_cost: costOf(emp, mertid / 60, Number(extraRules?.first_pct ?? 35), policy),
+        preliminary_cost: costOf(emp, mertid / 60, Number(extraRules?.first_pct ?? 35), policy, att.date),
       });
     }
 
@@ -608,7 +621,7 @@ Deno.serve(async (req) => {
   const rateByEmployee = new Map<string, number>();
   for (const [employeeId, emp] of employmentByEmployee) {
     const policy = policyFor(emp.agreement_area);
-    const fixed = emp.pay_type === "monthly" ? Number(emp.monthly_salary ?? 0) * (1 + Number(policy?.vacation_reserve_pct ?? 0) / 100) : 0;
+    const fixed = fixedSalaryForPeriod(emp, wagesByEmployment.get(emp.id), from, to) * (1 + Number(policy?.vacation_reserve_pct ?? 0) / 100);
     const gross = (wageGross.get(employeeId) ?? 0) + fixed;
     const year = birthYear.get(employeeId) ?? null;
     if (year === null && gross > 0) issues.push({ kind: "missing_birth_date", detail: "Födelsedatum saknas – 31,42 % används", employee_id: employeeId });

@@ -46,6 +46,7 @@ import { DeviationParts, useDecideAttestationPart } from "@/components/payroll/D
 import { asStampedDecision, partsOf, pendingParts, type PartDecisionRow, type PartsAttestation } from "@/lib/attestParts";
 import { netPay } from "@/lib/netPay";
 import { clockedHours, grossPay, obHours, workedHours } from "@/lib/payrollHours";
+import { fixedSalaryForPeriod, hourlyBaseOn, type DatedWage } from "../../supabase/functions/_shared/employmentWages";
 
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const money = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
@@ -116,25 +117,57 @@ export default function PayrollReview() {
     );
   }, [rows, employeeName]);
 
+  // Stämplad tid för månadsavlönade i löneperioden (16:e–15:e) — för att se avvikelser.
+  const periodRange = useMemo(() => {
+    const [y, m] = period.split("-").map(Number);
+    const start = new Date(Date.UTC(y, m - 2, 16)).toISOString().slice(0, 10);
+    return { from: start, to: `${period}-15` };
+  }, [period]);
+  // Lönebyten per datum (t.ex. månadslön → timlön mitt i perioden), samma som löneberäkningen.
+  const wagesQuery = useQuery({
+    queryKey: ["payroll-review-wages", activeEntity],
+    enabled: !!activeEntity,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employment_wages")
+        .select("employment_id, first_day, pay_type, monthly_salary, hourly_rate, employments!inner(employee_id, legal_entity_id, is_active)")
+        .eq("employments.legal_entity_id", activeEntity);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const wagesByEmployment = useMemo(() => {
+    const map = new Map<string, DatedWage[]>();
+    for (const w of wagesQuery.data ?? []) {
+      const list = map.get(w.employment_id);
+      if (list) list.push(w);
+      else map.set(w.employment_id, [w]);
+    }
+    return map;
+  }, [wagesQuery.data]);
   // Fast månadslön ligger på anställningen och betalas av Fortnox Lön — visas här som kontroll.
+  // Vid lönebyte i perioden räknas månadslönen bara för dagarna den gäller.
   const fixedQuery = useQuery({
     queryKey: ["payroll-fixed-salaries", activeEntity],
     enabled: !!activeEntity,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employments")
-        .select("employee_id, monthly_salary")
+        .select("id, employee_id, pay_type, monthly_salary, hourly_rate")
         .eq("legal_entity_id", activeEntity)
-        .eq("pay_type", "monthly")
         .eq("is_active", true);
       if (error) throw error;
       return data ?? [];
     },
   });
-  const fixedSalary = useMemo(
-    () => new Map((fixedQuery.data ?? []).filter((r) => r.monthly_salary).map((r) => [r.employee_id, Number(r.monthly_salary)])),
-    [fixedQuery.data],
-  );
+  const fixedSalary = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of fixedQuery.data ?? []) {
+      const amount = fixedSalaryForPeriod(r, wagesByEmployment.get(r.id), periodRange.from, periodRange.to);
+      if (amount > 0) map.set(r.employee_id, (map.get(r.employee_id) ?? 0) + amount);
+    }
+    return map;
+  }, [fixedQuery.data, wagesByEmployment, periodRange]);
   const fixedTotal = [...fixedSalary.values()].reduce((s, v) => s + v, 0);
   const employmentsQuery = useQuery({
     queryKey: ["payroll-review-employments", activeEntity],
@@ -142,34 +175,29 @@ export default function PayrollReview() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employments")
-        .select("employee_id, employment_number, pay_type, is_active, hourly_rate, monthly_salary, tax_table, tax_column, tax_adjustment, tax_type")
+        .select("id, employee_id, employment_number, pay_type, is_active, hourly_rate, monthly_salary, tax_table, tax_column, tax_adjustment, tax_type")
         .eq("legal_entity_id", activeEntity);
       if (error) throw error;
       return data ?? [];
     },
   });
   const employmentOf = useMemo(() => {
-    const map = new Map<string, { number: string; payType: string; hourlyBase: number; taxTable: string | null; taxColumn: number | null; taxAdjustment: number | null; taxType: string | null }>();
+    const map = new Map<string, { number: string; payType: string; hourlyBase: (date: string) => number; taxTable: string | null; taxColumn: number | null; taxAdjustment: number | null; taxType: string | null }>();
     for (const r of employmentsQuery.data ?? []) {
       if (map.has(r.employee_id) && !r.is_active) continue;
-      // Samma timbas som löneberäkningen: timlön, eller månadslön / 165.
-      const hourlyBase = r.pay_type === "monthly" ? Number(r.monthly_salary ?? 0) / 165 : Number(r.hourly_rate ?? 0);
+      // Samma timbas som löneberäkningen: timlön, eller månadslön / 165 — den lön som gällde dagen.
+      const wages = wagesByEmployment.get(r.id);
+      const hourlyBase = (date: string) => hourlyBaseOn(r, wages, date || periodRange.to);
       map.set(r.employee_id, { number: r.employment_number ?? "", payType: r.pay_type ?? "", hourlyBase, taxTable: r.tax_table != null ? String(r.tax_table) : null, taxColumn: r.tax_column != null ? Number(r.tax_column) : null, taxAdjustment: r.tax_adjustment != null ? Number(r.tax_adjustment) : null, taxType: r.tax_type ?? null });
     }
     return map;
-  }, [employmentsQuery.data]);
+  }, [employmentsQuery.data, wagesByEmployment, periodRange]);
   /** Brutto och ungefärligt netto per person — samma brutto som visas på raden. */
   const payOf = (employeeId: string, employeeLines: PayrollLine[]) => {
     const emp = employmentOf.get(employeeId);
     const gross = (fixedSalary.get(employeeId) ?? 0) + grossPay(employeeLines, emp?.hourlyBase ?? 0);
     return { gross, net: netPay(gross, emp?.taxTable, emp?.taxColumn, emp?.taxAdjustment, emp?.taxType) };
   };
-  // Stämplad tid för månadsavlönade i löneperioden (16:e–15:e) — för att se avvikelser.
-  const periodRange = useMemo(() => {
-    const [y, m] = period.split("-").map(Number);
-    const start = new Date(Date.UTC(y, m - 2, 16)).toISOString().slice(0, 10);
-    return { from: start, to: `${period}-15` };
-  }, [period]);
   // In- och utstämpling visas för alla i perioden (månads- och timavlönade).
   const clockIds = useMemo(
     () => [...new Set([...fixedSalary.keys(), ...byEmployee.map(([id]) => id)])].sort(),

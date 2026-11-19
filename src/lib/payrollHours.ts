@@ -35,16 +35,18 @@ export function clockedHours(days: { date: string; minutes: number; first_in?: s
  * TID (månadslön) och frånvaro ger inga kronor här — månadslönen läggs till separat.
  */
 export function grossPay(
-  lines: { line_type: string; quantity: number | null; note?: string | null }[],
-  hourlyBase: number,
+  lines: { line_type: string; quantity: number | null; note?: string | null; line_date?: string }[],
+  hourlyBase: number | ((date: string) => number),
 ): number {
+  const baseOf = (l: { line_date?: string }) =>
+    typeof hourlyBase === "function" ? hourlyBase(l.line_date ?? "") : hourlyBase;
   let sum = 0;
   for (const l of lines) {
     const qty = Number(l.quantity ?? 0);
-    if (l.line_type === "ARB") sum += qty * hourlyBase;
+    if (l.line_type === "ARB") sum += qty * baseOf(l);
     else if (isObCode(l.line_type) || l.line_type === "MER") {
       const pct = Number(l.note?.match(/(\d+) %/)?.[1] ?? 0);
-      sum += qty * hourlyBase * (pct / 100);
+      sum += qty * baseOf(l) * (pct / 100);
     }
   }
   return Math.round(sum);
