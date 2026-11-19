@@ -194,6 +194,20 @@
 }
 .sl-subtab--active { background: var(--sl-ink); border-color: var(--sl-ink); color: #fff; }
 
+/* Vyer inom ett sammanslaget menyval (t.ex. Vecka / Planering / Månad). */
+.sl-views {
+  display: flex; flex-wrap: wrap; gap: 4px 16px;
+  padding: 2px 2px 8px;
+}
+.sl-view {
+  min-height: 36px; display: inline-flex; align-items: center;
+  font-size: 13.5px; font-weight: 600;
+  color: var(--sl-ink-soft);
+  border-bottom: 2px solid transparent;
+}
+.sl-view:hover { color: var(--sl-ink); }
+.sl-view--active { color: var(--sl-blue-ink); border-bottom-color: var(--sl-blue-ink); }
+
 /* ------------------------------------------------------------ veckorutnät */
 
 .sl-grid-head {

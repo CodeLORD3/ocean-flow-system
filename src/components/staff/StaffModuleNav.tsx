@@ -3,7 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSite } from "@/contexts/SiteContext";
-import { staffSectionsForSite, staffSectionOf } from "@/lib/staffModuleNav";
+import { staffItemOf, staffSectionsForSite, staffSectionOf } from "@/lib/staffModuleNav";
 import { staffLevelOf } from "@/lib/staffModuleAccess";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
@@ -31,6 +31,8 @@ export function StaffModuleNav() {
 
   const openSection = sections.find((section) => section.key === openKey) ?? null;
   const subItems = openSection?.items ?? [];
+  const activeItem = staffItemOf(active, location.pathname);
+  const views = activeItem && openSection?.key === active?.key && activeItem.views.length > 1 ? activeItem.views : [];
 
   return (
     <div className="sticky top-0 z-20 -mx-3 mb-4 bg-[var(--sl-bg)] px-3 sm:-mx-5 sm:px-5">
@@ -75,9 +77,23 @@ export function StaffModuleNav() {
               to={item.url}
               end
               title={item.desc}
-              className={({ isActive }) => cn("sl-subtab", isActive && "sl-subtab--active")}
+              className={cn("sl-subtab", item.views.some((v) => v.url === location.pathname) && "sl-subtab--active")}
             >
               {item.title}
+            </NavLink>
+          ))}
+        </div>
+      ) : null}
+      {views.length > 0 ? (
+        <div className="sl-views" aria-label={`${activeItem?.title} — vyer`}>
+          {views.map((view) => (
+            <NavLink
+              key={view.url}
+              to={view.url}
+              end
+              className={cn("sl-view", view.url === location.pathname && "sl-view--active")}
+            >
+              {view.title}
             </NavLink>
           ))}
         </div>

@@ -40,7 +40,7 @@ export const STAFF_MODULE_GROUPS: StaffNavGroup[] = [
     desc: "Stämpelklocka, rapporterad tid och vem som är på plats",
     items: [
       { title: "Stämpelklocka", url: "/clock-stations", icon: Clock, desc: "Stationer, koder och driftövervakning" },
-      { title: "Rapporterad tid", url: "/time-entries", icon: ClipboardCheck, desc: "Alla stämplingar, faktisk och avrundad tid" },
+      { title: "Stämplingar", url: "/time-entries", icon: ClipboardCheck, desc: "Alla stämplingar, faktisk och avrundad tid, och vem som är på plats" },
       { title: "Min tid", url: "/my-time", icon: Clock, desc: "Egen tid, saldon och pass" },
       { title: "På plats nu", url: "/live-staff", icon: Activity, desc: "Live-vy över vilka som arbetar just nu" },
       { title: "Klocka vs PK", url: "/clock-vs-pk", icon: Scale, desc: "Jämförelse mot Personalkollen" },
@@ -60,7 +60,7 @@ export const STAFF_MODULE_GROUPS: StaffNavGroup[] = [
     label: "Frånvaro",
     desc: "Sjukanmälan, semester, saldon och notiser",
     items: [
-      { title: "Frånvaro & bemanning", url: "/hr-control", icon: CalendarCheck, desc: "Ansökningar, semesterår, sjukperioder, saldon och notiser" },
+      { title: "Frånvaro", url: "/hr-control", icon: CalendarCheck, desc: "Ansökningar, semesterår, sjukperioder, saldon och notiser" },
     ],
   },
   {
@@ -107,6 +107,9 @@ export function staffGroupsForSite(site: SiteMode, level: StaffLevel = "admin"):
 
 const ITEM_BY_URL = new Map(STAFF_MODULE_GROUPS.flatMap(g => g.items).map(i => [i.url, i]));
 
+/** En vy inom ett sammanslaget menyval, t.ex. Planering inom Schema. */
+export type StaffView = { title: string; url: string };
+
 export type StaffSection = {
   /** Stabilt id, används i flikraden. */
   key: string;
@@ -114,33 +117,67 @@ export type StaffSection = {
   icon: any;
   /** Sektionens startsida. */
   url: string;
-  items: StaffNavItem[];
+  items: (StaffNavItem & { views: StaffView[] })[];
 };
 
 /**
- * Fem sektioner istället för sexton flikar. Varje sektion har underflikar som
- * pekar på de sidor som redan finns — inget nås längre bara via menyn.
+ * Sammanslagna menyval: ett menyval, flera vyer av samma sak. Sidorna finns kvar
+ * på sina adresser men nås via vyväljaren under menyvalet — färre menyer och flikar.
  */
+export const STAFF_MERGED_VIEWS: Record<string, StaffView[]> = {
+  "/staff-schedule": [
+    { title: "Vecka", url: "/staff-schedule" },
+    { title: "Planering", url: "/schedule-planner" },
+    { title: "Månad", url: "/schedule" },
+  ],
+  "/time-entries": [
+    { title: "Alla stämplingar", url: "/time-entries" },
+    { title: "På plats nu", url: "/live-staff" },
+  ],
+  "/payroll-review": [
+    { title: "Granska lön", url: "/payroll-review" },
+    { title: "Attest", url: "/attestations" },
+  ],
+  "/staff": [
+    { title: "Personal", url: "/staff" },
+    { title: "Personalregister", url: "/employees" },
+  ],
+  "/personalkollen": [
+    { title: "Personalkollen", url: "/personalkollen" },
+    { title: "Klocka vs PK", url: "/clock-vs-pk" },
+  ],
+};
+
+/** Fem sektioner och tio menyval. Min profil ligger i användarmenyn. */
 const SECTION_LAYOUT: { key: string; label: string; icon: any; urls: string[] }[] = [
   { key: "start", label: "Start", icon: LayoutGrid, urls: [] },
-  { key: "schema", label: "Schema", icon: CalendarRange, urls: ["/staff-schedule", "/schedule-planner", "/schedule", "/my-shifts"] },
-  { key: "tider", label: "Tider", icon: Clock, urls: ["/time-entries", "/my-time", "/live-staff", "/clock-stations", "/attestations", "/clock-vs-pk"] },
-  { key: "analys", label: "Analys & Lön", icon: BarChart3, urls: ["/payroll-review", "/staff-rules"] },
-  { key: "personal", label: "Personal", icon: UserCheck, urls: ["/staff", "/employees", "/hr-control", "/profile", "/personalkollen"] },
+  { key: "schema", label: "Schema", icon: CalendarRange, urls: ["/staff-schedule", "/my-shifts"] },
+  { key: "tider", label: "Tider", icon: Clock, urls: ["/time-entries", "/my-time", "/clock-stations"] },
+  { key: "lon", label: "Lön", icon: BarChart3, urls: ["/payroll-review", "/staff-rules"] },
+  { key: "personal", label: "Personal", icon: UserCheck, urls: ["/staff", "/hr-control", "/personalkollen"] },
 ];
 
-/** Sektioner filtrerade på portal och nivå. Tomma sektioner faller bort. */
+/** Sektioner filtrerade på portal och nivå. Menyval utan någon öppningsbar vy faller bort. */
 export function staffSectionsForSite(site: SiteMode, level: StaffLevel = "admin"): StaffSection[] {
+  const allowed = (url: string) => canAccessRoute(site, url) && canOpenStaffPage(level, url);
   return SECTION_LAYOUT.map(section => {
-    const items = section.urls
-      .map(url => ITEM_BY_URL.get(url))
-      .filter((item): item is StaffNavItem => !!item)
-      .filter(item => canAccessRoute(site, item.url) && canOpenStaffPage(level, item.url));
+    const items = section.urls.flatMap(url => {
+      const item = ITEM_BY_URL.get(url);
+      if (!item) return [];
+      const views = (STAFF_MERGED_VIEWS[url] ?? [{ title: item.title, url }]).filter(v => allowed(v.url));
+      if (!views.length) return [];
+      return [{ ...item, url: views[0].url, views }];
+    });
     return { key: section.key, label: section.label, icon: section.icon, url: section.key === "start" ? "/personal" : items[0]?.url ?? "", items };
   }).filter(section => section.key === "start" || section.items.length > 0);
 }
 
-/** Vilken sektion en rutt hör till. */
+/** Vilken sektion en rutt hör till (även vyer inom sammanslagna menyval). */
 export function staffSectionOf(sections: StaffSection[], path: string): StaffSection | null {
-  return sections.find(section => section.items.some(item => item.url === path)) ?? null;
+  return sections.find(section => section.items.some(item => item.views.some(v => v.url === path))) ?? null;
+}
+
+/** Menyvalet som en rutt hör till. */
+export function staffItemOf(section: StaffSection | null, path: string) {
+  return section?.items.find(item => item.views.some(v => v.url === path)) ?? null;
 }
