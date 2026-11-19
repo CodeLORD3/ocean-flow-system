@@ -67,3 +67,19 @@ export function fixedSalaryForPeriod(emp: WageSource, wages: DatedWage[] | undef
   }
   return Math.round(sum * 100) / 100;
 }
+
+/**
+ * Timlöner som gäller i perioden, en post per byte: { from, rate }.
+ * Dagar med månadslön hoppas över. Används av Excel och PAXml så att filerna visar samma timlön.
+ */
+export function hourlyRatesInPeriod(emp: WageSource, wages: DatedWage[] | undefined, from: string, to: string): { from: string; rate: number }[] {
+  const out: { from: string; rate: number }[] = [];
+  let prev: string | null = null;
+  for (const day of days(from, to)) {
+    const w = wageOn(emp, wages, day);
+    const key = w.pay_type === "hourly" ? `h:${w.hourly_rate}` : "m";
+    if (key !== prev && w.pay_type === "hourly" && w.hourly_rate > 0) out.push({ from: day, rate: w.hourly_rate });
+    prev = key;
+  }
+  return out;
+}

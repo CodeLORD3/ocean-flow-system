@@ -20,6 +20,8 @@
  * "corrected" av omräkningen och skickas då som ny transaktion.
  */
 import { adminClient, requireUser, fortnoxRequest, FortnoxError, json, corsHeaders } from "../_shared/fortnox.ts";
+import { buildPaxml, type PaxmlLine, type PaxmlPerson } from "../_shared/paxml.ts";
+import { hourlyRatesInPeriod, type DatedWage } from "../_shared/employmentWages.ts";
 
 interface PayrollLineRow {
   id: string;
@@ -46,9 +48,6 @@ interface WageCode {
   transaction_type: string;
   active: boolean;
 }
-
-const xmlEscape = (value: string) =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 const hours = (value: number) => Number(value ?? 0).toFixed(2);
 
@@ -78,7 +77,7 @@ Deno.serve(async (req) => {
 
   const { data: periodRow, error: periodErr } = await sb
     .from("payroll_periods")
-    .select("id, status, legal_entity_id, period")
+    .select("id, status, legal_entity_id, period, period_start, period_end")
     .eq("legal_entity_id", legalEntityId)
     .eq("period", period)
     .maybeSingle();
@@ -131,33 +130,56 @@ Deno.serve(async (req) => {
   }
 
   if (mode === "paxml") {
-    const rows = lines
-      .map((line) => {
-        const code = wageCodes.get(line.line_type);
-        const employeeId = fortnoxEmployee.get(line.employee_id) ?? line.employee_id;
-        const paxml = code?.paxml_code ?? code?.fortnox_code ?? line.line_type;
-        const kind = code?.transaction_type ?? "attendance";
-        if (kind === "absence") {
-          return `      <frånvarotransaktion anstid="${xmlEscape(employeeId)}" frånvarotyp="${xmlEscape(paxml)}" datum="${line.line_date}" omfattning="${Number(line.extent_pct ?? 100)}" timmar="${hours(line.quantity)}" />`;
-        }
-        if (kind === "salary") {
-          return `      <lönetransaktion anstid="${xmlEscape(employeeId)}" löneart="${xmlEscape(paxml)}" datum="${line.line_date}" antal="${hours(line.quantity)}" belopp="${Number(line.unit_amount ?? 0).toFixed(2)}"${line.cost_center ? ` kostnadsställe="${xmlEscape(line.cost_center)}"` : ""} />`;
-        }
-        return `      <tidtransaktion anstid="${xmlEscape(employeeId)}" tidkod="${xmlEscape(paxml)}" datum="${line.line_date}" timmar="${hours(line.quantity)}"${line.cost_center ? ` kostnadsställe="${xmlEscape(line.cost_center)}"` : ""} />`;
-      })
-      .join("\n");
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<paxml xmlns="http://www.paxml.se/2.2/">
-  <header>
-    <format>LÖNIN</format>
-    <version>2.2</version>
-    <datum>${new Date().toISOString()}</datum>
-    <programnamn>Makrilltrade</programnamn>
-  </header>
-  <tidtransaktioner>
-${rows}
-  </tidtransaktioner>
-</paxml>`;
+    const paxLines: PaxmlLine[] = lines.map((line) => {
+      const code = wageCodes.get(line.line_type);
+      const kind = code?.transaction_type === "absence" ? "absence" : code?.transaction_type === "salary" ? "salary" : "attendance";
+      return {
+        anstid: fortnoxEmployee.get(line.employee_id) ?? line.employee_id,
+        code: code?.paxml_code ?? code?.fortnox_code ?? line.line_type,
+        kind,
+        date: line.line_date,
+        quantity: Number(line.quantity ?? 0),
+        extent_pct: line.extent_pct,
+        unit_amount: line.unit_amount,
+        cost_center: line.cost_center,
+      };
+    });
+    // Timlön per person i perioden (samma lön per datum som löneberäkningen).
+    const employeeIds = [...new Set(lines.map((l) => l.employee_id))];
+    const { data: empRows } = await sb
+      .from("employments")
+      .select("id, employee_id, is_active, pay_type, hourly_rate, monthly_salary, fortnox_employee_id, employees(first_name, last_name)")
+      .eq("legal_entity_id", legalEntityId)
+      .in("employee_id", employeeIds.length ? employeeIds : ["00000000-0000-0000-0000-000000000000"]);
+    const empIds = ((empRows ?? []) as { id: string }[]).map((e) => e.id);
+    const { data: wageRows } = await sb
+      .from("employment_wages")
+      .select("employment_id, first_day, pay_type, monthly_salary, hourly_rate")
+      .in("employment_id", empIds.length ? empIds : ["00000000-0000-0000-0000-000000000000"]);
+    const wagesBy = new Map<string, DatedWage[]>();
+    ((wageRows ?? []) as (DatedWage & { employment_id: string })[]).forEach((w) => {
+      wagesBy.set(w.employment_id, [...(wagesBy.get(w.employment_id) ?? []), w]);
+    });
+    const from = (periodRow as { period_start?: string }).period_start ?? lines[0]?.line_date ?? `${period}-01`;
+    const to = (periodRow as { period_end?: string }).period_end ?? lines[lines.length - 1]?.line_date ?? `${period}-28`;
+    const chosen = new Map<string, Record<string, any>>();
+    for (const e of (empRows ?? []) as Record<string, any>[]) {
+      const cur = chosen.get(e.employee_id);
+      if (!cur || (e.is_active && !cur.is_active)) chosen.set(e.employee_id, e);
+    }
+    const persons: PaxmlPerson[] = [...chosen.values()].map((e) => ({
+      anstid: fortnoxEmployee.get(e.employee_id) ?? e.fortnox_employee_id ?? e.employee_id,
+      first_name: e.employees?.first_name ?? "",
+      last_name: e.employees?.last_name ?? "",
+      hourly: hourlyRatesInPeriod(e as any, wagesBy.get(e.id), from, to),
+    }));
+    const { data: entity } = await sb.from("legal_entities").select("legal_name, org_nr").eq("legal_entity_id", legalEntityId).maybeSingle();
+    const xml = buildPaxml({
+      lines: paxLines,
+      persons,
+      companyName: (entity as { legal_name?: string } | null)?.legal_name,
+      orgNr: (entity as { org_nr?: string } | null)?.org_nr,
+    });
     await sb.from("payroll_export_log").insert({
       payroll_period_id: periodRow.id,
       legal_entity_id: legalEntityId,

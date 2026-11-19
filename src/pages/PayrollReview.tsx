@@ -47,7 +47,7 @@ import { asStampedDecision, partsOf, pendingParts, type PartDecisionRow, type Pa
 import { netPay } from "@/lib/netPay";
 import { explainAttestation, type ExplainAttestation } from "@/lib/attestExplanation";
 import { clockedHours, grossPay, obHours, unpaidAbsenceDeduction, workedHours } from "@/lib/payrollHours";
-import { fixedSalaryForPeriod, hourlyBaseOn, type DatedWage } from "../../supabase/functions/_shared/employmentWages";
+import { fixedSalaryForPeriod, hourlyBaseOn, hourlyRatesInPeriod, type DatedWage } from "../../supabase/functions/_shared/employmentWages";
 
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const money = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
@@ -524,6 +524,13 @@ export default function PayrollReview() {
         Avlöningsform: fixedSalary.has(employeeId) ? "Månadslön" : "Timlön",
         "Arbetade timmar": worked,
       };
+      // Timlön som gäller i perioden — vid byte visas den senaste och från vilket datum.
+      const empRows = (employmentsQuery.data ?? []).filter((r) => r.employee_id === employeeId);
+      const empRow = empRows.find((r) => r.is_active) ?? empRows[0];
+      const rates = empRow ? hourlyRatesInPeriod(empRow, wagesByEmployment.get(empRow.id), periodRange.from, periodRange.to) : [];
+      const lastRate = rates[rates.length - 1];
+      row["Timlön (kr/h)"] = lastRate ? lastRate.rate : "";
+      row["Timlön gäller från"] = lastRate ? lastRate.from : "";
       for (const pct of pcts) row[`OB ${pct} %`] = sum((l) => isObCode(l.line_type) && obPct(l) === pct);
       row.Mertid = sum((l) => l.line_type === "MER");
       row.Frånvarodagar = employeeLines.filter((l) => isAbsence(l.line_type)).length;

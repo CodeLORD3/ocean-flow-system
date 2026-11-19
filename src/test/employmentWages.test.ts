@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fixedSalaryForPeriod, hourlyBaseOn, wageOn } from "../../supabase/functions/_shared/employmentWages";
+import { fixedSalaryForPeriod, hourlyBaseOn, hourlyRatesInPeriod, wageOn } from "../../supabase/functions/_shared/employmentWages";
 
 // Vilma: månadslön 25 000 kr, timlön 180 kr från 1 november. Löneperiod 16 okt–15 nov (31 dagar).
 const vilmaEmp = { pay_type: "hourly", monthly_salary: null, hourly_rate: 180 };
@@ -25,5 +25,19 @@ describe("lönebyte mitt i perioden", () => {
 
   it("ger hela månadslönen när ingen lön byts i perioden", () => {
     expect(fixedSalaryForPeriod({ pay_type: "monthly", monthly_salary: 23000, hourly_rate: null }, [], "2026-10-16", "2026-11-15")).toBe(23000);
+  });
+});
+
+describe("timlön i Excel och PAXml", () => {
+  it("Vilma: timlön 180 kr från 1 november, ingen timlön under månadslönedagarna", () => {
+    expect(hourlyRatesInPeriod(vilmaEmp, vilmaWages, "2026-10-16", "2026-11-15")).toEqual([{ from: "2026-11-01", rate: 180 }]);
+  });
+
+  it("Adam: 175 kr/h hela perioden", () => {
+    expect(hourlyRatesInPeriod({ pay_type: "hourly", monthly_salary: null, hourly_rate: 175 }, [], "2026-10-16", "2026-11-15")).toEqual([{ from: "2026-10-16", rate: 175 }]);
+  });
+
+  it("månadsavlönad har ingen timlön", () => {
+    expect(hourlyRatesInPeriod({ pay_type: "monthly", monthly_salary: 35000, hourly_rate: null }, [], "2026-10-16", "2026-11-15")).toEqual([]);
   });
 });
