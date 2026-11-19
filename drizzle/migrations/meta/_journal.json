@@ -337,6 +337,13 @@
       "when": 1795086997995,
       "tag": "0047_employments_tax_type",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1795087846221,
+      "tag": "0048_attest_schedule_change_guard",
+      "breakpoints": true
     }
   ]
 }

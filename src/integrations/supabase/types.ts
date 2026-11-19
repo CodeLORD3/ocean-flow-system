@@ -809,6 +809,7 @@ export type Database = {
           part_decisions: Json
           payroll_in: string | null
           payroll_out: string | null
+          schedule_baseline: Json | null
           shift_id: string | null
           status: string
           store_id: string
@@ -829,6 +830,7 @@ export type Database = {
           part_decisions?: Json
           payroll_in?: string | null
           payroll_out?: string | null
+          schedule_baseline?: Json | null
           shift_id?: string | null
           status?: string
           store_id: string
@@ -849,6 +851,7 @@ export type Database = {
           part_decisions?: Json
           payroll_in?: string | null
           payroll_out?: string | null
+          schedule_baseline?: Json | null
           shift_id?: string | null
           status?: string
           store_id?: string

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asStampedDecision, decisionOptions, pendingParts, type PartsAttestation } from "@/lib/attestParts";
+import { asStampedDecision, decisionOptions, isExtra, pendingParts, type PartsAttestation } from "@/lib/attestParts";
 
 const day = (over: Partial<PartsAttestation> = {}): PartsAttestation => ({
   id: "a",
@@ -39,5 +39,9 @@ describe("avvikelser per del av dagen", () => {
 
   it("dagar utan uppdelning har inga avvikelsedelar", () => {
     expect(pendingParts(day({ computed: { parts: [{ kind: "sen_in", minutes: 30 }] } }))).toEqual([]);
+  });
+  it("tid som schemat utökats med i efterhand godkänns eller nekas", () => {
+    expect(isExtra("schemaandring")).toBe(true);
+    expect(decisionOptions("schemaandring").map((o) => o.value)).toEqual(["godkand", "nekad"]);
   });
 });

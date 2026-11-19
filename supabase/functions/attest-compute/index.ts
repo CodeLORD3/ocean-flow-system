@@ -65,13 +65,22 @@ Deno.serve(async (req) => {
     t.setUTCDate(t.getUTCDate() - n);
     return t.toISOString().slice(0, 10);
   };
-  const from: string = body.from ?? (cron ? dayBefore(today, 7) : today);
-  const to: string = body.to ?? (cron && !body.from ? dayBefore(today, 1) : from);
+  // Schemaändring på en avslutad dag (databastrigger på shifts): bara datumet skickas,
+  // allt annat läses om här. Endast avslutade dagar de senaste 62 dagarna.
+  const changeDate: string | null = typeof body.schedule_change_date === "string" ? body.schedule_change_date : null;
+  if (changeDate !== null) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(changeDate) || changeDate >= today || changeDate < dayBefore(today, 62)) {
+      return json({ error: "Ogiltigt datum för schemaändring" }, 400);
+    }
+  }
+  const internal = cron || changeDate !== null;
+  const from: string = changeDate ?? body.from ?? (cron ? dayBefore(today, 7) : today);
+  const to: string = changeDate ?? body.to ?? (cron && !body.from ? dayBefore(today, 1) : from);
 
   const db = createClient(url, serviceKey, { auth: { persistSession: false } });
 
   // Behörighet: on-demand-anrop måste komma från en chef med butiksbehörighet.
-  if (!cron) {
+  if (!internal) {
     const authHeader = req.headers.get("Authorization") ?? "";
     if (!authHeader) return json({ error: "Saknar autentisering" }, 401);
     const asUser = createClient(url, anonKey, {
@@ -386,6 +395,53 @@ Deno.serve(async (req) => {
     decided.set(`${r.store_id}|${r.date}|${r.employee_id}|${r.shift_id ?? ""}`, r);
   }
 
+  // Ursprungligt schema: fönstret när dagen först räknades. Utökas schemat i efterhand
+  // betalas den nya tiden först efter attest (delen "schemaandring") — mindre tid gäller direkt.
+  const { data: priorRows } = await db
+    .from("attestations")
+    .select("id, store_id, date, employee_id, shift_id, status, computed, schedule_baseline")
+    .gte("date", from)
+    .lte("date", to)
+    .not("shift_id", "is", null);
+  const prior = new Map<string, { schedule_baseline: Record<string, unknown> | null; computed: Record<string, unknown> | null }>();
+  const publishedIds = new Set(allShifts.map((sh) => sh.id as string));
+  const stale: string[] = [];
+  for (const r of (priorRows ?? []) as { id: string; store_id: string; date: string; employee_id: string; shift_id: string; status: string; computed: Record<string, unknown> | null; schedule_baseline: Record<string, unknown> | null }[]) {
+    prior.set(`${r.store_id}|${r.date}|${r.employee_id}|${r.shift_id}`, r);
+    // Passet är borttaget eller inte längre publicerat: ej beslutad rad får inte betala schematid.
+    if (!publishedIds.has(r.shift_id) && ["flagged", "auto_approved"].includes(r.status) && r.date < today
+        && (!storeId || r.store_id === storeId)) stale.push(r.id);
+  }
+  if (stale.length) {
+    const { error: staleErr } = await db.from("attestations").delete().in("id", stale);
+    if (staleErr) return json({ error: staleErr.message }, 500);
+  }
+  const overlap = (a0: number, a1: number, b0: number, b1: number) => Math.max(0, Math.min(a1, b1) - Math.max(a0, b0));
+  for (const row of rows) {
+    if (!row.shift_id) continue;
+    const c = row.computed as Record<string, any>;
+    if (!c.sched_from) continue;
+    const prev = prior.get(`${row.store_id}|${row.date}|${row.employee_id}|${row.shift_id}`);
+    const pc = prev?.computed as Record<string, any> | null | undefined;
+    const baseline = (prev?.schedule_baseline as Record<string, any> | null | undefined)
+      ?? (pc?.sched_from ? { sched_from: pc.sched_from, sched_to: pc.sched_to, scheduled_minutes: pc.scheduled_minutes ?? null } : null)
+      ?? { sched_from: c.sched_from, sched_to: c.sched_to, scheduled_minutes: c.scheduled_minutes ?? null };
+    row.schedule_baseline = baseline;
+    if (c.model !== "delar" || !c.eff_in || !c.eff_out) continue;
+    const nf = Date.parse(c.sched_from), nt = Date.parse(c.sched_to);
+    const bf = Date.parse(baseline.sched_from), bt = Date.parse(baseline.sched_to);
+    const wi = Date.parse(c.eff_in), wo = Date.parse(c.eff_out);
+    const inNew = overlap(wi, wo, nf, nt);
+    const inBoth = Math.max(0, Math.min(wo, nt, bt) - Math.max(wi, nf, bf));
+    const extra = mins(inNew - inBoth);
+    if (extra > Number(c.tolerance_minutes ?? DEFAULT_TOLERANCE)) {
+      c.parts = [...(c.parts ?? []), {
+        kind: "schemaandring", minutes: extra,
+        sched: c.sched_from, sched_end: c.sched_to, stamp: baseline.sched_from, stamp_end: baseline.sched_to,
+      }];
+    }
+  }
+
   let written = 0;
   let preserved = 0;
   let reopened = 0;
@@ -434,6 +490,7 @@ Deno.serve(async (req) => {
   return json({
     written,
     preserved,
+    stale_removed: stale.length,
     reopened,
     deviation_parts: rows.reduce((n, r) => n + (((r.computed as { parts?: unknown[] }).parts ?? []).length), 0),
     skipped,
