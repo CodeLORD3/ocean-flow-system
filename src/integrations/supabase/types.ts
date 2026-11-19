@@ -1485,6 +1485,47 @@ export type Database = {
         }
         Relationships: []
       }
+      break_exemption_entities: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          decided_by: string | null
+          id: string
+          legal_entity_id: string
+          reason: string
+          valid_from: string
+          valid_to: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          decided_by?: string | null
+          id?: string
+          legal_entity_id: string
+          reason: string
+          valid_from: string
+          valid_to: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          decided_by?: string | null
+          id?: string
+          legal_entity_id?: string
+          reason?: string
+          valid_from?: string
+          valid_to?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "break_exemption_entities_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
       break_exemptions: {
         Row: {
           created_at: string

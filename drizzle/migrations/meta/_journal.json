@@ -400,6 +400,13 @@
       "when": 1795100248962,
       "tag": "0056_break_exemptions",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1795100753444,
+      "tag": "0057_paid_break_gothenburg",
+      "breakpoints": true
     }
   ]
 }
