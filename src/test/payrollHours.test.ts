@@ -34,3 +34,17 @@ describe("stämplad tid för månadsavlönade", () => {
     expect(clockedHours(days)).toBe(18);
   });
 });
+
+describe("bruttolön per person", () => {
+  it("timlön × timmar plus bara OB-tilläggsdelen", async () => {
+    const { grossPay } = await import("@/lib/payrollHours");
+    const lines = [
+      { line_type: "ARB", quantity: 10, note: null },
+      { line_type: "OB4", quantity: 2, note: "OB 100 % enligt databasmotorn" },
+      { line_type: "OB1", quantity: 2, note: "OB 50 % enligt databasmotorn" },
+      { line_type: "VAB", quantity: 1, note: null },
+    ];
+    // 10 × 190 + 2 × 190 × 1,0 + 2 × 190 × 0,5 = 1 900 + 380 + 190
+    expect(grossPay(lines, 190)).toBe(2470);
+  });
+});

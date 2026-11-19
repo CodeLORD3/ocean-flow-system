@@ -139,7 +139,7 @@ export function PayrollDayEditDialog({
           await decide.mutateAsync({ ids: list.slice(1).map((x) => x.id), approve: false, basis: null, note: why });
         }
       }
-      qc.invalidateQueries({ queryKey: ["payroll-fixed-clocked"] });
+      qc.invalidateQueries({ queryKey: ["payroll-clocked"] });
       qc.invalidateQueries({ queryKey: ["payroll-day-attest"] });
       toast.success((isRange ? "Perioden" : "Dagen") + " är ändrad. Tryck Beräkna för att uppdatera löneunderlaget.");
       onSaved();

@@ -28,3 +28,24 @@ export function clockedHours(days: { date: string; minutes: number; first_in?: s
   });
   return minutes / 60;
 }
+
+/**
+ * Bruttolön för timmarna i underlaget, före skatt och utan arbetsgivaravgift/semesteravsättning.
+ * ARB = timmar × timlön. OB och mertid = bara tilläggsdelen (procent i radens notering).
+ * TID (månadslön) och frånvaro ger inga kronor här — månadslönen läggs till separat.
+ */
+export function grossPay(
+  lines: { line_type: string; quantity: number | null; note?: string | null }[],
+  hourlyBase: number,
+): number {
+  let sum = 0;
+  for (const l of lines) {
+    const qty = Number(l.quantity ?? 0);
+    if (l.line_type === "ARB") sum += qty * hourlyBase;
+    else if (isObCode(l.line_type) || l.line_type === "MER") {
+      const pct = Number(l.note?.match(/(\d+) %/)?.[1] ?? 0);
+      sum += qty * hourlyBase * (pct / 100);
+    }
+  }
+  return Math.round(sum);
+}

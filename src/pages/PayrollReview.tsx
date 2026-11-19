@@ -42,7 +42,7 @@ import {
   type PayrollLine,
 } from "@/hooks/usePayroll";
 import { PayrollDayEditDialog } from "@/components/payroll/PayrollDayEditDialog";
-import { clockedHours, obHours, workedHours } from "@/lib/payrollHours";
+import { clockedHours, grossPay, obHours, workedHours } from "@/lib/payrollHours";
 
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const money = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
@@ -139,17 +139,19 @@ export default function PayrollReview() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employments")
-        .select("employee_id, employment_number, pay_type, is_active")
+        .select("employee_id, employment_number, pay_type, is_active, hourly_rate, monthly_salary")
         .eq("legal_entity_id", activeEntity);
       if (error) throw error;
       return data ?? [];
     },
   });
   const employmentOf = useMemo(() => {
-    const map = new Map<string, { number: string; payType: string }>();
+    const map = new Map<string, { number: string; payType: string; hourlyBase: number }>();
     for (const r of employmentsQuery.data ?? []) {
       if (map.has(r.employee_id) && !r.is_active) continue;
-      map.set(r.employee_id, { number: r.employment_number ?? "", payType: r.pay_type ?? "" });
+      // Samma timbas som löneberäkningen: timlön, eller månadslön / 165.
+      const hourlyBase = r.pay_type === "monthly" ? Number(r.monthly_salary ?? 0) / 165 : Number(r.hourly_rate ?? 0);
+      map.set(r.employee_id, { number: r.employment_number ?? "", payType: r.pay_type ?? "", hourlyBase });
     }
     return map;
   }, [employmentsQuery.data]);
@@ -505,14 +507,19 @@ export default function PayrollReview() {
                   <IndustryButton variant="ghost" className="h-9" onClick={() => setEditDay({ employeeId, date: periodRange.from })}>
                     Redigera period
                   </IndustryButton>
-                  {fixedSalary.has(employeeId) ? (
-                    <span className="ml-auto ind-mono">
-                      Fast månadslön {money.format(fixedSalary.get(employeeId) ?? 0)} kr
-                      {cost ? ` + ${money.format(cost)} kr` : ""}
-                    </span>
-                  ) : (
-                    <span className="ml-auto ind-mono">{money.format(cost)} kr preliminärt</span>
-                  )}
+                  {(() => {
+                    const fixed = fixedSalary.get(employeeId) ?? 0;
+                    const gross = fixed + grossPay(employeeLines, employmentOf.get(employeeId)?.hourlyBase ?? 0);
+                    const totalCost = cost + (fixed ? fixed * 1.3142 : 0);
+                    return (
+                      <span className="ml-auto flex flex-col items-end text-right">
+                        <span className="ind-mono">Brutto {money.format(gross)} kr</span>
+                        <span className="ind-mono text-xs text-muted-foreground">
+                          {fixed ? `varav fast månadslön ${money.format(fixed)} kr · ` : ""}Kostnad {money.format(totalCost)} kr
+                        </span>
+                      </span>
+                    );
+                  })()}
                 </IndustryRow>
                 {open && fixedSalary.has(employeeId) && (
                   <div className="mb-3 space-y-1">
