@@ -393,6 +393,13 @@
       "when": 1795099372297,
       "tag": "0055_tolerance_minutes_exact_length",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1795100248962,
+      "tag": "0056_break_exemptions",
+      "breakpoints": true
     }
   ]
 }

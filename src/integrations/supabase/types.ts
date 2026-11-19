@@ -1485,6 +1485,47 @@ export type Database = {
         }
         Relationships: []
       }
+      break_exemptions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          decided_by: string | null
+          employee_id: string
+          id: string
+          reason: string
+          valid_from: string
+          valid_to: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          decided_by?: string | null
+          employee_id: string
+          id?: string
+          reason: string
+          valid_from: string
+          valid_to: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          decided_by?: string | null
+          employee_id?: string
+          id?: string
+          reason?: string
+          valid_from?: string
+          valid_to?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "break_exemptions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bug_report_states: {
         Row: {
           created_at: string
