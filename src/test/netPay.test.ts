@@ -13,4 +13,12 @@ describe("utbetalas till kontot", () => {
     expect(netPay(30000, null, 1)).toBeNull();
     expect(netPay(30000, "1", 1)).toBeNull();
   });
+  it("sidoinkomst (Fortnox EXT) ger 30 % skatt oavsett tabell", () => {
+    expect(preliminaryTax(10000, null, null, "EXT")).toBe(3000);
+    expect(netPay(10000, null, null, null, "EXT")).toBe(7000);
+  });
+  it("ingen skatt (EJ) ger hela bruttot, studerande räknas inte här", () => {
+    expect(netPay(10000, null, null, null, "EJ")).toBe(10000);
+    expect(netPay(10000, 33, 1, null, "STU")).toBeNull();
+  });
 });

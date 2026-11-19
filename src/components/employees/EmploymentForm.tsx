@@ -43,6 +43,7 @@ export function EmploymentForm({ employeeId, employment, onDone }: Props) {
     tax_table: employment?.tax_table != null ? String(employment.tax_table) : "",
     tax_column: employment?.tax_column != null ? String(employment.tax_column) : "",
     tax_adjustment: employment?.tax_adjustment != null ? String(employment.tax_adjustment) : "",
+    tax_type: employment?.tax_type ?? "",
     vacation_rule: employment?.vacation_rule ?? "sammalon",
     vacation_days: String(employment?.vacation_days ?? 25),
     vacation_supplement_pct: String(employment?.vacation_supplement_pct ?? 0.43),
@@ -89,6 +90,7 @@ export function EmploymentForm({ employeeId, employment, onDone }: Props) {
         tax_table: num(f.tax_table),
         tax_column: num(f.tax_column),
         tax_adjustment: num(f.tax_adjustment),
+        tax_type: f.tax_type || null,
         vacation_rule: f.vacation_rule,
         vacation_days: Number(f.vacation_days || 25),
         vacation_supplement_pct: Number(f.vacation_supplement_pct || 0.43),
@@ -211,6 +213,20 @@ export function EmploymentForm({ employeeId, employment, onDone }: Props) {
         <div>
           <Label>Kostnadsställe</Label>
           <Input value={f.cost_center} onChange={(e) => set("cost_center", e.target.value)} />
+        </div>
+        <div>
+          <Label>Skattetyp</Label>
+          <Select value={f.tax_type || "none"} onValueChange={(v) => set("tax_type", v === "none" ? "" : v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Ej angiven</SelectItem>
+              <SelectItem value="HUV">Huvudinkomst (tabell)</SelectItem>
+              <SelectItem value="EXT">Sidoinkomst (30 %)</SelectItem>
+              <SelectItem value="STU">Studerande</SelectItem>
+              <SelectItem value="TMP">Kortvarigt anställd</SelectItem>
+              <SelectItem value="EJ">Ingen skatt</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label>Skattetabell</Label>

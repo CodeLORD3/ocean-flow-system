@@ -145,3 +145,6 @@ verify_jwt = false
 
 [functions.shopify-health]
 verify_jwt = false
+
+[functions.fortnox-employee-gaps]
+verify_jwt = false

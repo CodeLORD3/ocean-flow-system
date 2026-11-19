@@ -142,19 +142,19 @@ export default function PayrollReview() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employments")
-        .select("employee_id, employment_number, pay_type, is_active, hourly_rate, monthly_salary, tax_table, tax_column, tax_adjustment")
+        .select("employee_id, employment_number, pay_type, is_active, hourly_rate, monthly_salary, tax_table, tax_column, tax_adjustment, tax_type")
         .eq("legal_entity_id", activeEntity);
       if (error) throw error;
       return data ?? [];
     },
   });
   const employmentOf = useMemo(() => {
-    const map = new Map<string, { number: string; payType: string; hourlyBase: number; taxTable: string | null; taxColumn: number | null; taxAdjustment: number | null }>();
+    const map = new Map<string, { number: string; payType: string; hourlyBase: number; taxTable: string | null; taxColumn: number | null; taxAdjustment: number | null; taxType: string | null }>();
     for (const r of employmentsQuery.data ?? []) {
       if (map.has(r.employee_id) && !r.is_active) continue;
       // Samma timbas som löneberäkningen: timlön, eller månadslön / 165.
       const hourlyBase = r.pay_type === "monthly" ? Number(r.monthly_salary ?? 0) / 165 : Number(r.hourly_rate ?? 0);
-      map.set(r.employee_id, { number: r.employment_number ?? "", payType: r.pay_type ?? "", hourlyBase, taxTable: r.tax_table != null ? String(r.tax_table) : null, taxColumn: r.tax_column != null ? Number(r.tax_column) : null, taxAdjustment: r.tax_adjustment != null ? Number(r.tax_adjustment) : null });
+      map.set(r.employee_id, { number: r.employment_number ?? "", payType: r.pay_type ?? "", hourlyBase, taxTable: r.tax_table != null ? String(r.tax_table) : null, taxColumn: r.tax_column != null ? Number(r.tax_column) : null, taxAdjustment: r.tax_adjustment != null ? Number(r.tax_adjustment) : null, taxType: r.tax_type ?? null });
     }
     return map;
   }, [employmentsQuery.data]);
@@ -162,7 +162,7 @@ export default function PayrollReview() {
   const payOf = (employeeId: string, employeeLines: PayrollLine[]) => {
     const emp = employmentOf.get(employeeId);
     const gross = (fixedSalary.get(employeeId) ?? 0) + grossPay(employeeLines, emp?.hourlyBase ?? 0);
-    return { gross, net: netPay(gross, emp?.taxTable, emp?.taxColumn, emp?.taxAdjustment) };
+    return { gross, net: netPay(gross, emp?.taxTable, emp?.taxColumn, emp?.taxAdjustment, emp?.taxType) };
   };
   // Stämplad tid för månadsavlönade i löneperioden (16:e–15:e) — för att se avvikelser.
   const periodRange = useMemo(() => {

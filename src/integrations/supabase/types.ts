@@ -6188,6 +6188,7 @@ export type Database = {
           tax_adjustment: number | null
           tax_column: number | null
           tax_table: number | null
+          tax_type: string | null
           updated_at: string
           vacation_days: number
           vacation_rule: string
@@ -6227,6 +6228,7 @@ export type Database = {
           tax_adjustment?: number | null
           tax_column?: number | null
           tax_table?: number | null
+          tax_type?: string | null
           updated_at?: string
           vacation_days?: number
           vacation_rule?: string
@@ -6266,6 +6268,7 @@ export type Database = {
           tax_adjustment?: number | null
           tax_column?: number | null
           tax_table?: number | null
+          tax_type?: string | null
           updated_at?: string
           vacation_days?: number
           vacation_rule?: string

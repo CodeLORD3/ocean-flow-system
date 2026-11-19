@@ -58,6 +58,7 @@ export interface Employment {
   tax_table: number | null;
   tax_column: number | null;
   tax_adjustment: number | null;
+  tax_type: string | null;
   vacation_rule: string;
   vacation_days: number;
   vacation_supplement_pct: number;
