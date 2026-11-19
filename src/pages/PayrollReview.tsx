@@ -136,20 +136,33 @@ export default function PayrollReview() {
     const start = new Date(Date.UTC(y, m - 2, 16)).toISOString().slice(0, 10);
     return { from: start, to: `${period}-15` };
   }, [period]);
-  const fixedIds = useMemo(() => [...fixedSalary.keys()], [fixedSalary]);
+  // In- och utstämpling visas för alla i perioden (månads- och timavlönade).
+  const clockIds = useMemo(
+    () => [...new Set([...fixedSalary.keys(), ...byEmployee.map(([id]) => id)])].sort(),
+    [fixedSalary, byEmployee],
+  );
   const clockedQuery = useQuery({
-    queryKey: ["payroll-fixed-clocked", fixedIds.join(","), periodRange.from, periodRange.to],
-    enabled: fixedIds.length > 0,
+    queryKey: ["payroll-clocked", clockIds.join(","), periodRange.from, periodRange.to],
+    enabled: clockIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("attestations")
-        .select("employee_id, date, store_id, approved_minutes, computed")
-        .in("employee_id", fixedIds)
-        .gte("date", periodRange.from)
-        .lte("date", periodRange.to)
-        .order("date");
-      if (error) throw error;
-      return data ?? [];
+      type Row = { employee_id: string; date: string; store_id: string | null; approved_minutes: number | null; computed: unknown };
+      const all: Row[] = [];
+      const pageSize = 1000;
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase
+          .from("attestations")
+          .select("employee_id, date, store_id, approved_minutes, computed")
+          .in("employee_id", clockIds)
+          .gte("date", periodRange.from)
+          .lte("date", periodRange.to)
+          .order("date")
+          .order("id")
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        all.push(...((data ?? []) as Row[]));
+        if (!data || data.length < pageSize) break;
+      }
+      return all;
     },
   });
   const clockedByEmployee = useMemo(() => {
@@ -164,6 +177,19 @@ export default function PayrollReview() {
     }
     return map;
   }, [clockedQuery.data]);
+  // Stämplingar per person och dag, för att visa in/ut på timavlönades rader.
+  const clockedByDay = useMemo(() => {
+    const map = new Map<string, { minutes: number; first_in?: string | null; last_out?: string | null; store_id: string | null }[]>();
+    for (const [employeeId, days] of clockedByEmployee) {
+      for (const d of days) {
+        const key = `${employeeId}|${d.date}`;
+        const list = map.get(key) ?? [];
+        list.push(d);
+        map.set(key, list);
+      }
+    }
+    return map;
+  }, [clockedByEmployee]);
   const clockTime = (iso?: string | null) =>
     iso ? new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Stockholm" }) : "–";
   // Månadsavlönade utan avvikelser har inga rader men ska ändå synas i listan.
@@ -417,13 +443,27 @@ export default function PayrollReview() {
                             : line.line_type.startsWith("OB")
                               ? (line.note?.match(/OB \d+ %/)?.[0] ?? "OB-tillägg")
                               : line.line_type;
+                        const dayPunches = line.line_type === "ARB" || line.line_type === "TID"
+                          ? (clockedByDay.get(`${employeeId}|${line.line_date}`) ?? []).filter(
+                              (d) => d.first_in && (!line.store_id || !d.store_id || d.store_id === line.store_id),
+                            )
+                          : [];
                         const amount = line.preliminary_cost ?? (line.unit_amount !== null ? Number(line.unit_amount) * Number(line.quantity ?? 0) : null);
                         return (
                           <li key={line.id} className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 px-3 py-1.5 text-sm">
                             <span className="ind-mono w-24 shrink-0">
                               {new Date(line.line_date + "T12:00:00").toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })}
                             </span>
-                            <span className="min-w-[7rem] flex-1">{label}</span>
+                            <span className="min-w-[7rem] flex-1">
+                              {label}
+                              {dayPunches.length > 0 && (
+                                <span className="ind-mono ml-2 text-muted-foreground">
+                                  {dayPunches
+                                    .map((d) => `In ${clockTime(d.first_in)} · Ut ${d.last_out ? clockTime(d.last_out) : "ej utstämplad"}`)
+                                    .join(", ")}
+                                </span>
+                              )}
+                            </span>
                             <span className="ind-mono w-16 text-right">{dec.format(Number(line.quantity ?? 0))} h</span>
                             {line.extent_pct !== null && <span className="ind-mono text-muted-foreground">{line.extent_pct} %</span>}
                             <span className="ind-mono w-24 text-right">{amount !== null ? `${money.format(Number(amount))} kr` : "–"}</span>
