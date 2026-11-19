@@ -45,7 +45,7 @@ import { PayrollDayEditDialog } from "@/components/payroll/PayrollDayEditDialog"
 import { DeviationParts, useDecideAttestationPart } from "@/components/payroll/DeviationParts";
 import { asStampedDecision, partsOf, pendingParts, type PartDecisionRow, type PartsAttestation } from "@/lib/attestParts";
 import { netPay } from "@/lib/netPay";
-import { clockedHours, grossPay, obHours, workedHours } from "@/lib/payrollHours";
+import { clockedHours, grossPay, obHours, unpaidAbsenceDeduction, workedHours } from "@/lib/payrollHours";
 import { fixedSalaryForPeriod, hourlyBaseOn, type DatedWage } from "../../supabase/functions/_shared/employmentWages";
 
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -98,7 +98,8 @@ export default function PayrollReview() {
       if (line.line_type === "ARB" || line.line_type === "TID") workHours += qty;
       else if (isObCode(line.line_type)) obPerLevel.set(line.line_type, (obPerLevel.get(line.line_type) ?? 0) + qty);
       else if (line.line_type === "MER" || line.line_type.startsWith("OT")) extraHours += qty;
-      else if (isAbsence(line.line_type)) absenceDays += qty;
+      // En frånvarorad per dag; obetald frånvaro i timmar räknas också som en dag.
+      else if (isAbsence(line.line_type)) absenceDays += Number(line.unit_amount ?? 0) < 0 ? 1 : qty;
       else if (isAmountLine(line.line_type)) benefitAmount += Number(line.unit_amount ?? 0) * qty;
       cost += Number(line.preliminary_cost ?? 0);
     });
@@ -359,7 +360,8 @@ export default function PayrollReview() {
     const rate = Number(employeeLines.find((l) => l.contribution_rate != null)?.contribution_rate ?? 31.42) / 100;
     const wageCost = employeeLines.filter((l) => l.source_type === "attestation").reduce((t, l) => t + Number(l.preliminary_cost ?? 0), 0);
     const otherCost = employeeLines.filter((l) => l.source_type !== "attestation").reduce((t, l) => t + Number(l.preliminary_cost ?? 0), 0);
-    const payWithVacation = wageCost / (1 + rate) + (fixedSalary.get(employeeId) ?? 0) * 1.008;
+    const fixedAfterUnpaid = Math.max(0, (fixedSalary.get(employeeId) ?? 0) + unpaidAbsenceDeduction(employeeLines));
+    const payWithVacation = wageCost / (1 + rate) + fixedAfterUnpaid * 1.008;
     const contribution = payWithVacation * rate;
     return { cost: payWithVacation + contribution + otherCost, contribution, vacation: payWithVacation - payWithVacation / 1.008, rate };
   };
@@ -458,8 +460,9 @@ export default function PayrollReview() {
       };
       for (const pct of pcts) row[`OB ${pct} %`] = sum((l) => isObCode(l.line_type) && obPct(l) === pct);
       row.Mertid = sum((l) => l.line_type === "MER");
-      row.Frånvarodagar = sum((l) => isAbsence(l.line_type));
+      row.Frånvarodagar = employeeLines.filter((l) => isAbsence(l.line_type)).reduce((t, l) => t + (Number(l.unit_amount ?? 0) < 0 ? 1 : Number(l.quantity ?? 0)), 0);
       row["Fast månadslön (kr)"] = fixedSalary.get(employeeId) ?? 0;
+      row["Avdrag obetald frånvaro (kr)"] = Math.round(unpaidAbsenceDeduction(employeeLines));
       const { gross, net } = payOf(employeeId, employeeLines);
       row["Brutto (kr)"] = Math.round(gross);
       row["Kostnad för bolag (kr)"] = Math.round(costOfPerson(employeeId, employeeLines).cost);
@@ -648,6 +651,11 @@ export default function PayrollReview() {
                         <span className="ind-mono text-right">{net !== null ? `ca ${money.format(net)} kr` : "Skattetabell saknas"}</span>
                         {fixed ? (
                           <span className="ind-mono col-span-2 text-right text-xs text-muted-foreground">varav fast månadslön {money.format(fixed)} kr</span>
+                        ) : null}
+                        {unpaidAbsenceDeduction(employeeLines) < 0 ? (
+                          <span className="ind-mono col-span-2 text-right text-xs text-muted-foreground">
+                            avdrag obetald frånvaro {money.format(unpaidAbsenceDeduction(employeeLines))} kr
+                          </span>
                         ) : null}
                       </span>
                     );

@@ -48,3 +48,19 @@ describe("bruttolön per person", () => {
     expect(grossPay(lines, 190)).toBe(2470);
   });
 });
+
+describe("obetald frånvaro på månadslön", () => {
+  it("Vilma: tre dagar à 10 h dras av med månadslön 25 000 / 165 per timme", async () => {
+    const { unpaidAbsenceDeduction, grossPay } = await import("@/lib/payrollHours");
+    const perHour = -Math.round((25000 / 165) * 100) / 100; // -151,52
+    const lines = ["2026-10-24", "2026-10-29", "2026-10-30"].map((d) => ({
+      line_type: "TJL", quantity: 10, unit_amount: perHour, line_date: d, note: "Obetald frånvaro 10 h – avdrag på månadslönen",
+    }));
+    expect(unpaidAbsenceDeduction(lines)).toBe(-4545.6);
+    expect(grossPay(lines, 180)).toBe(-4546);
+  });
+  it("annan frånvaro utan timbelopp ger inget avdrag", async () => {
+    const { unpaidAbsenceDeduction } = await import("@/lib/payrollHours");
+    expect(unpaidAbsenceDeduction([{ line_type: "TJL", quantity: 1 }, { line_type: "SEM", quantity: 1 }])).toBe(0);
+  });
+});

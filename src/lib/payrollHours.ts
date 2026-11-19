@@ -33,9 +33,25 @@ export function clockedHours(days: { date: string; minutes: number; first_in?: s
  * Bruttolön för timmarna i underlaget, före skatt och utan arbetsgivaravgift/semesteravsättning.
  * ARB = timmar × timlön. OB och mertid = bara tilläggsdelen (procent i radens notering).
  * TID (månadslön) och frånvaro ger inga kronor här — månadslönen läggs till separat.
+ * Undantag: obetald frånvaro (TJL med negativt timbelopp) dras av.
  */
+/**
+ * Avdrag för obetald frånvaro på månadslönen: TJL-rader med timmar och negativt
+ * timbelopp (unit_amount). Fortnox Lön räknar det slutliga avdraget.
+ */
+export function unpaidAbsenceDeduction(
+  lines: { line_type: string; quantity: number | null; unit_amount?: number | null }[],
+): number {
+  let sum = 0;
+  for (const l of lines) {
+    const unit = Number(l.unit_amount ?? 0);
+    if (l.line_type === "TJL" && unit < 0) sum += Number(l.quantity ?? 0) * unit;
+  }
+  return Math.round(sum * 100) / 100;
+}
+
 export function grossPay(
-  lines: { line_type: string; quantity: number | null; note?: string | null; line_date?: string }[],
+  lines: { line_type: string; quantity: number | null; note?: string | null; line_date?: string; unit_amount?: number | null }[],
   hourlyBase: number | ((date: string) => number),
 ): number {
   const baseOf = (l: { line_date?: string }) =>
@@ -49,5 +65,5 @@ export function grossPay(
       sum += qty * baseOf(l) * (pct / 100);
     }
   }
-  return Math.round(sum);
+  return Math.round(sum + unpaidAbsenceDeduction(lines));
 }

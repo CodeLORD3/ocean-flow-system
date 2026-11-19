@@ -339,6 +339,27 @@ Deno.serve(async (req) => {
     .gte("end_date", from)
     .in("employee_id", employeeIds);
   const { data: absenceTypes = [] } = await db.from("absence_types").select("id, code, is_sick");
+  // Timmar per frånvarodag (absence_days.hours) — sidvis, databasen ger högst 1000 rader per anrop.
+  const absenceHours = new Map<string, number>();
+  const absenceIds = (absences as { id: string }[]).map((a) => a.id);
+  for (let i = 0; i < absenceIds.length; i += 200) {
+    const ids = absenceIds.slice(i, i + 200);
+    for (let offset = 0; ; offset += 1000) {
+      const { data: dayRows, error: dayErr } = await db
+        .from("absence_days")
+        .select("request_id, date, hours")
+        .in("request_id", ids)
+        .gte("date", from)
+        .lte("date", to)
+        .order("date")
+        .range(offset, offset + 999);
+      if (dayErr) return json({ error: dayErr.message }, 500);
+      for (const d of (dayRows ?? []) as { request_id: string; date: string; hours: number | null }[]) {
+        if (d.hours != null && Number(d.hours) > 0) absenceHours.set(`${d.request_id}|${d.date}`, Number(d.hours));
+      }
+      if ((dayRows ?? []).length < 1000) break;
+    }
+  }
   // Frånvarotypernas koder (semester, sjuk …) översätts till lönearterna i Fortnox (SEM, SJK …).
   const ABSENCE_TO_WAGE: Record<string, string> = {
     semester: "SEM", sjuk: "SJK", vab: "VAB", komp: "KOM", tjanstledig: "TJL", foraldraledig: "FPE",
@@ -509,6 +530,21 @@ Deno.serve(async (req) => {
     const start = req.start_date > from ? req.start_date : from;
     const end = req.end_date < to ? req.end_date : to;
     for (const day of svenskaDagar(start, end)) {
+      // Obetald frånvaro (TJL) med angivna timmar: raden räknas i timmar och dras av på
+      // månadslönen med samma timbas som övriga kronor (unit_amount negativt). Fortnox Lön
+      // räknar det slutliga avdraget.
+      const hours = code === "TJL" ? absenceHours.get(`${req.id}|${day}`) : undefined;
+      const monthlyDay = wageOn(emp, wagesByEmployment.get(emp.id), day).pay_type === "monthly";
+      if (hours && monthlyDay) {
+        push({
+          store_id: req.store_id ?? emp.store_id, employee_id: req.employee_id, employment_id: emp.id,
+          line_type: code, line_date: day, quantity: round2(hours), extent_pct: Number(req.extent_pct ?? 100),
+          unit_amount: -round2(hourlyBase(emp, day)),
+          cost_center: emp.cost_center ?? null, source_ref: req.id, source_type: "absence_request",
+          note: `Obetald frånvaro ${round2(hours)} h – avdrag på månadslönen`,
+        });
+        continue;
+      }
       push({
         store_id: req.store_id ?? emp.store_id, employee_id: req.employee_id, employment_id: emp.id,
         line_type: code, line_date: day, quantity: 1, extent_pct: Number(req.extent_pct ?? 100),
@@ -622,7 +658,11 @@ Deno.serve(async (req) => {
   for (const [employeeId, emp] of employmentByEmployee) {
     const policy = policyFor(emp.agreement_area);
     const fixed = fixedSalaryForPeriod(emp, wagesByEmployment.get(emp.id), from, to) * (1 + Number(policy?.vacation_reserve_pct ?? 0) / 100);
-    const gross = (wageGross.get(employeeId) ?? 0) + fixed;
+    // Avdrag för obetald frånvaro minskar månadslönen (och därmed avgiftsunderlaget).
+    const unpaid = lines
+      .filter((l) => l.employee_id === employeeId && l.line_type === "TJL" && Number(l.unit_amount ?? 0) < 0)
+      .reduce((t, l) => t + Number(l.quantity ?? 0) * Number(l.unit_amount ?? 0), 0);
+    const gross = (wageGross.get(employeeId) ?? 0) + Math.max(0, fixed + unpaid * (1 + Number(policy?.vacation_reserve_pct ?? 0) / 100));
     const year = birthYear.get(employeeId) ?? null;
     if (year === null && gross > 0) issues.push({ kind: "missing_birth_date", detail: "Födelsedatum saknas – 31,42 % används", employee_id: employeeId });
     rateByEmployee.set(employeeId, employerContribution(gross, year, contributionRules as ContributionRule[], { legalEntityId, from, to }).rate);
