@@ -40,7 +40,7 @@ export function useDecideAttestationPart() {
   });
 }
 
-export function DeviationParts({ attestation, readOnly = false }: { attestation: PartsAttestation; readOnly?: boolean }) {
+export function DeviationParts({ attestation, readOnly = false, onEdit }: { attestation: PartsAttestation; readOnly?: boolean; onEdit?: () => void }) {
   const decide = useDecideAttestationPart();
   const parts = partsOf(attestation);
   if (parts.length === 0) return null;
@@ -95,6 +95,11 @@ export function DeviationParts({ attestation, readOnly = false }: { attestation:
                   </IndustryButton>
                 ))}
               </span>
+            )}
+            {onEdit && !readOnly && (
+              <IndustryButton variant="ghost" className="h-11" onClick={onEdit}>
+                Ändra
+              </IndustryButton>
             )}
           </li>
         );

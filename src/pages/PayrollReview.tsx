@@ -637,7 +637,7 @@ export default function PayrollReview() {
                             </span>
                             <span className="text-muted-foreground">{storeName.get(a.store_id ?? "") ?? ""}</span>
                           </div>
-                          <DeviationParts attestation={a} />
+                          <DeviationParts attestation={a} onEdit={() => setEditDay({ employeeId, date: a.date })} />
                         </li>
                       ))}
                     </ul>
