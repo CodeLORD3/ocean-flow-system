@@ -213,6 +213,47 @@ export default function PayrollReview() {
     }
     return map;
   }, [clockedByEmployee]);
+  // Schemalagda (publicerade) pass i perioden, för att jämföra mot faktisk stämpling.
+  const shiftsQuery = useQuery({
+    queryKey: ["payroll-shifts", clockIds.join(","), periodRange.from, periodRange.to],
+    enabled: clockIds.length > 0,
+    queryFn: async () => {
+      type Row = { employee_id: string; date: string; store_id: string | null; start_time: string; end_time: string };
+      const all: Row[] = [];
+      const pageSize = 1000;
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase
+          .from("shifts")
+          .select("employee_id, date, store_id, start_time, end_time")
+          .in("employee_id", clockIds)
+          .eq("status", "published")
+          .gte("date", periodRange.from)
+          .lte("date", periodRange.to)
+          .order("date")
+          .order("start_time")
+          .order("id")
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        all.push(...((data ?? []) as Row[]));
+        if (!data || data.length < pageSize) break;
+      }
+      return all;
+    },
+  });
+  const shiftsByDay = useMemo(() => {
+    const map = new Map<string, { start: string; end: string; store_id: string | null }[]>();
+    for (const r of shiftsQuery.data ?? []) {
+      const key = `${r.employee_id}|${r.date}`;
+      const list = map.get(key) ?? [];
+      list.push({ start: r.start_time.slice(0, 5), end: r.end_time.slice(0, 5), store_id: r.store_id });
+      map.set(key, list);
+    }
+    return map;
+  }, [shiftsQuery.data]);
+  const scheduleText = (employeeId: string, date: string) => {
+    const list = shiftsByDay.get(`${employeeId}|${date}`) ?? [];
+    return list.length ? list.map((x) => `${x.start}–${x.end}`).join(", ") : "ej schemalagd";
+  };
   const clockTime = (iso?: string | null) =>
     iso ? new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Stockholm" }) : "–";
   // Månadsavlönade utan avvikelser har inga rader men ska ändå synas i listan.
@@ -475,7 +516,7 @@ export default function PayrollReview() {
                 </IndustryRow>
                 {open && fixedSalary.has(employeeId) && (
                   <div className="mb-3 space-y-1">
-                    <SectionLabel>Instämplad tid {periodRange.from} – {periodRange.to}</SectionLabel>
+                    <SectionLabel>Schema och stämpling {periodRange.from} – {periodRange.to}</SectionLabel>
                     {(clockedByEmployee.get(employeeId) ?? []).length === 0 ? (
                       <p className="ind-muted text-sm">Inga stämplingar i perioden.</p>
                     ) : (
@@ -485,13 +526,16 @@ export default function PayrollReview() {
                             <span className="ind-mono w-24 shrink-0">
                               {new Date(`${d.date}T12:00:00`).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })}
                             </span>
-                            <span className="ind-mono w-28">
-                              {clockTime(d.first_in)}–{d.last_out ? clockTime(d.last_out) : "ej utstämplad"}
+                            <span className="ind-mono min-w-[16rem] flex-1 text-muted-foreground">
+                              <span className="block">Schema {scheduleText(employeeId, d.date)}</span>
+                              <span className="block text-foreground">
+                                In {clockTime(d.first_in)} · Ut {d.last_out ? clockTime(d.last_out) : "ej utstämplad"}
+                              </span>
                             </span>
                             <span className="ind-mono w-16 text-right">
                               {dec.format(d.minutes / 60)} h{d.minutes > 11 * 60 ? " ⚠" : ""}
                             </span>
-                            <span className="flex-1 text-muted-foreground">{storeName.get(d.store_id ?? "") ?? ""}</span>
+                            <span className="w-40 text-muted-foreground">{storeName.get(d.store_id ?? "") ?? ""}</span>
                             <IndustryButton variant="ghost" className="h-9" onClick={() => setEditDay({ employeeId, date: d.date })}>Ändra</IndustryButton>
                           </li>
                         ))}
@@ -511,7 +555,8 @@ export default function PayrollReview() {
                             : line.line_type.startsWith("OB")
                               ? (line.note?.match(/OB \d+ %/)?.[0] ?? "OB-tillägg")
                               : line.line_type;
-                        const dayPunches = line.line_type === "ARB" || line.line_type === "TID"
+                        const isTimeLine = line.line_type === "ARB" || line.line_type === "TID";
+                        const dayPunches = isTimeLine
                           ? (clockedByDay.get(`${employeeId}|${line.line_date}`) ?? []).filter(
                               (d) => d.first_in && (!line.store_id || !d.store_id || d.store_id === line.store_id),
                             )
@@ -524,11 +569,16 @@ export default function PayrollReview() {
                             </span>
                             <span className="min-w-[7rem] flex-1">
                               {label}
-                              {dayPunches.length > 0 && (
-                                <span className="ind-mono ml-2 text-muted-foreground">
-                                  {dayPunches
-                                    .map((d) => `In ${clockTime(d.first_in)} · Ut ${d.last_out ? clockTime(d.last_out) : "ej utstämplad"}`)
-                                    .join(", ")}
+                              {isTimeLine && (
+                                <span className="ind-mono block text-muted-foreground">
+                                  <span className="block">Schema {scheduleText(employeeId, line.line_date)}</span>
+                                  <span className="block text-foreground">
+                                    {dayPunches.length > 0
+                                      ? dayPunches
+                                          .map((d) => `In ${clockTime(d.first_in)} · Ut ${d.last_out ? clockTime(d.last_out) : "ej utstämplad"}`)
+                                          .join(", ")
+                                      : "Ingen stämpling"}
+                                  </span>
                                 </span>
                               )}
                             </span>
