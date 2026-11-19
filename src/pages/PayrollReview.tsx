@@ -7,9 +7,10 @@
  */
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, ChevronDown, ChevronRight, Download, Loader2, RefreshCw, Send, ShieldAlert } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronRight, Download, FileSpreadsheet, Loader2, RefreshCw, Send, ShieldAlert } from "lucide-react";
 import {
   DecisionBar,
   DecisionMetric,
@@ -41,6 +42,7 @@ import {
   type PayrollLine,
 } from "@/hooks/usePayroll";
 import { PayrollDayEditDialog } from "@/components/payroll/PayrollDayEditDialog";
+import { obHours, workedHours } from "@/lib/payrollHours";
 
 const dec = new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const money = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
@@ -48,6 +50,7 @@ const money = new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 });
 const isObCode = (type: string) => /^OB\d$/.test(type);
 const isAbsence = (type: string) => ["SJK", "SEM", "VAB", "KOM", "TJL", "FPE", "PEM", "ASK", "HAV", "NAR", "UTB"].includes(type);
 const isAmountLine = (type: string) => type.startsWith("FORMAN") || type.startsWith("AVDRAG") || type.startsWith("ERSATTNING");
+const obPct = (line: PayrollLine) => Number(line.note?.match(/OB (\d+) %/)?.[1] ?? 0);
 
 export default function PayrollReview() {
   const { data: entities = [] } = useLegalEntities();
@@ -130,6 +133,26 @@ export default function PayrollReview() {
     [fixedQuery.data],
   );
   const fixedTotal = [...fixedSalary.values()].reduce((s, v) => s + v, 0);
+  const employmentsQuery = useQuery({
+    queryKey: ["payroll-review-employments", activeEntity],
+    enabled: !!activeEntity,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employments")
+        .select("employee_id, employment_number, pay_type, is_active")
+        .eq("legal_entity_id", activeEntity);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const employmentOf = useMemo(() => {
+    const map = new Map<string, { number: string; payType: string }>();
+    for (const r of employmentsQuery.data ?? []) {
+      if (map.has(r.employee_id) && !r.is_active) continue;
+      map.set(r.employee_id, { number: r.employment_number ?? "", payType: r.pay_type ?? "" });
+    }
+    return map;
+  }, [employmentsQuery.data]);
   // Stämplad tid för månadsavlönade i löneperioden (16:e–15:e) — för att se avvikelser.
   const periodRange = useMemo(() => {
     const [y, m] = period.split("-").map(Number);
@@ -262,6 +285,49 @@ export default function PayrollReview() {
     }
   };
 
+  // Excel för manuell inmatning i Fortnox Lön — samma rader som visas här, en rad per person.
+  const downloadExcel = () => {
+    if (people.length === 0) return;
+    const pcts = [...new Set(rows.filter((l) => isObCode(l.line_type)).map(obPct).filter((p) => p > 0))].sort((a, b) => a - b);
+    const data = people.map(([employeeId, employeeLines]) => {
+      const sum = (pick: (l: PayrollLine) => boolean) =>
+        Math.round(employeeLines.filter(pick).reduce((t, l) => t + Number(l.quantity ?? 0), 0) * 100) / 100;
+      const clocked = clockedByEmployee.get(employeeId) ?? [];
+      const useClocked = fixedSalary.has(employeeId) && employeeLines.length === 0;
+      const worked = useClocked
+        ? Math.round((clocked.reduce((t, d) => t + d.minutes, 0) / 60) * 100) / 100
+        : Math.round(workedHours(employeeLines) * 100) / 100;
+      const row: Record<string, string | number> = {
+        Anställningsnummer: employmentOf.get(employeeId)?.number ?? "",
+        Namn: employeeName.get(employeeId) ?? employeeId,
+        Avlöningsform: fixedSalary.has(employeeId) ? "Månadslön" : "Timlön",
+        "Arbetade timmar": worked,
+      };
+      for (const pct of pcts) row[`OB ${pct} %`] = sum((l) => isObCode(l.line_type) && obPct(l) === pct);
+      row.Mertid = sum((l) => l.line_type === "MER");
+      row.Frånvarodagar = sum((l) => isAbsence(l.line_type));
+      row["Fast månadslön (kr)"] = fixedSalary.get(employeeId) ?? 0;
+      row["Preliminär kostnad (kr)"] = Math.round(employeeLines.reduce((t, l) => t + Number(l.preliminary_cost ?? 0), 0));
+      return row;
+    });
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(book, XLSX.utils.json_to_sheet(data), "Löneunderlag");
+    const entityName = swedishEntities.find((e) => e.legal_entity_id === activeEntity)?.legal_name ?? activeEntity;
+    XLSX.utils.book_append_sheet(
+      book,
+      XLSX.utils.aoa_to_sheet([
+        ["Bolag", entityName],
+        ["Löneperiod", `${periodRange.from} – ${periodRange.to}`],
+        ["Status", periodRow ? PERIOD_STATUS_LABEL[periodRow.status] : "Ej beräknad"],
+        ["Antal personer", people.length],
+        ["Skapad", new Date().toLocaleString("sv-SE", { timeZone: "Europe/Stockholm" })],
+      ]),
+      "Period",
+    );
+    XLSX.writeFile(book, `loneunderlag-${activeEntity}-${periodRange.from}_${periodRange.to}.xlsx`);
+    toast.success("Excel-filen är nedladdad");
+  };
+
   return (
     <IndustryFrame className="p-4 sm:p-6">
       <DecisionBar>
@@ -284,6 +350,9 @@ export default function PayrollReview() {
           </IndustryButton>
           <IndustryButton variant="secondary" size="touch" onClick={() => void downloadPaxml()} disabled={!canExport || exportPayroll.isPending}>
             <Download className="h-4 w-4" /> PAXml 2.2
+          </IndustryButton>
+          <IndustryButton variant="secondary" size="touch" onClick={downloadExcel} disabled={people.length === 0}>
+            <FileSpreadsheet className="h-4 w-4" /> Excel
           </IndustryButton>
         </div>
       </DecisionBar>
@@ -370,9 +439,8 @@ export default function PayrollReview() {
         ) : (
           people.map(([employeeId, employeeLines]) => {
             const open = openEmployee === employeeId;
-            const hours = employeeLines
-              .filter((l) => l.line_type === "ARB" || l.line_type === "TID" || isObCode(l.line_type) || l.line_type === "MER" || l.line_type.startsWith("OT"))
-              .reduce((sum, l) => sum + Number(l.quantity ?? 0), 0);
+            const hours = workedHours(employeeLines);
+            const obTotal = obHours(employeeLines);
             const cost = employeeLines.reduce((sum, l) => sum + Number(l.preliminary_cost ?? 0), 0);
             return (
               <div key={employeeId}>
@@ -388,7 +456,8 @@ export default function PayrollReview() {
                     const n = useClocked ? clocked.length : employeeLines.length;
                     return (
                       <>
-                        <span className="ind-mono">{dec.format(h)} h</span>
+                        <span className="ind-mono">{dec.format(h)} h arbetad tid</span>
+                        {obTotal > 0 && <span className="ind-muted ind-mono text-sm">varav OB {dec.format(obTotal)} h</span>}
                         <span className="ind-muted ind-mono text-sm">{n} rader</span>
                       </>
                     );

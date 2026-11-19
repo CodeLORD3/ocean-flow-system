@@ -1,5 +1,6 @@
 import { RetailCustomerProfile } from "@/components/orders/RetailCustomerProfile";
 import React, { ComponentType, Suspense, lazy, useMemo, useRef } from "react";
+import { Navigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PageState } from "@/components/PageState";
 import { useTabs } from "@/contexts/TabsContext";
@@ -51,9 +52,7 @@ const TimeEntriesPage = lazy(() => import("@/pages/TimeEntriesPage"));
 const MyTime = lazy(() => import("@/pages/MyTime"));
 const StaffRules = lazy(() => import("@/pages/StaffRules"));
 const HRControlCenter = lazy(() => import("@/pages/HRControlCenter"));
-const PayrollExports = lazy(() => import("@/pages/PayrollExports"));
 const PayrollReview = lazy(() => import("@/pages/PayrollReview"));
-const PayrollBasisPeriod = lazy(() => import("@/pages/PayrollBasisPeriod"));
 const ClockVsPk = lazy(() => import("@/pages/ClockVsPk"));
 const FortnoxSettings = lazy(() => import("@/pages/FortnoxSettings"));
 
@@ -187,9 +186,10 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/my-time": { component: <MyTime /> },
   "/staff-rules": { component: <StaffRules /> },
   "/hr-control": { component: <HRControlCenter /> },
-  "/payroll-exports": { component: <PayrollExports /> },
+  // Gamla lönesidor räknade fel — en enda sida gäller: Granska lön.
+  "/payroll-exports": { component: <Navigate to="/payroll-review" replace /> },
   "/payroll-review": { component: <PayrollReview /> },
-  "/payroll-basis": { component: <PayrollBasisPeriod /> },
+  "/payroll-basis": { component: <Navigate to="/payroll-review" replace /> },
   "/clock-vs-pk": { component: <ClockVsPk /> },
   "/on-site-now": { component: <LiveStaff /> },
   "/staff-schedule": { component: <StaffSchedule /> },

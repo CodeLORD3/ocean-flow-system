@@ -1,6 +1,6 @@
 import {
   UserCheck, IdCard, Clock, ClipboardCheck, Activity, Scale, CalendarRange,
-  CalendarCheck, Settings, FileText, Plug, LayoutGrid, BarChart3,
+  CalendarCheck, Settings, Plug, LayoutGrid, BarChart3,
 } from "lucide-react";
 import type { SiteMode } from "@/contexts/SiteContext";
 import { canAccessRoute } from "@/lib/pageAccess";
@@ -75,9 +75,7 @@ export const STAFF_MODULE_GROUPS: StaffNavGroup[] = [
     label: "Lön",
     desc: "Löneunderlag och export till lönesystem",
     items: [
-      { title: "Granska lön", url: "/payroll-review", icon: ClipboardCheck, desc: "Granska löneperiod rad för rad" },
-      { title: "Löneunderlag", url: "/payroll-exports", icon: FileText, desc: "Exportfiler och exportlogg" },
-      { title: "Löneunderlag per period", url: "/payroll-basis", icon: FileText, desc: "16:e–15:e per person, Excel för Fortnox" },
+      { title: "Granska lön", url: "/payroll-review", icon: ClipboardCheck, desc: "Löneperiod 16:e–15:e rad för rad, Fortnox, PAXml och Excel" },
     ],
   },
   {
@@ -127,7 +125,7 @@ const SECTION_LAYOUT: { key: string; label: string; icon: any; urls: string[] }[
   { key: "start", label: "Start", icon: LayoutGrid, urls: [] },
   { key: "schema", label: "Schema", icon: CalendarRange, urls: ["/staff-schedule", "/schedule-planner", "/schedule", "/my-shifts"] },
   { key: "tider", label: "Tider", icon: Clock, urls: ["/time-entries", "/my-time", "/live-staff", "/clock-stations", "/attestations", "/clock-vs-pk"] },
-  { key: "analys", label: "Analys & Lön", icon: BarChart3, urls: ["/payroll-basis", "/payroll-review", "/payroll-exports", "/staff-rules"] },
+  { key: "analys", label: "Analys & Lön", icon: BarChart3, urls: ["/payroll-review", "/staff-rules"] },
   { key: "personal", label: "Personal", icon: UserCheck, urls: ["/staff", "/employees", "/hr-control", "/profile", "/personalkollen"] },
 ];
 
