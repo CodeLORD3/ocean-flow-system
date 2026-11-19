@@ -1,5 +1,5 @@
 /**
- * Frånvaro, semester och VAB valda under "Skifttyp" i passdialogen.
+ * Frånvaro, semester, VAB och kompledighet valda under "Skifttyp" i passdialogen.
  * Inga riktiga skifttyper: allt sparas via admin_schedule_absence
  * (frånvaro via admin_register_absence, Ej tillgänglig i availability).
  */
@@ -13,12 +13,16 @@ import { Label } from "@/components/ui/label";
 import { IndustryButton, IndustryInput } from "@/components/industry";
 import { useAbsenceTypes, absenceKeys } from "@/hooks/useAbsence";
 
-export type ShiftAbsenceMode = "unavail" | "semester" | "vab";
+export type ShiftAbsenceMode = "unavail" | "semester" | "vab" | "komp";
 export const SHIFT_ABSENCE_OPTIONS: { value: `__${ShiftAbsenceMode}`; mode: ShiftAbsenceMode; label: string }[] = [
   { value: "__unavail", mode: "unavail", label: "Frånvaro / Ej tillgänglig" },
   { value: "__semester", mode: "semester", label: "Semester" },
   { value: "__vab", mode: "vab", label: "VAB" },
+  { value: "__komp", mode: "komp", label: "Kompledighet" },
 ];
+
+/** Lägen med en fast frånvarotyp (kod i absence_types). */
+const FIXED_CODES = ["semester", "vab", "komp"] as const;
 
 const UNAVAIL = "__ej_tillganglig";
 type Conflict = "keep" | "open_shift" | "cancel_shift";
@@ -57,8 +61,8 @@ export function ShiftAbsenceForm({
   useEffect(() => { setReason(UNAVAIL); }, [mode]);
 
   const byCode = (c: string) => types.find((t) => t.code.toLowerCase() === c);
-  const otherTypes = useMemo(() => types.filter((t) => !["semester", "vab"].includes(t.code.toLowerCase())), [types]);
-  const type = mode === "semester" ? byCode("semester") : mode === "vab" ? byCode("vab") : reason === UNAVAIL ? null : types.find((t) => t.id === reason);
+  const otherTypes = useMemo(() => types.filter((t) => !(FIXED_CODES as readonly string[]).includes(t.code.toLowerCase())), [types]);
+  const type = mode !== "unavail" ? byCode(mode) : reason === UNAVAIL ? null : types.find((t) => t.id === reason);
   const isUnavail = mode === "unavail" && reason === UNAVAIL;
   const isExisting = Boolean(shiftId);
   const fromDate = isExisting ? date : from;
