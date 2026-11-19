@@ -51,7 +51,10 @@ function days(from: string, to: string): string[] {
 
 /**
  * Fast månadslön för löneperioden. Utan lönebyte: hela månadslönen (som tidigare).
- * Med lönebyte i perioden: månadslönen räknas per kalenderdag den gäller (dagar / periodens dagar).
+ * Med lönebyte i perioden: en period över ett månadsskifte (16–15) delas i två halvor,
+ * före och efter månadsskiftet, och varje halva är halva månadslönen. Inom en halva
+ * räknas lönen per kalenderdag. Byte den 1:a ger alltså exakt halva månadslönen.
+ * Period utan månadsskifte: per kalenderdag i perioden.
  */
 export function fixedSalaryForPeriod(emp: WageSource, wages: DatedWage[] | undefined, from: string, to: string): number {
   const inPeriod = (wages ?? []).some((w) => w.first_day > from && w.first_day <= to);
@@ -60,10 +63,14 @@ export function fixedSalaryForPeriod(emp: WageSource, wages: DatedWage[] | undef
     return w.pay_type === "monthly" ? w.monthly_salary : 0;
   }
   const all = days(from, to);
+  const months = [...new Set(all.map((d) => d.slice(0, 7)))];
+  const halves = months.length === 2;
+  const daysInPart = (day: string) => (halves ? all.filter((d) => d.slice(0, 7) === day.slice(0, 7)).length : all.length);
+  const share = halves ? 0.5 : 1;
   let sum = 0;
   for (const day of all) {
     const w = wageOn(emp, wages, day);
-    if (w.pay_type === "monthly") sum += w.monthly_salary / all.length;
+    if (w.pay_type === "monthly") sum += (w.monthly_salary * share) / daysInPart(day);
   }
   return Math.round(sum * 100) / 100;
 }

@@ -15,8 +15,17 @@ describe("lönebyte mitt i perioden", () => {
     expect(hourlyBaseOn(vilmaEmp, vilmaWages, "2026-11-05")).toBe(180);
   });
 
-  it("ger månadslön för 16 av periodens 31 dagar", () => {
-    expect(fixedSalaryForPeriod(vilmaEmp, vilmaWages, "2026-10-16", "2026-11-15")).toBeCloseTo((25000 * 16) / 31, 2);
+  it("ger halva månadslönen, 12 500 kr, när timlönen börjar 1 november", () => {
+    expect(fixedSalaryForPeriod(vilmaEmp, vilmaWages, "2026-10-16", "2026-11-15")).toBe(12500);
+  });
+
+  it("räknar per dag inom halvan när bytet sker mitt i en halva", () => {
+    const wages = [
+      { first_day: "2025-01-01", pay_type: "monthly", monthly_salary: 31000, hourly_rate: null },
+      { first_day: "2026-11-06", pay_type: "hourly", monthly_salary: null, hourly_rate: 180 },
+    ];
+    // 16–31 okt = halva lönen (15 500), 1–5 nov = 5 av 15 dagar av andra halvan.
+    expect(fixedSalaryForPeriod(vilmaEmp, wages, "2026-10-16", "2026-11-15")).toBeCloseTo(15500 + (15500 * 5) / 15, 2);
   });
 
   it("ger ingen månadslön perioden efter bytet", () => {
