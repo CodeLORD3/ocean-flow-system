@@ -331,13 +331,15 @@ export default function PayrollReview() {
         part_decisions: (r.part_decisions ?? {}) as Record<string, PartDecisionRow>,
       };
       if (partsOf(a).length === 0) continue;
+      // Lönebyte i perioden: dagarna på fast lön visas inte — där betalas bara den fasta lönen.
+      if (wageParts.get(r.employee_id)?.some((p) => p.pay_type === "monthly" && r.date >= p.from && r.date <= p.to)) continue;
       const c = (r.computed ?? {}) as { first_in?: string | null; last_out?: string | null };
       const list = map.get(r.employee_id) ?? [];
       list.push({ ...a, date: r.date, store_id: r.store_id, first_in: c.first_in, last_out: c.last_out });
       map.set(r.employee_id, list);
     }
     return map;
-  }, [clockedQuery.data]);
+  }, [clockedQuery.data, wageParts]);
   const pendingOf = (employeeId: string) =>
     (deviationsByEmployee.get(employeeId) ?? []).reduce((n, a) => n + pendingParts(a).length, 0);
   const pendingTotal = useMemo(
@@ -709,12 +711,13 @@ export default function PayrollReview() {
                     const n = isMonthly && employeeLines.length === 0 ? clocked.length : employeeLines.length;
                     if (parts) {
                       // Lönebyte: stämplad tid på fast lön för sig, attesterad tid på timlön för sig.
-                      const inMonthly = (date: string) => parts.some((p) => p.pay_type === "monthly" && date >= p.from && date <= p.to);
-                      const fixedH = clockedHours(clocked.filter((d) => inMonthly(d.date)));
+                      const monthly = parts.filter((p) => p.pay_type === "monthly");
+                      const inMonthly = (date: string) => monthly.some((p) => date >= p.from && date <= p.to);
                       const hourlyH = workedHours(employeeLines.filter((l) => !inMonthly(l.line_date)));
+                      const fixedText = monthly.map((p) => `Fast lön ${shortDate(p.from)} – ${shortDate(p.to)}`).join(", ");
                       return (
                         <>
-                          <span className="ind-mono">{dec.format(fixedH)} h på fast lön · {dec.format(hourlyH)} h på timlön</span>
+                          <span className="ind-mono">{fixedText} · {dec.format(hourlyH)} h på timlön</span>
                           {obTotal > 0 && <span className="ind-muted ind-mono text-sm">varav OB {dec.format(obTotal)} h</span>}
                           <span className="ind-muted ind-mono text-sm">{n} rader</span>
                         </>
@@ -762,7 +765,6 @@ export default function PayrollReview() {
                 {wageParts.has(employeeId) && (() => {
                   const parts = wageParts.get(employeeId)!;
                   const emp = employmentOf.get(employeeId);
-                  const clocked = clockedByEmployee.get(employeeId) ?? [];
                   return (
                     <div className="mb-3 rounded-md border border-border px-3 py-2">
                       <SectionLabel>Lönebyte i perioden</SectionLabel>
@@ -773,13 +775,12 @@ export default function PayrollReview() {
                           const range = `${shortDate(p.from)} – ${shortDate(p.to)}`;
                           if (p.pay_type === "monthly") {
                             const deduction = unpaidAbsenceDeduction(partLines);
-                            const stamped = clockedHours(clocked.filter((d) => inPart(d.date)));
                             return (
                               <li key={p.from} className="grid grid-cols-[1fr_auto] gap-x-4">
                                 <span>
-                                  <span className="ind-mono">{range}</span> · Fast månadslön {money.format(p.monthly_salary)} kr/mån
+                                  <span className="ind-mono">{range}</span> · Fast lön
                                   <span className="block text-xs text-muted-foreground">
-                                    Halva perioden = halva månadslönen. Stämplat {dec.format(stamped)} h ingår i den fasta lönen.
+                                    Halva månadslönen ({money.format(p.monthly_salary)} kr/mån).
                                   </span>
                                 </span>
                                 <span className="ind-mono text-right">{money.format(p.fixed)} kr</span>
@@ -847,7 +848,7 @@ export default function PayrollReview() {
                     </ul>
                   </div>
                 )}
-                {open && fixedSalary.has(employeeId) && (() => {
+                {open && fixedSalary.has(employeeId) && !wageParts.has(employeeId) && (() => {
                   // Vid lönebyte visas bara dagarna på fast lön här; timlönedagarna står som rader nedan.
                   const parts = wageParts.get(employeeId);
                   const monthlyParts = parts?.filter((p) => p.pay_type === "monthly") ?? [];
