@@ -11,6 +11,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import type { LinePriority } from "@/components/orders/linePriority";
 import { buildWeekdaySuggestion } from "@/lib/orderSuggestion";
+import { formatKg, orderWeight } from "@/lib/orderWeight";
 
 export type ShopLine = {
   product_id: string;
@@ -103,6 +104,29 @@ export default function StoreShopView(p: Props) {
   const active = p.lines.filter((l) => num(l.quantity) > 0);
   const [catOpen, setCatOpen] = useState(false);
   const [bump, setBump] = useState(0);
+  const allById = useMemo(() => new Map(p.products.map((x: any) => [x.id, x])), [p.products]);
+  const weight = useMemo(() => orderWeight(p.lines, allById), [p.lines, allById]);
+  const [showMissing, setShowMissing] = useState(false);
+  const weightRow = active.length > 0 ? (
+    <div className="space-y-1">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-[15px]">
+        <span className="text-muted-foreground">Total vikt</span>
+        <span className="font-mono font-semibold tabular-nums text-foreground">{formatKg(weight.totalKg)}</span>
+      </div>
+      {weight.missing.length > 0 && (
+        <button type="button" onClick={() => setShowMissing((v) => !v)} className="block min-h-8 w-full text-left text-[13px] text-warning">
+          {weight.missing.length} {weight.missing.length === 1 ? "styckvara" : "styckvaror"} utan vikt räknas inte med {showMissing ? "▴" : "▾"}
+        </button>
+      )}
+      {showMissing && weight.missing.length > 0 && (
+        <ul className="space-y-0.5 text-[13px] text-muted-foreground">
+          {weight.missing.map((m) => (
+            <li key={m.product_id} className="break-words">{m.product_name} – {fmtQty(m.quantity)} st</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  ) : null;
 
   const setQty = (id: string, n: number) =>
     p.setLines((prev) =>
@@ -390,7 +414,8 @@ export default function StoreShopView(p: Props) {
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-border bg-card px-4 py-3 group-data-[kb=true]:hidden">
+      <div className="shrink-0 space-y-2 border-t border-border bg-card px-4 py-3 group-data-[kb=true]:hidden">
+        {weightRow}
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => setCartOpen(true)} className="flex min-h-12 min-w-0 flex-1 items-center gap-2 text-left">
             <span key={bump} className="relative shrink-0 animate-in zoom-in-50 duration-300">
@@ -472,9 +497,12 @@ export default function StoreShopView(p: Props) {
             ))}
           </div>
         ),
-        <Button className="h-14 w-full text-[17px]" disabled={active.length === 0} onClick={() => { setCartOpen(false); setCheckoutOpen(true); }}>
-          Till kassan
-        </Button>,
+        <div className="space-y-2">
+          {weightRow}
+          <Button className="h-14 w-full text-[17px]" disabled={active.length === 0} onClick={() => { setCartOpen(false); setCheckoutOpen(true); }}>
+            Till kassan
+          </Button>
+        </div>,
       )}
 
       {checkoutOpen && panel(
@@ -492,6 +520,7 @@ export default function StoreShopView(p: Props) {
           <div className="rounded-lg border border-border">
             <div className="flex items-center justify-between border-b border-border px-3 py-2 text-[15px]">
               <span className="font-semibold">{active.length} {active.length === 1 ? "vara" : "varor"}</span>
+              <span className="font-mono font-semibold tabular-nums">{formatKg(weight.totalKg)}</span>
             </div>
             <div className="divide-y divide-border/60">
               {active.map((l) => (
