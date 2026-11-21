@@ -414,6 +414,13 @@
       "when": 1795101001802,
       "tag": "0058_restrict_portal_map_settings_read",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1795279456385,
+      "tag": "0059_scope_portal_and_map_settings_read",
+      "breakpoints": true
     }
   ]
 }

@@ -25716,6 +25716,7 @@ export type Database = {
       is_flow_member: { Args: never; Returns: boolean }
       is_flow_owner: { Args: never; Returns: boolean }
       is_hr_admin: { Args: never; Returns: boolean }
+      is_internal_user: { Args: never; Returns: boolean }
       is_investor: { Args: never; Returns: boolean }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
