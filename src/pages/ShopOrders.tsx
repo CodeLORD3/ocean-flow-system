@@ -1762,7 +1762,7 @@ export default function ShopOrders() {
             </div>
 
             <div className="sticky bottom-0 z-20 -mx-4 border-t border-border bg-card px-4 py-3 space-y-2 group-data-[kb=true]:hidden sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:pt-2">
-              {orderLines.some(l => Number(String(l.quantity).replace(",", ".")) > 0) && (
+              {orderLines.length > 0 && (
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 rounded-md bg-muted px-3 py-2 text-sm sm:justify-end">
                   <span className="text-muted-foreground">Total vikt</span>
                   <span className="font-mono font-semibold tabular-nums text-foreground">{formatKg(orderWeightNow.totalKg)}</span>
