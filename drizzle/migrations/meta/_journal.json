@@ -442,6 +442,13 @@
       "when": 1795542756523,
       "tag": "0062_feed_cache_clear_on_hide",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1795560289690,
+      "tag": "0063_restrict_contact_currency_settings_read",
+      "breakpoints": true
     }
   ]
 }
