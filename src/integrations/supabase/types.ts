@@ -6737,6 +6737,77 @@ export type Database = {
           },
         ]
       }
+      feed_hamtningar: {
+        Row: {
+          http_status: number
+          id: number
+          ip: string | null
+          partner_id: string | null
+          tidpunkt: string
+        }
+        Insert: {
+          http_status: number
+          id?: never
+          ip?: string | null
+          partner_id?: string | null
+          tidpunkt?: string
+        }
+        Update: {
+          http_status?: number
+          id?: never
+          ip?: string | null
+          partner_id?: string | null
+          tidpunkt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_hamtningar_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "feed_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feed_partners: {
+        Row: {
+          aktiv: boolean
+          api_nyckel_hash: string | null
+          butiksurval: string[]
+          cache_byggd: string | null
+          cache_json: Json | null
+          id: string
+          namn: string
+          nyckel_skapad: string | null
+          senast_hamtad: string | null
+          skapad: string
+        }
+        Insert: {
+          aktiv?: boolean
+          api_nyckel_hash?: string | null
+          butiksurval?: string[]
+          cache_byggd?: string | null
+          cache_json?: Json | null
+          id?: string
+          namn: string
+          nyckel_skapad?: string | null
+          senast_hamtad?: string | null
+          skapad?: string
+        }
+        Update: {
+          aktiv?: boolean
+          api_nyckel_hash?: string | null
+          butiksurval?: string[]
+          cache_byggd?: string | null
+          cache_json?: Json | null
+          id?: string
+          namn?: string
+          nyckel_skapad?: string | null
+          senast_hamtad?: string | null
+          skapad?: string
+        }
+        Relationships: []
+      }
       floor_plan_versions: {
         Row: {
           created_at: string
@@ -15215,6 +15286,7 @@ export type Database = {
           day_price: number
           day_price_lots: number
           day_price_updated_at: string | null
+          dold_i_partnerfeed: boolean
           exempt_species_data: boolean
           export_documentation_required: boolean | null
           family_id: string | null
@@ -15269,6 +15341,7 @@ export type Database = {
           day_price?: number
           day_price_lots?: number
           day_price_updated_at?: string | null
+          dold_i_partnerfeed?: boolean
           exempt_species_data?: boolean
           export_documentation_required?: boolean | null
           family_id?: string | null
@@ -15323,6 +15396,7 @@ export type Database = {
           day_price?: number
           day_price_lots?: number
           day_price_updated_at?: string | null
+          dold_i_partnerfeed?: boolean
           exempt_species_data?: boolean
           export_documentation_required?: boolean | null
           family_id?: string | null
@@ -25143,6 +25217,8 @@ export type Database = {
     Functions: {
       _actor_name: { Args: never; Returns: string }
       _dagslage: { Args: { _day: string }; Returns: Json }
+      _feed_admin_check: { Args: never; Returns: undefined }
+      _feed_new_key: { Args: { _id: string }; Returns: string }
       absence_conflicts: {
         Args: { _request_id: string }
         Returns: {
@@ -25519,6 +25595,15 @@ export type Database = {
       entity_series_code: {
         Args: { _legal_entity_id: string }
         Returns: string
+      }
+      feed_partner_create: {
+        Args: { _butiksurval: string[]; _namn: string }
+        Returns: Json
+      }
+      feed_partner_rotate_key: { Args: { _id: string }; Returns: string }
+      feed_partner_update: {
+        Args: { _aktiv: boolean; _butiksurval: string[]; _id: string }
+        Returns: undefined
       }
       finalize_lot_price: {
         Args: {

@@ -421,6 +421,27 @@
       "when": 1795279456385,
       "tag": "0059_scope_portal_and_map_settings_read",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1795542705939,
+      "tag": "0060_partner_feed",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1795542719927,
+      "tag": "0061_feed_partners_column_grants",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1795542756523,
+      "tag": "0062_feed_cache_clear_on_hide",
+      "breakpoints": true
     }
   ]
 }

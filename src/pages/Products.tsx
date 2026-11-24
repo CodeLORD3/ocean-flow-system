@@ -408,6 +408,7 @@ export default function Products() {
     origin: "",
     producer: "",
     is_production_item: false,
+    dold_i_partnerfeed: false,
     shelf_life_days: "", // NEW
     shelf_life_open_days: "",
     image_url: "",
@@ -490,6 +491,7 @@ export default function Products() {
       origin: "",
       producer: "",
     is_production_item: false,
+    dold_i_partnerfeed: false,
       shelf_life_days: "",
       shelf_life_open_days: "",
       image_url: "",
@@ -520,6 +522,7 @@ export default function Products() {
       origin: p.origin || "",
       producer: (p as any).producer || "",
       is_production_item: !!(p as any).is_production_item,
+      dold_i_partnerfeed: !!(p as any).dold_i_partnerfeed,
       shelf_life_days: String((p as any).shelf_life_days || ""), // NEW
       shelf_life_open_days: String((p as any).shelf_life_open_days || ""),
       image_url: (p as any).image_url || "",
@@ -581,6 +584,7 @@ export default function Products() {
       origin: form.origin || null,
       producer: form.producer || null,
       is_production_item: !!form.is_production_item,
+      dold_i_partnerfeed: !!(form as any).dold_i_partnerfeed,
       shelf_life_days: form.shelf_life_days ? Number(form.shelf_life_days) : null, // NEW
       shelf_life_open_days: form.shelf_life_open_days ? Number(form.shelf_life_open_days) : null,
       image_url: form.image_url.trim() || null,
@@ -1815,6 +1819,10 @@ export default function Products() {
                 <label className="flex items-center gap-2 pt-1 text-xs">
                   <Checkbox checked={!!form.is_production_item} onCheckedChange={(v) => setField("is_production_item" as any, !!v as any)} />
                   Produktionens vara
+                </label>
+                <label className="flex items-center gap-2 pt-1 text-xs">
+                  <Checkbox checked={!!(form as any).dold_i_partnerfeed} onCheckedChange={(v) => setField("dold_i_partnerfeed" as any, !!v as any)} />
+                  Dölj i partnerfeed
                 </label>
               </div>
               <div className="space-y-1.5">
