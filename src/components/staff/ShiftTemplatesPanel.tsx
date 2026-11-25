@@ -11,7 +11,7 @@ import { defaultBreakMinutes } from "@/lib/schedule";
 const weekdays = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 
 type Draft = { name: string; weekday: string; start_time: string; end_time: string; break_minutes: string; count: string };
-const emptyDraft: Draft = { name: "", weekday: "1", start_time: "08:00", end_time: "17:00", break_minutes: String(defaultBreakMinutes("08:00", "17:00")), count: "1" };
+const emptyDraft: Draft = { name: "", weekday: "1", start_time: "09:00", end_time: "18:00", break_minutes: String(defaultBreakMinutes("09:00", "18:00")), count: "1" };
 
 export function ShiftTemplatesPanel() {
   const { data: stores = [] } = useStores(true);
