@@ -456,6 +456,13 @@
       "when": 1795609744309,
       "tag": "0064_shifts_default_break_rule",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1795610666010,
+      "tag": "0065_shifts_break_rule_from_date",
+      "breakpoints": true
     }
   ]
 }

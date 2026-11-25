@@ -486,6 +486,15 @@ export function suggestCandidates(
     .slice(0, opts.limit ?? 5);
 }
 
+/** Rastregeln gäller bara pass från och med detta datum. */
+export const BREAK_RULE_FROM = "2026-11-26";
+
+/** Rast för ett pass: regeln från BREAK_RULE_FROM, annars behålls befintlig rast oförändrad. */
+export function breakForShift(date: string | null | undefined, start: string | null | undefined, end: string | null | undefined, current: number | null | undefined): number {
+  if (date && date < BREAK_RULE_FROM) return current ?? 0;
+  return defaultBreakMinutes(start, end);
+}
+
 /** Schemalagd rast enligt regel: pass under 5 h → 0 min, 5 h eller mer → 30 min. Pass över midnatt hanteras. */
 export function defaultBreakMinutes(start: string | null | undefined, end: string | null | undefined): number {
   if (!start || !end) return 0;

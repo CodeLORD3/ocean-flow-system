@@ -95,6 +95,7 @@ import {
   type Shift,
   type RuleCheck,
   defaultBreakMinutes,
+  breakForShift,
 } from "@/lib/schedule";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { staffLevelOf } from "@/lib/staffModuleAccess";
@@ -1590,7 +1591,7 @@ export default function SchedulePlanner() {
                   <IndustryInput
                     type="time"
                     value={(editing.start_time ?? "").slice(0, 5)}
-                    onChange={(e) => setEditing({ ...editing, start_time: e.target.value, break_minutes: defaultBreakMinutes(e.target.value, editing.end_time) })}
+                    onChange={(e) => setEditing({ ...editing, start_time: e.target.value, break_minutes: breakForShift(editing.date, e.target.value, editing.end_time, editing.break_minutes) })}
                   />
                 </div>
                 <div>
@@ -1598,7 +1599,7 @@ export default function SchedulePlanner() {
                   <IndustryInput
                     type="time"
                     value={(editing.end_time ?? "").slice(0, 5)}
-                    onChange={(e) => setEditing({ ...editing, end_time: e.target.value, break_minutes: defaultBreakMinutes(editing.start_time, e.target.value) })}
+                    onChange={(e) => setEditing({ ...editing, end_time: e.target.value, break_minutes: breakForShift(editing.date, editing.start_time, e.target.value, editing.break_minutes) })}
                   />
                 </div>
               </div>}
