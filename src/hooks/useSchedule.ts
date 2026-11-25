@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Availability, Shift, ShiftRequest, ShiftTemplate, ShiftType } from "@/lib/schedule";
-import { shiftStart, weekDates } from "@/lib/schedule";
+import { defaultBreakMinutes, shiftStart, weekDates } from "@/lib/schedule";
 
 /**
  * Schemamodulen (etapp 3). Alla skrivningar går via RLS: bara chefer med
@@ -205,7 +205,7 @@ export function useCreateWeekFromTemplates() {
           date: week[t.weekday - 1],
           start_time: t.start_time,
           end_time: t.end_time,
-          break_minutes: t.break_minutes,
+          break_minutes: defaultBreakMinutes(t.start_time, t.end_time),
           status: "draft" as const,
           note: t.name,
           created_by: auth.user?.id ?? null,
@@ -293,7 +293,7 @@ export function useCopyWeek() {
           date,
           start_time: s.start_time,
           end_time: s.end_time,
-          break_minutes: s.break_minutes,
+          break_minutes: defaultBreakMinutes(s.start_time, s.end_time),
           status: "draft" as const,
           note: s.note,
           created_by: auth.user?.id ?? null,

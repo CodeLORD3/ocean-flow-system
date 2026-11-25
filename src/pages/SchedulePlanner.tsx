@@ -94,6 +94,7 @@ import {
   type Availability,
   type Shift,
   type RuleCheck,
+  defaultBreakMinutes,
 } from "@/lib/schedule";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { staffLevelOf } from "@/lib/staffModuleAccess";
@@ -370,7 +371,7 @@ export default function SchedulePlanner() {
     date,
     start_time: "08:00",
     end_time: "17:00",
-    break_minutes: 30,
+    break_minutes: defaultBreakMinutes("08:00", "17:00"),
     status: "draft",
     shift_type_id: shiftTypes[0]?.id ?? null,
   });
@@ -808,7 +809,7 @@ export default function SchedulePlanner() {
                     date: week[0],
                     start_time: "08:00",
                     end_time: "17:00",
-                    break_minutes: 30,
+                    break_minutes: defaultBreakMinutes("08:00", "17:00"),
                     status: "draft",
                     shift_type_id: shiftTypes[0]?.id ?? null,
                   })
@@ -1510,7 +1511,7 @@ export default function SchedulePlanner() {
                       date: week[0],
                       start_time: "08:00",
                       end_time: "17:00",
-                      break_minutes: 30,
+                      break_minutes: defaultBreakMinutes("08:00", "17:00"),
                       status: "draft",
                       shift_type_id: shiftTypes[0]?.id ?? null,
                     })
@@ -1589,7 +1590,7 @@ export default function SchedulePlanner() {
                   <IndustryInput
                     type="time"
                     value={(editing.start_time ?? "").slice(0, 5)}
-                    onChange={(e) => setEditing({ ...editing, start_time: e.target.value })}
+                    onChange={(e) => setEditing({ ...editing, start_time: e.target.value, break_minutes: defaultBreakMinutes(e.target.value, editing.end_time) })}
                   />
                 </div>
                 <div>
@@ -1597,7 +1598,7 @@ export default function SchedulePlanner() {
                   <IndustryInput
                     type="time"
                     value={(editing.end_time ?? "").slice(0, 5)}
-                    onChange={(e) => setEditing({ ...editing, end_time: e.target.value })}
+                    onChange={(e) => setEditing({ ...editing, end_time: e.target.value, break_minutes: defaultBreakMinutes(editing.start_time, e.target.value) })}
                   />
                 </div>
               </div>}

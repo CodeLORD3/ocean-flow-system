@@ -485,3 +485,12 @@ export function suggestCandidates(
     .sort((a, b) => Number(a.blocked) - Number(b.blocked) || b.score - a.score)
     .slice(0, opts.limit ?? 5);
 }
+
+/** Schemalagd rast enligt regel: pass under 5 h → 0 min, 5 h eller mer → 30 min. Pass över midnatt hanteras. */
+export function defaultBreakMinutes(start: string | null | undefined, end: string | null | undefined): number {
+  if (!start || !end) return 0;
+  const s = minutesOf(start);
+  let e = minutesOf(end);
+  if (e <= s) e += 1440;
+  return e - s >= 300 ? 30 : 0;
+}

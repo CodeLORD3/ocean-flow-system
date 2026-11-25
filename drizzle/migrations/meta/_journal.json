@@ -449,6 +449,13 @@
       "when": 1795560289690,
       "tag": "0063_restrict_contact_currency_settings_read",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1795609744309,
+      "tag": "0064_shifts_default_break_rule",
+      "breakpoints": true
     }
   ]
 }

@@ -6,11 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useStores } from "@/hooks/useStores";
 import { useDeleteTemplate, useSaveTemplate, useShiftTemplates } from "@/hooks/useSchedule";
 import type { ShiftTemplate } from "@/lib/schedule";
+import { defaultBreakMinutes } from "@/lib/schedule";
 
 const weekdays = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 
 type Draft = { name: string; weekday: string; start_time: string; end_time: string; break_minutes: string; count: string };
-const emptyDraft: Draft = { name: "", weekday: "1", start_time: "08:00", end_time: "17:00", break_minutes: "30", count: "1" };
+const emptyDraft: Draft = { name: "", weekday: "1", start_time: "08:00", end_time: "17:00", break_minutes: String(defaultBreakMinutes("08:00", "17:00")), count: "1" };
 
 export function ShiftTemplatesPanel() {
   const { data: stores = [] } = useStores(true);
@@ -23,7 +24,11 @@ export function ShiftTemplatesPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const grouped = useMemo(() => [...templates].sort((a, b) => a.weekday - b.weekday || a.start_time.localeCompare(b.start_time)), [templates]);
-  const update = (key: keyof Draft, value: string) => setDraft((current) => ({ ...current, [key]: value }));
+  const update = (key: keyof Draft, value: string) => setDraft((current) => {
+    const next = { ...current, [key]: value };
+    if (key === "start_time" || key === "end_time") next.break_minutes = String(defaultBreakMinutes(next.start_time, next.end_time));
+    return next;
+  });
   const edit = (template: ShiftTemplate) => {
     setEditingId(template.id);
     setDraft({ name: template.name, weekday: String(template.weekday), start_time: template.start_time.slice(0, 5), end_time: template.end_time.slice(0, 5), break_minutes: String(template.break_minutes), count: String(template.count) });

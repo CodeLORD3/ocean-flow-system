@@ -16788,7 +16788,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
-          break_minutes?: number
+          break_minutes: number
           created_at?: string
           created_by?: string | null
           date: string
