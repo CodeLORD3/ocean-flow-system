@@ -79,7 +79,7 @@ export function useSaveShift() {
       }
       const { data, error } = await supabase
         .from("shifts")
-        .insert({ ...payload, created_by: auth.user?.id ?? null })
+        .insert({ ...payload, break_minutes: payload.break_minutes ?? defaultBreakMinutes(payload.start_time, payload.end_time), created_by: auth.user?.id ?? null })
         .select()
         .single();
       if (error) throw error;
