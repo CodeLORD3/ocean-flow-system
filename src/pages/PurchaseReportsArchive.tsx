@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPurchaseReportLines, fetchPurchaseReports } from "@/lib/purchaseReportRows";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,26 +72,14 @@ export default function PurchaseReportsArchive() {
   const { data: archivedReports = [], isLoading } = useQuery({
     queryKey: ["archived-purchase-reports"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("purchase_reports")
-        .select("*")
-        .not("archived_at", "is", null)
-        .order("archived_at", { ascending: false });
-      if (error) throw error;
-      return data as ArchivedReport[];
+      return await fetchPurchaseReports(true) as ArchivedReport[];
     },
   });
 
   const { data: allLines = [] } = useQuery({
     queryKey: ["archived-purchase-report-lines"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("purchase_report_lines")
-        .select("*")
-        .order("created_at", { ascending: true })
-        .order("id", { ascending: true });
-      if (error) throw error;
-      return data as ReportLine[];
+      return await fetchPurchaseReportLines() as ReportLine[];
     },
     enabled: archivedReports.length > 0,
   });

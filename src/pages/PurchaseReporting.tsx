@@ -5,6 +5,7 @@ import { recordMovement } from "@/lib/stockLedger";
 
 import { PdfViewer } from "@/components/PdfViewer";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPurchaseReportLines, fetchPurchaseReports } from "@/lib/purchaseReportRows";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1046,26 +1047,14 @@ export default function PurchaseReporting() {
   const { data: reports = [], isLoading: reportsLoading } = useQuery({
     queryKey: ["purchase-reports"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("purchase_reports")
-        .select("*")
-        .is("archived_at", null)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as Report[];
+      return await fetchPurchaseReports(false) as Report[];
     },
   });
 
   const { data: allLines = [] } = useQuery({
     queryKey: ["purchase-report-lines"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("purchase_report_lines")
-        .select("*")
-        .order("created_at", { ascending: true })
-        .order("id", { ascending: true });
-      if (error) throw error;
-      return data as ReportLine[];
+      return await fetchPurchaseReportLines() as ReportLine[];
     },
   });
 
